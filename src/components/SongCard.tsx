@@ -4,7 +4,8 @@ import { Edit, Music2, Trash2, Youtube, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { ko, enUS } from "date-fns/locale";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,8 @@ interface SongCardProps {
 }
 
 export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
+  const { t, language } = useTranslation();
+
   const handleDelete = async () => {
     try {
       const { error } = await supabase
@@ -32,10 +35,10 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
         .eq("id", song.id);
 
       if (error) throw error;
-      toast.success("곡이 삭제되었습니다");
+      toast.success(t("songCard.songDeleted"));
       onDelete();
     } catch (error: any) {
-      toast.error("삭제 실패: " + error.message);
+      toast.error("Error: " + error.message);
     }
   };
 
@@ -51,6 +54,27 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
 
   const lastUsed = getLastUsedDate();
   const usageCount = song.set_songs?.length || 0;
+  const locale = language === "ko" ? ko : enUS;
+
+  const getCategoryTranslation = (category: string) => {
+    const categoryMap: { [key: string]: string } = {
+      "오프닝": t("songLibrary.categories.opening"),
+      "찬양": t("songLibrary.categories.worship"),
+      "헌금": t("songLibrary.categories.offering"),
+      "응답": t("songLibrary.categories.response"),
+      "파송": t("songLibrary.categories.sending"),
+    };
+    return categoryMap[category] || category;
+  };
+
+  const getLanguageTranslation = (lang: string) => {
+    const langMap: { [key: string]: string } = {
+      "KO": t("songLibrary.languages.ko"),
+      "EN": t("songLibrary.languages.en"),
+      "KO/EN": t("songLibrary.languages.koen"),
+    };
+    return langMap[lang] || lang;
+  };
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-all animate-fade-in">
@@ -74,28 +98,28 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
             )}
             {song.language && (
               <span className="px-2 py-1 bg-accent text-accent-foreground text-xs rounded-full">
-                {song.language}
+                {getLanguageTranslation(song.language)}
               </span>
             )}
             {song.category && (
               <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
-                {song.category}
+                {getCategoryTranslation(song.category)}
               </span>
             )}
           </div>
 
           {song.bpm && (
-            <p className="text-xs text-muted-foreground">BPM: {song.bpm}</p>
+            <p className="text-xs text-muted-foreground">{t("songCard.bpm")}: {song.bpm}</p>
           )}
 
           {lastUsed && (
             <p className="text-xs text-muted-foreground">
-              마지막 사용: {format(lastUsed, "yyyy년 M월 d일", { locale: ko })} ({usageCount}회)
+              {t("songCard.lastUsed")}: {format(lastUsed, language === "ko" ? "yyyy년 M월 d일" : "MMM d, yyyy", { locale })} ({usageCount})
             </p>
           )}
 
           {!lastUsed && usageCount === 0 && (
-            <p className="text-xs text-muted-foreground">아직 사용되지 않음</p>
+            <p className="text-xs text-muted-foreground">{t("songCard.neverUsed")}</p>
           )}
         </div>
 
@@ -108,7 +132,7 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
               className="flex-1"
             >
               <Youtube className="w-4 h-4 mr-1" />
-              유튜브
+              {t("songCard.viewYouTube")}
             </Button>
           )}
           {song.score_file_url && (
@@ -119,12 +143,12 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
               className="flex-1"
             >
               <FileText className="w-4 h-4 mr-1" />
-              악보
+              {t("songCard.viewScore")}
             </Button>
           )}
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-4">
           <Button
             variant="outline"
             size="sm"
@@ -132,26 +156,26 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
             className="flex-1"
           >
             <Edit className="w-4 h-4 mr-1" />
-            수정
+            {t("common.edit")}
           </Button>
-
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="flex-1">
-                <Trash2 className="w-4 h-4 mr-1" />
-                삭제
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>곡 삭제</AlertDialogTitle>
+                <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  "{song.title}" 곡을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                  {t("songCard.deleteConfirm")}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>취소</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>삭제</AlertDialogAction>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>
+                  {t("common.delete")}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SongDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface SongDialogProps {
 }
 
 export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProps) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -89,9 +91,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         .getPublicUrl(filePath);
 
       setFormData({ ...formData, score_file_url: publicUrl });
-      toast.success("파일이 업로드되었습니다");
+      toast.success(t("songDialog.uploading"));
     } catch (error: any) {
-      toast.error("파일 업로드 실패: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -100,7 +102,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) {
-      toast.error("곡 제목을 입력해주세요");
+      toast.error(t("songDialog.titleRequired"));
       return;
     }
 
@@ -118,18 +120,18 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           .update(data)
           .eq("id", song.id);
         if (error) throw error;
-        toast.success("곡이 수정되었습니다");
+        toast.success(t("songDialog.songUpdated"));
       } else {
         const { error } = await supabase
           .from("songs")
           .insert([data]);
         if (error) throw error;
-        toast.success("곡이 추가되었습니다");
+        toast.success(t("songDialog.songAdded"));
       }
 
       onClose();
     } catch (error: any) {
-      toast.error("저장 실패: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -139,22 +141,25 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{song ? "곡 수정" : "새 곡 추가"}</DialogTitle>
+          <DialogTitle>
+            {song ? t("songDialog.editSong") : t("songDialog.addSong")}
+          </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">곡 제목 *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="artist">아티스트</Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">{t("songDialog.title")} *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="artist">{t("songDialog.artist")}</Label>
               <Input
                 id="artist"
                 value={formData.artist}
@@ -162,32 +167,34 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="language">언어</Label>
+            <div>
+              <Label htmlFor="language">{t("songDialog.language")}</Label>
               <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="언어 선택" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="KO">한국어</SelectItem>
-                  <SelectItem value="EN">영어</SelectItem>
-                  <SelectItem value="KO/EN">한영 혼합</SelectItem>
+                  <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+                  <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+                  <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="default_key">기본 키</Label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="key">{t("songDialog.key")}</Label>
               <Input
-                id="default_key"
+                id="key"
                 value={formData.default_key}
                 onChange={(e) => setFormData({ ...formData, default_key: e.target.value })}
-                placeholder="예: G, E♭, C#m"
+                placeholder="C, D, Em, etc."
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="bpm">BPM</Label>
+            <div>
+              <Label htmlFor="bpm">{t("songDialog.bpm")}</Label>
               <Input
                 id="bpm"
                 type="number"
@@ -196,18 +203,20 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="time_signature">박자</Label>
+            <div>
+              <Label htmlFor="time_signature">{t("songDialog.timeSignature")}</Label>
               <Input
                 id="time_signature"
                 value={formData.time_signature}
                 onChange={(e) => setFormData({ ...formData, time_signature: e.target.value })}
-                placeholder="예: 4/4, 6/8"
+                placeholder="4/4"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="energy_level">에너지 레벨 (1-5)</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="energy_level">{t("songDialog.energyLevel")} (1-5)</Label>
               <Input
                 id="energy_level"
                 type="number"
@@ -218,63 +227,62 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">카테고리</Label>
+            <div>
+              <Label htmlFor="category">{t("songDialog.category")}</Label>
               <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                 <SelectTrigger>
-                  <SelectValue placeholder="카테고리 선택" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="오프닝">오프닝</SelectItem>
-                  <SelectItem value="찬양">찬양</SelectItem>
-                  <SelectItem value="헌금">헌금</SelectItem>
-                  <SelectItem value="응답">응답</SelectItem>
-                  <SelectItem value="파송">파송</SelectItem>
+                  <SelectItem value="오프닝">{t("songLibrary.categories.opening")}</SelectItem>
+                  <SelectItem value="찬양">{t("songLibrary.categories.worship")}</SelectItem>
+                  <SelectItem value="헌금">{t("songLibrary.categories.offering")}</SelectItem>
+                  <SelectItem value="응답">{t("songLibrary.categories.response")}</SelectItem>
+                  <SelectItem value="파송">{t("songLibrary.categories.sending")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tags">태그 (콤마로 구분)</Label>
+          <div>
+            <Label htmlFor="tags">{t("songDialog.tags")}</Label>
             <Input
               id="tags"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="예: 성령, 회복, 빠른"
+              placeholder={t("songDialog.tagsPlaceholder")}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="youtube_url">YouTube 링크</Label>
+          <div>
+            <Label htmlFor="youtube_url">{t("songDialog.youtubeUrl")}</Label>
             <Input
               id="youtube_url"
               type="url"
               value={formData.youtube_url}
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-              placeholder="https://youtube.com/..."
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="score_file">악보 파일</Label>
+          <div>
+            <Label htmlFor="score_file">{t("songDialog.scoreFile")}</Label>
             <div className="flex gap-2">
               <Input
                 id="score_file"
                 type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
                 onChange={handleFileUpload}
+                accept=".pdf,.jpg,.jpeg,.png"
                 disabled={uploading}
               />
-              {uploading && <span className="text-sm text-muted-foreground">업로드 중...</span>}
+              <Button type="button" variant="outline" disabled={uploading}>
+                <Upload className="w-4 h-4 mr-2" />
+                {uploading ? t("songDialog.uploading") : t("songDialog.uploadScore")}
+              </Button>
             </div>
-            {formData.score_file_url && (
-              <p className="text-xs text-muted-foreground">파일이 업로드되었습니다</p>
-            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">메모</Label>
+          <div>
+            <Label htmlFor="notes">{t("songDialog.notes")}</Label>
             <Textarea
               id="notes"
               value={formData.notes}
@@ -285,10 +293,10 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "저장 중..." : song ? "수정" : "추가"}
+              {loading ? t("common.loading") : t("common.save")}
             </Button>
           </div>
         </form>
