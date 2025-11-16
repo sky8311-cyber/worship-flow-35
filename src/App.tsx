@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import SongLibrary from "./pages/SongLibrary";
 import SetBuilder from "./pages/SetBuilder";
@@ -46,6 +47,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public Landing Page */}
+              <Route path="/" element={<Landing />} />
+              
               {/* Auth Routes */}
               <Route path="/signup-choice" element={<SignUpChoice />} />
               <Route path="/signup" element={<SignUp />} />
@@ -55,7 +59,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Protected Routes */}
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/songs" element={<ProtectedRoute><SongLibrary /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />

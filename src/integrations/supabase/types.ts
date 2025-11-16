@@ -328,6 +328,39 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          church_name: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          id: string
+          k_spirit_meaning: string | null
+          name: string | null
+          role: string | null
+        }
+        Insert: {
+          church_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          k_spirit_meaning?: string | null
+          name?: string | null
+          role?: string | null
+        }
+        Update: {
+          church_name?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          k_spirit_meaning?: string | null
+          name?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
       worship_communities: {
         Row: {
           avatar_url: string | null
