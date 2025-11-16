@@ -14,12 +14,115 @@ export type Database = {
   }
   public: {
     Tables: {
+      community_invitations: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string
+          status: string | null
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by: string
+          status?: string | null
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_invitations_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       service_sets: {
         Row: {
           band_name: string | null
+          community_id: string | null
           created_at: string
+          created_by: string | null
           date: string
           id: string
+          is_public: boolean | null
           notes: string | null
           service_name: string
           theme: string | null
@@ -28,9 +131,12 @@ export type Database = {
         }
         Insert: {
           band_name?: string | null
+          community_id?: string | null
           created_at?: string
+          created_by?: string | null
           date: string
           id?: string
+          is_public?: boolean | null
           notes?: string | null
           service_name: string
           theme?: string | null
@@ -39,16 +145,62 @@ export type Database = {
         }
         Update: {
           band_name?: string | null
+          community_id?: string | null
           created_at?: string
+          created_by?: string | null
           date?: string
           id?: string
+          is_public?: boolean | null
           notes?: string | null
           service_name?: string
           theme?: string | null
           updated_at?: string
           worship_leader?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_sets_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      set_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          service_set_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          service_set_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          service_set_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_comments_service_set_id_fkey"
+            columns: ["service_set_id"]
+            isOneToOne: false
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       set_songs: {
         Row: {
@@ -155,15 +307,76 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      worship_communities: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          leader_id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "worship_leader" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -290,6 +503,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "worship_leader", "user"],
+    },
   },
 } as const
