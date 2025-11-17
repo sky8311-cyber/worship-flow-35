@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongDialog } from "@/components/SongDialog";
@@ -18,7 +18,7 @@ import Papa from "papaparse";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -131,6 +131,18 @@ const SongLibrary = () => {
                 </span>
               )}
               <LanguageToggle />
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  title={t("dashboard.adminMenu")}
+                >
+                  <Link to="/admin">
+                    <Shield className="h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
