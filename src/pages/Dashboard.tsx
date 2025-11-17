@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Music, Plus, Shield, LogOut } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Users, Search } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -130,6 +130,26 @@ const Dashboard = () => {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {t("dashboard.createNewSet")}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-md hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">예배공동체</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-primary">
+                <Users className="w-8 h-8" />
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">예배공동체를 찾아 가입하세요</p>
+              <Button 
+                variant="outline"
+                onClick={() => navigate("/community/search")}
+                className="w-full mt-4"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                예배공동체 찾기
               </Button>
             </CardContent>
           </Card>

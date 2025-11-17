@@ -22,6 +22,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminWaitlist from "./pages/AdminWaitlist";
 import AdminCommunities from "./pages/AdminCommunities";
+import CommunitySearch from "./pages/CommunitySearch";
+import CommunityManagement from "./pages/CommunityManagement";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +71,9 @@ const App = () => (
               <Route path="/songs" element={<ProtectedRoute><SongLibrary /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
+              <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
+              <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
+              <Route path="/invitation/:token" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
               
               {/* Admin Routes */}
