@@ -284,6 +284,7 @@ export const translations = {
       lastUsed: "Last used",
       usedTimes: "Used {count} times",
       addToSet: "Add",
+      addNewSong: "Add New Song",
     },
     setSongItem: {
       key: "Key",
@@ -588,6 +589,7 @@ export const translations = {
       lastUsed: "마지막 사용",
       usedTimes: "{count}번 사용됨",
       addToSet: "추가",
+      addNewSong: "새 곡 추가",
     },
     setSongItem: {
       key: "키",

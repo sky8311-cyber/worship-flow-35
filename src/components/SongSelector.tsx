@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,9 @@ import { Search, Plus, Music } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { SongDialog } from "./SongDialog";
+import { useTranslation } from "@/hooks/useTranslation";
+import { toast } from "@/hooks/use-toast";
 
 interface SongSelectorProps {
   open: boolean;
@@ -18,6 +21,9 @@ interface SongSelectorProps {
 export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showSongDialog, setShowSongDialog] = useState(false);
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: songs, isLoading } = useQuery({
     queryKey: ["songs-selector", searchQuery, selectedCategory],
@@ -58,11 +64,24 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
     return dates[0] ? new Date(dates[0]) : null;
   };
 
+  const handleSongDialogClose = () => {
+    setShowSongDialog(false);
+    queryClient.invalidateQueries({ queryKey: ["songs-selector"] });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle>곡 선택</DialogTitle>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <DialogTitle>{t("songSelector.title")}</DialogTitle>
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => setShowSongDialog(true)}
+          >
+            <Plus className="w-4 h-4 mr-1" />
+            {t("songSelector.addNewSong")}
+          </Button>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -150,6 +169,13 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           )}
         </div>
       </DialogContent>
+
+      <SongDialog 
+        open={showSongDialog}
+        onOpenChange={setShowSongDialog}
+        song={undefined}
+        onClose={handleSongDialogClose}
+      />
     </Dialog>
   );
 };
