@@ -52,31 +52,55 @@ export default function CommunityManagement() {
   const { data: members } = useQuery({
     queryKey: ["community-members", id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: members, error } = await supabase
         .from("community_members")
-        .select(`
-          *,
-          profiles:user_id(full_name, email)
-        `)
+        .select("*")
         .eq("community_id", id);
       if (error) throw error;
-      return data;
+      
+      if (!members || members.length === 0) return [];
+      
+      // Fetch profiles
+      const userIds = members.map(m => m.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+      if (profileError) throw profileError;
+      
+      // Merge
+      return members.map(m => ({
+        ...m,
+        profiles: profiles?.find(p => p.id === m.user_id)
+      }));
     },
   });
 
   const { data: invitations } = useQuery({
     queryKey: ["community-invitations", id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: invites, error } = await supabase
         .from("community_invitations")
-        .select(`
-          *,
-          profiles:invited_by(full_name)
-        `)
+        .select("*")
         .eq("community_id", id)
         .eq("status", "pending");
       if (error) throw error;
-      return data;
+      
+      if (!invites || invites.length === 0) return [];
+      
+      // Fetch invited_by profiles
+      const inviterIds = invites.map(i => i.invited_by);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", inviterIds);
+      if (profileError) throw profileError;
+      
+      // Merge
+      return invites.map(i => ({
+        ...i,
+        profiles: profiles?.find(p => p.id === i.invited_by)
+      }));
     },
   });
 

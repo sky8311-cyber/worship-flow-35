@@ -22,20 +22,46 @@ export default function CommunitySearch() {
     queryFn: async () => {
       let query = supabase
         .from("worship_communities")
-        .select(`
-          *,
-          profiles:leader_id(full_name),
-          community_members(count)
-        `)
+        .select("*")
         .eq("is_active", true);
 
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
 
-      const { data, error } = await query;
+      const { data: communities, error } = await query;
       if (error) throw error;
-      return data;
+      
+      if (!communities || communities.length === 0) return [];
+      
+      // Fetch leader profiles
+      const leaderIds = communities.map(c => c.leader_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", leaderIds);
+      if (profileError) throw profileError;
+      
+      // Fetch member counts
+      const communityIds = communities.map(c => c.id);
+      const { data: memberCounts, error: countError } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .in("community_id", communityIds);
+      if (countError) throw countError;
+      
+      // Count members per community
+      const counts = memberCounts?.reduce((acc, m) => {
+        acc[m.community_id] = (acc[m.community_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Merge all data
+      return communities.map(c => ({
+        ...c,
+        profiles: profiles?.find(p => p.id === c.leader_id),
+        member_count: counts?.[c.id] || 0
+      }));
     },
   });
 
@@ -123,7 +149,7 @@ export default function CommunitySearch() {
                       <span className="text-muted-foreground">{t("community.members")}:</span>
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        {community.community_members?.[0]?.count || 0}
+                        {community.member_count || 0}
                       </span>
                     </div>
                   </div>
