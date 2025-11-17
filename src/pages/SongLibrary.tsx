@@ -18,7 +18,7 @@ import Papa from "papaparse";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
-  const { signOut, profile, isAdmin } = useAuth();
+  const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -151,10 +151,12 @@ const SongLibrary = () => {
               >
                 <LogOut className="h-5 w-5" />
               </Button>
-              <Button onClick={handleAddSong} className="hidden md:flex">
-                <Plus className="w-4 h-4 mr-2" />
-                {t("songLibrary.addSong")}
-              </Button>
+              {isWorshipLeader && (
+                <Button onClick={handleAddSong} className="hidden md:flex">
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t("songLibrary.addSong")}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -168,27 +170,29 @@ const SongLibrary = () => {
                 <Filter className="w-5 h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsCSVDialogOpen(true)}
-                  className="gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportCSV}
-                  disabled={!songs || songs.length === 0}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
-                </Button>
-              </div>
+              {isWorshipLeader && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCSVDialogOpen(true)}
+                    className="gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    disabled={!songs || songs.length === 0}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -239,8 +243,8 @@ const SongLibrary = () => {
               <SongCard
                 key={song.id}
                 song={song}
-                onEdit={handleEditSong}
-                onDelete={() => refetch()}
+                onEdit={isWorshipLeader ? handleEditSong : undefined}
+                onDelete={isWorshipLeader ? () => refetch() : undefined}
               />
             ))}
           </div>
@@ -253,22 +257,26 @@ const SongLibrary = () => {
                   ? t("common.noResults")
                   : t("songLibrary.noSongs")}
               </p>
-              <Button onClick={handleAddSong}>
-                <Plus className="w-4 h-4 mr-2" />
-                {t("songLibrary.addFirstSong")}
-              </Button>
+              {isWorshipLeader && (
+                <Button onClick={handleAddSong}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t("songLibrary.addFirstSong")}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
       </main>
 
-      <Button
-        onClick={handleAddSong}
-        className="fixed bottom-20 right-4 md:hidden rounded-full w-14 h-14 shadow-lg"
-        size="icon"
-      >
-        <Plus className="w-6 h-6" />
-      </Button>
+      {isWorshipLeader && (
+        <Button
+          onClick={handleAddSong}
+          className="fixed bottom-20 right-4 md:hidden rounded-full w-14 h-14 shadow-lg"
+          size="icon"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      )}
 
       <SongDialog
         open={isDialogOpen}
