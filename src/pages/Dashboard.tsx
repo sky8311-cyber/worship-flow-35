@@ -71,6 +71,18 @@ const Dashboard = () => {
               </span>
             )}
             <LanguageToggle />
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                title={t("dashboard.adminMenu")}
+              >
+                <Link to="/admin">
+                  <Shield className="h-5 w-5" />
+                </Link>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -121,27 +133,6 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
-
-          {isAdmin && (
-            <Card className="shadow-md hover:shadow-lg transition-shadow border-primary/20">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <CardTitle className="text-lg">{t("dashboard.adminMenu")}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("dashboard.adminMenuDescription")}
-                </p>
-                <Link to="/admin">
-                  <Button variant="default" className="w-full">
-                    {t("dashboard.goToAdmin")}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         <Card className="shadow-md">

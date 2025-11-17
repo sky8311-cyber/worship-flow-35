@@ -7,18 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SongSelector } from "@/components/SongSelector";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const SetBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isAdmin, signOut } = useAuth();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     service_name: "",
@@ -161,6 +165,12 @@ const SetBuilder = () => {
     setSongs(songs.map((ss, i) => (i === index ? { ...ss, ...updates } : ss)));
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    toast.success(t("dashboard.logout"));
+    navigate("/login");
+  };
+
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
@@ -213,6 +223,26 @@ const SetBuilder = () => {
               </div>
             </div>
             <div className="flex gap-2">
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  title={t("dashboard.adminMenu")}
+                >
+                  <Link to="/admin">
+                    <Shield className="h-5 w-5" />
+                  </Link>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title={t("dashboard.logout")}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
               {id && (
                 <Button variant="outline" onClick={handleCopyLink}>
                   <Share2 className="w-4 h-4 mr-2" />
