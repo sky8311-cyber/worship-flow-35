@@ -52,34 +52,43 @@ export const AddCollaboratorDialog = ({
     queryFn: async () => {
       if (!serviceSet?.community_id) return [];
       
-      let query = supabase
+      const { data: members, error } = await supabase
         .from("community_members")
-        .select(`
-          user_id,
-          profiles:user_id(id, full_name, email)
-        `)
+        .select("user_id")
         .eq("community_id", serviceSet.community_id)
         .neq("user_id", user?.id);
-
-      const { data, error } = await query;
       if (error) throw error;
 
+      if (!members || members.length === 0) return [];
+
       // Filter out existing collaborators
-      const filtered = data.filter(
-        (m) => !existingCollaborators.includes(m.user_id)
-      );
+      const availableUserIds = members
+        .map(m => m.user_id)
+        .filter(uid => !existingCollaborators.includes(uid));
+
+      if (availableUserIds.length === 0) return [];
+
+      // Fetch profiles
+      let profileQuery = supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", availableUserIds);
+
+      const { data: profiles, error: profileError } = await profileQuery;
+      if (profileError) throw profileError;
 
       // Apply search filter
       if (searchQuery) {
-        return filtered.filter((m) => {
-          const name = m.profiles?.full_name?.toLowerCase() || "";
-          const email = m.profiles?.email?.toLowerCase() || "";
+        const filtered = profiles?.filter((p) => {
+          const name = p.full_name?.toLowerCase() || "";
+          const email = p.email?.toLowerCase() || "";
           const query = searchQuery.toLowerCase();
           return name.includes(query) || email.includes(query);
         });
+        return filtered || [];
       }
 
-      return filtered;
+      return profiles || [];
     },
     enabled: !!serviceSet?.community_id && open,
   });
@@ -146,11 +155,11 @@ export const AddCollaboratorDialog = ({
                   </div>
                 ) : members && members.length > 0 ? (
                   members.map((member) => (
-                    <SelectItem key={member.user_id} value={member.user_id}>
+                    <SelectItem key={member.id} value={member.id}>
                       <div>
-                        <p className="font-medium">{member.profiles?.full_name}</p>
+                        <p className="font-medium">{member.full_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {member.profiles?.email}
+                          {member.email}
                         </p>
                       </div>
                     </SelectItem>

@@ -34,15 +34,27 @@ export const SetCollaborators = ({ serviceSetId, createdBy, currentUserId }: Set
   const { data: collaborators } = useQuery({
     queryKey: ["set-collaborators", serviceSetId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: collabs, error } = await supabase
         .from("set_collaborators")
-        .select(`
-          *,
-          profiles:user_id(full_name, email)
-        `)
+        .select("*")
         .eq("service_set_id", serviceSetId);
       if (error) throw error;
-      return data;
+      
+      if (!collabs || collabs.length === 0) return [];
+      
+      // Fetch profiles separately
+      const userIds = collabs.map(c => c.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", userIds);
+      if (profileError) throw profileError;
+      
+      // Merge data
+      return collabs.map(c => ({
+        ...c,
+        profiles: profiles?.find(p => p.id === c.user_id)
+      }));
     },
     enabled: !!serviceSetId,
   });

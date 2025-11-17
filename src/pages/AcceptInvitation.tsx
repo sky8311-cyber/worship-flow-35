@@ -19,18 +19,36 @@ export default function AcceptInvitation() {
   const { data: invitation, isLoading, error } = useQuery({
     queryKey: ["invitation", token],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: invitation, error } = await supabase
         .from("community_invitations")
-        .select(`
-          *,
-          worship_communities(name, description),
-          profiles:invited_by(full_name)
-        `)
+        .select("*")
         .eq("id", token)
         .eq("status", "pending")
-        .single();
+        .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!invitation) return null;
+      
+      // Fetch community
+      const { data: community, error: commError } = await supabase
+        .from("worship_communities")
+        .select("name, description")
+        .eq("id", invitation.community_id)
+        .single();
+      if (commError) throw commError;
+      
+      // Fetch inviter profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", invitation.invited_by)
+        .single();
+      if (profileError) throw profileError;
+      
+      return {
+        ...invitation,
+        worship_communities: community,
+        profiles: profile
+      };
     },
     enabled: !!token,
   });
