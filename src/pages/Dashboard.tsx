@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,14 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { isAdmin, signOut, profile } = useAuth();
+  const { isAdmin, isWorshipLeader, signOut, profile, user } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -48,6 +51,87 @@ const Dashboard = () => {
       if (error) throw error;
       return count;
     },
+  });
+
+  // Fetch communities for worship leaders
+  const { data: myCommunities } = useQuery({
+    queryKey: ["my-communities", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from("worship_communities")
+        .select("id, name, description, created_at")
+        .eq("leader_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch member counts for each community
+      const communitiesWithCounts = await Promise.all(
+        data.map(async (community) => {
+          const { count } = await supabase
+            .from("community_members")
+            .select("*", { count: "exact", head: true })
+            .eq("community_id", community.id);
+          
+          return { ...community, memberCount: count || 0 };
+        })
+      );
+
+      return communitiesWithCounts;
+    },
+    enabled: isWorshipLeader && !!user,
+  });
+
+  // Fetch joined communities for team members
+  const { data: joinedCommunities } = useQuery({
+    queryKey: ["joined-communities", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data: memberData, error } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      if (!memberData || memberData.length === 0) return [];
+
+      const communityIds = memberData.map((m) => m.community_id);
+
+      const { data: communities, error: communitiesError } = await supabase
+        .from("worship_communities")
+        .select("id, name, description, leader_id")
+        .in("id", communityIds);
+
+      if (communitiesError) throw communitiesError;
+
+      // Fetch leader profiles and member counts
+      const communitiesWithDetails = await Promise.all(
+        communities.map(async (community) => {
+          const { data: leaderProfile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", community.leader_id)
+            .single();
+
+          const { count } = await supabase
+            .from("community_members")
+            .select("*", { count: "exact", head: true })
+            .eq("community_id", community.id);
+
+          return {
+            ...community,
+            leaderName: leaderProfile?.full_name || "Unknown",
+            memberCount: count || 0,
+          };
+        })
+      );
+
+      return communitiesWithDetails;
+    },
+    enabled: !!user,
   });
 
   return (
@@ -136,21 +220,33 @@ const Dashboard = () => {
 
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">예배공동체</CardTitle>
+              <CardTitle className="text-lg">{t("community.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-primary">
-                <Users className="w-8 h-8" />
+                {isWorshipLeader ? myCommunities?.length || 0 : joinedCommunities?.length || 0}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">예배공동체를 찾아 가입하세요</p>
-              <Button 
-                variant="outline"
-                onClick={() => navigate("/community/search")}
-                className="w-full mt-4"
-              >
-                <Search className="w-4 h-4 mr-2" />
-                예배공동체 찾기
-              </Button>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isWorshipLeader ? t("community.myCommunities") : t("community.joined")}
+              </p>
+              {isWorshipLeader ? (
+                <Button 
+                  onClick={() => setCreateDialogOpen(true)}
+                  className="w-full mt-4"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t("community.createNew")}
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate("/community/search")}
+                  className="w-full mt-4"
+                >
+                  <Search className="w-4 h-4 mr-2" />
+                  {t("community.search")}
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -211,7 +307,81 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Communities Section */}
+        {isWorshipLeader && myCommunities && myCommunities.length > 0 && (
+          <Card className="shadow-md mt-6">
+            <CardHeader>
+              <CardTitle>{t("community.myCommunities")}</CardTitle>
+              <CardDescription>{t("community.manageCommunities")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {myCommunities.map((community) => (
+                  <Card key={community.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{community.name}</CardTitle>
+                      {community.description && (
+                        <CardDescription className="line-clamp-2">
+                          {community.description}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {t("community.memberCount", { count: community.memberCount })}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/community/${community.id}`)}
+                        className="w-full"
+                      >
+                        {t("community.manage")}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isWorshipLeader && joinedCommunities && joinedCommunities.length > 0 && (
+          <Card className="shadow-md mt-6">
+            <CardHeader>
+              <CardTitle>{t("community.joined")}</CardTitle>
+              <CardDescription>{t("community.yourCommunities")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {joinedCommunities.map((community) => (
+                  <Card key={community.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{community.name}</CardTitle>
+                      {community.description && (
+                        <CardDescription className="line-clamp-2">
+                          {community.description}
+                        </CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {t("community.leader")}: {community.leaderName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {t("community.memberCount", { count: community.memberCount })}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
+
+      <CreateCommunityDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden">
         <div className="flex justify-around py-3">

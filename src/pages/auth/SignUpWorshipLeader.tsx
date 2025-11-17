@@ -23,8 +23,6 @@ const SignUpWorshipLeader = () => {
     confirmPassword: "",
     fullName: "",
     phone: "",
-    communityName: "",
-    communityDescription: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,31 +80,12 @@ const SignUpWorshipLeader = () => {
       return;
     }
 
-    // Create the worship community
-    const { error: communityError } = await supabase
-      .from("worship_communities")
-      .insert({
-        name: formData.communityName,
-        description: formData.communityDescription,
-        leader_id: user.id,
-      });
-
-    if (communityError) {
-      toast({
-        title: t("auth.error"),
-        description: communityError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
     toast({
       title: t("auth.success"),
       description: t("auth.worshipLeaderSuccess"),
     });
     
-    navigate("/");
+    navigate("/dashboard");
     setLoading(false);
   };
 
@@ -171,29 +150,7 @@ const SignUpWorshipLeader = () => {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
-            <div className="border-t pt-4 mt-4">
-              <h3 className="font-semibold mb-4">{t("auth.communityInfo")}</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="communityName">{t("auth.communityName")}</Label>
-                  <Input
-                    id="communityName"
-                    type="text"
-                    required
-                    value={formData.communityName}
-                    onChange={(e) => setFormData({ ...formData, communityName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="communityDescription">{t("auth.communityDescription")}</Label>
-                  <Textarea
-                    id="communityDescription"
-                    value={formData.communityDescription}
-                    onChange={(e) => setFormData({ ...formData, communityDescription: e.target.value })}
-                  />
-                </div>
-              </div>
-            </div>
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? t("auth.loading") : t("auth.signUpWorshipLeader")}
             </Button>
