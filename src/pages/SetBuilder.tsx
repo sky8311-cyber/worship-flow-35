@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SongSelector } from "@/components/SongSelector";
+import { SetCollaborators } from "@/components/SetCollaborators";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ const SetBuilder = () => {
   const queryClient = useQueryClient();
   const { isAdmin, signOut } = useAuth();
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     service_name: "",
@@ -33,6 +35,7 @@ const SetBuilder = () => {
   });
   const [songs, setSongs] = useState<any[]>([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
+  const [status, setStatus] = useState<"draft" | "published">("draft");
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -85,7 +88,8 @@ const SetBuilder = () => {
   }, [existingSet]);
 
   const saveSetMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (publishStatus?: "draft" | "published") => {
+      const statusToSave = publishStatus || status;
       let setId = id;
 
       if (!setId) {
@@ -249,7 +253,7 @@ const SetBuilder = () => {
                   팀 링크
                 </Button>
               )}
-              <Button onClick={() => saveSetMutation.mutate()} disabled={saveSetMutation.isPending}>
+              <Button onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending}>
                 <Save className="w-4 h-4 mr-2" />
                 {saveSetMutation.isPending ? "저장 중..." : "저장"}
               </Button>
@@ -387,6 +391,14 @@ const SetBuilder = () => {
                 )}
               </CardContent>
             </Card>
+
+            {id && user && existingSet && (
+              <SetCollaborators
+                serviceSetId={id}
+                createdBy={existingSet.created_by}
+                currentUserId={user.id}
+              />
+            )}
           </div>
         </div>
       </main>
