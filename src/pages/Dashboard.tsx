@@ -2,16 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Music, Plus } from "lucide-react";
+import { Calendar, Music, Plus, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
+  const { isAdmin } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
 
   const { data: upcomingSets, isLoading } = useQuery({
@@ -97,6 +99,27 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {isAdmin && (
+            <Card className="shadow-md hover:shadow-lg transition-shadow border-primary/20">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <CardTitle className="text-lg">{t("dashboard.adminMenu")}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {t("dashboard.adminMenuDescription")}
+                </p>
+                <Link to="/admin">
+                  <Button variant="default" className="w-full">
+                    {t("dashboard.goToAdmin")}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <Card className="shadow-md">

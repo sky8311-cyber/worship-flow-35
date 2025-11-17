@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AdminRoute } from "@/components/AdminRoute";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import SongLibrary from "./pages/SongLibrary";
@@ -17,6 +18,10 @@ import SignUpWorshipLeader from "./pages/auth/SignUpWorshipLeader";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminWaitlist from "./pages/AdminWaitlist";
+import AdminCommunities from "./pages/AdminCommunities";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +69,12 @@ const App = () => (
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
+              
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/waitlist" element={<AdminRoute><AdminWaitlist /></AdminRoute>} />
+              <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
