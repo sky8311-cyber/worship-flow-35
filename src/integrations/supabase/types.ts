@@ -22,6 +22,7 @@ export type Database = {
           expires_at: string | null
           id: string
           invited_by: string
+          role: string | null
           status: string | null
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           invited_by: string
+          role?: string | null
           status?: string | null
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           invited_by?: string
+          role?: string | null
           status?: string | null
         }
         Relationships: [
@@ -125,6 +128,7 @@ export type Database = {
           is_public: boolean | null
           notes: string | null
           service_name: string
+          status: Database["public"]["Enums"]["set_status"]
           theme: string | null
           updated_at: string
           worship_leader: string | null
@@ -139,6 +143,7 @@ export type Database = {
           is_public?: boolean | null
           notes?: string | null
           service_name: string
+          status?: Database["public"]["Enums"]["set_status"]
           theme?: string | null
           updated_at?: string
           worship_leader?: string | null
@@ -153,6 +158,7 @@ export type Database = {
           is_public?: boolean | null
           notes?: string | null
           service_name?: string
+          status?: Database["public"]["Enums"]["set_status"]
           theme?: string | null
           updated_at?: string
           worship_leader?: string | null
@@ -163,6 +169,55 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      set_collaborators: {
+        Row: {
+          created_at: string | null
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["collaborator_role"]
+          service_set_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["collaborator_role"]
+          service_set_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["collaborator_role"]
+          service_set_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_collaborators_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_collaborators_service_set_id_fkey"
+            columns: ["service_set_id"]
+            isOneToOne: false
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_collaborators_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -410,6 +465,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "worship_leader" | "user"
+      collaborator_role: "editor" | "viewer"
+      set_status: "draft" | "published"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -538,6 +595,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "worship_leader", "user"],
+      collaborator_role: ["editor", "viewer"],
+      set_status: ["draft", "published"],
     },
   },
 } as const
