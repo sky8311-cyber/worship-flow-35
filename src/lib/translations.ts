@@ -89,6 +89,9 @@ export const translations = {
       adminMenu: "Admin Menu",
       adminMenuDescription: "Access admin dashboard",
       goToAdmin: "Go to Admin Dashboard",
+      logout: "Logout",
+      logoutConfirm: "Are you sure you want to logout?",
+      userMenu: "User Menu",
     },
     admin: {
       nav: {
@@ -413,6 +416,9 @@ export const translations = {
       adminMenu: "관리자 메뉴",
       adminMenuDescription: "관리자 대시보드 접속",
       goToAdmin: "관리자 대시보드로 이동",
+      logout: "로그아웃",
+      logoutConfirm: "로그아웃하시겠습니까?",
+      userMenu: "사용자 메뉴",
     },
     admin: {
       nav: {
