@@ -14,15 +14,15 @@ export const LandingFooter = () => {
               href="mailto:hello@kworship.app"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              Contact
+              문의하기
             </a>
             <span className="text-muted-foreground">•</span>
             <button className="text-muted-foreground hover:text-foreground transition-colors">
-              Privacy
+              개인정보처리방침
             </button>
             <span className="text-muted-foreground">•</span>
             <button className="text-muted-foreground hover:text-foreground transition-colors">
-              Terms
+              이용약관
             </button>
           </div>
         </div>

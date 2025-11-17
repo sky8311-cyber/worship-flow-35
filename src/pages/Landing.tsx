@@ -6,7 +6,7 @@ import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingVision } from "@/components/landing/LandingVision";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
-import { LandingKoreanChurches } from "@/components/landing/LandingKoreanChurches";
+import { LandingTeam } from "@/components/landing/LandingTeam";
 import { LandingWaitlist } from "@/components/landing/LandingWaitlist";
 import { LandingFAQ } from "@/components/landing/LandingFAQ";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -36,7 +36,7 @@ const Landing = () => {
       <LandingVision />
       <LandingFeatures />
       <LandingHowItWorks />
-      <LandingKoreanChurches />
+      <LandingTeam />
       <LandingWaitlist />
       <LandingFAQ />
       <LandingFooter />
