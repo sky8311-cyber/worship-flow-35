@@ -2,19 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Music, Plus, Shield } from "lucide-react";
+import { Calendar, Music, Plus, Shield, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, signOut, profile } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success(t("dashboard.logout"));
+    navigate("/login");
+  };
 
   const { data: upcomingSets, isLoading } = useQuery({
     queryKey: ["upcoming-sets"],
@@ -52,12 +59,27 @@ const Dashboard = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
                 <Music className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
-                <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
+              <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {profile?.full_name && (
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                {profile.full_name}
+              </span>
+            )}
             <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleLogout}
+              title={t("dashboard.logout")}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
           </div>
         </div>
       </header>

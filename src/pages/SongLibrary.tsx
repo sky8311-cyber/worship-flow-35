@@ -4,18 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import Papa from "papaparse";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
+  const { signOut, profile } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
@@ -71,6 +75,12 @@ const SongLibrary = () => {
     refetch();
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    toast.success(t("dashboard.logout"));
+    navigate("/login");
+  };
+
   const handleExportCSV = () => {
     if (!songs || songs.length === 0) return;
 
@@ -115,7 +125,20 @@ const SongLibrary = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {profile?.full_name && (
+                <span className="text-sm text-muted-foreground hidden sm:inline">
+                  {profile.full_name}
+                </span>
+              )}
               <LanguageToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title={t("dashboard.logout")}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
               <Button onClick={handleAddSong} className="hidden md:flex">
                 <Plus className="w-4 h-4 mr-2" />
                 {t("songLibrary.addSong")}
