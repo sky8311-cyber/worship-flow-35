@@ -20,8 +20,8 @@ import {
 
 interface SongCardProps {
   song: any;
-  onEdit: (song: any) => void;
-  onDelete: () => void;
+  onEdit?: (song: any) => void;
+  onDelete?: () => void;
 }
 
 export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
@@ -148,38 +148,44 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
           )}
         </div>
 
-        <div className="flex gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(song)}
-            className="flex-1"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            {t("common.edit")}
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                <Trash2 className="w-4 h-4" />
+        {(onEdit || onDelete) && (
+          <div className="flex gap-2 mt-4">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(song)}
+                className="flex-1"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                {t("common.edit")}
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t("songCard.deleteConfirm")}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>
-                  {t("common.delete")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+            )}
+            {onDelete && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("songCard.deleteConfirm")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>
+                      {t("common.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
