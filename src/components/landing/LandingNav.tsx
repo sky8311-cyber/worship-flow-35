@@ -10,11 +10,11 @@ export const LandingNav = () => {
   const scrolled = useScrollObserver(50);
 
   const navItems = [
-    { label: "Vision", id: "vision" },
-    { label: "Features", id: "features" },
-    { label: "How it works", id: "how-it-works" },
-    { label: "For Korean churches", id: "korean-churches" },
-    { label: "FAQ", id: "faq" },
+    { label: "비전", id: "vision" },
+    { label: "기능 소개", id: "features" },
+    { label: "어떻게 쓰이나요", id: "how-it-works" },
+    { label: "워십리더와 팀", id: "team" },
+    { label: "자주 묻는 질문", id: "faq" },
   ];
 
   const handleNavClick = (id: string) => {
@@ -58,7 +58,7 @@ export const LandingNav = () => {
               size="sm"
               className="ml-4"
             >
-              Join early access
+              얼리 액세스 신청
             </Button>
           </div>
 
@@ -99,7 +99,7 @@ export const LandingNav = () => {
                 onClick={() => handleNavClick("waitlist")}
                 className="w-full"
               >
-                Join early access
+                얼리 액세스 신청
               </Button>
             </div>
           </motion.div>
