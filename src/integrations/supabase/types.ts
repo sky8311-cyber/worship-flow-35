@@ -422,6 +422,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          invite_token: string
           is_active: boolean | null
           leader_id: string
           name: string
@@ -432,6 +433,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          invite_token?: string
           is_active?: boolean | null
           leader_id: string
           name: string
@@ -442,6 +444,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          invite_token?: string
           is_active?: boolean | null
           leader_id?: string
           name?: string

@@ -32,10 +32,10 @@ export default function CommunityManagement() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
 
-  const copyInvitationLink = (invitationId: string) => {
-    const inviteUrl = `${window.location.origin}/accept-invitation/${invitationId}`;
+  const copyInviteLink = () => {
+    if (!community?.invite_token) return;
+    const inviteUrl = `${window.location.origin}/join/${community.invite_token}`;
     
     navigator.clipboard.writeText(inviteUrl)
       .then(() => {
@@ -51,6 +51,31 @@ export default function CommunityManagement() {
         });
       });
   };
+
+  const resetInviteLinkMutation = useMutation({
+    mutationFn: async () => {
+      const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      const { error } = await supabase
+        .from("worship_communities")
+        .update({ invite_token: newToken })
+        .eq("id", id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community", id] });
+      toast({ title: t("community.linkResetSuccess") });
+    },
+    onError: () => {
+      toast({
+        title: t("community.linkResetError"),
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
@@ -94,34 +119,6 @@ export default function CommunityManagement() {
     },
   });
 
-  const { data: invitations } = useQuery({
-    queryKey: ["community-invitations", id],
-    queryFn: async () => {
-      const { data: invites, error } = await supabase
-        .from("community_invitations")
-        .select("*")
-        .eq("community_id", id)
-        .eq("status", "pending");
-      if (error) throw error;
-      
-      if (!invites || invites.length === 0) return [];
-      
-      // Fetch invited_by profiles
-      const inviterIds = invites.map(i => i.invited_by);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", inviterIds);
-      if (profileError) throw profileError;
-      
-      // Merge
-      return invites.map(i => ({
-        ...i,
-        profiles: profiles?.find(p => p.id === i.invited_by)
-      }));
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -136,28 +133,6 @@ export default function CommunityManagement() {
     },
     onError: () => {
       toast({ title: t("community.updateError"), variant: "destructive" });
-    },
-  });
-
-  const inviteMutation = useMutation({
-    mutationFn: async (email: string) => {
-      const { error } = await supabase
-        .from("community_invitations")
-        .insert({
-          community_id: id,
-          email: email,
-          invited_by: user?.id,
-          status: "pending",
-        });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-invitations"] });
-      setInviteEmail("");
-      toast({ title: t("community.invitationSent") });
-    },
-    onError: () => {
-      toast({ title: t("community.invitationError"), variant: "destructive" });
     },
   });
 
@@ -288,59 +263,34 @@ export default function CommunityManagement() {
             </CardContent>
           </Card>
 
-          {/* Invite Members */}
+          {/* Permanent Invite Link */}
           <Card>
             <CardHeader>
-              <CardTitle>{t("community.inviteMembers")}</CardTitle>
+              <CardTitle>{t("community.permanentInviteLink")}</CardTitle>
+              <CardDescription>
+                {t("community.shareThisLink")}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
+                {window.location.origin}/join/{community?.invite_token}
+              </div>
               <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="email"
-                    placeholder={t("community.inviteEmail")}
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
-                </div>
                 <Button
-                  onClick={() => inviteMutation.mutate(inviteEmail)}
-                  disabled={!inviteEmail || inviteMutation.isPending}
+                  onClick={copyInviteLink}
+                  className="flex-1"
                 >
-                  <Mail className="mr-2 h-4 w-4" />
-                  {t("community.sendInvite")}
+                  <Copy className="h-4 w-4 mr-2" />
+                  {t("community.copyInviteLink")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => resetInviteLinkMutation.mutate()}
+                  disabled={resetInviteLinkMutation.isPending}
+                >
+                  {t("community.resetInviteLink")}
                 </Button>
               </div>
-
-              {invitations && invitations.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="font-medium mb-2">{t("community.pendingInvitations")}</h3>
-                  <div className="space-y-2">
-                    {invitations.map((invitation) => (
-                      <div
-                        key={invitation.id}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{invitation.email}</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground">
-                            {t("community.invitedBy")}: {invitation.profiles?.full_name}
-                          </p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => copyInvitationLink(invitation.id)}
-                          className="ml-2 flex-shrink-0"
-                        >
-                          <Copy className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">{t("community.copyLink")}</span>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
