@@ -57,7 +57,7 @@ const BandView = () => {
     ?.sort((a: any, b: any) => a.position - b.position) || [];
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-[100dvh] bg-gradient-soft">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
@@ -72,7 +72,7 @@ const BandView = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
+      <main className="container mx-auto px-4 py-6 pb-8 max-w-4xl">
         <Card className="shadow-lg mb-6">
           <CardContent className="p-6">
             <div className="flex items-start gap-4 mb-4">

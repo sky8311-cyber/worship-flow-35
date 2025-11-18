@@ -68,10 +68,10 @@ const AdminDashboard = () => {
   ];
   
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-[100dvh] bg-gradient-soft">
       <AdminNav />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {t("admin.dashboard.title")}

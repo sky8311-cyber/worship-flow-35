@@ -162,7 +162,7 @@ const SongLibrary = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 pb-24 md:pb-8">
         <Card className="shadow-md mb-6">
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -271,7 +271,7 @@ const SongLibrary = () => {
       {isWorshipLeader && (
         <Button
           onClick={handleAddSong}
-          className="fixed bottom-20 right-4 md:hidden rounded-full w-14 h-14 shadow-lg"
+          className="fixed bottom-24 right-4 md:hidden rounded-full w-14 h-14 shadow-lg z-40"
           size="icon"
         >
           <Plus className="w-6 h-6" />
@@ -291,7 +291,7 @@ const SongLibrary = () => {
         onImportComplete={() => refetch()}
       />
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden z-50">
         <div className="flex justify-around py-3">
           <Link to="/" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
             <Music className="w-5 h-5" />

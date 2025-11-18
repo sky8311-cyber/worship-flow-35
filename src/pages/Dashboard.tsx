@@ -180,7 +180,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-24 md:pb-8 space-y-8">
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
@@ -383,7 +383,7 @@ const Dashboard = () => {
 
       <CreateCommunityDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden z-50">
         <div className="flex justify-around py-3">
           <Link to="/" className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
             <Calendar className="w-5 h-5" />

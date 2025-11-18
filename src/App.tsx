@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AdminRoute } from "@/components/AdminRoute";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import SongLibrary from "./pages/SongLibrary";
@@ -54,6 +55,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Routes>
               {/* Public Landing Page */}
               <Route path="/" element={<Landing />} />

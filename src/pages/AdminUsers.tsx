@@ -99,10 +99,10 @@ const AdminUsers = () => {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-[100dvh] bg-gradient-soft">
       <AdminNav />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-8">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between mb-4">

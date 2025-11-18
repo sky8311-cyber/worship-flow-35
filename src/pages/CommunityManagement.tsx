@@ -175,7 +175,7 @@ export default function CommunityManagement() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="min-h-[100dvh] container mx-auto py-8 px-4 pb-8">
       <div className="max-w-4xl mx-auto">
         <Button
           variant="ghost"
