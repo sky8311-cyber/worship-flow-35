@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { TagSelector } from "@/components/TagSelector";
 
 interface SongDialogProps {
   open: boolean;
@@ -23,6 +24,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    subtitle: "",
     artist: "",
     language: "",
     default_key: "",
@@ -30,16 +32,18 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     time_signature: "",
     energy_level: "",
     category: "",
-    tags: "",
+    tags: [] as string[],
     youtube_url: "",
     score_file_url: "",
     notes: "",
+    interpretation: "",
   });
 
   useEffect(() => {
     if (song) {
       setFormData({
         title: song.title || "",
+        subtitle: song.subtitle || "",
         artist: song.artist || "",
         language: song.language || "",
         default_key: song.default_key || "",
@@ -47,14 +51,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         time_signature: song.time_signature || "",
         energy_level: song.energy_level?.toString() || "",
         category: song.category || "",
-        tags: song.tags || "",
+        tags: song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [],
         youtube_url: song.youtube_url || "",
         score_file_url: song.score_file_url || "",
         notes: song.notes || "",
+        interpretation: song.interpretation || "",
       });
     } else {
       setFormData({
         title: "",
+        subtitle: "",
         artist: "",
         language: "",
         default_key: "",
@@ -62,10 +68,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         time_signature: "",
         energy_level: "",
         category: "",
-        tags: "",
+        tags: [],
         youtube_url: "",
         score_file_url: "",
         notes: "",
+        interpretation: "",
       });
     }
   }, [song, open]);
@@ -110,6 +117,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     try {
       const data: any = {
         ...formData,
+        tags: formData.tags.join(", "),
         bpm: formData.bpm ? parseInt(formData.bpm) : null,
         energy_level: formData.energy_level ? parseInt(formData.energy_level) : null,
       };
@@ -154,6 +162,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="subtitle">{t("songDialog.subtitle")}</Label>
+            <Input
+              id="subtitle"
+              value={formData.subtitle}
+              onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+              placeholder={t("songDialog.subtitlePlaceholder")}
             />
           </div>
 
@@ -246,11 +264,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
           <div>
             <Label htmlFor="tags">{t("songDialog.tags")}</Label>
-            <Input
-              id="tags"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder={t("songDialog.tagsPlaceholder")}
+            <TagSelector 
+              selectedTags={formData.tags} 
+              onTagsChange={(tags) => setFormData({ ...formData, tags })} 
             />
           </div>
 
@@ -261,6 +277,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               type="url"
               value={formData.youtube_url}
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+              placeholder={t("songDialog.youtubePlaceholder")}
             />
           </div>
 

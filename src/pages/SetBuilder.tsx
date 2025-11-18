@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut } from "lucide-react";
 import { toast } from "sonner";
@@ -28,9 +29,12 @@ const SetBuilder = () => {
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     service_name: "",
+    target_audience: "",
     worship_leader: "",
     band_name: "",
+    scripture_reference: "",
     theme: "",
+    worship_duration: "",
     notes: "",
   });
   const [songs, setSongs] = useState<any[]>([]);
@@ -71,9 +75,12 @@ const SetBuilder = () => {
       setFormData({
         date: existingSet.date,
         service_name: existingSet.service_name,
+        target_audience: existingSet.target_audience || "",
         worship_leader: existingSet.worship_leader || "",
         band_name: existingSet.band_name || "",
+        scripture_reference: existingSet.scripture_reference || "",
         theme: existingSet.theme || "",
+        worship_duration: existingSet.worship_duration?.toString() || "",
         notes: existingSet.notes || "",
       });
       setSongs(
@@ -92,10 +99,15 @@ const SetBuilder = () => {
       const statusToSave = publishStatus || status;
       let setId = id;
 
+      const dataToSave = {
+        ...formData,
+        worship_duration: formData.worship_duration ? parseInt(formData.worship_duration) : null,
+      };
+
       if (!setId) {
         const { data, error } = await supabase
           .from("service_sets")
-          .insert([formData])
+          .insert([dataToSave])
           .select()
           .single();
 
@@ -104,7 +116,7 @@ const SetBuilder = () => {
       } else {
         const { error } = await supabase
           .from("service_sets")
-          .update(formData)
+          .update(dataToSave)
           .eq("id", setId);
 
         if (error) throw error;
@@ -294,6 +306,23 @@ const SetBuilder = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="target_audience">{t("setBuilder.targetAudience")}</Label>
+                  <Select value={formData.target_audience} onValueChange={(value) => setFormData({ ...formData, target_audience: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("setBuilder.selectTargetAudience")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="전체">{t("setBuilder.audiences.all")}</SelectItem>
+                      <SelectItem value="청년">{t("setBuilder.audiences.youngAdults")}</SelectItem>
+                      <SelectItem value="장년">{t("setBuilder.audiences.adults")}</SelectItem>
+                      <SelectItem value="청소년">{t("setBuilder.audiences.youth")}</SelectItem>
+                      <SelectItem value="어린이">{t("setBuilder.audiences.children")}</SelectItem>
+                      <SelectItem value="영어권">{t("setBuilder.audiences.english")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="worship_leader">예배 인도자</Label>
                   <Input
                     id="worship_leader"
@@ -312,11 +341,32 @@ const SetBuilder = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="theme">주제</Label>
+                  <Label htmlFor="scripture_reference">{t("setBuilder.scriptureReference")}</Label>
+                  <Input
+                    id="scripture_reference"
+                    value={formData.scripture_reference}
+                    onChange={(e) => setFormData({ ...formData, scripture_reference: e.target.value })}
+                    placeholder="예: 시편 23편, 요한복음 3:16"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="theme">{t("setBuilder.themeSermonTitle")}</Label>
                   <Input
                     id="theme"
                     value={formData.theme}
                     onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="worship_duration">{t("setBuilder.worshipDuration")}</Label>
+                  <Input
+                    id="worship_duration"
+                    type="number"
+                    value={formData.worship_duration}
+                    onChange={(e) => setFormData({ ...formData, worship_duration: e.target.value })}
+                    placeholder="20"
                   />
                 </div>
 

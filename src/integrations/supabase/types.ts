@@ -127,10 +127,13 @@ export type Database = {
           id: string
           is_public: boolean | null
           notes: string | null
+          scripture_reference: string | null
           service_name: string
           status: Database["public"]["Enums"]["set_status"]
+          target_audience: string | null
           theme: string | null
           updated_at: string
+          worship_duration: number | null
           worship_leader: string | null
         }
         Insert: {
@@ -142,10 +145,13 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           notes?: string | null
+          scripture_reference?: string | null
           service_name: string
           status?: Database["public"]["Enums"]["set_status"]
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string
+          worship_duration?: number | null
           worship_leader?: string | null
         }
         Update: {
@@ -157,10 +163,13 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           notes?: string | null
+          scripture_reference?: string | null
           service_name?: string
           status?: Database["public"]["Enums"]["set_status"]
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string
+          worship_duration?: number | null
           worship_leader?: string | null
         }
         Relationships: [
@@ -317,9 +326,11 @@ export type Database = {
           default_key: string | null
           energy_level: number | null
           id: string
+          interpretation: string | null
           language: string | null
           notes: string | null
           score_file_url: string | null
+          subtitle: string | null
           tags: string | null
           time_signature: string | null
           title: string
@@ -334,9 +345,11 @@ export type Database = {
           default_key?: string | null
           energy_level?: number | null
           id?: string
+          interpretation?: string | null
           language?: string | null
           notes?: string | null
           score_file_url?: string | null
+          subtitle?: string | null
           tags?: string | null
           time_signature?: string | null
           title: string
@@ -351,9 +364,11 @@ export type Database = {
           default_key?: string | null
           energy_level?: number | null
           id?: string
+          interpretation?: string | null
           language?: string | null
           notes?: string | null
           score_file_url?: string | null
+          subtitle?: string | null
           tags?: string | null
           time_signature?: string | null
           title?: string
