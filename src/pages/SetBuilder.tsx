@@ -212,21 +212,21 @@ const SetBuilder = () => {
     <div className="min-h-screen bg-gradient-soft pb-8">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link to="/">
                 <Button variant="ghost" size="icon">
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
-                <Calendar className="w-6 h-6 text-primary" />
-                <h1 className="text-2xl font-bold text-foreground">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">
                   {id ? t("setBuilder.editSet") : t("setBuilder.newSet")}
                 </h1>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {isAdmin && (
                 <Button
                   variant="ghost"
@@ -248,13 +248,13 @@ const SetBuilder = () => {
                 <LogOut className="h-5 w-5" />
               </Button>
               {id && (
-                <Button variant="outline" onClick={handleCopyLink}>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  팀 링크
+                <Button variant="outline" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm">
+                  <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">팀 링크</span>
                 </Button>
               )}
-              <Button onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending}>
-                <Save className="w-4 h-4 mr-2" />
+              <Button size="sm" onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
+                <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                 {saveSetMutation.isPending ? "저장 중..." : "저장"}
               </Button>
             </div>
@@ -269,15 +269,16 @@ const SetBuilder = () => {
               <CardHeader>
                 <CardTitle>예배 정보</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date">날짜 *</Label>
+                  <Label htmlFor="date" className="text-sm">날짜 *</Label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
+                    className="text-sm"
                   />
                 </div>
 

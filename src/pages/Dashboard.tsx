@@ -138,17 +138,17 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-soft">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
                 <Music className="w-6 h-6 text-white" />
               </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
-              <p className="text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">{t("dashboard.subtitle")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {profile?.full_name && (
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 {profile.full_name}
@@ -181,16 +181,16 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{t("dashboard.totalSongs")}</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("dashboard.totalSongs")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
                 {songsCount || 0}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{t("dashboard.songsRegistered")}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.songsRegistered")}</p>
               <Link to="/songs">
                 <Button variant="outline" className="w-full mt-4">
                   {t("dashboard.viewLibrary")}
@@ -201,13 +201,13 @@ const Dashboard = () => {
 
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{t("dashboard.upcomingServices")}</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("dashboard.upcomingServices")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
                 {upcomingSets?.length || 0}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">{t("dashboard.servicesScheduled")}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.servicesScheduled")}</p>
               <Button 
                 onClick={() => navigate("/set-builder")}
                 className="w-full mt-4"
@@ -220,13 +220,13 @@ const Dashboard = () => {
 
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{t("community.title")}</CardTitle>
+              <CardTitle className="text-base md:text-lg">{t("community.title")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">
                 {isWorshipLeader ? myCommunities?.length || 0 : joinedCommunities?.length || 0}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 {isWorshipLeader ? t("community.myCommunities") : t("community.joined")}
               </p>
               {isWorshipLeader ? (
@@ -268,24 +268,24 @@ const Dashboard = () => {
               <div className="space-y-3">
                 {upcomingSets.map((set) => (
                   <Link key={set.id} to={`/set-builder/${set.id}`}>
-                     <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground">
+                     <div className="p-3 sm:p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                            <h3 className="font-semibold text-foreground truncate">
                               {set.service_name}
                             </h3>
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(set.date), language === "ko" ? "yyyy년 M월 d일 (EEE)" : "MMM d, yyyy (EEE)", { locale: dateLocale })}
+                            <span className="text-xs sm:text-sm text-muted-foreground">
+                              {format(new Date(set.date), language === "ko" ? "M/d (EEE)" : "M/d (EEE)", { locale: dateLocale })}
                             </span>
                           </div>
                           {set.worship_leader && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">
                               {t("dashboard.leader")}: {set.worship_leader}
                             </p>
                           )}
                           {set.theme && (
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-1">
                               {t("dashboard.theme")}: {set.theme}
                             </p>
                           )}
@@ -320,22 +320,22 @@ const Dashboard = () => {
                 {myCommunities.map((community) => (
                   <Card key={community.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">{community.name}</CardTitle>
+                      <CardTitle className="text-base md:text-lg truncate">{community.name}</CardTitle>
                       {community.description && (
-                        <CardDescription className="line-clamp-2">
+                        <CardDescription className="line-clamp-2 text-xs sm:text-sm">
                           {community.description}
                         </CardDescription>
                       )}
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground mb-3">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-3">
                         {t("community.memberCount", { count: community.memberCount })}
                       </p>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => navigate(`/community/${community.id}`)}
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm"
                       >
                         {t("community.manage")}
                       </Button>
@@ -358,15 +358,15 @@ const Dashboard = () => {
                 {joinedCommunities.map((community) => (
                   <Card key={community.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">{community.name}</CardTitle>
+                      <CardTitle className="text-base md:text-lg truncate">{community.name}</CardTitle>
                       {community.description && (
-                        <CardDescription className="line-clamp-2">
+                        <CardDescription className="line-clamp-2 text-xs sm:text-sm">
                           {community.description}
                         </CardDescription>
                       )}
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {t("community.leader")}: {community.leaderName}
                       </p>
                       <p className="text-sm text-muted-foreground">

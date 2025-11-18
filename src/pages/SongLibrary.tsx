@@ -120,8 +120,8 @@ const SongLibrary = () => {
                 </Button>
               </Link>
               <div className="flex items-center gap-2">
-                <Music className="w-6 h-6 text-primary" />
-                <h1 className="text-2xl font-bold text-foreground">{t("songLibrary.title")}</h1>
+                <Music className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t("songLibrary.title")}</h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -165,20 +165,20 @@ const SongLibrary = () => {
       <main className="container mx-auto px-4 py-6">
         <Card className="shadow-md mb-6">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Filter className="w-5 h-5" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
               {isWorshipLeader && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsCSVDialogOpen(true)}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-initial text-xs sm:text-sm"
                   >
-                    <Upload className="w-4 h-4" />
+                    <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
                   </Button>
                   <Button
@@ -186,9 +186,9 @@ const SongLibrary = () => {
                     size="sm"
                     onClick={handleExportCSV}
                     disabled={!songs || songs.length === 0}
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-initial text-xs sm:text-sm"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
                   </Button>
                 </div>

@@ -79,14 +79,14 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
   return (
     <Card className="shadow-md hover:shadow-lg transition-all animate-fade-in">
       <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg text-foreground mb-1">{song.title}</h3>
+        <div className="flex items-start justify-between mb-3 gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1 truncate">{song.title}</h3>
             {song.artist && (
-              <p className="text-sm text-muted-foreground">{song.artist}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{song.artist}</p>
             )}
           </div>
-          <Music2 className="w-5 h-5 text-primary" />
+          <Music2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
         </div>
 
         <div className="space-y-2 mb-4">
@@ -109,11 +109,11 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
           </div>
 
           {song.bpm && (
-            <p className="text-xs text-muted-foreground">{t("songCard.bpm")}: {song.bpm}</p>
+            <p className="text-xs text-muted-foreground truncate">{t("songCard.bpm")}: {song.bpm}</p>
           )}
 
           {lastUsed && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               {t("songCard.lastUsed")}: {format(lastUsed, language === "ko" ? "yyyy년 M월 d일" : "MMM d, yyyy", { locale })} ({usageCount})
             </p>
           )}
