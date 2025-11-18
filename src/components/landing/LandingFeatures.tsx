@@ -12,7 +12,7 @@ export const LandingFeatures = () => {
     },
     {
       icon: ListOrdered,
-      title: "예배 세트 (콘티) 제작",
+      title: "워십세트 (콘티) 제작",
       description: "날짜와 예배를 선택하고, 드래그 앤 드롭으로 곡을 배치하면서 흐름을 설계합니다.",
       subtitle: "예: '인도 – 회개 – 선포 – 응답 – 파송' 같은 구조를 시각적으로 설계.",
     },

@@ -47,7 +47,7 @@ const BandView = () => {
       <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
         <div className="text-center">
           <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">예배 세트를 찾을 수 없습니다</p>
+          <p className="text-muted-foreground">워십세트를 찾을 수 없습니다</p>
         </div>
       </div>
     );
@@ -65,7 +65,7 @@ const BandView = () => {
               <Music className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">예배 세트리스트</h1>
+              <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
               <p className="text-sm text-muted-foreground">팀 공유 뷰</p>
             </div>
           </div>

@@ -134,7 +134,7 @@ const SetBuilder = () => {
       return setId;
     },
     onSuccess: (setId) => {
-      toast.success("예배 세트가 저장되었습니다");
+      toast.success(t("setBuilder.successSave"));
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       if (!id) {
@@ -193,7 +193,7 @@ const SetBuilder = () => {
       navigator.clipboard.writeText(url);
       toast.success("팀 링크가 복사되었습니다");
     } else {
-      toast.error("먼저 예배 세트를 저장해주세요");
+      toast.error("먼저 워십세트를 저장해주세요");
     }
   };
 
@@ -222,7 +222,7 @@ const SetBuilder = () => {
               <div className="flex items-center gap-2">
                 <Calendar className="w-6 h-6 text-primary" />
                 <h1 className="text-2xl font-bold text-foreground">
-                  {id ? "예배 세트 편집" : "새 예배 세트"}
+                  {id ? t("setBuilder.editSet") : t("setBuilder.newSet")}
                 </h1>
               </div>
             </div>
