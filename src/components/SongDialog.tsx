@@ -80,7 +80,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   }, [song, open]);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
+  const [showYouTubeSearch, setShowYouTubeSearch] = useState(true);
 
   const uploadFile = async (file: File) => {
     try {
@@ -147,6 +147,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     e.preventDefault();
     if (!formData.title) {
       toast.error(t("songDialog.titleRequired"));
+      return;
+    }
+
+    if (!formData.youtube_url.trim()) {
+      toast.error(t("songDialog.youtubeRequired"));
+      return;
+    }
+
+    if (!formData.score_file_url.trim()) {
+      toast.error(t("songDialog.scoreRequired"));
       return;
     }
 
@@ -308,80 +318,126 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           </div>
 
           <div>
-            <Label htmlFor="youtube_url">{t("songDialog.youtubeUrl")}</Label>
-            <Input
-              id="youtube_url"
-              type="url"
-              value={formData.youtube_url}
-              onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-              placeholder={t("songDialog.youtubePlaceholder")}
-              className="mb-2"
-            />
-            <Collapsible open={showYouTubeSearch} onOpenChange={setShowYouTubeSearch}>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="w-full">
-                  <Youtube className="w-4 h-4 mr-2" />
-                  {showYouTubeSearch ? t("songDialog.hideYoutubeSearch") : t("songDialog.searchYouTube")}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-2">
-                <YouTubeSearchBar
-                  onSelectVideo={(url) => {
-                    setFormData({ ...formData, youtube_url: url });
-                    setShowYouTubeSearch(false);
-                  }}
-                  defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
-                />
-              </CollapsibleContent>
-            </Collapsible>
+            <Label htmlFor="youtube_url">
+              {t("songDialog.youtubeUrl")} <span className="text-destructive">*</span>
+            </Label>
+            
+            <div className="space-y-2">
+              <Collapsible open={showYouTubeSearch} onOpenChange={setShowYouTubeSearch}>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="w-full mb-2">
+                    <Youtube className="w-4 h-4 mr-2" />
+                    {showYouTubeSearch ? t("songDialog.hideYoutubeSearch") : t("songDialog.searchYouTube")}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mb-2">
+                  <YouTubeSearchBar
+                    onSelectVideo={(url) => {
+                      setFormData({ ...formData, youtube_url: url });
+                      setShowYouTubeSearch(false);
+                    }}
+                    defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+
+              {formData.youtube_url && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">{t("songDialog.youtubeUrl")}:</span>
+                  <Input
+                    id="youtube_url"
+                    type="url"
+                    value={formData.youtube_url}
+                    onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+                    placeholder={t("songDialog.youtubePlaceholder")}
+                    className="mt-1"
+                    readOnly
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
-            <Label htmlFor="score_file">{t("songDialog.scoreFile")}</Label>
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                isDragging ? "border-primary bg-accent" : "border-border"
-              }`}
-            >
-              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="mb-2 text-sm">{t("songDialog.dragDropFile")}</p>
-              <Input
-                type="file"
-                onChange={handleFileUpload}
-                accept=".pdf,.jpg,.jpeg,.png"
-                className="hidden"
-                id="file-upload"
-                disabled={uploading}
-              />
-              <div className="flex gap-2 justify-center mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById('file-upload')?.click()}
+            <Label htmlFor="score_file">
+              {t("songDialog.scoreFile")} <span className="text-destructive">*</span>
+            </Label>
+            
+            {!formData.score_file_url ? (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDragging ? "border-primary bg-accent" : "border-border"
+                }`}
+              >
+                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="mb-2 text-sm">{t("songDialog.dragDropFile")}</p>
+                <Input
+                  type="file"
+                  onChange={handleFileUpload}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  id="file-upload"
                   disabled={uploading}
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t("songDialog.uploading")}
-                    </>
-                  ) : (
-                    <>
-                      📁 {t("songDialog.selectFile")}
-                    </>
-                  )}
-                </Button>
+                />
+                <div className="flex gap-2 justify-center mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t("songDialog.uploading")}
+                      </>
+                    ) : (
+                      <>
+                        📁 {t("songDialog.selectFile")}
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-              {formData.score_file_url && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  ✓ {t("songDialog.fileUploaded")}
-                </p>
-              )}
-            </div>
+            ) : (
+              <div className="border rounded-lg p-4 bg-card">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-2xl">
+                      {formData.score_file_url.match(/\.(pdf)$/i) ? '📄' : '🖼️'}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{t("songDialog.uploadedFile")}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {formData.score_file_url.split('/').pop()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 ml-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(formData.score_file_url, '_blank')}
+                    >
+                      {t("songDialog.previewScore")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setFormData({ ...formData, score_file_url: '' })}
+                    >
+                      {t("songDialog.removeFile")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
