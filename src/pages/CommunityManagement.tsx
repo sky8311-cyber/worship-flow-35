@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowLeft } from "lucide-react";
+import { Trash2, Mail, ArrowLeft, Copy } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,24 @@ export default function CommunityManagement() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+
+  const copyInvitationLink = (invitationId: string) => {
+    const inviteUrl = `${window.location.origin}/accept-invitation/${invitationId}`;
+    
+    navigator.clipboard.writeText(inviteUrl)
+      .then(() => {
+        toast({ 
+          title: t("community.linkCopied"),
+          description: inviteUrl 
+        });
+      })
+      .catch(() => {
+        toast({ 
+          title: "Failed to copy link", 
+          variant: "destructive" 
+        });
+      });
+  };
 
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
@@ -301,17 +319,23 @@ export default function CommunityManagement() {
                     {invitations.map((invitation) => (
                       <div
                         key={invitation.id}
-                        className="flex items-center justify-between p-3 border rounded-lg text-sm"
+                        className="flex items-center justify-between p-3 border rounded-lg"
                       >
-                        <div>
-                          <p>{invitation.email}</p>
-                          <p className="text-muted-foreground">
-                            Invited by {invitation.profiles?.full_name}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{invitation.email}</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {t("community.invitedBy")}: {invitation.profiles?.full_name}
                           </p>
                         </div>
-                        <span className="text-muted-foreground">
-                          {invitation.status}
-                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyInvitationLink(invitation.id)}
+                          className="ml-2 flex-shrink-0"
+                        >
+                          <Copy className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">{t("community.copyLink")}</span>
+                        </Button>
                       </div>
                     ))}
                   </div>
