@@ -106,7 +106,7 @@ export default function AcceptInvitation() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 flex justify-center">
+      <div className="min-h-[100dvh] container mx-auto py-8 pb-8 flex justify-center">
         <p>{t("common.loading")}</p>
       </div>
     );
@@ -114,7 +114,7 @@ export default function AcceptInvitation() {
 
   if (error || !invitation) {
     return (
-      <div className="container mx-auto py-8 flex justify-center">
+      <div className="min-h-[100dvh] container mx-auto py-8 pb-8 flex justify-center">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export default function AcceptInvitation() {
 
   if (accepted) {
     return (
-      <div className="container mx-auto py-8 flex justify-center">
+    <div className="min-h-[100dvh] container mx-auto py-8 pb-8 flex justify-center">
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

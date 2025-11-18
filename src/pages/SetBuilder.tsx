@@ -209,7 +209,7 @@ const SetBuilder = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-soft pb-8">
+    <div className="min-h-[100dvh] bg-gradient-soft pb-8">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
