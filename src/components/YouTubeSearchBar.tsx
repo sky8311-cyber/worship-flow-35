@@ -35,13 +35,7 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
     setSearched(true);
 
     try {
-      const apiKey = import.meta.env.VITE_YOUTUBE_API_KEY;
-      
-      if (!apiKey) {
-        toast.error(t("songDialog.youtubeApiKeyMissing"));
-        setLoading(false);
-        return;
-      }
+      const apiKey = "AIzaSyDebIF_jHyj9p4Gx5m4GFnGNpOValfToWs";
 
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?` +
