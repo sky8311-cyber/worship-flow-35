@@ -26,6 +26,7 @@ import AdminCommunities from "./pages/AdminCommunities";
 import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import JoinCommunity from "./pages/JoinCommunity";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
+              <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
               <Route path="/invitation/:token" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
               
