@@ -56,7 +56,10 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
   const usageCount = song.set_songs?.length || 0;
   const locale = language === "ko" ? ko : enUS;
 
-  const getCategoryTranslation = (category: string) => {
+  const getCategoryTranslation = (category: string | null) => {
+    if (!category) {
+      return t("songLibrary.categories.uncategorized");
+    }
     const categoryMap: { [key: string]: string } = {
       "찬송가": t("songLibrary.categories.hymn"),
       "모던워십 (한국)": t("songLibrary.categories.modernKorean"),
@@ -101,11 +104,9 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
                 {getLanguageTranslation(song.language)}
               </span>
             )}
-            {song.category && (
-              <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
-                {getCategoryTranslation(song.category)}
-              </span>
-            )}
+            <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
+              {getCategoryTranslation(song.category)}
+            </span>
           </div>
 
           {song.bpm && (

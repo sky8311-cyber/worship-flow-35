@@ -250,6 +250,7 @@ export const translations = {
         modernWestern: "Modern Worship (Western)",
         modernOther: "Modern Worship (Other)",
         koreanGospel: "Korean Gospel Song",
+        uncategorized: "Uncategorized",
       },
       languages: {
         ko: "Korean",
@@ -714,11 +715,12 @@ export const translations = {
         modernWestern: "모던워십 (서양)",
         modernOther: "모던워십 (기타)",
         koreanGospel: "한국 복음성가",
+        uncategorized: "미분류",
       },
-      language: {
+      languages: {
         ko: "한국어",
         en: "영어",
-        both: "한국어/영어",
+        koen: "한국어/영어",
       },
     },
     songDialog: {
