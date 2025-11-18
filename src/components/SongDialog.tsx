@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Youtube, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
+import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface SongDialogProps {
   open: boolean;
@@ -77,17 +79,17 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     }
   }, [song, open]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [isDragging, setIsDragging] = useState(false);
+  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
+  const uploadFile = async (file: File) => {
     try {
       setUploading(true);
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("scores")
         .upload(filePath, file);
 
@@ -98,12 +100,47 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         .getPublicUrl(filePath);
 
       setFormData({ ...formData, score_file_url: publicUrl });
-      toast.success(t("songDialog.uploading"));
+      toast.success(t("songDialog.fileUploaded"));
     } catch (error: any) {
       toast.error("Error: " + error.message);
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadFile(file);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    const validTypes = [".pdf", ".jpg", ".jpeg", ".png"];
+    const fileExt = "." + file.name.split(".").pop()?.toLowerCase();
+    
+    if (!validTypes.includes(fileExt)) {
+      toast.error(t("songDialog.invalidFileType"));
+      return;
+    }
+
+    await uploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -278,23 +315,72 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               value={formData.youtube_url}
               onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
               placeholder={t("songDialog.youtubePlaceholder")}
+              className="mb-2"
             />
+            <Collapsible open={showYouTubeSearch} onOpenChange={setShowYouTubeSearch}>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="w-full">
+                  <Youtube className="w-4 h-4 mr-2" />
+                  {showYouTubeSearch ? t("songDialog.hideYoutubeSearch") : t("songDialog.searchYouTube")}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <YouTubeSearchBar
+                  onSelectVideo={(url) => {
+                    setFormData({ ...formData, youtube_url: url });
+                    setShowYouTubeSearch(false);
+                  }}
+                  defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
+                />
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           <div>
             <Label htmlFor="score_file">{t("songDialog.scoreFile")}</Label>
-            <div className="flex gap-2">
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragging ? "border-primary bg-accent" : "border-border"
+              }`}
+            >
+              <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="mb-2 text-sm">{t("songDialog.dragDropFile")}</p>
               <Input
-                id="score_file"
                 type="file"
                 onChange={handleFileUpload}
                 accept=".pdf,.jpg,.jpeg,.png"
+                className="hidden"
+                id="file-upload"
                 disabled={uploading}
               />
-              <Button type="button" variant="outline" disabled={uploading}>
-                <Upload className="w-4 h-4 mr-2" />
-                {uploading ? t("songDialog.uploading") : t("songDialog.uploadScore")}
-              </Button>
+              <div className="flex gap-2 justify-center mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {t("songDialog.uploading")}
+                    </>
+                  ) : (
+                    <>
+                      📁 {t("songDialog.selectFile")}
+                    </>
+                  )}
+                </Button>
+              </div>
+              {formData.score_file_url && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  ✓ {t("songDialog.fileUploaded")}
+                </p>
+              )}
             </div>
           </div>
 
