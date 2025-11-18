@@ -80,7 +80,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   }, [song, open]);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [showYouTubeSearch, setShowYouTubeSearch] = useState(true);
+  const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
   const uploadFile = async (file: File) => {
     try {
@@ -322,39 +322,39 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               {t("songDialog.youtubeUrl")} <span className="text-destructive">*</span>
             </Label>
             
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Collapsible open={showYouTubeSearch} onOpenChange={setShowYouTubeSearch}>
                 <CollapsibleTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="w-full mb-2">
+                  <Button type="button" variant="outline" size="sm" className="w-full">
                     <Youtube className="w-4 h-4 mr-2" />
                     {showYouTubeSearch ? t("songDialog.hideYoutubeSearch") : t("songDialog.searchYouTube")}
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mb-2">
-                  <YouTubeSearchBar
-                    onSelectVideo={(url) => {
-                      setFormData({ ...formData, youtube_url: url });
-                      setShowYouTubeSearch(false);
-                    }}
-                    defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
-                  />
+                <CollapsibleContent className="mt-2">
+                  <div className="p-4 rounded-lg border-2 border-accent bg-accent/30">
+                    <YouTubeSearchBar
+                      onSelectVideo={(url) => {
+                        setFormData({ ...formData, youtube_url: url });
+                        setShowYouTubeSearch(false);
+                      }}
+                      defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
+                    />
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
-              {formData.youtube_url && (
-                <div className="text-sm">
-                  <span className="text-muted-foreground">{t("songDialog.youtubeUrl")}:</span>
-                  <Input
-                    id="youtube_url"
-                    type="url"
-                    value={formData.youtube_url}
-                    onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-                    placeholder={t("songDialog.youtubePlaceholder")}
-                    className="mt-1"
-                    readOnly
-                  />
-                </div>
-              )}
+              <div>
+                <Label htmlFor="youtube_url_input" className="text-xs text-muted-foreground mb-1 block">
+                  {t("songDialog.youtubeUrl")}
+                </Label>
+                <Input
+                  id="youtube_url_input"
+                  type="url"
+                  value={formData.youtube_url}
+                  onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+                  placeholder={t("songDialog.youtubePlaceholder")}
+                />
+              </div>
             </div>
           </div>
 
