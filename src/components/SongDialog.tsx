@@ -162,8 +162,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
     setLoading(true);
     try {
+      const normalizedCategory = formData.category === "uncategorized" ? null : formData.category;
+      
       const data: any = {
         ...formData,
+        category: normalizedCategory || null,
         tags: formData.tags.join(", "),
         bpm: formData.bpm ? parseInt(formData.bpm) : null,
         energy_level: formData.energy_level ? parseInt(formData.energy_level) : null,
@@ -294,11 +297,12 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
             <div>
               <Label htmlFor="category">{t("songDialog.category")}</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <Select value={formData.category || "uncategorized"} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
                   <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
                   <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
                   <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>

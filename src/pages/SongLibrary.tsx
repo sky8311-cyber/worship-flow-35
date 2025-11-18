@@ -32,13 +32,7 @@ const SongLibrary = () => {
     queryFn: async () => {
       let query = supabase
         .from("songs")
-        .select(`
-          *,
-          set_songs(
-            service_set_id,
-            service_sets(date)
-          )
-        `)
+        .select("*")
         .order("title");
 
       if (searchQuery) {
@@ -46,7 +40,11 @@ const SongLibrary = () => {
       }
 
       if (selectedCategory !== "all") {
-        query = query.eq("category", selectedCategory);
+        if (selectedCategory === "uncategorized") {
+          query = query.is("category", null);
+        } else {
+          query = query.eq("category", selectedCategory);
+        }
       }
 
       if (selectedLanguage !== "all") {
@@ -212,6 +210,7 @@ const SongLibrary = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("songLibrary.allCategories")}</SelectItem>
+                  <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
                   <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
                   <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
                   <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
