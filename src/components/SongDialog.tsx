@@ -299,11 +299,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="오프닝">{t("songLibrary.categories.opening")}</SelectItem>
-                  <SelectItem value="찬양">{t("songLibrary.categories.worship")}</SelectItem>
-                  <SelectItem value="헌금">{t("songLibrary.categories.offering")}</SelectItem>
-                  <SelectItem value="응답">{t("songLibrary.categories.response")}</SelectItem>
-                  <SelectItem value="파송">{t("songLibrary.categories.sending")}</SelectItem>
+                  <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
+                  <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
+                  <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
+                  <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
+                  <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
