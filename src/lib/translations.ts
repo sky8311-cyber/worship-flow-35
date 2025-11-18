@@ -245,11 +245,11 @@ export const translations = {
       noSongs: "No songs found",
       addFirstSong: "Add your first song to get started",
       categories: {
-        opening: "Opening",
-        worship: "Worship",
-        offering: "Offering",
-        response: "Response",
-        sending: "Closing",
+        hymn: "Hymn",
+        modernKorean: "Modern Worship (Korean)",
+        modernWestern: "Modern Worship (Western)",
+        modernOther: "Modern Worship (Other)",
+        koreanGospel: "Korean Gospel Song",
       },
       languages: {
         ko: "Korean",
@@ -708,12 +708,12 @@ export const translations = {
       allLanguages: "전체 언어",
       noSongs: "곡이 없습니다",
       addFirstSong: "첫 곡을 추가하여 시작하세요",
-      category: {
-        opening: "오프닝",
-        worship: "찬양",
-        offering: "헌금",
-        response: "응답",
-        closing: "파송",
+      categories: {
+        hymn: "찬송가",
+        modernKorean: "모던워십 (한국)",
+        modernWestern: "모던워십 (서양)",
+        modernOther: "모던워십 (기타)",
+        koreanGospel: "한국 복음성가",
       },
       language: {
         ko: "한국어",

@@ -58,11 +58,11 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
 
   const getCategoryTranslation = (category: string) => {
     const categoryMap: { [key: string]: string } = {
-      "오프닝": t("songLibrary.categories.opening"),
-      "찬양": t("songLibrary.categories.worship"),
-      "헌금": t("songLibrary.categories.offering"),
-      "응답": t("songLibrary.categories.response"),
-      "파송": t("songLibrary.categories.sending"),
+      "찬송가": t("songLibrary.categories.hymn"),
+      "모던워십 (한국)": t("songLibrary.categories.modernKorean"),
+      "모던워십 (서양)": t("songLibrary.categories.modernWestern"),
+      "모던워십 (기타)": t("songLibrary.categories.modernOther"),
+      "한국 복음성가": t("songLibrary.categories.koreanGospel"),
     };
     return categoryMap[category] || category;
   };
