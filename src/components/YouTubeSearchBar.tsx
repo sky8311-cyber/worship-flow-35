@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, ExternalLink, Check } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 
@@ -40,7 +40,7 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/search?` +
         `part=snippet&q=${encodeURIComponent(query)}&` +
-        `type=video&maxResults=5&key=${apiKey}`
+        `type=video&maxResults=10&key=${apiKey}`
       );
 
       if (!response.ok) {
@@ -75,6 +75,11 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
     toast.success(t("songDialog.youtubeUrlSelected"));
   };
 
+  const handlePreview = (videoId: string) => {
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -99,22 +104,45 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
       </div>
 
       {searched && results.length > 0 && (
-        <ScrollArea className="h-[300px] rounded-md border p-4">
+        <ScrollArea className="h-[400px] rounded-md border p-4">
           <div className="space-y-3">
             {results.map((video) => (
               <div
                 key={video.id}
-                className="flex gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                onClick={() => handleSelect(video.id)}
+                className="flex gap-3 p-3 rounded-lg border bg-card"
               >
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="w-32 h-20 object-cover rounded"
+                  className="w-32 h-20 object-cover rounded flex-shrink-0"
                 />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm line-clamp-2">{video.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <p className="font-medium text-sm line-clamp-2">{video.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePreview(video.id)}
+                      className="flex-1"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {t("songDialog.previewVideo")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="default"
+                      size="sm"
+                      onClick={() => handleSelect(video.id)}
+                      className="flex-1"
+                    >
+                      <Check className="w-3 h-3 mr-1" />
+                      {t("songDialog.selectVideo")}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
