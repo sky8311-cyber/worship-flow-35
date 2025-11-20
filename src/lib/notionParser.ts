@@ -4,6 +4,7 @@ export interface ParsedNotionSet {
   area?: string;
   songs: ParsedSong[];
   fileName: string;
+  songsList?: string[]; // Expected songs from metadata
 }
 
 export interface ParsedSong {
@@ -95,12 +96,22 @@ export function parseNotionMarkdown(
     // Parse songs
     const songs = parseSongs(lines.slice(contentStartIndex >= 0 ? contentStartIndex : 7));
     
+    // Validate song count matches metadata
+    if (metadata.songsList && metadata.songsList.length !== songs.length) {
+      console.warn(`⚠️ Song count mismatch in "${serviceName}":`);
+      console.warn(`  Expected (from Songs field): ${metadata.songsList.length} songs`);
+      console.warn(`  Found: ${songs.length} songs`);
+      console.warn(`  Expected songs: ${metadata.songsList.join(', ')}`);
+      console.warn(`  Found songs: ${songs.map(s => s.title).join(', ')}`);
+    }
+    
     return {
       serviceName,
       date: metadata.date || new Date().toISOString().split('T')[0],
       area: metadata.area,
       songs,
       fileName,
+      songsList: metadata.songsList,
     };
   } catch (error) {
     console.error('Failed to parse markdown:', error);
@@ -108,8 +119,8 @@ export function parseNotionMarkdown(
   }
 }
 
-function extractMetadata(lines: string[]): { date?: string; area?: string } {
-  const metadata: { date?: string; area?: string } = {};
+function extractMetadata(lines: string[]): { date?: string; area?: string; songsList?: string[] } {
+  const metadata: { date?: string; area?: string; songsList?: string[] } = {};
   
   for (const line of lines) {
     if (line.startsWith('Date:') || line.startsWith('날짜:')) {
@@ -118,6 +129,11 @@ function extractMetadata(lines: string[]): { date?: string; area?: string } {
     }
     if (line.startsWith('Area:') || line.startsWith('분야:')) {
       metadata.area = line.replace(/^(Area:|분야:)/, '').trim().replace('@', '');
+    }
+    // Extract Songs list
+    if (line.startsWith('Songs:') || line.startsWith('노래:')) {
+      const songsStr = line.replace(/^(Songs:|노래:)/, '').trim();
+      metadata.songsList = songsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
     }
   }
   
@@ -139,22 +155,38 @@ function parseSongs(lines: string[]): ParsedSong[] {
     let line = lines[i].trim();
     if (!line) continue;
     
-    // Check if this is a section header to skip
-    const cleanLine = line.replace(/\*\*/g, '').trim().toLowerCase();
-    if (sectionHeaders.has(cleanLine)) {
-      console.log(`⏭️ Skipping section header: ${line}`);
-      continue;
-    }
+    // Strip markdown bold early
+    line = line.replace(/\*\*/g, '');
     
     // Try to match song patterns
     let songTitle: string | null = null;
     let songKey: string | undefined = undefined;
     
+    // Pattern 0: Section header with colon-separated song
+    // Format: "결단찬양 : 아무것도 두려워말라 (Bb)" or "결단찬양 아무것도 두려워말라 (Bb)"
+    const sectionWithSong = line.match(/^(기도찬양|결단찬양|특송|찬양|경배와찬양|Praise & Worship|Praise and Worship|Worship)\s*[:：]?\s*(.+?)\s*\(([A-G]#?b?)\)$/i);
+    if (sectionWithSong) {
+      songTitle = sectionWithSong[2].trim();
+      songKey = sectionWithSong[3];
+      console.log(`✅ Found song after section header: "${songTitle}" (Key: ${songKey})`);
+    }
+    
+    // Check if this is a standalone section header to skip
+    if (!songTitle) {
+      const cleanLine = line.trim().toLowerCase();
+      if (sectionHeaders.has(cleanLine)) {
+        console.log(`⏭️ Skipping section header: ${line}`);
+        continue;
+      }
+    }
+    
     // Pattern 1: Numbered song with key in parentheses (1. 왕되신 주께 (G))
-    const numberedWithParenKey = line.match(/^\d+\.\s*(.+?)\s*\(([A-G]#?b?)\)\s*$/);
-    if (numberedWithParenKey) {
-      songTitle = numberedWithParenKey[1].trim();
-      songKey = numberedWithParenKey[2];
+    if (!songTitle) {
+      const numberedWithParenKey = line.match(/^\d+\.\s*(.+?)\s*\(([A-G]#?b?)\)\s*$/);
+      if (numberedWithParenKey) {
+        songTitle = numberedWithParenKey[1].trim();
+        songKey = numberedWithParenKey[2];
+      }
     }
     
     // Pattern 2: Numbered song with space-separated key (1. 오늘 이곳에 계신 성령님 F)
@@ -219,8 +251,8 @@ function parseSongs(lines: string[]): ParsedSong[] {
     
     // If we found a song title, save previous and start new
     if (songTitle) {
-      // Strip markdown bold
-      songTitle = songTitle.replace(/\*\*/g, '').trim();
+      // Bold already stripped, just trim
+      songTitle = songTitle.trim();
       
       // Save previous song if exists
       if (currentSong?.title) {
