@@ -101,16 +101,18 @@ export const SongTable = ({ songs, onEdit, onDelete }: SongTableProps) => {
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>{t("songLibrary.tableHeaders.title")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.artist")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.category")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.language")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.key")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.bpm")}</TableHead>
-              <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
-              <TableHead className="text-right">{t("songLibrary.tableHeaders.actions")}</TableHead>
-            </TableRow>
+          <TableRow>
+            <TableHead>{t("songLibrary.tableHeaders.title")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.artist")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.category")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.language")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.key")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.bpm")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.energyLevel")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.tags")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
+            <TableHead className="text-right">{t("songLibrary.tableHeaders.actions")}</TableHead>
+          </TableRow>
           </TableHeader>
           <TableBody>
             {songs.map((song) => (
@@ -134,11 +136,34 @@ export const SongTable = ({ songs, onEdit, onDelete }: SongTableProps) => {
                     {getLanguageTranslation(song.language)}
                   </Badge>
                 </TableCell>
-                <TableCell>{song.default_key || "-"}</TableCell>
-                <TableCell>{song.bpm || "-"}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {getLastUsedDate(song.id)}
-                </TableCell>
+              <TableCell>{song.default_key || "-"}</TableCell>
+              <TableCell>{song.bpm || "-"}</TableCell>
+              <TableCell>
+                {song.energy_level ? (
+                  <Badge variant="outline" className="text-xs">
+                    {song.energy_level}/5
+                  </Badge>
+                ) : "-"}
+              </TableCell>
+              <TableCell>
+                {song.tags ? (
+                  <div className="flex flex-wrap gap-1 max-w-xs">
+                    {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {tag.trim()}
+                      </Badge>
+                    ))}
+                    {song.tags.split(',').length > 2 && (
+                      <span className="text-xs text-muted-foreground">
+                        +{song.tags.split(',').length - 2}
+                      </span>
+                    )}
+                  </div>
+                ) : "-"}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {getLastUsedDate(song.id)}
+              </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
                     {song.youtube_url && (
