@@ -26,9 +26,9 @@ interface NotionImportDialogProps {
 interface ValidationIssue {
   setIndex: number;
   serviceName: string;
-  type: 'count_mismatch' | 'missing_images';
-  expectedCount?: number;
-  foundCount?: number;
+  type: 'missing_songs' | 'extra_songs' | 'missing_images';
+  missingSongs?: string[];
+  extraSongs?: string[];
   expectedSongs?: string[];
   foundSongs?: string[];
   unmatchedImages?: string[];
@@ -101,17 +101,43 @@ export function NotionImportDialog({
     const issues: ValidationIssue[] = [];
     
     sets.forEach((set, idx) => {
-      // Check song count mismatch
-      if (set.songsList && set.songsList.length !== set.songs.length) {
-        issues.push({
-          setIndex: idx,
-          serviceName: set.serviceName,
-          type: 'count_mismatch',
-          expectedCount: set.songsList.length,
-          foundCount: set.songs.length,
-          expectedSongs: set.songsList,
-          foundSongs: set.songs.map(s => s.title),
-        });
+      // Songs 필드가 있는 경우, 각 곡을 MD body에서 찾았는지 검증
+      if (set.songsList && set.songsList.length > 0) {
+        const parsedTitles = set.songs.map(s => s.title); // 이미 normalized됨
+        
+        // 1. Songs 필드에 있지만 MD body에서 못 찾은 곡들 (CRITICAL)
+        const missingSongs = set.songsList.filter(
+          expectedTitle => !parsedTitles.includes(expectedTitle)
+        );
+        
+        // 2. MD body에 있지만 Songs 필드에 없는 곡들 (WARNING)
+        const extraSongs = parsedTitles.filter(
+          parsedTitle => !set.songsList!.includes(parsedTitle)
+        );
+        
+        // Missing songs는 critical error
+        if (missingSongs.length > 0) {
+          issues.push({
+            setIndex: idx,
+            serviceName: set.serviceName,
+            type: 'missing_songs',
+            missingSongs,
+            expectedSongs: set.songsList,
+            foundSongs: parsedTitles,
+          });
+        }
+        
+        // Extra songs는 optional warning (사용자가 추가한 것일 수 있음)
+        if (extraSongs.length > 0) {
+          issues.push({
+            setIndex: idx,
+            serviceName: set.serviceName,
+            type: 'extra_songs',
+            extraSongs,
+            expectedSongs: set.songsList,
+            foundSongs: parsedTitles,
+          });
+        }
       }
       
       // Check unmatched images
@@ -355,32 +381,46 @@ export function NotionImportDialog({
               <CardTitle className="text-sm">{issue.serviceName}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              {issue.type === 'count_mismatch' && (
+              {issue.type === 'missing_songs' && (
                 <div className="space-y-2">
-                  <div className="text-sm text-destructive">
-                    ⚠️ {t("songLibrary.notionImport.countMismatch")}
+                  <div className="text-sm text-destructive font-semibold">
+                    ❌ {t('songLibrary.notionImport.missingSongs', { count: issue.missingSongs?.length || 0 })}
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div>
-                      <div className="font-semibold">
-                        {t("songLibrary.notionImport.expected", { count: issue.expectedCount })}
-                      </div>
-                      <ul className="list-disc list-inside">
-                        {issue.expectedSongs?.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <div className="font-semibold">
-                        {t("songLibrary.notionImport.found", { count: issue.foundCount })}
-                      </div>
-                      <ul className="list-disc list-inside">
-                        {issue.foundSongs?.map((s, i) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {t('songLibrary.notionImport.missingSongsDesc')}
+                  </div>
+                  <div className="bg-destructive/10 p-3 rounded">
+                    <div className="font-semibold text-xs mb-1">{t('songLibrary.notionImport.notFound')}</div>
+                    <ul className="list-disc list-inside text-xs">
+                      {issue.missingSongs?.map((song, i) => (
+                        <li key={i} className="text-destructive">{song}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    💡 {t('songLibrary.notionImport.tipMissing')}
+                  </div>
+                </div>
+              )}
+
+              {issue.type === 'extra_songs' && (
+                <div className="space-y-2">
+                  <div className="text-sm text-amber-600 font-semibold">
+                    ⚠️ {t('songLibrary.notionImport.extraSongs', { count: issue.extraSongs?.length || 0 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {t('songLibrary.notionImport.extraSongsDesc')}
+                  </div>
+                  <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded">
+                    <div className="font-semibold text-xs mb-1">{t('songLibrary.notionImport.extraFound')}</div>
+                    <ul className="list-disc list-inside text-xs">
+                      {issue.extraSongs?.map((song, i) => (
+                        <li key={i} className="text-amber-700 dark:text-amber-500">{song}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    ℹ️ {t('songLibrary.notionImport.tipExtra')}
                   </div>
                 </div>
               )}
