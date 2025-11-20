@@ -4,15 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { NotionImportDialog } from "@/components/NotionImportDialog";
+import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -31,6 +33,9 @@ const SongLibrary = () => {
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [isNotionImportOpen, setIsNotionImportOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedSongIds, setSelectedSongIds] = useState<Set<string>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
@@ -129,6 +134,69 @@ const SongLibrary = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleToggleSelection = (songId: string) => {
+    const newSelection = new Set(selectedSongIds);
+    if (newSelection.has(songId)) {
+      newSelection.delete(songId);
+    } else {
+      newSelection.add(songId);
+    }
+    setSelectedSongIds(newSelection);
+  };
+
+  const handleSelectAll = () => {
+    if (songs && selectedSongIds.size === songs.length) {
+      setSelectedSongIds(new Set());
+    } else if (songs) {
+      setSelectedSongIds(new Set(songs.map(s => s.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectedSongIds.size;
+    
+    const { error } = await supabase
+      .from("songs")
+      .delete()
+      .in("id", Array.from(selectedSongIds));
+
+    if (error) {
+      toast.error(t("common.error"));
+      console.error("Bulk delete error:", error);
+    } else {
+      toast.success(t("songLibrary.bulkDeleteSuccess", { count }));
+      setSelectedSongIds(new Set());
+      setSelectionMode(false);
+      setShowDeleteConfirm(false);
+      refetch();
+    }
+  };
+
+  const handleBulkCategorize = async (category: string) => {
+    const count = selectedSongIds.size;
+    const categoryValue = category === "uncategorized" ? null : category;
+    
+    const { error } = await supabase
+      .from("songs")
+      .update({ category: categoryValue })
+      .in("id", Array.from(selectedSongIds));
+
+    if (error) {
+      toast.error(t("common.error"));
+      console.error("Bulk categorize error:", error);
+    } else {
+      toast.success(t("songLibrary.bulkCategorizeSuccess", { count }));
+      setSelectedSongIds(new Set());
+      setSelectionMode(false);
+      refetch();
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedSongIds(new Set());
+    setSelectionMode(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-soft pb-20 md:pb-8">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -192,6 +260,20 @@ const SongLibrary = () => {
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
               <div className="flex gap-2 w-full sm:w-auto">
+                {isWorshipLeader && (
+                  <Button
+                    variant={selectionMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectionMode(!selectionMode);
+                      setSelectedSongIds(new Set());
+                    }}
+                    className="gap-2 text-xs sm:text-sm"
+                  >
+                    <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
+                  </Button>
+                )}
                 <div className="flex gap-1 border rounded-md p-1">
                   <Button
                     variant={viewMode === "card" ? "secondary" : "ghost"}
@@ -309,6 +391,10 @@ const SongLibrary = () => {
               songs={songs}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
+              selectionMode={selectionMode}
+              selectedSongs={selectedSongIds}
+              onToggleSelection={handleToggleSelection}
+              onSelectAll={handleSelectAll}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -318,6 +404,9 @@ const SongLibrary = () => {
                   song={song}
                   onEdit={isWorshipLeader ? handleEditSong : undefined}
                   onDelete={isWorshipLeader ? () => refetch() : undefined}
+                  selectionMode={selectionMode}
+                  isSelected={selectedSongIds.has(song.id)}
+                  onToggleSelection={handleToggleSelection}
                 />
               ))}
             </div>
@@ -370,6 +459,34 @@ const SongLibrary = () => {
         onOpenChange={setIsNotionImportOpen}
         onImportComplete={() => refetch()}
       />
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("songLibrary.bulkDeleteConfirm", { count: selectedSongIds.size })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("songLibrary.bulkDeleteDesc", { count: selectedSongIds.size })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {selectionMode && selectedSongIds.size > 0 && (
+        <BulkActionsBar
+          selectedCount={selectedSongIds.size}
+          onBulkDelete={() => setShowDeleteConfirm(true)}
+          onBulkCategorize={handleBulkCategorize}
+          onClearSelection={handleClearSelection}
+        />
+      )}
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden z-50">
         <div className="flex justify-around py-3">

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Eye, Youtube, Edit, Trash2 } from "lucide-react";
@@ -15,9 +16,21 @@ interface SongTableProps {
   songs: any[];
   onEdit?: (song: any) => void;
   onDelete?: () => void;
+  selectionMode?: boolean;
+  selectedSongs?: Set<string>;
+  onToggleSelection?: (songId: string) => void;
+  onSelectAll?: () => void;
 }
 
-export const SongTable = ({ songs, onEdit, onDelete }: SongTableProps) => {
+export const SongTable = ({ 
+  songs, 
+  onEdit, 
+  onDelete,
+  selectionMode = false,
+  selectedSongs = new Set(),
+  onToggleSelection,
+  onSelectAll
+}: SongTableProps) => {
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
@@ -102,6 +115,14 @@ export const SongTable = ({ songs, onEdit, onDelete }: SongTableProps) => {
         <Table>
           <TableHeader>
           <TableRow>
+            {selectionMode && (
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedSongs.size === songs.length && songs.length > 0}
+                  onCheckedChange={onSelectAll}
+                />
+              </TableHead>
+            )}
             <TableHead>{t("songLibrary.tableHeaders.title")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.artist")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.category")}</TableHead>
@@ -116,7 +137,15 @@ export const SongTable = ({ songs, onEdit, onDelete }: SongTableProps) => {
           </TableHeader>
           <TableBody>
             {songs.map((song) => (
-              <TableRow key={song.id}>
+              <TableRow key={song.id} className={selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""}>
+                {selectionMode && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedSongs.has(song.id)}
+                      onCheckedChange={() => onToggleSelection?.(song.id)}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="font-medium">
                   <div>
                     <div>{song.title}</div>
