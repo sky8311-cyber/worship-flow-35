@@ -1,0 +1,525 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { parseNotionMarkdown, matchImageFile, ParsedNotionSet } from "@/lib/notionParser";
+import { findOrCreateSong } from "@/lib/songMatcher";
+import { useTranslation } from "@/hooks/useTranslation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
+import { Upload, FileText, Image as ImageIcon, CheckCircle, AlertCircle, Youtube, FileImage } from "lucide-react";
+
+interface NotionImportDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onImportComplete?: () => void;
+}
+
+export function NotionImportDialog({
+  open,
+  onOpenChange,
+  onImportComplete,
+}: NotionImportDialogProps) {
+  const { t } = useTranslation();
+  const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'complete'>('upload');
+  const [uploadType, setUploadType] = useState<'folder' | 'files'>('folder');
+  const [allFiles, setAllFiles] = useState<File[]>([]);
+  const [mdFiles, setMdFiles] = useState<File[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [parsedSets, setParsedSets] = useState<ParsedNotionSet[]>([]);
+  const [selectedCommunity, setSelectedCommunity] = useState<string>('');
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [importResults, setImportResults] = useState({
+    setsCreated: 0,
+    songsCreated: 0,
+    songsUpdated: 0,
+    errors: [] as string[],
+  });
+
+  // Fetch user's communities
+  const { data: communities = [] } = useQuery({
+    queryKey: ['user-communities'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // Fetch communities where user is leader
+      const { data: leaderCommunities } = await supabase
+        .from('worship_communities')
+        .select('id, name')
+        .eq('leader_id', user.id);
+
+      // Fetch communities where user is member
+      const { data: memberCommunities } = await supabase
+        .from('community_members')
+        .select('community_id, worship_communities(id, name)')
+        .eq('user_id', user.id);
+
+      const allCommunities = [
+        ...(leaderCommunities || []),
+        ...(memberCommunities?.map(m => m.worship_communities).filter(Boolean) || []),
+      ];
+
+      // Deduplicate by id
+      return Array.from(new Map(allCommunities.map((c: any) => [c.id, c])).values());
+    },
+    enabled: open,
+  });
+
+  const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
+  const handleFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await processFiles(files);
+  };
+
+  const processFiles = async (files: File[]) => {
+    setAllFiles(files);
+
+    // Separate MD files and image files
+    const md = files.filter(f => f.name.endsWith('.md'));
+    const images = files.filter(f => 
+      /\.(jpg|jpeg|png|gif|webp|pdf)$/i.test(f.name)
+    );
+
+    setMdFiles(md);
+    setImageFiles(images);
+
+    if (md.length === 0) {
+      toast.error("No .md files found");
+      return;
+    }
+
+    // Parse all MD files
+    const parsed: ParsedNotionSet[] = [];
+    for (const file of md) {
+      try {
+        const content = await file.text();
+        const result = parseNotionMarkdown(content, file.name);
+        if (result) {
+          parsed.push(result);
+        }
+      } catch (error) {
+        console.error(`Failed to parse ${file.name}:`, error);
+        toast.error(`Failed to parse ${file.name}`);
+      }
+    }
+
+    if (parsed.length === 0) {
+      toast.error("No valid worship sets found");
+      return;
+    }
+
+    setParsedSets(parsed);
+    setStep('preview');
+    toast.success(t("songLibrary.notionImport.parseSuccess", { count: parsed.length }));
+  };
+
+  const handleImport = async () => {
+    if (!selectedCommunity) {
+      toast.error(t("songLibrary.notionImport.selectCommunity"));
+      return;
+    }
+
+    setStep('importing');
+    setImportProgress({ current: 0, total: parsedSets.length });
+
+    const results = {
+      setsCreated: 0,
+      songsCreated: 0,
+      songsUpdated: 0,
+      errors: [] as string[],
+    };
+
+    for (let i = 0; i < parsedSets.length; i++) {
+      const set = parsedSets[i];
+      try {
+        await importSingleSet(set, imageFiles, selectedCommunity, results);
+        results.setsCreated++;
+      } catch (error: any) {
+        results.errors.push(`${set.serviceName}: ${error.message}`);
+      }
+      setImportProgress({ current: i + 1, total: parsedSets.length });
+    }
+
+    setImportResults(results);
+    setStep('complete');
+    onImportComplete?.();
+  };
+
+  const importSingleSet = async (
+    set: ParsedNotionSet,
+    imageFiles: File[],
+    communityId: string,
+    results: any
+  ) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    // 1. Upload matched score images
+    const scoreUrls: Record<string, string> = {};
+    for (const song of set.songs) {
+      if (song.scoreImageRef) {
+        const imageFile = matchImageFile(song.scoreImageRef, imageFiles);
+        if (imageFile) {
+          try {
+            const url = await uploadScoreImage(imageFile, song.title);
+            scoreUrls[song.scoreImageRef] = url;
+          } catch (error) {
+            console.error(`Failed to upload image for ${song.title}:`, error);
+          }
+        }
+      }
+    }
+
+    // 2. Find or create songs
+    const songIds: string[] = [];
+    for (const song of set.songs) {
+      const scoreUrl = song.scoreImageRef ? scoreUrls[song.scoreImageRef] : undefined;
+      const { id, created, updated } = await findOrCreateSong(song, scoreUrl);
+      songIds.push(id);
+      if (created) results.songsCreated++;
+      if (updated) results.songsUpdated++;
+    }
+
+    // 3. Create service set
+    const { data: serviceSet, error: setError } = await supabase
+      .from('service_sets')
+      .insert({
+        date: set.date,
+        service_name: set.serviceName,
+        theme: set.area,
+        created_by: user.id,
+        community_id: communityId,
+        status: 'published',
+        is_public: false,
+      })
+      .select('id')
+      .single();
+
+    if (setError) throw setError;
+
+    // 4. Link songs to set
+    const setSongs = set.songs.map((song, idx) => ({
+      service_set_id: serviceSet.id,
+      song_id: songIds[idx],
+      position: song.position,
+      key: song.key || null,
+      override_youtube_url: song.youtubeUrl || null,
+      override_score_file_url: song.scoreImageRef ? scoreUrls[song.scoreImageRef] : null,
+    }));
+
+    const { error: songsError } = await supabase.from('set_songs').insert(setSongs);
+    if (songsError) throw songsError;
+  };
+
+  const uploadScoreImage = async (file: File, songTitle: string): Promise<string> => {
+    const sanitized = songTitle.replace(/[^a-zA-Z0-9가-힣]/g, '_');
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}_${sanitized}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from('scores')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from('scores').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
+  const getMatchedImagesCount = () => {
+    let count = 0;
+    for (const set of parsedSets) {
+      for (const song of set.songs) {
+        if (song.scoreImageRef && matchImageFile(song.scoreImageRef, imageFiles)) {
+          count++;
+        }
+      }
+    }
+    return count;
+  };
+
+  const getTotalImageRefsCount = () => {
+    return parsedSets.reduce((sum, set) => 
+      sum + set.songs.filter(s => s.scoreImageRef).length, 0
+    );
+  };
+
+  const renderUploadStep = () => (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <Button
+            variant={uploadType === 'folder' ? 'default' : 'outline'}
+            onClick={() => setUploadType('folder')}
+            className="flex-1"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            {t("songLibrary.notionImport.uploadFolder")}
+          </Button>
+          <Button
+            variant={uploadType === 'files' ? 'default' : 'outline'}
+            onClick={() => setUploadType('files')}
+            className="flex-1"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            {t("songLibrary.notionImport.uploadFiles")}
+          </Button>
+        </div>
+
+        {uploadType === 'folder' ? (
+          <div>
+            <Label htmlFor="folder-upload">
+              {t("songLibrary.notionImport.selectFolder")}
+            </Label>
+            <Input
+              id="folder-upload"
+              type="file"
+              // @ts-ignore - webkitdirectory is not in types
+              webkitdirectory=""
+              directory=""
+              multiple
+              onChange={handleFolderUpload}
+              className="mt-2"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              {t("songLibrary.notionImport.folderHint")}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <Label htmlFor="files-upload">
+              {t("songLibrary.notionImport.uploadFiles")}
+            </Label>
+            <Input
+              id="files-upload"
+              type="file"
+              multiple
+              accept=".md,.jpg,.jpeg,.png,.gif,.webp,.pdf"
+              onChange={handleFilesUpload}
+              className="mt-2"
+            />
+            <p className="text-sm text-muted-foreground mt-2">
+              {t("songLibrary.notionImport.filesHint")}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {allFiles.length > 0 && (
+        <Alert>
+          <FileText className="w-4 h-4" />
+          <AlertTitle>
+            {mdFiles.length} MD files, {imageFiles.length} images
+          </AlertTitle>
+          <AlertDescription>
+            Ready to parse and preview
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+
+  const renderPreview = () => {
+    const matchedCount = getMatchedImagesCount();
+    const totalRefs = getTotalImageRefsCount();
+    const unmatchedRefs = totalRefs - matchedCount;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm">
+            <div className="font-semibold">
+              {t("songLibrary.notionImport.filesFound", { count: parsedSets.length })}
+            </div>
+            <div className="text-muted-foreground">
+              {t("songLibrary.notionImport.imagesMatched", { matched: matchedCount, total: totalRefs })}
+            </div>
+          </div>
+        </div>
+
+        {unmatchedRefs > 0 && (
+          <Alert variant="default">
+            <AlertCircle className="w-4 h-4" />
+            <AlertTitle>{t("songLibrary.notionImport.someImagesMissing")}</AlertTitle>
+            <AlertDescription>
+              {unmatchedRefs} {t("songLibrary.notionImport.imagesMissing")}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <ScrollArea className="h-[300px] border rounded-md p-4">
+          <div className="space-y-3">
+            {parsedSets.map((set, idx) => (
+              <Card key={idx} className="p-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-sm">{set.serviceName}</h3>
+                    <p className="text-xs text-muted-foreground">{set.date}</p>
+                    {set.area && (
+                      <p className="text-xs text-muted-foreground">{set.area}</p>
+                    )}
+                  </div>
+                  <Badge variant="outline">{set.songs.length} songs</Badge>
+                </div>
+                <div className="mt-2 space-y-1">
+                  {set.songs.slice(0, 3).map((song, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs">
+                      <span>{song.title}</span>
+                      {song.key && <Badge variant="secondary" className="text-xs">{song.key}</Badge>}
+                      {song.youtubeUrl && <Youtube className="w-3 h-3 text-muted-foreground" />}
+                      {song.scoreImageRef && matchImageFile(song.scoreImageRef, imageFiles) && (
+                        <FileImage className="w-3 h-3 text-green-500" />
+                      )}
+                      {song.scoreImageRef && !matchImageFile(song.scoreImageRef, imageFiles) && (
+                        <FileImage className="w-3 h-3 text-muted-foreground" />
+                      )}
+                    </div>
+                  ))}
+                  {set.songs.length > 3 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{set.songs.length - 3} more songs
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <div className="space-y-2">
+          <Label>{t("songLibrary.notionImport.selectCommunity")}</Label>
+          <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
+            <SelectTrigger>
+              <SelectValue placeholder={t("songLibrary.notionImport.selectCommunity")} />
+            </SelectTrigger>
+            <SelectContent>
+              {communities.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setStep('upload')}>
+            {t("common.cancel")}
+          </Button>
+          <Button onClick={handleImport} disabled={!selectedCommunity} className="flex-1">
+            {t("songLibrary.notionImport.import")}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderImporting = () => {
+    const progress = importProgress.total > 0
+      ? (importProgress.current / importProgress.total) * 100
+      : 0;
+
+    return (
+      <div className="space-y-4 py-8">
+        <div className="text-center">
+          <Upload className="w-12 h-12 mx-auto mb-4 animate-pulse" />
+          <h3 className="font-semibold">
+            {t("songLibrary.notionImport.importing", {
+              current: importProgress.current,
+              total: importProgress.total,
+            })}
+          </h3>
+        </div>
+        <Progress value={progress} className="w-full" />
+      </div>
+    );
+  };
+
+  const renderComplete = () => (
+    <div className="space-y-4 py-4">
+      <div className="text-center">
+        <CheckCircle className="w-12 h-12 mx-auto text-green-500 mb-4" />
+        <h3 className="font-semibold text-lg">{t("songLibrary.notionImport.success")}</h3>
+      </div>
+
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center justify-between p-2 bg-muted rounded">
+          <span>✅ {t("songLibrary.notionImport.setsCreated")}</span>
+          <Badge>{importResults.setsCreated}</Badge>
+        </div>
+        <div className="flex items-center justify-between p-2 bg-muted rounded">
+          <span>🎵 {t("songLibrary.notionImport.songsCreated")}</span>
+          <Badge>{importResults.songsCreated}</Badge>
+        </div>
+        <div className="flex items-center justify-between p-2 bg-muted rounded">
+          <span>🔄 {t("songLibrary.notionImport.songsUpdated")}</span>
+          <Badge>{importResults.songsUpdated}</Badge>
+        </div>
+      </div>
+
+      {importResults.errors.length > 0 && (
+        <Alert variant="destructive">
+          <AlertCircle className="w-4 h-4" />
+          <AlertTitle>{t("songLibrary.notionImport.errors")}</AlertTitle>
+          <AlertDescription>
+            <ScrollArea className="h-[100px] mt-2">
+              {importResults.errors.map((err, i) => (
+                <div key={i} className="text-xs">{err}</div>
+              ))}
+            </ScrollArea>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Button onClick={() => onOpenChange(false)} className="w-full">
+        {t("common.close")}
+      </Button>
+    </div>
+  );
+
+  const handleClose = () => {
+    setStep('upload');
+    setUploadType('folder');
+    setAllFiles([]);
+    setMdFiles([]);
+    setImageFiles([]);
+    setParsedSets([]);
+    setSelectedCommunity('');
+    setImportProgress({ current: 0, total: 0 });
+    setImportResults({
+      setsCreated: 0,
+      songsCreated: 0,
+      songsUpdated: 0,
+      errors: [],
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle>{t("songLibrary.notionImport.title")}</DialogTitle>
+        </DialogHeader>
+
+        {step === 'upload' && renderUploadStep()}
+        {step === 'preview' && renderPreview()}
+        {step === 'importing' && renderImporting()}
+        {step === 'complete' && renderComplete()}
+      </DialogContent>
+    </Dialog>
+  );
+}
