@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Upload, FileText, Image as ImageIcon, CheckCircle, AlertCircle, AlertTriangle, Youtube, FileImage } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, CheckCircle, AlertCircle, AlertTriangle, Youtube, FileImage, Sparkles, Loader2, ArrowRight } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface NotionImportDialogProps {
   open: boolean;
@@ -32,6 +33,13 @@ interface ValidationIssue {
   expectedSongs?: string[];
   foundSongs?: string[];
   unmatchedImages?: string[];
+}
+
+interface SongMatch {
+  missing: string;      // Songs 필드의 제목
+  found: string;        // MD body에서 찾은 제목
+  confidence: number;   // 0-1 사이의 신뢰도
+  accepted?: boolean;   // 사용자가 수락했는지
 }
 
 export function NotionImportDialog({
@@ -56,6 +64,9 @@ export function NotionImportDialog({
     errors: [] as string[],
     imageErrors: [] as string[],
   });
+  const [aiMatches, setAiMatches] = useState<SongMatch[]>([]);
+  const [isAiMatching, setIsAiMatching] = useState(false);
+  const [showMatchEditor, setShowMatchEditor] = useState(false);
 
   // Fetch user's communities
   const { data: communities = [] } = useQuery({
@@ -364,6 +375,70 @@ export function NotionImportDialog({
     );
   };
 
+  const handleAiMatch = async (issue: ValidationIssue) => {
+    if (!issue.missingSongs || !issue.foundSongs) return;
+    
+    setIsAiMatching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('match-song-titles', {
+        body: {
+          missingSongs: issue.missingSongs,
+          foundSongs: issue.foundSongs,
+        }
+      });
+
+      if (error) throw error;
+
+      setAiMatches(data.matches.map((m: SongMatch) => ({ ...m, accepted: false })));
+      setShowMatchEditor(true);
+      
+      toast.success(t("songLibrary.notionImport.aiMatchSuccess", { count: data.matches.length }));
+    } catch (error) {
+      console.error('AI matching error:', error);
+      toast.error(t("songLibrary.notionImport.aiMatchError"));
+    } finally {
+      setIsAiMatching(false);
+    }
+  };
+
+  const applyAiMatches = () => {
+    const acceptedMatches = aiMatches.filter(m => m.accepted);
+    
+    if (acceptedMatches.length === 0) {
+      toast.error(t("songLibrary.notionImport.aiMatchNone"));
+      return;
+    }
+
+    // parsedSets 업데이트: found 제목을 missing 제목으로 변경
+    const updatedSets = parsedSets.map(set => ({
+      ...set,
+      songs: set.songs.map(song => {
+        const match = acceptedMatches.find(m => m.found === song.title);
+        if (match) {
+          return { ...song, title: match.missing }; // AI가 제안한 올바른 제목으로 변경
+        }
+        return song;
+      })
+    }));
+
+    setParsedSets(updatedSets);
+    
+    // 재검증
+    const issues = validateParsedSets(updatedSets, imageFiles);
+    setValidationIssues(issues);
+    
+    // 매칭 에디터 닫기
+    setShowMatchEditor(false);
+    setAiMatches([]);
+    
+    toast.success(t("songLibrary.notionImport.aiMatchApplied", { count: acceptedMatches.length }));
+    
+    // 이슈가 해결되었으면 preview로 이동
+    if (issues.length === 0) {
+      setStep('preview');
+    }
+  };
+
   const renderValidation = () => (
     <div className="space-y-4">
       <Alert variant="destructive">
@@ -400,6 +475,27 @@ export function NotionImportDialog({
                   <div className="text-xs text-muted-foreground mt-2">
                     💡 {t('songLibrary.notionImport.tipMissing')}
                   </div>
+                  
+                  {/* AI 자동 매칭 버튼 */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleAiMatch(issue)}
+                    disabled={isAiMatching}
+                    className="w-full mt-2"
+                  >
+                    {isAiMatching ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('songLibrary.notionImport.aiMatching')}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        {t('songLibrary.notionImport.aiMatchButton')}
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
 
@@ -730,18 +826,83 @@ export function NotionImportDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh]">
-        <DialogHeader>
-          <DialogTitle>{t("songLibrary.notionImport.title")}</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{t("songLibrary.notionImport.title")}</DialogTitle>
+          </DialogHeader>
 
-        {step === 'upload' && renderUploadStep()}
-        {step === 'validate' && renderValidation()}
-        {step === 'preview' && renderPreview()}
-        {step === 'importing' && renderImporting()}
-        {step === 'complete' && renderComplete()}
-      </DialogContent>
-    </Dialog>
+          {step === 'upload' && renderUploadStep()}
+          {step === 'validate' && renderValidation()}
+          {step === 'preview' && renderPreview()}
+          {step === 'importing' && renderImporting()}
+          {step === 'complete' && renderComplete()}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI 매칭 에디터 Dialog */}
+      <Dialog open={showMatchEditor} onOpenChange={setShowMatchEditor}>
+        <DialogContent className="max-w-2xl max-h-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t('songLibrary.notionImport.aiMatchTitle')}</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {t('songLibrary.notionImport.aiMatchDesc', { count: aiMatches.length })}
+            </p>
+          </DialogHeader>
+          
+          <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-3">
+              {aiMatches.map((match, idx) => (
+                <Card key={idx} className="p-3">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      checked={match.accepted}
+                      onCheckedChange={(checked) => {
+                        setAiMatches(prev => prev.map((m, i) => 
+                          i === idx ? { ...m, accepted: !!checked } : m
+                        ));
+                      }}
+                    />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive" className="text-xs">Missing</Badge>
+                        <span className="text-sm font-medium">{match.missing}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Found</Badge>
+                        <span className="text-sm">{match.found}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <span>{t('songLibrary.notionImport.aiMatchConfidence')}</span>
+                        <Badge variant={match.confidence > 0.85 ? "default" : "secondary"}>
+                          {(match.confidence * 100).toFixed(0)}%
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowMatchEditor(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button 
+              onClick={applyAiMatches}
+              disabled={!aiMatches.some(m => m.accepted)}
+              className="flex-1"
+            >
+              {t('songLibrary.notionImport.aiMatchApply', { count: aiMatches.filter(m => m.accepted).length })}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

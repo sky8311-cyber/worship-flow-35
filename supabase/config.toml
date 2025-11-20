@@ -1,1 +1,4 @@
 project_id = "jihozsqrrmzzrqvwilyy"
+
+[functions.match-song-titles]
+verify_jwt = false
