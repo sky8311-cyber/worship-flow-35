@@ -129,46 +129,116 @@ function parseSongs(lines: string[]): ParsedSong[] {
   let currentSong: Partial<ParsedSong> | null = null;
   let position = 0;
   
+  // Section headers to ignore (case-insensitive)
+  const sectionHeaders = new Set([
+    '기도찬양', '결단찬양', '찬양', '찬송', '경배와 찬양', '특송',
+    'worship', 'praise', 'praise & worship', 'praise and worship'
+  ]);
+  
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    
+    let line = lines[i].trim();
     if (!line) continue;
     
-    // Detect song title with key: "왕되신 주께 감사하며 (G)"
-    const songWithKeyMatch = line.match(/^(.+?)\s*\(([A-G]#?b?)\)\s*$/);
+    // Check if this is a section header to skip
+    const cleanLine = line.replace(/\*\*/g, '').trim().toLowerCase();
+    if (sectionHeaders.has(cleanLine)) {
+      console.log(`⏭️ Skipping section header: ${line}`);
+      continue;
+    }
     
-    // Detect song title without key (but not a bullet or link line)
-    const titleOnlyMatch = !line.startsWith('-') && 
-                          !line.startsWith('*') &&
-                          !line.startsWith('[') &&
-                          !line.startsWith('!') &&
-                          !line.includes('http') &&
-                          /^[가-힣a-zA-Z\s\u3000]+$/.test(line);
+    // Try to match song patterns
+    let songTitle: string | null = null;
+    let songKey: string | undefined = undefined;
     
-    if (songWithKeyMatch) {
+    // Pattern 1: Numbered song with key in parentheses (1. 왕되신 주께 (G))
+    const numberedWithParenKey = line.match(/^\d+\.\s*(.+?)\s*\(([A-G]#?b?)\)\s*$/);
+    if (numberedWithParenKey) {
+      songTitle = numberedWithParenKey[1].trim();
+      songKey = numberedWithParenKey[2];
+    }
+    
+    // Pattern 2: Numbered song with space-separated key (1. 오늘 이곳에 계신 성령님 F)
+    if (!songTitle) {
+      const numberedWithSpaceKey = line.match(/^\d+\.\s*(.+?)\s+([A-G]#?b?)$/);
+      if (numberedWithSpaceKey) {
+        songTitle = numberedWithSpaceKey[1].trim();
+        songKey = numberedWithSpaceKey[2];
+      }
+    }
+    
+    // Pattern 3: Numbered song without key (1. 오늘 이곳에 계신 성령님)
+    if (!songTitle) {
+      const numberedNoKey = line.match(/^\d+\.\s*(.+)$/);
+      if (numberedNoKey && numberedNoKey[1].length > 2) {
+        songTitle = numberedNoKey[1].trim();
+      }
+    }
+    
+    // Pattern 4: Song with parentheses key (왕되신 주께 (G))
+    if (!songTitle) {
+      const withParenKey = line.match(/^(.+?)\s*\(([A-G]#?b?)\)$/);
+      if (withParenKey && !line.startsWith('!') && !line.startsWith('[')) {
+        songTitle = withParenKey[1].trim();
+        songKey = withParenKey[2];
+      }
+    }
+    
+    // Pattern 5: Song with space-separated key (왕되신 주께 G)
+    if (!songTitle) {
+      const withSpaceKey = line.match(/^(.+?)\s+([A-G]#?b?)$/);
+      if (withSpaceKey && 
+          !line.startsWith('-') && 
+          !line.startsWith('*') &&
+          !line.startsWith('[') &&
+          !line.startsWith('!') &&
+          !line.includes('http')) {
+        const possibleTitle = withSpaceKey[1].trim();
+        const possibleKey = withSpaceKey[2];
+        
+        // Validate it's actually a musical key
+        if (/^[A-G]#?b?$/.test(possibleKey) && possibleTitle.length > 2) {
+          songTitle = possibleTitle;
+          songKey = possibleKey;
+        }
+      }
+    }
+    
+    // Pattern 6: Title only (no key, no number)
+    if (!songTitle) {
+      const titleOnly = !line.startsWith('-') && 
+                        !line.startsWith('*') &&
+                        !line.startsWith('[') &&
+                        !line.startsWith('!') &&
+                        !line.includes('http') &&
+                        /^[가-힣a-zA-Z\s\u3000]+$/.test(line.replace(/\*\*/g, ''));
+      
+      if (titleOnly && line.length > 2) {
+        songTitle = line.trim();
+      }
+    }
+    
+    // If we found a song title, save previous and start new
+    if (songTitle) {
+      // Strip markdown bold
+      songTitle = songTitle.replace(/\*\*/g, '').trim();
+      
       // Save previous song if exists
       if (currentSong?.title) {
         songs.push(currentSong as ParsedSong);
       }
       
       currentSong = {
-        title: songWithKeyMatch[1].trim(),
-        key: songWithKeyMatch[2],
+        title: songTitle,
+        key: songKey,
         position: position++,
       };
-    } else if (titleOnlyMatch && line.length > 2) {
-      // Save previous song if exists
-      if (currentSong?.title) {
-        songs.push(currentSong as ParsedSong);
-      }
       
-      currentSong = {
-        title: line.trim(),
-        position: position++,
-      };
-    } else if (currentSong) {
-      // Parse metadata for current song
-      
+      console.log(`✅ Found song: "${songTitle}"${songKey ? ` (Key: ${songKey})` : ''}`);
+      continue;
+    }
+    
+    // If we're inside a song, parse metadata
+    if (currentSong) {
       // Languages (bullet list)
       if (line.startsWith('-') || line.startsWith('*')) {
         const lang = line.replace(/^[-*]\s*/, '').trim();
@@ -183,6 +253,7 @@ function parseSongs(lines: string[]): ParsedSong[] {
         const urlMatch = line.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
         if (urlMatch) {
           currentSong.youtubeUrl = urlMatch[0];
+          console.log(`  📺 YouTube: ${urlMatch[0]}`);
         }
       }
       
@@ -191,6 +262,7 @@ function parseSongs(lines: string[]): ParsedSong[] {
         const imgMatch = line.match(/!\[.*?\]\(([^)]+)\)/);
         if (imgMatch) {
           currentSong.scoreImageRef = normalizeFilename(imgMatch[1]);
+          console.log(`  🖼️ Image: ${imgMatch[1]}`);
         }
       }
     }
