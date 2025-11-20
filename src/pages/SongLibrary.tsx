@@ -25,7 +25,7 @@ const SongLibrary = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("title-asc");
-  const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
@@ -300,7 +300,7 @@ const SongLibrary = () => {
               onDelete={isWorshipLeader ? () => refetch() : undefined}
             />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {songs.map((song) => (
                 <SongCard
                   key={song.id}
