@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Music2, Trash2, Youtube, FileText, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,9 +25,19 @@ interface SongCardProps {
   song: any;
   onEdit?: (song: any) => void;
   onDelete?: () => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: (songId: string) => void;
 }
 
-export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
+export const SongCard = ({ 
+  song, 
+  onEdit, 
+  onDelete,
+  selectionMode = false,
+  isSelected = false,
+  onToggleSelection
+}: SongCardProps) => {
   const { t, language } = useTranslation();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
 
@@ -84,7 +95,18 @@ export const SongCard = ({ song, onEdit, onDelete }: SongCardProps) => {
 
   return (
     <>
-      <Card className="shadow-md hover:shadow-lg transition-all animate-fade-in overflow-hidden">
+      <Card className={`shadow-md hover:shadow-lg transition-all animate-fade-in overflow-hidden relative ${
+        selectionMode && isSelected ? "ring-2 ring-primary shadow-lg" : ""
+      }`}>
+        {selectionMode && (
+          <div className="absolute top-2 right-2 z-10">
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={() => onToggleSelection?.(song.id)}
+              className="bg-background shadow-md h-5 w-5"
+            />
+          </div>
+        )}
         {song.score_file_url && (
           <div 
             className="relative h-32 bg-muted cursor-pointer group"
