@@ -10,6 +10,7 @@ import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
+import { NotionImportDialog } from "@/components/NotionImportDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -28,6 +29,7 @@ const SongLibrary = () => {
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
+  const [isNotionImportOpen, setIsNotionImportOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
 
   const { data: songs, isLoading, refetch } = useQuery({
@@ -215,6 +217,15 @@ const SongLibrary = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setIsNotionImportOpen(true)}
+                      className="gap-2 text-xs sm:text-sm"
+                    >
+                      <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{t("songLibrary.importNotion")}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setIsCSVDialogOpen(true)}
                       className="gap-2 text-xs sm:text-sm"
                     >
@@ -351,6 +362,12 @@ const SongLibrary = () => {
       <CSVImportDialog
         open={isCSVDialogOpen}
         onOpenChange={setIsCSVDialogOpen}
+        onImportComplete={() => refetch()}
+      />
+
+      <NotionImportDialog
+        open={isNotionImportOpen}
+        onOpenChange={setIsNotionImportOpen}
         onImportComplete={() => refetch()}
       />
 
