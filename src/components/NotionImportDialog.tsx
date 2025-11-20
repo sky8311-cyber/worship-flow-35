@@ -42,6 +42,7 @@ export function NotionImportDialog({
     songsCreated: 0,
     songsUpdated: 0,
     errors: [] as string[],
+    imageErrors: [] as string[],
   });
 
   // Fetch user's communities
@@ -140,6 +141,7 @@ export function NotionImportDialog({
       songsCreated: 0,
       songsUpdated: 0,
       errors: [] as string[],
+      imageErrors: [] as string[],
     };
 
     for (let i = 0; i < parsedSets.length; i++) {
@@ -167,18 +169,29 @@ export function NotionImportDialog({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    // 1. Upload matched score images
+    // 1. Upload matched score images with detailed error tracking
     const scoreUrls: Record<string, string> = {};
     for (const song of set.songs) {
       if (song.scoreImageRef) {
         const imageFile = matchImageFile(song.scoreImageRef, imageFiles);
-        if (imageFile) {
-          try {
-            const url = await uploadScoreImage(imageFile, song.title);
-            scoreUrls[song.scoreImageRef] = url;
-          } catch (error) {
-            console.error(`Failed to upload image for ${song.title}:`, error);
-          }
+        
+        if (!imageFile) {
+          // Image file not found
+          const errorMsg = `${song.title}: 이미지 파일 "${song.scoreImageRef}"를 찾을 수 없습니다`;
+          results.imageErrors.push(errorMsg);
+          console.warn(`⚠️ ${errorMsg}`);
+          continue;
+        }
+        
+        try {
+          const url = await uploadScoreImage(imageFile, song.title);
+          scoreUrls[song.scoreImageRef] = url;
+          console.log(`✅ Image uploaded for ${song.title}: ${url}`);
+        } catch (error: any) {
+          // Upload failed - record detailed error
+          const errorMsg = `${song.title}: 이미지 업로드 실패 - ${error.message}`;
+          results.imageErrors.push(errorMsg);
+          console.error(`❌ ${errorMsg}`, error);
         }
       }
     }
@@ -225,6 +238,12 @@ export function NotionImportDialog({
   };
 
   const uploadScoreImage = async (file: File, songTitle: string): Promise<string> => {
+    console.log(`📤 Uploading image for "${songTitle}":`, {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+
     const sanitized = songTitle.replace(/[^a-zA-Z0-9가-힣]/g, '_');
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${sanitized}.${fileExt}`;
@@ -233,9 +252,14 @@ export function NotionImportDialog({
       .from('scores')
       .upload(fileName, file);
 
-    if (error) throw error;
+    if (error) {
+      console.error(`❌ Upload failed for "${songTitle}":`, error);
+      throw error;
+    }
 
     const { data } = supabase.storage.from('scores').getPublicUrl(fileName);
+    console.log(`✅ Upload success for "${songTitle}": ${data.publicUrl}`);
+    
     return data.publicUrl;
   };
 
@@ -339,26 +363,33 @@ export function NotionImportDialog({
 
     return (
       <div className="space-y-4">
+        <Alert variant={unmatchedRefs > 0 ? "default" : "default"}>
+          <ImageIcon className="w-4 h-4" />
+          <AlertTitle>이미지 매칭 상태</AlertTitle>
+          <AlertDescription>
+            <div className="space-y-1 text-sm">
+              <div>✅ 매칭됨: {matchedCount}개</div>
+              {unmatchedRefs > 0 && (
+                <div>⚠️ 매칭 안됨: {unmatchedRefs}개</div>
+              )}
+              <div className="text-xs text-muted-foreground mt-2">
+                {totalRefs > 0 ? (
+                  unmatchedRefs > 0 
+                    ? "매칭되지 않은 이미지는 업로드되지 않습니다. 파일명이 Notion MD 파일의 이미지 참조와 일치하는지 확인하세요." 
+                    : "모든 이미지가 매칭되었습니다!"
+                ) : "이미지 참조가 없습니다."}
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+
         <div className="flex items-center justify-between">
           <div className="text-sm">
             <div className="font-semibold">
               {t("songLibrary.notionImport.filesFound", { count: parsedSets.length })}
             </div>
-            <div className="text-muted-foreground">
-              {t("songLibrary.notionImport.imagesMatched", { matched: matchedCount, total: totalRefs })}
-            </div>
           </div>
         </div>
-
-        {unmatchedRefs > 0 && (
-          <Alert variant="default">
-            <AlertCircle className="w-4 h-4" />
-            <AlertTitle>{t("songLibrary.notionImport.someImagesMissing")}</AlertTitle>
-            <AlertDescription>
-              {unmatchedRefs} {t("songLibrary.notionImport.imagesMissing")}
-            </AlertDescription>
-          </Alert>
-        )}
 
         <ScrollArea className="h-[300px] border rounded-md p-4">
           <div className="space-y-3">
@@ -473,13 +504,30 @@ export function NotionImportDialog({
       {importResults.errors.length > 0 && (
         <Alert variant="destructive">
           <AlertCircle className="w-4 h-4" />
-          <AlertTitle>{t("songLibrary.notionImport.errors")}</AlertTitle>
+          <AlertTitle>예배세트 생성 실패</AlertTitle>
           <AlertDescription>
             <ScrollArea className="h-[100px] mt-2">
               {importResults.errors.map((err, i) => (
                 <div key={i} className="text-xs">{err}</div>
               ))}
             </ScrollArea>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {importResults.imageErrors && importResults.imageErrors.length > 0 && (
+        <Alert variant="default">
+          <ImageIcon className="w-4 h-4" />
+          <AlertTitle>⚠️ 이미지 업로드 실패 ({importResults.imageErrors.length}개)</AlertTitle>
+          <AlertDescription>
+            <ScrollArea className="h-[120px] mt-2">
+              {importResults.imageErrors.map((err, i) => (
+                <div key={i} className="text-xs mb-1">{err}</div>
+              ))}
+            </ScrollArea>
+            <p className="text-xs mt-2 text-muted-foreground">
+              💡 악보 이미지는 나중에 Song Library에서 수동으로 업로드할 수 있습니다.
+            </p>
           </AlertDescription>
         </Alert>
       )}
@@ -504,6 +552,7 @@ export function NotionImportDialog({
       songsCreated: 0,
       songsUpdated: 0,
       errors: [],
+      imageErrors: [],
     });
     onOpenChange(false);
   };
