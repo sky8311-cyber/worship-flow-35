@@ -10,17 +10,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Upload, FileText, Image as ImageIcon, CheckCircle, AlertCircle, Youtube, FileImage } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, CheckCircle, AlertCircle, AlertTriangle, Youtube, FileImage } from "lucide-react";
 
 interface NotionImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onImportComplete?: () => void;
+}
+
+interface ValidationIssue {
+  setIndex: number;
+  serviceName: string;
+  type: 'count_mismatch' | 'missing_images';
+  expectedCount?: number;
+  foundCount?: number;
+  expectedSongs?: string[];
+  foundSongs?: string[];
+  unmatchedImages?: string[];
 }
 
 export function NotionImportDialog({
@@ -29,13 +40,14 @@ export function NotionImportDialog({
   onImportComplete,
 }: NotionImportDialogProps) {
   const { t } = useTranslation();
-  const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'complete'>('upload');
+  const [step, setStep] = useState<'upload' | 'validate' | 'preview' | 'importing' | 'complete'>('upload');
   const [uploadType, setUploadType] = useState<'folder' | 'files'>('folder');
   const [allFiles, setAllFiles] = useState<File[]>([]);
   const [mdFiles, setMdFiles] = useState<File[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [parsedSets, setParsedSets] = useState<ParsedNotionSet[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<string>('');
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [importResults, setImportResults] = useState({
     setsCreated: 0,
@@ -85,6 +97,41 @@ export function NotionImportDialog({
     await processFiles(files);
   };
 
+  const validateParsedSets = (sets: ParsedNotionSet[], images: File[]): ValidationIssue[] => {
+    const issues: ValidationIssue[] = [];
+    
+    sets.forEach((set, idx) => {
+      // Check song count mismatch
+      if (set.songsList && set.songsList.length !== set.songs.length) {
+        issues.push({
+          setIndex: idx,
+          serviceName: set.serviceName,
+          type: 'count_mismatch',
+          expectedCount: set.songsList.length,
+          foundCount: set.songs.length,
+          expectedSongs: set.songsList,
+          foundSongs: set.songs.map(s => s.title),
+        });
+      }
+      
+      // Check unmatched images
+      const unmatchedRefs = set.songs
+        .filter(s => s.scoreImageRef && !matchImageFile(s.scoreImageRef, images))
+        .map(s => s.scoreImageRef!);
+        
+      if (unmatchedRefs.length > 0) {
+        issues.push({
+          setIndex: idx,
+          serviceName: set.serviceName,
+          type: 'missing_images',
+          unmatchedImages: unmatchedRefs,
+        });
+      }
+    });
+    
+    return issues;
+  };
+
   const processFiles = async (files: File[]) => {
     setAllFiles(files);
 
@@ -123,7 +170,17 @@ export function NotionImportDialog({
     }
 
     setParsedSets(parsed);
-    setStep('preview');
+    
+    // Validate parsed sets
+    const issues = validateParsedSets(parsed, images);
+    setValidationIssues(issues);
+    
+    if (issues.length > 0) {
+      setStep('validate'); // Go to validation step first
+    } else {
+      setStep('preview'); // Skip validation if no issues
+    }
+    
     toast.success(t("songLibrary.notionImport.parseSuccess", { count: parsed.length }));
   };
 
@@ -280,6 +337,81 @@ export function NotionImportDialog({
       sum + set.songs.filter(s => s.scoreImageRef).length, 0
     );
   };
+
+  const renderValidation = () => (
+    <div className="space-y-4">
+      <Alert variant="destructive">
+        <AlertTriangle className="w-4 h-4" />
+        <AlertTitle>{t("songLibrary.notionImport.validationRequired")}</AlertTitle>
+        <AlertDescription>
+          {t("songLibrary.notionImport.validationIssues", { count: validationIssues.length })}
+        </AlertDescription>
+      </Alert>
+      
+      <ScrollArea className="h-[400px]">
+        {validationIssues.map((issue, idx) => (
+          <Card key={idx} className="p-4 mb-3">
+            <CardHeader className="p-0 pb-3">
+              <CardTitle className="text-sm">{issue.serviceName}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {issue.type === 'count_mismatch' && (
+                <div className="space-y-2">
+                  <div className="text-sm text-destructive">
+                    ⚠️ {t("songLibrary.notionImport.countMismatch")}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <div className="font-semibold">
+                        {t("songLibrary.notionImport.expected", { count: issue.expectedCount })}
+                      </div>
+                      <ul className="list-disc list-inside">
+                        {issue.expectedSongs?.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="font-semibold">
+                        {t("songLibrary.notionImport.found", { count: issue.foundCount })}
+                      </div>
+                      <ul className="list-disc list-inside">
+                        {issue.foundSongs?.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {issue.type === 'missing_images' && (
+                <div className="space-y-2">
+                  <div className="text-sm text-amber-600">
+                    ⚠️ {t("songLibrary.notionImport.missingImages", { count: issue.unmatchedImages?.length })}
+                  </div>
+                  <ul className="list-disc list-inside text-xs">
+                    {issue.unmatchedImages?.map((ref, i) => (
+                      <li key={i}>{ref}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </ScrollArea>
+      
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={() => setStep('upload')}>
+          {t("songLibrary.notionImport.backToEdit")}
+        </Button>
+        <Button onClick={() => setStep('preview')} className="flex-1">
+          {t("songLibrary.notionImport.continueAnyway")}
+        </Button>
+      </div>
+    </div>
+  );
 
   const renderUploadStep = () => (
     <div className="space-y-6">
@@ -565,6 +697,7 @@ export function NotionImportDialog({
         </DialogHeader>
 
         {step === 'upload' && renderUploadStep()}
+        {step === 'validate' && renderValidation()}
         {step === 'preview' && renderPreview()}
         {step === 'importing' && renderImporting()}
         {step === 'complete' && renderComplete()}

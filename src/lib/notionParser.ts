@@ -17,6 +17,23 @@ export interface ParsedSong {
 }
 
 /**
+ * Remove key notation from song title for matching
+ * Handles: "title (F)", "title F", "title F - G", "title (F) - (G)"
+ */
+export function normalizeSongTitle(title: string): string {
+  let normalized = title;
+  
+  // Remove key patterns: (F), F, F - G, (F) - (G), etc.
+  // Pattern: optional paren, key letter, optional #/b, optional paren, optional transition
+  normalized = normalized.replace(/\s*\(?[A-G](#|b)?\)?\s*(-\s*\(?[A-G](#|b)?\)?)?$/i, '');
+  
+  // Remove any remaining trailing parentheses or dashes
+  normalized = normalized.replace(/[\s\-\(\)]+$/, '');
+  
+  return normalized.trim();
+}
+
+/**
  * Normalize filename to handle URL encoding
  * Handles both single and double URL encoding for Korean characters
  */
@@ -43,6 +60,7 @@ export function normalizeFilename(filename: string): string {
 
 /**
  * Match an image file by comparing normalized filenames
+ * Uses cascading match strategy for better matching
  */
 export function matchImageFile(
   imageRef: string,
@@ -50,20 +68,41 @@ export function matchImageFile(
 ): File | undefined {
   const normalizedRef = normalizeFilename(imageRef).toLowerCase();
   
-  return imageFiles.find(file => {
+  // Try multiple matching strategies in order of specificity
+  
+  // 1. Exact match
+  let match = imageFiles.find(file => {
     const normalizedFileName = normalizeFilename(file.name).toLowerCase();
-    
-    // Exact match
-    if (normalizedFileName === normalizedRef) {
-      return true;
-    }
-    
-    // Match without path prefix (e.g., "folder/image.png" -> "image.png")
-    const refBasename = normalizedRef.split('/').pop() || normalizedRef;
+    return normalizedFileName === normalizedRef;
+  });
+  if (match) return match;
+  
+  // 2. Match without path prefix
+  const refBasename = normalizedRef.split('/').pop() || normalizedRef;
+  match = imageFiles.find(file => {
+    const normalizedFileName = normalizeFilename(file.name).toLowerCase();
     const fileBasename = normalizedFileName.split('/').pop() || normalizedFileName;
-    
     return fileBasename === refBasename;
   });
+  if (match) return match;
+  
+  // 3. Match without file extension
+  const refWithoutExt = refBasename.replace(/\.(jpg|jpeg|png|pdf|webp)$/i, '');
+  match = imageFiles.find(file => {
+    const fileBasename = normalizeFilename(file.name).toLowerCase().split('/').pop() || '';
+    const fileWithoutExt = fileBasename.replace(/\.(jpg|jpeg|png|pdf|webp)$/i, '');
+    return fileWithoutExt === refWithoutExt;
+  });
+  if (match) return match;
+  
+  // 4. Fuzzy match: contains the ref string (for Notion UUID prefixes)
+  match = imageFiles.find(file => {
+    const fileBasename = normalizeFilename(file.name).toLowerCase().split('/').pop() || '';
+    const fileWithoutExt = fileBasename.replace(/\.(jpg|jpeg|png|pdf|webp)$/i, '');
+    return fileWithoutExt.includes(refWithoutExt) || refWithoutExt.includes(fileWithoutExt);
+  });
+  
+  return match;
 }
 
 /**
@@ -130,10 +169,13 @@ function extractMetadata(lines: string[]): { date?: string; area?: string; songs
     if (line.startsWith('Area:') || line.startsWith('분야:')) {
       metadata.area = line.replace(/^(Area:|분야:)/, '').trim().replace('@', '');
     }
-    // Extract Songs list
+    // Extract Songs list and normalize titles
     if (line.startsWith('Songs:') || line.startsWith('노래:')) {
       const songsStr = line.replace(/^(Songs:|노래:)/, '').trim();
-      metadata.songsList = songsStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      metadata.songsList = songsStr
+        .split(',')
+        .map(s => normalizeSongTitle(s.trim()))
+        .filter(s => s.length > 0);
     }
   }
   
@@ -251,8 +293,8 @@ function parseSongs(lines: string[]): ParsedSong[] {
     
     // If we found a song title, save previous and start new
     if (songTitle) {
-      // Bold already stripped, just trim
-      songTitle = songTitle.trim();
+      // Bold already stripped, normalize title
+      songTitle = normalizeSongTitle(songTitle.trim());
       
       // Save previous song if exists
       if (currentSong?.title) {
