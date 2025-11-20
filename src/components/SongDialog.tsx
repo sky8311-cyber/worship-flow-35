@@ -250,15 +250,15 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </div>
           </div>
 
-          <div className="border-4 border-red-500 p-4 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-            <Label htmlFor="category" className="text-lg font-bold">
-              {t("songDialog.category")} ⬇️ 여기 클릭하세요
+          <div>
+            <Label htmlFor="category">
+              {t("songDialog.category")}
             </Label>
             <Select value={formData.category || "uncategorized"} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger className="bg-white dark:bg-gray-800 border-2 border-input h-12 mt-2">
+              <SelectTrigger>
                 <SelectValue placeholder={t("songLibrary.selectCategory")} />
               </SelectTrigger>
-              <SelectContent className="bg-white dark:bg-gray-800 border-2 border-border z-[100]">
+              <SelectContent className="bg-popover z-50">
                 <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
                 <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
                 <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
