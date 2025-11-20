@@ -250,6 +250,23 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="category">{t("songDialog.category")}</Label>
+            <Select value={formData.category || "uncategorized"} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("songLibrary.selectCategory")} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
+                <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
+                <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
+                <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
+                <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
+                <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="key">{t("songDialog.key")}</Label>
@@ -282,35 +299,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="energy_level">{t("songDialog.energyLevel")} (1-5)</Label>
-              <Input
-                id="energy_level"
-                type="number"
-                min="1"
-                max="5"
-                value={formData.energy_level}
-                onChange={(e) => setFormData({ ...formData, energy_level: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="category">{t("songDialog.category")}</Label>
-              <Select value={formData.category || "uncategorized"} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
-                  <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
-                  <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
-                  <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
-                  <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
-                  <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="energy_level">{t("songDialog.energyLevel")} (1-5)</Label>
+            <Input
+              id="energy_level"
+              type="number"
+              min="1"
+              max="5"
+              value={formData.energy_level}
+              onChange={(e) => setFormData({ ...formData, energy_level: e.target.value })}
+            />
           </div>
 
           <div>
