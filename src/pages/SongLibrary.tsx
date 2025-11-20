@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
+import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -23,17 +24,16 @@ const SongLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("title-asc");
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
 
   const { data: songs, isLoading, refetch } = useQuery({
-    queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage],
+    queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
     queryFn: async () => {
-      let query = supabase
-        .from("songs")
-        .select("*")
-        .order("title");
+      let query = supabase.from("songs").select("*");
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`);
@@ -49,6 +49,27 @@ const SongLibrary = () => {
 
       if (selectedLanguage !== "all") {
         query = query.eq("language", selectedLanguage);
+      }
+
+      // Apply sorting
+      switch (sortBy) {
+        case "title-asc":
+          query = query.order("title", { ascending: true });
+          break;
+        case "title-desc":
+          query = query.order("title", { ascending: false });
+          break;
+        case "recent":
+          query = query.order("created_at", { ascending: false });
+          break;
+        case "artist":
+          query = query.order("artist", { ascending: true, nullsFirst: false });
+          break;
+        case "bpm":
+          query = query.order("bpm", { ascending: false, nullsFirst: false });
+          break;
+        default:
+          query = query.order("title");
       }
 
       const { data, error } = await query;
@@ -168,29 +189,51 @@ const SongLibrary = () => {
                 <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
-              {isWorshipLeader && (
-                <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-1 border rounded-md p-1">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsCSVDialogOpen(true)}
-                    className="gap-2 flex-1 sm:flex-initial text-xs sm:text-sm"
+                    variant={viewMode === "card" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("card")}
+                    className="h-8 w-8"
+                    title={t("songLibrary.viewMode.card")}
                   >
-                    <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
+                    <LayoutGrid className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportCSV}
-                    disabled={!songs || songs.length === 0}
-                    className="gap-2 flex-1 sm:flex-initial text-xs sm:text-sm"
+                    variant={viewMode === "table" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("table")}
+                    className="h-8 w-8"
+                    title={t("songLibrary.viewMode.table")}
                   >
-                    <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
+                    <LayoutList className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
+                {isWorshipLeader && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCSVDialogOpen(true)}
+                      className="gap-2 text-xs sm:text-sm"
+                    >
+                      <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      disabled={!songs || songs.length === 0}
+                      className="gap-2 text-xs sm:text-sm"
+                    >
+                      <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -203,7 +246,7 @@ const SongLibrary = () => {
                 className="pl-10"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("songLibrary.selectCategory")} />
@@ -230,6 +273,19 @@ const SongLibrary = () => {
                   <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("songLibrary.sortBy")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="title-asc">{t("songLibrary.sortOptions.titleAsc")}</SelectItem>
+                  <SelectItem value="title-desc">{t("songLibrary.sortOptions.titleDesc")}</SelectItem>
+                  <SelectItem value="recent">{t("songLibrary.sortOptions.recentlyAdded")}</SelectItem>
+                  <SelectItem value="artist">{t("songLibrary.sortOptions.artist")}</SelectItem>
+                  <SelectItem value="bpm">{t("songLibrary.sortOptions.bpm")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -237,16 +293,24 @@ const SongLibrary = () => {
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">{t("common.loading")}</div>
         ) : songs && songs.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {songs.map((song) => (
-              <SongCard
-                key={song.id}
-                song={song}
-                onEdit={isWorshipLeader ? handleEditSong : undefined}
-                onDelete={isWorshipLeader ? () => refetch() : undefined}
-              />
-            ))}
-          </div>
+          viewMode === "table" ? (
+            <SongTable
+              songs={songs}
+              onEdit={isWorshipLeader ? handleEditSong : undefined}
+              onDelete={isWorshipLeader ? () => refetch() : undefined}
+            />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {songs.map((song) => (
+                <SongCard
+                  key={song.id}
+                  song={song}
+                  onEdit={isWorshipLeader ? handleEditSong : undefined}
+                  onDelete={isWorshipLeader ? () => refetch() : undefined}
+                />
+              ))}
+            </div>
+          )
         ) : (
           <Card className="shadow-md">
             <CardContent className="text-center py-12">
