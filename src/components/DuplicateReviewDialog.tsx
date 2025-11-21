@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,7 @@ const STORAGE_KEY = "k-worship-duplicate-progress";
 
 export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }: DuplicateReviewDialogProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [highConfidenceGroups, setHighConfidenceGroups] = useState<DuplicateGroup[]>([]);
   const [mediumConfidenceGroups, setMediumConfidenceGroups] = useState<DuplicateGroup[]>([]);
@@ -212,6 +214,60 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
       ...prev,
       [songId]: status
     }));
+  };
+
+  const handleProcessSingleGroup = async (groupId: string) => {
+    const group = highConfidenceGroups.find(g => g.id === groupId);
+    if (!group) return;
+
+    const songsToKeep = group.songs.filter(s => keepDeleteStates[s.id] === 'keep');
+    const songsToDelete = group.songs.filter(s => keepDeleteStates[s.id] === 'delete');
+
+    if (songsToKeep.length === 0) {
+      toast.error(t("songLibrary.duplicateReview.mustKeepAtLeastOne"));
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const keepSongId = songsToKeep[0].id;
+      const deleteIds = songsToDelete.map(s => s.id);
+
+      if (deleteIds.length > 0) {
+        // Update set_songs references
+        for (const deleteId of deleteIds) {
+          await supabase
+            .from("set_songs")
+            .update({ song_id: keepSongId })
+            .eq("song_id", deleteId);
+        }
+
+        // Delete songs
+        const { error } = await supabase
+          .from("songs")
+          .delete()
+          .in("id", deleteIds);
+
+        if (error) throw error;
+      }
+
+      // Remove this group from UI
+      setHighConfidenceGroups(prev => 
+        prev.filter(g => g.id !== groupId)
+      );
+
+      toast.success(t("songLibrary.duplicateReview.processGroupSummary", { 
+        kept: songsToKeep.length, 
+        deleted: deleteIds.length 
+      }));
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+    } catch (error) {
+      console.error("Error processing group:", error);
+      toast.error(t("songLibrary.duplicateReview.mergeError"));
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleBatchDelete = async () => {
@@ -943,6 +999,19 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                   </div>
                                 );
                               })}
+                            </div>
+
+                            {/* Individual Process Button */}
+                            <div className="flex justify-end pt-3 mt-3 border-t">
+                              <Button
+                                onClick={() => handleProcessSingleGroup(group.id)}
+                                disabled={isProcessing}
+                                variant="default"
+                                size="sm"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {t("songLibrary.duplicateReview.processSingleGroup")}
+                              </Button>
                             </div>
                           </div>
                         </div>
