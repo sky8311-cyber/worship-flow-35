@@ -44,7 +44,7 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
 
   return (
     <>
-      <Card className="sticky top-20">
+      <Card className="md:sticky md:top-20">
         <CardContent className="p-6">
           {/* Avatar + Edit Icon */}
           <div className="relative group">
@@ -129,15 +129,6 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
               label={t("profile.collabs")}
             />
           </div>
-
-          {/* View Profile Button */}
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={() => navigate("/profile")}
-          >
-            {t("profile.viewProfile")}
-          </Button>
         </CardContent>
       </Card>
 
