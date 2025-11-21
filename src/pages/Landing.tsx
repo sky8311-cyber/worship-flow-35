@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { LandingVision } from "@/components/landing/LandingVision";
+import { LandingIntro } from "@/components/landing/LandingIntro";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
-import { LandingTeam } from "@/components/landing/LandingTeam";
+import { LandingCommunity } from "@/components/landing/LandingCommunity";
 import { LandingWaitlist } from "@/components/landing/LandingWaitlist";
 import { LandingFAQ } from "@/components/landing/LandingFAQ";
 import { LandingFooter } from "@/components/landing/LandingFooter";
@@ -33,10 +33,10 @@ const Landing = () => {
     <div className="min-h-screen bg-background">
       <LandingNav />
       <LandingHero />
-      <LandingVision />
+      <LandingIntro />
       <LandingFeatures />
       <LandingHowItWorks />
-      <LandingTeam />
+      <LandingCommunity />
       <LandingWaitlist />
       <LandingFAQ />
       <LandingFooter />

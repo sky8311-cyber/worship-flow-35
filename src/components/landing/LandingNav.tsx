@@ -11,11 +11,11 @@ export const LandingNav = () => {
   const scrolled = useScrollObserver(50);
 
   const navItems = [
-    { label: "비전", id: "vision" },
-    { label: "기능 소개", id: "features" },
+    { label: "소개", id: "intro" },
+    { label: "주요 기능", id: "features" },
     { label: "어떻게 쓰이나요", id: "how-it-works" },
-    { label: "워십리더와 팀", id: "team" },
-    { label: "자주 묻는 질문", id: "faq" },
+    { label: "워십리더 커뮤니티", id: "community" },
+    { label: "FAQ", id: "faq" },
   ];
 
   const handleNavClick = (id: string) => {
@@ -27,7 +27,7 @@ export const LandingNav = () => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-background/80 backdrop-blur-md border-b border-border"
+          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-sm"
           : "bg-transparent"
       }`}
     >
@@ -53,7 +53,7 @@ export const LandingNav = () => {
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
               >
                 {item.label}
               </button>
@@ -88,7 +88,7 @@ export const LandingNav = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background border-b border-border"
+            className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border"
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {navItems.map((item) => (
