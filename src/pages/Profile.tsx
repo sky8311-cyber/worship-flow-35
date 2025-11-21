@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Settings, MapPin, Instagram, Youtube } from "lucide-react";
+import { Settings, MapPin, Instagram, Youtube, ArrowLeft, Home } from "lucide-react";
 
 export default function Profile() {
   const { userId } = useParams();
@@ -92,6 +92,25 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("common.backToDashboard")}
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Home className="h-4 w-4" />
+            <span>/</span>
+            <span>{t("profile.title")}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Cover Image */}
       <div className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/10">
         {profile.cover_image_url && (

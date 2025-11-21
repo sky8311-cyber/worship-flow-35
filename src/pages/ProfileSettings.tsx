@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Instagram, Youtube } from "lucide-react";
+import { ArrowLeft, Instagram, Youtube, Home } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { CoverImageUpload } from "@/components/profile/CoverImageUpload";
 
@@ -44,7 +44,7 @@ export default function ProfileSettings() {
   const [youtubeUrl, setYoutubeUrl] = useState(profile?.youtube_url || "");
 
   // Update state when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || "");
       setPhone(profile.phone || "");
@@ -55,7 +55,7 @@ export default function ProfileSettings() {
       setInstagramUrl(profile.instagram_url || "");
       setYoutubeUrl(profile.youtube_url || "");
     }
-  });
+  }, [profile]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -89,17 +89,28 @@ export default function ProfileSettings() {
   });
 
   return (
-    <div className="min-h-screen container mx-auto py-8 px-4 max-w-3xl">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={() => navigate("/profile")}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        {t("common.back")}
-      </Button>
+    <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <div className="bg-background border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/dashboard")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t("common.backToDashboard")}
+          </Button>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Home className="h-4 w-4" />
+            <span>/</span>
+            <span>{t("profile.settings")}</span>
+          </div>
+        </div>
+      </div>
 
-      <h1 className="text-3xl font-bold mb-8">{t("profile.settings")}</h1>
+      <div className="container mx-auto py-8 px-4 max-w-3xl">
+        <h1 className="text-3xl font-bold mb-8">{t("profile.settings")}</h1>
 
       <div className="space-y-6">
         {/* Cover Image */}
@@ -259,6 +270,7 @@ export default function ProfileSettings() {
         >
           {updateMutation.isPending ? t("profile.saving") : t("profile.saveChanges")}
         </Button>
+      </div>
       </div>
     </div>
   );
