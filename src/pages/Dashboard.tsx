@@ -7,20 +7,8 @@ import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home } from "lucid
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -39,130 +27,147 @@ import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSideba
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingServicesWidget } from "@/components/dashboard/UpcomingServicesWidget";
 import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { t, language } = useTranslation();
-  const { isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, signOut, profile, user } = useAuth();
+  const {
+    t,
+    language
+  } = useTranslation();
+  const {
+    isAdmin,
+    isWorshipLeader,
+    isCommunityLeaderInAnyCommunity,
+    signOut,
+    profile,
+    user
+  } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
-
   const handleLogout = async () => {
     await signOut();
     toast.success(t("dashboard.logout"));
     navigate("/login");
   };
-
-  const { data: upcomingSets, isLoading } = useQuery({
+  const {
+    data: upcomingSets,
+    isLoading
+  } = useQuery({
     queryKey: ["upcoming-sets"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("service_sets")
-        .select("*")
-        .gte("date", new Date().toISOString().split("T")[0])
-        .order("date", { ascending: true })
-        .limit(10);
-
+      const {
+        data,
+        error
+      } = await supabase.from("service_sets").select("*").gte("date", new Date().toISOString().split("T")[0]).order("date", {
+        ascending: true
+      }).limit(10);
       if (error) throw error;
       return data;
-    },
+    }
   });
-
-  const { data: songsCount } = useQuery({
+  const {
+    data: songsCount
+  } = useQuery({
     queryKey: ["songs-count"],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("songs")
-        .select("*", { count: "exact", head: true });
-
+      const {
+        count,
+        error
+      } = await supabase.from("songs").select("*", {
+        count: "exact",
+        head: true
+      });
       if (error) throw error;
       return count;
-    },
+    }
   });
 
   // Fetch joined communities
-  const { data: joinedCommunities } = useQuery({
+  const {
+    data: joinedCommunities
+  } = useQuery({
     queryKey: ["joined-communities", user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
-      const { data: memberData, error } = await supabase
-        .from("community_members")
-        .select("community_id")
-        .eq("user_id", user.id);
-
+      const {
+        data: memberData,
+        error
+      } = await supabase.from("community_members").select("community_id").eq("user_id", user.id);
       if (error) throw error;
       if (!memberData || memberData.length === 0) return [];
-
-      const communityIds = memberData.map((m) => m.community_id);
-
-      const { data: communities, error: communitiesError } = await supabase
-        .from("worship_communities")
-        .select("id, name, avatar_url")
-        .in("id", communityIds);
-
+      const communityIds = memberData.map(m => m.community_id);
+      const {
+        data: communities,
+        error: communitiesError
+      } = await supabase.from("worship_communities").select("id, name, avatar_url").in("id", communityIds);
       if (communitiesError) throw communitiesError;
 
       // Fetch member counts
-      const communitiesWithDetails = await Promise.all(
-        communities.map(async (community) => {
-          const { count } = await supabase
-            .from("community_members")
-            .select("*", { count: "exact", head: true })
-            .eq("community_id", community.id);
-
-          return {
-            ...community,
-            memberCount: count || 0,
-          };
-        })
-      );
-
+      const communitiesWithDetails = await Promise.all(communities.map(async community => {
+        const {
+          count
+        } = await supabase.from("community_members").select("*", {
+          count: "exact",
+          head: true
+        }).eq("community_id", community.id);
+        return {
+          ...community,
+          memberCount: count || 0
+        };
+      }));
       return communitiesWithDetails;
     },
-    enabled: !!user,
+    enabled: !!user
   });
 
   // Fetch user stats for profile card
-  const { data: userStats } = useQuery({
+  const {
+    data: userStats
+  } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async () => {
-      if (!user) return { sets: 0, communities: 0, collaborations: 0 };
+      if (!user) return {
+        sets: 0,
+        communities: 0,
+        collaborations: 0
+      };
 
       // Count created sets
-      const { count: setsCount } = await supabase
-        .from("service_sets")
-        .select("*", { count: "exact", head: true })
-        .eq("created_by", user.id);
+      const {
+        count: setsCount
+      } = await supabase.from("service_sets").select("*", {
+        count: "exact",
+        head: true
+      }).eq("created_by", user.id);
 
       // Count joined communities
-      const { count: communitiesCount } = await supabase
-        .from("community_members")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      const {
+        count: communitiesCount
+      } = await supabase.from("community_members").select("*", {
+        count: "exact",
+        head: true
+      }).eq("user_id", user.id);
 
       // Count collaborations
-      const { count: collaborationsCount } = await supabase
-        .from("set_collaborators")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
+      const {
+        count: collaborationsCount
+      } = await supabase.from("set_collaborators").select("*", {
+        count: "exact",
+        head: true
+      }).eq("user_id", user.id);
       return {
         sets: setsCount || 0,
         communities: communitiesCount || 0,
-        collaborations: collaborationsCount || 0,
+        collaborations: collaborationsCount || 0
       };
     },
-    enabled: !!user,
+    enabled: !!user
   });
-
-  return (
-    <div className="min-h-screen bg-gradient-soft">
+  return <div className="min-h-screen bg-gradient-soft">
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -182,23 +187,17 @@ const Dashboard = () => {
             
             {/* Center: Logo */}
             <Link to="/dashboard" className="justify-self-center col-start-2">
-              <img 
-                src={logo} 
-                alt="K-Worship" 
-                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
-              />
+              <img src={logo} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
             </Link>
             
             {/* Right: Navigation Items */}
             <div className="justify-self-end flex items-center gap-2 sm:gap-3">
               <LanguageToggle />
-              {isAdmin && (
-                <Button variant="ghost" size="icon" asChild>
+              {isAdmin && <Button variant="ghost" size="icon" asChild>
                   <Link to="/admin">
                     <Shield className="h-5 w-5" />
                   </Link>
-                </Button>
-              )}
+                </Button>}
               
               {/* Profile Dropdown */}
               <DropdownMenu>
@@ -220,26 +219,18 @@ const Dashboard = () => {
                       
                       {/* Role Badges */}
                       <div className="flex gap-1 flex-wrap">
-                        {isAdmin && (
-                          <Badge variant="destructive" className="text-xs">
+                        {isAdmin && <Badge variant="destructive" className="text-xs">
                             {t("roles.admin")}
-                          </Badge>
-                        )}
-                        {isWorshipLeader && (
-                          <Badge className="text-xs bg-purple-500 hover:bg-purple-600">
+                          </Badge>}
+                        {isWorshipLeader && <Badge className="text-xs bg-purple-500 hover:bg-purple-600">
                             {t("roles.worshipLeader")}
-                          </Badge>
-                        )}
-                        {isCommunityLeaderInAnyCommunity && (
-                          <Badge className="text-xs bg-blue-500 hover:bg-blue-600">
+                          </Badge>}
+                        {isCommunityLeaderInAnyCommunity && <Badge className="text-xs bg-blue-500 hover:bg-blue-600">
                             {t("roles.communityLeader")}
-                          </Badge>
-                        )}
-                        {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && (
-                          <Badge variant="outline" className="text-xs">
+                          </Badge>}
+                        {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && <Badge variant="outline" className="text-xs">
                             {t("roles.member")}
-                          </Badge>
-                        )}
+                          </Badge>}
                       </div>
                     </div>
                   </DropdownMenuLabel>
@@ -283,8 +274,7 @@ const Dashboard = () => {
                       <Music className="w-5 h-5" />
                       <CardTitle className="text-lg">{t("dashboard.upcomingSets")}</CardTitle>
                     </div>
-                    {canCreateSets && (
-                      <div className="flex gap-2">
+                    {canCreateSets && <div className="flex gap-2">
                         <Button size="sm" onClick={() => navigate("/set-builder")}>
                           <Plus className="w-4 h-4 mr-1" />
                           {t("dashboard.createNewSet")}
@@ -293,61 +283,43 @@ const Dashboard = () => {
                           <Upload className="w-4 h-4 mr-1" />
                           {t("common.import")}
                         </Button>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {isLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
-                  ) : upcomingSets && upcomingSets.length > 0 ? (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {upcomingSets.slice(0, 4).map((set) => (
-                        <Link key={set.id} to={`/set-builder/${set.id}`}>
+                  {isLoading ? <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div> : upcomingSets && upcomingSets.length > 0 ? <div className="grid gap-3 md:grid-cols-2">
+                      {upcomingSets.slice(0, 4).map(set => <Link key={set.id} to={`/set-builder/${set.id}`}>
                           <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <h3 className="font-semibold text-sm truncate">{set.service_name}</h3>
                               <Badge variant="secondary" className="shrink-0 text-xs">
                                 <Calendar className="w-3 h-3 mr-1" />
-                                {format(new Date(set.date), "M/d", { locale: dateLocale })}
+                                {format(new Date(set.date), "M/d", {
+                            locale: dateLocale
+                          })}
                               </Badge>
                             </div>
-                            {set.worship_leader && (
-                              <p className="text-xs text-muted-foreground truncate">
+                            {set.worship_leader && <p className="text-xs text-muted-foreground truncate">
                                 {set.worship_leader}
-                              </p>
-                            )}
-                            {set.theme && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              </p>}
+                            {set.theme && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                 {set.theme}
-                              </p>
-                            )}
+                              </p>}
                           </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
+                        </Link>)}
+                    </div> : <div className="text-center py-12">
                       <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-4">{t("dashboard.noUpcoming")}</p>
-                      {canCreateSets && (
-                        <Button onClick={() => navigate("/set-builder")}>
+                      {canCreateSets && <Button onClick={() => navigate("/set-builder")}>
                           <Plus className="w-4 h-4 mr-2" />
                           {t("dashboard.createFirst")}
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                        </Button>}
+                    </div>}
                 </CardContent>
               </Card>
 
               {/* Song Library Widget - 1 column (Admin/Worship Leader only) */}
-              {(isAdmin || isWorshipLeader) && (
-                <SongLibraryWidget 
-                  onAddSong={() => setAddSongOpen(true)}
-                  onImport={() => setImportSetOpen(true)}
-                />
-              )}
+              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => setImportSetOpen(true)} />}
             </div>
 
             {/* Community Feed */}
@@ -391,34 +363,28 @@ const Dashboard = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{t("dashboard.upcomingSets")}</CardTitle>
-                  {canCreateSets && (
-                    <Button size="sm" onClick={() => navigate("/set-builder")}>
+                  {canCreateSets && <Button size="sm" onClick={() => navigate("/set-builder")}>
                       <Plus className="w-4 h-4" />
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
               </CardHeader>
               <CardContent>
-                {upcomingSets && upcomingSets.length > 0 ? (
-                  <div className="space-y-3">
-                    {upcomingSets.slice(0, 5).map((set) => (
-                      <Link key={set.id} to={`/set-builder/${set.id}`}>
+                {upcomingSets && upcomingSets.length > 0 ? <div className="space-y-3">
+                    {upcomingSets.slice(0, 5).map(set => <Link key={set.id} to={`/set-builder/${set.id}`}>
                         <div className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <h3 className="font-semibold text-sm truncate">{set.service_name}</h3>
                               <p className="text-xs text-muted-foreground">
-                                {format(new Date(set.date), "M/d (EEE)", { locale: dateLocale })}
+                                {format(new Date(set.date), "M/d (EEE)", {
+                            locale: dateLocale
+                          })}
                               </p>
                             </div>
                           </div>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-8">{t("dashboard.noUpcoming")}</p>
-                )}
+                      </Link>)}
+                  </div> : <p className="text-sm text-muted-foreground text-center py-8">{t("dashboard.noUpcoming")}</p>}
               </CardContent>
             </Card>
 
@@ -445,27 +411,22 @@ const Dashboard = () => {
         </Tabs>
       </main>
 
-      <SetImportDialog 
-        open={importSetOpen} 
-        onOpenChange={setImportSetOpen}
-        onImportComplete={() => {
-          queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-          setImportSetOpen(false);
-        }}
-      />
+      <SetImportDialog open={importSetOpen} onOpenChange={setImportSetOpen} onImportComplete={() => {
+      queryClient.invalidateQueries({
+        queryKey: ["upcoming-sets"]
+      });
+      setImportSetOpen(false);
+    }} />
 
-      <SongDialog
-        open={addSongOpen}
-        onOpenChange={setAddSongOpen}
-        song={null}
-        onClose={() => {
-          setAddSongOpen(false);
-          queryClient.invalidateQueries({ queryKey: ["songs-count"] });
-          queryClient.invalidateQueries({ queryKey: ["recent-songs"] });
-        }}
-      />
-    </div>
-  );
+      <SongDialog open={addSongOpen} onOpenChange={setAddSongOpen} song={null} onClose={() => {
+      setAddSongOpen(false);
+      queryClient.invalidateQueries({
+        queryKey: ["songs-count"]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["recent-songs"]
+      });
+    }} />
+    </div>;
 };
-
 export default Dashboard;
