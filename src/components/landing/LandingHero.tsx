@@ -41,9 +41,11 @@ export const LandingHero = () => {
           {/* Left content */}
           <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="text-center lg:text-left">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              
+              <span className="bg-gradient-to-r from-primary via-primary/80 to-secondary bg-clip-text text-transparent">
+                예배 공동체를 위한,
+              </span>
               <br />
-              <span className="text-foreground">예배팀 통합 플랫폼</span>
+              <span className="text-foreground">워십리더 통합 플랫폼</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-6 leading-relaxed">
