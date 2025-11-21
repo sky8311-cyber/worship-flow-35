@@ -38,7 +38,7 @@ export const AdminNav = () => {
           <img 
             src={logo} 
             alt="K-Worship" 
-            className="h-8 w-auto"
+            className="h-16 w-auto"
           />
           <Link 
             to="/dashboard"

@@ -161,16 +161,12 @@ const Dashboard = () => {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <img 
                 src={logo} 
                 alt="K-Worship" 
-                className="h-10 w-auto"
+                className="h-20 w-auto"
               />
-              <div>
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">{t("dashboard.subtitle")}</p>
-              </div>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <LanguageToggle />
