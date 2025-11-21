@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
+import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -36,6 +37,7 @@ const SongLibrary = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [editedSongs, setEditedSongs] = useState<Record<string, any>>({});
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
@@ -368,6 +370,16 @@ const SongLibrary = () => {
                       <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsDuplicateDialogOpen(true)}
+                      disabled={!songs || songs.length < 2}
+                      className="gap-2 text-xs sm:text-sm"
+                    >
+                      <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">{t("songLibrary.findDuplicates")}</span>
+                    </Button>
                   </>
                 )}
               </div>
@@ -504,6 +516,16 @@ const SongLibrary = () => {
         open={isCSVDialogOpen}
         onOpenChange={setIsCSVDialogOpen}
         onImportComplete={() => refetch()}
+      />
+
+      <DuplicateReviewDialog
+        open={isDuplicateDialogOpen}
+        onClose={() => setIsDuplicateDialogOpen(false)}
+        songs={songs || []}
+        onMergeComplete={() => {
+          refetch();
+          setIsDuplicateDialogOpen(false);
+        }}
       />
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
