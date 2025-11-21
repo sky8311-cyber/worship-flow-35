@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Users, Search } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Users, Search, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -12,13 +12,16 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
+import { SetImportDialog } from "@/components/SetImportDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader, signOut, profile, user } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importSetOpen, setImportSetOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -208,13 +211,23 @@ const Dashboard = () => {
                 {upcomingSets?.length || 0}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.servicesScheduled")}</p>
-              <Button 
-                onClick={() => navigate("/set-builder")}
-                className="w-full mt-4"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {t("dashboard.createNewSet")}
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => navigate("/set-builder")}
+                  className="w-full mt-4"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {t("dashboard.createNewSet")}
+                </Button>
+                <Button
+                  onClick={() => setImportSetOpen(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {t("dashboard.importWorshipSet")}
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
@@ -382,6 +395,14 @@ const Dashboard = () => {
       </main>
 
       <CreateCommunityDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      
+      <SetImportDialog
+        open={importSetOpen}
+        onOpenChange={setImportSetOpen}
+        onImportComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+        }}
+      />
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden z-50">
         <div className="flex justify-around py-3">
