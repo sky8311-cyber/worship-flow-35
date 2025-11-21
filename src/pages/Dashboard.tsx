@@ -3,7 +3,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Users, Search, Upload } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Users, Search, Upload, User, Settings } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -152,32 +161,50 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            {profile?.full_name && (
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {profile.full_name}
-              </span>
-            )}
             <LanguageToggle />
             {isAdmin && (
-              <Button
-                variant="ghost"
-                size="icon"
-                asChild
-                title={t("dashboard.adminMenu")}
-              >
+              <Button variant="ghost" size="icon" asChild>
                 <Link to="/admin">
                   <Shield className="h-5 w-5" />
                 </Link>
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              title={t("dashboard.logout")}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+            
+            {/* Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar>
+                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{profile?.full_name || t("profile.title")}</p>
+                    <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  {t("profile.viewProfile")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile/settings")}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t("profile.settings")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t("auth.logout")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           </div>
         </div>
