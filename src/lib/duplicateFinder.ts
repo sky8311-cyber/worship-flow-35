@@ -9,8 +9,6 @@ export interface DuplicateGroup {
   confidence: number;
   matchType: MatchType;
   matchReasons: string[];
-  suggestedMaster?: string;
-  userSelectedMaster?: string;
 }
 
 export interface MergeDecision {
@@ -113,8 +111,7 @@ export const findDuplicates = async (songs: any[]): Promise<DuplicateGroup[]> =>
           songs: unprocessed,
           confidence: 100,
           matchType: 'EXACT_URL_MATCH',
-          matchReasons: ['Same YouTube URL'],
-          suggestedMaster: scores[0].song.id
+          matchReasons: ['Same YouTube URL']
         });
         unprocessed.forEach(s => processed.add(s.id));
       }
@@ -155,8 +152,7 @@ export const findDuplicates = async (songs: any[]): Promise<DuplicateGroup[]> =>
         songs: duplicates,
         confidence: 95,
         matchType: 'EXACT_METADATA_MATCH',
-        matchReasons: ['Exact title and artist match'],
-        suggestedMaster: scores[0].song.id
+        matchReasons: ['Exact title and artist match']
       });
       processed.add(song.id);
     }
@@ -206,8 +202,7 @@ export const findDuplicates = async (songs: any[]): Promise<DuplicateGroup[]> =>
         songs: duplicates,
         confidence: avgSimilarity,
         matchType: 'HIGH_SIMILARITY',
-        matchReasons: [`${avgSimilarity}% title and artist similarity`],
-        suggestedMaster: scores[0].song.id
+        matchReasons: [`${avgSimilarity}% title and artist similarity`]
       });
       processed.add(song.id);
     }
@@ -256,8 +251,7 @@ export const findDuplicates = async (songs: any[]): Promise<DuplicateGroup[]> =>
         songs: duplicates,
         confidence: avgSimilarity,
         matchType: 'MEDIUM_SIMILARITY',
-        matchReasons: [`${avgSimilarity}% title and artist similarity`],
-        suggestedMaster: scores[0].song.id
+        matchReasons: [`${avgSimilarity}% title and artist similarity`]
       });
       processed.add(song.id);
     }
