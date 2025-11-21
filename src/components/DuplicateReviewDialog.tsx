@@ -400,6 +400,40 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
               </Button>
             </div>
 
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="border p-2 text-left min-w-[120px]">Field</th>
+                      {currentGroup.songs.map((song, idx) => (
+                        <th key={idx} className="border p-2 text-left">
+                          Song {idx + 1}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderComparisonRow("title", "Title")}
+                    {renderComparisonRow("artist", "Artist")}
+                    {renderComparisonRow("subtitle", "Subtitle")}
+                    {renderComparisonRow("category", "Category")}
+                    {renderComparisonRow("language", "Language")}
+                    {renderComparisonRow("default_key", "Key")}
+                    {renderComparisonRow("bpm", "BPM")}
+                    {renderComparisonRow("time_signature", "Time Signature")}
+                    {renderComparisonRow("energy_level", "Energy Level")}
+                    {renderComparisonRow("tags", "Tags")}
+                    {renderComparisonRow("youtube_url", "YouTube")}
+                    {renderComparisonRow("score_file_url", "Score")}
+                    {renderComparisonRow("interpretation", "Interpretation")}
+                    {renderComparisonRow("notes", "Notes")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.selectToDelete")}</h3>
               
@@ -449,40 +483,6 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                   </AlertDescription>
                 </Alert>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="border p-2 text-left min-w-[120px]">Field</th>
-                      {currentGroup.songs.map((song, idx) => (
-                        <th key={idx} className="border p-2 text-left">
-                          Song {idx + 1}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderComparisonRow("title", "Title")}
-                    {renderComparisonRow("artist", "Artist")}
-                    {renderComparisonRow("subtitle", "Subtitle")}
-                    {renderComparisonRow("category", "Category")}
-                    {renderComparisonRow("language", "Language")}
-                    {renderComparisonRow("default_key", "Key")}
-                    {renderComparisonRow("bpm", "BPM")}
-                    {renderComparisonRow("time_signature", "Time Signature")}
-                    {renderComparisonRow("energy_level", "Energy Level")}
-                    {renderComparisonRow("tags", "Tags")}
-                    {renderComparisonRow("youtube_url", "YouTube")}
-                    {renderComparisonRow("score_file_url", "Score")}
-                    {renderComparisonRow("interpretation", "Interpretation")}
-                    {renderComparisonRow("notes", "Notes")}
-                  </tbody>
-                </table>
-              </div>
             </div>
           </div>
 
