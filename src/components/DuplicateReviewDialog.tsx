@@ -429,54 +429,53 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                     {renderComparisonRow("score_file_url", "Score")}
                     {renderComparisonRow("interpretation", "Interpretation")}
                     {renderComparisonRow("notes", "Notes")}
+                    <tr className="bg-muted/30">
+                      <td className="border p-3 font-semibold text-destructive">
+                        {t("songLibrary.duplicateReview.selectToDelete")}
+                      </td>
+                      {currentGroup.songs.map((song, idx) => {
+                        const usage = songUsages.get(song.id) || 0;
+                        return (
+                          <td key={idx} className="border p-3">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-center">
+                                <Checkbox
+                                  id={`delete-${song.id}`}
+                                  checked={selectedToDelete.has(song.id)}
+                                  onCheckedChange={(checked) => {
+                                    const newSet = new Set(selectedToDelete);
+                                    if (checked) {
+                                      newSet.add(song.id);
+                                    } else {
+                                      newSet.delete(song.id);
+                                    }
+                                    setSelectedToDelete(newSet);
+                                  }}
+                                  className="h-5 w-5"
+                                />
+                              </div>
+                              <Label 
+                                htmlFor={`delete-${song.id}`} 
+                                className="text-center block cursor-pointer text-xs font-medium text-destructive"
+                              >
+                                {t("songLibrary.duplicateReview.deleteThisSong")}
+                              </Label>
+                              <Badge variant="outline" className="w-full justify-center text-xs">
+                                {usage > 0
+                                  ? `${t("songLibrary.duplicateReview.usedInSets")}: ${usage}`
+                                  : t("songLibrary.duplicateReview.never")}
+                              </Badge>
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.selectToDelete")}</h3>
-              
-              <div className="grid gap-3">
-                {currentGroup.songs.map((song) => {
-                  const usage = songUsages.get(song.id) || 0;
-                  return (
-                    <div key={song.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50">
-                      <Checkbox
-                        id={`delete-${song.id}`}
-                        checked={selectedToDelete.has(song.id)}
-                        onCheckedChange={(checked) => {
-                          const newSet = new Set(selectedToDelete);
-                          if (checked) {
-                            newSet.add(song.id);
-                          } else {
-                            newSet.delete(song.id);
-                          }
-                          setSelectedToDelete(newSet);
-                        }}
-                      />
-                      <Label htmlFor={`delete-${song.id}`} className="flex-1 cursor-pointer">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-destructive">{t("songLibrary.duplicateReview.deleteThisSong")}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {song.title} {song.artist && `- ${song.artist}`}
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            {usage > 0
-                              ? `${t("songLibrary.duplicateReview.usedInSets")}: ${usage}`
-                              : t("songLibrary.duplicateReview.never")}
-                          </Badge>
-                        </div>
-                      </Label>
-                    </div>
-                  );
-                })}
-              </div>
 
               {remainingSongsCount === 1 && selectedToDelete.size > 0 && (
-                <Alert variant="default" className="border-yellow-500">
+                <Alert variant="default" className="border-yellow-500 mt-4">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
                     Warning: Only 1 song will remain in this group after deletion.
