@@ -16,6 +16,7 @@ interface CSVImportDialogProps {
 
 interface CSVRow {
   title: string;
+  subtitle?: string;
   artist?: string;
   language?: string;
   default_key?: string;
@@ -25,6 +26,8 @@ interface CSVRow {
   category?: string;
   tags?: string;
   youtube_url?: string;
+  score_file_url?: string;
+  interpretation?: string;
   notes?: string;
 }
 
@@ -38,6 +41,14 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   const validateRow = (row: CSVRow, index: number): string | null => {
     if (!row.title || row.title.trim() === "") {
       return t("csvImport.rowError", { row: index + 2, error: t("songDialog.titleRequired") });
+    }
+
+    if (!row.youtube_url || row.youtube_url.trim() === "") {
+      return t("csvImport.rowError", { row: index + 2, error: t("csvImport.youtubeRequired") });
+    }
+
+    if (!row.score_file_url || row.score_file_url.trim() === "") {
+      return t("csvImport.rowError", { row: index + 2, error: t("csvImport.scoreRequired") });
     }
 
     if (row.bpm && isNaN(Number(row.bpm))) {
@@ -89,19 +100,22 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
 
     setImporting(true);
     try {
-      const songsToInsert = csvData.map((row) => ({
-        title: row.title.trim(),
-        artist: row.artist || null,
-        language: row.language || null,
-        default_key: row.default_key || null,
-        bpm: row.bpm ? parseInt(row.bpm) : null,
-        time_signature: row.time_signature || null,
-        energy_level: row.energy_level ? parseInt(row.energy_level) : null,
-        category: row.category || null,
-        tags: row.tags || null,
-        youtube_url: row.youtube_url || null,
-        notes: row.notes || null,
-      }));
+    const songsToInsert = csvData.map((row) => ({
+      title: row.title.trim(),
+      subtitle: row.subtitle?.trim() || null,
+      artist: row.artist || null,
+      language: row.language || null,
+      default_key: row.default_key || null,
+      bpm: row.bpm ? parseInt(row.bpm) : null,
+      time_signature: row.time_signature || null,
+      energy_level: row.energy_level ? parseInt(row.energy_level) : null,
+      category: row.category || null,
+      tags: row.tags || null,
+      youtube_url: row.youtube_url?.trim() || null,
+      score_file_url: row.score_file_url?.trim() || null,
+      interpretation: row.interpretation || null,
+      notes: row.notes || null,
+    }));
 
       const { error } = await supabase.from("songs").insert(songsToInsert);
 
@@ -120,9 +134,10 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   };
 
   const downloadTemplate = () => {
-    const template = `title,artist,language,default_key,bpm,time_signature,energy_level,category,tags,youtube_url,notes
-Amazing Grace,Traditional,EN,G,80,4/4,3,찬양,"grace,worship",https://youtube.com/...,Beautiful hymn
-주 안에 있는 나에게,김명식,KO,D,120,4/4,4,찬양,"은혜,감사",https://youtube.com/...,
+    const template = `title,subtitle,artist,language,default_key,bpm,time_signature,energy_level,category,tags,youtube_url,score_file_url,interpretation,notes
+Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,https://supabase.co/.../score.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn
+주 안에 있는 나에게,,김명식,KO,D,120,4/4,4,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,https://supabase.co/.../score.pdf,주님 안에서의 평안을 노래하는 찬양,
+거룩하신 하나님,주님 찬양해,마커스워십,KO,C,95,4/4,5,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,https://supabase.co/.../score.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시
 `;
     const blob = new Blob([template], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
