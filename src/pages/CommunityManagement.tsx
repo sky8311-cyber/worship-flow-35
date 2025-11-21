@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowLeft, Copy } from "lucide-react";
+import { Trash2, Mail, ArrowLeft, Copy, ArrowUp, ArrowDown } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,14 +109,21 @@ export default function CommunityManagement() {
       const userIds = members.map(m => m.user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name, email, avatar_url")
         .in("id", userIds);
       if (profileError) throw profileError;
+      
+      // Fetch global worship_leader roles
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds);
       
       // Merge
       return members.map(m => ({
         ...m,
-        profiles: profiles?.find(p => p.id === m.user_id)
+        profiles: profiles?.find(p => p.id === m.user_id),
+        globalRoles: userRoles?.filter(r => r.user_id === m.user_id).map(r => r.role) || []
       }));
     },
   });
@@ -133,6 +142,46 @@ export default function CommunityManagement() {
     },
     onError: () => {
       toast({ title: t("community.updateError"), variant: "destructive" });
+    },
+  });
+
+  const promoteToCommunityLeaderMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_members")
+        .update({ role: "community_leader" })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      toast({ title: t("community.promoteToCommunityLeaderSuccess") });
+    },
+    onError: () => {
+      toast({
+        title: t("community.promoteToCommunityLeaderError"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const demoteToMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_members")
+        .update({ role: "member" })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      toast({ title: t("community.demoteToMemberSuccess") });
+    },
+    onError: () => {
+      toast({
+        title: t("community.demoteToMemberError"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -220,45 +269,164 @@ export default function CommunityManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {members?.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium">{member.profiles?.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {member.profiles?.email}
-                      </p>
+              <div className="space-y-3">
+                {members?.map((member) => {
+                  const isWorshipLeader = member.globalRoles?.includes('worship_leader');
+                  const isCommunityLeader = member.role === 'community_leader';
+                  const isLeaderOfCommunity = member.user_id === community.leader_id;
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={member.profiles?.avatar_url || undefined} />
+                          <AvatarFallback>{member.profiles?.full_name?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.profiles?.full_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {member.profiles?.email}
+                          </p>
+                          
+                          {/* Role Badges */}
+                          <div className="flex gap-1 mt-1">
+                            {isLeaderOfCommunity && (
+                              <Badge variant="default">
+                                {t("community.communityOwner")}
+                              </Badge>
+                            )}
+                            {isWorshipLeader && (
+                              <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-100">
+                                {t("community.worshipLeader")}
+                              </Badge>
+                            )}
+                            {isCommunityLeader && !isWorshipLeader && (
+                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100">
+                                {t("community.communityLeader")}
+                              </Badge>
+                            )}
+                            {!isCommunityLeader && !isWorshipLeader && !isLeaderOfCommunity && (
+                              <Badge variant="outline">
+                                {t("community.member")}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        {/* Promote/Demote buttons - only for non-owner, non-worship-leaders */}
+                        {!isLeaderOfCommunity && !isWorshipLeader && (
+                          <>
+                            {isCommunityLeader ? (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <ArrowDown className="h-4 w-4 mr-1" />
+                                    {t("community.demoteToMember")}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {t("community.demoteConfirmTitle")}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {t("community.demoteConfirmDescription", {
+                                        name: member.profiles?.full_name,
+                                      })}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => demoteToMemberMutation.mutate(member.id)}
+                                    >
+                                      {t("community.demote")}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            ) : (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <ArrowUp className="h-4 w-4 mr-1" />
+                                    {t("community.promoteToCommunityLeader")}
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {t("community.promoteConfirmTitle")}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      <p>
+                                        {t("community.promoteConfirmDescription", {
+                                          name: member.profiles?.full_name,
+                                        })}
+                                      </p>
+                                      <div className="mt-3 p-3 bg-muted rounded-md">
+                                        <p className="text-sm font-semibold mb-2">
+                                          {t("community.communityLeaderPermissions")}:
+                                        </p>
+                                        <ul className="text-sm space-y-1 list-disc list-inside">
+                                          <li>{t("community.permissionCreateSets")}</li>
+                                          <li>{t("community.permissionAddSongs")}</li>
+                                          <li>{t("community.permissionLimited")}</li>
+                                        </ul>
+                                      </div>
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => promoteToCommunityLeaderMutation.mutate(member.id)}
+                                    >
+                                      {t("community.promote")}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </>
+                        )}
+
+                        {/* Remove button (not for community owner) */}
+                        {!isLeaderOfCommunity && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("community.removeMember")}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("community.removeDescription", {
+                                    name: member.profiles?.full_name,
+                                  })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("community.cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => removeMemberMutation.mutate(member.id)}
+                                >
+                                  {t("common.remove")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </div>
                     </div>
-                    {member.user_id !== community.leader_id && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t("community.removeMember")}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove this member?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t("community.cancel")}</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => removeMemberMutation.mutate(member.id)}
-                            >
-                              {t("common.remove")}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
