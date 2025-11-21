@@ -21,9 +21,6 @@ interface CSVRow {
   artist?: string;
   language?: string;
   default_key?: string;
-  bpm?: string;
-  time_signature?: string;
-  energy_level?: string;
   category?: string;
   tags?: string;
   youtube_url?: string;
@@ -61,17 +58,6 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   const validateRow = (row: CSVRow, index: number): string | null => {
     if (!row.title || row.title.trim() === "") {
       return t("csvImport.rowError", { row: index + 2, error: t("songDialog.titleRequired") });
-    }
-
-    if (row.bpm && isNaN(Number(row.bpm))) {
-      return t("csvImport.rowError", { row: index + 2, error: "BPM must be a number" });
-    }
-
-    if (row.energy_level) {
-      const level = Number(row.energy_level);
-      if (isNaN(level) || level < 1 || level > 5) {
-        return t("csvImport.rowError", { row: index + 2, error: "Energy level must be 1-5" });
-      }
     }
 
     return null;
@@ -189,9 +175,6 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             artist: row.artist || null,
             language: row.language || null,
             default_key: row.default_key || null,
-            bpm: row.bpm ? parseInt(row.bpm) : null,
-            time_signature: row.time_signature || null,
-            energy_level: row.energy_level ? parseInt(row.energy_level) : null,
             category: row.category || null,
             tags: row.tags || null,
             youtube_url: row.youtube_url?.trim() || null,
@@ -229,10 +212,10 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   };
 
   const downloadTemplate = () => {
-    const template = `title,subtitle,artist,language,default_key,bpm,time_signature,energy_level,category,tags,youtube_url,score_file_url,interpretation,notes
-Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,amazing-grace.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn
-주 안에 있는 나에게,,김명식,KO,D,120,4/4,4,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,joo-ane-innun.pdf,주님 안에서의 평안을 노래하는 찬양,
-거룩하신 하나님,주님 찬양해,마커스워십,KO,C,95,4/4,5,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,georokhasin-hananim.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시
+    const template = `title,subtitle,artist,language,default_key,category,tags,youtube_url,score_file_url,interpretation,notes
+Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,amazing-grace.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn
+주 안에 있는 나에게,,김명식,KO,D,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,joo-ane-innun.pdf,주님 안에서의 평안을 노래하는 찬양,
+거룩하신 하나님,주님 찬양해,마커스워십,KO,C,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,georokhasin-hananim.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시
 `;
     const blob = new Blob([template], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -401,7 +384,7 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
                       <th className="p-2 text-left">{t("songDialog.category")}</th>
-                      <th className="p-2 text-left">{t("csvImport.keyBpm")}</th>
+                      <th className="p-2 text-left">{t("songDialog.key")}</th>
                       <th className="p-2 text-left">{t("csvImport.youtubeStatus")}</th>
                       <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
                     </tr>
@@ -416,7 +399,7 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
                           <td className="p-2 text-sm">{row.artist || "-"}</td>
                           <td className="p-2 text-sm">{row.category || "-"}</td>
                           <td className="p-2 text-sm">
-                            {row.default_key || "-"} {row.bpm ? `/ ${row.bpm}` : ""}
+                            {row.default_key || "-"}
                           </td>
                           <td className="p-2">
                             {row.youtube_url && row.youtube_url.trim() !== "" ? (

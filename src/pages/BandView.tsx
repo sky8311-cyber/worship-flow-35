@@ -140,14 +140,19 @@ const BandView = () => {
                             키: {setSong.key}
                           </span>
                         )}
-                        {song.bpm && (
+                        {setSong.bpm && (
                           <span className="px-3 py-1.5 bg-secondary text-secondary-foreground text-sm rounded-full">
-                            BPM: {song.bpm}
+                            BPM: {setSong.bpm}
                           </span>
                         )}
-                        {song.time_signature && (
+                        {setSong.time_signature && (
                           <span className="px-3 py-1.5 bg-secondary text-secondary-foreground text-sm rounded-full">
-                            {song.time_signature}
+                            {setSong.time_signature}
+                          </span>
+                        )}
+                        {setSong.energy_level && (
+                          <span className="px-3 py-1.5 bg-secondary text-secondary-foreground text-sm rounded-full">
+                            에너지: {setSong.energy_level}/5
                           </span>
                         )}
                       </div>

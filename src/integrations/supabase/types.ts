@@ -289,8 +289,10 @@ export type Database = {
       }
       set_songs: {
         Row: {
+          bpm: number | null
           created_at: string
           custom_notes: string | null
+          energy_level: number | null
           id: string
           key: string | null
           override_score_file_url: string | null
@@ -298,10 +300,13 @@ export type Database = {
           position: number
           service_set_id: string
           song_id: string
+          time_signature: string | null
         }
         Insert: {
+          bpm?: number | null
           created_at?: string
           custom_notes?: string | null
+          energy_level?: number | null
           id?: string
           key?: string | null
           override_score_file_url?: string | null
@@ -309,10 +314,13 @@ export type Database = {
           position: number
           service_set_id: string
           song_id: string
+          time_signature?: string | null
         }
         Update: {
+          bpm?: number | null
           created_at?: string
           custom_notes?: string | null
+          energy_level?: number | null
           id?: string
           key?: string | null
           override_score_file_url?: string | null
@@ -320,6 +328,7 @@ export type Database = {
           position?: number
           service_set_id?: string
           song_id?: string
+          time_signature?: string | null
         }
         Relationships: [
           {
@@ -341,11 +350,9 @@ export type Database = {
       songs: {
         Row: {
           artist: string | null
-          bpm: number | null
           category: string | null
           created_at: string
           default_key: string | null
-          energy_level: number | null
           id: string
           interpretation: string | null
           language: string | null
@@ -353,18 +360,15 @@ export type Database = {
           score_file_url: string | null
           subtitle: string | null
           tags: string | null
-          time_signature: string | null
           title: string
           updated_at: string
           youtube_url: string | null
         }
         Insert: {
           artist?: string | null
-          bpm?: number | null
           category?: string | null
           created_at?: string
           default_key?: string | null
-          energy_level?: number | null
           id?: string
           interpretation?: string | null
           language?: string | null
@@ -372,18 +376,15 @@ export type Database = {
           score_file_url?: string | null
           subtitle?: string | null
           tags?: string | null
-          time_signature?: string | null
           title: string
           updated_at?: string
           youtube_url?: string | null
         }
         Update: {
           artist?: string | null
-          bpm?: number | null
           category?: string | null
           created_at?: string
           default_key?: string | null
-          energy_level?: number | null
           id?: string
           interpretation?: string | null
           language?: string | null
@@ -391,7 +392,6 @@ export type Database = {
           score_file_url?: string | null
           subtitle?: string | null
           tags?: string | null
-          time_signature?: string | null
           title?: string
           updated_at?: string
           youtube_url?: string | null

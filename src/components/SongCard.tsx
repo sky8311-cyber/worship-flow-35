@@ -150,10 +150,6 @@ export const SongCard = ({
               </span>
             </div>
 
-            {song.bpm && (
-              <p className="text-xs text-muted-foreground truncate">{t("songCard.bpm")}: {song.bpm}</p>
-            )}
-
             {lastUsed && (
               <p className="text-xs text-muted-foreground truncate">
                 {t("songCard.lastUsed")}: {format(lastUsed, language === "ko" ? "yyyy년 M월 d일" : "MMM d, yyyy", { locale })} ({usageCount})

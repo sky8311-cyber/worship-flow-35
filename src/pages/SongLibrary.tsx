@@ -117,9 +117,6 @@ const SongLibrary = () => {
       artist: song.artist || "",
       language: song.language || "",
       default_key: song.default_key || "",
-      bpm: song.bpm || "",
-      time_signature: song.time_signature || "",
-      energy_level: song.energy_level || "",
       category: song.category || "",
       tags: song.tags || "",
       youtube_url: song.youtube_url || "",
@@ -432,7 +429,6 @@ const SongLibrary = () => {
                   <SelectItem value="title-desc">{t("songLibrary.sortOptions.titleDesc")}</SelectItem>
                   <SelectItem value="recent">{t("songLibrary.sortOptions.recentlyAdded")}</SelectItem>
                   <SelectItem value="artist">{t("songLibrary.sortOptions.artist")}</SelectItem>
-                  <SelectItem value="bpm">{t("songLibrary.sortOptions.bpm")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -136,8 +136,6 @@ export const SongTable = ({
             <TableHead>{t("songLibrary.tableHeaders.category")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.language")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.key")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.bpm")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.energyLevel")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.tags")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
             <TableHead className="text-right">{t("songLibrary.tableHeaders.actions")}</TableHead>
@@ -241,43 +239,6 @@ export const SongTable = ({
                       />
                     ) : (
                       <span>{song.default_key || "-"}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditable ? (
-                      <Input
-                        type="number"
-                        value={displaySong.bpm || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'bpm', e.target.value ? parseInt(e.target.value) : null)}
-                        className="h-8 text-sm w-20"
-                      />
-                    ) : (
-                      <span>{song.bpm || "-"}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditable ? (
-                      <Select
-                        value={displaySong.energy_level?.toString() || ''}
-                        onValueChange={(value) => onUpdateEditedSong?.(song.id, 'energy_level', value ? parseInt(value) : null)}
-                      >
-                        <SelectTrigger className="h-8 text-xs w-20">
-                          <SelectValue placeholder="-" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5].map(level => (
-                            <SelectItem key={level} value={level.toString()}>
-                              {level}/5
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      song.energy_level ? (
-                        <Badge variant="outline" className="text-xs">
-                          {song.energy_level}/5
-                        </Badge>
-                      ) : "-"
                     )}
                   </TableCell>
                   <TableCell>
