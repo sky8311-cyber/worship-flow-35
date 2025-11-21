@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { Search, Users, ArrowLeft, Home } from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import logo from "@/assets/logo.png";
 
 export default function CommunitySearch() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,23 +114,29 @@ export default function CommunitySearch() {
       {/* Navigation Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dashboard")}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                {t("common.backToDashboard")}
-              </Button>
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left: Breadcrumb */}
+            <div className="justify-self-start hidden md:block">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Home className="h-4 w-4" />
                 <span>/</span>
-                <span>{t("community.search")}</span>
+                <span>{t("breadcrumb.communitySearch")}</span>
               </div>
             </div>
-            <LanguageToggle />
+            
+            {/* Center: Logo */}
+            <div className="justify-self-center col-start-2">
+              <img 
+                src={logo} 
+                alt="K-Worship" 
+                className="h-20 w-auto"
+              />
+            </div>
+            
+            {/* Right: Navigation Items */}
+            <div className="justify-self-end">
+              <LanguageToggle />
+            </div>
           </div>
         </div>
       </header>

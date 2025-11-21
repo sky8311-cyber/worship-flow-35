@@ -12,6 +12,8 @@ import { Settings, MapPin, Instagram, Youtube, ArrowLeft, Home, Camera } from "l
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { CoverEditDialog } from "@/components/profile/CoverEditDialog";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import logo from "@/assets/logo.png";
 
 export default function Profile() {
   const { userId } = useParams();
@@ -101,23 +103,34 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
-      <div className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-3 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/dashboard")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("common.backToDashboard")}
-          </Button>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Home className="h-4 w-4" />
-            <span>/</span>
-            <span>{t("profile.title")}</span>
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left: Breadcrumb */}
+            <div className="justify-self-start hidden md:block">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Home className="h-4 w-4" />
+                <span>/</span>
+                <span>{t("breadcrumb.profile")}</span>
+              </div>
+            </div>
+            
+            {/* Center: Logo */}
+            <div className="justify-self-center col-start-2">
+              <img 
+                src={logo} 
+                alt="K-Worship" 
+                className="h-20 w-auto"
+              />
+            </div>
+            
+            {/* Right: Navigation Items */}
+            <div className="justify-self-end">
+              <LanguageToggle />
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Cover Image */}
       <div className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/10 group">

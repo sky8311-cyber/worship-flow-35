@@ -19,6 +19,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import { Home } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
@@ -253,19 +255,27 @@ const SongLibrary = () => {
     <div className="min-h-screen bg-gradient-soft pb-20 md:pb-8">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link to="/">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-              </Link>
-              <div className="flex items-center gap-2">
-                <Music className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t("songLibrary.title")}</h1>
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left: Breadcrumb */}
+            <div className="justify-self-start hidden md:block">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Home className="h-4 w-4" />
+                <span>/</span>
+                <span>{t("breadcrumb.songs")}</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            
+            {/* Center: Logo */}
+            <div className="justify-self-center col-start-2">
+              <img 
+                src={logo} 
+                alt="K-Worship" 
+                className="h-20 w-auto"
+              />
+            </div>
+            
+            {/* Right: Navigation Items */}
+            <div className="justify-self-end flex items-center gap-2">
               {profile?.full_name && (
                 <span className="text-sm text-muted-foreground hidden sm:inline">
                   {profile.full_name}
