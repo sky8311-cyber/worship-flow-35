@@ -487,14 +487,17 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
 
       if (error) throw error;
 
-      setDuplicateGroups(prev =>
-        prev.map(group => ({
-          ...group,
-          songs: group.songs.map(song =>
-            song.id === songId ? { ...song, ...updates } : song
-          )
-        }))
-      );
+      // Update local state - sync all group states
+      const updateSong = (group: DuplicateGroup) => ({
+        ...group,
+        songs: group.songs.map(song =>
+          song.id === songId ? { ...song, ...updates } : song
+        )
+      });
+
+      setDuplicateGroups(prev => prev.map(updateSong));
+      setHighConfidenceGroups(prev => prev.map(updateSong));
+      setMediumConfidenceGroups(prev => prev.map(updateSong));
 
       toggleEdit(songId);
       toast.success(t('songLibrary.duplicateReview.savedSuccessfully'));
@@ -538,14 +541,17 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
 
       if (error) throw error;
 
-      setDuplicateGroups(prev =>
-        prev.map(group => ({
-          ...group,
-          songs: group.songs.map(song =>
-            song.id === toSongId ? { ...song, ...updates } : song
-          )
-        }))
-      );
+      // Update local state - sync all group states
+      const updateGroup = (group: DuplicateGroup) => ({
+        ...group,
+        songs: group.songs.map(song =>
+          song.id === toSongId ? { ...song, ...updates } : song
+        )
+      });
+
+      setDuplicateGroups(prev => prev.map(updateGroup));
+      setHighConfidenceGroups(prev => prev.map(updateGroup));
+      setMediumConfidenceGroups(prev => prev.map(updateGroup));
 
       toast.success(t('songLibrary.duplicateReview.copiedFromMaster'));
     } catch (error) {
@@ -962,6 +968,11 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                                   <FileText className="h-3 w-3" />
                                                   악보
                                                 </button>
+                                              )}
+                                              {song.default_key && (
+                                                <Badge variant="secondary" className="text-xs">
+                                                  Key: {song.default_key}
+                                                </Badge>
                                               )}
                                             <Badge variant="outline" className="text-xs">
                                               {usage > 0 ? `${usage}회 사용` : "미사용"}
