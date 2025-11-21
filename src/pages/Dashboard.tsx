@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Users, Search, Upload, User, Settings } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Users, Search, Upload, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -27,10 +28,13 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
-  const { isAdmin, isWorshipLeader, signOut, profile, user } = useAuth();
+  const { isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, signOut, profile, user } = useAuth();
   const dateLocale = language === "ko" ? ko : enUS;
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importSetOpen, setImportSetOpen] = useState(false);
+
+  // Check if user can create sets (worship leaders, community leaders, or admins)
+  const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
 
   const handleLogout = async () => {
     await signOut();
@@ -182,21 +186,41 @@ const Dashboard = () => {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-2">
                     <p className="text-sm font-medium">{profile?.full_name || t("profile.title")}</p>
                     <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+                    
+                    {/* Role Badges */}
+                    <div className="flex gap-1 flex-wrap">
+                      {isAdmin && (
+                        <Badge variant="destructive" className="text-xs">
+                          {t("roles.admin")}
+                        </Badge>
+                      )}
+                      {isWorshipLeader && (
+                        <Badge className="text-xs bg-purple-500 hover:bg-purple-600">
+                          {t("roles.worshipLeader")}
+                        </Badge>
+                      )}
+                      {isCommunityLeaderInAnyCommunity && (
+                        <Badge className="text-xs bg-blue-500 hover:bg-blue-600">
+                          {t("roles.communityLeader")}
+                        </Badge>
+                      )}
+                      {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && (
+                        <Badge variant="outline" className="text-xs">
+                          {t("roles.member")}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="mr-2 h-4 w-4" />
                   {t("profile.viewProfile")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/profile/settings")}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  {t("profile.settings")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
@@ -212,22 +236,25 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 py-8 pb-24 md:pb-8 space-y-8">
         <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <Card className="shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base md:text-lg">{t("dashboard.totalSongs")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-primary">
-                {songsCount || 0}
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.songsRegistered")}</p>
-              <Link to="/songs">
-                <Button variant="outline" className="w-full mt-4">
-                  {t("dashboard.viewLibrary")}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {/* Show Song Library card only to creators */}
+          {canCreateSets && (
+            <Card className="shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base md:text-lg">{t("dashboard.totalSongs")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl sm:text-3xl font-bold text-primary">
+                  {songsCount || 0}
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.songsRegistered")}</p>
+                <Link to="/songs">
+                  <Button variant="outline" className="w-full mt-4">
+                    {t("dashboard.viewLibrary")}
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="shadow-md hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
@@ -238,23 +265,26 @@ const Dashboard = () => {
                 {upcomingSets?.length || 0}
               </div>
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t("dashboard.servicesScheduled")}</p>
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => navigate("/set-builder")}
-                  className="w-full mt-4"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t("dashboard.createNewSet")}
-                </Button>
-                <Button
-                  onClick={() => setImportSetOpen(true)}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {t("dashboard.importWorshipSet")}
-                </Button>
-              </div>
+              {/* Show creation buttons only to creators */}
+              {canCreateSets && (
+                <div className="space-y-2">
+                  <Button 
+                    onClick={() => navigate("/set-builder")}
+                    className="w-full mt-4"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {t("dashboard.createNewSet")}
+                  </Button>
+                  <Button
+                    onClick={() => setImportSetOpen(true)}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {t("dashboard.importWorshipSet")}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

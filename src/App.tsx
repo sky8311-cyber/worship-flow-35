@@ -28,7 +28,6 @@ import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import JoinCommunity from "./pages/JoinCommunity";
 import Profile from "./pages/Profile";
-import ProfileSettings from "./pages/ProfileSettings";
 
 const queryClient = new QueryClient();
 
@@ -82,7 +81,6 @@ const App = () => (
               <Route path="/invitation/:token" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/profile/settings" element={<ProtectedRoute><ProfileSettings /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
               
               {/* Admin Routes */}
