@@ -229,21 +229,21 @@ const SetBuilder = () => {
           <div className="grid grid-cols-3 items-center gap-4">
             {/* Left: Breadcrumb */}
             <div className="justify-self-start hidden md:block">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Home className="h-4 w-4" />
                 <span>/</span>
                 <span>{t("breadcrumb.setBuilder")}</span>
-              </div>
+              </Link>
             </div>
             
             {/* Center: Logo */}
-            <div className="justify-self-center col-start-2">
+            <Link to="/dashboard" className="justify-self-center col-start-2">
               <img 
                 src={logo} 
                 alt="K-Worship" 
-                className="h-20 w-auto"
+                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
-            </div>
+            </Link>
             
             {/* Right: Navigation Items */}
             <div className="justify-self-end flex flex-wrap gap-2">
