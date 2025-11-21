@@ -9,9 +9,10 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { findDuplicates, executeMerge, DuplicateGroup, MergeDecision } from "@/lib/duplicateFinder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, ExternalLink, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
 
 interface DuplicateReviewDialogProps {
   open: boolean;
@@ -28,6 +29,9 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [songUsages, setSongUsages] = useState<Map<string, number>>(new Map());
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
+  const [selectedScoreUrl, setSelectedScoreUrl] = useState<string | null>(null);
+  const [selectedSongTitle, setSelectedSongTitle] = useState("");
 
   useEffect(() => {
     if (open && songs.length > 0) {
@@ -156,17 +160,44 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     return t(`songLibrary.languages.${langKey}` as any);
   };
 
-  const formatFieldValue = (value: any, field: string) => {
+  const formatFieldValue = (value: any, field: string, song?: any): React.ReactNode => {
     if (value === null || value === undefined || value === "") {
       return <span className="text-muted-foreground">-</span>;
     }
 
     switch (field) {
       case "youtube_url":
+        return value ? (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-4 w-4" />
+            <span className="text-xs">Watch</span>
+          </a>
+        ) : (
+          <XCircle className="h-4 w-4 text-destructive" />
+        );
       case "score_file_url":
-        return value ? 
-          <CheckCircle className="h-4 w-4 text-green-500" /> : 
-          <XCircle className="h-4 w-4 text-red-500" />;
+        return value ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedScoreUrl(value);
+              setSelectedSongTitle(song?.title || "Unknown");
+              setScorePreviewOpen(true);
+            }}
+            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline"
+          >
+            <Eye className="h-4 w-4" />
+            <span className="text-xs">Preview</span>
+          </button>
+        ) : (
+          <XCircle className="h-4 w-4 text-destructive" />
+        );
       case "energy_level":
         return <Badge variant="outline">{value}/5</Badge>;
       case "category":
@@ -201,7 +232,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
               isDifferent && "bg-yellow-100 dark:bg-yellow-900/20"
             )}
           >
-            {formatFieldValue(song[field], field)}
+            {formatFieldValue(song[field], field, song)}
           </td>
         ))}
       </tr>
@@ -371,6 +402,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ScorePreviewDialog
+        open={scorePreviewOpen}
+        onOpenChange={setScorePreviewOpen}
+        scoreUrl={selectedScoreUrl}
+        songTitle={selectedSongTitle}
+      />
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
