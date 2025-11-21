@@ -49,7 +49,7 @@ export const LandingFeatures = () => {
         }
       }} className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            예배 준비를 한 흐름으로 
+            예배 준비를 한 흐름으로
 묶어 주는 기능들
           </h2>
         </motion.div>

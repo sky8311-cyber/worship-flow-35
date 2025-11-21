@@ -80,13 +80,34 @@ export const LandingWaitlist = () => {
         <motion.div initial="hidden" whileInView="visible" viewport={viewportOptions} variants={fadeInUp} className="max-w-2xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight lg:text-5xl">
-              K-Worship을 함께 만들어 갈
-워십리더를 기다립니다.
+              K-Worship을 함께 만들어 갈 워십리더를 기다립니다.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
               <br />
               워십리더를 기다립니다.
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed md:text-lg">
-              K-Worship은 실제 예배 현장에서 사역하는 워십리더들과 함께 만들어 가고 있습니다. 지금 얼리 액세스를 신청하시면, 개발 소식과 테스트 기회를 가장 먼저 
+              K-Worship은 실제 예배 현장에서 사역하는 워십리더들과 함께 만들어 가고 있습니다. 지금 얼리 액세스를 신청하시면, 개발 소식과 테스트 기회를 
+가장 먼저
 받아보실 수 있습니다.
             </p>
           </div>

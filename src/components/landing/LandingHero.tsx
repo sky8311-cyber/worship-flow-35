@@ -45,17 +45,17 @@ export const LandingHero = () => {
                 예배 공동체를 위한,
               </span>
               <br />
-              <span className="text-foreground">워십리더 통합 플랫폼</span>
+              <span className="text-foreground">            통합 플랫폼</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-6 leading-relaxed">
-              K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 워십리더 커뮤니티를
-              한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.
+              K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 
+워십리더 커뮤니티를 한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.
             </p>
 
             <p className="text-base md:text-lg text-muted-foreground/80 mb-10">
-              사용했던 곡과 악보, 예배 흐름을 저장하고,
-              다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.
+              사용했던 곡과 악보, 예배 흐름을 저장하고, 
+다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">

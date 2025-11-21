@@ -37,12 +37,12 @@ export const LandingIntro = () => {
           </h2>
           <div className="text-lg md:text-xl text-muted-foreground leading-relaxed space-y-4">
             <p>
-              예배에서 찬양 송리스트는 단순한 순서가 아니라, 
+              예배에서 찬양 송리스트는 단순한 순서가 아니라,
 회중이 하나님께 나아가는 길을 여는 '영적인 흐름'입니다.
             </p>
             <p>
-              K-Worship은 그 흐름을 데이터베이스로 기록하고, 예배 인도자와 팀, 그리고 다른 워십리더들과 
-함께 나눌 수 있게 돕는 통합 플랫폼입니다.
+              K-Worship은 그 흐름을 데이터베이스로 기록하고, 예배 인도자와 팀, 
+그리고 다른 워십리더들과  함께 나눌 수 있게 돕는 통합 플랫폼입니다.
             </p>
           </div>
         </motion.div>
