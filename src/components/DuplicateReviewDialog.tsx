@@ -1,18 +1,35 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
-import { findDuplicates, executeMerge, DuplicateGroup, MergeDecision } from "@/lib/duplicateFinder";
+import { findDuplicates, DuplicateGroup } from "@/lib/duplicateFinder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, ExternalLink, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, XCircle, ExternalLink, Eye, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DuplicateReviewDialogProps {
   open: boolean;
@@ -21,11 +38,23 @@ interface DuplicateReviewDialogProps {
   onMergeComplete: () => void;
 }
 
+interface DuplicateProgress {
+  timestamp: number;
+  currentGroupIndex: number;
+  processedGroups: string[];
+  skippedGroups: string[];
+  duplicateGroups: DuplicateGroup[];
+}
+
+const STORAGE_KEY = "k-worship-duplicate-progress";
+
 export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }: DuplicateReviewDialogProps) => {
   const { t } = useTranslation();
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
-  const [decisions, setDecisions] = useState<Map<string, MergeDecision>>(new Map());
+  const [selectedToDelete, setSelectedToDelete] = useState<Set<string>>(new Set());
+  const [processedGroups, setProcessedGroups] = useState<Set<string>>(new Set());
+  const [skippedGroups, setSkippedGroups] = useState<Set<string>>(new Set());
   const [songUsages, setSongUsages] = useState<Map<string, number>>(new Map());
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -33,130 +62,214 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [selectedScoreUrl, setSelectedScoreUrl] = useState<string | null>(null);
   const [selectedSongTitle, setSelectedSongTitle] = useState("");
 
+  const saveProgressToLocalStorage = (
+    processed: Set<string>,
+    skipped: Set<string>,
+    currentIndex: number
+  ) => {
+    const progress: DuplicateProgress = {
+      timestamp: Date.now(),
+      currentGroupIndex: currentIndex,
+      processedGroups: Array.from(processed),
+      skippedGroups: Array.from(skipped),
+      duplicateGroups: duplicateGroups,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  };
+
+  const loadProgressFromLocalStorage = (): DuplicateProgress | null => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+
+    try {
+      const progress = JSON.parse(stored) as DuplicateProgress;
+      
+      if (Date.now() - progress.timestamp > 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+
+      return progress;
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+  };
+
+  const clearProgress = () => {
+    localStorage.removeItem(STORAGE_KEY);
+  };
+
   useEffect(() => {
     if (open && songs.length > 0) {
       const groups = findDuplicates(songs);
-      setDuplicateGroups(groups);
-      setCurrentGroupIndex(0);
-      setDecisions(new Map());
       
       if (groups.length === 0) {
         toast.info(t("songLibrary.duplicateReview.noDuplicates"));
         onClose();
+        return;
       }
+
+      const savedProgress = loadProgressFromLocalStorage();
+      if (savedProgress && savedProgress.duplicateGroups.length === groups.length) {
+        toast.info(t("songLibrary.duplicateReview.resuming"));
+        setDuplicateGroups(groups);
+        setCurrentGroupIndex(savedProgress.currentGroupIndex);
+        setProcessedGroups(new Set(savedProgress.processedGroups));
+        setSkippedGroups(new Set(savedProgress.skippedGroups));
+      } else {
+        setDuplicateGroups(groups);
+        setCurrentGroupIndex(0);
+        setProcessedGroups(new Set());
+        setSkippedGroups(new Set());
+        clearProgress();
+      }
+
+      toast.info(t("songLibrary.duplicateReview.foundGroups", { count: groups.length }));
     }
-  }, [open, songs]);
+  }, [open, songs, t, onClose]);
 
   useEffect(() => {
-    const loadUsages = async () => {
-      const usages = new Map();
-      for (const group of duplicateGroups) {
-        for (const song of group.songs) {
-          const { count, error } = await supabase
-            .from("set_songs")
-            .select("*", { count: "exact", head: true })
-            .eq("song_id", song.id);
-          
-          if (!error) {
-            usages.set(song.id, count || 0);
+    if (duplicateGroups.length > 0 && currentGroupIndex < duplicateGroups.length) {
+      const currentGroup = duplicateGroups[currentGroupIndex];
+      const songIds = currentGroup.songs.map((s) => s.id);
+
+      supabase
+        .from("set_songs")
+        .select("song_id")
+        .in("song_id", songIds)
+        .then(({ data }) => {
+          const usageMap = new Map<string, number>();
+          if (data) {
+            data.forEach((row) => {
+              usageMap.set(row.song_id, (usageMap.get(row.song_id) || 0) + 1);
+            });
           }
-        }
-      }
-      setSongUsages(usages);
-    };
-
-    if (duplicateGroups.length > 0) {
-      loadUsages();
+          setSongUsages(usageMap);
+        });
     }
-  }, [duplicateGroups]);
+  }, [currentGroupIndex, duplicateGroups]);
 
-  const currentGroup = duplicateGroups[currentGroupIndex];
+  const handleDeleteSelected = async () => {
+    if (selectedToDelete.size === 0) {
+      toast.error(t("songLibrary.duplicateReview.noSelection"));
+      return;
+    }
 
-  const handleSelectMaster = (masterSongId: string) => {
-    if (!currentGroup) return;
+    const currentGroup = duplicateGroups[currentGroupIndex];
+    const remainingSongs = currentGroup.songs.filter((s) => !selectedToDelete.has(s.id));
+    
+    if (remainingSongs.length === 0) {
+      toast.error(t("songLibrary.duplicateReview.mustKeepOne"));
+      return;
+    }
 
-    const newDecisions = new Map(decisions);
-    const duplicateIds = currentGroup.songs
-      .filter(s => s.id !== masterSongId)
-      .map(s => s.id);
+    setShowConfirmDialog(true);
+  };
 
-    newDecisions.set(currentGroup.id, {
-      groupId: currentGroup.id,
-      masterSongId,
-      duplicateIds,
-      action: 'merge'
-    });
+  const executeDelete = async () => {
+    try {
+      setIsProcessing(true);
+      const currentGroup = duplicateGroups[currentGroupIndex];
+      const remainingSongs = currentGroup.songs.filter((s) => !selectedToDelete.has(s.id));
+      const masterSongId = remainingSongs[0].id;
+      const deleteIds = Array.from(selectedToDelete);
 
-    setDecisions(newDecisions);
+      for (const deleteId of deleteIds) {
+        await supabase
+          .from("set_songs")
+          .update({ song_id: masterSongId })
+          .eq("song_id", deleteId);
+      }
+
+      const { error } = await supabase
+        .from("songs")
+        .delete()
+        .in("id", deleteIds);
+
+      if (error) throw error;
+
+      const newProcessed = new Set(processedGroups);
+      newProcessed.add(currentGroup.id);
+      setProcessedGroups(newProcessed);
+      saveProgressToLocalStorage(newProcessed, skippedGroups, currentGroupIndex);
+
+      toast.success(t("songLibrary.duplicateReview.deleteSuccess", { count: deleteIds.length }));
+
+      moveToNextGroup(newProcessed);
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error(t("songLibrary.duplicateReview.mergeError"));
+    } finally {
+      setIsProcessing(false);
+      setShowConfirmDialog(false);
+      setSelectedToDelete(new Set());
+    }
   };
 
   const handleSkipGroup = () => {
-    if (!currentGroup) return;
+    const currentGroup = duplicateGroups[currentGroupIndex];
+    const newSkipped = new Set(skippedGroups);
+    newSkipped.add(currentGroup.id);
+    setSkippedGroups(newSkipped);
+    setSelectedToDelete(new Set());
+    saveProgressToLocalStorage(processedGroups, newSkipped, currentGroupIndex);
+    
+    moveToNextGroup(processedGroups, newSkipped);
+  };
 
-    const newDecisions = new Map(decisions);
-    newDecisions.set(currentGroup.id, {
-      groupId: currentGroup.id,
-      masterSongId: '',
-      duplicateIds: [],
-      action: 'skip'
-    });
-
-    setDecisions(newDecisions);
+  const moveToNextGroup = (processed: Set<string> = processedGroups, skipped: Set<string> = skippedGroups) => {
+    if (currentGroupIndex < duplicateGroups.length - 1) {
+      setCurrentGroupIndex(currentGroupIndex + 1);
+    } else {
+      clearProgress();
+      onMergeComplete();
+    }
   };
 
   const handlePrevGroup = () => {
     if (currentGroupIndex > 0) {
       setCurrentGroupIndex(currentGroupIndex - 1);
+      setSelectedToDelete(new Set());
     }
   };
 
   const handleNextGroup = () => {
     if (currentGroupIndex < duplicateGroups.length - 1) {
       setCurrentGroupIndex(currentGroupIndex + 1);
+      setSelectedToDelete(new Set());
     }
   };
 
-  const handleApproveAll = async () => {
-    setShowConfirmDialog(false);
-    
-    try {
-      setIsProcessing(true);
-      
-      const mergeDecisions = Array.from(decisions.values());
-      
-      if (mergeDecisions.length === 0) {
-        toast.info(t("songLibrary.duplicateReview.noDecisions"));
-        return;
-      }
-
-      const result = await executeMerge(mergeDecisions);
-      
-      if (result.errors.length > 0) {
-        toast.error(t("songLibrary.duplicateReview.mergeError"));
-        console.error("Merge errors:", result.errors);
-      } else {
-        toast.success(t("songLibrary.duplicateReview.mergeSuccess", { 
-          count: result.merged 
-        }));
-        onMergeComplete();
-      }
-    } catch (error) {
-      console.error("Merge error:", error);
-      toast.error(t("common.error"));
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleDialogClose = () => {
+    saveProgressToLocalStorage(processedGroups, skippedGroups, currentGroupIndex);
+    onClose();
   };
+
+  if (duplicateGroups.length === 0) {
+    return null;
+  }
+
+  const currentGroup = duplicateGroups[currentGroupIndex];
+  const remainingSongsCount = currentGroup.songs.filter((s) => !selectedToDelete.has(s.id)).length;
+  const progressRemaining = duplicateGroups.length - processedGroups.size - skippedGroups.size;
 
   const getCategoryTranslation = (category: string | null) => {
     if (!category) return t("songLibrary.categories.uncategorized");
-    const key = `songLibrary.categories.${category}` as any;
-    return category;
+    const categoryMap: Record<string, string> = {
+      "찬송가": "hymn",
+      "모던워십 (한국)": "modernKorean",
+      "모던워십 (서양)": "modernWestern",
+      "모던워십 (기타)": "modernOther",
+      "한국 복음성가": "koreanGospel",
+    };
+    const key = categoryMap[category] || "uncategorized";
+    return t(`songLibrary.categories.${key}` as any);
   };
 
   const getLanguageTranslation = (language: string | null) => {
     if (!language) return "-";
-    const langKey = language.toLowerCase().replace("/", "") as any;
+    const langKey = language.toLowerCase().replace("/", "");
     return t(`songLibrary.languages.${langKey}` as any);
   };
 
@@ -203,201 +316,189 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
       case "category":
         return <Badge variant="secondary">{getCategoryTranslation(value)}</Badge>;
       case "language":
-        return <Badge variant="outline">{getLanguageTranslation(value)}</Badge>;
-      case "tags":
-        return value ? value.split(",").slice(0, 2).map((tag: string) => (
-          <Badge key={tag} variant="secondary" className="mr-1 text-xs">{tag.trim()}</Badge>
-        )) : "-";
+        return <Badge variant="secondary">{getLanguageTranslation(value)}</Badge>;
       case "created_at":
+      case "updated_at":
         return format(new Date(value), "yyyy-MM-dd");
-      case "bpm":
-        return value || "-";
+      case "tags":
+        if (!value) return <span className="text-muted-foreground">-</span>;
+        const tags = value.split(",").map((tag: string) => tag.trim());
+        return (
+          <div className="flex flex-wrap gap-1">
+            {tags.map((tag: string, idx: number) => (
+              <Badge key={idx} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        );
       default:
-        return <span>{value}</span>;
+        return String(value);
     }
   };
 
-  const renderComparisonRow = (label: string, field: string, songs: any[]) => {
-    const values = songs.map(s => s[field]);
-    const isDifferent = !values.every(v => v === values[0]);
+  const renderComparisonRow = (field: string, label: string) => {
+    const values = currentGroup.songs.map((song) => song[field]);
+    const allSame = values.every((v) => v === values[0]);
 
     return (
-      <tr key={field}>
-        <td className="px-4 py-2 font-medium text-muted-foreground border-r">{label}</td>
-        {songs.map((song, idx) => (
-          <td 
-            key={idx}
-            className={cn(
-              "px-4 py-2 border-r last:border-r-0",
-              isDifferent && "bg-yellow-100 dark:bg-yellow-900/20"
-            )}
-          >
-            {formatFieldValue(song[field], field, song)}
-          </td>
-        ))}
+      <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
+        <td className="border p-2 font-medium">{label}</td>
+        {currentGroup.songs.map((song, idx) => {
+          const isDifferent = !allSame;
+          return (
+            <td
+              key={idx}
+              className={cn(
+                "border p-2",
+                isDifferent && "bg-yellow-100 dark:bg-yellow-900/20"
+              )}
+            >
+              {formatFieldValue(song[field], field, song)}
+            </td>
+          );
+        })}
       </tr>
     );
   };
 
-  const currentDecision = currentGroup ? decisions.get(currentGroup.id) : undefined;
-  const mergeCount = Array.from(decisions.values()).filter(d => d.action === 'merge').length;
-  const skipCount = Array.from(decisions.values()).filter(d => d.action === 'skip').length;
-  const pendingCount = duplicateGroups.length - decisions.size;
-
-  if (!currentGroup) {
-    return null;
-  }
-
   return (
     <>
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} onOpenChange={handleDialogClose}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t("songLibrary.duplicateReview.title")}</DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {t("songLibrary.duplicateReview.foundGroups", { count: duplicateGroups.length })}
-            </p>
+            <DialogDescription>
+              {t("songLibrary.duplicateReview.groupOf", {
+                current: currentGroupIndex + 1,
+                total: duplicateGroups.length,
+              })}{" "}
+              - {t("songLibrary.duplicateReview.similarity", { percent: Math.round(currentGroup.confidence * 100) })}
+            </DialogDescription>
+            <div className="text-sm text-muted-foreground mt-2">
+              {t("songLibrary.duplicateReview.progressStatus", {
+                processed: processedGroups.size,
+                skipped: skippedGroups.size,
+                remaining: progressRemaining,
+              })}
+            </div>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="font-semibold">
-                  {t("songLibrary.duplicateReview.groupOf", { 
-                    current: currentGroupIndex + 1, 
-                    total: duplicateGroups.length 
-                  })}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("songLibrary.duplicateReview.similarity", { percent: currentGroup.confidence })}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePrevGroup}
-                  disabled={currentGroupIndex === 0}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNextGroup}
-                  disabled={currentGroupIndex === duplicateGroups.length - 1}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="border rounded-lg overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/50">
-                    <th className="px-4 py-2 text-left border-r">Field</th>
-                    {currentGroup.songs.map((song, idx) => (
-                      <th key={idx} className="px-4 py-2 text-left border-r last:border-r-0">
-                        Song {idx + 1}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {renderComparisonRow("Title", "title", currentGroup.songs)}
-                  {renderComparisonRow("Artist", "artist", currentGroup.songs)}
-                  {renderComparisonRow("Category", "category", currentGroup.songs)}
-                  {renderComparisonRow("Language", "language", currentGroup.songs)}
-                  {renderComparisonRow("Key", "default_key", currentGroup.songs)}
-                  {renderComparisonRow("BPM", "bpm", currentGroup.songs)}
-                  {renderComparisonRow("Energy", "energy_level", currentGroup.songs)}
-                  {renderComparisonRow("Tags", "tags", currentGroup.songs)}
-                  {renderComparisonRow("YouTube", "youtube_url", currentGroup.songs)}
-                  {renderComparisonRow("Score", "score_file_url", currentGroup.songs)}
-                  <tr>
-                    <td className="px-4 py-2 font-medium text-muted-foreground border-r">
-                      {t("songLibrary.duplicateReview.usedInSets")}
-                    </td>
-                    {currentGroup.songs.map((song, idx) => {
-                      const usageCount = songUsages.get(song.id) || 0;
-                      return (
-                        <td key={idx} className="px-4 py-2 border-r last:border-r-0">
-                          {usageCount > 0 ? (
-                            <Badge variant="secondary">{usageCount}</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">
-                              {t("songLibrary.duplicateReview.never")}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {renderComparisonRow("Created", "created_at", currentGroup.songs)}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="space-y-3 border rounded-lg p-4 bg-muted/20">
-              <div className="space-y-2">
-                <Label className="text-base font-semibold">
-                  {t("songLibrary.duplicateReview.selectMaster")}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {t("songLibrary.duplicateReview.masterNote")}
-                </p>
-              </div>
-              
-              <RadioGroup
-                value={currentDecision?.masterSongId || ''}
-                onValueChange={handleSelectMaster}
-                className="space-y-2"
-              >
-                {currentGroup.songs.map((song, idx) => (
-                  <div key={song.id} className="flex items-center space-x-2">
-                    <RadioGroupItem value={song.id} id={`song-${song.id}`} />
-                    <Label htmlFor={`song-${song.id}`} className="cursor-pointer flex-1">
-                      <span className="font-medium">
-                        {t("songLibrary.duplicateReview.keepSong")} {idx + 1}
-                      </span>
-                      {" - "}
-                      <span className="text-muted-foreground">{song.title}</span>
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <Button variant="outline" size="sm" onClick={handlePrevGroup} disabled={currentGroupIndex === 0}>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSkipGroup}
-                className="w-full"
+                onClick={handleNextGroup}
+                disabled={currentGroupIndex === duplicateGroups.length - 1}
               >
-                {t("songLibrary.duplicateReview.skipGroup")}
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
 
-            <div className="text-sm text-muted-foreground border-t pt-3">
-              {t("songLibrary.duplicateReview.decisions", { 
-                merged: mergeCount, 
-                skipped: skipCount, 
-                pending: pendingCount 
-              })}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.selectToDelete")}</h3>
+              
+              <div className="grid gap-3">
+                {currentGroup.songs.map((song) => {
+                  const usage = songUsages.get(song.id) || 0;
+                  return (
+                    <div key={song.id} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50">
+                      <Checkbox
+                        id={`delete-${song.id}`}
+                        checked={selectedToDelete.has(song.id)}
+                        onCheckedChange={(checked) => {
+                          const newSet = new Set(selectedToDelete);
+                          if (checked) {
+                            newSet.add(song.id);
+                          } else {
+                            newSet.delete(song.id);
+                          }
+                          setSelectedToDelete(newSet);
+                        }}
+                      />
+                      <Label htmlFor={`delete-${song.id}`} className="flex-1 cursor-pointer">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-destructive">{t("songLibrary.duplicateReview.deleteThisSong")}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {song.title} {song.artist && `- ${song.artist}`}
+                            </div>
+                          </div>
+                          <Badge variant="outline">
+                            {usage > 0
+                              ? `${t("songLibrary.duplicateReview.usedInSets")}: ${usage}`
+                              : t("songLibrary.duplicateReview.never")}
+                          </Badge>
+                        </div>
+                      </Label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {remainingSongsCount === 1 && selectedToDelete.size > 0 && (
+                <Alert variant="default" className="border-yellow-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Warning: Only 1 song will remain in this group after deletion.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-muted">
+                      <th className="border p-2 text-left min-w-[120px]">Field</th>
+                      {currentGroup.songs.map((song, idx) => (
+                        <th key={idx} className="border p-2 text-left">
+                          Song {idx + 1}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderComparisonRow("title", "Title")}
+                    {renderComparisonRow("artist", "Artist")}
+                    {renderComparisonRow("subtitle", "Subtitle")}
+                    {renderComparisonRow("category", "Category")}
+                    {renderComparisonRow("language", "Language")}
+                    {renderComparisonRow("default_key", "Key")}
+                    {renderComparisonRow("bpm", "BPM")}
+                    {renderComparisonRow("time_signature", "Time Signature")}
+                    {renderComparisonRow("energy_level", "Energy Level")}
+                    {renderComparisonRow("tags", "Tags")}
+                    {renderComparisonRow("youtube_url", "YouTube")}
+                    {renderComparisonRow("score_file_url", "Score")}
+                    {renderComparisonRow("interpretation", "Interpretation")}
+                    {renderComparisonRow("notes", "Notes")}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={onClose} disabled={isProcessing}>
-              {t("common.cancel")}
+            <Button variant="outline" onClick={handleSkipGroup} disabled={isProcessing}>
+              {t("songLibrary.duplicateReview.skipThisGroup")}
             </Button>
-            <Button 
-              onClick={() => setShowConfirmDialog(true)} 
-              disabled={isProcessing || mergeCount === 0}
+            <Button
+              onClick={handleDeleteSelected}
+              disabled={isProcessing || selectedToDelete.size === 0}
+              variant="destructive"
             >
-              {isProcessing ? t("songLibrary.duplicateReview.processing") : t("songLibrary.duplicateReview.approveAll")}
+              {isProcessing
+                ? t("songLibrary.duplicateReview.processing")
+                : t("songLibrary.duplicateReview.deleteSelected", { count: selectedToDelete.size })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -415,13 +516,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
           <AlertDialogHeader>
             <AlertDialogTitle>{t("songLibrary.duplicateReview.warningTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("songLibrary.duplicateReview.warningMessage", { count: mergeCount })}
+              {t("songLibrary.duplicateReview.warningMessage", { count: selectedToDelete.size })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApproveAll}>
-              {t("common.confirm")}
+            <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
