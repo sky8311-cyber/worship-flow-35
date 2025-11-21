@@ -35,6 +35,7 @@ interface CSVRow {
 export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImportDialogProps) => {
   const { t } = useTranslation();
   const [csvData, setCSVData] = useState<CSVRow[]>([]);
+  const [csvFileCount, setCSVFileCount] = useState(0);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [importing, setImporting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -76,36 +77,60 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
     return null;
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const data = results.data as CSVRow[];
-        const validationErrors: string[] = [];
+    const csvFiles = Array.from(files).filter(file => 
+      file.name.endsWith('.csv') || file.type === 'text/csv'
+    );
 
-        data.forEach((row, index) => {
-          const error = validateRow(row, index);
-          if (error) validationErrors.push(error);
+    if (csvFiles.length === 0) {
+      toast.error("Please upload CSV files");
+      return;
+    }
+
+    setCSVFileCount(csvFiles.length);
+    const allData: CSVRow[] = [];
+    const validationErrors: string[] = [];
+    let processedFiles = 0;
+
+    for (const file of csvFiles) {
+      await new Promise<void>((resolve) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const data = results.data as CSVRow[];
+            
+            data.forEach((row, index) => {
+              const error = validateRow(row, allData.length + index);
+              if (error) validationErrors.push(`[${file.name}] ${error}`);
+            });
+
+            allData.push(...data);
+            processedFiles++;
+            
+            if (processedFiles === csvFiles.length) {
+              if (validationErrors.length > 0) {
+                setErrors(validationErrors);
+                setCSVData([]);
+                setStep("upload");
+              } else {
+                setErrors([]);
+                setCSVData(allData);
+                setStep("preview");
+              }
+            }
+            resolve();
+          },
+          error: (error) => {
+            toast.error(`${file.name}: ${error.message}`);
+            resolve();
+          },
         });
-
-        if (validationErrors.length > 0) {
-          setErrors(validationErrors);
-          setCSVData([]);
-          setStep("upload");
-        } else {
-          setErrors([]);
-          setCSVData(data);
-          setStep("preview");
-        }
-      },
-      error: (error) => {
-        toast.error(t("csvImport.error") + ": " + error.message);
-      },
-    });
+      });
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,6 +268,7 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
 
   const handleReset = () => {
     setCSVData([]);
+    setCSVFileCount(0);
     setImageFiles([]);
     setErrors([]);
     setStep("upload");
@@ -286,12 +312,15 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
                 <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-sm font-medium mb-1">{t("csvImport.uploadCSV")}</p>
                 <p className="text-xs text-muted-foreground">
-                  {csvData.length > 0 ? `${csvData.length} ${t("csvImport.songsLoaded")}` : t("csvImport.clickToUpload")}
+                  {csvData.length > 0 
+                    ? `${csvFileCount} ${t("csvImport.filesLoaded")}, ${csvData.length} ${t("csvImport.songsLoaded")}` 
+                    : t("csvImport.clickToUpload")}
                 </p>
                 <input
                   ref={fileInputRef}
                   type="file"
                   accept=".csv"
+                  multiple
                   onChange={handleFileUpload}
                   className="hidden"
                 />
