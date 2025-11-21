@@ -25,7 +25,7 @@ import { SongLibraryWidget } from "@/components/dashboard/SongLibraryWidget";
 import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
 import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSidebarList";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
-import { UpcomingServicesWidget } from "@/components/dashboard/UpcomingServicesWidget";
+import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
 import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -259,7 +259,7 @@ const Dashboard = () => {
             <ProfileSidebarCard stats={userStats} />
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={5} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
-            <UpcomingServicesWidget sets={upcomingSets || []} maxVisible={3} />
+            <UpcomingEventsWidget sets={upcomingSets || []} maxVisible={3} />
           </div>
 
           {/* Columns A+B: Main Feed */}
@@ -402,7 +402,7 @@ const Dashboard = () => {
           <TabsContent value="communities" className="space-y-4 mt-4">
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={10} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
-            <UpcomingServicesWidget sets={upcomingSets || []} maxVisible={5} />
+            <UpcomingEventsWidget sets={upcomingSets || []} maxVisible={5} />
           </TabsContent>
 
           <TabsContent value="profile" className="mt-4">

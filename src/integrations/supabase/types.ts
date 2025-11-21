@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          attendees: string[] | null
+          community_id: string
+          created_at: string | null
+          created_by: string
+          description: string | null
+          end_time: string | null
+          event_date: string
+          event_type: string
+          id: string
+          location: string | null
+          notification_enabled: boolean | null
+          notification_time: number | null
+          start_time: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          attendees?: string[] | null
+          community_id: string
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          location?: string | null
+          notification_enabled?: boolean | null
+          notification_time?: number | null
+          start_time?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          attendees?: string[] | null
+          community_id?: string
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          location?: string | null
+          notification_enabled?: boolean | null
+          notification_time?: number | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_invitations: {
         Row: {
           community_id: string

@@ -39,30 +39,62 @@ export function CommunityFeed() {
         .order("created_at", { ascending: false })
         .limit(20);
 
-      if (!recentSets) return [];
+      // Get recent calendar events (last 30 days)
+      const { data: recentEvents } = await supabase
+        .from("calendar_events")
+        .select(`
+          *,
+          worship_communities!inner(id, name, avatar_url)
+        `)
+        .in("community_id", communityIds)
+        .gte("created_at", thirtyDaysAgo.toISOString())
+        .order("created_at", { ascending: false })
+        .limit(20);
 
-      // Get song counts for each set
-      const setsWithCounts = await Promise.all(
-        recentSets.map(async (set) => {
-          const { count } = await supabase
-            .from("set_songs")
-            .select("*", { count: "exact", head: true })
-            .eq("service_set_id", set.id);
+      const allFeedItems = [];
 
-          return {
-            id: set.id,
-            type: "worship_set" as const,
-            community: set.worship_communities,
-            set: {
-              ...set,
-              song_count: count || 0,
-            },
-            created_at: set.created_at,
-          };
-        })
+      // Process worship sets
+      if (recentSets && recentSets.length > 0) {
+        const setsWithCounts = await Promise.all(
+          recentSets.map(async (set) => {
+            const { count } = await supabase
+              .from("set_songs")
+              .select("*", { count: "exact", head: true })
+              .eq("service_set_id", set.id);
+
+            return {
+              id: set.id,
+              type: "worship_set" as const,
+              community: set.worship_communities,
+              set: {
+                ...set,
+                song_count: count || 0,
+              },
+              created_at: set.created_at,
+            };
+          })
+        );
+        allFeedItems.push(...setsWithCounts);
+      }
+
+      // Process calendar events
+      if (recentEvents && recentEvents.length > 0) {
+        const eventItems = recentEvents.map((event) => ({
+          id: event.id,
+          type: "calendar_event" as const,
+          community: event.worship_communities,
+          calendarEvent: event,
+          created_at: event.created_at,
+        }));
+        allFeedItems.push(...eventItems);
+      }
+
+      // Sort by created_at descending
+      allFeedItems.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      return setsWithCounts;
+      return allFeedItems;
     },
     enabled: !!user,
   });
