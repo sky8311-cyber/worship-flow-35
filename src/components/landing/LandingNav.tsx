@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { smoothScrollTo } from "@/lib/smoothScroll";
 import { useScrollObserver } from "@/hooks/useScrollObserver";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 
 export const LandingNav = () => {
@@ -58,10 +59,15 @@ export const LandingNav = () => {
                 {item.label}
               </button>
             ))}
+            <Link
+              to="/auth/login"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors ml-4"
+            >
+              베타 로그인
+            </Link>
             <Button
               onClick={() => handleNavClick("waitlist")}
               size="sm"
-              className="ml-4"
             >
               얼리 액세스 신청
             </Button>
@@ -100,6 +106,13 @@ export const LandingNav = () => {
                   {item.label}
                 </button>
               ))}
+              <Link
+                to="/auth/login"
+                className="text-left text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                베타 로그인
+              </Link>
               <Button
                 onClick={() => handleNavClick("waitlist")}
                 className="w-full"
