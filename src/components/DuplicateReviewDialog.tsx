@@ -123,11 +123,10 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
         setProcessedGroups(new Set());
         setSkippedGroups(new Set());
         clearProgress();
+        toast.info(t("songLibrary.duplicateReview.foundGroups", { count: groups.length }));
       }
-
-      toast.info(t("songLibrary.duplicateReview.foundGroups", { count: groups.length }));
     }
-  }, [open, songs, t, onClose]);
+  }, [open, songs]);
 
   useEffect(() => {
     if (duplicateGroups.length > 0 && currentGroupIndex < duplicateGroups.length) {
