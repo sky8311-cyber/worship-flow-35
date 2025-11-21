@@ -186,7 +186,7 @@ const Dashboard = () => {
             </div>
             
             {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-center col-start-2">
+            <Link to="/dashboard" className="justify-self-start md:justify-self-center col-start-1 md:col-start-2">
               <img src={logo} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
             </Link>
             
