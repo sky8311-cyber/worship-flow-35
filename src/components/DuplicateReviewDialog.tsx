@@ -868,6 +868,12 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                               className="text-sm"
                                             />
                                             <Input
+                                              value={editData.subtitle || ''}
+                                              onChange={(e) => handleFieldChange(song.id, 'subtitle', e.target.value)}
+                                              placeholder="부제"
+                                              className="text-sm"
+                                            />
+                                            <Input
                                               value={editData.artist}
                                               onChange={(e) => handleFieldChange(song.id, 'artist', e.target.value)}
                                               placeholder="아티스트"
@@ -931,6 +937,9 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                             <div className="flex items-center justify-between gap-2">
                                               <div className="flex-1">
                                                 <div className="font-medium">{song.title}</div>
+                                                {song.subtitle && (
+                                                  <div className="text-xs text-muted-foreground italic">{song.subtitle}</div>
+                                                )}
                                                 {song.artist && (
                                                   <div className="text-xs text-muted-foreground">{song.artist}</div>
                                                 )}
