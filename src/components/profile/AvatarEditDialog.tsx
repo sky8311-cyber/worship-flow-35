@@ -228,7 +228,7 @@ export function AvatarEditDialog({ open, onOpenChange, currentUrl }: AvatarEditD
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">{t("profile.zoom")}</label>
+              <label className="text-sm font-medium">{t("profile.zoom" as any)}</label>
               <Slider
                 value={[zoom]}
                 onValueChange={(value) => setZoom(value[0])}
@@ -246,7 +246,7 @@ export function AvatarEditDialog({ open, onOpenChange, currentUrl }: AvatarEditD
                 className="flex-1"
               >
                 <Check className="w-4 h-4 mr-2" />
-                {uploading ? t("profile.uploading") : t("profile.apply")}
+                {uploading ? t("profile.uploading") : t("profile.apply" as any)}
               </Button>
               <Button
                 variant="outline"
