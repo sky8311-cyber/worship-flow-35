@@ -41,7 +41,9 @@ import {
   Copy,
   Youtube,
   FileText,
-  Music
+  Music,
+  CheckCircle,
+  Edit2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -87,6 +89,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [editingStates, setEditingStates] = useState<Record<string, boolean>>({});
   const [editedData, setEditedData] = useState<Record<string, any>>({});
   const [deleteSingleConfirm, setDeleteSingleConfirm] = useState<{groupId: string, songId: string} | null>(null);
+  const [keepDeleteStates, setKeepDeleteStates] = useState<Record<string, 'keep' | 'delete'>>({});
 
   const saveProgressToLocalStorage = (
     processed: Set<string>,
@@ -143,6 +146,15 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
         setHighConfidenceGroups(high);
         setMediumConfidenceGroups(medium);
 
+        // Initialize all songs to 'keep' state
+        const initialStates: Record<string, 'keep' | 'delete'> = {};
+        groups.forEach(group => {
+          group.songs.forEach(song => {
+            initialStates[song.id] = 'keep';
+          });
+        });
+        setKeepDeleteStates(initialStates);
+
         // Auto-select all high confidence groups for batch processing
         const highGroupIds = new Set(high.map(g => g.id));
         setBatchSelectedGroups(highGroupIds);
@@ -195,53 +207,62 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     }
   }, [currentGroupIndex, duplicateGroups]);
 
+  const handleSetStatus = (songId: string, status: 'keep' | 'delete') => {
+    setKeepDeleteStates(prev => ({
+      ...prev,
+      [songId]: status
+    }));
+  };
+
   const handleBatchDelete = async () => {
     if (batchSelectedGroups.size === 0) {
       toast.error("처리할 그룹을 선택하세요");
       return;
     }
 
-    const selectedGroups = highConfidenceGroups.filter(g => batchSelectedGroups.has(g.id));
-    const totalDuplicates = selectedGroups.reduce((sum, g) => sum + g.songs.length - 1, 0);
-    const totalMasters = selectedGroups.length;
-
-    const confirmed = window.confirm(
-      t("songLibrary.duplicateReview.batchDeleteConfirm", { 
-        count: totalDuplicates, 
-        masters: totalMasters 
-      })
-    );
-
-    if (!confirmed) return;
-
+    setIsProcessing(true);
     try {
-      setIsProcessing(true);
-      let successCount = 0;
+      let totalKept = 0;
+      let totalDeleted = 0;
+      
+      for (const groupId of Array.from(batchSelectedGroups)) {
+        const group = highConfidenceGroups.find(g => g.id === groupId);
+        if (!group) continue;
 
-      for (const group of selectedGroups) {
-        const masterSongId = group.suggestedMaster!;
-        const deleteIds = group.songs.filter(s => s.id !== masterSongId).map(s => s.id);
+        const songsToKeep = group.songs.filter(s => keepDeleteStates[s.id] === 'keep');
+        const songsToDelete = group.songs.filter(s => keepDeleteStates[s.id] === 'delete');
+
+        if (songsToKeep.length === 0) {
+          toast.error(t("songLibrary.duplicateReview.mustKeepAtLeastOne"));
+          continue;
+        }
+
+        const keepSongId = songsToKeep[0].id;
+        const deleteIds = songsToDelete.map(s => s.id);
+
+        if (deleteIds.length === 0) continue;
 
         // Update set_songs references
         for (const deleteId of deleteIds) {
           await supabase
             .from("set_songs")
-            .update({ song_id: masterSongId })
+            .update({ song_id: keepSongId })
             .eq("song_id", deleteId);
         }
 
-        // Delete duplicate songs
+        // Delete songs
         const { error } = await supabase
           .from("songs")
           .delete()
           .in("id", deleteIds);
 
         if (!error) {
-          successCount += deleteIds.length;
+          totalDeleted += deleteIds.length;
+          totalKept += songsToKeep.length;
         }
       }
 
-      toast.success(t("songLibrary.duplicateReview.batchDeleteSuccess", { count: successCount }));
+      toast.success(t("songLibrary.duplicateReview.processGroupSummary", { kept: totalKept, deleted: totalDeleted }));
       clearProgress();
       onMergeComplete();
     } catch (error) {
@@ -429,18 +450,24 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     }
   };
 
-  const quickCopyFromMaster = async (fromSongId: string, toSongId: string) => {
-    const fromSong = duplicateGroups.flatMap(g => g.songs).find(s => s.id === fromSongId);
-    const toSong = duplicateGroups.flatMap(g => g.songs).find(s => s.id === toSongId);
-    
-    if (!fromSong || !toSong) return;
+  const quickCopyFromMaster = async (groupId: string, toSongId: string) => {
+    const group = duplicateGroups.find(g => g.id === groupId);
+    if (!group) return;
 
-    const updates: any = { title: fromSong.title };
-    if (!toSong.artist && fromSong.artist) updates.artist = fromSong.artist;
-    if (!toSong.default_key && fromSong.default_key) updates.default_key = fromSong.default_key;
-    if (!toSong.score_file_url && fromSong.score_file_url) updates.score_file_url = fromSong.score_file_url;
-    if (!toSong.language && fromSong.language) updates.language = fromSong.language;
-    if (!toSong.category && fromSong.category) updates.category = fromSong.category;
+    const keepSongs = group.songs.filter(s => keepDeleteStates[s.id] === 'keep');
+    const firstKeepSong = keepSongs[0];
+    if (!firstKeepSong) return;
+
+    const toSong = group.songs.find(s => s.id === toSongId);
+    if (!toSong) return;
+
+    const updates: any = { title: firstKeepSong.title };
+    if (!toSong.artist && firstKeepSong.artist) updates.artist = firstKeepSong.artist;
+    if (!toSong.default_key && firstKeepSong.default_key) updates.default_key = firstKeepSong.default_key;
+    if (!toSong.youtube_url && firstKeepSong.youtube_url) updates.youtube_url = firstKeepSong.youtube_url;
+    if (!toSong.score_file_url && firstKeepSong.score_file_url) updates.score_file_url = firstKeepSong.score_file_url;
+    if (!toSong.language && firstKeepSong.language) updates.language = firstKeepSong.language;
+    if (!toSong.category && firstKeepSong.category) updates.category = firstKeepSong.category;
 
     setIsProcessing(true);
 
@@ -483,25 +510,30 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   };
 
   const handleDeleteSingleSong = async (songId: string, groupId: string) => {
-    setIsProcessing(true);
+    const group = highConfidenceGroups.find(g => g.id === groupId) || 
+                  mediumConfidenceGroups.find(g => g.id === groupId);
     
+    if (!group) return;
+
+    const songsToKeep = group.songs.filter(s => keepDeleteStates[s.id] === 'keep');
+    
+    if (keepDeleteStates[songId] === 'keep' && songsToKeep.length === 1) {
+      toast.error(t("songLibrary.duplicateReview.mustKeepAtLeastOne"));
+      return;
+    }
+
+    setIsProcessing(true);
     try {
-      const group = duplicateGroups.find(g => g.id === groupId);
-      if (!group) return;
+      const keepSongId = songsToKeep[0]?.id;
       
-      // Get the master song (user-selected or suggested)
-      const masterSongId = group.userSelectedMaster || group.suggestedMaster || group.songs[0].id;
-      
-      // Only allow deletion if not deleting the last song or the only remaining song
-      if (group.songs.length <= 1 || (group.songs.length === 2 && songId === masterSongId)) {
-        toast.error("마지막 곡은 삭제할 수 없습니다");
+      if (!keepSongId) {
+        toast.error("No keep song found");
         return;
       }
-      
-      // Update set_songs references to point to master
+
       const { error: updateError } = await supabase
         .from("set_songs")
-        .update({ song_id: masterSongId })
+        .update({ song_id: keepSongId })
         .eq("song_id", songId);
       
       if (updateError) throw updateError;
@@ -605,7 +637,6 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     const values = currentGroup.songs.map((song) => song[field]);
     const allSame = values.every((v) => v === values[0]);
     const hasEmpty = values.some(v => !v);
-    const masterSongId = currentGroup.userSelectedMaster || currentGroup.suggestedMaster;
 
     return (
       <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
@@ -617,30 +648,19 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
           </div>
         </td>
         {currentGroup.songs.map((song, idx) => {
-          const isDifferent = !allSame;
-          const isMaster = song.id === masterSongId;
-          const isUserSelected = song.id === currentGroup.userSelectedMaster;
+          const status = keepDeleteStates[song.id];
           
           return (
             <td
               key={idx}
               className={cn(
                 "border p-2 text-sm",
-                isDifferent && "bg-yellow-100 dark:bg-yellow-900/20",
-                isMaster && "bg-green-50 dark:bg-green-950/20"
+                status === 'keep' && "bg-green-50 dark:bg-green-950/20",
+                status === 'delete' && "bg-red-50 dark:bg-red-950/20 opacity-60"
               )}
             >
-              <div className="flex items-center gap-2">
-                {isMaster && field === "title" && (
-                  isUserSelected ? (
-                    <Star className="h-4 w-4 text-blue-500 fill-blue-500 flex-shrink-0" />
-                  ) : (
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
-                  )
-                )}
-                <div className="truncate max-w-[200px]">
-                  {formatFieldValue(song[field], field, song)}
-                </div>
+              <div className="truncate max-w-[200px]">
+                {formatFieldValue(song[field], field, song)}
               </div>
             </td>
           );
@@ -760,9 +780,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {group.songs.map((song) => {
-                                const masterSongId = group.userSelectedMaster || group.suggestedMaster;
-                                const isMaster = song.id === masterSongId;
-                                const isUserSelected = song.id === group.userSelectedMaster;
+                                const status = keepDeleteStates[song.id];
                                 const usage = songUsages.get(song.id) || 0;
                                 const isEditing = editingStates[song.id];
                                 const editData = editedData[song.id] || song;
@@ -772,21 +790,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                     key={song.id}
                                     className={cn(
                                       "p-3 rounded border text-sm transition-all",
-                                      isMaster 
-                                        ? "border-green-500 bg-green-50 dark:bg-green-950/20" 
-                                        : "border-muted bg-muted/30",
+                                      status === 'keep' && "border-green-500 bg-green-50 dark:bg-green-950/20",
+                                      status === 'delete' && "border-red-500 bg-red-50 dark:bg-red-950/20 opacity-60",
                                       isEditing && "bg-accent/20"
                                     )}
-                                  >
-                                     <div className="flex items-start gap-2">
-                                      {isMaster && !isEditing && (
-                                        isUserSelected ? (
-                                          <Star className="h-4 w-4 text-blue-500 fill-blue-500 flex-shrink-0 mt-0.5" />
-                                        ) : (
-                                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0 mt-0.5" />
-                                        )
-                                      )}
-                                      <div className="flex-1 space-y-2">
+                                   >
+                                      <div className="flex items-start gap-2">
+                                       <div className="flex-1 space-y-2">
                                         {isEditing ? (
                                           <>
                                             <Input
@@ -897,53 +907,35 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                                   악보
                                                 </button>
                                               )}
-                                              <Badge variant="outline" className="text-xs">
-                                                {usage > 0 ? `${usage}회 사용` : "미사용"}
-                                              </Badge>
-                                            </div>
-                                            {isMaster && (
-                                              <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                                                {isUserSelected 
-                                                  ? "🔵 " + t("songLibrary.duplicateReview.masterSelected")
-                                                  : "⭐ " + t("songLibrary.duplicateReview.recommendedKeep")
-                                                }
-                                              </div>
-                                            )}
-                                            <div className="flex gap-2 mt-2">
-                                              {!isMaster && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => handleSetMaster(group.id, song.id)}
-                                                  disabled={isProcessing}
-                                                  className="text-xs flex-1"
-                                                >
-                                                  <Star className="h-3 w-3 mr-1" />
-                                                  {t("songLibrary.duplicateReview.setAsMaster")}
-                                                </Button>
+                                            <Badge variant="outline" className="text-xs">
+                                              {usage > 0 ? `${usage}회 사용` : "미사용"}
+                                            </Badge>
+                                          </div>
+                                          <div className="flex gap-2 mt-2 flex-wrap">
+                                            <Button
+                                              size="sm"
+                                              variant={status === 'keep' ? 'default' : 'outline'}
+                                              onClick={() => handleSetStatus(song.id, 'keep')}
+                                              disabled={isProcessing}
+                                              className={cn(
+                                                "text-xs flex-1",
+                                                status === 'keep' && "bg-green-600 hover:bg-green-700"
                                               )}
-                                              {!isMaster && masterSongId && (
-                                                <Button
-                                                  size="sm"
-                                                  variant="outline"
-                                                  onClick={() => quickCopyFromMaster(masterSongId, song.id)}
-                                                  disabled={isProcessing}
-                                                  className="text-xs flex-1"
-                                                >
-                                                  <Copy className="h-3 w-3 mr-1" />
-                                                  마스터에서 복사
-                                                </Button>
-                                              )}
-                                              <Button
-                                                size="sm"
-                                                variant="destructive"
-                                                onClick={() => setDeleteSingleConfirm({groupId: group.id, songId: song.id})}
-                                                disabled={isProcessing}
-                                                className="text-xs"
-                                              >
-                                                <XCircle className="h-3 w-3" />
-                                              </Button>
-                                            </div>
+                                            >
+                                              <CheckCircle className="h-3 w-3 mr-1" />
+                                              {t("songLibrary.duplicateReview.keepSong")}
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant={status === 'delete' ? 'destructive' : 'outline'}
+                                              onClick={() => handleSetStatus(song.id, 'delete')}
+                                              disabled={isProcessing}
+                                              className="text-xs flex-1"
+                                            >
+                                              <XCircle className="h-3 w-3 mr-1" />
+                                              {t("songLibrary.duplicateReview.deleteSong")}
+                                            </Button>
+                                          </div>
                                           </>
                                         )}
                                       </div>
@@ -1032,16 +1024,21 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                           <thead>
                             <tr className="bg-muted">
                               <th className="border p-2 text-left w-[140px]">Field</th>
-                              {currentGroup.songs.map((song, idx) => (
-                                <th key={idx} className="border p-2 text-left w-[280px]">
-                                  Song {idx + 1}
-                                  {song.id === currentGroup.suggestedMaster && (
-                                    <Badge variant="default" className="ml-2 text-xs">
-                                      {t("songLibrary.duplicateReview.suggested")}
+                              {currentGroup.songs.map((song, idx) => {
+                                const status = keepDeleteStates[song.id];
+                                return (
+                                  <th key={idx} className={cn(
+                                    "border p-2 text-left w-[280px]",
+                                    status === 'keep' && "bg-green-50 dark:bg-green-950/20",
+                                    status === 'delete' && "bg-red-50 dark:bg-red-950/20"
+                                  )}>
+                                    Song {idx + 1}
+                                    <Badge variant={status === 'keep' ? 'default' : 'destructive'} className="ml-2 text-xs">
+                                      {status === 'keep' ? t("songLibrary.duplicateReview.keepSong") : t("songLibrary.duplicateReview.deleteSong")}
                                     </Badge>
-                                  )}
-                                </th>
-                              ))}
+                                  </th>
+                                );
+                              })}
                             </tr>
                           </thead>
                           <tbody>
