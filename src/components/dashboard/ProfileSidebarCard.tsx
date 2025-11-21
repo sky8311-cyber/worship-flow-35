@@ -49,11 +49,11 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
           {/* Avatar + Edit Icon */}
           <div className="relative group">
             <Avatar
-              className="cursor-pointer mx-auto w-20 h-20 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
-              onClick={() => navigate("/profile")}
+              className="cursor-pointer mx-auto w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
+              onClick={() => setAvatarDialogOpen(true)}
             >
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
             </Avatar>
             <Button
               size="icon"
