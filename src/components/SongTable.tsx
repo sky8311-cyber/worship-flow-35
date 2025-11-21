@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Eye, Youtube, Edit, Trash2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -20,6 +22,9 @@ interface SongTableProps {
   selectedSongs?: Set<string>;
   onToggleSelection?: (songId: string) => void;
   onSelectAll?: () => void;
+  bulkEditMode?: boolean;
+  editedSongs?: Record<string, any>;
+  onUpdateEditedSong?: (songId: string, field: string, value: any) => void;
 }
 
 export const SongTable = ({ 
@@ -29,7 +34,10 @@ export const SongTable = ({
   selectionMode = false,
   selectedSongs = new Set(),
   onToggleSelection,
-  onSelectAll
+  onSelectAll,
+  bulkEditMode = false,
+  editedSongs = {},
+  onUpdateEditedSong
 }: SongTableProps) => {
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -136,116 +144,226 @@ export const SongTable = ({
           </TableRow>
           </TableHeader>
           <TableBody>
-            {songs.map((song) => (
-              <TableRow key={song.id} className={selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""}>
-                {selectionMode && (
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedSongs.has(song.id)}
-                      onCheckedChange={() => onToggleSelection?.(song.id)}
-                    />
+            {songs.map((song) => {
+              const isEditable = bulkEditMode && selectedSongs.has(song.id);
+              const displaySong = isEditable && editedSongs[song.id] ? editedSongs[song.id] : song;
+
+              return (
+                <TableRow key={song.id} className={selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""}>
+                  {selectionMode && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedSongs.has(song.id)}
+                        onCheckedChange={() => onToggleSelection?.(song.id)}
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell className="font-medium">
+                    {isEditable ? (
+                      <Input
+                        value={displaySong.title}
+                        onChange={(e) => onUpdateEditedSong?.(song.id, 'title', e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <div>
+                        <div>{song.title}</div>
+                        {song.subtitle && (
+                          <div className="text-xs text-muted-foreground">{song.subtitle}</div>
+                        )}
+                      </div>
+                    )}
                   </TableCell>
-                )}
-                <TableCell className="font-medium">
-                  <div>
-                    <div>{song.title}</div>
-                    {song.subtitle && (
-                      <div className="text-xs text-muted-foreground">{song.subtitle}</div>
+                  <TableCell>
+                    {isEditable ? (
+                      <Input
+                        value={displaySong.artist || ''}
+                        onChange={(e) => onUpdateEditedSong?.(song.id, 'artist', e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      <span>{song.artist || "-"}</span>
                     )}
-                  </div>
-                </TableCell>
-                <TableCell>{song.artist || "-"}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="text-xs">
-                    {getCategoryTranslation(song.category)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="text-xs">
-                    {getLanguageTranslation(song.language)}
-                  </Badge>
-                </TableCell>
-              <TableCell>{song.default_key || "-"}</TableCell>
-              <TableCell>{song.bpm || "-"}</TableCell>
-              <TableCell>
-                {song.energy_level ? (
-                  <Badge variant="outline" className="text-xs">
-                    {song.energy_level}/5
-                  </Badge>
-                ) : "-"}
-              </TableCell>
-              <TableCell>
-                {song.tags ? (
-                  <div className="flex flex-wrap gap-1 max-w-xs">
-                    {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {tag.trim()}
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Select
+                        value={displaySong.category || 'uncategorized'}
+                        onValueChange={(value) => 
+                          onUpdateEditedSong?.(song.id, 'category', value === 'uncategorized' ? null : value)
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
+                          <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
+                          <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
+                          <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
+                          <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
+                          <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="secondary" className="text-xs">
+                        {getCategoryTranslation(song.category)}
                       </Badge>
-                    ))}
-                    {song.tags.split(',').length > 2 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{song.tags.split(',').length - 2}
-                      </span>
                     )}
-                  </div>
-                ) : "-"}
-              </TableCell>
-              <TableCell className="text-sm text-muted-foreground">
-                {getLastUsedDate(song.id)}
-              </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    {song.youtube_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleYoutubeClick(song.youtube_url)}
-                        title={t("songCard.viewYouTube")}
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Select
+                        value={displaySong.language || ''}
+                        onValueChange={(value) => onUpdateEditedSong?.(song.id, 'language', value)}
                       >
-                        <Youtube className="h-4 w-4" />
-                      </Button>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+                          <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+                          <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        {getLanguageTranslation(song.language)}
+                      </Badge>
                     )}
-                    {song.score_file_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handlePreviewScore(song)}
-                        title={t("songLibrary.previewScore")}
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Input
+                        value={displaySong.default_key || ''}
+                        onChange={(e) => onUpdateEditedSong?.(song.id, 'default_key', e.target.value)}
+                        className="h-8 text-sm w-16"
+                      />
+                    ) : (
+                      <span>{song.default_key || "-"}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Input
+                        type="number"
+                        value={displaySong.bpm || ''}
+                        onChange={(e) => onUpdateEditedSong?.(song.id, 'bpm', e.target.value ? parseInt(e.target.value) : null)}
+                        className="h-8 text-sm w-20"
+                      />
+                    ) : (
+                      <span>{song.bpm || "-"}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Select
+                        value={displaySong.energy_level?.toString() || ''}
+                        onValueChange={(value) => onUpdateEditedSong?.(song.id, 'energy_level', value ? parseInt(value) : null)}
                       >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                        <SelectTrigger className="h-8 text-xs w-20">
+                          <SelectValue placeholder="-" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1, 2, 3, 4, 5].map(level => (
+                            <SelectItem key={level} value={level.toString()}>
+                              {level}/5
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      song.energy_level ? (
+                        <Badge variant="outline" className="text-xs">
+                          {song.energy_level}/5
+                        </Badge>
+                      ) : "-"
                     )}
-                    {onEdit && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => onEdit(song)}
-                        title={t("songCard.edit")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                  </TableCell>
+                  <TableCell>
+                    {isEditable ? (
+                      <Input
+                        value={displaySong.tags || ''}
+                        onChange={(e) => onUpdateEditedSong?.(song.id, 'tags', e.target.value)}
+                        className="h-8 text-sm"
+                        placeholder="tag1, tag2"
+                      />
+                    ) : (
+                      song.tags ? (
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {tag.trim()}
+                            </Badge>
+                          ))}
+                          {song.tags.split(',').length > 2 && (
+                            <span className="text-xs text-muted-foreground">
+                              +{song.tags.split(',').length - 2}
+                            </span>
+                          )}
+                        </div>
+                      ) : "-"
                     )}
-                    {onDelete && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setSongToDelete(song);
-                          setDeleteDialogOpen(true);
-                        }}
-                        title={t("songCard.delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {getLastUsedDate(song.id)}
+                  </TableCell>
+                  <TableCell>
+                    {!bulkEditMode && (
+                      <div className="flex items-center justify-end gap-1">
+                        {song.youtube_url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleYoutubeClick(song.youtube_url)}
+                            title={t("songCard.viewYouTube")}
+                          >
+                            <Youtube className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {song.score_file_url && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handlePreviewScore(song)}
+                            title={t("songLibrary.previewScore")}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {onEdit && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => onEdit(song)}
+                            title={t("songCard.edit")}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setSongToDelete(song);
+                              setDeleteDialogOpen(true);
+                            }}
+                            title={t("songCard.delete")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
