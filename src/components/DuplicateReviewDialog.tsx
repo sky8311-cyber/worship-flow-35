@@ -21,11 +21,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { findDuplicates, DuplicateGroup } from "@/lib/duplicateFinder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, XCircle, ExternalLink, Eye, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, XCircle, ExternalLink, Eye, AlertCircle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
@@ -61,6 +63,8 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [selectedScoreUrl, setSelectedScoreUrl] = useState<string | null>(null);
   const [selectedSongTitle, setSelectedSongTitle] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedSongs, setEditedSongs] = useState<Map<string, any>>(new Map());
 
   const saveProgressToLocalStorage = (
     processed: Set<string>,
@@ -242,7 +246,50 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
 
   const handleDialogClose = () => {
     saveProgressToLocalStorage(processedGroups, skippedGroups, currentGroupIndex);
+    setIsEditMode(false);
+    setEditedSongs(new Map());
     onClose();
+  };
+
+  const handleFieldChange = (songId: string, field: string, value: any) => {
+    const newEditedSongs = new Map(editedSongs);
+    const currentEdits = newEditedSongs.get(songId) || {};
+    
+    newEditedSongs.set(songId, {
+      ...currentEdits,
+      [field]: value
+    });
+    
+    setEditedSongs(newEditedSongs);
+  };
+
+  const handleSaveAllChanges = async () => {
+    try {
+      setIsProcessing(true);
+      
+      const updates = Array.from(editedSongs.entries()).map(([songId, changes]) => {
+        if (changes.category === 'uncategorized') {
+          changes.category = null;
+        }
+        
+        return supabase
+          .from('songs')
+          .update(changes)
+          .eq('id', songId);
+      });
+      
+      await Promise.all(updates);
+      
+      toast.success(`${editedSongs.size}개 곡 정보가 저장되었습니다`);
+      setEditedSongs(new Map());
+      setIsEditMode(false);
+      onMergeComplete();
+    } catch (error) {
+      console.error('Save error:', error);
+      toast.error('저장 중 오류가 발생했습니다');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (duplicateGroups.length === 0) {
@@ -354,23 +401,91 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
       score_file_url: "text-center",
     };
 
+    const editableTextFields = ['title', 'artist', 'subtitle', 'interpretation', 'notes', 'default_key', 'youtube_url'];
+    const readOnlyFields = ['score_file_url', 'created_at', 'updated_at'];
+
+    const renderEditableCell = (song: any) => {
+      const editedValue = editedSongs.get(song.id)?.[field];
+      const currentValue = editedValue !== undefined ? editedValue : song[field];
+      const hasEdits = editedSongs.get(song.id)?.[field] !== undefined;
+
+      if (field === 'category') {
+        return (
+          <Select 
+            value={currentValue || 'uncategorized'} 
+            onValueChange={(value) => handleFieldChange(song.id, 'category', value)}
+          >
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="uncategorized">Uncategorized</SelectItem>
+              <SelectItem value="찬송가">찬송가</SelectItem>
+              <SelectItem value="모던워십 (한국)">모던워십 (한국)</SelectItem>
+              <SelectItem value="모던워십 (서양)">모던워십 (서양)</SelectItem>
+              <SelectItem value="모던워십 (기타)">모던워십 (기타)</SelectItem>
+              <SelectItem value="한국 복음성가">한국 복음성가</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      }
+
+      if (field === 'language') {
+        return (
+          <Select 
+            value={currentValue || ''} 
+            onValueChange={(value) => handleFieldChange(song.id, 'language', value)}
+          >
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="-" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="KO">한국어</SelectItem>
+              <SelectItem value="EN">English</SelectItem>
+              <SelectItem value="KO/EN">한국어/English</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      }
+
+      if (editableTextFields.includes(field)) {
+        return (
+          <Input 
+            value={currentValue || ''} 
+            onChange={(e) => handleFieldChange(song.id, field, e.target.value)}
+            className={cn("h-8 text-sm", hasEdits && "border-blue-500 border-2")}
+            placeholder={field === 'tags' ? "worship, praise" : undefined}
+          />
+        );
+      }
+
+      return formatFieldValue(song[field], field, song);
+    };
+
     return (
       <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
         <td className="border p-2 font-medium">{label}</td>
         {currentGroup.songs.map((song, idx) => {
           const isDifferent = !allSame;
+          const hasEdits = editedSongs.get(song.id)?.[field] !== undefined;
+          
           return (
             <td
               key={idx}
               className={cn(
                 "border p-2",
                 isDifferent && "bg-yellow-100 dark:bg-yellow-900/20",
-                fieldStyles[field] || ""
+                hasEdits && "bg-blue-50 dark:bg-blue-950/20",
+                !isEditMode && fieldStyles[field] || ""
               )}
             >
-              <div className={fieldStyles[field] || ""}>
-                {formatFieldValue(song[field], field, song)}
-              </div>
+              {isEditMode && !readOnlyFields.includes(field) ? (
+                renderEditableCell(song)
+              ) : (
+                <div className={fieldStyles[field] || ""}>
+                  {formatFieldValue(song[field], field, song)}
+                </div>
+              )}
             </td>
           );
         })}
@@ -418,7 +533,40 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
+                <Button
+                  variant={isEditMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setIsEditMode(!isEditMode);
+                    if (isEditMode) {
+                      setEditedSongs(new Map());
+                    }
+                  }}
+                  disabled={isProcessing}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Mode
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit Mode
+                    </>
+                  )}
+                </Button>
+              </div>
+              {isEditMode && (
+                <Alert>
+                  <Pencil className="h-4 w-4" />
+                  <AlertDescription>
+                    에디터 모드: 모든 필드를 수정할 수 있습니다. 수정 완료 후 "Save All Changes" 버튼을 클릭하세요.
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="overflow-x-auto">
                 <table className="text-sm border-collapse table-fixed">
                   <thead>
@@ -503,18 +651,41 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleSkipGroup} disabled={isProcessing}>
-              {t("songLibrary.duplicateReview.skipThisGroup")}
-            </Button>
-            <Button
-              onClick={handleDeleteSelected}
-              disabled={isProcessing || selectedToDelete.size === 0}
-              variant="destructive"
-            >
-              {isProcessing
-                ? t("songLibrary.duplicateReview.processing")
-                : t("songLibrary.duplicateReview.deleteSelected", { count: selectedToDelete.size })}
-            </Button>
+            {isEditMode ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditMode(false);
+                    setEditedSongs(new Map());
+                  }}
+                  disabled={isProcessing}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveAllChanges} 
+                  disabled={isProcessing || editedSongs.size === 0}
+                >
+                  {isProcessing ? "Saving..." : `Save All Changes (${editedSongs.size})`}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleSkipGroup} disabled={isProcessing}>
+                  {t("songLibrary.duplicateReview.skipThisGroup")}
+                </Button>
+                <Button
+                  onClick={handleDeleteSelected}
+                  disabled={isProcessing || selectedToDelete.size === 0}
+                  variant="destructive"
+                >
+                  {isProcessing
+                    ? t("songLibrary.duplicateReview.processing")
+                    : t("songLibrary.duplicateReview.deleteSelected", { count: selectedToDelete.size })}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
