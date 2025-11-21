@@ -30,6 +30,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
   isAdmin: boolean;
   isWorshipLeader: boolean;
+  isCommunityLeaderInAnyCommunity: boolean;
   hasRole: (role: string) => boolean;
   isCommunityLeader: (communityId: string) => Promise<boolean>;
   getCommunityRole: (communityId: string) => Promise<string | null>;
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
+  const [isCommunityLeaderInAnyCommunity, setIsCommunityLeaderInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -56,8 +58,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("role")
       .eq("user_id", userId);
 
+    // Check if user is a community leader in any community
+    const { data: communityLeaderData } = await supabase
+      .from("community_members")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "community_leader")
+      .limit(1);
+
     if (profileData) setProfile(profileData);
     if (rolesData) setRoles(rolesData.map((r: any) => r.role));
+    setIsCommunityLeaderInAnyCommunity(!!communityLeaderData && communityLeaderData.length > 0);
   };
 
   useEffect(() => {
@@ -174,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatePassword,
         isAdmin,
         isWorshipLeader,
+        isCommunityLeaderInAnyCommunity,
         hasRole,
         isCommunityLeader,
         getCommunityRole,

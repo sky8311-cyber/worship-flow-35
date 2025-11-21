@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,13 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Settings, MapPin, Instagram, Youtube, ArrowLeft, Home } from "lucide-react";
+import { Settings, MapPin, Instagram, Youtube, ArrowLeft, Home, Camera } from "lucide-react";
+import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
+import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
+import { CoverEditDialog } from "@/components/profile/CoverEditDialog";
 
 export default function Profile() {
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [coverDialogOpen, setCoverDialogOpen] = useState(false);
 
   const targetUserId = userId || currentUser?.id;
   const isOwnProfile = targetUserId === currentUser?.id;
@@ -112,13 +120,28 @@ export default function Profile() {
       </div>
 
       {/* Cover Image */}
-      <div className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/10">
-        {profile.cover_image_url && (
-          <img 
-            src={profile.cover_image_url} 
-            className="w-full h-full object-cover" 
+      <div className="relative h-64 bg-gradient-to-r from-primary/20 to-primary/10 group">
+        {profile.cover_image_url ? (
+          <img
+            src={profile.cover_image_url}
             alt="Cover"
+            className="w-full h-full object-cover"
           />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <Camera className="w-16 h-16" />
+          </div>
+        )}
+        {isOwnProfile && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={() => setCoverDialogOpen(true)}
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            {t("profile.editProfile")}
+          </Button>
         )}
       </div>
 
@@ -127,7 +150,10 @@ export default function Profile() {
         <div className="bg-card rounded-lg shadow-lg p-6">
           <div className="flex flex-col md:flex-row items-start gap-6">
             {/* Avatar */}
-            <Avatar className="w-32 h-32 border-4 border-background">
+            <Avatar 
+              className={`w-32 h-32 border-4 border-background ${isOwnProfile ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+              onClick={() => isOwnProfile && setAvatarDialogOpen(true)}
+            >
               <AvatarImage src={profile.avatar_url || undefined} />
               <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
             </Avatar>
@@ -148,12 +174,12 @@ export default function Profile() {
                   )}
                 </div>
 
-                {isOwnProfile && (
-                  <Button onClick={() => navigate("/profile/settings")}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    {t("profile.editProfile")}
-                  </Button>
-                )}
+            {isOwnProfile && (
+              <Button onClick={() => setEditDialogOpen(true)}>
+                <Settings className="w-4 h-4 mr-2" />
+                {t("profile.editProfile")}
+              </Button>
+            )}
               </div>
 
               {/* Roles */}
