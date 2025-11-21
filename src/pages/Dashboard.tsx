@@ -191,7 +191,7 @@ const Dashboard = () => {
             </Link>
             
             {/* Right: Navigation Items */}
-            <div className="justify-self-end flex items-center gap-2 sm:gap-3">
+            <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
               <LanguageToggle />
               {isAdmin && <Button variant="ghost" size="icon" asChild>
                   <Link to="/admin">
