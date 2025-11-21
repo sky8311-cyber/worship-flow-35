@@ -55,10 +55,41 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
                     className="mt-1"
                   />
                 </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">BPM</label>
+                  <Input
+                    type="number"
+                    value={setSong.bpm || ""}
+                    onChange={(e) => onUpdate(index, { bpm: e.target.value ? parseInt(e.target.value) : null })}
+                    placeholder="BPM"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">박자</label>
+                  <Input
+                    value={setSong.time_signature || ""}
+                    onChange={(e) => onUpdate(index, { time_signature: e.target.value })}
+                    placeholder="4/4"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">에너지 레벨</label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="5"
+                    value={setSong.energy_level || ""}
+                    onChange={(e) => onUpdate(index, { energy_level: e.target.value ? parseInt(e.target.value) : null })}
+                    placeholder="1-5"
+                    className="mt-1"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-xs text-muted-foreground">노트</label>
+                <label className="text-xs text-muted-foreground">진행설명</label>
                 <Textarea
                   value={setSong.custom_notes || ""}
                   onChange={(e) => onUpdate(index, { custom_notes: e.target.value })}

@@ -30,9 +30,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     artist: "",
     language: "",
     default_key: "",
-    bpm: "",
-    time_signature: "",
-    energy_level: "",
     category: "",
     tags: [] as string[],
     youtube_url: "",
@@ -49,9 +46,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         artist: song.artist || "",
         language: song.language || "",
         default_key: song.default_key || "",
-        bpm: song.bpm?.toString() || "",
-        time_signature: song.time_signature || "",
-        energy_level: song.energy_level?.toString() || "",
         category: song.category || "",
         tags: song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [],
         youtube_url: song.youtube_url || "",
@@ -66,9 +60,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         artist: "",
         language: "",
         default_key: "",
-        bpm: "",
-        time_signature: "",
-        energy_level: "",
         category: "",
         tags: [],
         youtube_url: "",
@@ -168,8 +159,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         ...formData,
         category: normalizedCategory || null,
         tags: formData.tags.join(", "),
-        bpm: formData.bpm ? parseInt(formData.bpm) : null,
-        energy_level: formData.energy_level ? parseInt(formData.energy_level) : null,
       };
 
       if (song) {
@@ -279,38 +268,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                 placeholder="C, D, Em, etc."
               />
             </div>
-
-            <div>
-              <Label htmlFor="bpm">{t("songDialog.bpm")}</Label>
-              <Input
-                id="bpm"
-                type="number"
-                value={formData.bpm}
-                onChange={(e) => setFormData({ ...formData, bpm: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="time_signature">{t("songDialog.timeSignature")}</Label>
-              <Input
-                id="time_signature"
-                value={formData.time_signature}
-                onChange={(e) => setFormData({ ...formData, time_signature: e.target.value })}
-                placeholder="4/4"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="energy_level">{t("songDialog.energyLevel")} (1-5)</Label>
-            <Input
-              id="energy_level"
-              type="number"
-              min="1"
-              max="5"
-              value={formData.energy_level}
-              onChange={(e) => setFormData({ ...formData, energy_level: e.target.value })}
-            />
           </div>
 
           <div>

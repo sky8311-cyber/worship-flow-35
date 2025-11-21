@@ -367,7 +367,6 @@ export const translations = {
         titleDesc: "Title (Z-A)",
         recentlyAdded: "Recently Added",
         artist: "Artist",
-        bpm: "BPM",
       },
   tableHeaders: {
     title: "Title",
@@ -375,8 +374,6 @@ export const translations = {
     category: "Category",
     language: "Language",
     key: "Key",
-    bpm: "BPM",
-    energyLevel: "Energy",
     tags: "Tags",
     lastUsed: "Last Used",
     actions: "Actions",
@@ -464,11 +461,6 @@ export const translations = {
       language: "Language",
       key: "Key",
       keyPlaceholder: "e.g., G, C, D",
-      bpm: "BPM",
-      bpmPlaceholder: "Tempo",
-      timeSignature: "Time Signature",
-      timePlaceholder: "e.g., 4/4",
-      energyLevel: "Energy Level",
       category: "Category",
       categories: {
         hymn: "Hymn",
@@ -530,7 +522,6 @@ export const translations = {
       viewYouTube: "YouTube",
       viewScore: "Score",
       key: "Key",
-      bpm: "BPM",
     },
     setBuilder: {
       title: "Set Builder",
@@ -1101,7 +1092,6 @@ export const translations = {
         titleDesc: "제목 (역순)",
         recentlyAdded: "최근 추가",
         artist: "아티스트",
-        bpm: "BPM",
       },
   tableHeaders: {
     title: "제목",
@@ -1109,8 +1099,6 @@ export const translations = {
     category: "카테고리",
     language: "언어",
     key: "키",
-    bpm: "BPM",
-    energyLevel: "에너지",
     tags: "태그",
     lastUsed: "마지막 사용",
     actions: "액션",
@@ -1186,11 +1174,6 @@ export const translations = {
       language: "언어",
       key: "키",
       keyPlaceholder: "예: G, C, D",
-      bpm: "BPM",
-      bpmPlaceholder: "템포",
-      timeSignature: "박자",
-      timePlaceholder: "예: 4/4",
-      energyLevel: "에너지 레벨",
       category: "카테고리",
       categories: {
         hymn: "찬송가",
@@ -1252,7 +1235,6 @@ export const translations = {
       viewYouTube: "유튜브",
       viewScore: "악보",
       key: "키",
-      bpm: "BPM",
     },
     setBuilder: {
       title: "워십세트 빌더",
