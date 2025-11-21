@@ -179,13 +179,13 @@ const Dashboard = () => {
             </div>
             
             {/* Center: Logo */}
-            <div className="justify-self-center col-start-2">
+            <Link to="/dashboard" className="justify-self-center col-start-2">
               <img 
                 src={logo} 
                 alt="K-Worship" 
-                className="h-20 w-auto"
+                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
-            </div>
+            </Link>
             
             {/* Right: Navigation Items */}
             <div className="justify-self-end flex items-center gap-2 sm:gap-3">

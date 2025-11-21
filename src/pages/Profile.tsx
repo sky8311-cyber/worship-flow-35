@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -108,21 +108,21 @@ export default function Profile() {
           <div className="grid grid-cols-3 items-center gap-4">
             {/* Left: Breadcrumb */}
             <div className="justify-self-start hidden md:block">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <Home className="h-4 w-4" />
                 <span>/</span>
                 <span>{t("breadcrumb.profile")}</span>
-              </div>
+              </Link>
             </div>
             
             {/* Center: Logo */}
-            <div className="justify-self-center col-start-2">
+            <Link to="/dashboard" className="justify-self-center col-start-2">
               <img 
                 src={logo} 
                 alt="K-Worship" 
-                className="h-20 w-auto"
+                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
               />
-            </div>
+            </Link>
             
             {/* Right: Navigation Items */}
             <div className="justify-self-end">
