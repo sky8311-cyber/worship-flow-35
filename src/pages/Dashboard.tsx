@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SetImportDialog } from "@/components/SetImportDialog";
 import { SongDialog } from "@/components/SongDialog";
+import logo from "@/assets/logo.png";
 
 // New Dashboard Components
 import { SongLibraryWidget } from "@/components/dashboard/SongLibraryWidget";
@@ -161,9 +162,11 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                <Music className="w-6 h-6 text-white" />
-              </div>
+              <img 
+                src={logo} 
+                alt="K-Worship" 
+                className="h-10 w-auto"
+              />
               <div>
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{t("dashboard.title")}</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">{t("dashboard.subtitle")}</p>
