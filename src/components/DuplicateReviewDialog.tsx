@@ -340,6 +340,20 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     const values = currentGroup.songs.map((song) => song[field]);
     const allSame = values.every((v) => v === values[0]);
 
+    const fieldStyles: Record<string, string> = {
+      title: "max-w-[250px] truncate",
+      artist: "max-w-[200px] truncate",
+      subtitle: "max-w-[180px] truncate",
+      interpretation: "max-w-[200px] truncate",
+      notes: "max-w-[200px] truncate",
+      default_key: "text-center",
+      category: "text-center",
+      language: "text-center",
+      tags: "max-w-[180px]",
+      youtube_url: "text-center",
+      score_file_url: "text-center",
+    };
+
     return (
       <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
         <td className="border p-2 font-medium">{label}</td>
@@ -350,10 +364,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
               key={idx}
               className={cn(
                 "border p-2",
-                isDifferent && "bg-yellow-100 dark:bg-yellow-900/20"
+                isDifferent && "bg-yellow-100 dark:bg-yellow-900/20",
+                fieldStyles[field] || ""
               )}
             >
-              {formatFieldValue(song[field], field, song)}
+              <div className={fieldStyles[field] || ""}>
+                {formatFieldValue(song[field], field, song)}
+              </div>
             </td>
           );
         })}
@@ -403,12 +420,12 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
             <div className="space-y-2">
               <h3 className="font-semibold text-lg">{t("songLibrary.duplicateReview.compareSongs")}</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
+                <table className="text-sm border-collapse table-fixed">
                   <thead>
                     <tr className="bg-muted">
-                      <th className="border p-2 text-left min-w-[120px]">Field</th>
+                      <th className="border p-2 text-left w-[140px]">Field</th>
                       {currentGroup.songs.map((song, idx) => (
-                        <th key={idx} className="border p-2 text-left">
+                        <th key={idx} className="border p-2 text-left w-[280px]">
                           Song {idx + 1}
                         </th>
                       ))}
