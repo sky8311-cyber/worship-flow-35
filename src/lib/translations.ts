@@ -30,6 +30,9 @@ export const translations = {
       songs: "songs",
       import: "Import",
     },
+    breadcrumb: {
+      dashboard: "Dashboard",
+    },
     auth: {
       signUpChoice: {
         title: "Sign Up",
@@ -754,6 +757,9 @@ export const translations = {
       ago: "전",
       songs: "곡",
       import: "가져오기",
+    },
+    breadcrumb: {
+      dashboard: "대시보드",
     },
     auth: {
       signUpChoice: {
