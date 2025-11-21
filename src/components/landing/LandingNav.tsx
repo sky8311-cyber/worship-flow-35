@@ -65,7 +65,7 @@ export const LandingNav = () => {
               size="sm"
               className="ml-4"
             >
-              <Link to="/auth/login">
+              <Link to="/login">
                 베타 로그인
               </Link>
             </Button>
@@ -116,7 +116,7 @@ export const LandingNav = () => {
                 className="w-full"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Link to="/auth/login">
+                <Link to="/login">
                   베타 로그인
                 </Link>
               </Button>
