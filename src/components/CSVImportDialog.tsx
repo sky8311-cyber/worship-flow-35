@@ -62,14 +62,6 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       return t("csvImport.rowError", { row: index + 2, error: t("songDialog.titleRequired") });
     }
 
-    if (!row.youtube_url || row.youtube_url.trim() === "") {
-      return t("csvImport.rowError", { row: index + 2, error: t("csvImport.youtubeRequired") });
-    }
-
-    if (!row.score_file_url || row.score_file_url.trim() === "") {
-      return t("csvImport.rowError", { row: index + 2, error: t("csvImport.scoreRequired") });
-    }
-
     if (row.bpm && isNaN(Number(row.bpm))) {
       return t("csvImport.rowError", { row: index + 2, error: "BPM must be a number" });
     }
@@ -107,9 +99,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
         } else {
           setErrors([]);
           setCSVData(data);
-          if (imageFiles.length > 0) {
-            setStep("preview");
-          }
+          setStep("preview");
         }
       },
       error: (error) => {
@@ -127,10 +117,6 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
     );
     
     setImageFiles(imageFileList);
-    
-    if (csvData.length > 0) {
-      setStep("preview");
-    }
   };
 
   const uploadScoreImage = async (file: File): Promise<string | null> => {
@@ -242,6 +228,19 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
     return { matched, total: csvData.length };
   };
 
+  const getDataCompleteness = () => {
+    const missingYouTube = csvData.filter(row => !row.youtube_url || row.youtube_url.trim() === "").length;
+    const missingScoreFile = csvData.filter(row => !row.score_file_url || row.score_file_url.trim() === "").length;
+    const imageMatchStatus = getImageMatchStatus();
+    
+    return {
+      total: csvData.length,
+      missingYouTube,
+      missingScoreFile,
+      matchedImages: imageMatchStatus.matched
+    };
+  };
+
   const handleReset = () => {
     setCSVData([]);
     setImageFiles([]);
@@ -338,13 +337,13 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
               </Button>
               <Button
                 onClick={() => {
-                  if (csvData.length > 0 && imageFiles.length > 0) {
+                  if (csvData.length > 0) {
                     setStep("preview");
                   } else {
-                    toast.error(t("csvImport.uploadBothFiles"));
+                    toast.error(t("csvImport.uploadCSVOnly"));
                   }
                 }}
-                disabled={csvData.length === 0 || imageFiles.length === 0}
+                disabled={csvData.length === 0}
               >
                 {t("csvImport.continue")}
               </Button>
@@ -357,7 +356,7 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
             <Alert>
               <CheckCircle2 className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                {t("csvImport.previewInstructions", getImageMatchStatus())}
+                {t("csvImport.dataCompleteness", getDataCompleteness())}
               </AlertDescription>
             </Alert>
 
@@ -372,8 +371,10 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
                       <th className="p-2 text-left w-8"></th>
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
-                      <th className="p-2 text-left">{t("csvImport.scoreFile")}</th>
-                      <th className="p-2 text-left">{t("csvImport.imageStatus")}</th>
+                      <th className="p-2 text-left">{t("songDialog.category")}</th>
+                      <th className="p-2 text-left">{t("csvImport.keyBpm")}</th>
+                      <th className="p-2 text-left">{t("csvImport.youtubeStatus")}</th>
+                      <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -383,22 +384,41 @@ Amazing Grace,,Traditional,EN,G,80,4/4,3,모던워십 (서양),"grace,worship",h
                         <tr key={index} className="border-t">
                           <td className="p-2 text-center text-muted-foreground">{index + 1}</td>
                           <td className="p-2 font-medium">{row.title}</td>
-                          <td className="p-2">{row.artist}</td>
-                          <td className="p-2">
-                            <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                              {row.score_file_url}
-                            </code>
+                          <td className="p-2 text-sm">{row.artist || "-"}</td>
+                          <td className="p-2 text-sm">{row.category || "-"}</td>
+                          <td className="p-2 text-sm">
+                            {row.default_key || "-"} {row.bpm ? `/ ${row.bpm}` : ""}
                           </td>
                           <td className="p-2">
-                            {matchedFile ? (
+                            {row.youtube_url && row.youtube_url.trim() !== "" ? (
                               <Badge variant="default" className="gap-1">
                                 <CheckCircle2 className="w-3 h-3" />
-                                {t("csvImport.matched")}
+                                {t("csvImport.youtubePresent")}
                               </Badge>
                             ) : (
-                              <Badge variant="destructive" className="gap-1">
-                                <XCircle className="w-3 h-3" />
-                                {t("csvImport.notMatched")}
+                              <Badge variant="secondary" className="gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                {t("csvImport.youtubeMissing")}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-2">
+                            {row.score_file_url && row.score_file_url.trim() !== "" ? (
+                              matchedFile ? (
+                                <Badge variant="default" className="gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {t("csvImport.matched")}
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive" className="gap-1">
+                                  <XCircle className="w-3 h-3" />
+                                  {t("csvImport.notMatched")}
+                                </Badge>
+                              )
+                            ) : (
+                              <Badge variant="secondary" className="gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                {t("csvImport.scoreMissing")}
                               </Badge>
                             )}
                           </td>
