@@ -32,6 +32,10 @@ export const translations = {
     },
     breadcrumb: {
       dashboard: "Dashboard",
+      communitySearch: "Community Search",
+      profile: "Profile",
+      setBuilder: "Set Builder",
+      songs: "Song Library",
     },
     auth: {
       signUpChoice: {
@@ -760,6 +764,10 @@ export const translations = {
     },
     breadcrumb: {
       dashboard: "대시보드",
+      communitySearch: "예배공동체 검색",
+      profile: "프로필",
+      setBuilder: "세트 만들기",
+      songs: "찬양 라이브러리",
     },
     auth: {
       signUpChoice: {
