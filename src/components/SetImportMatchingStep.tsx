@@ -3,10 +3,11 @@ import { ParsedWorshipSet } from "@/lib/csvSetParser";
 import { MatchResult, MatchType, Song } from "@/lib/songMatcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useTranslation } from "@/hooks/useTranslation";
-import { CheckCircle, AlertTriangle, XCircle, HelpCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle, XCircle, HelpCircle, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SetImportMatchingStepProps {
   parsedSets: ParsedWorshipSet[];
@@ -22,6 +23,7 @@ export const SetImportMatchingStep = ({
   onUpdateMatch,
 }: SetImportMatchingStepProps) => {
   const { t } = useTranslation();
+  const [openComboboxes, setOpenComboboxes] = useState<Record<string, boolean>>({});
 
   const getMatchIcon = (matchType: MatchType) => {
     switch (matchType) {
@@ -142,46 +144,115 @@ export const SetImportMatchingStep = ({
                       {(matchResult.matchType === MatchType.MULTIPLE ||
                         matchResult.matchType === MatchType.NOT_FOUND) && (
                         <div className="flex items-center gap-2 mt-2">
-                          <Select
-                            onValueChange={(value) => {
-                              if (value === "skip") {
-                                onUpdateMatch(song.originalText, {
-                                  ...matchResult,
-                                  matchType: MatchType.NOT_FOUND,
-                                  matchedSong: undefined,
-                                });
-                              } else {
-                                const selectedSong = songLibrary.find((s) => s.id === value);
-                                if (selectedSong) {
-                                  onUpdateMatch(song.originalText, {
-                                    ...matchResult,
-                                    matchType: MatchType.EXACT,
-                                    confidence: 100,
-                                    matchedSong: selectedSong,
-                                  });
-                                }
-                              }
+                          <Popover
+                            open={openComboboxes[song.originalText] || false}
+                            onOpenChange={(open) => {
+                              setOpenComboboxes(prev => ({ ...prev, [song.originalText]: open }));
                             }}
                           >
-                            <SelectTrigger className="w-[250px] h-8 text-xs">
-                              <SelectValue placeholder={t("setImport.selectFromLibrary")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {matchResult.candidates?.map((candidate) => (
-                                <SelectItem key={candidate.id} value={candidate.id}>
-                                  {candidate.title}
-                                  {candidate.artist && ` - ${candidate.artist}`}
-                                </SelectItem>
-                              )) || 
-                                songLibrary.slice(0, 10).map((song) => (
-                                  <SelectItem key={song.id} value={song.id}>
-                                    {song.title}
-                                    {song.artist && ` - ${song.artist}`}
-                                  </SelectItem>
-                                ))}
-                              <SelectItem value="skip">{t("setImport.skipSong")}</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className="w-[300px] justify-between text-xs h-8"
+                              >
+                                {matchResult.matchedSong
+                                  ? `${matchResult.matchedSong.title}${matchResult.matchedSong.artist ? ` - ${matchResult.matchedSong.artist}` : ''}`
+                                  : t("setImport.selectFromLibrary")
+                                }
+                                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0" align="start">
+                              <Command>
+                                <CommandInput
+                                  placeholder={t("setImport.searchSongs")}
+                                  className="h-8"
+                                />
+                                <CommandList>
+                                  <CommandEmpty>{t("setImport.noSongsFound")}</CommandEmpty>
+                                  <CommandGroup>
+                                    {matchResult.candidates?.map((candidate) => (
+                                      <CommandItem
+                                        key={candidate.id}
+                                        value={`${candidate.title} ${candidate.artist || ''}`}
+                                        onSelect={() => {
+                                          onUpdateMatch(song.originalText, {
+                                            ...matchResult,
+                                            matchType: MatchType.EXACT,
+                                            confidence: 100,
+                                            matchedSong: candidate,
+                                          });
+                                          setOpenComboboxes(prev => ({ ...prev, [song.originalText]: false }));
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            matchResult.matchedSong?.id === candidate.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{candidate.title}</span>
+                                          {candidate.artist && (
+                                            <span className="text-xs text-muted-foreground">{candidate.artist}</span>
+                                          )}
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+
+                                    {songLibrary
+                                      .filter(s => !matchResult.candidates?.some(c => c.id === s.id))
+                                      .map((libSong) => (
+                                        <CommandItem
+                                          key={libSong.id}
+                                          value={`${libSong.title} ${libSong.artist || ''}`}
+                                          onSelect={() => {
+                                            onUpdateMatch(song.originalText, {
+                                              ...matchResult,
+                                              matchType: MatchType.EXACT,
+                                              confidence: 100,
+                                              matchedSong: libSong,
+                                            });
+                                            setOpenComboboxes(prev => ({ ...prev, [song.originalText]: false }));
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              matchResult.matchedSong?.id === libSong.id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{libSong.title}</span>
+                                            {libSong.artist && (
+                                              <span className="text-xs text-muted-foreground">{libSong.artist}</span>
+                                            )}
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                  </CommandGroup>
+
+                                  <CommandGroup>
+                                    <CommandItem
+                                      value="skip-song-option"
+                                      onSelect={() => {
+                                        onUpdateMatch(song.originalText, {
+                                          ...matchResult,
+                                          matchType: MatchType.NOT_FOUND,
+                                          matchedSong: undefined,
+                                        });
+                                        setOpenComboboxes(prev => ({ ...prev, [song.originalText]: false }));
+                                      }}
+                                    >
+                                      <XCircle className="mr-2 h-4 w-4 text-muted-foreground" />
+                                      <span className="text-muted-foreground">{t("setImport.skipSong")}</span>
+                                    </CommandItem>
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         </div>
                       )}
                     </div>
