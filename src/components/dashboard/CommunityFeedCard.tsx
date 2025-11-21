@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Calendar, Music, ArrowRight, UserPlus } from "lucide-react";
+import { Calendar, Music, ArrowRight, UserPlus, Users, Church, MoreHorizontal } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -31,12 +31,23 @@ interface Activity {
   created_at: string;
 }
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  event_type: "rehearsal" | "meeting" | "worship_service" | "other";
+  event_date: string;
+  start_time?: string | null;
+  location?: string | null;
+  created_at: string;
+}
+
 interface FeedItem {
   id: string;
-  type: "worship_set" | "activity";
+  type: "worship_set" | "activity" | "calendar_event";
   community: Community;
   set?: WorshipSet;
   activity?: Activity;
+  calendarEvent?: CalendarEvent;
   created_at: string;
 }
 
@@ -124,6 +135,55 @@ export function CommunityFeedCard({ item }: CommunityFeedCardProps) {
             </div>
           </div>
         </CardHeader>
+      </Card>
+    );
+  }
+
+  if (item.type === "calendar_event" && item.calendarEvent) {
+    const { calendarEvent, community } = item;
+    const eventTypeIconMap = {
+      rehearsal: <Music className="w-4 h-4" />,
+      meeting: <Users className="w-4 h-4" />,
+      worship_service: <Church className="w-4 h-4" />,
+      other: <MoreHorizontal className="w-4 h-4" />,
+    };
+
+    return (
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <Avatar className="w-10 h-10 shrink-0">
+              <AvatarImage src={community.avatar_url || undefined} />
+              <AvatarFallback>{community.name[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{community.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(calendarEvent.created_at), { locale: dateLocale })} {t("common.ago")}
+              </p>
+            </div>
+            <Badge variant="secondary" className="shrink-0">
+              {eventTypeIconMap[calendarEvent.event_type]}
+              <span className="ml-1">{t(`calendarEvent.types.${calendarEvent.event_type}` as any)}</span>
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <h4 className="font-semibold">{calendarEvent.title}</h4>
+          </div>
+          
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {format(new Date(calendarEvent.event_date), "PPP", { locale: dateLocale })}
+              {calendarEvent.start_time && ` • ${calendarEvent.start_time}`}
+            </p>
+            {calendarEvent.location && (
+              <p className="line-clamp-1">📍 {calendarEvent.location}</p>
+            )}
+          </div>
+        </CardContent>
       </Card>
     );
   }
