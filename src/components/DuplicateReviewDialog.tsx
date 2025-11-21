@@ -34,8 +34,17 @@ import {
   Eye, 
   AlertCircle,
   Star,
-  Sparkles 
+  Sparkles,
+  Edit,
+  X,
+  Save,
+  Copy,
+  Youtube,
+  FileText,
+  Music
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
@@ -75,6 +84,8 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [selectedScoreUrl, setSelectedScoreUrl] = useState<string | null>(null);
   const [selectedSongTitle, setSelectedSongTitle] = useState("");
   const [activeTab, setActiveTab] = useState<"high" | "medium">("high");
+  const [editingStates, setEditingStates] = useState<Record<string, boolean>>({});
+  const [editedData, setEditedData] = useState<Record<string, any>>({});
 
   const saveProgressToLocalStorage = (
     processed: Set<string>,
@@ -336,6 +347,131 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     onClose();
   };
 
+  const toggleEdit = (songId: string) => {
+    setEditingStates(prev => ({
+      ...prev,
+      [songId]: !prev[songId]
+    }));
+    
+    if (!editingStates[songId]) {
+      const song = duplicateGroups.flatMap(g => g.songs).find(s => s.id === songId);
+      if (song) {
+        setEditedData(prev => ({
+          ...prev,
+          [songId]: {
+            title: song.title,
+            artist: song.artist || '',
+            youtube_url: song.youtube_url || '',
+            score_file_url: song.score_file_url || '',
+            default_key: song.default_key || '',
+            language: song.language || '',
+            category: song.category || ''
+          }
+        }));
+      }
+    }
+  };
+
+  const handleFieldChange = (songId: string, field: string, value: any) => {
+    setEditedData(prev => ({
+      ...prev,
+      [songId]: {
+        ...prev[songId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSaveEdit = async (songId: string) => {
+    const updates = editedData[songId];
+    
+    if (!updates.title?.trim()) {
+      toast.error(t('songLibrary.duplicateReview.titleRequired'));
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .update({
+          title: updates.title,
+          artist: updates.artist || null,
+          youtube_url: updates.youtube_url || null,
+          score_file_url: updates.score_file_url || null,
+          default_key: updates.default_key || null,
+          language: updates.language || null,
+          category: updates.category || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', songId);
+
+      if (error) throw error;
+
+      setDuplicateGroups(prev =>
+        prev.map(group => ({
+          ...group,
+          songs: group.songs.map(song =>
+            song.id === songId ? { ...song, ...updates } : song
+          )
+        }))
+      );
+
+      toggleEdit(songId);
+      toast.success(t('songLibrary.duplicateReview.savedSuccessfully'));
+    } catch (error) {
+      console.error('Error saving song:', error);
+      toast.error(t('songLibrary.duplicateReview.saveFailed'));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const quickCopyFromMaster = async (fromSongId: string, toSongId: string) => {
+    const fromSong = duplicateGroups.flatMap(g => g.songs).find(s => s.id === fromSongId);
+    const toSong = duplicateGroups.flatMap(g => g.songs).find(s => s.id === toSongId);
+    
+    if (!fromSong || !toSong) return;
+
+    const updates: any = { title: fromSong.title };
+    if (!toSong.artist && fromSong.artist) updates.artist = fromSong.artist;
+    if (!toSong.default_key && fromSong.default_key) updates.default_key = fromSong.default_key;
+    if (!toSong.score_file_url && fromSong.score_file_url) updates.score_file_url = fromSong.score_file_url;
+    if (!toSong.language && fromSong.language) updates.language = fromSong.language;
+    if (!toSong.category && fromSong.category) updates.category = fromSong.category;
+
+    setIsProcessing(true);
+
+    try {
+      const { error } = await supabase
+        .from('songs')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', toSongId);
+
+      if (error) throw error;
+
+      setDuplicateGroups(prev =>
+        prev.map(group => ({
+          ...group,
+          songs: group.songs.map(song =>
+            song.id === toSongId ? { ...song, ...updates } : song
+          )
+        }))
+      );
+
+      toast.success(t('songLibrary.duplicateReview.copiedFromMaster'));
+    } catch (error) {
+      console.error('Error copying from master:', error);
+      toast.error(t('songLibrary.duplicateReview.copyFailed'));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const formatFieldValue = (value: any, field: string, song?: any): React.ReactNode => {
     if (value === null || value === undefined || value === "") {
       return <span className="text-muted-foreground">-</span>;
@@ -401,10 +537,17 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     const currentGroup = duplicateGroups[currentGroupIndex];
     const values = currentGroup.songs.map((song) => song[field]);
     const allSame = values.every((v) => v === values[0]);
+    const hasEmpty = values.some(v => !v);
 
     return (
       <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
-        <td className="border p-2 font-medium text-sm">{label}</td>
+        <td className="border p-2 font-medium text-sm">
+          <div className="flex items-center gap-2">
+            {label}
+            {!allSame && <span className="text-xs text-destructive">🔴</span>}
+            {hasEmpty && <span className="text-xs text-yellow-600">🟡</span>}
+          </div>
+        </td>
         {currentGroup.songs.map((song, idx) => {
           const isDifferent = !allSame;
           const isMaster = song.id === currentGroup.suggestedMaster;
@@ -544,43 +687,159 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {group.songs.map((song) => {
-                                const isMaster = song.id === group.suggestedMaster;
+                                 const isMaster = song.id === group.suggestedMaster;
                                 const usage = songUsages.get(song.id) || 0;
+                                const isEditing = editingStates[song.id];
+                                const editData = editedData[song.id] || song;
                                 
                                 return (
                                   <div
                                     key={song.id}
                                     className={cn(
-                                      "p-3 rounded border text-sm",
+                                      "p-3 rounded border text-sm transition-all",
                                       isMaster 
                                         ? "border-green-500 bg-green-50 dark:bg-green-950/20" 
-                                        : "border-muted bg-muted/30"
+                                        : "border-muted bg-muted/30",
+                                      isEditing && "bg-accent/20"
                                     )}
                                   >
                                     <div className="flex items-start gap-2">
-                                      {isMaster && (
+                                      {isMaster && !isEditing && (
                                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0 mt-0.5" />
                                       )}
-                                      <div className="flex-1 space-y-1">
-                                        <div className="font-medium">{song.title}</div>
-                                        {song.artist && (
-                                          <div className="text-xs text-muted-foreground">{song.artist}</div>
-                                        )}
-                                        <div className="flex items-center gap-2 text-xs">
-                                          {song.youtube_url && (
-                                            <Badge variant="outline" className="text-xs">YouTube ✓</Badge>
-                                          )}
-                                          {song.score_file_url && (
-                                            <Badge variant="outline" className="text-xs">Score ✓</Badge>
-                                          )}
-                                          <Badge variant="outline" className="text-xs">
-                                            {usage > 0 ? `${usage}회 사용` : "미사용"}
-                                          </Badge>
-                                        </div>
-                                        {isMaster && (
-                                          <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                                            {t("songLibrary.duplicateReview.recommendedKeep")}
-                                          </div>
+                                      <div className="flex-1 space-y-2">
+                                        {isEditing ? (
+                                          <>
+                                            <Input
+                                              value={editData.title}
+                                              onChange={(e) => handleFieldChange(song.id, 'title', e.target.value)}
+                                              placeholder="제목"
+                                              className="text-sm"
+                                            />
+                                            <Input
+                                              value={editData.artist}
+                                              onChange={(e) => handleFieldChange(song.id, 'artist', e.target.value)}
+                                              placeholder="아티스트"
+                                              className="text-xs"
+                                            />
+                                            <Input
+                                              value={editData.youtube_url}
+                                              onChange={(e) => handleFieldChange(song.id, 'youtube_url', e.target.value)}
+                                              placeholder="YouTube URL"
+                                              className="text-xs"
+                                            />
+                                            <div className="grid grid-cols-2 gap-2">
+                                              <Select
+                                                value={editData.default_key}
+                                                onValueChange={(v) => handleFieldChange(song.id, 'default_key', v)}
+                                              >
+                                                <SelectTrigger className="text-xs">
+                                                  <SelectValue placeholder="Key" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  {['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].map(key => (
+                                                    <SelectItem key={key} value={key}>{key}</SelectItem>
+                                                  ))}
+                                                </SelectContent>
+                                              </Select>
+                                              <Select
+                                                value={editData.language}
+                                                onValueChange={(v) => handleFieldChange(song.id, 'language', v)}
+                                              >
+                                                <SelectTrigger className="text-xs">
+                                                  <SelectValue placeholder="Language" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="한국어">한국어</SelectItem>
+                                                  <SelectItem value="English">English</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                            <div className="flex gap-2">
+                                              <Button
+                                                size="sm"
+                                                onClick={() => handleSaveEdit(song.id)}
+                                                disabled={isProcessing}
+                                                className="flex-1"
+                                              >
+                                                <Save className="h-3 w-3 mr-1" />
+                                                저장
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => toggleEdit(song.id)}
+                                                disabled={isProcessing}
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <div className="flex items-center justify-between gap-2">
+                                              <div className="flex-1">
+                                                <div className="font-medium">{song.title}</div>
+                                                {song.artist && (
+                                                  <div className="text-xs text-muted-foreground">{song.artist}</div>
+                                                )}
+                                              </div>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => toggleEdit(song.id)}
+                                                disabled={isProcessing}
+                                              >
+                                                <Edit className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs flex-wrap">
+                                              {song.youtube_url && (
+                                                <a
+                                                  href={song.youtube_url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="inline-flex items-center gap-1 hover:underline"
+                                                >
+                                                  <Youtube className="h-3 w-3" />
+                                                  보기
+                                                </a>
+                                              )}
+                                              {song.score_file_url && (
+                                                <button
+                                                  onClick={() => {
+                                                    setSelectedScoreUrl(song.score_file_url);
+                                                    setSelectedSongTitle(song.title);
+                                                    setScorePreviewOpen(true);
+                                                  }}
+                                                  className="inline-flex items-center gap-1 hover:underline"
+                                                >
+                                                  <FileText className="h-3 w-3" />
+                                                  악보
+                                                </button>
+                                              )}
+                                              <Badge variant="outline" className="text-xs">
+                                                {usage > 0 ? `${usage}회 사용` : "미사용"}
+                                              </Badge>
+                                            </div>
+                                            {isMaster && (
+                                              <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                                {t("songLibrary.duplicateReview.recommendedKeep")}
+                                              </div>
+                                            )}
+                                            {!isMaster && group.suggestedMaster && (
+                                              <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => quickCopyFromMaster(group.suggestedMaster!, song.id)}
+                                                disabled={isProcessing}
+                                                className="text-xs w-full"
+                                              >
+                                                <Copy className="h-3 w-3 mr-1" />
+                                                마스터에서 복사
+                                              </Button>
+                                            )}
+                                          </>
                                         )}
                                       </div>
                                     </div>
