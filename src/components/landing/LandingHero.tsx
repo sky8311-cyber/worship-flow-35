@@ -3,57 +3,47 @@ import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { smoothScrollTo } from "@/lib/smoothScroll";
 import { Music2, Youtube, FileText } from "lucide-react";
-
-const mockSongs = [
-  { title: "나의 하나님", key: "G", tags: ["인도", "기쁨"] },
-  { title: "주님의 마음", key: "F", tags: ["회개", "경배"] },
-  { title: "선포합니다", key: "E", tags: ["선포", "응답"] },
-];
-
+const mockSongs = [{
+  title: "나의 하나님",
+  key: "G",
+  tags: ["인도", "기쁨"]
+}, {
+  title: "주님의 마음",
+  key: "F",
+  tags: ["회개", "경배"]
+}, {
+  title: "선포합니다",
+  key: "E",
+  tags: ["선포", "응답"]
+}];
 export const LandingHero = () => {
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+  return <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Animated background blobs */}
-      <motion.div
-        className="absolute top-20 left-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.5, 0.3, 0.5],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
+      <motion.div className="absolute top-20 left-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl" animate={{
+      scale: [1, 1.2, 1],
+      opacity: [0.3, 0.5, 0.3]
+    }} transition={{
+      duration: 8,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }} />
+      <motion.div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" animate={{
+      scale: [1.2, 1, 1.2],
+      opacity: [0.5, 0.3, 0.5]
+    }} transition={{
+      duration: 8,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }} />
 
       <div className="container mx-auto px-4 py-32 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left content */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={fadeInUp}
-            className="text-center lg:text-left"
-          >
+          <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="text-center lg:text-left">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-primary via-primary to-secondary bg-clip-text text-transparent">
-                예배 공동체를 위한,
-              </span>
+              
               <br />
-              <span className="text-foreground">워십리더 통합 플랫폼</span>
+              <span className="text-foreground">예배팀 통합 플랫폼</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-6 leading-relaxed">
@@ -77,12 +67,16 @@ export const LandingHero = () => {
           </motion.div>
 
           {/* Right content - App mockup */}
-          <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          x: 50
+        }} animate={{
+          opacity: 1,
+          x: 0
+        }} transition={{
+          duration: 0.8,
+          delay: 0.2
+        }} className="relative">
             <div className="bg-card/50 backdrop-blur-sm border border-border rounded-3xl shadow-2xl p-8">
               <div className="mb-6 pb-6 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
@@ -93,11 +87,7 @@ export const LandingHero = () => {
               </div>
 
               <div className="space-y-4">
-                {mockSongs.map((song, index) => (
-                  <div
-                    key={index}
-                    className="group p-5 bg-background border border-border rounded-xl hover:shadow-md hover:scale-105 transition-all duration-300"
-                  >
+                {mockSongs.map((song, index) => <div key={index} className="group p-5 bg-background border border-border rounded-xl hover:shadow-md hover:scale-105 transition-all duration-300">
                     <div className="flex items-center justify-between mb-3">
                       <span className="font-semibold text-lg">{song.title}</span>
                       <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1.5 rounded-full">
@@ -106,14 +96,9 @@ export const LandingHero = () => {
                     </div>
                     <div className="flex items-center gap-3 mb-3">
                       <div className="flex gap-2">
-                        {song.tags.map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="text-xs bg-secondary/20 text-secondary px-3 py-1 rounded-full"
-                          >
+                        {song.tags.map((tag, tagIndex) => <span key={tagIndex} className="text-xs bg-secondary/20 text-secondary px-3 py-1 rounded-full">
                             {tag}
-                          </span>
-                        ))}
+                          </span>)}
                       </div>
                     </div>
                     <div className="flex gap-3 text-muted-foreground">
@@ -121,8 +106,7 @@ export const LandingHero = () => {
                       <Youtube className="w-4 h-4" />
                       <Music2 className="w-4 h-4" />
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
 
               <div className="mt-6 pt-6 border-t border-border text-sm text-muted-foreground flex items-center justify-between">
@@ -133,6 +117,5 @@ export const LandingHero = () => {
           </motion.div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
