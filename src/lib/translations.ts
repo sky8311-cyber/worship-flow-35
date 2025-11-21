@@ -24,6 +24,11 @@ export const translations = {
       remove: "Remove",
       admin: "Admin",
       back: "Back",
+      seeAll: "See All",
+      viewDetails: "View Details",
+      ago: "ago",
+      songs: "songs",
+      import: "Import",
     },
     auth: {
       signUpChoice: {
@@ -98,6 +103,8 @@ export const translations = {
       logoutConfirm: "Are you sure you want to logout?",
       userMenu: "User Menu",
       importWorshipSet: "Import Worship Set",
+      noLeader: "No leader assigned",
+      noActivity: "No recent activity in your communities",
     },
     admin: {
       nav: {
@@ -285,6 +292,10 @@ export const translations = {
       communities: "Communities",
       sets: "Worship Sets",
       collaborations: "Collaborations",
+      yourName: "Your Name",
+      addBio: "Add a bio to introduce yourself",
+      addSocial: "Add Social Links",
+      collabs: "Collabs",
       recentActivity: "Recent Activity",
       createdSet: "Created worship set",
       joinedCommunity: "Joined community",
@@ -320,6 +331,9 @@ export const translations = {
       editCoverDescription: "Upload or remove your cover image",
       uploadCover: "Upload Cover",
       removeCover: "Remove Cover",
+    },
+    activity: {
+      joinedCommunity: "joined community",
     },
     roles: {
       admin: "Admin",
@@ -712,6 +726,11 @@ export const translations = {
       remove: "제거",
       admin: "관리자",
       back: "뒤로",
+      seeAll: "모두 보기",
+      viewDetails: "자세히 보기",
+      ago: "전",
+      songs: "곡",
+      import: "가져오기",
     },
     auth: {
       signUpChoice: {
@@ -785,7 +804,9 @@ export const translations = {
       logout: "로그아웃",
       logoutConfirm: "로그아웃하시겠습니까?",
       userMenu: "사용자 메뉴",
-      importWorshipSet: "워십세트 임포트",
+      importWorshipSet: "워십세트 가져오기",
+      noLeader: "인도자 미지정",
+      noActivity: "커뮤니티의 최근 활동이 없습니다",
     },
     admin: {
       nav: {
@@ -974,6 +995,10 @@ export const translations = {
       communities: "참여 커뮤니티",
       sets: "만든 예배세트",
       collaborations: "협업 세트",
+      yourName: "이름",
+      addBio: "자기소개를 추가해주세요",
+      addSocial: "소셜 링크 추가",
+      collabs: "협업",
       recentActivity: "최근 활동",
       createdSet: "워십세트를 만들었습니다",
       joinedCommunity: "커뮤니티에 가입했습니다",
@@ -1008,6 +1033,9 @@ export const translations = {
       editCoverDescription: "커버 이미지를 업로드하거나 제거하세요",
       uploadCover: "커버 업로드",
       removeCover: "커버 제거",
+    },
+    activity: {
+      joinedCommunity: "커뮤니티에 가입했습니다",
     },
     roles: {
       admin: "관리자",
