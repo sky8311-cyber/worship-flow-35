@@ -86,6 +86,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [activeTab, setActiveTab] = useState<"high" | "medium">("high");
   const [editingStates, setEditingStates] = useState<Record<string, boolean>>({});
   const [editedData, setEditedData] = useState<Record<string, any>>({});
+  const [deleteSingleConfirm, setDeleteSingleConfirm] = useState<{groupId: string, songId: string} | null>(null);
 
   const saveProgressToLocalStorage = (
     processed: Set<string>,
@@ -472,6 +473,72 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     }
   };
 
+  const handleSetMaster = (groupId: string, songId: string) => {
+    setDuplicateGroups(prev => prev.map(group => 
+      group.id === groupId 
+        ? { ...group, userSelectedMaster: songId }
+        : group
+    ));
+    toast.success("Master 곡으로 선택되었습니다");
+  };
+
+  const handleDeleteSingleSong = async (songId: string, groupId: string) => {
+    setIsProcessing(true);
+    
+    try {
+      const group = duplicateGroups.find(g => g.id === groupId);
+      if (!group) return;
+      
+      // Get the master song (user-selected or suggested)
+      const masterSongId = group.userSelectedMaster || group.suggestedMaster || group.songs[0].id;
+      
+      // Only allow deletion if not deleting the last song or the only remaining song
+      if (group.songs.length <= 1 || (group.songs.length === 2 && songId === masterSongId)) {
+        toast.error("마지막 곡은 삭제할 수 없습니다");
+        return;
+      }
+      
+      // Update set_songs references to point to master
+      const { error: updateError } = await supabase
+        .from("set_songs")
+        .update({ song_id: masterSongId })
+        .eq("song_id", songId);
+      
+      if (updateError) throw updateError;
+      
+      // Delete the song
+      const { error: deleteError } = await supabase
+        .from("songs")
+        .delete()
+        .eq("id", songId);
+      
+      if (deleteError) throw deleteError;
+      
+      // Update UI
+      setDuplicateGroups(prev => prev.map(g => {
+        if (g.id !== groupId) return g;
+        
+        const updatedSongs = g.songs.filter(s => s.id !== songId);
+        
+        // If only one song left, remove the group
+        if (updatedSongs.length <= 1) {
+          setProcessedGroups(p => new Set([...p, g.id]));
+          return { ...g, songs: [] };
+        }
+        
+        return { ...g, songs: updatedSongs };
+      }).filter(g => g.songs.length > 1));
+      
+      toast.success("곡이 삭제되었습니다");
+      setDeleteSingleConfirm(null);
+    } catch (error) {
+      console.error("Error deleting song:", error);
+      toast.error("곡 삭제 중 오류가 발생했습니다");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const formatFieldValue = (value: any, field: string, song?: any): React.ReactNode => {
     if (value === null || value === undefined || value === "") {
       return <span className="text-muted-foreground">-</span>;
@@ -538,6 +605,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     const values = currentGroup.songs.map((song) => song[field]);
     const allSame = values.every((v) => v === values[0]);
     const hasEmpty = values.some(v => !v);
+    const masterSongId = currentGroup.userSelectedMaster || currentGroup.suggestedMaster;
 
     return (
       <tr key={field} className={!allSame ? "bg-muted/50" : ""}>
@@ -550,7 +618,8 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
         </td>
         {currentGroup.songs.map((song, idx) => {
           const isDifferent = !allSame;
-          const isMaster = song.id === currentGroup.suggestedMaster;
+          const isMaster = song.id === masterSongId;
+          const isUserSelected = song.id === currentGroup.userSelectedMaster;
           
           return (
             <td
@@ -563,7 +632,11 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
             >
               <div className="flex items-center gap-2">
                 {isMaster && field === "title" && (
-                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                  isUserSelected ? (
+                    <Star className="h-4 w-4 text-blue-500 fill-blue-500 flex-shrink-0" />
+                  ) : (
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
+                  )
                 )}
                 <div className="truncate max-w-[200px]">
                   {formatFieldValue(song[field], field, song)}
@@ -687,7 +760,9 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {group.songs.map((song) => {
-                                 const isMaster = song.id === group.suggestedMaster;
+                                const masterSongId = group.userSelectedMaster || group.suggestedMaster;
+                                const isMaster = song.id === masterSongId;
+                                const isUserSelected = song.id === group.userSelectedMaster;
                                 const usage = songUsages.get(song.id) || 0;
                                 const isEditing = editingStates[song.id];
                                 const editData = editedData[song.id] || song;
@@ -703,9 +778,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                       isEditing && "bg-accent/20"
                                     )}
                                   >
-                                    <div className="flex items-start gap-2">
+                                     <div className="flex items-start gap-2">
                                       {isMaster && !isEditing && (
-                                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0 mt-0.5" />
+                                        isUserSelected ? (
+                                          <Star className="h-4 w-4 text-blue-500 fill-blue-500 flex-shrink-0 mt-0.5" />
+                                        ) : (
+                                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0 mt-0.5" />
+                                        )
                                       )}
                                       <div className="flex-1 space-y-2">
                                         {isEditing ? (
@@ -824,21 +903,47 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                             </div>
                                             {isMaster && (
                                               <div className="text-xs text-green-600 dark:text-green-400 font-medium">
-                                                {t("songLibrary.duplicateReview.recommendedKeep")}
+                                                {isUserSelected 
+                                                  ? "🔵 " + t("songLibrary.duplicateReview.masterSelected")
+                                                  : "⭐ " + t("songLibrary.duplicateReview.recommendedKeep")
+                                                }
                                               </div>
                                             )}
-                                            {!isMaster && group.suggestedMaster && (
+                                            <div className="flex gap-2 mt-2">
+                                              {!isMaster && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => handleSetMaster(group.id, song.id)}
+                                                  disabled={isProcessing}
+                                                  className="text-xs flex-1"
+                                                >
+                                                  <Star className="h-3 w-3 mr-1" />
+                                                  {t("songLibrary.duplicateReview.setAsMaster")}
+                                                </Button>
+                                              )}
+                                              {!isMaster && masterSongId && (
+                                                <Button
+                                                  size="sm"
+                                                  variant="outline"
+                                                  onClick={() => quickCopyFromMaster(masterSongId, song.id)}
+                                                  disabled={isProcessing}
+                                                  className="text-xs flex-1"
+                                                >
+                                                  <Copy className="h-3 w-3 mr-1" />
+                                                  마스터에서 복사
+                                                </Button>
+                                              )}
                                               <Button
                                                 size="sm"
-                                                variant="outline"
-                                                onClick={() => quickCopyFromMaster(group.suggestedMaster!, song.id)}
+                                                variant="destructive"
+                                                onClick={() => setDeleteSingleConfirm({groupId: group.id, songId: song.id})}
                                                 disabled={isProcessing}
-                                                className="text-xs w-full"
+                                                className="text-xs"
                                               >
-                                                <Copy className="h-3 w-3 mr-1" />
-                                                마스터에서 복사
+                                                <XCircle className="h-3 w-3" />
                                               </Button>
-                                            )}
+                                            </div>
                                           </>
                                         )}
                                       </div>
@@ -1045,6 +1150,41 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={executeDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteSingleConfirm} onOpenChange={(open) => !open && setDeleteSingleConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>이 곡을 삭제하시겠습니까?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteSingleConfirm && (() => {
+                const group = duplicateGroups.find(g => g.id === deleteSingleConfirm.groupId);
+                const song = group?.songs.find(s => s.id === deleteSingleConfirm.songId);
+                const usage = songUsages.get(deleteSingleConfirm.songId) || 0;
+                return (
+                  <div className="space-y-2">
+                    <p className="font-medium">{song?.title}</p>
+                    {usage > 0 && (
+                      <p className="text-yellow-600">
+                        ⚠️ 이 곡은 {usage}개의 워십세트에서 사용 중입니다. 
+                        삭제 시 참조가 Master 곡으로 변경됩니다.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteSingleConfirm && handleDeleteSingleSong(deleteSingleConfirm.songId, deleteSingleConfirm.groupId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              삭제
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

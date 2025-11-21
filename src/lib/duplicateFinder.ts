@@ -10,6 +10,7 @@ export interface DuplicateGroup {
   matchType: MatchType;
   matchReasons: string[];
   suggestedMaster?: string;
+  userSelectedMaster?: string;
 }
 
 export interface MergeDecision {
