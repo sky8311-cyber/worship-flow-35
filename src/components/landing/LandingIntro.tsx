@@ -37,7 +37,7 @@ export const LandingIntro = () => {
           </h2>
           <div className="text-lg md:text-xl text-muted-foreground leading-relaxed space-y-4">
             <p>
-              예배에서 찬양 송리스트는 단순한 순서가 아니라,
+              예배에서 찬양 송리스트는 단순한 순서가 아니라, 
 회중이 하나님께 나아가는 길을 여는 '영적인 흐름'입니다.
             </p>
             <p>

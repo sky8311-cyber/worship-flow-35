@@ -41,11 +41,11 @@ export const LandingCommunity = () => {
           duration: 0.8
         }} className="space-y-6">
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed">
-              K-Worship의 워십리더 커뮤니티에서는 
+              K-Worship의 워십리더 커뮤니티에서는
 서로의  찬양 콘티를 공유하고, 같은 곡이 다른 예배에서 어떻게 사용됐는지 볼 수 있습니다.
             </p>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-              교회와 사역지가 달라도, 한국 예배의 살아 있는 영성을  
+              교회와 사역지가 달라도, 한국 예배의 살아 있는 영성을
 서로 나누고 이어갈 수 있습니다.
             </p>
           </motion.div>
