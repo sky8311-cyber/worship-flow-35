@@ -59,12 +59,16 @@ export const LandingNav = () => {
                 {item.label}
               </button>
             ))}
-            <Link
-              to="/auth/login"
-              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors ml-4"
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="ml-4"
             >
-              베타 로그인
-            </Link>
+              <Link to="/auth/login">
+                베타 로그인
+              </Link>
+            </Button>
             <Button
               onClick={() => handleNavClick("waitlist")}
               size="sm"
@@ -106,13 +110,16 @@ export const LandingNav = () => {
                   {item.label}
                 </button>
               ))}
-              <Link
-                to="/auth/login"
-                className="text-left text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2"
+              <Button
+                asChild
+                variant="outline"
+                className="w-full"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                베타 로그인
-              </Link>
+                <Link to="/auth/login">
+                  베타 로그인
+                </Link>
+              </Button>
               <Button
                 onClick={() => handleNavClick("waitlist")}
                 className="w-full"
