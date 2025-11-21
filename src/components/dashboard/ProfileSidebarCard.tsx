@@ -44,7 +44,7 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
 
   return (
     <>
-      <Card className="md:sticky md:top-20">
+      <Card className="lg:sticky lg:top-20">
         <CardContent className="p-6">
           {/* Avatar + Edit Icon */}
           <div className="relative group">

@@ -237,8 +237,8 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content - Desktop Layout (3 columns) */}
-      <main className="container mx-auto px-4 py-8 hidden md:block">
-        <div className="grid grid-cols-[320px_1fr] lg:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
+      <main className="container mx-auto px-4 py-8 hidden lg:block">
+        <div className="grid grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
           {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services) */}
           <div className="space-y-4">
             <ProfileSidebarCard stats={userStats} />
@@ -333,7 +333,7 @@ const Dashboard = () => {
       </main>
 
       {/* Mobile Layout - Tabs */}
-      <main className="md:hidden container mx-auto px-4 py-4">
+      <main className="lg:hidden container mx-auto px-4 py-4">
         <Tabs defaultValue="feed" className="w-full">
           <TabsList className="w-full sticky top-16 bg-background border-b grid grid-cols-3">
             <TabsTrigger value="feed" className="flex items-center gap-2">
