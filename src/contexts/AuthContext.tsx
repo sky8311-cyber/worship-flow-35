@@ -8,6 +8,13 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  bio: string | null;
+  location: string | null;
+  ministry_role: string | null;
+  instrument: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
+  cover_image_url: string | null;
 }
 
 interface AuthContextType {
@@ -24,6 +31,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isWorshipLeader: boolean;
   hasRole: (role: string) => boolean;
+  isCommunityLeader: (communityId: string) => Promise<boolean>;
+  getCommunityRole: (communityId: string) => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -124,6 +133,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAdmin = hasRole("admin");
   const isWorshipLeader = hasRole("worship_leader");
 
+  const isCommunityLeader = async (communityId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    const { data } = await supabase
+      .from("community_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("community_id", communityId)
+      .single();
+
+    return data?.role === "community_leader";
+  };
+
+  const getCommunityRole = async (communityId: string): Promise<string | null> => {
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from("community_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("community_id", communityId)
+      .single();
+
+    return data?.role || null;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -140,6 +175,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         isWorshipLeader,
         hasRole,
+        isCommunityLeader,
+        getCommunityRole,
       }}
     >
       {children}

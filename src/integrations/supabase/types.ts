@@ -90,30 +90,51 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          cover_image_url: string | null
           created_at: string | null
           email: string
           full_name: string | null
           id: string
+          instagram_url: string | null
+          instrument: string | null
+          location: string | null
+          ministry_role: string | null
           phone: string | null
           updated_at: string | null
+          youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
           id: string
+          instagram_url?: string | null
+          instrument?: string | null
+          location?: string | null
+          ministry_role?: string | null
           phone?: string | null
           updated_at?: string | null
+          youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
           id?: string
+          instagram_url?: string | null
+          instrument?: string | null
+          location?: string | null
+          ministry_role?: string | null
           phone?: string | null
           updated_at?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }
@@ -480,6 +501,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_community_leader: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_community_member: {
         Args: { _community_id: string; _user_id: string }
         Returns: boolean
