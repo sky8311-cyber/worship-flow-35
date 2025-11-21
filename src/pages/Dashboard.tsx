@@ -15,6 +15,12 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -160,15 +166,29 @@ const Dashboard = () => {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center">
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left: Breadcrumb */}
+            <div className="justify-self-start hidden md:block">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{t("breadcrumb.dashboard")}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+            
+            {/* Center: Logo */}
+            <div className="justify-self-center col-start-2">
               <img 
                 src={logo} 
                 alt="K-Worship" 
                 className="h-20 w-auto"
               />
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            
+            {/* Right: Navigation Items */}
+            <div className="justify-self-end flex items-center gap-2 sm:gap-3">
               <LanguageToggle />
               {isAdmin && (
                 <Button variant="ghost" size="icon" asChild>
