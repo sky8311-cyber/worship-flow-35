@@ -28,6 +28,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
+  refreshProfile: () => Promise<void>;
   isAdmin: boolean;
   isWorshipLeader: boolean;
   isCommunityLeaderInAnyCommunity: boolean;
@@ -170,6 +171,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return data?.role || null;
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      await fetchProfile(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -183,6 +190,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signOut,
         resetPassword,
         updatePassword,
+        refreshProfile,
         isAdmin,
         isWorshipLeader,
         isCommunityLeaderInAnyCommunity,

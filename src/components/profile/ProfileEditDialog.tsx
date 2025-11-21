@@ -24,7 +24,7 @@ interface ProfileEditDialogProps {
 }
 
 export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -69,8 +69,9 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      await refreshProfile();
       toast({
         title: t("profile.updateSuccess"),
         description: t("profile.updateSuccessDescription"),

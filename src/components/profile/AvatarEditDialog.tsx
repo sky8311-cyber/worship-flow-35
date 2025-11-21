@@ -23,7 +23,7 @@ interface AvatarEditDialogProps {
 }
 
 export function AvatarEditDialog({ open, onOpenChange, currentUrl }: AvatarEditDialogProps) {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +66,7 @@ export function AvatarEditDialog({ open, onOpenChange, currentUrl }: AvatarEditD
       if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      await refreshProfile();
       toast({
         title: t("profile.uploadSuccess"),
         description: t("profile.avatarUpdated"),
@@ -94,8 +95,9 @@ export function AvatarEditDialog({ open, onOpenChange, currentUrl }: AvatarEditD
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+      await refreshProfile();
       toast({
         title: t("profile.removeSuccess"),
         description: t("profile.avatarRemoved"),
