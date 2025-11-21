@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { smoothScrollTo } from "@/lib/smoothScroll";
 import { useScrollObserver } from "@/hooks/useScrollObserver";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "@/assets/logo.png";
 
 export const LandingNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,9 +37,13 @@ export const LandingNav = () => {
           <div className="flex items-center">
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent"
+              className="focus:outline-none"
             >
-              K-Worship
+              <img 
+                src={logo} 
+                alt="K-Worship" 
+                className="h-10 w-auto"
+              />
             </button>
           </div>
 
