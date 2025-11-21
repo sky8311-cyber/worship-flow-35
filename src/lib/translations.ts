@@ -549,6 +549,8 @@ export const translations = {
       successTitle: "Import Successful",
       successDescription: "songs imported successfully",
       errorTitle: "Import Failed",
+      youtubeRequired: "YouTube URL is required",
+      scoreRequired: "Score File URL is required",
     },
   },
   ko: {
@@ -1083,6 +1085,8 @@ export const translations = {
       successTitle: "가져오기 성공",
       successDescription: "개의 곡을 가져왔습니다",
       errorTitle: "가져오기 실패",
+      youtubeRequired: "YouTube URL은 필수입니다",
+      scoreRequired: "악보 파일 URL은 필수입니다",
     },
   },
 };
