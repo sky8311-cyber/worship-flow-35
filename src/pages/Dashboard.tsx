@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -193,6 +193,9 @@ const Dashboard = () => {
             {/* Right: Navigation Items */}
             <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
               <LanguageToggle />
+              <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
+                <Heart className="h-5 w-5" />
+              </Button>
               {isAdmin && <Button variant="ghost" size="icon" asChild>
                   <Link to="/admin">
                     <Shield className="h-5 w-5" />

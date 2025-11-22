@@ -504,6 +504,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_favorite_songs: {
+        Row: {
+          created_at: string | null
+          id: string
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorite_songs_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

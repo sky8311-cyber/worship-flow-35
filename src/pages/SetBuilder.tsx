@@ -85,6 +85,7 @@ const SetBuilder = () => {
         worship_duration: existingSet.worship_duration?.toString() || "",
         notes: existingSet.notes || "",
       });
+      setStatus(existingSet.status || "draft");
       setSongs(
         existingSet.set_songs
           ?.sort((a: any, b: any) => a.position - b.position)
@@ -104,6 +105,7 @@ const SetBuilder = () => {
       const dataToSave = {
         ...formData,
         worship_duration: formData.worship_duration ? parseInt(formData.worship_duration) : null,
+        status: statusToSave,
       };
 
       if (!setId) {
@@ -267,13 +269,22 @@ const SetBuilder = () => {
               >
                 <LogOut className="h-5 w-5" />
               </Button>
+              <Select value={status} onValueChange={(value: "draft" | "published") => setStatus(value)}>
+                <SelectTrigger className="w-28 text-xs sm:text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">📝 임시저장</SelectItem>
+                  <SelectItem value="published">✅ 게시됨</SelectItem>
+                </SelectContent>
+              </Select>
               {id && (
                 <Button variant="outline" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm">
                   <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                   <span className="hidden sm:inline">팀 링크</span>
                 </Button>
               )}
-              <Button size="sm" onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
+              <Button size="sm" onClick={() => saveSetMutation.mutate(status)} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
                 <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                 {saveSetMutation.isPending ? "저장 중..." : "저장"}
               </Button>

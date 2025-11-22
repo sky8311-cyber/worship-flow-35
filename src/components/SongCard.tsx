@@ -3,7 +3,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit, Music2, Trash2, Youtube, FileText, Eye } from "lucide-react";
+import { FavoriteButton } from "./FavoriteButton";
+import { AddToSetDialog } from "./AddToSetDialog";
+import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -42,6 +44,7 @@ export const SongCard = ({
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
+  const [addToSetOpen, setAddToSetOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -194,6 +197,16 @@ export const SongCard = ({
 
           {(onEdit || onDelete) && (
             <div className="flex gap-2 mt-4">
+              <FavoriteButton songId={song.id} size="sm" variant="outline" />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAddToSetOpen(true)}
+                className="flex-1"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                세트에 추가
+              </Button>
               {onEdit && (
                 <Button
                   variant="outline"
@@ -239,6 +252,11 @@ export const SongCard = ({
         scoreUrl={song.score_file_url}
         songTitle={song.title}
         songId={song.id}
+      />
+      <AddToSetDialog 
+        open={addToSetOpen}
+        onOpenChange={setAddToSetOpen}
+        song={song}
       />
     </>
   );

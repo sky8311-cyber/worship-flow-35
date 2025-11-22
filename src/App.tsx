@@ -27,6 +27,8 @@ import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import JoinCommunity from "./pages/JoinCommunity";
+import FavoritesList from "./pages/FavoritesList";
+import WorshipSets from "./pages/WorshipSets";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +74,8 @@ const App = () => (
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/songs" element={<ProtectedRoute><SongLibrary /></ProtectedRoute>} />
+              <Route path="/favorites" element={<ProtectedRoute><FavoritesList /></ProtectedRoute>} />
+              <Route path="/worship-sets" element={<ProtectedRoute><WorshipSets /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
