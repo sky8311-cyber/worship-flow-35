@@ -96,11 +96,16 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
         return selectedOption;
       }
     },
-    onSuccess: (setId) => {
+    onSuccess: async (setId) => {
       toast.success("곡이 워십세트에 추가되었습니다");
-      queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+      
+      // Wait for refetch to complete before navigating
+      await queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+      await queryClient.refetchQueries({ queryKey: ["service-set", setId] });
+      
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      
       onOpenChange(false);
       navigate(`/set-builder/${setId}`);
     },
