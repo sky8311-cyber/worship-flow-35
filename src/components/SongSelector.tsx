@@ -38,7 +38,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
             service_set_id,
             service_sets(date)
           ),
-          song_scores(file_url)
+          song_scores(file_url, key)
         `)
         .order("title");
 
@@ -132,76 +132,93 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                     key={song.id}
                     className="hover:shadow-lg transition-shadow overflow-hidden"
                   >
-                    <div className="p-4 space-y-3">
-                      <div>
-                        <h3 className="font-bold text-xl mb-1">{song.title}</h3>
-                        {song.subtitle && (
-                          <p className="text-sm text-muted-foreground italic mb-2">{song.subtitle}</p>
-                        )}
-                        {song.artist && (
-                          <p className="text-base text-muted-foreground font-medium">{song.artist}</p>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        {song.default_key && (
-                          <Badge variant="outline" className="text-sm">Key: {song.default_key}</Badge>
-                        )}
-                        {song.category && (
-                          <Badge className="text-sm">{song.category}</Badge>
-                        )}
-                        {song.tags && (
-                          <Badge variant="secondary" className="text-sm">{song.tags.split(',')[0]}</Badge>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                        <span>{lastUsed ? `사용: ${usageCount}회` : '미사용'}</span>
-                        {song.youtube_url && <Badge variant="outline" className="text-xs">🎥 유튜브</Badge>}
-                        {song.song_scores?.[0] && <Badge variant="outline" className="text-xs">📄 악보</Badge>}
-                      </div>
-                      
-                      <div className="flex gap-2 pt-2">
-                        {song.youtube_url && (
+                    <div className="p-4 flex gap-3">
+                      {/* LEFT: Content Section */}
+                      <div className="flex-1 space-y-3 min-w-0">
+                        <div>
+                          <h3 className="font-bold text-xl mb-1 truncate">{song.title}</h3>
+                          {song.subtitle && (
+                            <p className="text-sm text-muted-foreground italic mb-2 truncate">{song.subtitle}</p>
+                          )}
+                          {song.artist && (
+                            <p className="text-base text-muted-foreground font-medium truncate">{song.artist}</p>
+                          )}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {song.default_key && (
+                            <Badge variant="outline" className="text-sm">Key: {song.default_key}</Badge>
+                          )}
+                          {song.category && (
+                            <Badge className="text-sm">{song.category}</Badge>
+                          )}
+                          {song.tags && (
+                            <Badge variant="secondary" className="text-sm">{song.tags.split(',')[0]}</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+                          <span>{lastUsed ? `사용: ${usageCount}회` : '미사용'}</span>
+                          {song.youtube_url && <Badge variant="outline" className="text-xs">🎥 유튜브</Badge>}
+                          {song.song_scores?.[0] && <Badge variant="outline" className="text-xs">📄 악보</Badge>}
+                        </div>
+                        
+                        <div className="flex gap-2 pt-2">
+                          {song.youtube_url && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(song.youtube_url, "_blank");
+                              }}
+                            >
+                              <Youtube className="w-4 h-4 mr-1" />
+                              유튜브
+                            </Button>
+                          )}
+                          {song.song_scores?.[0]?.file_url && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(song.song_scores[0].file_url, "_blank");
+                              }}
+                            >
+                              <FileText className="w-4 h-4 mr-1" />
+                              악보
+                            </Button>
+                          )}
                           <Button 
-                            size="sm" 
-                            variant="outline"
+                            size="sm"
                             className="flex-1"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(song.youtube_url, "_blank");
+                              onSelect(song);
                             }}
                           >
-                            <Youtube className="w-4 h-4 mr-1" />
-                            유튜브
+                            <Plus className="w-4 h-4 mr-1" />
+                            추가
                           </Button>
-                        )}
-                        {song.song_scores?.[0]?.file_url && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(song.song_scores[0].file_url, "_blank");
-                            }}
-                          >
-                            <FileText className="w-4 h-4 mr-1" />
-                            악보
-                          </Button>
-                        )}
-                        <Button 
-                          size="sm"
-                          className="flex-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelect(song);
-                          }}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          추가
-                        </Button>
+                        </div>
                       </div>
+
+                      {/* RIGHT: Portrait Thumbnail */}
+                      {(song.song_scores?.[0]?.file_url || song.youtube_url) && (
+                        <div className="flex-shrink-0 w-20 md:w-32 aspect-[3/4] bg-muted rounded-md overflow-hidden">
+                          <img 
+                            src={song.song_scores?.[0]?.file_url || getYouTubeThumbnail(song.youtube_url) || '/placeholder.svg'}
+                            alt={`${song.title} preview`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder.svg';
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </Card>
                 );
