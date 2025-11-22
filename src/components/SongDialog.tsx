@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ interface SongDialogProps {
 
 export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [scoreVariations, setScoreVariations] = useState<Array<{
@@ -264,6 +266,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
       // Save score variations
       await saveScoreVariations(songId);
+
+      // Invalidate queries for real-time UI update
+      await queryClient.invalidateQueries({ queryKey: ["songs"] });
 
       onClose();
     } catch (error: any) {
