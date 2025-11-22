@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Youtube, Loader2, Trash2, FileText, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
 import { ArtistSelector } from "@/components/ArtistSelector";
@@ -468,75 +469,34 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </p>
 
             {scoreVariations.map((variation, index) => (
-              <Card key={index} className="mb-3 p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-4">
-                    <Select
-                      value={variation.key}
-                      onValueChange={(key) => updateVariationKey(index, key)}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder={t("songDialog.selectKey")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="C">C</SelectItem>
-                        <SelectItem value="C#">C#</SelectItem>
-                        <SelectItem value="D">D</SelectItem>
-                        <SelectItem value="D#">D#</SelectItem>
-                        <SelectItem value="E">E</SelectItem>
-                        <SelectItem value="F">F</SelectItem>
-                        <SelectItem value="F#">F#</SelectItem>
-                        <SelectItem value="G">G</SelectItem>
-                        <SelectItem value="G#">G#</SelectItem>
-                        <SelectItem value="A">A</SelectItem>
-                        <SelectItem value="A#">A#</SelectItem>
-                        <SelectItem value="B">B</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <Card key={index} className="mb-3 p-3">
+                <div className="flex items-center gap-3">
+                  {/* Key Selector */}
+                  <Select
+                    value={variation.key}
+                    onValueChange={(key) => updateVariationKey(index, key)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder={t("songDialog.selectKey")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="C">C</SelectItem>
+                      <SelectItem value="C#">C#</SelectItem>
+                      <SelectItem value="D">D</SelectItem>
+                      <SelectItem value="D#">D#</SelectItem>
+                      <SelectItem value="E">E</SelectItem>
+                      <SelectItem value="F">F</SelectItem>
+                      <SelectItem value="F#">F#</SelectItem>
+                      <SelectItem value="G">G</SelectItem>
+                      <SelectItem value="G#">G#</SelectItem>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="A#">A#</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeVariation(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  {variation.files.length > 0 && (
-                    <div className="space-y-2">
-                      {variation.files.map((file, fileIndex) => (
-                        <div
-                          key={fileIndex}
-                          className="flex items-center gap-2 text-sm border rounded p-2"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span className="flex-1">
-                            {t("songDialog.page")} {fileIndex + 1}
-                          </span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(file.url, "_blank")}
-                          >
-                            {t("songDialog.preview")}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeScoreFile(index, fileIndex)}
-                          >
-                            ✕
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div>
+                  {/* Upload Button + File Previews */}
+                  <div className="flex-1 flex items-center gap-2 flex-wrap">
                     <Input
                       type="file"
                       onChange={(e) => {
@@ -552,7 +512,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="w-full"
                       onClick={() =>
                         document.getElementById(`file-upload-${index}`)?.click()
                       }
@@ -572,7 +531,45 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                         </>
                       )}
                     </Button>
+
+                    {/* File Preview Badges */}
+                    {variation.files.map((file, fileIndex) => (
+                      <Badge
+                        key={fileIndex}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
+                        <FileText className="h-3 w-3" />
+                        <span className="text-xs">
+                          {t("songDialog.page")} {fileIndex + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => window.open(file.url, "_blank")}
+                          className="ml-1 hover:text-primary transition-colors"
+                        >
+                          👁️
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeScoreFile(index, fileIndex)}
+                          className="ml-1 hover:text-destructive transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
+
+                  {/* Delete Variation Button */}
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeVariation(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </Card>
             ))}
