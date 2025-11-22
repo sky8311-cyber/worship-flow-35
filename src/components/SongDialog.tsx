@@ -81,7 +81,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         notes: "",
         interpretation: "",
       });
-      setScoreVariations([]);
+      setScoreVariations([{ key: "", files: [] }]);
     }
   }, [song, open]);
 
@@ -96,27 +96,41 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
       if (error) throw error;
 
-      // Group by key
-      const grouped: Record<string, Array<{ url: string; page: number; id: string }>> = {};
-      data?.forEach((score) => {
-        if (!grouped[score.key]) {
-          grouped[score.key] = [];
-        }
-        grouped[score.key].push({
-          url: score.file_url,
-          page: score.page_number,
-          id: score.id,
+      // If new table has data, use it
+      if (data && data.length > 0) {
+        const grouped: Record<string, Array<{ url: string; page: number; id: string }>> = {};
+        data?.forEach((score) => {
+          if (!grouped[score.key]) {
+            grouped[score.key] = [];
+          }
+          grouped[score.key].push({
+            url: score.file_url,
+            page: score.page_number,
+            id: score.id,
+          });
         });
-      });
 
-      const variations = Object.entries(grouped).map(([key, files]) => ({
-        key,
-        files: files.sort((a, b) => a.page - b.page),
-      }));
+        const variations = Object.entries(grouped).map(([key, files]) => ({
+          key,
+          files: files.sort((a, b) => a.page - b.page),
+        }));
 
-      setScoreVariations(variations);
+        setScoreVariations(variations);
+      } else {
+        // No data in new table - check old field for backward compatibility
+        if (song.score_file_url) {
+          setScoreVariations([{
+            key: song.default_key || "",
+            files: [{ url: song.score_file_url, page: 1 }]
+          }]);
+        } else {
+          // No scores at all - initialize with empty first variation
+          setScoreVariations([{ key: song.default_key || "", files: [] }]);
+        }
+      }
     } catch (error) {
       console.error("Error loading score variations:", error);
+      setScoreVariations([{ key: song.default_key || "", files: [] }]);
     }
   };
 
@@ -196,7 +210,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       return;
     }
 
-    if (!formData.score_file_url.trim() && scoreVariations.length === 0) {
+    if (scoreVariations.length === 0 || (scoreVariations.length === 1 && scoreVariations[0].files.length === 0)) {
       toast.error(t("songDialog.scoreRequired"));
       return;
     }
@@ -207,6 +221,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       
       const data: any = {
         ...formData,
+        default_key: scoreVariations[0]?.key || "",
+        score_file_url: scoreVariations[0]?.files[0]?.url || "",
         category: normalizedCategory || null,
         tags: formData.tags.join(", "),
       };
@@ -401,16 +417,108 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="key">{t("songDialog.key")}</Label>
-              <Input
-                id="key"
-                value={formData.default_key}
-                onChange={(e) => setFormData({ ...formData, default_key: e.target.value })}
-                placeholder="C, D, Em, etc."
-              />
-            </div>
+          <div>
+            <Label>{t("songDialog.key")}</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              악보 이미지를 키별로 업로드하세요
+            </p>
+            
+            {scoreVariations.map((variation, index) => (
+              <div key={index} className="flex items-center gap-3 mb-3">
+                {/* Key Input */}
+                <Input
+                  value={variation.key}
+                  onChange={(e) => {
+                    updateVariationKey(index, e.target.value);
+                    if (index === 0) {
+                      setFormData({ ...formData, default_key: e.target.value });
+                    }
+                  }}
+                  placeholder="C, D, Em, etc."
+                  className="w-32"
+                />
+                
+                {/* Hidden file input */}
+                <Input
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadScoreFile(file, index);
+                  }}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  id={`file-upload-${index}`}
+                />
+                
+                {/* Upload button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
+                  disabled={uploadingVariationIndex === index}
+                >
+                  {uploadingVariationIndex === index ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      업로드 중
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      악보 업로드
+                    </>
+                  )}
+                </Button>
+                
+                {/* File preview badges (inline) */}
+                <div className="flex-1 flex items-center gap-1 flex-wrap">
+                  {variation.files.map((file, fileIndex) => (
+                    <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      <span className="text-xs">Page {fileIndex + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => window.open(file.url, "_blank")}
+                        className="ml-1 hover:text-primary transition-colors"
+                      >
+                        👁️
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeScoreFile(index, fileIndex)}
+                        className="ml-1 hover:text-destructive transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                
+                {/* Delete variation (only show if index > 0) */}
+                {index > 0 && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removeVariation(index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            
+            {/* Add Variation button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mt-2"
+              onClick={addVariation}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              키 변주 추가
+            </Button>
           </div>
 
           <div>
@@ -462,128 +570,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </div>
           </div>
 
-          <div>
-            <Label>{t("songDialog.scoreFiles")}</Label>
-            <p className="text-xs text-muted-foreground mb-3">
-              {t("songDialog.scoreFilesDescription")}
-            </p>
-
-            {scoreVariations.map((variation, index) => (
-              <Card key={index} className="mb-3 p-3">
-                <div className="flex items-center gap-3">
-                  {/* Key Selector */}
-                  <Select
-                    value={variation.key}
-                    onValueChange={(key) => updateVariationKey(index, key)}
-                  >
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder={t("songDialog.selectKey")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="C">C</SelectItem>
-                      <SelectItem value="C#">C#</SelectItem>
-                      <SelectItem value="D">D</SelectItem>
-                      <SelectItem value="D#">D#</SelectItem>
-                      <SelectItem value="E">E</SelectItem>
-                      <SelectItem value="F">F</SelectItem>
-                      <SelectItem value="F#">F#</SelectItem>
-                      <SelectItem value="G">G</SelectItem>
-                      <SelectItem value="G#">G#</SelectItem>
-                      <SelectItem value="A">A</SelectItem>
-                      <SelectItem value="A#">A#</SelectItem>
-                      <SelectItem value="B">B</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {/* Upload Button + File Previews */}
-                  <div className="flex-1 flex items-center gap-2 flex-wrap">
-                    <Input
-                      type="file"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadScoreFile(file, index);
-                      }}
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      id={`file-upload-${index}`}
-                      disabled={uploadingVariationIndex === index}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        document.getElementById(`file-upload-${index}`)?.click()
-                      }
-                      disabled={uploadingVariationIndex === index || !variation.key}
-                    >
-                      {uploadingVariationIndex === index ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {t("songDialog.uploading")}
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {variation.files.length === 0
-                            ? t("songDialog.uploadScore")
-                            : t("songDialog.addMorePages")}
-                        </>
-                      )}
-                    </Button>
-
-                    {/* File Preview Badges */}
-                    {variation.files.map((file, fileIndex) => (
-                      <Badge
-                        key={fileIndex}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        <FileText className="h-3 w-3" />
-                        <span className="text-xs">
-                          {t("songDialog.page")} {fileIndex + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => window.open(file.url, "_blank")}
-                          className="ml-1 hover:text-primary transition-colors"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeScoreFile(index, fileIndex)}
-                          className="ml-1 hover:text-destructive transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* Delete Variation Button */}
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeVariation(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </Card>
-            ))}
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={addVariation}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t("songDialog.addKeyVariation")}
-            </Button>
-          </div>
 
           <div>
             <Label htmlFor="notes">{t("songDialog.notes")}</Label>
