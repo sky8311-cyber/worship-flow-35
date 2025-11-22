@@ -164,101 +164,106 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                 return (
                   <Card key={song.id} className="hover:shadow-lg transition-shadow overflow-hidden">
                     <div className="p-4">
-                      {/* Title, subtitle, artist */}
-                      <div>
-                        <h3 className="font-bold text-xl mb-1">{song.title}</h3>
-                        {song.subtitle && (
-                          <p className="text-sm text-muted-foreground italic mb-2">{song.subtitle}</p>
-                        )}
-                        {song.artist && (
-                          <p className="text-base text-muted-foreground mb-3 font-medium">{song.artist}</p>
-                        )}
-                      </div>
-                      
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {song.default_key && (
-                          <Badge variant="outline" className="text-xs">
-                            Key: {song.default_key}
-                          </Badge>
-                        )}
-                        {song.category && (
-                          <Badge variant="secondary" className="text-xs">
-                            {song.category}
-                          </Badge>
-                        )}
-                        {song.tags && song.tags.split(',').slice(0, 2).map((tag: string) => (
-                          <Badge key={tag.trim()} variant="outline" className="text-xs">
-                            {tag.trim()}
-                          </Badge>
-                        ))}
-                        {song.tags && song.tags.split(',').length > 2 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{song.tags.split(',').length - 2} more
-                          </Badge>
+                      {/* Two-column layout: Descriptions left, Thumbnail right */}
+                      <div className="flex gap-3 mb-3">
+                        {/* LEFT: Descriptions column */}
+                        <div className="flex-1 min-w-0 space-y-3">
+                          {/* Title, subtitle, artist */}
+                          <div>
+                            <h3 className="font-bold text-xl mb-1 truncate">{song.title}</h3>
+                            {song.subtitle && (
+                              <p className="text-sm text-muted-foreground italic mb-2 truncate">{song.subtitle}</p>
+                            )}
+                            {song.artist && (
+                              <p className="text-base text-muted-foreground font-medium truncate">{song.artist}</p>
+                            )}
+                          </div>
+
+                          {/* Badges */}
+                          <div className="flex flex-wrap gap-2">
+                            {song.default_key && (
+                              <Badge variant="outline" className="text-xs">
+                                Key: {song.default_key}
+                              </Badge>
+                            )}
+                            {song.category && (
+                              <Badge variant="secondary" className="text-xs">
+                                {song.category}
+                              </Badge>
+                            )}
+                            {song.tags && song.tags.split(',').slice(0, 2).map((tag: string) => (
+                              <Badge key={tag.trim()} variant="outline" className="text-xs">
+                                {tag.trim()}
+                              </Badge>
+                            ))}
+                            {song.tags && song.tags.split(',').length > 2 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{song.tags.split(',').length - 2} more
+                              </Badge>
+                            )}
+                          </div>
+
+                          {/* Usage info */}
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{lastUsed ? `사용: ${usageCount}회` : '미사용'}</span>
+                            {song.youtube_url && <Badge variant="outline" className="text-xs">🎥 유튜브</Badge>}
+                            {song.song_scores?.[0] && <Badge variant="outline" className="text-xs">📄 악보</Badge>}
+                          </div>
+                        </div>
+
+                        {/* RIGHT: Thumbnail column (only if score exists) */}
+                        {currentScoreUrl && (
+                          <div className="flex-shrink-0">
+                            <div className="w-20 md:w-32 aspect-[3/4] bg-muted rounded-md overflow-hidden relative group">
+                              <img
+                                src={currentScoreUrl}
+                                alt={`${song.title} score`}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.src = '/placeholder.svg';
+                                }}
+                              />
+
+                              {/* Navigation Arrows (only if multiple variations) */}
+                              {uniqueKeys.length > 1 && (
+                                <>
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute left-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigateToPreviousScore(song.id);
+                                    }}
+                                  >
+                                    <ChevronLeft className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="secondary"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigateToNextScore(song.id);
+                                    }}
+                                  >
+                                    <ChevronRight className="w-3 h-3" />
+                                  </Button>
+                                </>
+                              )}
+
+                              {/* Key Badge */}
+                              {currentKey && (
+                                <Badge variant="secondary" className="absolute bottom-1 right-1 text-[10px] px-1 py-0">
+                                  {currentKey} {uniqueKeys.length > 1 && `(${currentIndex + 1}/${uniqueKeys.length})`}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
 
-                      {/* Usage info */}
-                      <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-                        <span>{lastUsed ? `사용: ${usageCount}회` : '미사용'}</span>
-                        {song.youtube_url && <Badge variant="outline" className="text-xs">🎥 유튜브</Badge>}
-                        {song.song_scores?.[0] && <Badge variant="outline" className="text-xs">📄 악보</Badge>}
-                      </div>
-                      
-                      {/* THUMBNAIL SECTION - ABOVE BUTTONS */}
-                      {(currentScoreUrl || song.youtube_url) && (
-                        <div className="relative w-full aspect-[3/4] bg-muted mb-3 rounded-md overflow-hidden group">
-                          <img 
-                            src={currentScoreUrl || getYouTubeThumbnail(song.youtube_url) || '/placeholder.svg'}
-                            alt={`${song.title} preview`}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder.svg';
-                            }}
-                          />
-                          
-                          {/* Navigation Arrows (only if multiple variations) */}
-                          {uniqueKeys.length > 1 && (
-                            <>
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-80 hover:opacity-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigateToPreviousScore(song.id);
-                                }}
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-80 hover:opacity-100"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigateToNextScore(song.id);
-                                }}
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </Button>
-                            </>
-                          )}
-                          
-                          {/* Key Badge */}
-                          {currentKey && (
-                            <Badge 
-                              variant="secondary" 
-                              className="absolute bottom-2 right-2 text-xs"
-                            >
-                              Key: {currentKey} {uniqueKeys.length > 1 && `(${currentIndex + 1}/${uniqueKeys.length})`}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      
-                      {/* BUTTONS - BELOW THUMBNAIL */}
+                      {/* Buttons - Full width BELOW two-column section */}
                       <div className="flex gap-2">
                         {song.youtube_url && (
                           <Button 
