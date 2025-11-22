@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -14,6 +14,7 @@ import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface SongSelectorProps {
   open: boolean;
@@ -28,6 +29,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [selectedScoreIndexes, setSelectedScoreIndexes] = useState<Record<string, number>>({});
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [previewSong, setPreviewSong] = useState<any>(null);
+  const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -95,24 +97,72 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
     }));
   };
 
+  const toggleSongSelection = (song: any) => {
+    setSelectedSongs(prev => {
+      const isSelected = prev.some(s => s.id === song.id);
+      if (isSelected) {
+        return prev.filter(s => s.id !== song.id);
+      } else {
+        return [...prev, song];
+      }
+    });
+  };
+
+  const isSongSelected = (songId: string) => {
+    return selectedSongs.some(s => s.id === songId);
+  };
+
+  const handleBulkAddToSet = () => {
+    selectedSongs.forEach((song) => {
+      onSelect(song);
+    });
+    toast({
+      title: "성공",
+      description: `${selectedSongs.length}곡을 예배세트에 추가했습니다`,
+    });
+    setSelectedSongs([]);
+  };
+
   const handleSongDialogClose = () => {
     setShowSongDialog(false);
     queryClient.invalidateQueries({ queryKey: ["songs-selector"] });
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        setSelectedSongs([]);
+      }
+      onClose();
+    }}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <DialogTitle>{t("songSelector.title")}</DialogTitle>
-          <Button 
-            size="sm" 
-            variant="outline"
-            onClick={() => setShowSongDialog(true)}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            {t("songSelector.addNewSong")}
-          </Button>
+          
+          <div className="flex gap-2">
+            {selectedSongs.length > 0 && (
+              <Button 
+                size="sm" 
+                onClick={handleBulkAddToSet}
+                className="relative"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                예배세트에 담기
+                <Badge variant="secondary" className="ml-2 bg-white text-primary">
+                  {selectedSongs.length}
+                </Badge>
+              </Button>
+            )}
+            
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowSongDialog(true)}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              {t("songSelector.addNewSong")}
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -174,7 +224,13 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                 }
 
                 return (
-                  <Card key={song.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <Card 
+                    key={song.id} 
+                    className={cn(
+                      "hover:shadow-lg transition-shadow overflow-hidden",
+                      isSongSelected(song.id) && "ring-2 ring-primary"
+                    )}
+                  >
                     <div className="p-4">
                       {/* Two-column layout: Descriptions left, Thumbnail right */}
                       <div className="flex gap-3 mb-3">
@@ -300,14 +356,24 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                         )}
                         <Button 
                           size="sm" 
-                          className="flex-1"
+                          variant={isSongSelected(song.id) ? "default" : "outline"}
+                          className="flex-1 relative"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onSelect(song);
+                            toggleSongSelection(song);
                           }}
                         >
-                          <Plus className="w-4 h-4 mr-1" />
-                          추가
+                          {isSongSelected(song.id) ? (
+                            <>
+                              <Check className="w-4 h-4 mr-1" />
+                              선택됨
+                            </>
+                          ) : (
+                            <>
+                              <Plus className="w-4 h-4 mr-1" />
+                              추가
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
