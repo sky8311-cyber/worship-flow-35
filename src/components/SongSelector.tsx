@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { SongDialog } from "./SongDialog";
+import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "@/hooks/use-toast";
 
@@ -25,6 +26,8 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showSongDialog, setShowSongDialog] = useState(false);
   const [selectedScoreIndexes, setSelectedScoreIndexes] = useState<Record<string, number>>({});
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
+  const [previewSong, setPreviewSong] = useState<any>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -142,7 +145,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
           ) : songs && songs.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
               {songs.map((song) => {
                 const lastUsed = getLastUsedDate(song);
                 const usageCount = song.set_songs?.length || 0;
@@ -223,7 +226,14 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                         {/* RIGHT: Thumbnail column (only if score exists) */}
                         {currentScoreUrl && (
                           <div className="flex-shrink-0">
-                            <div className="w-20 md:w-32 aspect-[3/4] bg-muted rounded-md overflow-hidden relative group">
+                            <div 
+                              className="w-20 md:w-32 aspect-[3/4] bg-muted rounded-md overflow-hidden relative group cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewSong(song);
+                                setShowPreviewDialog(true);
+                              }}
+                            >
                               <img
                                 src={currentScoreUrl}
                                 alt={`${song.title} score`}
@@ -318,6 +328,14 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
         onOpenChange={setShowSongDialog}
         song={undefined}
         onClose={handleSongDialogClose}
+      />
+
+      <ScorePreviewDialog
+        open={showPreviewDialog}
+        onOpenChange={setShowPreviewDialog}
+        scoreUrl={previewSong?.score_file_url || null}
+        songTitle={previewSong?.title || ""}
+        songId={previewSong?.id}
       />
     </Dialog>
   );
