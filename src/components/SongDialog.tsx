@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2 } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
 import { ArtistSelector } from "@/components/ArtistSelector";
 import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Card } from "@/components/ui/card";
 
 interface SongDialogProps {
   open: boolean;
@@ -25,6 +26,12 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [scoreVariations, setScoreVariations] = useState<Array<{
+    id?: string;
+    key: string;
+    files: Array<{ url: string; page: number; id?: string }>;
+  }>>([]);
+  const [uploadingVariationIndex, setUploadingVariationIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
@@ -54,6 +61,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         notes: song.notes || "",
         interpretation: song.interpretation || "",
       });
+      
+      // Load score variations
+      if (song.id) {
+        loadScoreVariations(song.id);
+      }
     } else {
       setFormData({
         title: "",
@@ -68,8 +80,44 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         notes: "",
         interpretation: "",
       });
+      setScoreVariations([]);
     }
   }, [song, open]);
+
+  const loadScoreVariations = async (songId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("song_scores")
+        .select("*")
+        .eq("song_id", songId)
+        .order("key", { ascending: true })
+        .order("page_number", { ascending: true });
+
+      if (error) throw error;
+
+      // Group by key
+      const grouped: Record<string, Array<{ url: string; page: number; id: string }>> = {};
+      data?.forEach((score) => {
+        if (!grouped[score.key]) {
+          grouped[score.key] = [];
+        }
+        grouped[score.key].push({
+          url: score.file_url,
+          page: score.page_number,
+          id: score.id,
+        });
+      });
+
+      const variations = Object.entries(grouped).map(([key, files]) => ({
+        key,
+        files: files.sort((a, b) => a.page - b.page),
+      }));
+
+      setScoreVariations(variations);
+    } catch (error) {
+      console.error("Error loading score variations:", error);
+    }
+  };
 
   const [isDragging, setIsDragging] = useState(false);
   const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
@@ -147,7 +195,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       return;
     }
 
-    if (!formData.score_file_url.trim()) {
+    if (!formData.score_file_url.trim() && scoreVariations.length === 0) {
       toast.error(t("songDialog.scoreRequired"));
       return;
     }
@@ -162,20 +210,29 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         tags: formData.tags.join(", "),
       };
 
+      let songId: string;
+
       if (song) {
         const { error } = await supabase
           .from("songs")
           .update(data)
           .eq("id", song.id);
         if (error) throw error;
+        songId = song.id;
         toast.success(t("songDialog.songUpdated"));
       } else {
-        const { error } = await supabase
+        const { data: newSong, error } = await supabase
           .from("songs")
-          .insert([data]);
+          .insert([data])
+          .select()
+          .single();
         if (error) throw error;
+        songId = newSong.id;
         toast.success(t("songDialog.songAdded"));
       }
+
+      // Save score variations
+      await saveScoreVariations(songId);
 
       onClose();
     } catch (error: any) {
@@ -183,6 +240,91 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     } finally {
       setLoading(false);
     }
+  };
+
+  const saveScoreVariations = async (songId: string) => {
+    try {
+      // Delete existing scores
+      await supabase.from("song_scores").delete().eq("song_id", songId);
+
+      // Insert new scores
+      const scoresToInsert = scoreVariations.flatMap((variation, varIndex) =>
+        variation.files.map((file, fileIndex) => ({
+          song_id: songId,
+          key: variation.key,
+          file_url: file.url,
+          page_number: fileIndex + 1,
+          position: varIndex + 1,
+        }))
+      );
+
+      if (scoresToInsert.length > 0) {
+        const { error } = await supabase.from("song_scores").insert(scoresToInsert);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("Error saving score variations:", error);
+      throw error;
+    }
+  };
+
+  const addVariation = () => {
+    setScoreVariations([...scoreVariations, { key: "", files: [] }]);
+  };
+
+  const removeVariation = (index: number) => {
+    setScoreVariations(scoreVariations.filter((_, i) => i !== index));
+  };
+
+  const updateVariationKey = (index: number, key: string) => {
+    const updated = [...scoreVariations];
+    updated[index].key = key;
+    setScoreVariations(updated);
+  };
+
+  const uploadScoreFile = async (file: File, variationIndex: number) => {
+    try {
+      setUploadingVariationIndex(variationIndex);
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("scores")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("scores").getPublicUrl(filePath);
+
+      // Add file to variation
+      const updated = [...scoreVariations];
+      updated[variationIndex].files.push({
+        url: publicUrl,
+        page: updated[variationIndex].files.length + 1,
+      });
+      setScoreVariations(updated);
+
+      toast.success(t("songDialog.fileUploaded"));
+    } catch (error: any) {
+      toast.error("Error: " + error.message);
+    } finally {
+      setUploadingVariationIndex(null);
+    }
+  };
+
+  const removeScoreFile = (variationIndex: number, fileIndex: number) => {
+    const updated = [...scoreVariations];
+    updated[variationIndex].files.splice(fileIndex, 1);
+    // Renumber pages
+    updated[variationIndex].files = updated[variationIndex].files.map((f, i) => ({
+      ...f,
+      page: i + 1,
+    }));
+    setScoreVariations(updated);
   };
 
   return (
@@ -320,85 +462,130 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           </div>
 
           <div>
-            <Label htmlFor="score_file">
-              {t("songDialog.scoreFile")} <span className="text-destructive">*</span>
-            </Label>
-            
-            {!formData.score_file_url ? (
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                  isDragging ? "border-primary bg-accent" : "border-border"
-                }`}
-              >
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="mb-2 text-sm">{t("songDialog.dragDropFile")}</p>
-                <Input
-                  type="file"
-                  onChange={handleFileUpload}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  id="file-upload"
-                  disabled={uploading}
-                />
-                <div className="flex gap-2 justify-center mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                    disabled={uploading}
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {t("songDialog.uploading")}
-                      </>
-                    ) : (
-                      <>
-                        📁 {t("songDialog.selectFile")}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="border rounded-lg p-4 bg-card">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-2xl">
-                      {formData.score_file_url.match(/\.(pdf)$/i) ? '📄' : '🖼️'}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{t("songDialog.uploadedFile")}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {formData.score_file_url.split('/').pop()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(formData.score_file_url, '_blank')}
+            <Label>{t("songDialog.scoreFiles")}</Label>
+            <p className="text-xs text-muted-foreground mb-3">
+              {t("songDialog.scoreFilesDescription")}
+            </p>
+
+            {scoreVariations.map((variation, index) => (
+              <Card key={index} className="mb-3 p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <Select
+                      value={variation.key}
+                      onValueChange={(key) => updateVariationKey(index, key)}
                     >
-                      {t("songDialog.previewScore")}
-                    </Button>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder={t("songDialog.selectKey")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="C">C</SelectItem>
+                        <SelectItem value="C#">C#</SelectItem>
+                        <SelectItem value="D">D</SelectItem>
+                        <SelectItem value="D#">D#</SelectItem>
+                        <SelectItem value="E">E</SelectItem>
+                        <SelectItem value="F">F</SelectItem>
+                        <SelectItem value="F#">F#</SelectItem>
+                        <SelectItem value="G">G</SelectItem>
+                        <SelectItem value="G#">G#</SelectItem>
+                        <SelectItem value="A">A</SelectItem>
+                        <SelectItem value="A#">A#</SelectItem>
+                        <SelectItem value="B">B</SelectItem>
+                      </SelectContent>
+                    </Select>
+
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={() => setFormData({ ...formData, score_file_url: '' })}
+                      onClick={() => removeVariation(index)}
                     >
-                      {t("songDialog.removeFile")}
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {variation.files.length > 0 && (
+                    <div className="space-y-2">
+                      {variation.files.map((file, fileIndex) => (
+                        <div
+                          key={fileIndex}
+                          className="flex items-center gap-2 text-sm border rounded p-2"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span className="flex-1">
+                            {t("songDialog.page")} {fileIndex + 1}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(file.url, "_blank")}
+                          >
+                            {t("songDialog.preview")}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeScoreFile(index, fileIndex)}
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div>
+                    <Input
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadScoreFile(file, index);
+                      }}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      id={`file-upload-${index}`}
+                      disabled={uploadingVariationIndex === index}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() =>
+                        document.getElementById(`file-upload-${index}`)?.click()
+                      }
+                      disabled={uploadingVariationIndex === index || !variation.key}
+                    >
+                      {uploadingVariationIndex === index ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {t("songDialog.uploading")}
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {variation.files.length === 0
+                            ? t("songDialog.uploadScore")
+                            : t("songDialog.addMorePages")}
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
-              </div>
-            )}
+              </Card>
+            ))}
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={addVariation}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t("songDialog.addKeyVariation")}
+            </Button>
           </div>
 
           <div>

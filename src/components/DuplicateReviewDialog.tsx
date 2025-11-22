@@ -88,6 +88,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [selectedScoreUrl, setSelectedScoreUrl] = useState<string | null>(null);
   const [selectedSongTitle, setSelectedSongTitle] = useState("");
+  const [selectedSongId, setSelectedSongId] = useState<string | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<"high" | "medium">("high");
   const [editingStates, setEditingStates] = useState<Record<string, boolean>>({});
   const [editedData, setEditedData] = useState<Record<string, any>>({});
@@ -662,6 +663,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
               e.stopPropagation();
               setSelectedScoreUrl(value);
               setSelectedSongTitle(song?.title || "Unknown");
+              setSelectedSongId(song?.id);
               setScorePreviewOpen(true);
             }}
             className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline"
@@ -971,6 +973,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                                   onClick={() => {
                                                     setSelectedScoreUrl(song.score_file_url);
                                                     setSelectedSongTitle(song.title);
+                                                    setSelectedSongId(song.id);
                                                     setScorePreviewOpen(true);
                                                   }}
                                                   className="inline-flex items-center gap-1 hover:underline"
@@ -1223,6 +1226,7 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
         onOpenChange={setScorePreviewOpen}
         scoreUrl={selectedScoreUrl}
         songTitle={selectedSongTitle}
+        songId={selectedSongId}
       />
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
