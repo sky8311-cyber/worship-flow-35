@@ -56,20 +56,35 @@ const SetBuilder = () => {
       if (!id) return null;
       const { data, error } = await supabase
         .from("service_sets")
-        .select(`
-          *,
-          set_songs(
-            *,
-            songs(*)
-          )
-        `)
+        .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
     enabled: !!id,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  const { data: existingSetSongs } = useQuery({
+    queryKey: ["set-songs", id],
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("set_songs")
+        .select(`
+          *,
+          songs(*)
+        `)
+        .eq("service_set_id", id)
+        .order("position", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
     refetchOnMount: "always",
     staleTime: 0,
   });
@@ -88,14 +103,6 @@ const SetBuilder = () => {
         notes: existingSet.notes || "",
       });
       setStatus(existingSet.status || "draft");
-      setSongs(
-        existingSet.set_songs
-          ?.sort((a: any, b: any) => a.position - b.position)
-          .map((ss: any) => ({
-            ...ss,
-            song: ss.songs,
-          })) || []
-      );
 
       // Safety patch for legacy sets without created_by
       if (!existingSet.created_by && user?.id) {
@@ -106,12 +113,23 @@ const SetBuilder = () => {
           .then(({ error }) => {
             if (!error) {
               queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
+              queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
               queryClient.refetchQueries({ queryKey: ["service-set", existingSet.id] });
+              queryClient.refetchQueries({ queryKey: ["set-songs", existingSet.id] });
             }
           });
       }
     }
-  }, [existingSet, user, queryClient]);
+
+    if (existingSetSongs) {
+      setSongs(
+        existingSetSongs.map((ss: any) => ({
+          ...ss,
+          song: ss.songs,
+        }))
+      );
+    }
+  }, [existingSet, existingSetSongs, user, queryClient]);
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
@@ -179,6 +197,7 @@ const SetBuilder = () => {
     onSuccess: (setId) => {
       toast.success(t("setBuilder.successSave"));
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+      queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       if (!id) {
         navigate(`/set-builder/${setId}`);
