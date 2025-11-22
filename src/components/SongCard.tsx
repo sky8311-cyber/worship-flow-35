@@ -232,6 +232,7 @@ export const SongCard = ({
         onOpenChange={setScorePreviewOpen}
         scoreUrl={song.score_file_url}
         songTitle={song.title}
+        songId={song.id}
       />
     </>
   );

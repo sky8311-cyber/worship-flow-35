@@ -445,6 +445,7 @@ export const SongTable = ({
         onOpenChange={setScorePreviewOpen}
         scoreUrl={selectedSong?.score_file_url}
         songTitle={selectedSong?.title || ""}
+        songId={selectedSong?.id}
       />
     </>
   );
