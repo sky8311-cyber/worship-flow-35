@@ -147,7 +147,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                 const lastUsed = getLastUsedDate(song);
                 const usageCount = song.set_songs?.length || 0;
 
-                // Group scores by key variation
+                // Group scores by key variation (multi-key scores)
                 const scoresByKey = song.song_scores?.reduce((acc: any, score: any) => {
                   if (!score.key) return acc;
                   if (!acc[score.key]) acc[score.key] = [];
@@ -155,11 +155,20 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                   return acc;
                 }, {}) || {};
 
-                const uniqueKeys = Object.keys(scoresByKey).sort();
-                const currentIndex = selectedScoreIndexes[song.id] || 0;
-                const currentKey = uniqueKeys[currentIndex];
-                const currentScores = scoresByKey[currentKey] || [];
-                const currentScoreUrl = currentScores[0]?.file_url;
+                // Derive current key and score URL, with legacy fallback to score_file_url
+                let uniqueKeys = Object.keys(scoresByKey).sort();
+                let currentIndex = selectedScoreIndexes[song.id] || 0;
+                let currentKey = uniqueKeys[currentIndex];
+                const currentScores = currentKey ? scoresByKey[currentKey] || [] : [];
+                let currentScoreUrl: string | null = currentScores[0]?.file_url || null;
+
+                // Fallback for older songs that only use songs.score_file_url (single score)
+                if (!currentScoreUrl && song.score_file_url) {
+                  currentScoreUrl = song.score_file_url;
+                  currentKey = song.default_key || undefined;
+                  uniqueKeys = currentKey ? [currentKey] : [];
+                  currentIndex = 0;
+                }
 
                 return (
                   <Card key={song.id} className="hover:shadow-lg transition-shadow overflow-hidden">
