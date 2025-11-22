@@ -109,6 +109,28 @@ const SetBuilder = () => {
     enabled: !!user,
   });
 
+  // Phase 2: Permission check and redirect logic
+  useEffect(() => {
+    if (existingSet && user) {
+      const isCreator = existingSet.created_by === user.id;
+      const isPublished = existingSet.status === 'published';
+      
+      // For published sets, redirect non-owners to BandView
+      if (isPublished && !isCreator && !isAdmin) {
+        navigate(`/band-view/${id}`, { replace: true });
+        toast.info("게시된 워십세트를 읽기 전용으로 보고 있습니다");
+        return;
+      }
+      
+      // For draft sets, check if user has any permission
+      if (!isPublished && !isCreator && !isAdmin) {
+        navigate('/dashboard', { replace: true });
+        toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
+        return;
+      }
+    }
+  }, [existingSet, user, isAdmin, navigate, id]);
+
   useEffect(() => {
     if (existingSet) {
       setFormData({
@@ -154,6 +176,14 @@ const SetBuilder = () => {
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
+      // Phase 2: Permission validation before save
+      if (existingSet && user) {
+        const isCreator = existingSet.created_by === user.id;
+        if (!isCreator && !isAdmin) {
+          throw new Error("이 워십세트를 수정할 권한이 없습니다");
+        }
+      }
+
       // Validation before save
       if (!formData.community_id) {
         throw new Error(t("setBuilder.errors.communityRequired"));
