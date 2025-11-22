@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Music } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
@@ -35,12 +37,13 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           set_songs(
             service_set_id,
             service_sets(date)
-          )
+          ),
+          song_scores(file_url)
         `)
         .order("title");
 
       if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`);
+        query = query.or(`title.ilike.%${searchQuery}%,subtitle.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`);
       }
 
       if (selectedCategory !== "all") {
@@ -88,7 +91,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="곡 제목 또는 태그로 검색..."
+              placeholder="곡 제목, 부제, 아티스트, 태그로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -110,58 +113,81 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           </Select>
         </div>
 
-        <div className="flex-1 overflow-y-auto mt-4 space-y-2">
+        <div className="flex-1 overflow-y-auto mt-4">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">로딩 중...</div>
           ) : songs && songs.length > 0 ? (
-            songs.map((song) => {
-              const lastUsed = getLastUsedDate(song);
-              const usageCount = song.set_songs?.length || 0;
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {songs.map((song) => {
+                const lastUsed = getLastUsedDate(song);
+                const usageCount = song.set_songs?.length || 0;
+                const getYouTubeThumbnail = (url: string | null) => {
+                  if (!url) return null;
+                  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+                  return match ? `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` : null;
+                };
 
-              return (
-                <div
-                  key={song.id}
-                  className="p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer flex items-start justify-between gap-4"
-                  onClick={() => onSelect(song)}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Music className="w-4 h-4 text-primary" />
-                      <h4 className="font-semibold">{song.title}</h4>
-                    </div>
-                    {song.artist && (
-                      <p className="text-sm text-muted-foreground mb-2">{song.artist}</p>
-                    )}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {song.default_key && (
-                        <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                          {song.default_key}
-                        </span>
+                return (
+                  <Card
+                    key={song.id}
+                    className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
+                    onClick={() => onSelect(song)}
+                  >
+                    <div className="relative aspect-video bg-muted overflow-hidden">
+                      {song.song_scores?.[0]?.file_url ? (
+                        <img 
+                          src={song.song_scores[0].file_url}
+                          className="object-cover w-full h-full"
+                          alt="Score"
+                        />
+                      ) : song.youtube_url && getYouTubeThumbnail(song.youtube_url) ? (
+                        <img 
+                          src={getYouTubeThumbnail(song.youtube_url)}
+                          className="object-cover w-full h-full"
+                          alt="YouTube"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music className="w-12 h-12 text-muted-foreground" />
+                        </div>
                       )}
-                      {song.category && (
-                        <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
-                          {song.category}
-                        </span>
-                      )}
                     </div>
-                    {lastUsed && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        마지막 사용: {format(lastUsed, "yyyy년 M월 d일", { locale: ko })} ({usageCount}회)
-                      </p>
-                    )}
-                    {!lastUsed && usageCount === 0 && (
-                      <p className="text-xs text-amber-600 mt-2">
-                        오랜만 (사용 이력 없음)
-                      </p>
-                    )}
-                  </div>
-                  <Button size="sm" onClick={() => onSelect(song)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    추가
-                  </Button>
-                </div>
-              );
-            })
+                    
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-1 line-clamp-1">{song.title}</h3>
+                      {song.subtitle && (
+                        <p className="text-sm text-muted-foreground italic mb-2">{song.subtitle}</p>
+                      )}
+                      {song.artist && (
+                        <p className="text-sm text-muted-foreground mb-3">{song.artist}</p>
+                      )}
+                      
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {song.default_key && (
+                          <Badge variant="outline">Key: {song.default_key}</Badge>
+                        )}
+                        {song.category && (
+                          <Badge>{song.category}</Badge>
+                        )}
+                        {song.tags && (
+                          <Badge variant="secondary">{song.tags.split(',')[0]}</Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">
+                          {lastUsed ? `사용: ${usageCount}회` : '미사용'}
+                        </span>
+                        <Button size="sm">
+                          <Plus className="w-4 h-4 mr-1" />
+                          추가
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               검색 결과가 없습니다

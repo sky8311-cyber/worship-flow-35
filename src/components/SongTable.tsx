@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown } from "lucide-react";
+import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { FavoriteButton } from "./FavoriteButton";
+import { AddToSetDialog } from "./AddToSetDialog";
 import { format } from "date-fns";
 
 interface SongTableProps {
@@ -55,6 +57,8 @@ export const SongTable = ({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
+  const [addToSetSong, setAddToSetSong] = useState<any>(null);
+  const [addToSetOpen, setAddToSetOpen] = useState(false);
 
   const renderColumnHeader = (
     columnKey: string,
@@ -373,6 +377,19 @@ export const SongTable = ({
                   <TableCell>
                     {!bulkEditMode && (
                       <div className="flex items-center justify-end gap-1">
+                        <FavoriteButton songId={song.id} size="icon" variant="ghost" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setAddToSetSong(song);
+                            setAddToSetOpen(true);
+                          }}
+                          title="워십세트에 추가"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                         {song.youtube_url && (
                           <Button
                             variant="ghost"
@@ -451,6 +468,11 @@ export const SongTable = ({
         scoreUrl={selectedSong?.score_file_url}
         songTitle={selectedSong?.title || ""}
         songId={selectedSong?.id}
+      />
+      <AddToSetDialog 
+        open={addToSetOpen}
+        onOpenChange={setAddToSetOpen}
+        song={addToSetSong}
       />
     </>
   );
