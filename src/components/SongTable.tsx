@@ -5,8 +5,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Eye, Youtube, Edit, Trash2 } from "lucide-react";
+import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,10 @@ interface SongTableProps {
   bulkEditMode?: boolean;
   editedSongs?: Record<string, any>;
   onUpdateEditedSong?: (songId: string, field: string, value: any) => void;
+  columnFilters?: Record<string, string>;
+  onColumnFilter?: (column: string, value: string) => void;
+  columnSort?: { column: string | null; direction: 'asc' | 'desc' | null };
+  onColumnSort?: (column: string, direction: 'asc' | 'desc') => void;
 }
 
 export const SongTable = ({ 
@@ -37,13 +42,104 @@ export const SongTable = ({
   onSelectAll,
   bulkEditMode = false,
   editedSongs = {},
-  onUpdateEditedSong
+  onUpdateEditedSong,
+  columnFilters = {},
+  onColumnFilter,
+  columnSort = { column: null, direction: null },
+  onColumnSort
 }: SongTableProps) => {
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
+  const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
+
+  const renderColumnHeader = (
+    columnKey: string,
+    label: string,
+    sortable: boolean = true,
+    filterable: boolean = true
+  ) => {
+    const hasActiveFilter = columnFilters[columnKey]?.trim();
+    const isActiveSortColumn = columnSort.column === columnKey;
+
+    return (
+      <div className="flex items-center gap-2">
+        <span>{label}</span>
+        {(sortable || filterable) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`h-6 w-6 p-0 ${hasActiveFilter || isActiveSortColumn ? 'text-primary' : ''}`}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {sortable && (
+                <>
+                  <DropdownMenuItem onClick={() => onColumnSort?.(columnKey, 'asc')}>
+                    <ArrowUp className="h-4 w-4 mr-2" />
+                    {t("songLibrary.sortAsc")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onColumnSort?.(columnKey, 'desc')}>
+                    <ArrowDown className="h-4 w-4 mr-2" />
+                    {t("songLibrary.sortDesc")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {filterable && (
+                <div className="p-2">
+                  <Input
+                    placeholder={t("songLibrary.filterPlaceholder")}
+                    value={filterInputs[columnKey] || ''}
+                    onChange={(e) => {
+                      setFilterInputs({ ...filterInputs, [columnKey]: e.target.value });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        onColumnFilter?.(columnKey, filterInputs[columnKey] || '');
+                      }
+                    }}
+                    className="h-8"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-7 flex-1"
+                      onClick={() => {
+                        onColumnFilter?.(columnKey, filterInputs[columnKey] || '');
+                      }}
+                    >
+                      {t("songLibrary.applyFilter")}
+                    </Button>
+                    {hasActiveFilter && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 flex-1"
+                        onClick={() => {
+                          setFilterInputs({ ...filterInputs, [columnKey]: '' });
+                          onColumnFilter?.(columnKey, '');
+                        }}
+                      >
+                        {t("songLibrary.clearFilter")}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    );
+  };
 
   const { data: serviceSets } = useQuery({
     queryKey: ["service-sets-for-songs"],
@@ -131,12 +227,12 @@ export const SongTable = ({
                 />
               </TableHead>
             )}
-            <TableHead>{t("songLibrary.tableHeaders.title")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.artist")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.category")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.language")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.key")}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.tags")}</TableHead>
+            <TableHead>{renderColumnHeader('title', t("songLibrary.tableHeaders.title"))}</TableHead>
+            <TableHead>{renderColumnHeader('artist', t("songLibrary.tableHeaders.artist"))}</TableHead>
+            <TableHead>{renderColumnHeader('category', t("songLibrary.tableHeaders.category"))}</TableHead>
+            <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
+            <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
+            <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
             <TableHead className="text-right">{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
