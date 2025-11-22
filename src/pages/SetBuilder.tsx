@@ -96,8 +96,22 @@ const SetBuilder = () => {
             song: ss.songs,
           })) || []
       );
+
+      // Safety patch for legacy sets without created_by
+      if (!existingSet.created_by && user?.id) {
+        supabase
+          .from("service_sets")
+          .update({ created_by: user.id })
+          .eq("id", existingSet.id)
+          .then(({ error }) => {
+            if (!error) {
+              queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
+              queryClient.refetchQueries({ queryKey: ["service-set", existingSet.id] });
+            }
+          });
+      }
     }
-  }, [existingSet]);
+  }, [existingSet, user, queryClient]);
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
@@ -113,19 +127,27 @@ const SetBuilder = () => {
       if (!setId) {
         const { data, error } = await supabase
           .from("service_sets")
-          .insert([{
-            ...dataToSave,
-            created_by: user.id,
-          }])
+          .insert([
+            {
+              ...dataToSave,
+              created_by: user.id,
+            },
+          ])
           .select()
           .single();
 
         if (error) throw error;
         setId = data.id;
       } else {
+        const updateData: any = { ...dataToSave };
+        // Ensure legacy sets without created_by get correctly assigned
+        if (!existingSet?.created_by && user?.id) {
+          updateData.created_by = user.id;
+        }
+
         const { error } = await supabase
           .from("service_sets")
-          .update(dataToSave)
+          .update(updateData)
           .eq("id", setId);
 
         if (error) throw error;
