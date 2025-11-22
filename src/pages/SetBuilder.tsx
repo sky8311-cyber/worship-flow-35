@@ -113,7 +113,10 @@ const SetBuilder = () => {
       if (!setId) {
         const { data, error } = await supabase
           .from("service_sets")
-          .insert([dataToSave])
+          .insert([{
+            ...dataToSave,
+            created_by: user.id,
+          }])
           .select()
           .single();
 
