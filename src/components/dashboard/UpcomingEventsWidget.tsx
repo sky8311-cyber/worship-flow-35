@@ -83,15 +83,15 @@ export function UpcomingEventsWidget({ sets = [], maxVisible = 5 }: UpcomingEven
 
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [
-    ...(sets?.map((set) => ({
+    ...(sets?.map((set: any) => ({
       id: set.id,
       type: "service_set" as const,
       date: set.date,
       title: set.service_name,
       subtitle: set.worship_leader || undefined,
       icon: <Church className="w-4 h-4" />,
-      linkTo: `/set-builder/${set.id}`,
-      badgeLabel: t("calendarEvent.types.worship_service"),
+      linkTo: set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`,
+      badgeLabel: set.status === "published" ? "게시됨" : "임시저장",
     })) || []),
     ...(calendarEvents?.map((event) => {
       const iconMap = {

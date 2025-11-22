@@ -680,6 +680,12 @@ export const translations = {
       collaboratorRemoved: "Collaborator removed successfully",
       collaboratorError: "Failed to manage collaborator",
       noCollaborators: "No collaborators yet",
+      community: "Community",
+      selectCommunity: "Select a community",
+      errors: {
+        communityRequired: "Please select a community before saving",
+        noSongsPublish: "Cannot publish a worship set without songs",
+      },
     },
     songSelector: {
       title: "Select Song",
@@ -1486,6 +1492,12 @@ export const translations = {
       collaboratorRemoved: "협업자가 제거되었습니다",
       collaboratorError: "협업자 관리 실패",
       noCollaborators: "아직 협업자가 없습니다",
+      community: "예배공동체",
+      selectCommunity: "예배공동체를 선택하세요",
+      errors: {
+        communityRequired: "저장하기 전에 예배공동체를 선택해주세요",
+        noSongsPublish: "곡이 없는 워십세트는 게시할 수 없습니다",
+      },
     },
     songSelector: {
       title: "곡 선택",

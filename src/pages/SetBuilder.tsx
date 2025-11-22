@@ -31,6 +31,7 @@ const SetBuilder = () => {
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     service_name: "",
+    community_id: "",
     target_audience: "",
     worship_leader: "",
     band_name: "",
@@ -89,11 +90,31 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
+  // Fetch user's communities
+  const { data: userCommunities } = useQuery({
+    queryKey: ["user-communities", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("community_members")
+        .select(`
+          community_id,
+          worship_communities(id, name)
+        `)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      return data?.map(m => m.worship_communities).filter(Boolean) || [];
+    },
+    enabled: !!user,
+  });
+
   useEffect(() => {
     if (existingSet) {
       setFormData({
         date: existingSet.date,
         service_name: existingSet.service_name,
+        community_id: existingSet.community_id || "",
         target_audience: existingSet.target_audience || "",
         worship_leader: existingSet.worship_leader || "",
         band_name: existingSet.band_name || "",
@@ -133,6 +154,14 @@ const SetBuilder = () => {
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
+      // Validation before save
+      if (!formData.community_id) {
+        throw new Error(t("setBuilder.errors.communityRequired"));
+      }
+      if (publishStatus === "published" && songs.length === 0) {
+        throw new Error(t("setBuilder.errors.noSongsPublish"));
+      }
+
       const statusToSave = publishStatus || status;
       let setId = id;
 
@@ -368,6 +397,29 @@ const SetBuilder = () => {
                     placeholder="예: 주일 2부 예배"
                     required
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="community_id" className="text-destructive">
+                    {t("setBuilder.community")} *
+                  </Label>
+                  <Select
+                    value={formData.community_id}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, community_id: value })
+                    }
+                  >
+                    <SelectTrigger id="community_id">
+                      <SelectValue placeholder={t("setBuilder.selectCommunity")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {userCommunities?.map((community: any) => (
+                        <SelectItem key={community.id} value={community.id}>
+                          {community.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
