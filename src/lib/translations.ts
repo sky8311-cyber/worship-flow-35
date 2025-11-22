@@ -411,6 +411,11 @@ export const translations = {
         recentlyAdded: "Recently Added",
         artist: "Artist",
       },
+      sortAsc: "Sort Ascending",
+      sortDesc: "Sort Descending",
+      filterPlaceholder: "Filter...",
+      applyFilter: "Apply",
+      clearFilter: "Clear",
   tableHeaders: {
     title: "Title",
     artist: "Artist",
@@ -587,6 +592,12 @@ export const translations = {
       successAdd: "Song added successfully",
       successEdit: "Song updated successfully",
       error: "Error saving song",
+    },
+    artistSelector: {
+      selectArtist: "Select artist",
+      searchArtist: "Search artist...",
+      addNew: "Add new",
+      noArtistFound: "No artist found",
     },
     songCard: {
       edit: "Edit",
@@ -1181,6 +1192,12 @@ export const translations = {
       uploadCover: "커버 업로드",
       removeCover: "커버 제거",
     },
+    artistSelector: {
+      selectArtist: "아티스트 선택",
+      searchArtist: "아티스트 검색...",
+      addNew: "새로 추가",
+      noArtistFound: "아티스트를 찾을 수 없습니다",
+    },
     activity: {
       joinedCommunity: "커뮤니티에 가입했습니다",
     },
@@ -1217,6 +1234,11 @@ export const translations = {
         recentlyAdded: "최근 추가",
         artist: "아티스트",
       },
+      sortAsc: "오름차순 정렬",
+      sortDesc: "내림차순 정렬",
+      filterPlaceholder: "필터링...",
+      applyFilter: "적용",
+      clearFilter: "초기화",
   tableHeaders: {
     title: "제목",
     artist: "아티스트",

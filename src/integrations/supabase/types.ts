@@ -409,6 +409,50 @@ export type Database = {
           },
         ]
       }
+      song_scores: {
+        Row: {
+          created_at: string | null
+          file_type: string | null
+          file_url: string
+          id: string
+          key: string
+          page_number: number | null
+          position: number | null
+          song_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          key: string
+          page_number?: number | null
+          position?: number | null
+          song_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          key?: string
+          page_number?: number | null
+          position?: number | null
+          song_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_scores_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       songs: {
         Row: {
           artist: string | null

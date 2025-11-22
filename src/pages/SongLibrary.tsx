@@ -40,6 +40,11 @@ const SongLibrary = () => {
   const [bulkEditMode, setBulkEditMode] = useState(false);
   const [editedSongs, setEditedSongs] = useState<Record<string, any>>({});
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [columnSort, setColumnSort] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({
+    column: null,
+    direction: null
+  });
 
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
@@ -88,6 +93,45 @@ const SongLibrary = () => {
       return data;
     },
   });
+
+  // Apply client-side column filters
+  const filteredSongs = (songs || []).filter(song => {
+    for (const [column, filterValue] of Object.entries(columnFilters)) {
+      if (!filterValue) continue;
+      
+      const songValue = song[column];
+      if (!songValue) return false;
+      
+      if (typeof songValue === 'string' && !songValue.toLowerCase().includes(filterValue.toLowerCase())) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  // Apply client-side column sorting
+  const sortedAndFilteredSongs = [...filteredSongs].sort((a, b) => {
+    if (!columnSort.column || !columnSort.direction) return 0;
+    
+    const aVal = a[columnSort.column] || '';
+    const bVal = b[columnSort.column] || '';
+    
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return columnSort.direction === 'asc' 
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    }
+    
+    return columnSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+  });
+
+  const handleColumnFilter = (column: string, value: string) => {
+    setColumnFilters(prev => ({ ...prev, [column]: value }));
+  };
+
+  const handleColumnSort = (column: string, direction: 'asc' | 'desc') => {
+    setColumnSort({ column, direction });
+  };
 
   const handleAddSong = () => {
     setSelectedSong(null);
@@ -447,10 +491,10 @@ const SongLibrary = () => {
 
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">{t("common.loading")}</div>
-        ) : songs && songs.length > 0 ? (
+        ) : sortedAndFilteredSongs && sortedAndFilteredSongs.length > 0 ? (
           viewMode === "table" ? (
             <SongTable
-              songs={songs}
+              songs={sortedAndFilteredSongs}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
               selectionMode={selectionMode}
@@ -465,10 +509,14 @@ const SongLibrary = () => {
                   [songId]: { ...prev[songId], [field]: value }
                 }));
               }}
+              columnFilters={columnFilters}
+              onColumnFilter={handleColumnFilter}
+              columnSort={columnSort}
+              onColumnSort={handleColumnSort}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {songs.map((song) => (
+              {sortedAndFilteredSongs.map((song) => (
                 <SongCard
                   key={song.id}
                   song={song}

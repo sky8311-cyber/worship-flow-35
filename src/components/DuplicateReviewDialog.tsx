@@ -51,6 +51,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
+import { ArtistSelector } from "@/components/ArtistSelector";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DuplicateReviewDialogProps {
@@ -867,18 +868,18 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                               placeholder="제목"
                                               className="text-sm"
                                             />
-                                            <Input
-                                              value={editData.subtitle || ''}
-                                              onChange={(e) => handleFieldChange(song.id, 'subtitle', e.target.value)}
-                                              placeholder="부제"
-                                              className="text-sm"
-                                            />
-                                            <Input
-                                              value={editData.artist}
-                                              onChange={(e) => handleFieldChange(song.id, 'artist', e.target.value)}
-                                              placeholder="아티스트"
-                                              className="text-xs"
-                                            />
+                                             <Input
+                                               value={editData.subtitle || ''}
+                                               onChange={(e) => handleFieldChange(song.id, 'subtitle', e.target.value)}
+                                               placeholder="부제"
+                                               className="text-sm"
+                                             />
+                                             <div>
+                                               <ArtistSelector
+                                                 value={editData.artist || ''}
+                                                 onValueChange={(artist) => handleFieldChange(song.id, 'artist', artist)}
+                                               />
+                                             </div>
                                             <Input
                                               value={editData.youtube_url}
                                               onChange={(e) => handleFieldChange(song.id, 'youtube_url', e.target.value)}

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Upload, Youtube, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
+import { ArtistSelector } from "@/components/ArtistSelector";
 import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -217,10 +218,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="artist">{t("songDialog.artist")}</Label>
-              <Input
-                id="artist"
+              <ArtistSelector
                 value={formData.artist}
-                onChange={(e) => setFormData({ ...formData, artist: e.target.value })}
+                onValueChange={(artist) => setFormData({ ...formData, artist })}
               />
             </div>
 
