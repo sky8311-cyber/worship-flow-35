@@ -1,8 +1,8 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer } from "lucide-react";
+import { Music, Calendar, Printer, ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 const BandView = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { data: serviceSet, isLoading } = useQuery({
     queryKey: ["band-view", id],
@@ -89,15 +90,25 @@ const BandView = () => {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 print:hidden">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              대시보드로
+            </Button>
+            
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
                 <Music className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
-                <p className="text-sm text-muted-foreground">팀 공유 뷰</p>
+                <Badge variant="secondary" className="text-xs">읽기 전용</Badge>
               </div>
             </div>
+            
             <Button
               variant="outline"
               onClick={() => window.print()}
