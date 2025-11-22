@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -15,6 +15,9 @@ import { ArtistSelector } from "@/components/ArtistSelector";
 import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card } from "@/components/ui/card";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface SongDialogProps {
   open: boolean;
@@ -137,6 +140,13 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const [isDragging, setIsDragging] = useState(false);
   const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const uploadFile = async (file: File) => {
     try {
       setUploading(true);
@@ -169,7 +179,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     await uploadFile(file);
   };
 
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDropOnVariation = async (e: React.DragEvent<HTMLDivElement>, variationIndex: number) => {
     e.preventDefault();
     setIsDragging(false);
 
@@ -185,7 +195,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       return;
     }
 
-    await uploadFile(file);
+    await uploadScoreFile(file, variationIndex);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -297,6 +307,30 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     const updated = [...scoreVariations];
     updated[index].key = key;
     setScoreVariations(updated);
+    
+    // Sync first variation with default_key
+    if (index === 0) {
+      setFormData({ ...formData, default_key: key });
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setScoreVariations((items) => {
+        const oldIndex = items.findIndex((_, i) => `variation-${i}` === active.id);
+        const newIndex = items.findIndex((_, i) => `variation-${i}` === over.id);
+        const reordered = arrayMove(items, oldIndex, newIndex);
+        
+        // Update formData.default_key to reflect new first variation
+        if (reordered.length > 0) {
+          setFormData({ ...formData, default_key: reordered[0].key });
+        }
+        
+        return reordered;
+      });
+    }
   };
 
   const uploadScoreFile = async (file: File, variationIndex: number) => {
@@ -342,6 +376,139 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       page: i + 1,
     }));
     setScoreVariations(updated);
+  };
+
+  // Sortable variation item component
+  interface ScoreVariationItemProps {
+    variation: { key: string; files: Array<{ url: string; page: number; id?: string }> };
+    index: number;
+    uploadingVariationIndex: number | null;
+    onKeyChange: (index: number, key: string) => void;
+    onFileUpload: (file: File, index: number) => void;
+    onFileRemove: (variationIndex: number, fileIndex: number) => void;
+    onRemoveVariation: (index: number) => void;
+    onDrop: (e: React.DragEvent<HTMLDivElement>, index: number) => void;
+    onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+    onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+    isDragging: boolean;
+  }
+
+  const ScoreVariationItem = ({ 
+    variation, 
+    index, 
+    uploadingVariationIndex,
+    onKeyChange,
+    onFileUpload,
+    onFileRemove,
+    onRemoveVariation,
+    onDrop,
+    onDragOver,
+    onDragLeave,
+    isDragging
+  }: ScoreVariationItemProps) => {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ 
+      id: `variation-${index}` 
+    });
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+
+    return (
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        {...attributes}
+        className="flex items-center gap-3 mb-3"
+        onDrop={(e) => onDrop(e, index)}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+      >
+        {/* Drag Handle */}
+        <div {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+          <GripVertical className="h-5 w-5" />
+        </div>
+
+        {/* Key Input */}
+        <Input
+          value={variation.key}
+          onChange={(e) => onKeyChange(index, e.target.value)}
+          placeholder="C, D, Em, etc."
+          className="w-32"
+        />
+        
+        {/* Hidden file input */}
+        <Input
+          type="file"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onFileUpload(file, index);
+          }}
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="hidden"
+          id={`file-upload-${index}`}
+        />
+        
+        {/* Upload button with drag-drop visual feedback */}
+        <Button
+          type="button"
+          variant={isDragging ? "default" : "outline"}
+          size="sm"
+          onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
+          disabled={uploadingVariationIndex === index}
+          className={isDragging ? "border-2 border-dashed border-primary" : ""}
+        >
+          {uploadingVariationIndex === index ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              업로드 중
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              악보 업로드
+            </>
+          )}
+        </Button>
+        
+        {/* File preview badges (inline) */}
+        <div className="flex-1 flex items-center gap-1 flex-wrap">
+          {variation.files.map((file, fileIndex) => (
+            <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
+              <FileText className="h-3 w-3" />
+              <span className="text-xs">Page {fileIndex + 1}</span>
+              <button
+                type="button"
+                onClick={() => window.open(file.url, "_blank")}
+                className="ml-1 hover:text-primary transition-colors"
+              >
+                👁️
+              </button>
+              <button
+                type="button"
+                onClick={() => onFileRemove(index, fileIndex)}
+                className="ml-1 hover:text-destructive transition-colors"
+              >
+                ✕
+              </button>
+            </Badge>
+          ))}
+        </div>
+        
+        {/* Delete variation (only show if index > 0) */}
+        {index > 0 && (
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={() => onRemoveVariation(index)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -420,94 +587,36 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           <div>
             <Label>{t("songDialog.key")}</Label>
             <p className="text-xs text-muted-foreground mb-2">
-              악보 이미지를 키별로 업로드하세요
+              악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
             </p>
             
-            {scoreVariations.map((variation, index) => (
-              <div key={index} className="flex items-center gap-3 mb-3">
-                {/* Key Input */}
-                <Input
-                  value={variation.key}
-                  onChange={(e) => {
-                    updateVariationKey(index, e.target.value);
-                    if (index === 0) {
-                      setFormData({ ...formData, default_key: e.target.value });
-                    }
-                  }}
-                  placeholder="C, D, Em, etc."
-                  className="w-32"
-                />
-                
-                {/* Hidden file input */}
-                <Input
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) uploadScoreFile(file, index);
-                  }}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  className="hidden"
-                  id={`file-upload-${index}`}
-                />
-                
-                {/* Upload button */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
-                  disabled={uploadingVariationIndex === index}
-                >
-                  {uploadingVariationIndex === index ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      업로드 중
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      악보 업로드
-                    </>
-                  )}
-                </Button>
-                
-                {/* File preview badges (inline) */}
-                <div className="flex-1 flex items-center gap-1 flex-wrap">
-                  {variation.files.map((file, fileIndex) => (
-                    <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      <span className="text-xs">Page {fileIndex + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => window.open(file.url, "_blank")}
-                        className="ml-1 hover:text-primary transition-colors"
-                      >
-                        👁️
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeScoreFile(index, fileIndex)}
-                        className="ml-1 hover:text-destructive transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                
-                {/* Delete variation (only show if index > 0) */}
-                {index > 0 && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeVariation(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={scoreVariations.map((_, i) => `variation-${i}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {scoreVariations.map((variation, index) => (
+                  <ScoreVariationItem
+                    key={`variation-${index}`}
+                    variation={variation}
+                    index={index}
+                    uploadingVariationIndex={uploadingVariationIndex}
+                    onKeyChange={updateVariationKey}
+                    onFileUpload={uploadScoreFile}
+                    onFileRemove={removeScoreFile}
+                    onRemoveVariation={removeVariation}
+                    onDrop={handleDropOnVariation}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    isDragging={isDragging}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
             
             {/* Add Variation button */}
             <Button
