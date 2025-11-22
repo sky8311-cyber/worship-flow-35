@@ -130,8 +130,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                 return (
                   <Card
                     key={song.id}
-                    className="cursor-pointer hover:shadow-lg transition-shadow overflow-hidden"
-                    onClick={() => onSelect(song)}
+                    className="hover:shadow-lg transition-shadow overflow-hidden"
                   >
                     <div className="relative aspect-video bg-muted overflow-hidden">
                       {song.song_scores?.[0]?.file_url ? (
@@ -174,14 +173,51 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                         )}
                       </div>
                       
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">
-                          {lastUsed ? `사용: ${usageCount}회` : '미사용'}
-                        </span>
-                        <Button size="sm">
-                          <Plus className="w-4 h-4 mr-1" />
-                          추가
-                        </Button>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">
+                            {lastUsed ? `사용: ${usageCount}회` : '미사용'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          {song.youtube_url && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(song.youtube_url, "_blank");
+                              }}
+                            >
+                              유튜브
+                            </Button>
+                          )}
+                          {song.song_scores?.[0]?.file_url && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="flex-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(song.song_scores[0].file_url, "_blank");
+                              }}
+                            >
+                              악보
+                            </Button>
+                          )}
+                          <Button 
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelect(song);
+                            }}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            추가
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
