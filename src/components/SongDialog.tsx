@@ -19,6 +19,10 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+const MUSICAL_KEYS = [
+  "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
+];
+
 interface SongDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -430,13 +434,22 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           <GripVertical className="h-5 w-5" />
         </div>
 
-        {/* Key Input */}
-        <Input
-          value={variation.key}
-          onChange={(e) => onKeyChange(index, e.target.value)}
-          placeholder="C, D, Em, etc."
-          className="w-32"
-        />
+        {/* Key Selector */}
+        <Select 
+          value={variation.key} 
+          onValueChange={(value) => onKeyChange(index, value)}
+        >
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder={t('songDialog.selectKey') || '키 선택'} />
+          </SelectTrigger>
+          <SelectContent>
+            {MUSICAL_KEYS.map((key) => (
+              <SelectItem key={key} value={key}>
+                {key}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         
         {/* Hidden file input */}
         <Input
