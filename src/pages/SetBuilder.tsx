@@ -70,6 +70,8 @@ const SetBuilder = () => {
       return data;
     },
     enabled: !!id,
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 
   useEffect(() => {
