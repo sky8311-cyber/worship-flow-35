@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +40,7 @@ export const SongCard = ({
   onToggleSelection
 }: SongCardProps) => {
   const { t, language } = useTranslation();
+  const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
 
   const handleDelete = async () => {
@@ -49,6 +51,10 @@ export const SongCard = ({
         .eq("id", song.id);
 
       if (error) throw error;
+      
+      // Invalidate queries for real-time UI update
+      await queryClient.invalidateQueries({ queryKey: ["songs"] });
+      
       toast.success(t("songCard.songDeleted"));
       onDelete();
     } catch (error: any) {

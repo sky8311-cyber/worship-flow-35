@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
@@ -49,6 +49,7 @@ export const SongTable = ({
   onColumnSort
 }: SongTableProps) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
@@ -192,6 +193,10 @@ export const SongTable = ({
     try {
       const { error } = await supabase.from("songs").delete().eq("id", song.id);
       if (error) throw error;
+      
+      // Invalidate queries for real-time UI update
+      await queryClient.invalidateQueries({ queryKey: ["songs"] });
+      
       toast.success(t("songCard.songDeleted"));
       setDeleteDialogOpen(false);
       setSongToDelete(null);

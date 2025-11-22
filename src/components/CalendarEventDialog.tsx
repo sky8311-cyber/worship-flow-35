@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -44,6 +44,7 @@ export function CalendarEventDialog({
 }: CalendarEventDialogProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -128,6 +129,10 @@ export function CalendarEventDialog({
         if (error) throw error;
         toast.success(t("calendarEvent.created"));
       }
+
+      // Invalidate queries for real-time UI update
+      await queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      await queryClient.invalidateQueries({ queryKey: ["community-feed"] });
 
       reset();
       onOpenChange(false);
