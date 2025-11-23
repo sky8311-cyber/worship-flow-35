@@ -142,7 +142,7 @@ export function CoverEditDialog({ open, onOpenChange, currentUrl }: CoverEditDia
             type="file"
             ref={fileInputRef}
             onChange={handleFileChange}
-            accept="image/*"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
             className="hidden"
           />
 

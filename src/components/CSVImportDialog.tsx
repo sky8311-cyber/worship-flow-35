@@ -321,7 +321,7 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
                 <input
                   ref={imageInputRef}
                   type="file"
-                  accept="image/*,application/pdf"
+                  accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
                   multiple
                   onChange={handleImageUpload}
                   className="hidden"

@@ -154,7 +154,7 @@ export function PostComposer() {
               <input
                 id="image-upload"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 multiple
                 onChange={handleImageUpload}
                 className="hidden"

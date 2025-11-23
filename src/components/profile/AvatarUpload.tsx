@@ -91,7 +91,7 @@ export const AvatarUpload = ({ currentUrl, onUploadSuccess }: AvatarUploadProps)
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
           className="hidden"
           onChange={handleFileChange}
           disabled={uploading}
