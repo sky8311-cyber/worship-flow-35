@@ -234,9 +234,8 @@ export function UpcomingEventsWidget({
             <div className="space-y-2">
               {unifiedEvents.map((event) => {
                 const isPast = isPastDate(event.date);
-                const canManage = event.type === "service_set" && 
-                  ((isAdmin && event.created_by === currentUserId) || 
-                   (isCommunityLeader && event.created_by === currentUserId));
+            const canManage = event.type === "service_set" && 
+              (isAdmin || (isCommunityLeader && event.created_by === currentUserId));
 
                 return event.linkTo ? (
                   <div key={`${event.type}-${event.id}`} className="relative group">
