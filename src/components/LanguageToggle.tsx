@@ -17,7 +17,7 @@ export const LanguageToggle = () => {
       className="gap-2"
     >
       <Languages className="w-4 h-4" />
-      <span className="font-medium">{language === "en" ? "EN" : "한국어"}</span>
+      <span className="font-medium">{language === "en" ? "한국어" : "EN"}</span>
     </Button>
   );
 };
