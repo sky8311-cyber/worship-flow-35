@@ -25,6 +25,8 @@ interface ServiceSet {
   worship_leader?: string | null;
   status: "draft" | "published";
   created_by: string;
+  scripture_reference?: string | null;
+  theme?: string | null;
 }
 
 interface CalendarEvent {
@@ -51,6 +53,9 @@ interface UnifiedEvent {
   onClick?: () => void;
   created_by?: string;
   status?: "draft" | "published";
+  scripture_reference?: string | null;
+  theme?: string | null;
+  songs?: { position: number; title: string; key: string }[];
 }
 
 interface UpcomingEventsWidgetProps {
@@ -185,6 +190,13 @@ export function UpcomingEventsWidget({
     return setDate < today;
   };
 
+  const getDayOfWeek = (dateString: string) => {
+    const date = new Date(dateString);
+    const dayIndex = date.getDay();
+    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    return t(`common.dayOfWeek.${days[dayIndex]}` as any);
+  };
+
   // Fetch calendar events
   const { data: calendarEvents } = useQuery({
     queryKey: ["calendar-events", user?.id],
@@ -215,6 +227,45 @@ export function UpcomingEventsWidget({
     enabled: !!user,
   });
 
+  // Fetch songs for worship sets
+  const { data: setSongsData } = useQuery({
+    queryKey: ["set-songs-preview", sets?.map(s => s.id)],
+    queryFn: async () => {
+      if (!sets || sets.length === 0) return {};
+      
+      const setIds = sets.map(s => s.id);
+      const { data: setSongs } = await supabase
+        .from("set_songs")
+        .select(`
+          service_set_id,
+          position,
+          key,
+          songs (
+            id,
+            title
+          )
+        `)
+        .in("service_set_id", setIds)
+        .order("position", { ascending: true });
+
+      // Group songs by set_id
+      const grouped: Record<string, { position: number; title: string; key: string }[]> = {};
+      setSongs?.forEach((ss: any) => {
+        if (!grouped[ss.service_set_id]) {
+          grouped[ss.service_set_id] = [];
+        }
+        grouped[ss.service_set_id].push({
+          position: ss.position,
+          title: ss.songs?.title || "",
+          key: ss.key || ""
+        });
+      });
+
+      return grouped;
+    },
+    enabled: !!sets && sets.length > 0,
+  });
+
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [
     ...(sets?.map((set: any) => ({
@@ -228,6 +279,9 @@ export function UpcomingEventsWidget({
       badgeLabel: set.status === "published" ? "게시됨" : "임시저장",
       created_by: set.created_by,
       status: set.status,
+      scripture_reference: set.scripture_reference,
+      theme: set.theme,
+      songs: setSongsData?.[set.id] || []
     })) || []),
     ...(calendarEvents?.map((event) => {
       const iconMap = {
@@ -279,34 +333,91 @@ export function UpcomingEventsWidget({
                   <div key={`${event.type}-${event.id}`} className="relative group">
                     <Link
                       to={event.linkTo}
-                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="block p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-border"
                     >
-                      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
-                        <span className="text-xs font-medium">
-                          {format(new Date(event.date), "MMM")}
-                        </span>
-                        <span className="text-lg font-bold">
-                          {format(new Date(event.date), "d")}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {event.icon}
-                          <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                      {event.type === "service_set" ? (
+                        <div className="space-y-2">
+                          {/* Service Name - Priority */}
+                          <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : ''}`}>
                             {event.title}
+                          </h3>
+                          
+                          {/* Date with Day of Week - Priority */}
+                          <p className={`text-sm ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {format(new Date(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
                           </p>
+                          
+                          {/* Worship Leader - Priority */}
+                          {event.subtitle && (
+                            <p className={`text-sm ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                              예배인도자: {event.subtitle}
+                            </p>
+                          )}
+                          
+                          {/* Scripture / Theme */}
+                          {(event.scripture_reference || event.theme) && (
+                            <div className={`text-sm space-y-1 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                              {event.scripture_reference && (
+                                <p>본문: {event.scripture_reference}</p>
+                              )}
+                              {event.theme && (
+                                <p>설교제목: {event.theme}</p>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Song List */}
+                          {event.songs && event.songs.length > 0 && (
+                            <div className={`text-sm space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                              <p className="font-medium mb-1">곡 목록:</p>
+                              {event.songs.map((song, idx) => (
+                                <p key={idx}>
+                                  {song.position}. {song.title} {song.key && `(${song.key})`}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Status Badge */}
+                          {event.badgeLabel && (
+                            <Badge variant="secondary" className="text-xs mt-2">
+                              {event.badgeLabel}
+                            </Badge>
+                          )}
                         </div>
-                        {event.subtitle && (
-                          <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                            {event.subtitle}
-                          </p>
-                        )}
-                        {event.badgeLabel && (
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {event.badgeLabel}
-                          </Badge>
-                        )}
-                      </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                            <span className="text-xs font-medium">
+                              {format(new Date(event.date), "MMM")}
+                            </span>
+                            <span className="text-lg font-bold">
+                              {format(new Date(event.date), "d")}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {event.icon}
+                              <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                                {event.title}
+                              </p>
+                            </div>
+                            <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                              {format(new Date(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
+                            </p>
+                            {event.subtitle && (
+                              <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                {event.subtitle}
+                              </p>
+                            )}
+                            {event.badgeLabel && (
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                {event.badgeLabel}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </Link>
                     {canManage && (
                       <DropdownMenu>
@@ -368,6 +479,9 @@ export function UpcomingEventsWidget({
                             {event.title}
                           </p>
                         </div>
+                        <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                          {format(new Date(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
+                        </p>
                         {event.subtitle && (
                           <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                             {event.subtitle}
