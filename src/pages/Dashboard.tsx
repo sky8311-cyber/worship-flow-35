@@ -21,6 +21,7 @@ import { SetImportDialog } from "@/components/SetImportDialog";
 import { SongDialog } from "@/components/SongDialog";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
 import logoDesktop from "@/assets/kworship-logo-desktop.png";
+import { getCountdown } from "@/lib/countdownHelper";
 
 // New Dashboard Components
 import { SongLibraryWidget } from "@/components/dashboard/SongLibraryWidget";
@@ -475,20 +476,40 @@ const Dashboard = () => {
                         const isPast = isPastDate(set.date);
                         const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
                         const songs = setSongsData?.[set.id] || [];
+                        const countdown = getCountdown(set.date, set.service_time);
+                        
+                        // Format time for display (AM/PM format)
+                        let formattedTime = "";
+                        if (set.service_time) {
+                          try {
+                            const timeDate = new Date(`${set.date}T${set.service_time.length === 5 ? set.service_time + ':00' : set.service_time}`);
+                            formattedTime = format(timeDate, "h:mm a");
+                          } catch (e) {
+                            formattedTime = set.service_time;
+                          }
+                        }
                         
                         return (
                           <div key={set.id} className="relative group">
                             <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className={`block p-4 border rounded-lg transition-colors hover:bg-muted/50 ${isPast ? "opacity-70" : ""}`}>
                               <div className="space-y-2">
                                 {/* Service Name - Priority */}
-                                <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : ''}`}>
+                                <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
                                   {set.service_name}
                                 </h3>
                                 
-                                {/* Date with Day of Week - Priority */}
-                                <p className={`text-sm ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                  {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
-                                </p>
+                                {/* Date Badge with Countdown */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-xs">
+                                    {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                    {set.service_time && ` • ${formattedTime}`}
+                                  </Badge>
+                                  {countdown && !countdown.isPast && countdown.text && (
+                                    <Badge variant="secondary" className="text-xs bg-accent/20 text-accent-foreground">
+                                      {countdown.text}
+                                    </Badge>
+                                  )}
+                                </div>
                                 
                                 {/* Worship Leader - Priority */}
                                 {set.worship_leader && (
@@ -635,21 +656,41 @@ const Dashboard = () => {
                       const isPast = isPastDate(set.date);
                       const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
                       const songs = setSongsData?.[set.id] || [];
+                      const countdown = getCountdown(set.date, set.service_time);
+                      
+                      // Format time for display (AM/PM format)
+                      let formattedTime = "";
+                      if (set.service_time) {
+                        try {
+                          const timeDate = new Date(`${set.date}T${set.service_time.length === 5 ? set.service_time + ':00' : set.service_time}`);
+                          formattedTime = format(timeDate, "h:mm a");
+                        } catch (e) {
+                          formattedTime = set.service_time;
+                        }
+                      }
                       
                       return (
                         <div key={set.id} className="relative group">
                           <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className="block">
-                            <div className={`p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${isPast ? 'opacity-70' : ''}`}>
+                            <div className={`p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors ${isPast ? 'opacity-70' : ''}`}>
                               <div className="space-y-2">
                                 {/* Service Name - Priority */}
-                                <h3 className={`font-semibold text-sm ${isPast ? 'text-muted-foreground' : ''}`}>
+                                <h3 className={`font-semibold text-sm ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
                                   {set.service_name}
                                 </h3>
                                 
-                                {/* Date with Day of Week - Priority */}
-                                <p className={`text-xs ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                  {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
-                                </p>
+                                {/* Date Badge with Countdown */}
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-[10px] sm:text-xs">
+                                    {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                    {set.service_time && ` • ${formattedTime}`}
+                                  </Badge>
+                                  {countdown && !countdown.isPast && countdown.text && (
+                                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-accent/20 text-accent-foreground">
+                                      {countdown.text}
+                                    </Badge>
+                                  )}
+                                </div>
                                 
                                 {/* Worship Leader - Priority */}
                                 {set.worship_leader && (
