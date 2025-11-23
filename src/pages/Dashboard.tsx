@@ -498,17 +498,20 @@ const Dashboard = () => {
                                   {set.service_name}
                                 </h3>
                                 
-                                {/* Date Badge with Countdown */}
+                                {/* Date Badge with Countdown and Status */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Badge variant="outline" className="text-xs">
                                     {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
                                     {set.service_time && ` • ${formattedTime}`}
                                   </Badge>
                                   {countdown && !countdown.isPast && countdown.text && (
-                                    <Badge variant="secondary" className="text-xs bg-accent/20 text-accent-foreground">
+                                    <Badge className="text-xs bg-accent text-white hover:bg-accent">
                                       {countdown.text}
                                     </Badge>
                                   )}
+                                  <Badge variant={set.status === "published" ? "default" : "secondary"} className="text-xs">
+                                    {set.status === "published" ? "게시됨" : "작성중"}
+                                  </Badge>
                                 </div>
                                 
                                 {/* Worship Leader - Priority */}
@@ -679,17 +682,20 @@ const Dashboard = () => {
                                   {set.service_name}
                                 </h3>
                                 
-                                {/* Date Badge with Countdown */}
+                                {/* Date Badge with Countdown and Status */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Badge variant="outline" className="text-[10px] sm:text-xs">
                                     {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
                                     {set.service_time && ` • ${formattedTime}`}
                                   </Badge>
                                   {countdown && !countdown.isPast && countdown.text && (
-                                    <Badge variant="secondary" className="text-[10px] sm:text-xs bg-accent/20 text-accent-foreground">
+                                    <Badge className="text-[10px] sm:text-xs bg-accent text-white hover:bg-accent">
                                       {countdown.text}
                                     </Badge>
                                   )}
+                                  <Badge variant={set.status === "published" ? "default" : "secondary"} className="text-[10px] sm:text-xs">
+                                    {set.status === "published" ? "게시됨" : "작성중"}
+                                  </Badge>
                                 </div>
                                 
                                 {/* Worship Leader - Priority */}
