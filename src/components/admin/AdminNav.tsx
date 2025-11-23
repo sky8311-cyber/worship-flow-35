@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, ListChecks, Building2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 export const AdminNav = () => {
   const location = useLocation();

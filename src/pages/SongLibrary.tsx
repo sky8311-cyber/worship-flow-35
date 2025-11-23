@@ -20,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { Home } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 const SongLibrary = () => {
   const { t } = useTranslation();

@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SetImportDialog } from "@/components/SetImportDialog";
 import { SongDialog } from "@/components/SongDialog";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 // New Dashboard Components
 import { SongLibraryWidget } from "@/components/dashboard/SongLibraryWidget";

@@ -45,6 +45,7 @@ const SetBuilder = () => {
   const [songs, setSongs] = useState<any[]>([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   const sensors = useSensors(
@@ -148,7 +149,10 @@ const SetBuilder = () => {
         worship_duration: existingSet.worship_duration?.toString() || "",
         notes: existingSet.notes || "",
       });
-      setStatus(existingSet.status || "draft");
+      if (!statusInitialized) {
+        setStatus(existingSet.status || "draft");
+        setStatusInitialized(true);
+      }
 
       // Safety patch for legacy sets without created_by
       if (!existingSet.created_by && user?.id) {
@@ -175,7 +179,7 @@ const SetBuilder = () => {
         }))
       );
     }
-  }, [existingSet, existingSetSongs, user, queryClient]);
+  }, [existingSet, existingSetSongs, user, queryClient, statusInitialized]);
 
   const handlePublishToggle = () => {
     if (status === "draft") {
@@ -436,9 +440,9 @@ const SetBuilder = () => {
                   <TooltipTrigger asChild>
                     <Button 
                       size="icon"
+                      variant="default"
                       onClick={() => saveSetMutation.mutate("draft")} 
                       disabled={saveSetMutation.isPending}
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
                     >
                       <Save className="h-5 w-5" />
                     </Button>
@@ -454,16 +458,22 @@ const SetBuilder = () => {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button 
-                        size="icon"
+                        size="sm"
                         variant={status === "published" ? "destructive" : "default"}
                         onClick={handlePublishToggle}
                         disabled={saveSetMutation.isPending}
-                        className={status === "published" ? "" : "bg-purple-600 hover:bg-purple-700 text-white"}
+                        className="flex items-center gap-2"
                       >
                         {status === "published" ? (
-                          <Lock className="h-5 w-5" />
+                          <>
+                            <Lock className="h-4 w-4" />
+                            <span>Unpublish</span>
+                          </>
                         ) : (
-                          <Upload className="h-5 w-5" />
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span>Publish</span>
+                          </>
                         )}
                       </Button>
                     </TooltipTrigger>
