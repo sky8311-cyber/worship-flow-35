@@ -57,17 +57,33 @@ const Dashboard = () => {
     data: upcomingSets,
     isLoading
   } = useQuery({
-    queryKey: ["upcoming-sets"],
+    queryKey: ["upcoming-sets", user?.id],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("service_sets").select("*").gte("date", new Date().toISOString().split("T")[0]).order("date", {
-        ascending: true
-      }).limit(10);
+      if (!user) return [];
+      
+      // Get user's communities
+      const { data: memberData } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .eq("user_id", user.id);
+      
+      const communityIds = memberData?.map(m => m.community_id) || [];
+      if (communityIds.length === 0) return [];
+      
+      // Get upcoming published sets from user's communities
+      const { data, error } = await supabase
+        .from("service_sets")
+        .select("*")
+        .in("community_id", communityIds)
+        .eq("status", "published")
+        .gte("date", new Date().toISOString().split("T")[0])
+        .order("date", { ascending: true })
+        .limit(10);
+      
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: !!user,
   });
   const {
     data: songsCount

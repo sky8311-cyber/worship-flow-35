@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
@@ -43,6 +44,7 @@ const SetBuilder = () => {
   const [songs, setSongs] = useState<any[]>([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -174,6 +176,31 @@ const SetBuilder = () => {
     }
   }, [existingSet, existingSetSongs, user, queryClient]);
 
+  const handlePublishToggle = () => {
+    if (status === "draft") {
+      // Validate before publishing
+      if (!formData.community_id) {
+        toast.error("예배공동체를 선택해주세요");
+        return;
+      }
+      if (songs.length === 0) {
+        toast.error("최소 1곡 이상 추가해주세요");
+        return;
+      }
+      
+      // Show confirmation dialog
+      setShowPublishConfirm(true);
+    } else {
+      // Unpublish directly
+      saveSetMutation.mutate("draft");
+    }
+  };
+
+  const confirmPublish = () => {
+    saveSetMutation.mutate("published");
+    setShowPublishConfirm(false);
+  };
+
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
       // Phase 2: Permission validation before save
@@ -258,6 +285,13 @@ const SetBuilder = () => {
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      
+      // Update status state to reflect the saved status
+      if (id) {
+        // Refetch the set to get the latest status
+        queryClient.invalidateQueries({ queryKey: ["service-set", id] });
+      }
+      
       if (!id) {
         navigate(`/set-builder/${setId}`);
       }
@@ -376,25 +410,27 @@ const SetBuilder = () => {
               >
                 <LogOut className="h-5 w-5" />
               </Button>
-              <Select value={status} onValueChange={(value: "draft" | "published") => setStatus(value)}>
-                <SelectTrigger className="w-28 text-xs sm:text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">📝 임시저장</SelectItem>
-                  <SelectItem value="published">✅ 게시됨</SelectItem>
-                </SelectContent>
-              </Select>
               {id && (
                 <Button variant="outline" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm">
                   <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                   <span className="hidden sm:inline">팀 링크</span>
                 </Button>
               )}
-              <Button size="sm" onClick={() => saveSetMutation.mutate(status)} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
+              <Button size="sm" onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
                 <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
                 {saveSetMutation.isPending ? "저장 중..." : "저장"}
               </Button>
+              {id && (
+                <Button 
+                  size="sm" 
+                  variant={status === "published" ? "destructive" : "default"}
+                  onClick={handlePublishToggle}
+                  disabled={saveSetMutation.isPending}
+                  className="text-xs sm:text-sm"
+                >
+                  {status === "published" ? "게시 취소" : "게시하기"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -610,6 +646,21 @@ const SetBuilder = () => {
           onSelect={handleAddSong}
         />
       )}
+
+      <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>워십세트 게시</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 워십세트는 선택한 예배공동체의 모든 팀멤버에게 공개됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPublish}>게시하기</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
