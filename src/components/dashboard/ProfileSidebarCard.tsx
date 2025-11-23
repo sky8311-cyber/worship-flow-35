@@ -58,8 +58,8 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
 
   return (
     <>
-      <Card className="h-full min-h-[520px] flex flex-col">
-        <CardContent className="p-6 flex-1 flex flex-col justify-between">
+      <Card>
+        <CardContent className="p-6">
           {/* Avatar + Edit Icon */}
           <div className="relative group">
             <Avatar
