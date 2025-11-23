@@ -113,9 +113,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   };
 
   const handleBulkAddToSet = () => {
-    selectedSongs.forEach((song) => {
-      onSelect(song);
-    });
+    onSelect(selectedSongs); // Pass entire array
     toast({
       title: "성공",
       description: `${selectedSongs.length}곡을 예배세트에 추가했습니다`,

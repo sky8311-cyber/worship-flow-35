@@ -267,18 +267,20 @@ const SetBuilder = () => {
     },
   });
 
-  const handleAddSong = (song: any) => {
-    setSongs([
-      ...songs,
-      {
-        song,
-        song_id: song.id,
-        key: song.default_key,
-        custom_notes: "",
-        override_score_file_url: null,
-        override_youtube_url: null,
-      },
-    ]);
+  const handleAddSong = (songOrSongs: any) => {
+    // Handle both single song and array of songs
+    const songsToAdd = Array.isArray(songOrSongs) ? songOrSongs : [songOrSongs];
+    
+    const newSetSongs = songsToAdd.map(song => ({
+      song,
+      song_id: song.id,
+      key: song.default_key,
+      custom_notes: "",
+      override_score_file_url: null,
+      override_youtube_url: null,
+    }));
+    
+    setSongs(prev => [...prev, ...newSetSongs]);
     setShowSongSelector(false);
   };
 
