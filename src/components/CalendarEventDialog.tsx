@@ -102,7 +102,7 @@ export function CalendarEventDialog({
     }
 
     if (!data.community_id) {
-      toast.error(t("community.selectCommunity" as any) || "Please select a community");
+      toast.error(t("community.selectCommunity"));
       return;
     }
 
@@ -168,7 +168,7 @@ export function CalendarEventDialog({
                 onValueChange={(value) => setValue("community_id", value)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={t("community.selectCommunity" as any) || "Select a community"} />
+                  <SelectValue placeholder={t("community.selectCommunity")} />
                 </SelectTrigger>
                 <SelectContent>
                   {userCommunities?.map((community) => (
