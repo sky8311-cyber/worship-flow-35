@@ -7,14 +7,17 @@ export interface CountdownResult {
 
 export function getCountdown(dateString: string, timeString?: string | null): CountdownResult {
   try {
-    // Combine date and time if available
+    // Parse date as local date to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
     let targetDate: Date;
+    
     if (timeString) {
       // Handle HH:MM format by appending :00 for seconds
       const cleanTime = timeString.length === 5 ? `${timeString}:00` : timeString;
-      targetDate = parseISO(`${dateString}T${cleanTime}`);
+      const [hours, minutes, seconds] = cleanTime.split(':').map(Number);
+      targetDate = new Date(year, month - 1, day, hours, minutes, seconds);
     } else {
-      targetDate = parseISO(`${dateString}T00:00:00`);
+      targetDate = new Date(year, month - 1, day);
     }
 
     const now = new Date();

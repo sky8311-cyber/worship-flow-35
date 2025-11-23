@@ -125,13 +125,19 @@ const Dashboard = () => {
   const isPastDate = (dateString: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const eventDate = new Date(dateString);
+    const eventDate = parseLocalDate(dateString);
     eventDate.setHours(0, 0, 0, 0);
     return eventDate < today;
   };
 
+  // Parse date string as local date to avoid timezone issues
+  const parseLocalDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const getDayOfWeek = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const dayIndex = date.getDay();
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
@@ -501,7 +507,7 @@ const Dashboard = () => {
                                 {/* Date Badge with Countdown and Status */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Badge variant="outline" className="text-xs">
-                                    {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                    {format(parseLocalDate(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
                                     {set.service_time && ` • ${formattedTime}`}
                                   </Badge>
                                   {countdown && !countdown.isPast && countdown.text && (
@@ -680,7 +686,7 @@ const Dashboard = () => {
                                 {/* Date Badge with Countdown and Status */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Badge variant="outline" className="text-[10px] sm:text-xs">
-                                    {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                    {format(parseLocalDate(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
                                     {set.service_time && ` • ${formattedTime}`}
                                   </Badge>
                                   {countdown && !countdown.isPast && countdown.text && (
