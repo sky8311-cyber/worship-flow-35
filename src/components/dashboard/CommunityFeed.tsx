@@ -55,16 +55,12 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
 
       if (communityIds.length === 0) return [];
 
-      // Fetch all post types in parallel
+      // Fetch all post types in parallel with simple selects
       const [postsData, setsData, eventsData] = await Promise.all([
         // User posts
         supabase
           .from("community_posts")
-          .select(`
-            *,
-            profiles!community_posts_author_id_fkey(id, full_name, avatar_url),
-            worship_communities!inner(id, name, avatar_url)
-          `)
+          .select("*")
           .in("community_id", communityIds)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -72,11 +68,7 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         // Worship sets (published only)
         supabase
           .from("service_sets")
-          .select(`
-            *,
-            profiles!service_sets_created_by_fkey(id, full_name, avatar_url),
-            worship_communities!inner(id, name, avatar_url)
-          `)
+          .select("*")
           .in("community_id", communityIds)
           .eq("status", "published")
           .order("created_at", { ascending: false })
@@ -85,23 +77,88 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         // Calendar events
         supabase
           .from("calendar_events")
-          .select(`
-            *,
-            profiles!calendar_events_created_by_fkey(id, full_name, avatar_url),
-            worship_communities!inner(id, name, avatar_url)
-          `)
+          .select("*")
           .in("community_id", communityIds)
           .order("created_at", { ascending: false })
           .limit(50),
       ]);
 
-      // Normalize all items into unified feed format
+      // Explicit error checking
+      if (postsData.error) {
+        console.error("Error fetching posts:", postsData.error);
+        throw postsData.error;
+      }
+      if (setsData.error) {
+        console.error("Error fetching worship sets:", setsData.error);
+        throw setsData.error;
+      }
+      if (eventsData.error) {
+        console.error("Error fetching events:", eventsData.error);
+        throw eventsData.error;
+      }
+
+      // Collect all unique author IDs and community IDs
+      const authorIds = new Set<string>();
+      const communityIdsSet = new Set<string>();
+
+      (postsData.data || []).forEach((post) => {
+        if (post.author_id) authorIds.add(post.author_id);
+        if (post.community_id) communityIdsSet.add(post.community_id);
+      });
+
+      (setsData.data || []).forEach((set) => {
+        if (set.created_by) authorIds.add(set.created_by);
+        if (set.community_id) communityIdsSet.add(set.community_id);
+      });
+
+      (eventsData.data || []).forEach((event) => {
+        if (event.created_by) authorIds.add(event.created_by);
+        if (event.community_id) communityIdsSet.add(event.community_id);
+      });
+
+      // Fetch profiles and communities separately
+      const [profilesData, communitiesData] = await Promise.all([
+        authorIds.size > 0
+          ? supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url")
+              .in("id", Array.from(authorIds))
+          : { data: [], error: null },
+        communityIdsSet.size > 0
+          ? supabase
+              .from("worship_communities")
+              .select("id, name, avatar_url")
+              .in("id", Array.from(communityIdsSet))
+          : { data: [], error: null },
+      ]);
+
+      // Build maps
+      const authorMap = new Map(
+        (profilesData.data || []).map((p) => [p.id, p])
+      );
+      const communityMap = new Map(
+        (communitiesData.data || []).map((c) => [c.id, c])
+      );
+
+      // Fallback objects for missing data
+      const fallbackAuthor = {
+        id: "",
+        full_name: "Unknown User",
+        avatar_url: null,
+      };
+      const fallbackCommunity = {
+        id: "",
+        name: "Unknown Community",
+        avatar_url: null,
+      };
+
+      // Build unified feed items manually
       const allItems = [
         ...(postsData.data || []).map((post) => ({
           id: post.id,
           type: "community_post" as const,
-          author: Array.isArray(post.profiles) ? post.profiles[0] : post.profiles,
-          community: Array.isArray(post.worship_communities) ? post.worship_communities[0] : post.worship_communities,
+          author: authorMap.get(post.author_id) || fallbackAuthor,
+          community: communityMap.get(post.community_id) || fallbackCommunity,
           content: post.content,
           images: post.image_urls,
           created_at: post.created_at,
@@ -109,16 +166,16 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         ...(setsData.data || []).map((set) => ({
           id: set.id,
           type: "worship_set" as const,
-          author: Array.isArray(set.profiles) ? set.profiles[0] : set.profiles,
-          community: Array.isArray(set.worship_communities) ? set.worship_communities[0] : set.worship_communities,
+          author: authorMap.get(set.created_by) || fallbackAuthor,
+          community: communityMap.get(set.community_id) || fallbackCommunity,
           set: set,
           created_at: set.created_at,
         })),
         ...(eventsData.data || []).map((event) => ({
           id: event.id,
           type: "calendar_event" as const,
-          author: Array.isArray(event.profiles) ? event.profiles[0] : event.profiles,
-          community: Array.isArray(event.worship_communities) ? event.worship_communities[0] : event.worship_communities,
+          author: authorMap.get(event.created_by) || fallbackAuthor,
+          community: communityMap.get(event.community_id) || fallbackCommunity,
           event: event,
           created_at: event.created_at,
         })),
