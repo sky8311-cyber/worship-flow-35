@@ -538,17 +538,12 @@ const Dashboard = () => {
                                   <div className={`text-sm space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                                     <p className="font-medium mb-1">곡 목록:</p>
                                     {songs.map((song, idx) => (
-                                      <p key={idx}>
+                                      <p key={idx} className="pl-6">
                                         {song.position}. {song.title} {song.key && `(${song.key})`}
                                       </p>
                                     ))}
                                   </div>
                                 )}
-                                
-                                {/* Status Badge */}
-                                <Badge variant={set.status === "published" ? "default" : "secondary"} className="text-xs mt-2">
-                                  {set.status === "published" ? t("setBuilder.status.published") : t("setBuilder.status.draft")}
-                                </Badge>
                               </div>
                             </Link>
 
@@ -722,7 +717,7 @@ const Dashboard = () => {
                                   <div className={`text-xs space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                                     <p className="font-medium">곡 목록:</p>
                                     {songs.map((song, idx) => (
-                                      <p key={idx}>
+                                      <p key={idx} className="pl-6">
                                         {song.position}. {song.title} {song.key && `(${song.key})`}
                                       </p>
                                     ))}
