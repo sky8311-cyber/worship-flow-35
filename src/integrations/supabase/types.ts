@@ -319,6 +319,7 @@ export type Database = {
           notes: string | null
           scripture_reference: string | null
           service_name: string
+          service_time: string | null
           status: Database["public"]["Enums"]["set_status"]
           target_audience: string | null
           theme: string | null
@@ -337,6 +338,7 @@ export type Database = {
           notes?: string | null
           scripture_reference?: string | null
           service_name: string
+          service_time?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
           theme?: string | null
@@ -355,6 +357,7 @@ export type Database = {
           notes?: string | null
           scripture_reference?: string | null
           service_name?: string
+          service_time?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
           theme?: string | null
