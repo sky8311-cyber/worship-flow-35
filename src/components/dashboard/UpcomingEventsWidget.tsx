@@ -179,14 +179,20 @@ export function UpcomingEventsWidget({
   };
 
   const isPastDate = (dateString: string) => {
-    const setDate = new Date(dateString);
+    const setDate = parseLocalDate(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return setDate < today;
   };
 
+  // Parse date string as local date to avoid timezone issues
+  const parseLocalDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const getDayOfWeek = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const dayIndex = date.getDay();
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
@@ -379,7 +385,7 @@ export function UpcomingEventsWidget({
                           </p>
                         </div>
                         <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                          {format(new Date(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
+                          {format(parseLocalDate(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
                         </p>
                         {event.subtitle && (
                           <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
