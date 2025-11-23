@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,19 @@ const SetBuilder = () => {
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Refs to ensure mutation always reads latest values
+  const formDataRef = useRef(formData);
+  const songsRef = useRef(songs);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
+
+  useEffect(() => {
+    songsRef.current = songs;
+  }, [songs]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -138,43 +151,43 @@ const SetBuilder = () => {
     }
   }, [existingSet, user, isAdmin, navigate, id]);
 
-  // Load form data from existing set
+  // Load form data from existing set with merge strategy
   useEffect(() => {
-    if (existingSet && !isLoading && !isSaving) {
-      setFormData({
-        date: existingSet.date,
-        service_time: existingSet.service_time || "",
-        service_name: existingSet.service_name,
-        community_id: existingSet.community_id || "",
-        target_audience: existingSet.target_audience || "",
-        worship_leader: existingSet.worship_leader || "",
-        band_name: existingSet.band_name || "",
-        scripture_reference: existingSet.scripture_reference || "",
-        theme: existingSet.theme || "",
-        worship_duration: existingSet.worship_duration?.toString() || "",
-        notes: existingSet.notes || "",
-      });
-      
-      if (!statusInitialized) {
-        setStatus(existingSet.status || "draft");
-        setStatusInitialized(true);
-      }
+    if (!existingSet || isLoading || isSaving) return;
 
-      // Safety patch for legacy sets without created_by
-      if (!existingSet.created_by && user?.id) {
-        supabase
-          .from("service_sets")
-          .update({ created_by: user.id })
-          .eq("id", existingSet.id)
-          .then(({ error }) => {
-            if (!error) {
-              setTimeout(() => {
-                queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
-                queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
-              }, 100);
-            }
-          });
-      }
+    setFormData(current => ({
+      date: existingSet.date ?? current.date,
+      service_time: existingSet.service_time ?? current.service_time,
+      service_name: existingSet.service_name ?? current.service_name,
+      community_id: existingSet.community_id ?? current.community_id,
+      target_audience: existingSet.target_audience ?? current.target_audience,
+      worship_leader: existingSet.worship_leader ?? current.worship_leader,
+      band_name: existingSet.band_name ?? current.band_name,
+      scripture_reference: existingSet.scripture_reference ?? current.scripture_reference,
+      theme: existingSet.theme ?? current.theme,
+      worship_duration: existingSet.worship_duration?.toString() ?? current.worship_duration,
+      notes: existingSet.notes ?? current.notes,
+    }));
+    
+    if (!statusInitialized) {
+      setStatus(existingSet.status || "draft");
+      setStatusInitialized(true);
+    }
+
+    // Safety patch for legacy sets without created_by
+    if (!existingSet.created_by && user?.id) {
+      supabase
+        .from("service_sets")
+        .update({ created_by: user.id })
+        .eq("id", existingSet.id)
+        .then(({ error }) => {
+          if (!error) {
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
+              queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
+            }, 100);
+          }
+        });
     }
   }, [existingSet, isLoading, isSaving, statusInitialized, user]);
 
@@ -217,6 +230,10 @@ const SetBuilder = () => {
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
+      // Read from refs to ensure we have the latest values
+      const currentForm = formDataRef.current;
+      const currentSongs = songsRef.current;
+
       // Phase 2: Permission validation before save
       if (existingSet && user) {
         const isCreator = existingSet.created_by === user.id;
@@ -226,10 +243,10 @@ const SetBuilder = () => {
       }
 
       // Validation before save
-      if (!formData.community_id) {
+      if (!currentForm.community_id) {
         throw new Error(t("setBuilder.errors.communityRequired"));
       }
-      if (publishStatus === "published" && songs.length === 0) {
+      if (publishStatus === "published" && currentSongs.length === 0) {
         throw new Error(t("setBuilder.errors.noSongsPublish"));
       }
 
@@ -239,19 +256,19 @@ const SetBuilder = () => {
       // Explicitly map all fields to ensure they're saved correctly
       const dataToSave = {
         // Required fields
-        date: formData.date,
-        service_name: formData.service_name,
-        community_id: formData.community_id,
+        date: currentForm.date,
+        service_name: currentForm.service_name,
+        community_id: currentForm.community_id,
         
         // Optional worship info fields
-        service_time: formData.service_time || null,
-        target_audience: formData.target_audience || null,
-        worship_leader: formData.worship_leader || null,
-        band_name: formData.band_name || null,
-        scripture_reference: formData.scripture_reference || null,
-        theme: formData.theme || null,
-        worship_duration: formData.worship_duration ? parseInt(formData.worship_duration, 10) : null,
-        notes: formData.notes || null,
+        service_time: currentForm.service_time || null,
+        target_audience: currentForm.target_audience || null,
+        worship_leader: currentForm.worship_leader || null,
+        band_name: currentForm.band_name || null,
+        scripture_reference: currentForm.scripture_reference || null,
+        theme: currentForm.theme || null,
+        worship_duration: currentForm.worship_duration ? parseInt(currentForm.worship_duration, 10) : null,
+        notes: currentForm.notes || null,
         
         // Status
         status: statusToSave,
@@ -294,7 +311,7 @@ const SetBuilder = () => {
       }
 
       // Insert new set_songs
-      const setSongsData = songs.map((ss, index) => ({
+      const setSongsData = currentSongs.map((ss, index) => ({
         service_set_id: setId,
         song_id: ss.song_id || ss.song.id,
         position: index + 1,
@@ -315,9 +332,29 @@ const SetBuilder = () => {
       setIsSaving(true);
     },
     onSuccess: (setId, publishStatus) => {
+      const currentForm = formDataRef.current;
+
       toast.success(t("setBuilder.successSave"));
       
-      // Directly update status state to reflect the saved status
+      // Optimistically update React Query cache with current form values
+      queryClient.setQueryData(["service-set", setId], (prev: any) => ({
+        ...prev,
+        date: currentForm.date,
+        service_name: currentForm.service_name,
+        community_id: currentForm.community_id,
+        service_time: currentForm.service_time || null,
+        target_audience: currentForm.target_audience || null,
+        worship_leader: currentForm.worship_leader || null,
+        band_name: currentForm.band_name || null,
+        scripture_reference: currentForm.scripture_reference || null,
+        theme: currentForm.theme || null,
+        worship_duration: currentForm.worship_duration ? parseInt(currentForm.worship_duration, 10) : null,
+        notes: currentForm.notes || null,
+        status: publishStatus || prev?.status,
+      }));
+
+      // Update local state with current form data
+      setFormData(currentForm);
       if (publishStatus) {
         setStatus(publishStatus);
       }
