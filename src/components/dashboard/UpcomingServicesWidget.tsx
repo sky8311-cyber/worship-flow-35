@@ -1,28 +1,74 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Calendar, Music, Youtube, FileText, ChevronRight } from "lucide-react";
+import { CalendarDays, Calendar, Music, Youtube, FileText, ChevronRight, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ServiceSet {
   id: string;
   date: string;
   service_name: string;
   worship_leader?: string | null;
+  status: "draft" | "published";
+  created_by: string;
 }
 
 interface UpcomingServicesWidgetProps {
   sets: ServiceSet[];
   maxVisible?: number;
+  currentUserId?: string;
+  isAdmin?: boolean;
+  isCommunityLeader?: boolean;
 }
 
-export function UpcomingServicesWidget({ sets, maxVisible = 3 }: UpcomingServicesWidgetProps) {
+export function UpcomingServicesWidget({ 
+  sets, 
+  maxVisible = 3,
+  currentUserId,
+  isAdmin = false,
+  isCommunityLeader = false
+}: UpcomingServicesWidgetProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const visibleSets = sets?.slice(0, maxVisible) || [];
   const [expandedSetId, setExpandedSetId] = useState<string | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      const { error } = await supabase
+        .from("service_sets")
+        .delete()
+        .eq("id", setId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("워십세트가 삭제되었습니다");
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error("워십세트 삭제에 실패했습니다");
+    },
+  });
+
+  const handleDelete = (setId: string, serviceName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm(`"${serviceName}" 워십세트를 삭제하시겠습니까?`)) {
+      deleteMutation.mutate(setId);
+    }
+  };
+
+  const isPastDate = (dateString: string) => {
+    const setDate = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return setDate < today;
+  };
 
   const { data: setSongs } = useQuery({
     queryKey: ["set-songs-preview", expandedSetId],
@@ -70,10 +116,7 @@ export function UpcomingServicesWidget({ sets, maxVisible = 3 }: UpcomingService
           <div className="space-y-4">
             {visibleSets.map((set) => (
               <div key={set.id} className="border rounded-lg overflow-hidden">
-                <div 
-                  className="flex items-start gap-3 p-3 hover:bg-accent transition-colors cursor-pointer"
-                  onClick={() => setExpandedSetId(expandedSetId === set.id ? null : set.id)}
-                >
+                <div className="flex items-start gap-3 p-3 hover:bg-accent transition-colors">
                   <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
                     <span className="text-xs font-medium">
                       {format(new Date(set.date), "MMM")}
@@ -82,15 +125,45 @@ export function UpcomingServicesWidget({ sets, maxVisible = 3 }: UpcomingService
                       {format(new Date(set.date), "d")}
                     </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{set.service_name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => setExpandedSetId(expandedSetId === set.id ? null : set.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm font-medium ${isPastDate(set.date) ? 'text-muted-foreground' : ''}`}>
+                        {set.service_name}
+                      </p>
+                      {set.status === "draft" && (
+                        <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded">
+                          임시저장
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs ${isPastDate(set.date) ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                       {set.worship_leader || t("dashboard.noLeader")}
                     </p>
                   </div>
-                  <ChevronRight 
-                    className={`w-5 h-5 transition-transform ${expandedSetId === set.id ? 'rotate-90' : ''}`}
-                  />
+                  
+                  {((isAdmin && set.created_by === currentUserId) || 
+                    (isCommunityLeader && set.created_by === currentUserId)) && (
+                    <button
+                      onClick={(e) => handleDelete(set.id, set.service_name, e)}
+                      className="p-2 hover:bg-destructive/10 rounded-md transition-colors"
+                      title="워십세트 삭제"
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => setExpandedSetId(expandedSetId === set.id ? null : set.id)}
+                    className="p-1"
+                  >
+                    <ChevronRight 
+                      className={`w-5 h-5 transition-transform ${expandedSetId === set.id ? 'rotate-90' : ''}`}
+                    />
+                  </button>
                 </div>
                 
                 {expandedSetId === set.id && setSongs && (

@@ -61,7 +61,7 @@ const Dashboard = () => {
     data: upcomingSets,
     isLoading
   } = useQuery({
-    queryKey: ["upcoming-sets", user?.id],
+    queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity],
     queryFn: async () => {
       if (!user) return [];
       
@@ -74,16 +74,32 @@ const Dashboard = () => {
       const communityIds = memberData?.map(m => m.community_id) || [];
       if (communityIds.length === 0) return [];
       
-      // Get upcoming published sets from user's communities
-      const { data, error } = await supabase
+      // Calculate date range: last 30 days to future
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const dateThreshold = thirtyDaysAgo.toISOString().split("T")[0];
+      
+      let query = supabase
         .from("service_sets")
         .select("*")
         .in("community_id", communityIds)
-        .eq("status", "published")
-        .gte("date", new Date().toISOString().split("T")[0])
+        .gte("date", dateThreshold)
         .order("date", { ascending: true })
-        .limit(10);
+        .limit(20);
       
+      // Role-based filtering
+      if (isAdmin) {
+        // Admin: show ALL sets (draft + published)
+        // No status filter needed
+      } else if (isCommunityLeaderInAnyCommunity) {
+        // Community Leader: show published + own drafts
+        query = query.or(`status.eq.published,and(status.eq.draft,created_by.eq.${user.id})`);
+      } else {
+        // Team Member: show ONLY published
+        query = query.eq("status", "published");
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -290,7 +306,13 @@ const Dashboard = () => {
             <ProfileSidebarCard stats={userStats} />
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={5} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
-            <UpcomingEventsWidget sets={upcomingSets || []} maxVisible={3} />
+            <UpcomingEventsWidget 
+              sets={upcomingSets || []} 
+              maxVisible={3}
+              currentUserId={user?.id}
+              isAdmin={isAdmin}
+              isCommunityLeader={isCommunityLeaderInAnyCommunity}
+            />
           </div>
 
           {/* Columns A+B: Main Feed */}
