@@ -347,10 +347,10 @@ const Dashboard = () => {
                         {isAdmin && <Badge variant="destructive" className="text-xs">
                             {t("roles.admin")}
                           </Badge>}
-                        {isWorshipLeader && <Badge className="text-xs bg-purple-500 hover:bg-purple-600">
+                        {isWorshipLeader && <Badge className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
                             {t("roles.worshipLeader")}
                           </Badge>}
-                        {isCommunityLeaderInAnyCommunity && <Badge className="text-xs bg-blue-500 hover:bg-blue-600">
+                        {isCommunityLeaderInAnyCommunity && <Badge className="text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
                             {t("roles.communityLeader")}
                           </Badge>}
                         {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && <Badge variant="outline" className="text-xs">
