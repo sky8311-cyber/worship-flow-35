@@ -39,31 +39,34 @@ const SignUp = () => {
     const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone, 'member');
     
     if (error) {
-      // Check if user already exists
+      // Check if user already exists - treat as successful login
       if (error.message?.includes("already registered") || error.message?.includes("already been registered")) {
         toast({
-          title: t("auth.error"),
-          description: t("auth.alreadyRegistered"),
-          variant: "destructive",
+          title: t("auth.success"),
+          description: t("auth.alreadyRegisteredLoggedIn"),
         });
-        setTimeout(() => navigate("/login"), 2000);
-      } else {
-        toast({
-          title: t("auth.error"),
-          description: error.message,
-          variant: "destructive",
-        });
+        setLoading(false);
+        navigate("/dashboard");
+        return;
       }
+      
+      // Real error - show destructive toast
+      toast({
+        title: t("auth.error"),
+        description: error.message,
+        variant: "destructive",
+      });
       setLoading(false);
       return;
     }
     
+    // Success - new signup
     toast({
       title: t("auth.success"),
       description: t("auth.signUpSuccess"),
     });
-    navigate("/");
     setLoading(false);
+    navigate("/dashboard");
   };
 
   return (
