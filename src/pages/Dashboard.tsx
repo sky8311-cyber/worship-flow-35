@@ -404,7 +404,7 @@ const Dashboard = () => {
             {/* Row 1: Upcoming Sets (2/3) + Song Library (1/3) */}
             <div className="grid grid-cols-3 gap-4">
               {/* Upcoming Worship Sets - 2 columns */}
-              <Card className="col-span-2">
+              <Card className="col-span-2 min-h-[520px]">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
