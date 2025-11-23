@@ -3,6 +3,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { MoreHorizontal, Calendar, Music } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -48,6 +50,8 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editContent, setEditContent] = useState(item.content || "");
   const queryClient = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -69,10 +73,43 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     },
   });
 
+  const editMutation = useMutation({
+    mutationFn: async (newContent: string) => {
+      if (item.type === "community_post") {
+        const { error } = await supabase
+          .from("community_posts")
+          .update({ content: newContent, updated_at: new Date().toISOString() })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(t("common.saveSuccess"));
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      setEditDialogOpen(false);
+    },
+    onError: () => {
+      toast.error(t("common.error"));
+    },
+  });
+
   const handleDelete = () => {
     if (window.confirm(t("common.confirmDelete"))) {
       deleteMutation.mutate();
     }
+  };
+
+  const handleEdit = () => {
+    setEditContent(item.content || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editContent.trim()) {
+      toast.error(t("common.required"));
+      return;
+    }
+    editMutation.mutate(editContent);
   };
 
   const renderContent = () => {
@@ -121,68 +158,96 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-start gap-3">
-          <Avatar 
-            className="cursor-pointer hover:opacity-80 transition-opacity w-10 h-10"
-            onClick={() => onProfileClick(item.author)}
-          >
-            <AvatarImage src={item.author.avatar_url || ""} />
-            <AvatarFallback>
-              {item.author.full_name?.charAt(0) || "U"}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm">{item.author.full_name || "Anonymous"}</p>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>
-                {formatDistanceToNow(new Date(item.created_at), {
-                  addSuffix: true,
-                  locale: language === "ko" ? ko : undefined,
-                })}
-              </span>
-              <span>•</span>
-              <span>{item.community.name}</span>
+    <>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <Avatar 
+              className="cursor-pointer hover:opacity-80 transition-opacity w-10 h-10"
+              onClick={() => onProfileClick(item.author)}
+            >
+              <AvatarImage src={item.author.avatar_url || ""} />
+              <AvatarFallback>
+                {item.author.full_name?.charAt(0) || "U"}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm">{item.author.full_name || "Anonymous"}</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
+                  {formatDistanceToNow(new Date(item.created_at), {
+                    addSuffix: true,
+                    locale: language === "ko" ? ko : undefined,
+                  })}
+                </span>
+                <span>•</span>
+                <span>{item.community.name}</span>
+              </div>
             </div>
+
+            {user?.id === item.author.id && item.type === "community_post" && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleEdit}>
+                    {t("socialFeed.edit")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                    {t("socialFeed.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent>{renderContent()}</CardContent>
+
+        <CardFooter className="flex-col items-stretch">
+          <div className="flex items-center gap-4 pb-3 border-b">
+            <LikeButton postId={item.id} postType={item.type} />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowComments(!showComments)}
+            >
+              {t("socialFeed.comment")}
+            </Button>
           </div>
 
-          {user?.id === item.author.id && item.type === "community_post" && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                  {t("socialFeed.delete")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {showComments && (
+            <CommentsSection postId={item.id} postType={item.type} />
           )}
-        </div>
-      </CardHeader>
+        </CardFooter>
+      </Card>
 
-      <CardContent>{renderContent()}</CardContent>
-
-      <CardFooter className="flex-col items-stretch">
-        <div className="flex items-center gap-4 pb-3 border-b">
-          <LikeButton postId={item.id} postType={item.type} />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowComments(!showComments)}
-          >
-            {t("socialFeed.comment")}
-          </Button>
-        </div>
-
-        {showComments && (
-          <CommentsSection postId={item.id} postType={item.type} />
-        )}
-      </CardFooter>
-    </Card>
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("socialFeed.editPost")}</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            placeholder={t("socialFeed.postPlaceholder")}
+            className="min-h-[120px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={editMutation.isPending}>
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

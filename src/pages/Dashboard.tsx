@@ -379,7 +379,6 @@ const Dashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>{t("community.joined")}</CardTitle>
-                <CardDescription>{t("dashboard.scheduledServices")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <CommunityFeed />
