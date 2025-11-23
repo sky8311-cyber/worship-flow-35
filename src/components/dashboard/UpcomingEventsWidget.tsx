@@ -36,6 +36,7 @@ interface CalendarEvent {
   end_time?: string | null;
   location?: string | null;
   community_id: string;
+  created_by: string;
 }
 
 interface UnifiedEvent {
@@ -92,6 +93,25 @@ export function UpcomingEventsWidget({
     },
   });
 
+  const deleteCalendarEventMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const { error } = await supabase
+        .from("calendar_events")
+        .delete()
+        .eq("id", eventId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("캘린더 일정이 삭제되었습니다");
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+    },
+    onError: (error) => {
+      console.error("Delete calendar event error:", error);
+      toast.error("캘린더 일정 삭제에 실패했습니다");
+    },
+  });
+
   const publishMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "draft" | "published" }) => {
       const newStatus = status === "draft" ? "published" : "draft";
@@ -141,6 +161,21 @@ export function UpcomingEventsWidget({
     if (window.confirm(`"${serviceName}" 워십세트를 삭제하시겠습니까?`)) {
       deleteMutation.mutate(setId);
     }
+  };
+
+  const handleDeleteCalendarEvent = (eventId: string, eventTitle: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm(`"${eventTitle}" 일정을 삭제하시겠습니까?`)) {
+      deleteCalendarEventMutation.mutate(eventId);
+    }
+  };
+
+  const handleEditCalendarEvent = (eventId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEventId(eventId);
+    setEventDialogOpen(true);
   };
 
   const isPastDate = (dateString: string) => {
@@ -210,6 +245,7 @@ export function UpcomingEventsWidget({
         subtitle: event.location || undefined,
         icon: iconMap[event.event_type],
         badgeLabel: t(`calendarEvent.types.${event.event_type}` as any),
+        created_by: event.created_by,
         onClick: () => {
           setSelectedEventId(event.id);
           setEventDialogOpen(true);
@@ -234,8 +270,10 @@ export function UpcomingEventsWidget({
             <div className="space-y-2">
               {unifiedEvents.map((event) => {
                 const isPast = isPastDate(event.date);
-            const canManage = event.type === "service_set" && 
-              (isAdmin || (isCommunityLeader && event.created_by === currentUserId));
+            const canManage = (event.type === "service_set" && 
+              (isAdmin || (isCommunityLeader && event.created_by === currentUserId))) ||
+              (event.type === "calendar_event" && 
+              (isAdmin || (isCommunityLeader && event.created_by === currentUserId)));
 
                 return event.linkTo ? (
                   <div key={`${event.type}-${event.id}`} className="relative group">
@@ -310,37 +348,65 @@ export function UpcomingEventsWidget({
                     )}
                   </div>
                 ) : (
-                  <div
-                    key={`${event.type}-${event.id}`}
-                    onClick={event.onClick}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
-                      <span className="text-xs font-medium">
-                        {format(new Date(event.date), "MMM")}
-                      </span>
-                      <span className="text-lg font-bold">
-                        {format(new Date(event.date), "d")}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        {event.icon}
-                        <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
-                          {event.title}
-                        </p>
+                  <div key={`${event.type}-${event.id}`} className="relative group">
+                    <div
+                      onClick={event.onClick}
+                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
+                      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                        <span className="text-xs font-medium">
+                          {format(new Date(event.date), "MMM")}
+                        </span>
+                        <span className="text-lg font-bold">
+                          {format(new Date(event.date), "d")}
+                        </span>
                       </div>
-                      {event.subtitle && (
-                        <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                          {event.subtitle}
-                        </p>
-                      )}
-                      {event.badgeLabel && (
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {event.badgeLabel}
-                        </Badge>
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {event.icon}
+                          <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                            {event.title}
+                          </p>
+                        </div>
+                        {event.subtitle && (
+                          <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                            {event.subtitle}
+                          </p>
+                        )}
+                        {event.badgeLabel && (
+                          <Badge variant="secondary" className="text-xs mt-1">
+                            {event.badgeLabel}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
+                    {canManage && event.type === "calendar_event" && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleEditCalendarEvent(event.id, e)}>
+                            <Calendar className="w-4 h-4 mr-2" />
+                            수정
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleDeleteCalendarEvent(event.id, event.title, e)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 );
               })}
@@ -361,6 +427,8 @@ export function UpcomingEventsWidget({
         onSuccess={() => {
           setEventDialogOpen(false);
           setSelectedEventId(undefined);
+          queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+          queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
         }}
       />
     </>
