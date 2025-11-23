@@ -173,33 +173,41 @@ const Dashboard = () => {
         collaborations: 0
       };
 
-      // Count created sets
+      // Count created sets - use select with data instead of head
       const {
-        count: setsCount
-      } = await supabase.from("service_sets").select("*", {
-        count: "exact",
-        head: true
-      }).eq("created_by", user.id);
+        data: setsData,
+        error: setsError
+      } = await supabase
+        .from("service_sets")
+        .select("id")
+        .eq("created_by", user.id);
 
       // Count joined communities
       const {
-        count: communitiesCount
-      } = await supabase.from("community_members").select("*", {
-        count: "exact",
-        head: true
-      }).eq("user_id", user.id);
+        data: communitiesData,
+        error: communitiesError
+      } = await supabase
+        .from("community_members")
+        .select("id")
+        .eq("user_id", user.id);
 
       // Count collaborations
       const {
-        count: collaborationsCount
-      } = await supabase.from("set_collaborators").select("*", {
-        count: "exact",
-        head: true
-      }).eq("user_id", user.id);
+        data: collaborationsData,
+        error: collaborationsError
+      } = await supabase
+        .from("set_collaborators")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (setsError) console.error("Sets count error:", setsError);
+      if (communitiesError) console.error("Communities count error:", communitiesError);
+      if (collaborationsError) console.error("Collaborations count error:", collaborationsError);
+
       return {
-        sets: setsCount || 0,
-        communities: communitiesCount || 0,
-        collaborations: collaborationsCount || 0
+        sets: setsData?.length || 0,
+        communities: communitiesData?.length || 0,
+        collaborations: collaborationsData?.length || 0
       };
     },
     enabled: !!user
