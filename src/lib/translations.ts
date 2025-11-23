@@ -117,7 +117,8 @@ export const translations = {
       success: "Success",
       signUpSuccess: "Sign up successful!",
       passwordMismatch: "Passwords do not match",
-      alreadyRegistered: "This email is already registered. Redirecting to login..."
+      alreadyRegistered: "This email is already registered. Redirecting to login...",
+      alreadyRegisteredLoggedIn: "You already have an account. We've logged you in with that account."
     },
     dashboard: {
       title: "K-Worship Set Builder",
@@ -1004,7 +1005,8 @@ export const translations = {
       success: "성공",
       signUpSuccess: "회원가입이 완료되었습니다!",
       passwordMismatch: "비밀번호가 일치하지 않습니다",
-      alreadyRegistered: "이미 가입된 이메일입니다. 로그인 페이지로 이동합니다..."
+      alreadyRegistered: "이미 가입된 이메일입니다. 로그인 페이지로 이동합니다...",
+      alreadyRegisteredLoggedIn: "이미 가입된 계정입니다. 해당 계정으로 로그인되었습니다."
     },
     dashboard: {
       title: "K-Worship Set Builder",
