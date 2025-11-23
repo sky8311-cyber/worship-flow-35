@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Calendar, Music, Users, Church, MoreHorizontal, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { CalendarDays, Calendar, Music, Users, Church, MoreHorizontal, Trash2, Upload, Lock, Link as LinkIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
@@ -77,13 +84,56 @@ export function UpcomingEventsWidget({
     onSuccess: () => {
       toast.success("워십세트가 삭제되었습니다");
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
     },
     onError: (error) => {
       console.error("Delete error:", error);
       toast.error("워십세트 삭제에 실패했습니다");
     },
   });
+
+  const publishMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "draft" | "published" }) => {
+      const newStatus = status === "draft" ? "published" : "draft";
+      const { error } = await supabase
+        .from("service_sets")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("워십세트 상태가 변경되었습니다");
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+    },
+    onError: () => {
+      toast.error("상태 변경에 실패했습니다");
+    },
+  });
+
+  const handleTogglePublish = (event: UnifiedEvent, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!event.status) return;
+    publishMutation.mutate({ id: event.id, status: event.status });
+  };
+
+  const handleShareLink = (event: UnifiedEvent, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const url = `${window.location.origin}/band-view/${event.id}`;
+    
+    if (navigator.share) {
+      navigator.share({ title: event.title, url }).catch(() => {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url);
+      toast.success("링크가 클립보드에 복사되었습니다");
+    } else {
+      window.prompt("아래 링크를 복사하세요", url);
+    }
+  };
 
   const handleDelete = (setId: string, serviceName: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -184,7 +234,7 @@ export function UpcomingEventsWidget({
             <div className="space-y-2">
               {unifiedEvents.map((event) => {
                 const isPast = isPastDate(event.date);
-                const canDelete = event.type === "service_set" && 
+                const canManage = event.type === "service_set" && 
                   ((isAdmin && event.created_by === currentUserId) || 
                    (isCommunityLeader && event.created_by === currentUserId));
 
@@ -221,14 +271,43 @@ export function UpcomingEventsWidget({
                         )}
                       </div>
                     </Link>
-                    {canDelete && (
-                      <button
-                        onClick={(e) => handleDelete(event.id, event.title, e)}
-                        className="absolute top-2 right-2 p-1.5 hover:bg-destructive/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
-                        title="워십세트 삭제"
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </button>
+                    {canManage && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => handleTogglePublish(event, e)}>
+                            {event.status === "draft" ? (
+                              <>
+                                <Upload className="w-4 h-4 mr-2" /> 게시하기
+                              </>
+                            ) : (
+                              <>
+                                <Lock className="w-4 h-4 mr-2" /> 비공개로 전환
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleShareLink(event, e)}>
+                            <LinkIcon className="w-4 h-4 mr-2" />
+                            링크 복사
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => handleDelete(event.id, event.title, e)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 ) : (

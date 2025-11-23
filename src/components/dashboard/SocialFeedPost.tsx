@@ -125,16 +125,26 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     }
 
     if (item.type === "worship_set") {
+      const dateText = new Date(item.set.date).toLocaleDateString(
+        language === "ko" ? "ko-KR" : "en-US"
+      );
+
       return (
-        <div className="flex items-center gap-3 p-4 bg-accent/50 rounded-lg">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-            <Music className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">{item.set.service_name}</p>
-            <p className="text-sm text-muted-foreground">
-              {new Date(item.set.date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-            </p>
+        <div className="p-4 bg-accent/40 rounded-lg space-y-2">
+          <p className="text-sm">
+            <span className="font-semibold">{item.community.name}</span>{" "}
+            워십세트가{" "}
+            <span className="font-semibold">"{item.set.service_name}"</span>{" "}
+            ({dateText})로 업데이트되었습니다.
+          </p>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
+            >
+              자세히 보기
+            </Button>
           </div>
         </div>
       );

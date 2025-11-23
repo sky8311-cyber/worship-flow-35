@@ -15,16 +15,30 @@ interface ProfileStats {
   collaborations: number;
 }
 
-interface ProfileSidebarCardProps {
-  stats?: ProfileStats;
+interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  ministry_role: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
 }
 
-export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
+interface ProfileSidebarCardProps {
+  stats?: ProfileStats;
+  profileOverride?: Profile;
+}
+
+export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { profile, user } = useAuth();
+  const { profile: authProfile, user } = useAuth();
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const profile = profileOverride || authProfile;
 
   const initials = profile?.full_name
     ? profile.full_name
@@ -55,14 +69,16 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
               <AvatarImage src={profile?.avatar_url || undefined} />
               <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
             </Avatar>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="absolute -top-1 -right-1 rounded-full bg-card shadow-md border opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-              onClick={() => setEditDialogOpen(true)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            {!profileOverride && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="absolute -top-1 -right-1 rounded-full bg-card shadow-md border opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+                onClick={() => setEditDialogOpen(true)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            )}
           </div>
 
           {/* Name */}
@@ -98,7 +114,7 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
                 </Button>
               </a>
             ) : null}
-            {!profile?.instagram_url && !profile?.youtube_url && (
+            {!profile?.instagram_url && !profile?.youtube_url && !profileOverride && (
               <Button
                 size="sm"
                 variant="outline"
@@ -111,33 +127,39 @@ export function ProfileSidebarCard({ stats }: ProfileSidebarCardProps) {
             )}
           </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-3 mt-6 pt-4 border-t">
-            <StatItem
-              icon={<Calendar className="w-4 h-4" />}
-              count={stats?.sets || 0}
-              label={t("profile.sets")}
-            />
-            <StatItem
-              icon={<Users className="w-4 h-4" />}
-              count={stats?.communities || 0}
-              label={t("profile.communities")}
-            />
-            <StatItem
-              icon={<UserCheck className="w-4 h-4" />}
-              count={stats?.collaborations || 0}
-              label={t("profile.collabs")}
-            />
-          </div>
+          {/* Stats Row - Only show if stats provided */}
+          {stats && (
+            <div className="grid grid-cols-3 gap-3 mt-6 pt-4 border-t">
+              <StatItem
+                icon={<Calendar className="w-4 h-4" />}
+                count={stats.sets || 0}
+                label={t("profile.sets")}
+              />
+              <StatItem
+                icon={<Users className="w-4 h-4" />}
+                count={stats.communities || 0}
+                label={t("profile.communities")}
+              />
+              <StatItem
+                icon={<UserCheck className="w-4 h-4" />}
+                count={stats.collaborations || 0}
+                label={t("profile.collabs")}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      <AvatarEditDialog
-        open={avatarDialogOpen}
-        onOpenChange={setAvatarDialogOpen}
-        currentUrl={profile?.avatar_url || null}
-      />
-      <ProfileEditDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+      {!profileOverride && (
+        <>
+          <AvatarEditDialog
+            open={avatarDialogOpen}
+            onOpenChange={setAvatarDialogOpen}
+            currentUrl={profile?.avatar_url || null}
+          />
+          <ProfileEditDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} />
+        </>
+      )}
     </>
   );
 }

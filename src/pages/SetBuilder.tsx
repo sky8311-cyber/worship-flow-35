@@ -21,7 +21,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Home } from "lucide-react";
-import logo from "@/assets/logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 const SetBuilder = () => {
   const { id } = useParams();
@@ -295,8 +295,8 @@ const SetBuilder = () => {
       
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
-      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
       
       if (!id) {
         navigate(`/set-builder/${setId}`);
@@ -387,11 +387,7 @@ const SetBuilder = () => {
             
             {/* Center: Logo */}
             <Link to="/dashboard" className="justify-self-center col-start-2">
-              <img 
-                src={logo} 
-                alt="K-Worship" 
-                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
-              />
+              <HeaderLogo />
             </Link>
             
             {/* Right: Navigation Items */}

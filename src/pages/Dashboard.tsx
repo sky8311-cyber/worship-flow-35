@@ -395,7 +395,7 @@ const Dashboard = () => {
                 <CardTitle>{t("community.joined")}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CommunityFeed />
+        <CommunityFeed userStats={userStats} />
               </CardContent>
             </Card>
           </div>
