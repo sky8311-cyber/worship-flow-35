@@ -10,7 +10,9 @@ export function getCountdown(dateString: string, timeString?: string | null): Co
     // Combine date and time if available
     let targetDate: Date;
     if (timeString) {
-      targetDate = parseISO(`${dateString}T${timeString}`);
+      // Handle HH:MM format by appending :00 for seconds
+      const cleanTime = timeString.length === 5 ? `${timeString}:00` : timeString;
+      targetDate = parseISO(`${dateString}T${cleanTime}`);
     } else {
       targetDate = parseISO(`${dateString}T00:00:00`);
     }
