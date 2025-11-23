@@ -35,6 +35,15 @@ export const translations = {
       confirmDelete: "Are you sure you want to delete?",
       saveSuccess: "Saved successfully",
       required: "This field is required",
+      dayOfWeek: {
+        sunday: "Sunday",
+        monday: "Monday",
+        tuesday: "Tuesday",
+        wednesday: "Wednesday",
+        thursday: "Thursday",
+        friday: "Friday",
+        saturday: "Saturday"
+      }
     },
     socialFeed: {
       postPlaceholder: "Share with your community...",
@@ -886,6 +895,15 @@ export const translations = {
       confirmDelete: "정말 삭제하시겠습니까?",
       saveSuccess: "저장 완료",
       required: "필수 입력 항목입니다",
+      dayOfWeek: {
+        sunday: "일요일",
+        monday: "월요일",
+        tuesday: "화요일",
+        wednesday: "수요일",
+        thursday: "목요일",
+        friday: "금요일",
+        saturday: "토요일"
+      }
     },
     socialFeed: {
       postPlaceholder: "공동체와 나눌 소식을 작성하세요...",
