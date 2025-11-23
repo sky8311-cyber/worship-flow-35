@@ -19,6 +19,7 @@ const AdminUsers = () => {
   const dateLocale = language === "ko" ? ko : enUS;
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; userName: string }>({
     open: false,
     userId: "",
@@ -159,6 +160,91 @@ const AdminUsers = () => {
       toast.error(error.message || t("admin.users.resetPasswordError"));
     },
   });
+
+  const bulkAddRoleMutation = useMutation({
+    mutationFn: async ({ userIds, role }: { userIds: string[]; role: string }) => {
+      const promises = userIds.map(userId =>
+        supabase.from("user_roles").insert({ user_id: userId, role: role as any })
+      );
+      const results = await Promise.allSettled(promises);
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length > 0) throw new Error(`${failures.length} operations failed`);
+    },
+    onSuccess: (_, { userIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(t("admin.users.bulkRoleAdded", { count: userIds.length }));
+      setSelectedUsers(new Set());
+    },
+    onError: () => {
+      toast.error(t("admin.users.bulkRoleAddError"));
+    },
+  });
+
+  const bulkRemoveRoleMutation = useMutation({
+    mutationFn: async ({ userIds, role }: { userIds: string[]; role: string }) => {
+      const promises = userIds.map(userId =>
+        supabase.from("user_roles").delete().eq("user_id", userId).eq("role", role as any)
+      );
+      const results = await Promise.allSettled(promises);
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length > 0) throw new Error(`${failures.length} operations failed`);
+    },
+    onSuccess: (_, { userIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(t("admin.users.bulkRoleRemoved", { count: userIds.length }));
+      setSelectedUsers(new Set());
+    },
+    onError: () => {
+      toast.error(t("admin.users.bulkRoleRemoveError"));
+    },
+  });
+
+  const bulkResetPasswordMutation = useMutation({
+    mutationFn: async (emails: string[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const promises = emails.map(email =>
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }).then(r => r.ok ? r.json() : Promise.reject(r))
+      );
+      
+      const results = await Promise.allSettled(promises);
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length > 0) throw new Error(`${failures.length} operations failed`);
+    },
+    onSuccess: (_, emails) => {
+      toast.success(t("admin.users.bulkResetPasswordSuccess", { count: emails.length }));
+      setSelectedUsers(new Set());
+    },
+    onError: () => {
+      toast.error(t("admin.users.bulkResetPasswordError"));
+    },
+  });
+
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.size === filteredUsers?.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredUsers?.map(u => u.id) || []));
+    }
+  };
   
   const filteredUsers = users?.filter(user => 
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -206,6 +292,14 @@ const AdminUsers = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.size === filteredUsers?.length && filteredUsers.length > 0}
+                        onChange={toggleSelectAll}
+                        className="cursor-pointer"
+                      />
+                    </TableHead>
                     <TableHead>{t("admin.users.email")}</TableHead>
                     <TableHead>{t("admin.users.name")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
@@ -222,6 +316,14 @@ const AdminUsers = () => {
                     
                     return (
                       <TableRow key={user.id}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.has(user.id)}
+                            onChange={() => toggleUserSelection(user.id)}
+                            className="cursor-pointer"
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{user.email}</TableCell>
                         <TableCell>{user.full_name || "-"}</TableCell>
                         <TableCell>
@@ -309,6 +411,62 @@ const AdminUsers = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Bulk Actions Bar */}
+      {selectedUsers.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">
+                  {t("admin.users.selectedCount", { count: selectedUsers.size })}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedUsers(new Set())}
+                >
+                  {t("common.clearSelection")}
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const userIds = Array.from(selectedUsers);
+                    bulkAddRoleMutation.mutate({ userIds, role: "worship_leader" });
+                  }}
+                >
+                  {t("admin.users.bulkAddWorshipLeader")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const userIds = Array.from(selectedUsers);
+                    bulkRemoveRoleMutation.mutate({ userIds, role: "worship_leader" });
+                  }}
+                >
+                  {t("admin.users.bulkRemoveWorshipLeader")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const emails = filteredUsers
+                      ?.filter(u => selectedUsers.has(u.id))
+                      .map(u => u.email) || [];
+                    bulkResetPasswordMutation.mutate(emails);
+                  }}
+                >
+                  {t("admin.users.bulkResetPassword")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete User Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
