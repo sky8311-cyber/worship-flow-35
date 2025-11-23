@@ -61,9 +61,9 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     );
 
     return (
-      <div className="flex items-center gap-3 py-3 px-4 text-sm text-muted-foreground border-b">
+      <div className="flex items-center justify-center gap-3 py-6 px-4 text-sm text-muted-foreground border-b">
         <Music className="w-4 h-4 shrink-0" />
-        <p className="flex-1">
+        <p className="text-center">
           <span className="font-semibold text-foreground">{item.community.name}</span>
           {language === "ko" 
             ? ` 워십세트가 "${item.set.service_name}" (${dateText})로 업데이트되었습니다. `
@@ -71,7 +71,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
           }
           <button 
             onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
-            className="text-primary hover:underline font-medium"
+            className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-80 transition-opacity ml-1"
           >
             {language === "ko" ? "더보기" : "Read More"}
           </button>
@@ -152,16 +152,15 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     if (item.type === "calendar_event") {
       return (
-        <div className="flex items-center gap-3 p-4 bg-accent/50 rounded-lg">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-            <Calendar className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1">
-            <p className="font-medium">{item.event.title}</p>
-            <p className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-3 py-6 px-4 text-sm text-muted-foreground border-b">
+          <Calendar className="w-4 h-4 shrink-0" />
+          <p className="text-center">
+            <span className="font-medium text-foreground">{item.event.title}</span>
+            <span className="mx-2">•</span>
+            <span className="text-muted-foreground">
               {new Date(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-            </p>
-          </div>
+            </span>
+          </p>
         </div>
       );
     }
