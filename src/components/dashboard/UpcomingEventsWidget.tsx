@@ -251,7 +251,7 @@ export function UpcomingEventsWidget({
                           {format(new Date(event.date), "d")}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0 pr-10">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           {event.icon}
                           <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
