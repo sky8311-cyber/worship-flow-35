@@ -48,14 +48,31 @@ const SignUpWorshipLeader = () => {
     );
     
     if (signUpError) {
-      toast({
-        title: t("auth.error"),
-        description: signUpError.message,
-        variant: "destructive",
-      });
+      // Check if user already exists
+      if (signUpError.message?.includes("already registered") || signUpError.message?.includes("already been registered")) {
+        toast({
+          title: t("auth.error"),
+          description: t("auth.alreadyRegistered"),
+          variant: "destructive",
+        });
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        toast({
+          title: t("auth.error"),
+          description: signUpError.message,
+          variant: "destructive",
+        });
+      }
       setLoading(false);
       return;
     }
+
+    toast({
+      title: t("auth.success"),
+      description: t("auth.worshipLeaderSuccess"),
+    });
+    navigate("/dashboard");
+    setLoading(false);
 
     toast({
       title: t("auth.success"),
