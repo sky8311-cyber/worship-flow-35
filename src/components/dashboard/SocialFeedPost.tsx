@@ -54,9 +54,15 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   const [editContent, setEditContent] = useState(item.content || "");
   const queryClient = useQueryClient();
 
+  // Parse date string as local date to avoid timezone issues
+  const parseLocalDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // Worship set notifications should be simple one-line text, not full cards
   if (item.type === "worship_set") {
-    const dateText = new Date(item.set.date).toLocaleDateString(
+    const dateText = parseLocalDate(item.set.date).toLocaleDateString(
       language === "ko" ? "ko-KR" : "en-US"
     );
 
@@ -185,7 +191,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                 {item.event.title}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                {new Date(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
+                {parseLocalDate(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
               </p>
             </div>
           </div>
