@@ -463,7 +463,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             const file = e.target.files?.[0];
             if (file) onFileUpload(file, index);
           }}
-          accept=".pdf,.jpg,.jpeg,.png"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
           className="hidden"
           id={`file-upload-${index}`}
         />
