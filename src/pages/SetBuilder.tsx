@@ -32,6 +32,7 @@ const SetBuilder = () => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
+    service_time: "",
     service_name: "",
     community_id: "",
     target_audience: "",
@@ -139,6 +140,7 @@ const SetBuilder = () => {
     if (existingSet) {
       setFormData({
         date: existingSet.date,
+        service_time: existingSet.service_time || "",
         service_name: existingSet.service_name,
         community_id: existingSet.community_id || "",
         target_audience: existingSet.target_audience || "",
@@ -492,16 +494,30 @@ const SetBuilder = () => {
                 <CardTitle>예배 정보</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="text-sm">날짜 *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    required
-                    className="text-sm"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date" className="text-sm">날짜 *</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      required
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="service_time" className="text-sm">시간</Label>
+                    <Input
+                      id="service_time"
+                      type="time"
+                      value={formData.service_time}
+                      onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
+                      className="text-sm"
+                      placeholder="HH:MM"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -17,10 +17,12 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { getCountdown } from "@/lib/countdownHelper";
 
 interface ServiceSet {
   id: string;
   date: string;
+  service_time?: string | null;
   service_name: string;
   worship_leader?: string | null;
   status: "draft" | "published";
@@ -43,6 +45,7 @@ interface UnifiedEvent {
   id: string;
   type: "service_set" | "calendar_event";
   date: string;
+  service_time?: string | null;
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
@@ -229,6 +232,7 @@ export function UpcomingEventsWidget({
       id: set.id,
       type: "service_set" as const,
       date: set.date,
+      service_time: set.service_time,
       title: set.service_name,
       subtitle: set.worship_leader || undefined,
       icon: <Church className="w-4 h-4" />,
@@ -282,6 +286,8 @@ export function UpcomingEventsWidget({
               (isAdmin || (isCommunityLeader && event.created_by === currentUserId))) ||
               (event.type === "calendar_event" && 
               (isAdmin || (isCommunityLeader && event.created_by === currentUserId)));
+            
+            const countdown = event.type === "service_set" ? getCountdown(event.date, event.service_time) : null;
 
                 return event.linkTo ? (
                   <div key={`${event.type}-${event.id}`} className="relative group">
@@ -289,34 +295,70 @@ export function UpcomingEventsWidget({
                       to={event.linkTo}
                       className="block p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer border border-border"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
-                          <span className="text-xs font-medium">
-                            {format(new Date(event.date), "MMM")}
-                          </span>
-                          <span className="text-lg font-bold">
-                            {format(new Date(event.date), "d")}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {event.icon}
-                            <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
-                              {event.title}
-                            </p>
+                      {event.type === "service_set" ? (
+                        <div className="space-y-2">
+                          {/* Service Name - Dark and prominent */}
+                          <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
+                            {event.title}
+                          </h3>
+                          
+                          {/* Date Badge with Countdown */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="outline" className="text-xs">
+                              {format(new Date(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
+                              {event.service_time && ` • ${event.service_time}`}
+                            </Badge>
+                            {countdown && !countdown.isPast && countdown.text && (
+                              <Badge variant="secondary" className="text-xs bg-accent/20 text-accent-foreground">
+                                {countdown.text}
+                              </Badge>
+                            )}
                           </div>
+                          
+                          {/* Worship Leader */}
                           {event.subtitle && (
-                            <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                            <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                               {event.subtitle}
                             </p>
                           )}
+                          
+                          {/* Status Badge */}
                           {event.badgeLabel && (
                             <Badge variant="secondary" className="text-xs mt-1">
                               {event.badgeLabel}
                             </Badge>
                           )}
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                            <span className="text-xs font-medium">
+                              {format(new Date(event.date), "MMM")}
+                            </span>
+                            <span className="text-lg font-bold">
+                              {format(new Date(event.date), "d")}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              {event.icon}
+                              <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                                {event.title}
+                              </p>
+                            </div>
+                            {event.subtitle && (
+                              <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                {event.subtitle}
+                              </p>
+                            )}
+                            {event.badgeLabel && (
+                              <Badge variant="secondary" className="text-xs mt-1">
+                                {event.badgeLabel}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </Link>
                     {canManage && (
                       <DropdownMenu>
