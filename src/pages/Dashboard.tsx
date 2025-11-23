@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart, Languages } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useLanguageContext } from "@/contexts/LanguageContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSideba
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
 import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
+import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -34,6 +36,7 @@ const Dashboard = () => {
     t,
     language
   } = useTranslation();
+  const { setLanguage } = useLanguageContext();
   const {
     isAdmin,
     isWorshipLeader,
@@ -45,6 +48,7 @@ const Dashboard = () => {
   const dateLocale = language === "ko" ? ko : enUS;
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
@@ -202,13 +206,15 @@ const Dashboard = () => {
             </div>
             
             {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-start md:justify-self-center col-start-1 md:col-start-2">
+            <Link to="/dashboard" className="justify-self-start col-start-1 md:col-start-2">
               <img src={logo} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
             </Link>
             
             {/* Right: Navigation Items */}
             <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
-              <LanguageToggle />
+              <div className="hidden md:block">
+                <LanguageToggle />
+              </div>
               <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
                 <Heart className="h-5 w-5" />
               </Button>
@@ -254,6 +260,17 @@ const Dashboard = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem className="md:hidden" onClick={() => setProfileDialogOpen(true)}>
+                    <User className="mr-2 h-4 w-4" />
+                    {t("profile.title")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="md:hidden" onClick={() => {
+                    setLanguage(language === "en" ? "ko" : "en");
+                  }}>
+                    <Languages className="mr-2 h-4 w-4" />
+                    <span>{language === "en" ? "한국어" : "English"}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="md:hidden" />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t("auth.logout")}
@@ -355,23 +372,23 @@ const Dashboard = () => {
 
       {/* Mobile Layout - Tabs */}
       <main className="lg:hidden container mx-auto px-4 py-4">
-        <Tabs defaultValue="feed" className="w-full">
+        <Tabs defaultValue="home" className="w-full">
           <TabsList className="w-full sticky top-16 bg-background border-b grid grid-cols-3">
-            <TabsTrigger value="feed" className="flex items-center gap-2">
-              <Music className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("common.home")}</span>
+            <TabsTrigger value="home" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Home</span>
             </TabsTrigger>
             <TabsTrigger value="communities" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("community.title")}</span>
+              <span className="hidden sm:inline">예배공동체</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">{t("profile.title")}</span>
+            <TabsTrigger value="library" className="flex items-center gap-2">
+              <Music className="w-4 h-4" />
+              <span className="hidden sm:inline">곡 라이브러리</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="feed" className="space-y-4 mt-4">
+          <TabsContent value="home" className="space-y-4 mt-4">
             {/* Upcoming Sets */}
             <Card>
               <CardHeader>
@@ -419,8 +436,18 @@ const Dashboard = () => {
             <UpcomingEventsWidget sets={upcomingSets || []} maxVisible={5} />
           </TabsContent>
 
-          <TabsContent value="profile" className="mt-4">
-            <ProfileSidebarCard stats={userStats} />
+          <TabsContent value="library" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">곡 라이브러리</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SongLibraryWidget 
+                  onAddSong={() => setAddSongOpen(true)}
+                  onImport={() => setImportSetOpen(true)}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
@@ -441,6 +468,12 @@ const Dashboard = () => {
         queryKey: ["recent-songs"]
       });
     }} />
+
+      <ProfileDialog 
+        open={profileDialogOpen} 
+        onOpenChange={setProfileDialogOpen} 
+        stats={userStats} 
+      />
     </div>;
 };
 export default Dashboard;
