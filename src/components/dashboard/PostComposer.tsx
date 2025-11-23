@@ -175,13 +175,25 @@ export function PostComposer() {
                 </Select>
               )}
 
-              <Button
-                className="ml-auto"
-                onClick={handleSubmit}
-                disabled={!content.trim() || postMutation.isPending}
-              >
-                {postMutation.isPending ? t("common.saving") : t("socialFeed.post")}
-              </Button>
+              <div className="ml-auto flex gap-2">
+                {uploadedImages.length > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setUploadedImages([]);
+                      setContent("");
+                    }}
+                  >
+                    {t("common.cancel")}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!content.trim() || postMutation.isPending}
+                >
+                  {postMutation.isPending ? t("common.saving") : t("socialFeed.post")}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
