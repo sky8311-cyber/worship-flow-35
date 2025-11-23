@@ -33,6 +33,8 @@ export const translations = {
       uploadError: "Failed to upload image",
       deleteSuccess: "Deleted successfully",
       confirmDelete: "Are you sure you want to delete?",
+      saveSuccess: "Saved successfully",
+      required: "This field is required",
     },
     socialFeed: {
       postPlaceholder: "Share with your community...",
@@ -47,6 +49,7 @@ export const translations = {
       postedIn: "Posted in",
       liked: "Liked",
       postSuccess: "Posted successfully",
+      editPost: "Edit Post",
     },
     breadcrumb: {
       dashboard: "Dashboard",
@@ -881,6 +884,8 @@ export const translations = {
       uploadError: "이미지 업로드 실패",
       deleteSuccess: "삭제 완료",
       confirmDelete: "정말 삭제하시겠습니까?",
+      saveSuccess: "저장 완료",
+      required: "필수 입력 항목입니다",
     },
     socialFeed: {
       postPlaceholder: "공동체와 나눌 소식을 작성하세요...",
@@ -895,6 +900,7 @@ export const translations = {
       postedIn: "게시 위치",
       liked: "좋아요를 눌렀습니다",
       postSuccess: "게시 완료",
+      editPost: "게시물 수정",
     },
     breadcrumb: {
       dashboard: "대시보드",
