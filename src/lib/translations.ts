@@ -243,6 +243,7 @@ export const translations = {
     },
     community: {
       title: "Worship Communities",
+      selectCommunity: "Select a community",
       name: "Community Name",
       description: "Description",
       leader: "Leader",
@@ -1103,6 +1104,7 @@ export const translations = {
     },
     community: {
       title: "예배공동체",
+      selectCommunity: "예배공동체 선택",
       name: "예배공동체 이름",
       description: "설명",
       leader: "예배인도자",
