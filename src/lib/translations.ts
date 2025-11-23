@@ -147,6 +147,7 @@ export const translations = {
     },
     calendarEvent: {
       title: "Calendar Event",
+      eventName: "Event Name",
       createEvent: "Create New Event",
       editEvent: "Edit Event",
       eventType: "Event Type",
@@ -1008,6 +1009,7 @@ export const translations = {
     },
     calendarEvent: {
       title: "캘린더 이벤트",
+      eventName: "이벤트 이름",
       createEvent: "새 일정 만들기",
       editEvent: "일정 수정",
       eventType: "이벤트 타입",

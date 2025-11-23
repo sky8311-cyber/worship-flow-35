@@ -203,11 +203,11 @@ export function CalendarEventDialog({
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">{t("community.name")}</Label>
+            <Label htmlFor="title">{t("calendarEvent.eventName")}</Label>
             <Input
               id="title"
               {...register("title", { required: true })}
-              placeholder={t("calendarEvent.title")}
+              placeholder={t("calendarEvent.eventName")}
             />
             {errors.title && <p className="text-sm text-destructive">{t("common.error")}</p>}
           </div>
