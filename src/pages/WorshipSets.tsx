@@ -9,7 +9,7 @@ import { Edit, Trash2, Eye, Home, Plus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 export default function WorshipSets() {
   const navigate = useNavigate();

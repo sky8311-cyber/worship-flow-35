@@ -5,7 +5,7 @@ import { smoothScrollTo } from "@/lib/smoothScroll";
 import { useScrollObserver } from "@/hooks/useScrollObserver";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 export const LandingNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

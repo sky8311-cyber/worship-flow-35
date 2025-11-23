@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { Search, Users, ArrowLeft, Home } from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 export default function CommunitySearch() {
   const [searchQuery, setSearchQuery] = useState("");

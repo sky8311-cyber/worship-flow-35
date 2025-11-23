@@ -7,7 +7,7 @@ import { SongCard } from "@/components/SongCard";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, LayoutList, Home, Heart } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/kworship-logo.png";
 
 export default function FavoritesList() {
   const navigate = useNavigate();
