@@ -236,12 +236,28 @@ const SetBuilder = () => {
       const statusToSave = publishStatus || status;
       let setId = id;
 
+      // Explicitly map all fields to ensure they're saved correctly
       const dataToSave = {
-        ...formData,
-        worship_duration: formData.worship_duration ? parseInt(formData.worship_duration) : null,
+        // Required fields
+        date: formData.date,
+        service_name: formData.service_name,
+        community_id: formData.community_id,
+        
+        // Optional worship info fields
         service_time: formData.service_time || null,
+        target_audience: formData.target_audience || null,
+        worship_leader: formData.worship_leader || null,
+        band_name: formData.band_name || null,
+        scripture_reference: formData.scripture_reference || null,
+        theme: formData.theme || null,
+        worship_duration: formData.worship_duration ? parseInt(formData.worship_duration, 10) : null,
+        notes: formData.notes || null,
+        
+        // Status
         status: statusToSave,
       };
+      
+      console.log("Saving service_set with data:", dataToSave);
 
       if (!setId) {
         const { data, error } = await supabase
