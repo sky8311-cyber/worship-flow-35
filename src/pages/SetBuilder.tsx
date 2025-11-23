@@ -48,6 +48,7 @@ const SetBuilder = () => {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -71,6 +72,7 @@ const SetBuilder = () => {
     },
     enabled: !!id,
     refetchOnMount: "always",
+    refetchOnWindowFocus: false,
     staleTime: 0,
   });
 
@@ -136,8 +138,9 @@ const SetBuilder = () => {
     }
   }, [existingSet, user, isAdmin, navigate, id]);
 
+  // Load form data from existing set
   useEffect(() => {
-    if (existingSet) {
+    if (existingSet && !isLoading && !isSaving) {
       setFormData({
         date: existingSet.date,
         service_time: existingSet.service_time || "",
@@ -151,6 +154,7 @@ const SetBuilder = () => {
         worship_duration: existingSet.worship_duration?.toString() || "",
         notes: existingSet.notes || "",
       });
+      
       if (!statusInitialized) {
         setStatus(existingSet.status || "draft");
         setStatusInitialized(true);
@@ -164,16 +168,19 @@ const SetBuilder = () => {
           .eq("id", existingSet.id)
           .then(({ error }) => {
             if (!error) {
-              queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
-              queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
-              queryClient.refetchQueries({ queryKey: ["service-set", existingSet.id] });
-              queryClient.refetchQueries({ queryKey: ["set-songs", existingSet.id] });
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
+                queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
+              }, 100);
             }
           });
       }
     }
+  }, [existingSet, isLoading, isSaving, statusInitialized, user]);
 
-    if (existingSetSongs) {
+  // Load songs separately to prevent interference
+  useEffect(() => {
+    if (existingSetSongs && !isSaving) {
       setSongs(
         existingSetSongs.map((ss: any) => ({
           ...ss,
@@ -181,7 +188,7 @@ const SetBuilder = () => {
         }))
       );
     }
-  }, [existingSet, existingSetSongs, user, queryClient, statusInitialized]);
+  }, [existingSetSongs, isSaving]);
 
   const handlePublishToggle = () => {
     if (status === "draft") {
@@ -288,6 +295,9 @@ const SetBuilder = () => {
 
       return setId;
     },
+    onMutate: () => {
+      setIsSaving(true);
+    },
     onSuccess: (setId, publishStatus) => {
       toast.success(t("setBuilder.successSave"));
       
@@ -296,10 +306,13 @@ const SetBuilder = () => {
         setStatus(publishStatus);
       }
       
-      queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
-      queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
-      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+      // Delay invalidation to ensure DB transaction completes
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+        queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
+        queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+        queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+      }, 100);
       
       if (!id) {
         navigate(`/set-builder/${setId}`);
@@ -307,6 +320,9 @@ const SetBuilder = () => {
     },
     onError: (error: any) => {
       toast.error("저장 실패: " + error.message);
+    },
+    onSettled: () => {
+      setIsSaving(false);
     },
   });
 
