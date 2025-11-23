@@ -40,7 +40,7 @@ export function SongLibraryWidget({ onAddSong, onImport }: SongLibraryWidgetProp
   });
 
   return (
-    <Card className="h-full">
+    <Card className="h-full min-h-[520px]">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center gap-2">
           <Music className="w-4 h-4" />
