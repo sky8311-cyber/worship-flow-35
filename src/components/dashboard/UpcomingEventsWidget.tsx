@@ -25,16 +25,6 @@ interface ServiceSet {
   worship_leader?: string | null;
   status: "draft" | "published";
   created_by: string;
-  theme?: string | null;
-  scripture_reference?: string | null;
-  songs?: Array<{
-    id: string;
-    position: number;
-    key?: string | null;
-    song: {
-      title: string;
-    };
-  }>;
 }
 
 interface CalendarEvent {
@@ -61,13 +51,6 @@ interface UnifiedEvent {
   onClick?: () => void;
   created_by?: string;
   status?: "draft" | "published";
-  worshipLeader?: string | null;
-  scriptureTheme?: string | null;
-  songs?: Array<{
-    position: number;
-    title: string;
-    key?: string | null;
-  }>;
 }
 
 interface UpcomingEventsWidgetProps {
@@ -234,7 +217,7 @@ export function UpcomingEventsWidget({
 
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [
-    ...(sets?.map((set: ServiceSet) => ({
+    ...(sets?.map((set: any) => ({
       id: set.id,
       type: "service_set" as const,
       date: set.date,
@@ -245,13 +228,6 @@ export function UpcomingEventsWidget({
       badgeLabel: set.status === "published" ? "게시됨" : "임시저장",
       created_by: set.created_by,
       status: set.status,
-      worshipLeader: set.worship_leader,
-      scriptureTheme: set.scripture_reference || set.theme,
-      songs: set.songs?.sort((a, b) => a.position - b.position).map(s => ({
-        position: s.position,
-        title: s.song.title,
-        key: s.key
-      })),
     })) || []),
     ...(calendarEvents?.map((event) => {
       const iconMap = {
@@ -303,54 +279,30 @@ export function UpcomingEventsWidget({
                   <div key={`${event.type}-${event.id}`} className="relative group">
                     <Link
                       to={event.linkTo}
-                      className="block p-4 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                     >
-                      <div className="space-y-2">
-                        {/* Header with date */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          <span>{format(new Date(event.date), "yyyy년 M월 d일")}</span>
+                      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                        <span className="text-xs font-medium">
+                          {format(new Date(event.date), "MMM")}
+                        </span>
+                        <span className="text-lg font-bold">
+                          {format(new Date(event.date), "d")}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {event.icon}
+                          <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                            {event.title}
+                          </p>
                         </div>
-                        
-                        {/* Service name */}
-                        <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : ''}`}>
-                          {event.title}
-                        </h3>
-
-                        {/* Worship leader */}
-                        {event.worshipLeader && (
-                          <p className="text-sm text-muted-foreground">
-                            예배인도자: {event.worshipLeader}
+                        {event.subtitle && (
+                          <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                            {event.subtitle}
                           </p>
                         )}
-
-                        {/* Scripture/Theme */}
-                        {event.scriptureTheme && (
-                          <p className="text-sm text-muted-foreground">
-                            본문/설교제목: {event.scriptureTheme}
-                          </p>
-                        )}
-
-                        {/* Song list */}
-                        {event.songs && event.songs.length > 0 && (
-                          <div className="space-y-1 pt-2">
-                            <p className="text-xs font-medium text-muted-foreground">곡 목록:</p>
-                            {event.songs.slice(0, 3).map((song, idx) => (
-                              <p key={idx} className="text-sm text-muted-foreground">
-                                {song.position}. {song.title} {song.key ? `(${song.key})` : ''}
-                              </p>
-                            ))}
-                            {event.songs.length > 3 && (
-                              <p className="text-xs text-muted-foreground italic">
-                                +{event.songs.length - 3}곡 더보기
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Status badge */}
                         {event.badgeLabel && (
-                          <Badge variant="secondary" className="text-xs mt-2">
+                          <Badge variant="secondary" className="text-xs mt-1">
                             {event.badgeLabel}
                           </Badge>
                         )}
