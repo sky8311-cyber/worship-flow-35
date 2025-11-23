@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart, Languages } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart, Languages, MoreHorizontal, Trash2, Lock, Link as LinkIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +57,76 @@ const Dashboard = () => {
     await signOut();
     toast.success(t("dashboard.logout"));
     navigate("/login");
+  };
+
+  // Mutations for worship set actions
+  const deleteMutation = useMutation({
+    mutationFn: async (setId: string) => {
+      const { error } = await supabase
+        .from("service_sets")
+        .delete()
+        .eq("id", setId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("워십세트가 삭제되었습니다");
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast.error("워십세트 삭제에 실패했습니다");
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "draft" | "published" }) => {
+      const newStatus = status === "draft" ? "published" : "draft";
+      const { error } = await supabase
+        .from("service_sets")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      toast.success("상태가 변경되었습니다");
+    },
+    onError: (error) => {
+      console.error("Publish toggle error:", error);
+      toast.error("상태 변경에 실패했습니다");
+    },
+  });
+
+  const handleTogglePublish = async (set: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    publishMutation.mutate({ id: set.id, status: set.status });
+  };
+
+  const handleShareLink = async (set: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const bandViewUrl = `${window.location.origin}/band-view/${set.id}`;
+    await navigator.clipboard.writeText(bandViewUrl);
+    toast.success("링크가 복사되었습니다");
+  };
+
+  const handleDelete = async (setId: string, setName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (confirm(`"${setName}" 워십세트를 삭제하시겠습니까?`)) {
+      deleteMutation.mutate(setId);
+    }
+  };
+
+  const isPastDate = (dateString: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(dateString);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
   };
   const {
     data: upcomingSets,
@@ -355,25 +425,72 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {isLoading ? <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div> : upcomingSets && upcomingSets.length > 0 ? <div className="grid gap-3 md:grid-cols-2">
-                      {upcomingSets.slice(0, 4).map(set => <Link key={set.id} to={`/set-builder/${set.id}`}>
-                          <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <h3 className="font-semibold text-sm truncate">{set.service_name}</h3>
-                              <Badge variant="secondary" className="shrink-0 text-xs">
-                                <Calendar className="w-3 h-3 mr-1" />
-                                {format(new Date(set.date), "M/d", {
-                            locale: dateLocale
-                          })}
-                              </Badge>
-                            </div>
-                            {set.worship_leader && <p className="text-xs text-muted-foreground truncate">
-                                {set.worship_leader}
-                              </p>}
-                            {set.theme && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {set.theme}
-                              </p>}
+                      {upcomingSets.slice(0, 4).map(set => {
+                        const isPast = isPastDate(set.date);
+                        const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
+                        
+                        return (
+                          <div key={set.id} className="relative group">
+                            <Link to={`/set-builder/${set.id}`}>
+                              <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <h3 className={`font-semibold text-sm truncate ${isPast ? 'text-muted-foreground' : ''}`}>{set.service_name}</h3>
+                                  <Badge variant="secondary" className="shrink-0 text-xs">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {format(new Date(set.date), "M/d", { locale: dateLocale })}
+                                  </Badge>
+                                </div>
+                                {set.worship_leader && <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    {set.worship_leader}
+                                  </p>}
+                                {set.theme && <p className={`text-xs mt-1 line-clamp-2 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    {set.theme}
+                                  </p>}
+                              </div>
+                            </Link>
+                            {canManage && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute top-2 right-2 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={(e) => handleTogglePublish(set, e)}>
+                                    {set.status === "draft" ? (
+                                      <>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        게시하기
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Lock className="mr-2 h-4 w-4" />
+                                        임시저장으로 전환
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
+                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                    링크 복사
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={(e) => handleDelete(set.id, set.service_name, e)}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    삭제
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
-                        </Link>)}
+                        );
+                      })}
                     </div> : <div className="text-center py-12">
                       <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                       <p className="text-muted-foreground mb-4">{t("dashboard.noUpcoming")}</p>
@@ -436,20 +553,67 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 {upcomingSets && upcomingSets.length > 0 ? <div className="space-y-3">
-                    {upcomingSets.slice(0, 5).map(set => <Link key={set.id} to={`/set-builder/${set.id}`}>
-                        <div className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-sm truncate">{set.service_name}</h3>
-                              <p className="text-xs text-muted-foreground">
-                                {format(new Date(set.date), "M/d (EEE)", {
-                            locale: dateLocale
-                          })}
-                              </p>
+                    {upcomingSets.slice(0, 5).map(set => {
+                      const isPast = isPastDate(set.date);
+                      const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
+                      
+                      return (
+                        <div key={set.id} className="relative group">
+                          <Link to={`/set-builder/${set.id}`}>
+                            <div className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className={`font-semibold text-sm truncate ${isPast ? 'text-muted-foreground' : ''}`}>{set.service_name}</h3>
+                                  <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    {format(new Date(set.date), "M/d (EEE)", { locale: dateLocale })}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          </Link>
+                          {canManage && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute top-2 right-2 h-8 w-8"
+                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => handleTogglePublish(set, e)}>
+                                  {set.status === "draft" ? (
+                                    <>
+                                      <Upload className="mr-2 h-4 w-4" />
+                                      게시하기
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock className="mr-2 h-4 w-4" />
+                                      임시저장으로 전환
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
+                                  <LinkIcon className="mr-2 h-4 w-4" />
+                                  링크 복사
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => handleDelete(set.id, set.service_name, e)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  삭제
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
-                      </Link>)}
+                      );
+                    })}
                   </div> : <p className="text-sm text-muted-foreground text-center py-8">{t("dashboard.noUpcoming")}</p>}
               </CardContent>
             </Card>
@@ -468,7 +632,13 @@ const Dashboard = () => {
           <TabsContent value="communities" className="space-y-4 mt-4">
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={10} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
-            <UpcomingEventsWidget sets={upcomingSets || []} maxVisible={5} />
+            <UpcomingEventsWidget 
+              sets={upcomingSets || []} 
+              maxVisible={5}
+              currentUserId={user?.id}
+              isAdmin={isAdmin}
+              isCommunityLeader={isCommunityLeaderInAnyCommunity}
+            />
           </TabsContent>
 
           <TabsContent value="library" className="mt-4">
