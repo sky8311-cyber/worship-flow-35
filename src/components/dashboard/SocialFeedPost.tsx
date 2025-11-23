@@ -54,6 +54,32 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   const [editContent, setEditContent] = useState(item.content || "");
   const queryClient = useQueryClient();
 
+  // Worship set notifications should be simple one-line text, not full cards
+  if (item.type === "worship_set") {
+    const dateText = new Date(item.set.date).toLocaleDateString(
+      language === "ko" ? "ko-KR" : "en-US"
+    );
+
+    return (
+      <div className="flex items-center gap-3 py-3 px-4 text-sm text-muted-foreground border-b">
+        <Music className="w-4 h-4 shrink-0" />
+        <p className="flex-1">
+          <span className="font-semibold text-foreground">{item.community.name}</span>
+          {language === "ko" 
+            ? ` 워십세트가 "${item.set.service_name}" (${dateText})로 업데이트되었습니다. `
+            : ` updated a new Worship Set "${item.set.service_name}" (${dateText}). `
+          }
+          <button 
+            onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
+            className="text-primary hover:underline font-medium"
+          >
+            {language === "ko" ? "더보기" : "Read More"}
+          </button>
+        </p>
+      </div>
+    );
+  }
+
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (item.type === "community_post") {
@@ -121,32 +147,6 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
             <ImageGrid images={item.images} />
           )}
         </>
-      );
-    }
-
-    if (item.type === "worship_set") {
-      const dateText = new Date(item.set.date).toLocaleDateString(
-        language === "ko" ? "ko-KR" : "en-US"
-      );
-
-      return (
-        <div className="p-4 bg-accent/40 rounded-lg space-y-2">
-          <p className="text-sm">
-            <span className="font-semibold">{item.community.name}</span>{" "}
-            워십세트가{" "}
-            <span className="font-semibold">"{item.set.service_name}"</span>{" "}
-            ({dateText})로 업데이트되었습니다.
-          </p>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
-            >
-              자세히 보기
-            </Button>
-          </div>
-        </div>
       );
     }
 

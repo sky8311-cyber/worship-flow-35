@@ -241,7 +241,7 @@ export function UpcomingEventsWidget({
                   <div key={`${event.type}-${event.id}`} className="relative group">
                     <Link
                       to={event.linkTo}
-                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                     >
                       <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
                         <span className="text-xs font-medium">
@@ -251,7 +251,7 @@ export function UpcomingEventsWidget({
                           {format(new Date(event.date), "d")}
                         </span>
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-10">
                         <div className="flex items-center gap-2 mb-1">
                           {event.icon}
                           <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
@@ -313,7 +313,7 @@ export function UpcomingEventsWidget({
                   <div
                     key={`${event.type}-${event.id}`}
                     onClick={event.onClick}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                   >
                     <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
                       <span className="text-xs font-medium">
