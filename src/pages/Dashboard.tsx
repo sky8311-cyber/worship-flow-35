@@ -19,7 +19,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SetImportDialog } from "@/components/SetImportDialog";
 import { SongDialog } from "@/components/SongDialog";
-import logo from "@/assets/kworship-logo.png";
+import logoMobile from "@/assets/kworship-logo-mobile.png";
+import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 // New Dashboard Components
 import { SongLibraryWidget } from "@/components/dashboard/SongLibraryWidget";
@@ -221,9 +222,14 @@ const Dashboard = () => {
               </Breadcrumb>
             </div>
             
-            {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-start col-start-1 md:col-start-2">
-              <img src={logo} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
+            {/* Center: Logo - Desktop */}
+            <Link to="/dashboard" className="hidden md:block justify-self-center col-start-2">
+              <img src={logoDesktop} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
+            </Link>
+            
+            {/* Left: Logo - Mobile */}
+            <Link to="/dashboard" className="md:hidden justify-self-start col-start-1">
+              <img src={logoMobile} alt="K-Worship" className="h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
             </Link>
             
             {/* Right: Navigation Items */}
