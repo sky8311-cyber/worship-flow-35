@@ -9,7 +9,7 @@ import { Edit, Trash2, Eye, Home, Plus } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import logo from "@/assets/kworship-logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -81,8 +81,8 @@ export default function WorshipSets() {
               <span className="text-sm text-muted-foreground hidden md:inline">/ 워십세트</span>
             </div>
             
-            <Link to="/dashboard" className="flex justify-center">
-              <img src={logo} alt="K-Worship" className="h-20 cursor-pointer" />
+            <Link to="/dashboard" className="flex justify-center col-start-2">
+              <HeaderLogo />
             </Link>
             
             <div className="flex justify-end gap-2">

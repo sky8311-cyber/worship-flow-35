@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Users, ListChecks, Building2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
-import logo from "@/assets/kworship-logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 export const AdminNav = () => {
   const location = useLocation();
@@ -35,12 +35,8 @@ export const AdminNav = () => {
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-4 py-4">
-          <img 
-            src={logo} 
-            alt="K-Worship" 
-            className="h-16 w-auto"
-          />
-          <Link 
+          <HeaderLogo />
+          <Link
             to="/dashboard"
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >

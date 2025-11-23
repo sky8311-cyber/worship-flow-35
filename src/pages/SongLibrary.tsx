@@ -20,7 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { Home } from "lucide-react";
-import logo from "@/assets/kworship-logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
@@ -311,11 +311,7 @@ const SongLibrary = () => {
             
             {/* Center: Logo */}
             <Link to="/dashboard" className="justify-self-center col-start-2">
-              <img 
-                src={logo} 
-                alt="K-Worship" 
-                className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity"
-              />
+              <HeaderLogo />
             </Link>
             
             {/* Right: Navigation Items */}

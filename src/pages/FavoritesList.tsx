@@ -7,7 +7,7 @@ import { SongCard } from "@/components/SongCard";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, LayoutList, Home, Heart } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import logo from "@/assets/kworship-logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 export default function FavoritesList() {
   const navigate = useNavigate();
@@ -47,8 +47,8 @@ export default function FavoritesList() {
               <span className="text-sm text-muted-foreground hidden md:inline">/ 즐겨찾기</span>
             </div>
             
-            <Link to="/dashboard" className="flex justify-center">
-              <img src={logo} alt="K-Worship" className="h-20 cursor-pointer" />
+            <Link to="/dashboard" className="flex justify-center col-start-2">
+              <HeaderLogo />
             </Link>
             
             <div className="flex justify-end gap-2">

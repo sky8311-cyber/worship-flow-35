@@ -5,7 +5,7 @@ import { smoothScrollTo } from "@/lib/smoothScroll";
 import { useScrollObserver } from "@/hooks/useScrollObserver";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import logo from "@/assets/kworship-logo.png";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 export const LandingNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -40,11 +40,7 @@ export const LandingNav = () => {
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="focus:outline-none"
             >
-              <img 
-                src={logo} 
-                alt="K-Worship" 
-                className="h-20 w-auto"
-              />
+              <HeaderLogo />
             </button>
           </div>
 

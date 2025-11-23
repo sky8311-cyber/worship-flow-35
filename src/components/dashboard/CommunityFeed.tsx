@@ -14,11 +14,31 @@ interface Author {
   avatar_url: string | null;
 }
 
-export function CommunityFeed() {
+interface Profile {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  ministry_role: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
+}
+
+interface CommunityFeedProps {
+  userStats?: {
+    sets: number;
+    communities: number;
+    collaborations: number;
+  };
+}
+
+export function CommunityFeed({ userStats }: CommunityFeedProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<Author | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [selectedProfileStats, setSelectedProfileStats] = useState<any>(null);
 
   const { data: feedItems, isLoading } = useQuery({
     queryKey: ["unified-community-feed", user?.id],
@@ -115,9 +135,27 @@ export function CommunityFeed() {
     enabled: !!user,
   });
 
-  const openProfile = (author: Author) => {
-    setSelectedProfile(author);
-    setProfileDialogOpen(true);
+  const openProfile = async (author: Author) => {
+    // If clicking own profile, use existing userStats
+    if (author.id === user?.id && userStats) {
+      setSelectedProfile(null); // No override, will use auth profile
+      setSelectedProfileStats(userStats);
+      setProfileDialogOpen(true);
+      return;
+    }
+
+    // Fetch full profile for other users
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", author.id)
+      .maybeSingle();
+    
+    if (!error && data) {
+      setSelectedProfile(data as Profile);
+      setSelectedProfileStats(null); // Don't show stats for other users
+      setProfileDialogOpen(true);
+    }
   };
 
   if (isLoading) {
@@ -155,6 +193,8 @@ export function CommunityFeed() {
       <ProfileDialog
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
+        profileOverride={selectedProfile || undefined}
+        stats={selectedProfileStats}
       />
     </>
   );
