@@ -62,10 +62,12 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     return (
       <div className="py-6 px-4 border-b">
-        <div className="flex items-center justify-center gap-3">
-          <Music className="w-4 h-4 shrink-0" />
-          <div className="text-center text-sm">
-            <p>
+        <div className="flex items-start gap-4">
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
+            <Music className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm">
               <span className="text-foreground">{item.community.name}</span>
               {language === "ko" 
                 ? ` "` 
@@ -173,17 +175,19 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     if (item.type === "calendar_event") {
       return (
-        <div className="flex items-start gap-4 py-6 px-4 border-b">
-          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
-            <Calendar className="w-6 h-6 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground text-base">
-              {item.event.title}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {new Date(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-            </p>
+        <div className="flex items-center justify-center py-6 px-4 border-b">
+          <div className="flex items-start gap-4 max-w-md">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
+              <Calendar className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground text-base">
+                {item.event.title}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {new Date(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
+              </p>
+            </div>
           </div>
         </div>
       );
