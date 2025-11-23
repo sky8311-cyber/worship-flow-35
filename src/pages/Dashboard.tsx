@@ -328,10 +328,10 @@ const Dashboard = () => {
     },
     enabled: !!user
   });
-  return <div className="min-h-screen bg-gradient-soft">
-      {/* Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
+   return <div className="min-h-screen bg-gradient-soft">
+       {/* Header */}
+       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+         <div className="container mx-auto px-4 py-4">
           <div className="grid grid-cols-3 items-center gap-4">
             {/* Left: Breadcrumb */}
             <div className="justify-self-start hidden md:block">
@@ -478,7 +478,7 @@ const Dashboard = () => {
                         
                         return (
                           <div key={set.id} className="relative group">
-                            <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className={`block p-4 border rounded-lg transition-colors hover:bg-muted/30 ${isPast ? "opacity-70" : ""}`}>
+                            <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className={`block p-4 border rounded-lg transition-colors hover:bg-muted/50 ${isPast ? "opacity-70" : ""}`}>
                               <div className="space-y-2">
                                 {/* Service Name - Priority */}
                                 <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : ''}`}>

@@ -232,6 +232,7 @@ const SetBuilder = () => {
       const dataToSave = {
         ...formData,
         worship_duration: formData.worship_duration ? parseInt(formData.worship_duration) : null,
+        service_time: formData.service_time || null,
         status: statusToSave,
       };
 
