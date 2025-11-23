@@ -134,7 +134,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
       onClose();
     }}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 pr-12">
           <DialogTitle>{t("songSelector.title")}</DialogTitle>
           
           <div className="flex gap-2">
