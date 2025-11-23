@@ -5,19 +5,30 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; userName: string }>({
+    open: false,
+    userId: "",
+    userName: "",
+  });
+  const [resetDialog, setResetDialog] = useState<{ open: boolean; email: string; userName: string }>({
+    open: false,
+    email: "",
+    userName: "",
+  });
   
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -81,6 +92,73 @@ const AdminUsers = () => {
       toast.error(t("admin.users.roleRemoveError"));
     },
   });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete user");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(t("admin.users.deleteSuccess"));
+      setDeleteDialog({ open: false, userId: "", userName: "" });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("admin.users.deleteError"));
+    },
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to send reset email");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success(t("admin.users.resetPasswordSuccess"));
+      setResetDialog({ open: false, email: "", userName: "" });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || t("admin.users.resetPasswordError"));
+    },
+  });
   
   const filteredUsers = users?.filter(user => 
     user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,7 +210,8 @@ const AdminUsers = () => {
                     <TableHead>{t("admin.users.name")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
-                    <TableHead>{t("admin.users.actions")}</TableHead>
+                    <TableHead>{t("admin.users.roleManagement")}</TableHead>
+                    <TableHead>{t("admin.users.userActions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -158,7 +237,7 @@ const AdminUsers = () => {
                           {format(new Date(user.created_at), "PPP", { locale: dateLocale })}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
                             {!hasAdmin && (
                               <Button
                                 size="sm"
@@ -201,6 +280,26 @@ const AdminUsers = () => {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email })}
+                            >
+                              <KeyRound className="w-3 h-3 mr-1" />
+                              {t("admin.users.resetPassword")}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email })}
+                            >
+                              <Trash2 className="w-3 h-3 mr-1" />
+                              {t("admin.users.delete")}
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -210,6 +309,45 @@ const AdminUsers = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.deleteConfirmDescription", { name: deleteDialog.userName })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteUserMutation.mutate(deleteDialog.userId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("admin.users.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Password Confirmation Dialog */}
+      <AlertDialog open={resetDialog.open} onOpenChange={(open) => setResetDialog({ ...resetDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
+              {t("admin.users.sendResetEmail")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
