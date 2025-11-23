@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,41 +38,19 @@ const SignUpWorshipLeader = () => {
 
     setLoading(true);
 
-    // First, sign up the user
-    const { error: signUpError } = await signUp(formData.email, formData.password, formData.fullName, formData.phone);
+    // Sign up with worship_leader user type (role assigned server-side)
+    const { error: signUpError } = await signUp(
+      formData.email, 
+      formData.password, 
+      formData.fullName, 
+      formData.phone,
+      'worship_leader'
+    );
     
     if (signUpError) {
       toast({
         title: t("auth.error"),
         description: signUpError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast({
-        title: t("auth.error"),
-        description: "Failed to get user information",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-
-    // Add worship_leader role
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .insert({ user_id: user.id, role: "worship_leader" });
-
-    if (roleError) {
-      toast({
-        title: t("auth.error"),
-        description: roleError.message,
         variant: "destructive",
       });
       setLoading(false);

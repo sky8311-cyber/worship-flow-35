@@ -36,7 +36,7 @@ const SignUp = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone);
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone, 'member');
     
     if (error) {
       toast({
