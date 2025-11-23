@@ -152,7 +152,15 @@ const Dashboard = () => {
       
       let query = supabase
         .from("service_sets")
-        .select("*")
+        .select(`
+          *,
+          songs:set_songs(
+            id,
+            position,
+            key,
+            song:songs(title)
+          )
+        `)
         .in("community_id", communityIds)
         .gte("date", dateThreshold)
         .order("date", { ascending: true })
