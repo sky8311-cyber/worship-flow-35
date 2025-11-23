@@ -299,12 +299,12 @@ export default function CommunityManagement() {
                               </Badge>
                             )}
                             {isWorshipLeader && (
-                              <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-100">
+                              <Badge className="bg-primary/10 text-primary dark:bg-primary/20">
                                 {t("community.worshipLeader")}
                               </Badge>
                             )}
                             {isCommunityLeader && !isWorshipLeader && (
-                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100">
+                              <Badge className="bg-accent/10 text-accent dark:bg-accent/20">
                                 {t("community.communityLeader")}
                               </Badge>
                             )}
