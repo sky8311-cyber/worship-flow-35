@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
@@ -280,17 +281,18 @@ const SetBuilder = () => {
 
       return setId;
     },
-    onSuccess: (setId) => {
+    onSuccess: (setId, publishStatus) => {
       toast.success(t("setBuilder.successSave"));
+      
+      // Directly update status state to reflect the saved status
+      if (publishStatus) {
+        setStatus(publishStatus);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      
-      // Update status state to reflect the saved status
-      if (id) {
-        // Refetch the set to get the latest status
-        queryClient.invalidateQueries({ queryKey: ["service-set", id] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
       
       if (!id) {
         navigate(`/set-builder/${setId}`);
@@ -391,45 +393,85 @@ const SetBuilder = () => {
             {/* Right: Navigation Items */}
             <div className="justify-self-end flex flex-wrap gap-2">
               {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  title={t("dashboard.adminMenu")}
-                >
-                  <Link to="/admin">
-                    <Shield className="h-5 w-5" />
-                  </Link>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link to="/admin">
+                          <Shield className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t("dashboard.adminMenu")}</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleLogout}
-                title={t("dashboard.logout")}
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={handleLogout}>
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("dashboard.logout")}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               {id && (
-                <Button variant="outline" size="sm" onClick={handleCopyLink} className="text-xs sm:text-sm">
-                  <Share2 className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">팀 링크</span>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" onClick={handleCopyLink}>
+                        <Share2 className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>팀 링크 복사</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
-              <Button size="sm" onClick={() => saveSetMutation.mutate("draft")} disabled={saveSetMutation.isPending} className="text-xs sm:text-sm">
-                <Save className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                {saveSetMutation.isPending ? "저장 중..." : "저장"}
-              </Button>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon"
+                      onClick={() => saveSetMutation.mutate("draft")} 
+                      disabled={saveSetMutation.isPending}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Save className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {saveSetMutation.isPending ? "저장 중..." : "저장"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               {id && (
-                <Button 
-                  size="sm" 
-                  variant={status === "published" ? "destructive" : "default"}
-                  onClick={handlePublishToggle}
-                  disabled={saveSetMutation.isPending}
-                  className="text-xs sm:text-sm"
-                >
-                  {status === "published" ? "게시 취소" : "게시하기"}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        size="icon"
+                        variant={status === "published" ? "destructive" : "default"}
+                        onClick={handlePublishToggle}
+                        disabled={saveSetMutation.isPending}
+                        className={status === "published" ? "" : "bg-purple-600 hover:bg-purple-700 text-white"}
+                      >
+                        {status === "published" ? (
+                          <Lock className="h-5 w-5" />
+                        ) : (
+                          <Upload className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {status === "published" ? "게시 취소" : "게시하기"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </div>
