@@ -128,6 +128,13 @@ const Dashboard = () => {
     eventDate.setHours(0, 0, 0, 0);
     return eventDate < today;
   };
+
+  const getDayOfWeek = (dateString: string) => {
+    const date = new Date(dateString);
+    const dayIndex = date.getDay();
+    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    return t(`common.dayOfWeek.${days[dayIndex]}` as any);
+  };
   const {
     data: upcomingSets,
     isLoading
@@ -229,6 +236,45 @@ const Dashboard = () => {
       return communitiesWithDetails;
     },
     enabled: !!user
+  });
+
+  // Fetch songs for worship sets in dashboard
+  const { data: setSongsData } = useQuery({
+    queryKey: ["dashboard-set-songs", upcomingSets?.map(s => s.id)],
+    queryFn: async () => {
+      if (!upcomingSets || upcomingSets.length === 0) return {};
+      
+      const setIds = upcomingSets.map(s => s.id);
+      const { data: setSongs } = await supabase
+        .from("set_songs")
+        .select(`
+          service_set_id,
+          position,
+          key,
+          songs (
+            id,
+            title
+          )
+        `)
+        .in("service_set_id", setIds)
+        .order("position", { ascending: true });
+
+      // Group songs by set_id
+      const grouped: Record<string, { position: number; title: string; key: string }[]> = {};
+      setSongs?.forEach((ss: any) => {
+        if (!grouped[ss.service_set_id]) {
+          grouped[ss.service_set_id] = [];
+        }
+        grouped[ss.service_set_id].push({
+          position: ss.position,
+          title: ss.songs?.title || "",
+          key: ss.key || ""
+        });
+      });
+
+      return grouped;
+    },
+    enabled: !!upcomingSets && upcomingSets.length > 0,
   });
 
   // Fetch user stats for profile card
@@ -428,26 +474,60 @@ const Dashboard = () => {
                       {upcomingSets.slice(0, 4).map(set => {
                         const isPast = isPastDate(set.date);
                         const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
+                        const songs = setSongsData?.[set.id] || [];
                         
                         return (
                           <div key={set.id} className="relative group">
-                            <Link to={`/set-builder/${set.id}`}>
-                              <div className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors cursor-pointer">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <h3 className={`font-semibold text-sm truncate ${isPast ? 'text-muted-foreground' : ''}`}>{set.service_name}</h3>
-                                  <Badge variant="secondary" className="shrink-0 text-xs">
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    {format(new Date(set.date), "M/d", { locale: dateLocale })}
-                                  </Badge>
-                                </div>
-                                {set.worship_leader && <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                    {set.worship_leader}
-                                  </p>}
-                                {set.theme && <p className={`text-xs mt-1 line-clamp-2 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                    {set.theme}
-                                  </p>}
+                            <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className={`block p-4 border rounded-lg transition-colors hover:bg-muted/30 ${isPast ? "opacity-70" : ""}`}>
+                              <div className="space-y-2">
+                                {/* Service Name - Priority */}
+                                <h3 className={`text-base font-semibold ${isPast ? 'text-muted-foreground' : ''}`}>
+                                  {set.service_name}
+                                </h3>
+                                
+                                {/* Date with Day of Week - Priority */}
+                                <p className={`text-sm ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                  {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                </p>
+                                
+                                {/* Worship Leader - Priority */}
+                                {set.worship_leader && (
+                                  <p className={`text-sm ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    예배인도자: {set.worship_leader}
+                                  </p>
+                                )}
+                                
+                                {/* Scripture / Theme */}
+                                {(set.scripture_reference || set.theme) && (
+                                  <div className={`text-sm space-y-1 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    {set.scripture_reference && (
+                                      <p>본문: {set.scripture_reference}</p>
+                                    )}
+                                    {set.theme && (
+                                      <p>설교제목: {set.theme}</p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Song List */}
+                                {songs.length > 0 && (
+                                  <div className={`text-sm space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    <p className="font-medium mb-1">곡 목록:</p>
+                                    {songs.map((song, idx) => (
+                                      <p key={idx}>
+                                        {song.position}. {song.title} {song.key && `(${song.key})`}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {/* Status Badge */}
+                                <Badge variant={set.status === "published" ? "default" : "secondary"} className="text-xs mt-2">
+                                  {set.status === "published" ? t("setBuilder.status.published") : t("setBuilder.status.draft")}
+                                </Badge>
                               </div>
                             </Link>
+
                             {canManage && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -457,33 +537,31 @@ const Dashboard = () => {
                                     className="absolute top-2 right-2 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                                   >
-                                    <MoreHorizontal className="h-4 w-4" />
+                                    <MoreHorizontal className="w-4 h-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={(e) => handleTogglePublish(set, e)}>
                                     {set.status === "draft" ? (
                                       <>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        게시하기
+                                        <Upload className="w-4 h-4 mr-2" /> 게시하기
                                       </>
                                     ) : (
                                       <>
-                                        <Lock className="mr-2 h-4 w-4" />
-                                        임시저장으로 전환
+                                        <Lock className="w-4 h-4 mr-2" /> 비공개로 전환
                                       </>
                                     )}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
-                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                    <LinkIcon className="w-4 h-4 mr-2" />
                                     링크 복사
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={(e) => handleDelete(set.id, set.service_name, e)}
                                     className="text-destructive"
                                   >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    삭제
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    {t("common.delete")}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -551,23 +629,58 @@ const Dashboard = () => {
                     </Button>}
                 </div>
               </CardHeader>
-              <CardContent>
-                {upcomingSets && upcomingSets.length > 0 ? <div className="space-y-3">
+                <CardContent>
+                  {upcomingSets && upcomingSets.length > 0 ? <div className="space-y-3">
                     {upcomingSets.slice(0, 5).map(set => {
                       const isPast = isPastDate(set.date);
                       const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
+                      const songs = setSongsData?.[set.id] || [];
                       
                       return (
                         <div key={set.id} className="relative group">
-                          <Link to={`/set-builder/${set.id}`}>
-                            <div className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className={`font-semibold text-sm truncate ${isPast ? 'text-muted-foreground' : ''}`}>{set.service_name}</h3>
+                          <Link to={set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`} className="block">
+                            <div className={`p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors ${isPast ? 'opacity-70' : ''}`}>
+                              <div className="space-y-2">
+                                {/* Service Name - Priority */}
+                                <h3 className={`font-semibold text-sm ${isPast ? 'text-muted-foreground' : ''}`}>
+                                  {set.service_name}
+                                </h3>
+                                
+                                {/* Date with Day of Week - Priority */}
+                                <p className={`text-xs ${isPast ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                  {format(new Date(set.date), "yyyy.MM.dd")} ({getDayOfWeek(set.date)})
+                                </p>
+                                
+                                {/* Worship Leader - Priority */}
+                                {set.worship_leader && (
                                   <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                    {format(new Date(set.date), "M/d (EEE)", { locale: dateLocale })}
+                                    예배인도자: {set.worship_leader}
                                   </p>
-                                </div>
+                                )}
+                                
+                                {/* Scripture / Theme */}
+                                {(set.scripture_reference || set.theme) && (
+                                  <div className={`text-xs space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    {set.scripture_reference && (
+                                      <p>본문: {set.scripture_reference}</p>
+                                    )}
+                                    {set.theme && (
+                                      <p>설교제목: {set.theme}</p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Song List */}
+                                {songs.length > 0 && (
+                                  <div className={`text-xs space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                                    <p className="font-medium">곡 목록:</p>
+                                    {songs.map((song, idx) => (
+                                      <p key={idx}>
+                                        {song.position}. {song.title} {song.key && `(${song.key})`}
+                                      </p>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </Link>
