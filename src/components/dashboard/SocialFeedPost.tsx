@@ -61,21 +61,42 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     );
 
     return (
-      <div className="flex items-center justify-center gap-3 py-6 px-4 text-sm text-muted-foreground border-b">
-        <Music className="w-4 h-4 shrink-0" />
-        <p className="text-center">
-          <span className="font-semibold text-foreground">{item.community.name}</span>
-          {language === "ko" 
-            ? ` 워십세트가 "${item.set.service_name}" (${dateText})로 업데이트되었습니다. `
-            : ` updated a new Worship Set "${item.set.service_name}" (${dateText}). `
-          }
-          <button 
-            onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
-            className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-80 transition-opacity ml-1"
-          >
-            {language === "ko" ? "더보기" : "Read More"}
-          </button>
-        </p>
+      <div className="py-6 px-4 border-b">
+        <div className="flex items-center justify-center gap-3">
+          <Music className="w-4 h-4 shrink-0" />
+          <div className="text-center text-sm">
+            <p>
+              <span className="text-foreground">{item.community.name}</span>
+              {language === "ko" 
+                ? ` "` 
+                : ` "`
+              }
+              <span className="font-bold text-foreground">{item.set.service_name}</span>
+              {` (`}
+              <span className="font-bold text-foreground">{dateText}</span>
+              {language === "ko" 
+                ? `)` 
+                : `)` 
+              }
+              {language === "ko" 
+                ? ` 워십세트가 업데이트되었습니다. `
+                : ` Worship Set was updated. `
+              }
+              <button 
+                onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-80 transition-opacity ml-1"
+              >
+                {language === "ko" ? "더보기" : "Read More"}
+              </button>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatDistanceToNow(new Date(item.created_at), {
+                addSuffix: true,
+                locale: language === "ko" ? ko : undefined,
+              })}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -152,15 +173,18 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     if (item.type === "calendar_event") {
       return (
-        <div className="flex items-center justify-center gap-3 py-6 px-4 text-sm text-muted-foreground border-b">
-          <Calendar className="w-4 h-4 shrink-0" />
-          <p className="text-center">
-            <span className="font-medium text-foreground">{item.event.title}</span>
-            <span className="mx-2">•</span>
-            <span className="text-muted-foreground">
+        <div className="flex items-start gap-4 py-6 px-4 border-b">
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
+            <Calendar className="w-6 h-6 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground text-base">
+              {item.event.title}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
               {new Date(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-            </span>
-          </p>
+            </p>
+          </div>
         </div>
       );
     }
