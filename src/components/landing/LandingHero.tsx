@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { smoothScrollTo } from "@/lib/smoothScroll";
-import { Music2, Youtube, FileText } from "lucide-react";
+import { Music2, Youtube, FileText, ChevronRight } from "lucide-react";
 
 const mockSongs = [
   {
@@ -106,52 +106,76 @@ export const LandingHero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative"
           >
-            <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 md:p-8">
+            <div className="bg-card border border-border rounded-lg shadow-lg p-4 md:p-5">
               {/* Set header */}
-              <div className="mb-6 pb-4 border-b border-border">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-xl md:text-2xl font-bold">주일 2부 예배</h3>
-                  <span className="text-xs md:text-sm text-muted-foreground">2025.11.17</span>
+              <div className="mb-4 pb-4 border-b border-border">
+                <div className="flex items-start gap-3">
+                  {/* Calendar date box - matching dashboard style */}
+                  <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                    <span className="text-xs font-medium">Nov</span>
+                    <span className="text-lg font-bold">17</span>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base md:text-lg font-semibold">주일 2부 예배</h3>
+                    <p className="text-xs text-muted-foreground">서울한빛교회</p>
+                  </div>
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground">서울한빛교회</p>
               </div>
 
               {/* Song list */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {mockSongs.map((song, index) => (
                   <motion.div 
-                    key={index} 
+                    key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + index * 0.1 }}
-                    className="group p-4 bg-background border border-border rounded-xl hover:shadow-md hover:border-primary/20 transition-all duration-300"
+                    className="flex items-center gap-3 p-2 bg-muted/30 rounded hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-base">{song.title}</span>
-                      <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1 rounded-full">
-                        {song.key}
-                      </span>
+                    {/* Thumbnail - matching dashboard 16:12 aspect ratio */}
+                    <div className="w-16 h-12 bg-gradient-to-br from-primary/20 to-accent/20 rounded overflow-hidden shrink-0 flex items-center justify-center">
+                      <Music2 className="w-5 h-5 text-primary/60" />
                     </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      {song.tags.map((tag, tagIndex) => (
-                        <span key={tagIndex} className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
+                    
+                    {/* Song info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{song.title}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="px-2 py-0.5 bg-primary/10 text-primary rounded">Key: {song.key}</span>
+                        {song.tags.slice(0, 2).map((tag, tagIndex) => (
+                          <span key={tagIndex}>#{tag}</span>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex gap-3 text-foreground/60">
-                      <FileText className="w-4 h-4" />
-                      <Youtube className="w-4 h-4" />
-                      <Music2 className="w-4 h-4" />
+                    
+                    {/* Resource icons - matching dashboard colors */}
+                    <div className="flex gap-1.5">
+                      <Youtube className="w-4 h-4 text-red-500" />
+                      <FileText className="w-4 h-4 text-blue-500" />
                     </div>
                   </motion.div>
                 ))}
               </div>
 
               {/* Set footer */}
-              <div className="mt-6 pt-4 border-t border-border text-xs md:text-sm text-muted-foreground flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <span>예배인도자: 홍길동</span>
-                <span>팀원 7명 • 공유됨</span>
+              <div className="mt-4 pt-3 border-t border-border">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>예배인도자: 홍길동</span>
+                  <span className="flex items-center gap-1">
+                    <span>팀원 7명</span>
+                    <span>•</span>
+                    <span>공유됨</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Expandable hint */}
+              <div className="mt-3 text-center">
+                <span className="text-xs text-primary cursor-pointer hover:underline inline-flex items-center gap-1">
+                  전체 보기 
+                  <ChevronRight className="w-3 h-3" />
+                </span>
               </div>
             </div>
           </motion.div>
