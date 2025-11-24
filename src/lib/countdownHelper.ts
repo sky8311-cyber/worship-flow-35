@@ -5,6 +5,20 @@ export interface CountdownResult {
   isPast: boolean;
 }
 
+// Helper to parse date strings in local timezone
+export function parseLocalDate(dateString: string): Date {
+  if (!dateString) return new Date();
+  
+  // Try ISO format first
+  if (dateString.includes('T')) {
+    return new Date(dateString);
+  }
+  
+  // Parse YYYY-MM-DD as local date
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function getCountdown(dateString: string, timeString?: string | null): CountdownResult {
   try {
     // Parse date as local date to avoid timezone issues
