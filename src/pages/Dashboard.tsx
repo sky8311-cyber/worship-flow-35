@@ -229,7 +229,7 @@ const Dashboard = () => {
       const {
         data: communities,
         error: communitiesError
-      } = await supabase.from("worship_communities").select("id, name, avatar_url").in("id", communityIds);
+      } = await supabase.from("worship_communities").select("id, name, avatar_url, leader_id").in("id", communityIds);
       if (communitiesError) throw communitiesError;
 
       // Fetch member counts

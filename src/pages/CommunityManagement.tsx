@@ -27,7 +27,7 @@ import {
 
 export default function CommunityManagement() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -202,19 +202,49 @@ export default function CommunityManagement() {
     },
   });
 
-  const isLeader = community?.leader_id === user?.id;
+  const leaveCommunityMutation = useMutation({
+    mutationFn: async () => {
+      const memberEntry = members?.find(m => m.user_id === user?.id);
+      if (!memberEntry) throw new Error("Member entry not found");
+      
+      const { error } = await supabase
+        .from("community_members")
+        .delete()
+        .eq("id", memberEntry.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: t("community.leaveSuccess") });
+      navigate("/dashboard");
+      queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+    },
+    onError: () => {
+      toast({ 
+        title: t("community.leaveError"), 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Check if user can manage this community
+  const canManage = 
+    isAdmin || // Admins can manage all communities
+    community?.leader_id === user?.id || // Community owner (worship leader creator)
+    members?.some(m => m.user_id === user?.id && m.role === 'community_leader'); // Community leaders
 
   if (isLoading) {
     return <div className="container mx-auto py-8">{t("community.loading")}</div>;
   }
 
-  if (!isLeader) {
+  if (!canManage) {
     return (
       <div className="container mx-auto py-8">
-        <p>You don't have permission to manage this community.</p>
+        <p>{t("community.noPermission")}</p>
       </div>
     );
   }
+
+  const isOwner = community?.leader_id === user?.id;
 
   return (
     <div className="min-h-[100dvh] container mx-auto py-8 px-4 pb-8">
@@ -395,8 +425,35 @@ export default function CommunityManagement() {
                           </>
                         )}
 
-                        {/* Remove button (not for community owner) */}
-                        {!isLeaderOfCommunity && (
+                        {/* Leave button for current user (not for community owner) */}
+                        {member.user_id === user?.id && !isLeaderOfCommunity && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                {t("community.leaveCommunity")}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("community.leaveConfirmTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("community.leaveConfirmDescription", { name: community.name })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => leaveCommunityMutation.mutate()}
+                                >
+                                  {t("community.leave")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        
+                        {/* Remove button (for managers removing other members, not for community owner) */}
+                        {member.user_id !== user?.id && !isLeaderOfCommunity && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">
