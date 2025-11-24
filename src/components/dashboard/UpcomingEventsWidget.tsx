@@ -279,11 +279,6 @@ export function UpcomingEventsWidget({
               <CalendarDays className="w-4 h-4" />
               {t("dashboard.upcomingEvents")}
             </CardTitle>
-            <Link to="/worship-sets">
-              <Button variant="outline" size="sm">
-                {t("worshipSets.viewHistory")}
-              </Button>
-            </Link>
           </div>
         </CardHeader>
         <CardContent>
