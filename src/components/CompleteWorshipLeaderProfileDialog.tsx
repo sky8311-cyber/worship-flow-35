@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
 export const CompleteWorshipLeaderProfileDialog = () => {
   const { user, profile, refreshProfile } = useAuth();
@@ -92,8 +93,12 @@ export const CompleteWorshipLeaderProfileDialog = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !loading && setOpen(isOpen)}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent 
+        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("worshipLeaderRequest.completeProfile")}</DialogTitle>
           <DialogDescription>
@@ -109,6 +114,16 @@ export const CompleteWorshipLeaderProfileDialog = () => {
         </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>{t("worshipLeaderRequest.photo")}</Label>
+            <p className="text-sm text-muted-foreground">
+              {t("worshipLeaderRequest.photoDesc")}
+            </p>
+            <AvatarUpload 
+              currentUrl={profile?.avatar_url} 
+              onUploadSuccess={() => refreshProfile()} 
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="churchName">{t("worshipLeaderRequest.churchName")}</Label>
             <Input
