@@ -428,139 +428,147 @@ export default function CommunityManagement() {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        {/* Promote/Demote buttons - only for managers and non-owner, non-worship-leaders */}
-                        {canManage && !isLeaderOfCommunity && !isWorshipLeader && (
-                          <>
-                            {isCommunityLeader ? (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <ArrowDown className="h-4 w-4 mr-1" />
-                                    {t("community.demoteToMember")}
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      {t("community.demoteConfirmTitle")}
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {t("community.demoteConfirmDescription", {
-                                        name: member.profiles?.full_name,
-                                      })}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => demoteToMemberMutation.mutate(member.id)}
-                                    >
-                                      {t("community.demote")}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            ) : (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <ArrowUp className="h-4 w-4 mr-1" />
-                                    {t("community.promoteToCommunityLeader")}
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      {t("community.promoteConfirmTitle")}
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      <p>
-                                        {t("community.promoteConfirmDescription", {
+                      <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
+                        {/* Column 1: Promote/Demote */}
+                        <div>
+                          {canManage && !isLeaderOfCommunity && !isWorshipLeader ? (
+                            <>
+                              {isCommunityLeader ? (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <ArrowDown className="h-4 w-4 mr-1" />
+                                      {t("community.demoteToMember")}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        {t("community.demoteConfirmTitle")}
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        {t("community.demoteConfirmDescription", {
                                           name: member.profiles?.full_name,
                                         })}
-                                      </p>
-                                      <div className="mt-3 p-3 bg-muted rounded-md">
-                                        <p className="text-sm font-semibold mb-2">
-                                          {t("community.communityLeaderPermissions")}:
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => demoteToMemberMutation.mutate(member.id)}
+                                      >
+                                        {t("community.demote")}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              ) : (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <ArrowUp className="h-4 w-4 mr-1" />
+                                      {t("community.promoteToCommunityLeader")}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        {t("community.promoteConfirmTitle")}
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        <p>
+                                          {t("community.promoteConfirmDescription", {
+                                            name: member.profiles?.full_name,
+                                          })}
                                         </p>
-                                        <ul className="text-sm space-y-1 list-disc list-inside">
-                                          <li>{t("community.permissionCreateSets")}</li>
-                                          <li>{t("community.permissionAddSongs")}</li>
-                                          <li>{t("community.permissionLimited")}</li>
-                                        </ul>
-                                      </div>
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => promoteToCommunityLeaderMutation.mutate(member.id)}
-                                    >
-                                      {t("community.promote")}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            )}
-                          </>
-                        )}
+                                        <div className="mt-3 p-3 bg-muted rounded-md">
+                                          <p className="text-sm font-semibold mb-2">
+                                            {t("community.communityLeaderPermissions")}:
+                                          </p>
+                                          <ul className="text-sm space-y-1 list-disc list-inside">
+                                            <li>{t("community.permissionCreateSets")}</li>
+                                            <li>{t("community.permissionAddSongs")}</li>
+                                            <li>{t("community.permissionLimited")}</li>
+                                          </ul>
+                                        </div>
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => promoteToCommunityLeaderMutation.mutate(member.id)}
+                                      >
+                                        {t("community.promote")}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </>
+                          ) : (
+                            <div />
+                          )}
+                        </div>
 
-                        {/* Leave button for current user (not for community owner) */}
-                        {member.user_id === user?.id && !isLeaderOfCommunity && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm">
-                                {t("community.leaveCommunity")}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("community.leaveConfirmTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("community.leaveConfirmDescription", { name: community.name })}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => leaveCommunityMutation.mutate()}
-                                >
-                                  {t("community.leave")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                        
-                        {/* Remove button (for managers removing other members, not for community owner) */}
-                        {canManage && member.user_id !== user?.id && !isLeaderOfCommunity && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("community.removeMember")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("community.removeDescription", {
-                                    name: member.profiles?.full_name,
-                                  })}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("community.cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => removeMemberMutation.mutate(member.id)}
-                                >
-                                  {t("common.remove")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                        {/* Column 2: Leave/Remove */}
+                        <div>
+                          {member.user_id === user?.id && !isLeaderOfCommunity ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="destructive" size="sm">
+                                  {t("community.leaveCommunity")}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{t("community.leaveConfirmTitle")}</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("community.leaveConfirmDescription", { name: community.name })}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => leaveCommunityMutation.mutate()}
+                                  >
+                                    {t("community.leave")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : canManage && member.user_id !== user?.id && !isLeaderOfCommunity ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>{t("community.removeMember")}</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("community.removeDescription", {
+                                      name: member.profiles?.full_name,
+                                    })}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t("community.cancel")}</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => removeMemberMutation.mutate(member.id)}
+                                  >
+                                    {t("common.remove")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <div />
+                          )}
+                        </div>
+
+                        {/* Column 3: Reserved for consistency */}
+                        <div />
                       </div>
                     </div>
                   );
@@ -598,43 +606,50 @@ export default function CommunityManagement() {
                     </div>
 
                     {canManage && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => resendInviteMutation.mutate(invitation.id)}
-                          disabled={resendInviteMutation.isPending}
-                        >
-                          <Mail className="h-4 w-4 mr-1" />
-                          {t("community.resendInvitation")}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {t("community.cancelInvitationTitle")}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {t("community.cancelInvitationDescription", {
-                                  email: invitation.email,
-                                })}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => cancelInviteMutation.mutate(invitation.id)}
-                              >
-                                {t("community.cancelInvitation")}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                      <div className="grid grid-cols-2 gap-2 items-center min-w-[250px]">
+                        {/* Column 1: Resend button */}
+                        <div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => resendInviteMutation.mutate(invitation.id)}
+                            disabled={resendInviteMutation.isPending}
+                          >
+                            <Mail className="h-4 w-4 mr-1" />
+                            {t("community.resendInvitation")}
+                          </Button>
+                        </div>
+
+                        {/* Column 2: Cancel/Delete button */}
+                        <div className="flex justify-end">
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {t("community.cancelInvitationTitle")}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("community.cancelInvitationDescription", {
+                                    email: invitation.email,
+                                  })}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => cancelInviteMutation.mutate(invitation.id)}
+                                >
+                                  {t("community.cancelInvitation")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
                     )}
                   </div>
