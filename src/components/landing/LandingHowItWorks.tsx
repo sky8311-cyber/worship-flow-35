@@ -59,8 +59,8 @@ export const LandingHowItWorks = () => {
                     {step.number}
                   </div>
 
-                  <div className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center mb-6">
-                    <step.icon className="w-7 h-7 text-secondary" />
+                  <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mb-6">
+                    <step.icon className="w-7 h-7 text-accent" />
                   </div>
 
                   <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
@@ -84,8 +84,8 @@ export const LandingHowItWorks = () => {
                       {step.number}
                     </div>
 
-                    <div className="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center mx-auto mb-6 mt-4">
-                      <step.icon className="w-7 h-7 text-secondary" />
+                    <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-6 mt-4">
+                      <step.icon className="w-7 h-7 text-accent" />
                     </div>
 
                     <h3 className="font-semibold mb-4 text-center text-base">{step.title}</h3>
