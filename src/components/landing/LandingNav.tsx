@@ -57,19 +57,12 @@ export const LandingNav = () => {
             ))}
             <Button
               asChild
-              variant="outline"
               size="sm"
-              className="ml-4"
+              className="ml-4 bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <Link to="/login">
-                베타 로그인
+              <Link to="/signup">
+                베타 가입
               </Link>
-            </Button>
-            <Button
-              onClick={() => handleNavClick("waitlist")}
-              size="sm"
-            >
-              얼리 액세스 신청
             </Button>
           </div>
 
@@ -108,19 +101,12 @@ export const LandingNav = () => {
               ))}
               <Button
                 asChild
-                variant="outline"
-                className="w-full"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <Link to="/login">
-                  베타 로그인
+                <Link to="/signup">
+                  베타 가입
                 </Link>
-              </Button>
-              <Button
-                onClick={() => handleNavClick("waitlist")}
-                className="w-full"
-              >
-                얼리 액세스 신청
               </Button>
             </div>
           </motion.div>

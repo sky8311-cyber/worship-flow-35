@@ -55,13 +55,13 @@ export const LandingFeatures = () => {
         </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={viewportOptions} variants={staggerContainer} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => <motion.div key={index} variants={staggerItem} className="group p-8 bg-card border border-border rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 hover:scale-105">
-              <div className="w-16 h-16 rounded-xl bg-secondary/10 flex items-center justify-center mb-6 group-hover:bg-secondary/20 group-hover:scale-110 transition-all">
-                <feature.icon className="w-8 h-8 text-secondary" />
+          {features.map((feature, index) => <motion.div key={index} variants={staggerItem} className="group p-8 bg-card border border-border rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-2">
+              <div className="w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 group-hover:scale-110 transition-all">
+                <feature.icon className="w-8 h-8 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">{feature.title}</h3>
-              <p className="text-muted-foreground leading-relaxed mb-3">{feature.description}</p>
-              {feature.subtitle && <p className="text-sm text-primary/70 italic border-l-2 border-primary/30 pl-4">
+              <h3 className="text-xl font-semibold mb-4" style={{ wordBreak: "keep-all" }}>{feature.title}</h3>
+              <p className="text-muted-foreground leading-relaxed mb-3" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>{feature.description}</p>
+              {feature.subtitle && <p className="text-sm text-primary/80 italic border-l-2 border-primary/30 pl-4" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
                   {feature.subtitle}
                 </p>}
             </motion.div>)}
