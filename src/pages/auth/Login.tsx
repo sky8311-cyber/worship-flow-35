@@ -113,19 +113,19 @@ const Login = () => {
           >
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
-                  {t("auth.loginPage.headline")}
-                </h1>
+            <h1 className="text-2xl md:text-3xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
+              {t("auth.loginPage.headline")}
+            </h1>
                 <Badge variant="secondary" className="text-xs px-2 py-1">
                   {t("auth.loginPage.betaBadge")}
                 </Badge>
               </div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-                {t("auth.loginPage.subheadline")}
-              </h2>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                {t("auth.loginPage.description")}
-              </p>
+            <h2 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground">
+              {t("auth.loginPage.subheadline")}
+            </h2>
+            <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed">
+              {t("auth.loginPage.description")}
+            </p>
             </div>
 
             {/* Feature List */}

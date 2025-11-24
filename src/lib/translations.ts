@@ -142,28 +142,28 @@ export const translations = {
       passwordMismatch: "Passwords do not match",
       alreadyRegistered: "This email is already registered. Redirecting to login...",
       alreadyRegisteredLoggedIn: "You already have an account. We've logged you in with that account.",
-      loginPage: {
-        headline: "For Worship Communities",
-        subheadline: "Integrated Worship Leader Platform",
-        description: "K-Worship is an all-in-one worship preparation app that manages song libraries, worship sets (setlists), worship communities, and collaboration in one place.",
-        betaBadge: "Beta Service",
-        features: {
-          library: {
-            title: "Save and Share Song Library",
-            description: "Systematic song management with linked YouTube references and scores"
-          },
-          setBuilder: {
-            title: "Create Worship Sets (Setlists)",
-            description: "Song selection considering worship flow and team member invitations"
-          },
-          community: {
-            title: "Worship Community Collaboration",
-            description: "View and reference setlists from worship leader community"
-          }
+    loginPage: {
+      headline: "For Worship Communities",
+      subheadline: "Integrated Worship Leader Platform",
+      description: "All-in-one worship preparation platform for song libraries, setlists, and team collaboration.",
+      betaBadge: "Beta Service",
+      features: {
+        library: {
+          title: "Save and Share Song Library",
+          description: "Systematic song management with linked YouTube references and scores"
         },
-        cardTitle: "Login",
-        cardSubtitle: "Start preparing worship with your K-Worship account",
-        helperText: "Please login with the email invited by your worship community",
+        setBuilder: {
+          title: "Create Worship Sets (Setlists)",
+          description: "Song selection considering worship flow and team member invitations"
+        },
+        community: {
+          title: "Worship Community Collaboration",
+          description: "View and reference setlists from worship leader community"
+        }
+      },
+      cardTitle: "Login",
+      cardSubtitle: "Login to prepare worship services",
+      helperText: "Login with your community email",
         rememberMe: "Keep me logged in",
         loggingIn: "Logging in...",
         signUpPrompt: "Don't have an account?"
@@ -1158,28 +1158,28 @@ export const translations = {
       passwordMismatch: "비밀번호가 일치하지 않습니다",
       alreadyRegistered: "이미 가입된 이메일입니다. 로그인 페이지로 이동합니다...",
       alreadyRegisteredLoggedIn: "이미 가입된 계정입니다. 해당 계정으로 로그인되었습니다.",
-      loginPage: {
-        headline: "예배 공동체를 위한",
-        subheadline: "워십리더 통합 플랫폼",
-        description: "K-Worship은 곡 라이브러리, 워십세트(콘티), 예배공동체와 커뮤니티를 한 곳에서 관리할 수 있는 예배 준비 올인원 앱입니다.",
-        betaBadge: "베타 서비스",
-        features: {
-          library: {
-            title: "곡 라이브러리 저장 및 공유",
-            description: "YouTube 링크와 악보가 연결된 체계적인 곡 관리"
-          },
-          setBuilder: {
-            title: "워십세트(콘티) 제작",
-            description: "예배 흐름을 고려한 곡 선곡과 팀원 초대"
-          },
-          community: {
-            title: "예배공동체 협업",
-            description: "워십리더 커뮤니티에서 콘티 공유 및 참고"
-          }
+    loginPage: {
+      headline: "예배 공동체를 위한",
+      subheadline: "워십리더 통합 플랫폼",
+      description: "곡 라이브러리, 워십세트, 예배공동체를 한 곳에서 관리하는 예배 준비 플랫폼입니다.",
+      betaBadge: "베타 서비스",
+      features: {
+        library: {
+          title: "곡 라이브러리 저장 및 공유",
+          description: "YouTube 링크와 악보가 연결된 체계적인 곡 관리"
         },
-        cardTitle: "로그인",
-        cardSubtitle: "K-Worship 계정으로 예배 준비를 시작하세요",
-        helperText: "예배공동체에서 초대받은 이메일로 로그인해 주세요",
+        setBuilder: {
+          title: "워십세트(콘티) 제작",
+          description: "예배 흐름을 고려한 곡 선곡과 팀원 초대"
+        },
+        community: {
+          title: "예배공동체 협업",
+          description: "워십리더 커뮤니티에서 콘티 공유 및 참고"
+        }
+      },
+      cardTitle: "로그인",
+      cardSubtitle: "계정으로 예배 준비를 시작하세요",
+      helperText: "초대받은 이메일로 로그인하세요",
         rememberMe: "로그인 상태 유지",
         loggingIn: "로그인 중...",
         signUpPrompt: "계정이 없으신가요?"
