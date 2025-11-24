@@ -148,10 +148,9 @@ const Dashboard = () => {
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
   };
-  const {
-    data: upcomingSets,
-    isLoading
-  } = useQuery({
+  // Fetch upcoming worship sets with role-based filtering
+  // Show max 4 sets: all drafts (any date) + published (future only)
+  const { data: upcomingSets, isLoading } = useQuery({
     queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity],
     queryFn: async () => {
       if (!user) return [];
@@ -165,36 +164,35 @@ const Dashboard = () => {
       const communityIds = memberData?.map(m => m.community_id) || [];
       if (communityIds.length === 0) return [];
       
-      // Calculate date range: last 30 days to future
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const dateThreshold = thirtyDaysAgo.toISOString().split("T")[0];
+      const today = new Date().toISOString().split('T')[0];
       
       let query = supabase
         .from("service_sets")
         .select("*")
-        .in("community_id", communityIds)
-        .gte("date", dateThreshold)
-        .order("date", { ascending: true })
-        .limit(20);
+        .in("community_id", communityIds);
       
-      // Role-based filtering
+      // Role-based filtering with future date filtering for published sets
       if (isAdmin) {
-        // Admin: show ALL sets (draft + published)
-        // No status filter needed
+        // Admin sees all drafts + published future sets
+        query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${today})`);
       } else if (isCommunityLeaderInAnyCommunity) {
-        // Community Leader: show published + own drafts
-        query = query.or(`status.eq.published,and(status.eq.draft,created_by.eq.${user.id})`);
+        // Community Leader: show own drafts + published future sets
+        query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${today})`);
       } else {
-        // Team Member: show ONLY published
-        query = query.eq("status", "published");
+        // Team Member: show ONLY published future sets
+        query = query.eq("status", "published").gte("date", today);
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query
+        .order("date", { ascending: true })
+        .limit(4);
+      
       if (error) throw error;
       return data;
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
   const {
     data: songsCount

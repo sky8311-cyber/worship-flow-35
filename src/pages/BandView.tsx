@@ -2,15 +2,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, ArrowLeft } from "lucide-react";
+import { Music, Calendar, Printer, ArrowLeft, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const BandView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
+  const { t } = useTranslation();
 
   const { data: serviceSet, isLoading } = useQuery({
     queryKey: ["band-view", id],
@@ -52,6 +56,48 @@ const BandView = () => {
     refetchOnMount: "always",
     staleTime: 0,
   });
+
+  // Check if user can edit this worship set
+  const { data: canEditData } = useQuery({
+    queryKey: ["can-edit-set", id, user?.id],
+    enabled: !!id && !!user,
+    queryFn: async () => {
+      if (!id || !user) return { canEdit: false };
+      
+      // Admin can always edit
+      if (isAdmin) return { canEdit: true };
+      
+      // Check if user is creator
+      if (serviceSet?.created_by === user.id) return { canEdit: true };
+      
+      // Check if user is collaborator
+      const { data: collaborator } = await supabase
+        .from("set_collaborators")
+        .select("id")
+        .eq("service_set_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (collaborator) return { canEdit: true };
+      
+      // Check if user is community leader
+      if (serviceSet?.community_id) {
+        const { data: member } = await supabase
+          .from("community_members")
+          .select("role")
+          .eq("community_id", serviceSet.community_id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (member?.role === "community_leader") return { canEdit: true };
+      }
+      
+      return { canEdit: false };
+    },
+    staleTime: 0,
+  });
+
+  const canEdit = canEditData?.canEdit || false;
 
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string) => {
@@ -105,18 +151,30 @@ const BandView = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
-                <Badge variant="secondary" className="text-xs">읽기 전용</Badge>
+                {!canEdit && <Badge variant="secondary" className="text-xs">읽기 전용</Badge>}
               </div>
             </div>
             
-            <Button
-              variant="outline"
-              onClick={() => window.print()}
-              className="flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              인쇄
-            </Button>
+            <div className="flex items-center gap-2">
+              {canEdit && (
+                <Button
+                  variant="default"
+                  onClick={() => navigate(`/set-builder/${id}`)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  {t("common.edit")}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+                className="flex items-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                인쇄
+              </Button>
+            </div>
           </div>
         </div>
       </header>

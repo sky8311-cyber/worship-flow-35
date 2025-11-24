@@ -5,19 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Eye, Home, Plus } from "lucide-react";
+import { Edit, Trash2, Eye, Home, Plus, Upload } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
   
+  // History page shows ALL worship sets (no date filtering)
   const { data: sets, isLoading } = useQuery({
-    queryKey: ["worship-sets", statusFilter],
+    queryKey: ["worship-sets-history", statusFilter],
     queryFn: async () => {
       let query = supabase
         .from("service_sets")
@@ -35,6 +38,8 @@ export default function WorshipSets() {
       if (error) throw error;
       return data;
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
   
   const deleteMutation = useMutation({
@@ -45,7 +50,7 @@ export default function WorshipSets() {
     },
     onSuccess: () => {
       toast.success("워십세트가 삭제되었습니다");
-      queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
     },
@@ -61,7 +66,8 @@ export default function WorshipSets() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
       toast.success("상태가 변경되었습니다");
     },
@@ -78,7 +84,7 @@ export default function WorshipSets() {
                   <Home className="w-5 h-5" />
                 </Button>
               </Link>
-              <span className="text-sm text-muted-foreground hidden md:inline">/ 워십세트</span>
+              <span className="text-sm text-muted-foreground hidden md:inline">/ {t("worshipSets.history")}</span>
             </div>
             
             <Link to="/dashboard" className="flex justify-center col-start-2">
@@ -86,9 +92,13 @@ export default function WorshipSets() {
             </Link>
             
             <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => navigate("/set-import")}>
+                <Upload className="w-4 h-4 mr-1" />
+                {t("worshipSets.import")}
+              </Button>
               <Button onClick={() => navigate("/set-builder")}>
                 <Plus className="w-4 h-4 mr-1" />
-                새 워십세트
+                {t("worshipSets.createNew")}
               </Button>
             </div>
           </div>
