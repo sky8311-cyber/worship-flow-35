@@ -410,7 +410,8 @@ export const translations = {
       leaveSuccess: "You have left the community",
       leaveError: "Failed to leave community",
       leave: "Leave",
-      noPermission: "You don't have permission to manage this community.",
+    noPermission: "You don't have permission to manage this community.",
+    notAMember: "You are not a member of this community.",
     },
     profile: {
       title: "Profile",
@@ -1350,7 +1351,8 @@ export const translations = {
       leaveSuccess: "예배공동체에서 나갔습니다",
       leaveError: "예배공동체 나가기에 실패했습니다",
       leave: "나가기",
-      noPermission: "이 예배공동체를 관리할 권한이 없습니다.",
+    noPermission: "이 예배공동체를 관리할 권한이 없습니다.",
+    notAMember: "이 예배공동체의 멤버가 아닙니다.",
     },
     profile: {
       title: "프로필",

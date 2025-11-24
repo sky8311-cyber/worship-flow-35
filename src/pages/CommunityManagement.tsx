@@ -232,14 +232,17 @@ export default function CommunityManagement() {
     community?.leader_id === user?.id || // Community owner (worship leader creator)
     members?.some(m => m.user_id === user?.id && m.role === 'community_leader'); // Community leaders
 
+  // Check if user is at least a member
+  const isMember = members?.some(m => m.user_id === user?.id);
+
   if (isLoading) {
     return <div className="container mx-auto py-8">{t("community.loading")}</div>;
   }
 
-  if (!canManage) {
+  if (!isMember && !isAdmin) {
     return (
       <div className="container mx-auto py-8">
-        <p>{t("community.noPermission")}</p>
+        <p>{t("community.notAMember")}</p>
       </div>
     );
   }
@@ -261,34 +264,36 @@ export default function CommunityManagement() {
         <h1 className="text-3xl font-bold mb-8">{t("community.manage")}</h1>
 
         <div className="space-y-6">
-          {/* Community Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("community.editCommunity")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="name">{t("community.name")}</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">{t("community.description")}</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                />
-              </div>
-              <Button onClick={() => updateMutation.mutate()}>
-                {t("common.save")}
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Community Info - Only for managers */}
+          {canManage && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("community.editCommunity")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="name">{t("community.name")}</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="description">{t("community.description")}</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <Button onClick={() => updateMutation.mutate()}>
+                  {t("common.save")}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Team Members */}
           <Card>
@@ -348,8 +353,8 @@ export default function CommunityManagement() {
                       </div>
 
                       <div className="flex gap-2">
-                        {/* Promote/Demote buttons - only for non-owner, non-worship-leaders */}
-                        {!isLeaderOfCommunity && !isWorshipLeader && (
+                        {/* Promote/Demote buttons - only for managers and non-owner, non-worship-leaders */}
+                        {canManage && !isLeaderOfCommunity && !isWorshipLeader && (
                           <>
                             {isCommunityLeader ? (
                               <AlertDialog>
@@ -453,7 +458,7 @@ export default function CommunityManagement() {
                         )}
                         
                         {/* Remove button (for managers removing other members, not for community owner) */}
-                        {member.user_id !== user?.id && !isLeaderOfCommunity && (
+                        {canManage && member.user_id !== user?.id && !isLeaderOfCommunity && (
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">
@@ -488,36 +493,38 @@ export default function CommunityManagement() {
             </CardContent>
           </Card>
 
-          {/* Permanent Invite Link */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("community.permanentInviteLink")}</CardTitle>
-              <CardDescription>
-                {t("community.shareThisLink")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
-                {window.location.origin}/join/{community?.invite_token}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={copyInviteLink}
-                  className="flex-1"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  {t("community.copyInviteLink")}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => resetInviteLinkMutation.mutate()}
-                  disabled={resetInviteLinkMutation.isPending}
-                >
-                  {t("community.resetInviteLink")}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Permanent Invite Link - Only for managers */}
+          {canManage && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("community.permanentInviteLink")}</CardTitle>
+                <CardDescription>
+                  {t("community.shareThisLink")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
+                  {window.location.origin}/join/{community?.invite_token}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={copyInviteLink}
+                    className="flex-1"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    {t("community.copyInviteLink")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => resetInviteLinkMutation.mutate()}
+                    disabled={resetInviteLinkMutation.isPending}
+                  >
+                    {t("community.resetInviteLink")}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
