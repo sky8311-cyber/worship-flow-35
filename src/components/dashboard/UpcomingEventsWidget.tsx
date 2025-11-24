@@ -274,10 +274,17 @@ export function UpcomingEventsWidget({
     <>
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <CalendarDays className="w-4 h-4" />
-            {t("dashboard.upcomingEvents")}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              {t("dashboard.upcomingEvents")}
+            </CardTitle>
+            <Link to="/worship-sets">
+              <Button variant="outline" size="sm">
+                {t("worshipSets.viewHistory")}
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           {unifiedEvents.length > 0 ? (
