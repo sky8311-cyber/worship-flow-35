@@ -572,7 +572,7 @@ const Dashboard = () => {
                                       </p>
                                     ))}
                                   </div>
-                                )}
+                                 )}
                               </div>
                             </Link>
 
@@ -625,6 +625,15 @@ const Dashboard = () => {
                           {t("dashboard.createFirst")}
                         </Button>}
                     </div>}
+                    
+                    {/* View History Button at Bottom */}
+                    <div className="flex justify-center pt-4 border-t mt-4">
+                      <Link to="/worship-sets">
+                        <Button variant="outline" size="sm">
+                          {t("worshipSets.viewHistory")}
+                        </Button>
+                      </Link>
+                    </div>
                 </CardContent>
               </Card>
 
