@@ -49,7 +49,10 @@ export function SongLibraryWidget({ onAddSong, onImport }: SongLibraryWidgetProp
       </CardHeader>
       <CardContent>
         {/* Statistics Section */}
-        <div className="text-center py-4 mb-4 bg-primary/5 rounded-lg">
+        <div 
+          className="text-center py-4 mb-4 bg-primary/5 rounded-lg cursor-pointer hover:bg-primary/10 transition-colors"
+          onClick={() => navigate("/songs")}
+        >
           <p className="text-3xl font-bold text-primary">{songsCount || 0}</p>
           <p className="text-xs text-muted-foreground">{t("dashboard.totalSongs")}</p>
         </div>
