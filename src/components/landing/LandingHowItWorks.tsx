@@ -38,9 +38,9 @@ export const LandingHowItWorks = () => {
           }
         }
       }} className="text-center max-w-3xl mx-auto mb-20">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+          <h2 className="">
             한 주 예배 준비,
-이렇게 달라집니다.                             
+이렇게 달라집니다.                                                                                                                                                                                                                                                                     
             <br />
             이렇게 달라집니다.
           </h2>
