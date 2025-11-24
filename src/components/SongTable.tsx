@@ -390,28 +390,26 @@ export const SongTable = ({
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        {song.youtube_url && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleYoutubeClick(song.youtube_url)}
-                            title={t("songCard.viewYouTube")}
-                          >
-                            <Youtube className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {song.score_file_url && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handlePreviewScore(song)}
-                            title={t("songLibrary.previewScore")}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleYoutubeClick(song.youtube_url)}
+                          disabled={!song.youtube_url}
+                          title={song.youtube_url ? t("songCard.viewYouTube") : "No YouTube link"}
+                        >
+                          <Youtube className={`h-4 w-4 ${!song.youtube_url ? 'opacity-50' : ''}`} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handlePreviewScore(song)}
+                          disabled={!song.score_file_url}
+                          title={song.score_file_url ? t("songLibrary.previewScore") : "No score file"}
+                        >
+                          <Eye className={`h-4 w-4 ${!song.score_file_url ? 'opacity-50' : ''}`} />
+                        </Button>
                         {onEdit && (
                           <Button
                             variant="ghost"
