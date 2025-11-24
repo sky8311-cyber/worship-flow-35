@@ -10,6 +10,8 @@ interface Profile {
   ministry_role: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  location: string | null;
+  instrument: string | null;
 }
 
 interface ProfileDialogProps {
