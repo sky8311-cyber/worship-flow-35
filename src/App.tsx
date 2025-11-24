@@ -13,9 +13,7 @@ import SongLibrary from "./pages/SongLibrary";
 import SetBuilder from "./pages/SetBuilder";
 import BandView from "./pages/BandView";
 import NotFound from "./pages/NotFound";
-import SignUpChoice from "./pages/auth/SignUpChoice";
 import SignUp from "./pages/auth/SignUp";
-import SignUpWorshipLeader from "./pages/auth/SignUpWorshipLeader";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
@@ -23,12 +21,14 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminWaitlist from "./pages/AdminWaitlist";
 import AdminCommunities from "./pages/AdminCommunities";
+import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplications";
 import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import JoinCommunity from "./pages/JoinCommunity";
 import FavoritesList from "./pages/FavoritesList";
 import WorshipSets from "./pages/WorshipSets";
+import RequestWorshipLeader from "./pages/RequestWorshipLeader";
 
 const queryClient = new QueryClient();
 
@@ -64,9 +64,7 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               
               {/* Auth Routes */}
-              <Route path="/signup-choice" element={<SignUpChoice />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route path="/signup-worship-leader" element={<SignUpWorshipLeader />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -78,6 +76,7 @@ const App = () => (
               <Route path="/worship-sets" element={<ProtectedRoute><WorshipSets /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
+              <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
@@ -89,6 +88,7 @@ const App = () => (
               <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
               <Route path="/admin/waitlist" element={<AdminRoute><AdminWaitlist /></AdminRoute>} />
               <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
+              <Route path="/admin/applications" element={<AdminRoute><AdminWorshipLeaderApplications /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

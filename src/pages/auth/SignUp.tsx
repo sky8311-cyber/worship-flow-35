@@ -36,7 +36,7 @@ const SignUp = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone, 'member');
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone);
     
     if (error) {
       // Check if user already exists - treat as successful login
