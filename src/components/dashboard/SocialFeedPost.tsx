@@ -60,7 +60,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     return new Date(year, month - 1, day);
   };
 
-  // Worship set notifications should be simple one-line text, not full cards
+  // Worship set and calendar event notifications should be simple one-line text, not full cards
   if (item.type === "worship_set") {
     const dateText = parseLocalDate(item.set.date).toLocaleDateString(
       language === "ko" ? "ko-KR" : "en-US"
@@ -97,6 +97,63 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                 {language === "ko" ? "더보기" : "Read More"}
               </button>
             </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {formatDistanceToNow(new Date(item.created_at), {
+                addSuffix: true,
+                locale: language === "ko" ? ko : undefined,
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Calendar event notifications
+  if (item.type === "calendar_event") {
+    const dateText = parseLocalDate(item.event.event_date).toLocaleDateString(
+      language === "ko" ? "ko-KR" : "en-US"
+    );
+    const timeText = item.event.start_time 
+      ? ` ${item.event.start_time}` 
+      : "";
+
+    // Get event type label
+    const eventTypeLabels: Record<string, { ko: string; en: string }> = {
+      rehearsal: { ko: "연습", en: "Rehearsal" },
+      meeting: { ko: "모임", en: "Meeting" },
+      worship_service: { ko: "예배", en: "Worship Service" },
+      other: { ko: "기타", en: "Other" },
+    };
+    const eventTypeLabel = eventTypeLabels[item.event.event_type] || eventTypeLabels.other;
+
+    return (
+      <div className="py-6 px-4 border-b">
+        <div className="flex items-start gap-4">
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-accent/10 shrink-0">
+            <Calendar className="w-6 h-6 text-accent" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm">
+              <span className="text-foreground">{item.community.name}</span>
+              {language === "ko" 
+                ? ` `
+                : ` `
+              }
+              <span className="font-bold text-foreground">{item.event.title}</span>
+              {` (`}
+              <span className="font-bold text-foreground">{dateText}{timeText}</span>
+              {`) `}
+              {language === "ko" 
+                ? `${eventTypeLabel.ko} 일정이 추가되었습니다.`
+                : `${eventTypeLabel.en} event was added.`
+              }
+            </p>
+            {item.event.description && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {item.event.description}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
               {formatDistanceToNow(new Date(item.created_at), {
                 addSuffix: true,
@@ -183,26 +240,9 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
         </>
       );
     }
-
-    if (item.type === "calendar_event") {
-      return (
-        <div className="flex items-center justify-center py-6 px-4 border-b">
-          <div className="flex items-start gap-4 max-w-md">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
-              <Calendar className="w-6 h-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-foreground text-base">
-                {item.event.title}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {parseLocalDate(item.event.event_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-              </p>
-            </div>
-          </div>
-        </div>
-      );
-    }
+    
+    // Calendar events are handled as early return above, not in renderContent
+    return null;
   };
 
   return (
