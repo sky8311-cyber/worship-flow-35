@@ -21,6 +21,7 @@ const SignUp = () => {
     confirmPassword: "",
     fullName: "",
     phone: "",
+    birthDate: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +37,7 @@ const SignUp = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone);
+    const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone, formData.birthDate);
     
     if (error) {
       // Check if user already exists - treat as successful login
@@ -63,10 +64,11 @@ const SignUp = () => {
     // Success - new signup
     toast({
       title: t("auth.success"),
-      description: t("auth.signUpSuccess"),
+      description: t("auth.checkEmailToConfirm"),
+      duration: 8000,
     });
     setLoading(false);
-    navigate("/dashboard");
+    // Don't navigate - let user check email
   };
 
   return (
@@ -108,6 +110,16 @@ const SignUp = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">{t("auth.birthDate")}</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                required
+                value={formData.birthDate}
+                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
               />
             </div>
             <div className="space-y-2">

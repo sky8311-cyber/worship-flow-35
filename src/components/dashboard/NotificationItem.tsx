@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
+import { Cake } from "lucide-react";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -24,12 +25,16 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate(`/community/${notification.related_id}`);
     } else if (notification.related_type === "song" && notification.related_id) {
       navigate("/songs");
+    } else if (notification.related_type === "profile" && notification.related_id && notification.type === "birthday") {
+      // Birthday notification - could open profile or stay on dashboard
+      navigate("/dashboard");
     }
   };
 
   const actorAvatar = notification.metadata?.actor_avatar;
   const actorName = notification.metadata?.actor_name || "User";
   const timeAgo = formatDistanceToNow(parseLocalDate(notification.created_at), { addSuffix: true });
+  const isBirthday = notification.type === "birthday";
 
   return (
     <div
@@ -41,10 +46,16 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       {!notification.is_read && (
         <div className="flex-shrink-0 w-2 h-2 bg-primary rounded-full mt-2" />
       )}
-      <Avatar className="h-10 w-10 flex-shrink-0">
-        <AvatarImage src={actorAvatar} alt={actorName} />
-        <AvatarFallback>{actorName.charAt(0)}</AvatarFallback>
-      </Avatar>
+      {isBirthday ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Cake className="h-5 w-5 text-primary" />
+        </div>
+      ) : (
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={actorAvatar} alt={actorName} />
+          <AvatarFallback>{actorName.charAt(0)}</AvatarFallback>
+        </Avatar>
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-sm">
           <span className="font-semibold">{actorName}</span>{" "}
