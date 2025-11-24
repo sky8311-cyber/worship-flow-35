@@ -438,7 +438,7 @@ export default function CommunityManagement() {
 
                       <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
                         {/* Column 1: Promote/Demote */}
-                        <div>
+                        <div className="flex justify-end">
                           {canManage && !isLeaderOfCommunity && !isWorshipLeader ? (
                             <>
                               {isCommunityLeader ? (
@@ -519,7 +519,7 @@ export default function CommunityManagement() {
                         </div>
 
                         {/* Column 2: Leave/Remove */}
-                        <div>
+                        <div className="flex justify-end">
                           {member.user_id === user?.id && !isLeaderOfCommunity ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -617,7 +617,7 @@ export default function CommunityManagement() {
                     {canManage && (
                       <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
                         {/* Column 1: Resend button */}
-                        <div>
+                        <div className="flex justify-end">
                           <Button
                             variant="outline"
                             size="sm"
@@ -630,7 +630,7 @@ export default function CommunityManagement() {
                         </div>
 
                         {/* Column 2: Cancel/Delete button */}
-                        <div>
+                        <div className="flex justify-end">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">
