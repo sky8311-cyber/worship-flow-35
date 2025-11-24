@@ -65,18 +65,18 @@ const Login = () => {
   const features = [
     {
       icon: Music,
-      title: "곡 라이브러리 저장 및 공유",
-      description: "YouTube 링크와 악보가 연결된 체계적인 곡 관리"
+      title: t("auth.loginPage.features.library.title"),
+      description: t("auth.loginPage.features.library.description")
     },
     {
       icon: FileText,
-      title: "워십세트(콘티) 제작",
-      description: "예배 흐름을 고려한 곡 선곡과 팀원 초대"
+      title: t("auth.loginPage.features.setBuilder.title"),
+      description: t("auth.loginPage.features.setBuilder.description")
     },
     {
       icon: Users,
-      title: "예배공동체 협업",
-      description: "워십리더 커뮤니티에서 콘티 공유 및 참고"
+      title: t("auth.loginPage.features.community.title"),
+      description: t("auth.loginPage.features.community.description")
     }
   ];
 
@@ -114,17 +114,17 @@ const Login = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
-                  예배 공동체를 위한
+                  {t("auth.loginPage.headline")}
                 </h1>
                 <Badge variant="secondary" className="text-xs px-2 py-1">
-                  베타 서비스
+                  {t("auth.loginPage.betaBadge")}
                 </Badge>
               </div>
               <h2 className="text-3xl lg:text-4xl font-bold text-foreground">
-                워십리더 통합 플랫폼
+                {t("auth.loginPage.subheadline")}
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                K-Worship은 곡 라이브러리, 워십세트(콘티), 예배공동체와 커뮤니티를 한 곳에서 관리할 수 있는 예배 준비 올인원 앱입니다.
+                {t("auth.loginPage.description")}
               </p>
             </div>
 
@@ -157,19 +157,19 @@ const Login = () => {
           >
             <Card className="shadow-lg border-border/50">
               <CardHeader className="space-y-2">
-                <CardTitle className="text-2xl font-bold">로그인</CardTitle>
+                <CardTitle className="text-2xl font-bold">{t("auth.loginPage.cardTitle")}</CardTitle>
                 <CardDescription className="text-base">
-                  K-Worship 계정으로 예배 준비를 시작하세요
+                  {t("auth.loginPage.cardSubtitle")}
                 </CardDescription>
                 <p className="text-xs text-muted-foreground pt-2">
-                  예배공동체에서 초대받은 이메일로 로그인해 주세요
+                  {t("auth.loginPage.helperText")}
                 </p>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Email Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="email">이메일</Label>
+                    <Label htmlFor="email">{t("auth.email")}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -183,7 +183,7 @@ const Login = () => {
 
                   {/* Password Input with Toggle */}
                   <div className="space-y-2">
-                    <Label htmlFor="password">비밀번호</Label>
+                    <Label htmlFor="password">{t("auth.password")}</Label>
                     <div className="relative">
                       <Input
                         id="password"
@@ -222,7 +222,7 @@ const Login = () => {
                         htmlFor="remember" 
                         className="text-sm font-normal cursor-pointer"
                       >
-                        로그인 상태 유지
+                        {t("auth.loginPage.rememberMe")}
                       </Label>
                     </div>
                     <Button 
@@ -231,7 +231,7 @@ const Login = () => {
                       className="p-0 h-auto text-sm"
                       onClick={() => navigate("/forgot-password")}
                     >
-                      비밀번호를 잊으셨나요?
+                      {t("auth.forgotPassword")}
                     </Button>
                   </div>
 
@@ -241,13 +241,13 @@ const Login = () => {
                     className="w-full h-11 text-base font-medium"
                     disabled={loading}
                   >
-                    {loading ? "로그인 중..." : "로그인"}
+                    {loading ? t("auth.loginPage.loggingIn") : t("auth.login")}
                   </Button>
 
                   {/* Sign Up Link */}
                   <div className="text-center pt-2">
                     <span className="text-sm text-muted-foreground">
-                      계정이 없으신가요?{" "}
+                      {t("auth.loginPage.signUpPrompt")}{" "}
                     </span>
                     <Button 
                       type="button"
@@ -255,7 +255,7 @@ const Login = () => {
                       className="p-0 h-auto text-sm font-semibold"
                       onClick={() => navigate("/signup")}
                     >
-                      회원가입
+                      {t("auth.signUp")}
                     </Button>
                   </div>
                 </form>
