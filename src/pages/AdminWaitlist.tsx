@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -72,13 +73,11 @@ const AdminWaitlist = () => {
             <div className="flex items-center justify-between mb-4">
               <CardTitle className="text-2xl">{t("admin.waitlist.title")}</CardTitle>
               <div className="flex items-center gap-4">
-                <div className="relative w-72">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
+                <div className="w-72">
+                  <SearchInput
                     placeholder={t("admin.waitlist.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
                   />
                 </div>
                 <Button onClick={exportToCSV} variant="outline">
