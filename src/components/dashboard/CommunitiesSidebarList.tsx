@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Users, ChevronRight, Settings } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Community {
   id: string;
@@ -11,6 +12,7 @@ interface Community {
   avatar_url?: string | null;
   memberCount?: number;
   userRole?: string;
+  leader_id?: string;
 }
 
 interface CommunitiesSidebarListProps {
@@ -20,6 +22,7 @@ interface CommunitiesSidebarListProps {
 
 export function CommunitiesSidebarList({ communities, maxVisible = 5 }: CommunitiesSidebarListProps) {
   const { t } = useTranslation();
+  const { user, isAdmin } = useAuth();
 
   if (!communities || communities.length === 0) {
     return null;
@@ -40,6 +43,8 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
         <div className="space-y-2">
           {visibleCommunities.map((community) => {
             const isLeader = community.userRole === 'community_leader';
+            const isOwner = community.leader_id === user?.id;
+            const canManage = isLeader || isOwner || isAdmin;
             
             return (
               <div
@@ -58,7 +63,7 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
                     </p>
                   )}
                 </div>
-                {isLeader && (
+                {canManage && (
                   <Link
                     to={`/community/${community.id}`}
                     className="text-muted-foreground hover:text-foreground transition-colors"
