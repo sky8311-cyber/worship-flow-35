@@ -60,6 +60,7 @@ export const translations = {
       liked: "Liked",
       postSuccess: "Posted successfully",
       editPost: "Edit Post",
+      confirmDeleteOtherPost: "Are you sure you want to delete this post by {{author}}? This action cannot be undone.",
     },
     breadcrumb: {
       dashboard: "Dashboard",
@@ -1001,6 +1002,7 @@ export const translations = {
       liked: "좋아요를 눌렀습니다",
       postSuccess: "게시 완료",
       editPost: "게시물 수정",
+      confirmDeleteOtherPost: "{{author}}님의 게시물을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
     },
     breadcrumb: {
       dashboard: "대시보드",

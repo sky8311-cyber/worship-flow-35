@@ -48,7 +48,7 @@ interface SocialFeedPostProps {
 
 export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   const { t, language } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isWorshipLeader } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState(item.content || "");
@@ -149,7 +149,12 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   });
 
   const handleDelete = () => {
-    if (window.confirm(t("common.confirmDelete"))) {
+    const isOwnPost = user?.id === item.author.id;
+    const confirmMessage = isOwnPost 
+      ? t("common.confirmDelete")
+      : t("socialFeed.confirmDeleteOtherPost", { author: item.author.full_name || "Unknown" });
+    
+    if (window.confirm(confirmMessage)) {
       deleteMutation.mutate();
     }
   };
@@ -229,21 +234,23 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
               </div>
             </div>
 
-            {user?.id === item.author.id && item.type === "community_post" && (
+            {(user?.id === item.author.id || isAdmin || isWorshipLeader) && item.type === "community_post" && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEdit}>
-                    {t("socialFeed.edit")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                    {t("socialFeed.delete")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
+                  <DropdownMenuContent align="end">
+                    {user?.id === item.author.id && (
+                      <DropdownMenuItem onClick={handleEdit}>
+                        {t("socialFeed.edit")}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                      {t("socialFeed.delete")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
               </DropdownMenu>
             )}
           </div>
