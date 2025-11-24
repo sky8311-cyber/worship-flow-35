@@ -84,7 +84,7 @@ const Login = () => {
             </Button>
             <div>
               <span className="text-muted-foreground">{t("auth.noAccount")} </span>
-              <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/signup-choice")}>
+              <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/signup")}>
                 {t("auth.signUp")}
               </Button>
             </div>
