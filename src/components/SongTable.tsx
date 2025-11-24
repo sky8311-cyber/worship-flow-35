@@ -243,7 +243,7 @@ export const SongTable = ({
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
-            <TableHead className="text-right">{t("songLibrary.tableHeaders.actions")}</TableHead>
+            <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
           </TableHeader>
           <TableBody>
@@ -376,7 +376,7 @@ export const SongTable = ({
                   </TableCell>
                   <TableCell>
                     {!bulkEditMode && (
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center gap-1">
                         <FavoriteButton songId={song.id} size="icon" variant="ghost" />
                         <Button
                           variant="ghost"
