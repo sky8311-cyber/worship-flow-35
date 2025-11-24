@@ -65,6 +65,16 @@ const AdminUsers = () => {
         .insert({ user_id: userId, role: role as any });
       
       if (error) throw error;
+
+      // If adding worship_leader role, set needs_worship_leader_profile flag
+      if (role === "worship_leader") {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ needs_worship_leader_profile: true })
+          .eq("id", userId);
+        
+        if (profileError) throw profileError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });

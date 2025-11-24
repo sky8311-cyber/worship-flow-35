@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Calendar } from "lucide-react";
+import { Search, Plus, Calendar, UserPlus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
@@ -54,6 +54,17 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 {t("dashboard.createEvent")}
+              </Button>
+            )}
+
+            {!isWorshipLeader && (
+              <Button
+                variant="default"
+                className="w-full justify-start"
+                onClick={() => navigate("/request-worship-leader")}
+              >
+                <UserPlus className="w-4 h-4 mr-2" />
+                {t("worshipLeaderRequest.title")}
               </Button>
             )}
           </div>

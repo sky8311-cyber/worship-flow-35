@@ -269,6 +269,7 @@ export type Database = {
           instrument: string | null
           location: string | null
           ministry_role: string | null
+          needs_worship_leader_profile: boolean | null
           phone: string | null
           updated_at: string | null
           youtube_url: string | null
@@ -285,6 +286,7 @@ export type Database = {
           instrument?: string | null
           location?: string | null
           ministry_role?: string | null
+          needs_worship_leader_profile?: boolean | null
           phone?: string | null
           updated_at?: string | null
           youtube_url?: string | null
@@ -301,6 +303,7 @@ export type Database = {
           instrument?: string | null
           location?: string | null
           ministry_role?: string | null
+          needs_worship_leader_profile?: boolean | null
           phone?: string | null
           updated_at?: string | null
           youtube_url?: string | null
@@ -730,6 +733,81 @@ export type Database = {
           leader_id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      worship_leader_applications: {
+        Row: {
+          church_name: string
+          created_at: string | null
+          id: string
+          introduction: string
+          position: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+          years_serving: number
+        }
+        Insert: {
+          church_name: string
+          created_at?: string | null
+          id?: string
+          introduction: string
+          position: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+          years_serving: number
+        }
+        Update: {
+          church_name?: string
+          created_at?: string | null
+          id?: string
+          introduction?: string
+          position?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+          years_serving?: number
+        }
+        Relationships: []
+      }
+      worship_leader_profiles: {
+        Row: {
+          church_name: string
+          created_at: string | null
+          id: string
+          introduction: string
+          position: string
+          updated_at: string | null
+          user_id: string
+          years_serving: number
+        }
+        Insert: {
+          church_name: string
+          created_at?: string | null
+          id?: string
+          introduction: string
+          position: string
+          updated_at?: string | null
+          user_id: string
+          years_serving: number
+        }
+        Update: {
+          church_name?: string
+          created_at?: string | null
+          id?: string
+          introduction?: string
+          position?: string
+          updated_at?: string | null
+          user_id?: string
+          years_serving?: number
         }
         Relationships: []
       }

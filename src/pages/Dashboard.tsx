@@ -31,6 +31,7 @@ import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
 import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
+import { CompleteWorshipLeaderProfileDialog } from "@/components/CompleteWorshipLeaderProfileDialog";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -840,6 +841,8 @@ const Dashboard = () => {
         onOpenChange={setProfileDialogOpen} 
         stats={userStats} 
       />
+
+      <CompleteWorshipLeaderProfileDialog />
     </div>;
 };
 export default Dashboard;
