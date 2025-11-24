@@ -307,6 +307,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           cover_image_url: string | null
           created_at: string | null
           email: string
@@ -324,6 +325,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           email: string
@@ -341,6 +343,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           email?: string
@@ -901,6 +904,7 @@ export type Database = {
         Args: { _set_id: string; _user_id: string }
         Returns: boolean
       }
+      notify_community_birthdays: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "worship_leader" | "user"

@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { PostComposer } from "./PostComposer";
 import { SocialFeedPost } from "./SocialFeedPost";
 import { ProfileDialog } from "./ProfileDialog";
+import { BirthdayFeedCard } from "./BirthdayFeedCard";
 
 interface Author {
   id: string;
@@ -57,8 +58,13 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
 
       if (communityIds.length === 0) return [];
 
+      // Calculate date range for birthdays this week
+      const today = new Date();
+      const nextWeek = new Date();
+      nextWeek.setDate(today.getDate() + 7);
+
       // Fetch all post types in parallel with simple selects
-      const [postsData, setsData, eventsData] = await Promise.all([
+      const [postsData, setsData, eventsData, birthdayData] = await Promise.all([
         // User posts
         supabase
           .from("community_posts")
@@ -83,6 +89,19 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
           .in("community_id", communityIds)
           .order("created_at", { ascending: false })
           .limit(50),
+
+        // Birthday profiles - members with birthdays this week
+        supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url, birth_date")
+          .not("birth_date", "is", null)
+          .in("id", 
+            (await supabase
+              .from("community_members")
+              .select("user_id")
+              .in("community_id", communityIds)
+            ).data?.map(m => m.user_id) || []
+          ),
       ]);
 
       // Explicit error checking
@@ -98,6 +117,30 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         console.error("Error fetching events:", eventsData.error);
         throw eventsData.error;
       }
+      if (birthdayData.error) {
+        console.error("Error fetching birthdays:", birthdayData.error);
+        throw birthdayData.error;
+      }
+
+      // Filter birthdays to this week only (check month/day ignoring year)
+      const birthdaysThisWeek = (birthdayData.data || []).filter((profile) => {
+        if (!profile.birth_date) return false;
+        const birthDate = new Date(profile.birth_date);
+        const currentMonth = today.getMonth();
+        const currentDay = today.getDate();
+        const birthMonth = birthDate.getMonth();
+        const birthDay = birthDate.getDate();
+        
+        // Check if birthday falls within next 7 days (ignoring year)
+        for (let i = 0; i < 7; i++) {
+          const checkDate = new Date(today);
+          checkDate.setDate(today.getDate() + i);
+          if (checkDate.getMonth() === birthMonth && checkDate.getDate() === birthDay) {
+            return true;
+          }
+        }
+        return false;
+      });
 
       // Collect all unique author IDs and community IDs
       const authorIds = new Set<string>();
@@ -117,6 +160,9 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         if (event.created_by) authorIds.add(event.created_by);
         if (event.community_id) communityIdsSet.add(event.community_id);
       });
+
+      // For birthdays, we'll fetch communities in the next step
+      // Just mark that we need to check all user's communities for birthday profiles
 
       // Fetch profiles and communities separately
       const [profilesData, communitiesData] = await Promise.all([
@@ -154,6 +200,29 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         avatar_url: null,
       };
 
+      // Build birthday items
+      const birthdayItems = await Promise.all(
+        birthdaysThisWeek.map(async (profile) => {
+          // Get first community this person belongs to from user's communities
+          const memberCommunity = (await supabase
+            .from("community_members")
+            .select("community_id")
+            .eq("user_id", profile.id)
+            .in("community_id", communityIds)
+            .limit(1)
+            .single()
+          ).data;
+          
+          return {
+            id: `birthday-${profile.id}`,
+            type: "birthday" as const,
+            profile: profile,
+            community: memberCommunity ? communityMap.get(memberCommunity.community_id) || fallbackCommunity : fallbackCommunity,
+            created_at: profile.birth_date || new Date().toISOString(),
+          };
+        })
+      );
+
       // Build unified feed items manually
       const allItems = [
         ...(postsData.data || []).map((post) => ({
@@ -181,6 +250,7 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
           event: event,
           created_at: event.created_at,
         })),
+        ...birthdayItems,
       ];
 
       // Sort by created_at descending
@@ -240,13 +310,25 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
     <>
       <div className="space-y-4">
         <PostComposer />
-        {feedItems.map((item) => (
-          <SocialFeedPost
-            key={`${item.type}-${item.id}`}
-            item={item}
-            onProfileClick={openProfile}
-          />
-        ))}
+        {feedItems.map((item) => {
+          if (item.type === "birthday") {
+            return (
+              <BirthdayFeedCard
+                key={`${item.type}-${item.id}`}
+                profile={item.profile}
+                community={item.community}
+                onProfileClick={openProfile}
+              />
+            );
+          }
+          return (
+            <SocialFeedPost
+              key={`${item.type}-${item.id}`}
+              item={item}
+              onProfileClick={openProfile}
+            />
+          );
+        })}
       </div>
 
       <ProfileDialog
