@@ -83,7 +83,7 @@ export default function CommunityManagement() {
       const userIds = members.map(m => m.user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url")
+        .select("id, full_name, email, avatar_url, birth_date")
         .in("id", userIds);
       if (profileError) throw profileError;
       
@@ -380,7 +380,7 @@ export default function CommunityManagement() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {/* Actual Members First */}
+                {/* Actual Members */}
                 {members?.map((member) => {
                   const isWorshipLeader = member.globalRoles?.includes('worship_leader');
                   const isCommunityLeader = member.role === 'community_leader';
@@ -401,6 +401,14 @@ export default function CommunityManagement() {
                           <p className="text-sm text-muted-foreground">
                             {member.profiles?.email}
                           </p>
+                          {member.profiles?.birth_date && (
+                            <p className="text-xs text-muted-foreground">
+                              🎂 {new Date(member.profiles.birth_date).toLocaleDateString(
+                                language === "ko" ? "ko-KR" : "en-US",
+                                { month: "long", day: "numeric" }
+                              )}
+                            </p>
+                          )}
                           
                           {/* Role Badges */}
                           <div className="flex gap-1 mt-1">
@@ -573,12 +581,13 @@ export default function CommunityManagement() {
                     </div>
                   );
                 })}
-              </div>
-            </CardContent>
-          </Card>
-
                 
                 {/* Pending Invitations */}
+                {invitations && invitations.length > 0 && (
+                  <div className="mt-6 pt-6 border-t">
+                    <h3 className="text-sm font-semibold mb-3">{t("community.pendingInvitations")}</h3>
+                  </div>
+                )}
                 {invitations?.map((invitation) => (
                   <div
                     key={invitation.id}
@@ -606,7 +615,7 @@ export default function CommunityManagement() {
                     </div>
 
                     {canManage && (
-                      <div className="grid grid-cols-2 gap-2 items-center min-w-[250px]">
+                      <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
                         {/* Column 1: Resend button */}
                         <div>
                           <Button
@@ -621,7 +630,7 @@ export default function CommunityManagement() {
                         </div>
 
                         {/* Column 2: Cancel/Delete button */}
-                        <div className="flex justify-end">
+                        <div>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="ghost" size="sm">
@@ -650,10 +659,16 @@ export default function CommunityManagement() {
                             </AlertDialogContent>
                           </AlertDialog>
                         </div>
+
+                        {/* Column 3: Empty for alignment */}
+                        <div />
                       </div>
                     )}
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
