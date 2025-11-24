@@ -20,25 +20,50 @@ const AdminCommunities = () => {
   const { data: communities, isLoading } = useQuery({
     queryKey: ["admin-communities"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Step 1: Fetch all communities (simple select)
+      const { data: communitiesData, error } = await supabase
         .from("worship_communities")
-        .select(`
-          *,
-          profiles!worship_communities_leader_id_fkey (
-            full_name,
-            email
-          ),
-          community_members (
-            count
-          ),
-          service_sets (
-            count
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
       
       if (error) throw error;
-      return data;
+      if (!communitiesData || communitiesData.length === 0) return [];
+
+      // Step 2: Collect unique leader IDs
+      const leaderIds = [...new Set(communitiesData.map(c => c.leader_id))];
+
+      // Step 3: Batch fetch leader profiles
+      const { data: leaders } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", leaderIds);
+
+      // Step 4: Build leader lookup map
+      const leaderMap = new Map((leaders || []).map(l => [l.id, l]));
+
+      // Step 5: For each community, count members and sets
+      const enrichedCommunities = await Promise.all(
+        communitiesData.map(async (community) => {
+          const { count: memberCount } = await supabase
+            .from("community_members")
+            .select("*", { count: "exact", head: true })
+            .eq("community_id", community.id);
+          
+          const { count: setCount } = await supabase
+            .from("service_sets")
+            .select("*", { count: "exact", head: true })
+            .eq("community_id", community.id);
+          
+          return {
+            ...community,
+            profiles: leaderMap.get(community.leader_id),
+            community_members: memberCount || 0,
+            service_sets: setCount || 0
+          };
+        })
+      );
+
+      return enrichedCommunities;
     },
   });
   
@@ -91,8 +116,8 @@ const AdminCommunities = () => {
                 <TableBody>
                   {communities?.map((community) => {
                     const leader = community.profiles as any;
-                    const memberCount = community.community_members?.length || 0;
-                    const setCount = community.service_sets?.length || 0;
+                    const memberCount = community.community_members || 0;
+                    const setCount = community.service_sets || 0;
                     
                     return (
                       <TableRow key={community.id}>

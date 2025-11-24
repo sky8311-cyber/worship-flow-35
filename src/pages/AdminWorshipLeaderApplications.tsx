@@ -20,20 +20,32 @@ const AdminWorshipLeaderApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ["worship-leader-applications"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Step 1: Fetch all applications (simple select)
+      const { data: apps, error } = await supabase
         .from("worship_leader_applications")
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email,
-            avatar_url
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+      if (!apps || apps.length === 0) return [];
+
+      // Step 2: Collect unique user IDs
+      const userIds = [...new Set(apps.map(app => app.user_id))];
+
+      // Step 3: Batch fetch profiles
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .in("id", userIds);
+
+      // Step 4: Build lookup map
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      // Step 5: Reconstruct data
+      return apps.map(app => ({
+        ...app,
+        profiles: profileMap.get(app.user_id)
+      }));
     },
   });
 
