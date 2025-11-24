@@ -63,6 +63,9 @@ export default function CommunityManagement() {
       if (error) throw error;
       return data || [];
     },
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const { data: members } = useQuery({
