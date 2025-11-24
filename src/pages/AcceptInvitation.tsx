@@ -10,19 +10,19 @@ import { toast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle } from "lucide-react";
 
 export default function AcceptInvitation() {
-  const { token } = useParams();
+  const { invitationId } = useParams();
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [accepted, setAccepted] = useState(false);
 
   const { data: invitation, isLoading, error } = useQuery({
-    queryKey: ["invitation", token],
+    queryKey: ["invitation", invitationId],
     queryFn: async () => {
       const { data: invitation, error } = await supabase
         .from("community_invitations")
         .select("*")
-        .eq("id", token)
+        .eq("id", invitationId)
         .eq("status", "pending")
         .maybeSingle();
       if (error) throw error;
@@ -50,7 +50,7 @@ export default function AcceptInvitation() {
         profiles: profile
       };
     },
-    enabled: !!token,
+    enabled: !!invitationId,
   });
 
   const acceptMutation = useMutation({
@@ -71,7 +71,7 @@ export default function AcceptInvitation() {
       const { error: inviteError } = await supabase
         .from("community_invitations")
         .update({ status: "accepted" })
-        .eq("id", token);
+        .eq("id", invitationId);
       if (inviteError) throw inviteError;
     },
     onSuccess: () => {
@@ -89,7 +89,7 @@ export default function AcceptInvitation() {
       const { error } = await supabase
         .from("community_invitations")
         .update({ status: "declined" })
-        .eq("id", token);
+        .eq("id", invitationId);
       if (error) throw error;
     },
     onSuccess: () => {

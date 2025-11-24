@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowLeft, Copy, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, Mail, ArrowLeft, ArrowUp, ArrowDown, Send } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,56 +28,13 @@ import {
 export default function CommunityManagement() {
   const { id } = useParams();
   const { user, isAdmin } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-
-  const copyInviteLink = () => {
-    if (!community?.invite_token) return;
-    const inviteUrl = `${window.location.origin}/join/${community.invite_token}`;
-    
-    navigator.clipboard.writeText(inviteUrl)
-      .then(() => {
-        toast({ 
-          title: t("community.linkCopied"),
-          description: inviteUrl 
-        });
-      })
-      .catch(() => {
-        toast({ 
-          title: "Failed to copy link", 
-          variant: "destructive" 
-        });
-      });
-  };
-
-  const resetInviteLinkMutation = useMutation({
-    mutationFn: async () => {
-      const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-      
-      const { error } = await supabase
-        .from("worship_communities")
-        .update({ invite_token: newToken })
-        .eq("id", id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community", id] });
-      toast({ title: t("community.linkResetSuccess") });
-    },
-    onError: () => {
-      toast({
-        title: t("community.linkResetError"),
-        variant: "destructive",
-      });
-    },
-  });
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
@@ -91,6 +48,20 @@ export default function CommunityManagement() {
       setName(data.name);
       setDescription(data.description || "");
       return data;
+    },
+  });
+
+  const { data: invitations } = useQuery({
+    queryKey: ["community-invitations", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_invitations")
+        .select("*")
+        .eq("community_id", id)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString());
+      if (error) throw error;
+      return data || [];
     },
   });
 
@@ -202,6 +173,74 @@ export default function CommunityManagement() {
     },
   });
 
+  const inviteMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !community) return;
+
+      const { error } = await supabase.functions.invoke("send-community-invitation", {
+        body: {
+          email: inviteEmail,
+          communityId: id,
+          communityName: community.name,
+          inviterName: user.email || "A worship leader",
+          inviterId: user.id,
+          language,
+        },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-invitations", id] });
+      toast({ title: t("community.invitationSent") });
+      setInviteEmail("");
+    },
+    onError: (error: any) => {
+      console.error("Invitation error:", error);
+      toast({
+        title: t("community.invitationError"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resendInviteMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { error } = await supabase.functions.invoke("send-community-invitation", {
+        body: { invitationId },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: t("community.invitationResent") });
+    },
+    onError: () => {
+      toast({
+        title: t("community.invitationError"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelInviteMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { error } = await supabase
+        .from("community_invitations")
+        .delete()
+        .eq("id", invitationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-invitations", id] });
+      toast({ title: t("community.invitationCancelled") });
+    },
+    onError: () => {
+      toast({
+        title: t("community.invitationError"),
+        variant: "destructive",
+      });
+    },
+  });
+
   const leaveCommunityMutation = useMutation({
     mutationFn: async () => {
       const memberEntry = members?.find(m => m.user_id === user?.id);
@@ -295,16 +334,50 @@ export default function CommunityManagement() {
             </Card>
           )}
 
+          {/* Email Invitation */}
+          {canManage && (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("community.inviteByEmail")}</CardTitle>
+                <CardDescription>
+                  {t("community.inviteByEmailDescription")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    inviteMutation.mutate();
+                  }}
+                  className="flex gap-2"
+                >
+                  <Input
+                    type="email"
+                    placeholder={t("community.enterEmail")}
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                  />
+                  <Button type="submit" disabled={inviteMutation.isPending}>
+                    <Send className="h-4 w-4 mr-2" />
+                    {t("community.sendInvitation")}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Team Members */}
           <Card>
             <CardHeader>
               <CardTitle>{t("community.members")}</CardTitle>
               <CardDescription>
-                {t("community.memberCount", { count: members?.length || 0 })}
+                {t("community.memberCount", { count: (members?.length || 0) + (invitations?.length || 0) })}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                {/* Actual Members First */}
                 {members?.map((member) => {
                   const isWorshipLeader = member.globalRoles?.includes('worship_leader');
                   const isCommunityLeader = member.role === 'community_leader';
@@ -493,38 +566,76 @@ export default function CommunityManagement() {
             </CardContent>
           </Card>
 
-          {/* Permanent Invite Link - Only for managers */}
-          {canManage && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("community.permanentInviteLink")}</CardTitle>
-                <CardDescription>
-                  {t("community.shareThisLink")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-3 bg-muted rounded-lg break-all text-sm font-mono">
-                  {window.location.origin}/join/{community?.invite_token}
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={copyInviteLink}
-                    className="flex-1"
+                
+                {/* Pending Invitations */}
+                {invitations?.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex items-center justify-between p-4 border rounded-lg bg-muted/30"
                   >
-                    <Copy className="h-4 w-4 mr-2" />
-                    {t("community.copyInviteLink")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => resetInviteLinkMutation.mutate()}
-                    disabled={resetInviteLinkMutation.isPending}
-                  >
-                    {t("community.resetInviteLink")}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          <Mail className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{invitation.email}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t("community.invitedOn", {
+                            date: new Date(invitation.created_at!).toLocaleDateString(
+                              language === "ko" ? "ko-KR" : "en-US"
+                            ),
+                          })}
+                        </p>
+                        <Badge variant="secondary" className="mt-1">
+                          {t("community.statusPending")}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {canManage && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => resendInviteMutation.mutate(invitation.id)}
+                          disabled={resendInviteMutation.isPending}
+                        >
+                          <Mail className="h-4 w-4 mr-1" />
+                          {t("community.resendInvitation")}
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                {t("community.cancelInvitationTitle")}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("community.cancelInvitationDescription", {
+                                  email: invitation.email,
+                                })}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => cancelInviteMutation.mutate(invitation.id)}
+                              >
+                                {t("community.cancelInvitation")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+                  </div>
+                ))}
         </div>
       </div>
     </div>

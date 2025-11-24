@@ -80,7 +80,7 @@ const App = () => (
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
-              <Route path="/invitation/:token" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
+              <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
               
               {/* Admin Routes */}
