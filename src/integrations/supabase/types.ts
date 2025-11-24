@@ -739,7 +739,10 @@ export type Database = {
       worship_leader_applications: {
         Row: {
           church_name: string
+          church_website: string
+          country: string
           created_at: string | null
+          denomination: string
           id: string
           introduction: string
           position: string
@@ -752,7 +755,10 @@ export type Database = {
         }
         Insert: {
           church_name: string
+          church_website: string
+          country: string
           created_at?: string | null
+          denomination: string
           id?: string
           introduction: string
           position: string
@@ -765,7 +771,10 @@ export type Database = {
         }
         Update: {
           church_name?: string
+          church_website?: string
+          country?: string
           created_at?: string | null
+          denomination?: string
           id?: string
           introduction?: string
           position?: string
@@ -781,7 +790,10 @@ export type Database = {
       worship_leader_profiles: {
         Row: {
           church_name: string
+          church_website: string
+          country: string
           created_at: string | null
+          denomination: string
           id: string
           introduction: string
           position: string
@@ -791,7 +803,10 @@ export type Database = {
         }
         Insert: {
           church_name: string
+          church_website: string
+          country: string
           created_at?: string | null
+          denomination: string
           id?: string
           introduction: string
           position: string
@@ -801,7 +816,10 @@ export type Database = {
         }
         Update: {
           church_name?: string
+          church_website?: string
+          country?: string
           created_at?: string | null
+          denomination?: string
           id?: string
           introduction?: string
           position?: string
