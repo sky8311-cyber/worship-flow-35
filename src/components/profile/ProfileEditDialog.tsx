@@ -30,6 +30,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [ministryRole, setMinistryRole] = useState("");
@@ -41,6 +42,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
     if (profile) {
       setFullName(profile.full_name || "");
       setPhone(profile.phone || "");
+      setBirthDate(profile.birth_date || "");
       setBio(profile.bio || "");
       setLocation(profile.location || "");
       setMinistryRole(profile.ministry_role || "");
@@ -57,6 +59,7 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
         .update({
           full_name: fullName,
           phone: phone,
+          birth_date: birthDate || null,
           bio: bio,
           location: location,
           ministry_role: ministryRole,
@@ -121,6 +124,16 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={t("profile.phonePlaceholder")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">{t("profile.birthDate")}</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
               />
             </div>
 
