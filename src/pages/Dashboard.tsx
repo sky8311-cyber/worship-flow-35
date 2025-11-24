@@ -3,12 +3,13 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart, Languages, MoreHorizontal, Trash2, Lock, Link as LinkIcon } from "lucide-react";
+import { Music, Calendar, Plus, Shield, LogOut, Upload, User, Home, Heart, Languages, MoreHorizontal, Trash2, Lock, Link as LinkIcon, Bell } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -32,6 +33,9 @@ import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidge
 import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { CompleteWorshipLeaderProfileDialog } from "@/components/CompleteWorshipLeaderProfileDialog";
+import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
+import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
+import { useNotifications } from "@/hooks/useNotifications";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -48,6 +52,7 @@ const Dashboard = () => {
     profile,
     user
   } = useAuth();
+  const { unreadCount } = useNotifications();
   const dateLocale = language === "ko" ? ko : enUS;
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
@@ -370,18 +375,32 @@ const Dashboard = () => {
             </Link>
             
             {/* Right: Navigation Items */}
-            <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
-              <div className="hidden md:block">
-                <LanguageToggle />
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
-                <Heart className="h-5 w-5" />
-              </Button>
-              {isAdmin && <Button variant="ghost" size="icon" asChild>
-                  <Link to="/admin">
-                    <Shield className="h-5 w-5" />
-                  </Link>
-                </Button>}
+          <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
+            <div className="hidden md:block">
+              <LanguageToggle />
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
+              <Heart className="h-5 w-5" />
+            </Button>
+            
+            {/* Notification Bell */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <NotificationBadge count={unreadCount} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="p-0 w-auto">
+                <NotificationPanel />
+              </PopoverContent>
+            </Popover>
+            
+            {isAdmin && <Button variant="ghost" size="icon" asChild>
+                <Link to="/admin">
+                  <Shield className="h-5 w-5" />
+                </Link>
+              </Button>}
               
               {/* Profile Dropdown */}
               <DropdownMenu>

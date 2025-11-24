@@ -4,6 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { LikersDialog } from "./LikersDialog";
 
 interface LikeButtonProps {
   postId: string;
@@ -14,6 +16,7 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
   const { user } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const [showLikersDialog, setShowLikersDialog] = useState(false);
 
   const { data: likeData } = useQuery({
     queryKey: ["post-like", postId, user?.id],
@@ -75,16 +78,34 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
   const isLiked = !!likeData;
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={() => likeMutation.mutate()}
-      disabled={!user || likeMutation.isPending}
-      className={isLiked ? "text-red-500" : ""}
-    >
-      <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
-      {t("socialFeed.like")}
-      {likeCount !== undefined && likeCount > 0 && ` (${likeCount})`}
-    </Button>
+    <>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => likeMutation.mutate()}
+          disabled={!user || likeMutation.isPending}
+          className={isLiked ? "text-red-500" : ""}
+        >
+          <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
+          {t("socialFeed.like")}
+        </Button>
+        {likeCount !== undefined && likeCount > 0 && (
+          <button
+            onClick={() => setShowLikersDialog(true)}
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            {likeCount}
+          </button>
+        )}
+      </div>
+      
+      <LikersDialog
+        postId={postId}
+        postType={postType}
+        open={showLikersDialog}
+        onOpenChange={setShowLikersDialog}
+      />
+    </>
   );
 }
