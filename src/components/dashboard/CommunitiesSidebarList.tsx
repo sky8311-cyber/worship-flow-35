@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, ChevronRight, Settings } from "lucide-react";
+import { Users, ChevronRight } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -46,11 +46,8 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
             const isOwner = community.leader_id === user?.id;
             const canManage = isLeader || isOwner || isAdmin;
             
-            return (
-              <div
-                key={community.id}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors group"
-              >
+            const cardContent = (
+              <>
                 <Avatar className="w-10 h-10 shrink-0">
                   <AvatarImage src={community.avatar_url || undefined} />
                   <AvatarFallback>{community.name[0]}</AvatarFallback>
@@ -63,16 +60,24 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
                     </p>
                   )}
                 </div>
-                {canManage && (
-                  <Link
-                    to={`/community/${community.id}`}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Settings className="w-4 h-4" />
-                  </Link>
-                )}
                 <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </>
+            );
+            
+            return canManage ? (
+              <Link
+                key={community.id}
+                to={`/community/${community.id}`}
+                className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors group"
+              >
+                {cardContent}
+              </Link>
+            ) : (
+              <div
+                key={community.id}
+                className="flex items-center gap-3 p-2 rounded-lg"
+              >
+                {cardContent}
               </div>
             );
           })}
