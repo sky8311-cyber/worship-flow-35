@@ -20,6 +20,9 @@ export const CompleteWorshipLeaderProfileDialog = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     churchName: "",
+    churchWebsite: "",
+    denomination: "",
+    country: "",
     position: "",
     yearsServing: "",
     introduction: "",
@@ -59,6 +62,9 @@ export const CompleteWorshipLeaderProfileDialog = () => {
         .insert({
           user_id: user.id,
           church_name: formData.churchName,
+          church_website: formData.churchWebsite,
+          denomination: formData.denomination,
+          country: formData.country,
           position: formData.position,
           years_serving: parseInt(formData.yearsServing),
           introduction: formData.introduction,
@@ -132,6 +138,42 @@ export const CompleteWorshipLeaderProfileDialog = () => {
               required
               value={formData.churchName}
               onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="churchWebsite">{t("worshipLeaderRequest.churchWebsite")}</Label>
+            <Input
+              id="churchWebsite"
+              type="url"
+              required
+              placeholder={t("worshipLeaderRequest.churchWebsitePlaceholder")}
+              value={formData.churchWebsite}
+              onChange={(e) => setFormData({ ...formData, churchWebsite: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="denomination">{t("worshipLeaderRequest.denomination")}</Label>
+            <Input
+              id="denomination"
+              type="text"
+              required
+              placeholder={t("worshipLeaderRequest.denominationPlaceholder")}
+              value={formData.denomination}
+              onChange={(e) => setFormData({ ...formData, denomination: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">{t("worshipLeaderRequest.country")}</Label>
+            <Input
+              id="country"
+              type="text"
+              required
+              placeholder={t("worshipLeaderRequest.countryPlaceholder")}
+              value={formData.country}
+              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
             />
           </div>
 

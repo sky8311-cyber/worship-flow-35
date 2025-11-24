@@ -67,6 +67,9 @@ const AdminWorshipLeaderApplications = () => {
         .insert({
           user_id: application.user_id,
           church_name: application.church_name,
+          church_website: application.church_website,
+          denomination: application.denomination,
+          country: application.country,
           position: application.position,
           years_serving: application.years_serving,
           introduction: application.introduction,
@@ -151,6 +154,9 @@ const AdminWorshipLeaderApplications = () => {
                   <TableRow>
                     <TableHead>{t("admin.applications.applicant")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.churchName")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.churchWebsite")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.denomination")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.country")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.position")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.yearsServing")}</TableHead>
                     <TableHead>{t("admin.applications.appliedDate")}</TableHead>
@@ -178,6 +184,22 @@ const AdminWorshipLeaderApplications = () => {
                         </div>
                       </TableCell>
                       <TableCell>{app.church_name}</TableCell>
+                      <TableCell>
+                        {app.church_website ? (
+                          <a 
+                            href={app.church_website} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                          >
+                            {app.church_website}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{app.denomination || "-"}</TableCell>
+                      <TableCell>{app.country || "-"}</TableCell>
                       <TableCell>{app.position}</TableCell>
                       <TableCell>{app.years_serving}년</TableCell>
                       <TableCell>
