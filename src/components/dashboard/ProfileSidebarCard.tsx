@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Settings, Instagram, Youtube, Calendar, Users, UserCheck, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
@@ -24,6 +25,8 @@ interface Profile {
   ministry_role: string | null;
   instagram_url: string | null;
   youtube_url: string | null;
+  location: string | null;
+  instrument: string | null;
 }
 
 interface ProfileSidebarCardProps {
@@ -86,11 +89,25 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
             {profile?.full_name || t("profile.yourName")}
           </h3>
 
-          {/* Ministry Role */}
-          {profile?.ministry_role && (
-            <p className="text-sm text-muted-foreground text-center mt-1">
-              {profile.ministry_role}
-            </p>
+          {/* Profile Badges */}
+          {(profile?.location || profile?.ministry_role || profile?.instrument) && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+              {profile?.location && (
+                <Badge variant="secondary" className="text-xs">
+                  {profile.location}
+                </Badge>
+              )}
+              {profile?.ministry_role && (
+                <Badge variant="secondary" className="text-xs">
+                  {profile.ministry_role}
+                </Badge>
+              )}
+              {profile?.instrument && (
+                <Badge variant="secondary" className="text-xs">
+                  {profile.instrument}
+                </Badge>
+              )}
+            </div>
           )}
 
           {/* Bio */}
