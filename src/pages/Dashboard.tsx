@@ -218,10 +218,14 @@ const Dashboard = () => {
       const {
         data: memberData,
         error
-      } = await supabase.from("community_members").select("community_id").eq("user_id", user.id);
+      } = await supabase.from("community_members").select("community_id, role").eq("user_id", user.id);
       if (error) throw error;
       if (!memberData || memberData.length === 0) return [];
       const communityIds = memberData.map(m => m.community_id);
+      
+      // Create a role map for quick lookup
+      const roleMap = new Map(memberData.map(m => [m.community_id, m.role]));
+      
       const {
         data: communities,
         error: communitiesError
@@ -238,7 +242,8 @@ const Dashboard = () => {
         }).eq("community_id", community.id);
         return {
           ...community,
-          memberCount: count || 0
+          memberCount: count || 0,
+          userRole: roleMap.get(community.id) || 'member'
         };
       }));
       return communitiesWithDetails;
