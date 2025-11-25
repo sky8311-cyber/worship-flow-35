@@ -3,15 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Search, Users, ArrowLeft, Home } from "lucide-react";
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { Users } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function CommunitySearch() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,35 +109,8 @@ export default function CommunitySearch() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      {/* Navigation Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-3 items-center gap-4">
-            {/* Left: Breadcrumb */}
-            <div className="justify-self-start hidden md:block">
-              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Home className="h-4 w-4" />
-                <span>/</span>
-                <span>{t("breadcrumb.communitySearch")}</span>
-              </Link>
-            </div>
-            
-            {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-center col-start-2">
-              <HeaderLogo />
-            </Link>
-            
-            {/* Right: Navigation Items */}
-            <div className="justify-self-end">
-              <LanguageToggle />
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="container mx-auto py-8 px-4 pb-8">
+    <AppLayout>
+      <div className="container mx-auto py-6 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">{t("community.search")}</h1>
@@ -212,6 +183,6 @@ export default function CommunitySearch() {
         )}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

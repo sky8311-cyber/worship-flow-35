@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, LogOut, Bell, Heart } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -40,23 +40,11 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
     <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-3 items-center gap-4">
-          {/* Left: Breadcrumb or Back Button */}
+          {/* Left: Home Icon (Desktop only) */}
           <div className="justify-self-start">
-            {showBackButton && backPath ? (
-              <Link 
-                to={backPath}
-                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("common.back")}</span>
-              </Link>
-            ) : breadcrumb ? (
-              <div className="hidden md:block">{breadcrumb}</div>
-            ) : (
-              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors hidden md:flex">
-                <Home className="h-4 w-4" />
-              </Link>
-            )}
+            <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Home className="h-4 w-4" />
+            </Link>
           </div>
           
           {/* Center: Logo */}
@@ -66,15 +54,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
           
           {/* Right: Navigation Items */}
           <div className="col-start-3 justify-self-end flex items-center gap-2">
-            <div className="hidden md:block">
+            {/* Language Toggle - Desktop only */}
+            <div className="hidden lg:block">
               <LanguageToggle />
             </div>
             
-            <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")} className="hidden sm:flex">
+            {/* Heart Icon - Tablet & Desktop only */}
+            <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")} className="hidden md:flex">
               <Heart className="h-5 w-5" />
             </Button>
             
-            {/* Notification Bell */}
+            {/* Notification Bell - Always visible */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
@@ -87,13 +77,10 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
               </PopoverContent>
             </Popover>
             
-            {isAdmin && (
-              <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
-                <Link to="/admin">
-                  <Shield className="h-5 w-5" />
-                </Link>
-              </Button>
-            )}
+            {/* Message Icon - Tablet & Desktop only */}
+            <Button variant="ghost" size="icon" className="hidden md:flex">
+              <MessageCircle className="h-5 w-5" />
+            </Button>
             
             {/* Profile Dropdown */}
             <DropdownMenu>
@@ -147,7 +134,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 </DropdownMenuItem>
                 
                 {isAdmin && (
-                  <DropdownMenuItem className="sm:hidden" asChild>
+                  <DropdownMenuItem asChild>
                     <Link to="/admin">
                       <Shield className="mr-2 h-4 w-4" />
                       {t("dashboard.adminMenu")}
@@ -155,12 +142,12 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                <DropdownMenuItem className="sm:hidden" onClick={() => navigate("/favorites")}>
+                <DropdownMenuItem className="md:hidden" onClick={() => navigate("/favorites")}>
                   <Heart className="mr-2 h-4 w-4" />
                   {t("navigation.favorites")}
                 </DropdownMenuItem>
                 
-                <DropdownMenuSeparator className="md:hidden" />
+                <DropdownMenuSeparator />
                 
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />

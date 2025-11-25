@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -292,20 +293,12 @@ export default function CommunityManagement() {
   const isOwner = community?.leader_id === user?.id;
 
   return (
-    <div className="min-h-[100dvh] container mx-auto py-8 px-4 pb-8">
-      <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          className="mb-4"
-          onClick={() => navigate("/dashboard")}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Dashboard
-        </Button>
+    <AppLayout>
+      <div className="container mx-auto py-6 px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">{t("community.manage")}</h1>
 
-        <h1 className="text-3xl font-bold mb-8">{t("community.manage")}</h1>
-
-        <div className="space-y-6">
+          <div className="space-y-6">
           {/* Community Info - Only for managers */}
           {canManage && (
             <Card>
@@ -669,8 +662,9 @@ export default function CommunityManagement() {
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

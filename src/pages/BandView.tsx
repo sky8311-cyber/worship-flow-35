@@ -2,13 +2,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, ArrowLeft, Edit } from "lucide-react";
+import { Music, Calendar, Printer, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const BandView = () => {
   const { id } = useParams();
@@ -109,77 +110,69 @@ const BandView = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
-        <div className="text-center">
-          <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">로딩 중...</p>
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   if (!serviceSet) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
-        <div className="text-center">
-          <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">워십세트를 찾을 수 없습니다</p>
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-center">
+            <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">워십세트를 찾을 수 없습니다</p>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   const sortedSetSongs = setSongs || [];
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft print:bg-white">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10 print:hidden">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              대시보드로
-            </Button>
-            
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                <Music className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
-                {!canEdit && <Badge variant="secondary" className="text-xs">읽기 전용</Badge>}
-              </div>
+    <AppLayout>
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {/* Action buttons */}
+        <div className="flex items-center justify-between mb-6 print:hidden">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+              <Music className="w-6 h-6 text-white" />
             </div>
-            
-            <div className="flex items-center gap-2">
-              {canEdit && (
-                <Button
-                  variant="default"
-                  onClick={() => navigate(`/set-builder/${id}`)}
-                  className="flex items-center gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  {t("common.edit")}
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                onClick={() => window.print()}
-                className="flex items-center gap-2"
-              >
-                <Printer className="w-4 h-4" />
-                인쇄
-              </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
+              {!canEdit && <Badge variant="secondary" className="text-xs">읽기 전용</Badge>}
             </div>
           </div>
+          
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <Button
+                variant="default"
+                onClick={() => navigate(`/set-builder/${id}`)}
+                className="flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                {t("common.edit")}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={() => window.print()}
+              className="flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              인쇄
+            </Button>
+          </div>
         </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-6 pb-8 max-w-5xl">
         {/* Service Set Header */}
         <Card className="shadow-lg mb-6 print:shadow-none">
           <CardContent className="p-6">
@@ -383,8 +376,8 @@ const BandView = () => {
             </CardContent>
           </Card>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
