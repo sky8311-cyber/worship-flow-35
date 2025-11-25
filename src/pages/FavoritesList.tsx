@@ -5,12 +5,15 @@ import { Card } from "@/components/ui/card";
 import { SongTable } from "@/components/SongTable";
 import { SongCard } from "@/components/SongCard";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, LayoutList, Home, Heart } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { LayoutGrid, LayoutList, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function FavoritesList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   
   const { data: favoriteSongs, isLoading } = useQuery({
@@ -34,49 +37,32 @@ export default function FavoritesList() {
   });
   
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <header className="sticky top-0 z-10 border-b bg-card/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 items-center py-4">
-            <div className="flex items-center gap-2">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <Home className="w-5 h-5" />
-                </Button>
-              </Link>
-              <span className="text-sm text-muted-foreground hidden md:inline">/ 즐겨찾기</span>
-            </div>
-            
-            <Link to="/dashboard" className="flex justify-center col-start-2">
-              <HeaderLogo />
-            </Link>
-            
-            <div className="flex justify-end gap-2">
-              <Button
-                variant={viewMode === "table" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("table")}
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === "card" ? "default" : "outline"}
-                size="icon"
-                onClick={() => setViewMode("card")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-            </div>
+    <AppLayout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">❤️ {t("navigation.favorites")} ({favoriteSongs?.length || 0})</h1>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === "table" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("table")}
+            >
+              <LayoutList className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === "card" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("card")}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
           </div>
         </div>
-      </header>
-      
-      <main className="container mx-auto px-4 py-8">
+        
         <Card className="p-6">
-          <h1 className="text-2xl font-bold mb-6">❤️ 즐겨찾기 ({favoriteSongs?.length || 0})</h1>
-          
           {isLoading ? (
-            <p>로딩 중...</p>
+            <p>{t("common.loading")}</p>
           ) : favoriteSongs && favoriteSongs.length > 0 ? (
             viewMode === "table" ? (
               <SongTable songs={favoriteSongs} />
@@ -97,7 +83,7 @@ export default function FavoritesList() {
             </div>
           )}
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

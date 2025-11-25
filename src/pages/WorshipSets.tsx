@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Eye, Home, Plus, Upload } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+import { Edit, Trash2, Eye, Plus, Upload } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -74,38 +74,23 @@ export default function WorshipSets() {
   });
   
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <header className="sticky top-0 z-10 border-b bg-card/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 items-center py-4">
-            <div className="flex items-center gap-2">
-              <Link to="/dashboard">
-                <Button variant="ghost" size="icon">
-                  <Home className="w-5 h-5" />
-                </Button>
-              </Link>
-              <span className="text-sm text-muted-foreground hidden md:inline">/ {t("worshipSets.history")}</span>
-            </div>
-            
-            <Link to="/dashboard" className="flex justify-center col-start-2">
-              <HeaderLogo />
-            </Link>
-            
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => navigate("/set-import")}>
-                <Upload className="w-4 h-4 mr-1" />
-                {t("worshipSets.import")}
-              </Button>
-              <Button onClick={() => navigate("/set-builder")}>
-                <Plus className="w-4 h-4 mr-1" />
-                {t("worshipSets.createNew")}
-              </Button>
-            </div>
+    <AppLayout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">{t("worshipSets.history")}</h1>
+          
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/set-import")}>
+              <Upload className="w-4 h-4 mr-1" />
+              {t("worshipSets.import")}
+            </Button>
+            <Button onClick={() => navigate("/set-builder")}>
+              <Plus className="w-4 h-4 mr-1" />
+              {t("worshipSets.createNew")}
+            </Button>
           </div>
         </div>
-      </header>
-      
-      <main className="container mx-auto px-4 py-8">
+        
         <Card className="p-6">
           <div className="flex gap-2 mb-6">
             <Button 
@@ -189,7 +174,7 @@ export default function WorshipSets() {
             </Table>
           )}
         </Card>
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
