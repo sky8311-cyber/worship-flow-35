@@ -550,20 +550,7 @@ const SongLibrary = () => {
           onCancelBulkEdit={handleCancelBulkEdit}
         />
       )}
-
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t shadow-lg md:hidden z-50">
-        <div className="flex justify-around py-3">
-          <Link to="/" className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground hover:text-foreground transition-colors">
-            <Music className="w-5 h-5" />
-            <span className="text-xs font-medium">{t("common.home")}</span>
-          </Link>
-          <Link to="/songs" className="flex flex-col items-center gap-1 px-4 py-2 text-primary">
-            <Music className="w-5 h-5" />
-            <span className="text-xs font-medium">{t("common.songLibrary")}</span>
-          </Link>
-        </div>
-      </nav>
-    </div>
+    </AppLayout>
   );
 };
 
