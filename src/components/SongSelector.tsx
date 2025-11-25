@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { SongDialog } from "./SongDialog";
@@ -140,27 +141,47 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           
           <div className="flex gap-2">
             {selectedSongs.length > 0 && (
-            <Button 
-              size="sm" 
-              onClick={handleBulkAddToSet}
-              className="relative"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              담기
-              <Badge variant="secondary" className="ml-2 bg-white text-primary">
-                {selectedSongs.length}
-              </Badge>
-            </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      onClick={handleBulkAddToSet}
+                      className="relative"
+                      aria-label="담기"
+                    >
+                      <Plus className="w-4 h-4 md:mr-1" />
+                      <span className="hidden md:inline">담기</span>
+                      <Badge variant="secondary" className="ml-2 bg-white text-primary">
+                        {selectedSongs.length}
+                      </Badge>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="md:hidden">
+                    <p>담기</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
-            <Button 
-              size="sm" 
-              variant="outline"
-              onClick={() => setShowSongDialog(true)}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {t("songSelector.addNewSong")}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => setShowSongDialog(true)}
+                    aria-label="새 곡 추가"
+                  >
+                    <Plus className="w-4 h-4 md:mr-1" />
+                    <span className="hidden md:inline">{t("songSelector.addNewSong")}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="md:hidden">
+                  <p>새 곡 추가</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </DialogHeader>
 
