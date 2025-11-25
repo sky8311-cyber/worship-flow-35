@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -449,6 +450,54 @@ const SetBuilder = () => {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
+        {/* Action Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            뒤로
+          </Button>
+          
+          <div className="flex items-center gap-2">
+            {status === "draft" ? (
+              <Badge variant="outline">
+                <Lock className="w-3 h-3 mr-1" />
+                임시저장
+              </Badge>
+            ) : (
+              <Badge>
+                <Check className="w-3 h-3 mr-1" />
+                게시됨
+              </Badge>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {id && (
+              <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                <Share2 className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">팀 링크 복사</span>
+              </Button>
+            )}
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => saveSetMutation.mutate(undefined)}
+              disabled={saveSetMutation.isPending}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saveSetMutation.isPending ? "저장 중..." : "저장"}
+            </Button>
+            
+            <Button 
+              size="sm" 
+              onClick={handlePublishToggle}
+              disabled={saveSetMutation.isPending}
+            >
+              {status === "draft" ? "게시하기" : "게시취소"}
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <Card className="shadow-md">
