@@ -121,3 +121,13 @@ All colors MUST be HSL.
     overflow-wrap: break-word;
   }
 }
+
+/* Hide scrollbar for horizontal scroll containers */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -170,16 +170,17 @@ export const SongCard = ({
             )}
           </div>
 
-          <div className="flex gap-2">
+          {/* Media buttons - stacked on mobile */}
+          <div className="flex flex-col sm:flex-row gap-2">
             {song.youtube_url && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(song.youtube_url, "_blank")}
-                className="flex-1"
+                className="flex-1 w-full"
               >
-                <Youtube className="w-4 h-4 mr-1" />
-                {t("songCard.viewYouTube")}
+                <Youtube className="w-4 h-4 mr-1 text-red-500" />
+                <span className="truncate">{t("songCard.viewYouTube")}</span>
               </Button>
             )}
             {song.score_file_url && (
@@ -187,60 +188,67 @@ export const SongCard = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setScorePreviewOpen(true)}
-                className="flex-1"
+                className="flex-1 w-full"
               >
-                <FileText className="w-4 h-4 mr-1" />
-                {t("songCard.viewScore")}
+                <FileText className="w-4 h-4 mr-1 text-blue-500" />
+                <span className="truncate">{t("songCard.viewScore")}</span>
               </Button>
             )}
           </div>
 
+          {/* Action buttons - stacked on mobile */}
           {(onEdit || onDelete) && (
-            <div className="flex gap-2 mt-4">
-              <FavoriteButton songId={song.id} size="sm" variant="outline" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setAddToSetOpen(true)}
-                className="flex-1"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                세트에 추가
-              </Button>
-              {onEdit && (
+            <div className="flex flex-col sm:flex-row gap-2 mt-4">
+              <div className="flex gap-2">
+                <FavoriteButton songId={song.id} size="sm" variant="outline" />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEdit(song)}
+                  onClick={() => setAddToSetOpen(true)}
                   className="flex-1"
                 >
-                  <Edit className="w-4 h-4 mr-1" />
-                  {t("common.edit")}
+                  <Plus className="w-4 h-4 mr-1" />
+                  <span className="hidden sm:inline">세트에 추가</span>
+                  <span className="sm:hidden">추가</span>
                 </Button>
-              )}
-              {onDelete && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("songCard.deleteConfirm")}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete}>
-                        {t("common.delete")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+              </div>
+              <div className="flex gap-2">
+                {onEdit && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(song)}
+                    className="flex-1"
+                  >
+                    <Edit className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">{t("common.edit")}</span>
+                    <span className="sm:hidden truncate">{t("common.edit")}</span>
+                  </Button>
+                )}
+                {onDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("songCard.deleteConfirm")}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>
+                          {t("common.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
