@@ -448,9 +448,7 @@ const SetBuilder = () => {
 
   return (
     <AppLayout>
-      <div className="min-h-[100dvh] pb-8">
-
-      <main className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <Card className="shadow-md">
@@ -665,7 +663,7 @@ const SetBuilder = () => {
             )}
           </div>
         </div>
-      </main>
+      </div>
 
       {showSongSelector && (
         <SongSelector
@@ -689,7 +687,6 @@ const SetBuilder = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </div>
     </AppLayout>
   );
 };
