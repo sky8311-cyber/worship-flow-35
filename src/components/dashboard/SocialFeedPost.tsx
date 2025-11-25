@@ -292,8 +292,8 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
             )}
           </div>
           
-          {/* Second row: Timestamp and Community (separate lines, indented) */}
-          <div className="pl-[52px] space-y-0.5">
+          {/* Second row: Timestamp and Community (separate lines, aligned left) */}
+          <div className="space-y-0.5">
             <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(item.created_at), {
                 addSuffix: true,
