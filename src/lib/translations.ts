@@ -87,6 +87,14 @@ export const translations = {
       setBuilder: "Set Builder",
       songs: "Song Library",
     },
+    navigation: {
+      home: "Home",
+      worshipSets: "Sets",
+      songs: "Songs",
+      community: "Community",
+      more: "More",
+      favorites: "Favorites",
+    },
     auth: {
       signUpChoice: {
         title: "Sign Up",
@@ -1102,6 +1110,14 @@ export const translations = {
       profile: "프로필",
       setBuilder: "세트 만들기",
       songs: "찬양 라이브러리",
+    },
+    navigation: {
+      home: "홈",
+      worshipSets: "예배세트",
+      songs: "곡 라이브러리",
+      community: "예배공동체",
+      more: "더보기",
+      favorites: "즐겨찾기",
     },
     auth: {
       signUpChoice: {
