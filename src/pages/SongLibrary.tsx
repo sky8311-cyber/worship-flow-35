@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { Home } from "lucide-react";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
@@ -297,63 +297,7 @@ const SongLibrary = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-soft pb-20 md:pb-8">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-3 items-center gap-4">
-            {/* Left: Breadcrumb */}
-            <div className="justify-self-start hidden md:block">
-              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Home className="h-4 w-4" />
-                <span>/</span>
-                <span>{t("breadcrumb.songs")}</span>
-              </Link>
-            </div>
-            
-            {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-center col-start-2">
-              <HeaderLogo />
-            </Link>
-            
-            {/* Right: Navigation Items */}
-            <div className="justify-self-end flex items-center gap-2">
-              {profile?.full_name && (
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {profile.full_name}
-                </span>
-              )}
-              <LanguageToggle />
-              {isAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  asChild
-                  title={t("dashboard.adminMenu")}
-                >
-                  <Link to="/admin">
-                    <Shield className="h-5 w-5" />
-                  </Link>
-                </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleLogout}
-                title={t("dashboard.logout")}
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-              {isWorshipLeader && (
-                <Button onClick={handleAddSong} className="hidden md:flex">
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t("songLibrary.addSong")}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <AppLayout>
       <main className="container mx-auto px-4 py-6 pb-24 md:pb-8">
         <Card className="shadow-md mb-6">
           <CardHeader>
