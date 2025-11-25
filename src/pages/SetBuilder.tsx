@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Home } from "lucide-react";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 const SetBuilder = () => {
   const { id } = useParams();
@@ -434,13 +435,15 @@ const SetBuilder = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
-        <div className="text-center">
-          <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">로딩 중...</p>
-      </div>
-    </AppLayout>
-  );
+      <AppLayout>
+        <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
+          <div className="text-center">
+            <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
   }
 
   return (
@@ -686,7 +689,8 @@ const SetBuilder = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 
