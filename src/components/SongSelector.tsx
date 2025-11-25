@@ -140,17 +140,17 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           
           <div className="flex gap-2">
             {selectedSongs.length > 0 && (
-              <Button 
-                size="sm" 
-                onClick={handleBulkAddToSet}
-                className="relative"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                예배세트에 담기
-                <Badge variant="secondary" className="ml-2 bg-white text-primary">
-                  {selectedSongs.length}
-                </Badge>
-              </Button>
+            <Button 
+              size="sm" 
+              onClick={handleBulkAddToSet}
+              className="relative"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              담기
+              <Badge variant="secondary" className="ml-2 bg-white text-primary">
+                {selectedSongs.length}
+              </Badge>
+            </Button>
             )}
             
             <Button 
