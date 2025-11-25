@@ -256,8 +256,9 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   return (
     <>
       <Card className="hover:shadow-md transition-shadow">
-        <CardHeader>
-          <div className="flex items-start gap-3">
+        <CardHeader className="flex flex-col space-y-2">
+          {/* First row: Avatar, Name, 3-dots */}
+          <div className="flex items-center gap-3">
             <Avatar 
               className="cursor-pointer hover:opacity-80 transition-opacity w-10 h-10"
               onClick={() => onProfileClick(item.author)}
@@ -268,19 +269,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
               </AvatarFallback>
             </Avatar>
             
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">{item.author.full_name || "Anonymous"}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>
-                  {formatDistanceToNow(new Date(item.created_at), {
-                    addSuffix: true,
-                    locale: language === "ko" ? ko : undefined,
-                  })}
-                </span>
-                <span>•</span>
-                <span>{item.community.name}</span>
-              </div>
-            </div>
+            <p className="font-medium text-sm flex-1">{item.author.full_name || "Anonymous"}</p>
 
             {(user?.id === item.author.id || isAdmin || isWorshipLeader) && item.type === "community_post" && (
               <DropdownMenu>
@@ -301,6 +290,19 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                   </DropdownMenuContent>
               </DropdownMenu>
             )}
+          </div>
+          
+          {/* Second row: Timestamp and Community (separate lines, indented) */}
+          <div className="pl-[52px] space-y-0.5">
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(item.created_at), {
+                addSuffix: true,
+                locale: language === "ko" ? ko : undefined,
+              })}
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              {item.community.name}
+            </p>
           </div>
         </CardHeader>
 
