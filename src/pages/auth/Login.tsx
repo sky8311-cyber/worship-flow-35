@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,6 @@ import logoMobile from "@/assets/kworship-logo-mobile.png";
 const Login = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
-  const { toast } = useToast();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -35,16 +34,9 @@ const Login = () => {
     const { error } = await signIn(formData.email, formData.password);
     
     if (error) {
-      toast({
-        title: t("auth.error"),
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error(error.message);
     } else {
-      toast({
-        title: t("auth.success"),
-        description: t("auth.loginSuccess"),
-      });
+      toast.success(t("auth.loginSuccess"));
       navigate("/");
     }
     setLoading(false);

@@ -36,6 +36,7 @@ import { CompleteWorshipLeaderProfileDialog } from "@/components/CompleteWorship
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
+import { AppLayout } from "@/components/layout/AppLayout";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -344,122 +345,9 @@ const Dashboard = () => {
     },
     enabled: !!user
   });
-   return <div className="min-h-screen bg-gradient-soft">
-       {/* Header */}
-       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-         <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-3 items-center gap-4">
-            {/* Left: Breadcrumb */}
-            <div className="justify-self-start hidden md:block">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="flex items-center">
-                      <Home className="h-4 w-4" />
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-            
-            {/* Center: Logo - Desktop */}
-            <Link to="/dashboard" className="hidden md:block justify-self-center col-start-2">
-              <img src={logoDesktop} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
-            </Link>
-            
-            {/* Left: Logo - Mobile */}
-            <Link to="/dashboard" className="md:hidden justify-self-start col-start-1">
-              <img src={logoMobile} alt="K-Worship" className="h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
-            </Link>
-            
-            {/* Right: Navigation Items */}
-          <div className="col-start-3 justify-self-end flex items-center gap-2 sm:gap-3">
-            <div className="hidden md:block">
-              <LanguageToggle />
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
-              <Heart className="h-5 w-5" />
-            </Button>
-            
-            {/* Notification Bell */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <NotificationBadge count={unreadCount} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 w-auto">
-                <NotificationPanel />
-              </PopoverContent>
-            </Popover>
-            
-            {isAdmin && <Button variant="ghost" size="icon" asChild>
-                <Link to="/admin">
-                  <Shield className="h-5 w-5" />
-                </Link>
-              </Button>}
-              
-              {/* Profile Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar>
-                      <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-2">
-                      <p className="text-sm font-medium">{profile?.full_name || t("profile.title")}</p>
-                      <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
-                      
-                      {/* Role Badges */}
-                      <div className="flex gap-1 flex-wrap">
-                        {isAdmin && <Badge variant="destructive" className="text-xs">
-                            {t("roles.admin")}
-                          </Badge>}
-                        {isWorshipLeader && <Badge className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
-                            {t("roles.worshipLeader")}
-                          </Badge>}
-                        {isCommunityLeaderInAnyCommunity && <Badge className="text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
-                            {t("roles.communityLeader")}
-                          </Badge>}
-                        {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && <Badge variant="outline" className="text-xs">
-                            {t("roles.member")}
-                          </Badge>}
-                      </div>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="md:hidden" onClick={() => setProfileDialogOpen(true)}>
-                    <User className="mr-2 h-4 w-4" />
-                    {t("profile.title")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="md:hidden" onClick={() => {
-                    setLanguage(language === "en" ? "ko" : "en");
-                  }}>
-                    <Languages className="mr-2 h-4 w-4" />
-                    <span>{language === "en" ? "한국어" : "English"}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="md:hidden" />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t("auth.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
-      </header>
-
+  return <AppLayout>
       {/* Main Content - Desktop Layout (3 columns) */}
-      <main className="container mx-auto px-4 py-8 hidden lg:block">
+      <div className="container mx-auto px-4 py-8 hidden lg:block">
         <div className="grid grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
           {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services) */}
           <div className="space-y-4">
@@ -655,27 +543,11 @@ const Dashboard = () => {
           {/* Column 3: Empty padding (on large screens) */}
           <div className="hidden lg:block"></div>
         </div>
-      </main>
+      </div>
 
-      {/* Mobile Layout - Tabs */}
-      <main className="lg:hidden container mx-auto px-4 py-4">
-        <Tabs defaultValue="home" className="w-full">
-          <TabsList className="w-full sticky top-16 bg-background border-b grid grid-cols-3">
-            <TabsTrigger value="home" className="flex items-center gap-2">
-              <Home className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
-            </TabsTrigger>
-            <TabsTrigger value="communities" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">예배공동체</span>
-            </TabsTrigger>
-            <TabsTrigger value="library" className="flex items-center gap-2">
-              <Music className="w-4 h-4" />
-              <span className="hidden sm:inline">곡 라이브러리</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="home" className="space-y-4 mt-4">
+      {/* Mobile Layout */}
+      <div className="lg:hidden container mx-auto px-4 py-4">
+        <div className="space-y-4">
             {/* Upcoming Sets */}
             <Card>
               <CardHeader>
@@ -811,69 +683,17 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Community Feed */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("community.joined")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CommunityFeed />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="communities" className="space-y-4 mt-4">
-            <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={10} />
-            <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
-            <UpcomingEventsWidget 
-              sets={upcomingSets || []} 
-              maxVisible={5}
-              currentUserId={user?.id}
-              isAdmin={isAdmin}
-              isCommunityLeader={isCommunityLeaderInAnyCommunity}
-            />
-          </TabsContent>
-
-          <TabsContent value="library" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">곡 라이브러리</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SongLibraryWidget 
-                  onAddSong={() => setAddSongOpen(true)}
-                  onImport={() => setImportSetOpen(true)}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      <SetImportDialog open={importSetOpen} onOpenChange={setImportSetOpen} onImportComplete={() => {
-      queryClient.invalidateQueries({
-        queryKey: ["upcoming-sets"]
-      });
-      setImportSetOpen(false);
-    }} />
-
-      <SongDialog open={addSongOpen} onOpenChange={setAddSongOpen} song={null} onClose={() => {
-      setAddSongOpen(false);
-      queryClient.invalidateQueries({
-        queryKey: ["songs-count"]
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["recent-songs"]
-      });
-    }} />
-
-      <ProfileDialog 
-        open={profileDialogOpen} 
-        onOpenChange={setProfileDialogOpen} 
-        stats={userStats} 
-      />
-
-      <CompleteWorshipLeaderProfileDialog />
-    </div>;
+          {/* Community Feed */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">{t("community.joined")}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CommunityFeed />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </AppLayout>;
 };
 export default Dashboard;

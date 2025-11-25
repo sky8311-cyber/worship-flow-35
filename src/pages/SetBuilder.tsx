@@ -438,123 +438,14 @@ const SetBuilder = () => {
         <div className="text-center">
           <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
           <p className="text-muted-foreground">로딩 중...</p>
-        </div>
       </div>
-    );
+    </AppLayout>
+  );
   }
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft pb-8">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-3 items-center gap-4">
-            {/* Left: Breadcrumb */}
-            <div className="justify-self-start hidden md:block">
-              <Link to="/dashboard" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Home className="h-4 w-4" />
-                <span>/</span>
-                <span>{t("breadcrumb.setBuilder")}</span>
-              </Link>
-            </div>
-            
-            {/* Center: Logo */}
-            <Link to="/dashboard" className="justify-self-center col-start-2">
-              <HeaderLogo />
-            </Link>
-            
-            {/* Right: Navigation Items */}
-            <div className="justify-self-end flex flex-wrap gap-2">
-              {isAdmin && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link to="/admin">
-                          <Shield className="h-5 w-5" />
-                        </Link>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t("dashboard.adminMenu")}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" onClick={handleLogout}>
-                      <LogOut className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t("dashboard.logout")}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              {id && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={handleCopyLink}>
-                        <Share2 className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>팀 링크 복사</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      size="icon"
-                      variant="default"
-                      onClick={() => saveSetMutation.mutate("draft")} 
-                      disabled={saveSetMutation.isPending}
-                    >
-                      <Save className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {saveSetMutation.isPending ? "저장 중..." : "저장"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              {id && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm"
-                        variant={status === "published" ? "destructive" : "default"}
-                        onClick={handlePublishToggle}
-                        disabled={saveSetMutation.isPending}
-                        className="flex items-center gap-2"
-                      >
-                        {status === "published" ? (
-                          <>
-                            <Lock className="h-4 w-4" />
-                            <span>Unpublish</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            <span>Publish</span>
-                          </>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {status === "published" ? "게시 취소" : "게시하기"}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+    <AppLayout>
+      <div className="min-h-[100dvh] pb-8">
 
       <main className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
