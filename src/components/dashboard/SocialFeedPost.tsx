@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,11 +69,11 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     return (
       <div className="py-6 px-4 border-b">
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
             <Music className="w-6 h-6 text-primary" />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="max-w-full">
             <p className="text-sm">
               <span className="text-foreground">{item.community.name}</span>
               {language === "ko" 
@@ -87,22 +88,24 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                 : `)` 
               }
               {language === "ko" 
-                ? ` 워십세트가 업데이트되었습니다. `
-                : ` Worship Set was updated. `
+                ? ` 워십세트가 업데이트되었습니다.`
+                : ` Worship Set was updated.`
               }
+            </p>
+            <div className="flex items-center gap-2 mt-2">
               <button 
                 onClick={() => window.location.assign(`/band-view/${item.set.id}`)}
-                className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-80 transition-opacity ml-1"
+                className="inline-flex items-center px-2 py-0.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-80 transition-opacity"
               >
                 {language === "ko" ? "더보기" : "Read More"}
               </button>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatDistanceToNow(new Date(item.created_at), {
-                addSuffix: true,
-                locale: language === "ko" ? ko : undefined,
-              })}
-            </p>
+              <span className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(item.created_at), {
+                  addSuffix: true,
+                  locale: language === "ko" ? ko : undefined,
+                })}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -129,11 +132,11 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
 
     return (
       <div className="py-6 px-4 border-b">
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-accent/10 shrink-0">
             <Calendar className="w-6 h-6 text-accent" />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="max-w-full">
             <p className="text-sm">
               <span className="text-foreground">{item.community.name}</span>
               {language === "ko" 
@@ -154,12 +157,17 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                 {item.event.description}
               </p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {formatDistanceToNow(new Date(item.created_at), {
-                addSuffix: true,
-                locale: language === "ko" ? ko : undefined,
-              })}
-            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className="text-xs">
+                {language === "ko" ? eventTypeLabel.ko : eventTypeLabel.en}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(item.created_at), {
+                  addSuffix: true,
+                  locale: language === "ko" ? ko : undefined,
+                })}
+              </span>
+            </div>
           </div>
         </div>
       </div>
