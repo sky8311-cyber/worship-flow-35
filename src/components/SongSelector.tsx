@@ -157,7 +157,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                       </Badge>
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="md:hidden">
+                  <TooltipContent side="bottom" className="md:hidden">
                     <p>담기</p>
                   </TooltipContent>
                 </Tooltip>
@@ -177,7 +177,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                     <span className="hidden md:inline">{t("songSelector.addNewSong")}</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="md:hidden">
+                <TooltipContent side="bottom" className="md:hidden">
                   <p>새 곡 추가</p>
                 </TooltipContent>
               </Tooltip>
