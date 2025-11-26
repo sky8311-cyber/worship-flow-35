@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { UserCard } from "@/components/admin/UserCard";
+import { AdminUserProfileDialog } from "@/components/admin/AdminUserProfileDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -31,6 +32,10 @@ const AdminUsers = () => {
     open: false,
     email: "",
     userName: "",
+  });
+  const [profileDialog, setProfileDialog] = useState<{ open: boolean; userId: string | null }>({
+    open: false,
+    userId: null,
   });
   
   useEffect(() => {
@@ -327,16 +332,21 @@ const AdminUsers = () => {
             ) : viewMode === "card" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredUsers?.map((user) => (
-                  <UserCard
+                  <div
                     key={user.id}
-                    user={user}
-                    onAddRole={(userId, role) => addRoleMutation.mutate({ userId, role })}
-                    onRemoveRole={(userId, role) => removeRoleMutation.mutate({ userId, role })}
-                    onResetPassword={(email, userName) => setResetDialog({ open: true, email, userName })}
-                    onDelete={(userId, userName) => setDeleteDialog({ open: true, userId, userName })}
-                    onToggleSelection={toggleUserSelection}
-                    isSelected={selectedUsers.has(user.id)}
-                  />
+                    onClick={() => setProfileDialog({ open: true, userId: user.id })}
+                    className="cursor-pointer"
+                  >
+                    <UserCard
+                      user={user}
+                      onAddRole={(userId, role) => addRoleMutation.mutate({ userId, role })}
+                      onRemoveRole={(userId, role) => removeRoleMutation.mutate({ userId, role })}
+                      onResetPassword={(email, userName) => setResetDialog({ open: true, email, userName })}
+                      onDelete={(userId, userName) => setDeleteDialog({ open: true, userId, userName })}
+                      onToggleSelection={toggleUserSelection}
+                      isSelected={selectedUsers.has(user.id)}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -366,8 +376,14 @@ const AdminUsers = () => {
                     const hasWorshipLeader = userRoles.includes("worship_leader");
                     
                     return (
-                      <TableRow key={user.id}>
-                        <TableCell>
+                      <TableRow
+                        key={user.id}
+                        onClick={() => setProfileDialog({ open: true, userId: user.id })}
+                        className="cursor-pointer"
+                      >
+                        <TableCell
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
@@ -389,13 +405,16 @@ const AdminUsers = () => {
                         <TableCell>
                           {format(new Date(user.created_at), "PPP", { locale: dateLocale })}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2 flex-wrap">
                             {!hasAdmin && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => addRoleMutation.mutate({ userId: user.id, role: "admin" })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addRoleMutation.mutate({ userId: user.id, role: "admin" });
+                                }}
                               >
                                 <UserPlus className="w-3 h-3 mr-1" />
                                 Admin
@@ -405,7 +424,10 @@ const AdminUsers = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => removeRoleMutation.mutate({ userId: user.id, role: "admin" })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeRoleMutation.mutate({ userId: user.id, role: "admin" });
+                                }}
                               >
                                 <UserMinus className="w-3 h-3 mr-1" />
                                 Admin
@@ -415,7 +437,10 @@ const AdminUsers = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => addRoleMutation.mutate({ userId: user.id, role: "worship_leader" })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
+                                }}
                               >
                                 <UserPlus className="w-3 h-3 mr-1" />
                                 Leader
@@ -425,7 +450,10 @@ const AdminUsers = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => removeRoleMutation.mutate({ userId: user.id, role: "worship_leader" })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
+                                }}
                               >
                                 <UserMinus className="w-3 h-3 mr-1" />
                                 Leader
@@ -433,12 +461,15 @@ const AdminUsers = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email });
+                              }}
                             >
                               <KeyRound className="w-3 h-3 mr-1" />
                               {t("admin.users.resetPassword")}
@@ -446,7 +477,10 @@ const AdminUsers = () => {
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email })}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email });
+                              }}
                             >
                               <Trash2 className="w-3 h-3 mr-1" />
                               {t("admin.users.delete")}
@@ -461,6 +495,13 @@ const AdminUsers = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Profile Dialog */}
+        <AdminUserProfileDialog
+          userId={profileDialog.userId}
+          open={profileDialog.open}
+          onOpenChange={(open) => setProfileDialog({ open, userId: open ? profileDialog.userId : null })}
+        />
       </main>
 
       {/* Bulk Actions Bar */}
