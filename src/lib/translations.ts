@@ -78,6 +78,8 @@ export const translations = {
         newSong: "New song added",
         postLike: "liked your post",
         comment: "commented on your post",
+        newWorshipSet: "New Worship Set",
+        newCalendarEvent: "New Event",
       },
     },
     breadcrumb: {
@@ -1144,6 +1146,8 @@ export const translations = {
         newSong: "새 곡 추가됨",
         postLike: "님이 회원님의 게시물을 좋아합니다",
         comment: "님이 회원님의 게시물에 댓글을 남겼습니다",
+        newWorshipSet: "새 예배세트",
+        newCalendarEvent: "새 일정",
       },
     },
     breadcrumb: {
