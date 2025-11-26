@@ -10,13 +10,26 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+  
+  // Check if user can manage a specific set
+  const canManage = (set: any) => {
+    if (isAdmin) return true;
+    if (isWorshipLeader && set.created_by === user?.id) return true;
+    if (isCommunityLeaderInAnyCommunity && set.created_by === user?.id) return true;
+    return false;
+  };
+  
+  // Check if user can create new sets
+  const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
   
   // History page shows ALL worship sets (no date filtering)
   const { data: sets, isLoading } = useQuery({
@@ -79,16 +92,18 @@ export default function WorshipSets() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">{t("worshipSets.history")}</h1>
           
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate("/set-import")}>
-              <Upload className="w-4 h-4 mr-1" />
-              {t("worshipSets.import")}
-            </Button>
-            <Button onClick={() => navigate("/set-builder")}>
-              <Plus className="w-4 h-4 mr-1" />
-              {t("worshipSets.createNew")}
-            </Button>
-          </div>
+          {canCreateSets && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate("/set-import")}>
+                <Upload className="w-4 h-4 mr-1" />
+                {t("worshipSets.import")}
+              </Button>
+              <Button onClick={() => navigate("/set-builder")}>
+                <Plus className="w-4 h-4 mr-1" />
+                {t("worshipSets.createNew")}
+              </Button>
+            </div>
+          )}
         </div>
         
         <Card className="p-6">
@@ -132,7 +147,7 @@ export default function WorshipSets() {
                   <TableRow 
                     key={set.id} 
                     className="cursor-pointer hover:bg-accent"
-                    onClick={() => navigate(`/set-builder/${set.id}`)}
+                    onClick={() => navigate(canManage(set) ? `/set-builder/${set.id}` : `/band-view/${set.id}`)}
                   >
                     <TableCell>{format(new Date(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
@@ -144,29 +159,35 @@ export default function WorshipSets() {
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => navigate(`/set-builder/${set.id}`)}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost"
-                          onClick={() => togglePublishMutation.mutate({ id: set.id, currentStatus: set.status })}
-                        >
+                      {canManage(set) ? (
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => navigate(`/set-builder/${set.id}`)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={() => togglePublishMutation.mutate({ id: set.id, currentStatus: set.status })}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={() => {
+                              if (confirm("정말 삭제하시겠습니까?")) {
+                                deleteMutation.mutate(set.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="icon" variant="ghost" onClick={() => navigate(`/band-view/${set.id}`)}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          onClick={() => {
-                            if (confirm("정말 삭제하시겠습니까?")) {
-                              deleteMutation.mutate(set.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
