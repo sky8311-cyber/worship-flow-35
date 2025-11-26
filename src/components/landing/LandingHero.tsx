@@ -27,7 +27,7 @@ export const LandingHero = () => {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Animated background blobs */}
       <motion.div
-        className="absolute top-20 left-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
+        className="absolute top-20 -left-20 sm:left-10 w-64 sm:w-96 h-64 sm:h-96 bg-primary/10 rounded-full blur-3xl"
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.5, 0.3],
@@ -39,7 +39,7 @@ export const LandingHero = () => {
         }}
       />
       <motion.div
-        className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+        className="absolute bottom-20 -right-20 sm:right-10 w-64 sm:w-96 h-64 sm:h-96 bg-accent/10 rounded-full blur-3xl"
         animate={{
           scale: [1.2, 1, 1.2],
           opacity: [0.5, 0.3, 0.5],
