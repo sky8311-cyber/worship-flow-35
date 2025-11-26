@@ -42,10 +42,6 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
       <CardContent>
         <div className="space-y-2">
           {visibleCommunities.map((community) => {
-            const isLeader = community.userRole === 'community_leader';
-            const isOwner = community.leader_id === user?.id;
-            const canManage = isLeader || isOwner || isAdmin;
-            
             const cardContent = (
               <>
                 <Avatar className="w-10 h-10 shrink-0">
@@ -64,7 +60,7 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
               </>
             );
             
-            return canManage ? (
+            return (
               <Link
                 key={community.id}
                 to={`/community/${community.id}`}
@@ -72,13 +68,6 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
               >
                 {cardContent}
               </Link>
-            ) : (
-              <div
-                key={community.id}
-                className="flex items-center gap-3 p-2 rounded-lg"
-              >
-                {cardContent}
-              </div>
             );
           })}
         </div>
