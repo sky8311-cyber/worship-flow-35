@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Eye, Plus, Upload } from "lucide-react";
+import { Edit, Trash2, Eye, Plus, Upload, Music, List, FileEdit, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -89,47 +89,55 @@ export default function WorshipSets() {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("worshipSets.title")}</h1>
-          </div>
-          
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           {canCreateSets && (
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={() => navigate("/set-import")}
               >
+                <Upload className="w-4 h-4" />
                 {t("worshipSets.import")}
               </Button>
               <Button onClick={() => navigate("/set-builder")}>
+                <Plus className="w-4 h-4" />
                 {t("worshipSets.createNew")}
               </Button>
             </div>
           )}
         </div>
         
-        <Card className="p-6">
-          <div className="flex gap-2 mb-6">
-            <Button 
-              variant={statusFilter === "all" ? "default" : "outline"}
-              onClick={() => setStatusFilter("all")}
-            >
-              {t("worshipSets.filterAll")}
-            </Button>
-            <Button 
-              variant={statusFilter === "draft" ? "default" : "outline"}
-              onClick={() => setStatusFilter("draft")}
-            >
-              {t("worshipSets.filterDraft")}
-            </Button>
-            <Button 
-              variant={statusFilter === "published" ? "default" : "outline"}
-              onClick={() => setStatusFilter("published")}
-            >
-              {t("worshipSets.filterPublished")}
-            </Button>
-          </div>
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Music className="w-4 h-4 sm:w-5 sm:h-5" />
+              {t("worshipSets.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2 sm:gap-3 mb-6">
+              <Button 
+                variant={statusFilter === "all" ? "default" : "outline"}
+                onClick={() => setStatusFilter("all")}
+              >
+                <List className="w-4 h-4" />
+                {t("worshipSets.filterAll")}
+              </Button>
+              <Button 
+                variant={statusFilter === "draft" ? "default" : "outline"}
+                onClick={() => setStatusFilter("draft")}
+              >
+                <FileEdit className="w-4 h-4" />
+                {t("worshipSets.filterDraft")}
+              </Button>
+              <Button 
+                variant={statusFilter === "published" ? "default" : "outline"}
+                onClick={() => setStatusFilter("published")}
+              >
+                <Globe className="w-4 h-4" />
+                {t("worshipSets.filterPublished")}
+              </Button>
+            </div>
           
           {isLoading ? (
             <p>{t("common.loading")}</p>
@@ -197,6 +205,7 @@ export default function WorshipSets() {
               </TableBody>
             </Table>
           )}
+          </CardContent>
         </Card>
       </div>
     </AppLayout>
