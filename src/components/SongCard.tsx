@@ -31,6 +31,8 @@ interface SongCardProps {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (songId: string) => void;
+  inCart?: boolean;
+  onToggleCart?: (songId: string) => void;
 }
 
 export const SongCard = ({ 
@@ -39,7 +41,9 @@ export const SongCard = ({
   onDelete,
   selectionMode = false,
   isSelected = false,
-  onToggleSelection
+  onToggleSelection,
+  inCart = false,
+  onToggleCart
 }: SongCardProps) => {
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
@@ -106,6 +110,8 @@ export const SongCard = ({
     <>
       <Card className={`shadow-md hover:shadow-lg transition-all animate-fade-in overflow-hidden relative ${
         selectionMode && isSelected ? "ring-2 ring-primary shadow-lg" : ""
+      } ${
+        inCart ? "ring-2 ring-blue-500 shadow-lg" : ""
       }`}>
         {selectionMode && (
           <div className="absolute top-2 right-2 z-10">
@@ -197,22 +203,23 @@ export const SongCard = ({
           </div>
 
           {/* Action buttons - stacked on mobile */}
-          {(onEdit || onDelete) && (
-            <div className="flex flex-col sm:flex-row gap-2 mt-4">
-              <div className="flex gap-2">
-                <FavoriteButton songId={song.id} size="sm" variant="outline" />
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+            <div className="flex gap-2">
+              <FavoriteButton songId={song.id} size="sm" variant="outline" />
+              {onToggleCart && (
                 <Button
-                  variant="outline"
+                  variant={inCart ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setAddToSetOpen(true)}
+                  onClick={() => onToggleCart(song.id)}
                   className="flex-1"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">세트에 추가</span>
-                  <span className="sm:hidden">추가</span>
+                  <span>{inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}</span>
                 </Button>
-              </div>
-              <div className="flex gap-2">
+              )}
+            </div>
+            {(onEdit || onDelete) && (
+              <div className="flex gap-2 flex-1">
                 {onEdit && (
                   <Button
                     variant="outline"
@@ -249,8 +256,8 @@ export const SongCard = ({
                   </AlertDialog>
                 )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
       

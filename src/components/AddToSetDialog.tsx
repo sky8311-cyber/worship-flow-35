@@ -13,10 +13,12 @@ import { useNavigate } from "react-router-dom";
 interface AddToSetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  song: any;
+  song?: any; // For backward compatibility with single song
+  songs?: any[]; // For multiple songs from cart
+  onSuccess?: () => void;
 }
 
-export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps) {
+export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: AddToSetDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<"new" | string>("new");
@@ -41,6 +43,8 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
     enabled: open,
   });
   
+  const songsToAdd = songs || (song ? [song] : []);
+  
   const addToSetMutation = useMutation({
     mutationFn: async () => {
       const { data: user } = await supabase.auth.getUser();
@@ -60,18 +64,21 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
         
         if (setError) throw setError;
         
+        // Add all songs sequentially
+        const songInserts = songsToAdd.map((s, index) => ({
+          service_set_id: newSet.id,
+          song_id: s.id,
+          position: index + 1,
+          key: s.default_key,
+        }));
+        
         const { error: songError } = await supabase
           .from("set_songs")
-          .insert([{
-            service_set_id: newSet.id,
-            song_id: song.id,
-            position: 1,
-            key: song.default_key,
-          }]);
+          .insert(songInserts);
         
         if (songError) throw songError;
         
-        return newSet.id;
+        return { setId: newSet.id, count: songsToAdd.length };
       } else {
         const { data: existingSongs } = await supabase
           .from("set_songs")
@@ -80,24 +87,29 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
           .order("position", { ascending: false })
           .limit(1);
         
-        const nextPosition = (existingSongs?.[0]?.position || 0) + 1;
+        const startPosition = (existingSongs?.[0]?.position || 0) + 1;
+        
+        const songInserts = songsToAdd.map((s, index) => ({
+          service_set_id: selectedOption,
+          song_id: s.id,
+          position: startPosition + index,
+          key: s.default_key,
+        }));
         
         const { error } = await supabase
           .from("set_songs")
-          .insert([{
-            service_set_id: selectedOption,
-            song_id: song.id,
-            position: nextPosition,
-            key: song.default_key,
-          }]);
+          .insert(songInserts);
         
         if (error) throw error;
         
-        return selectedOption;
+        return { setId: selectedOption, count: songsToAdd.length };
       }
     },
-    onSuccess: async (setId) => {
-      toast.success("곡이 워십세트에 추가되었습니다");
+    onSuccess: async ({ setId, count }) => {
+      const message = count === 1 
+        ? "곡이 워십세트에 추가되었습니다"
+        : `${count}곡이 워십세트에 추가되었습니다`;
+      toast.success(message);
       
       // Wait for refetch to complete before navigating
       await queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
@@ -105,6 +117,10 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
       
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
       
       onOpenChange(false);
       navigate(`/set-builder/${setId}`);
@@ -119,8 +135,20 @@ export function AddToSetDialog({ open, onOpenChange, song }: AddToSetDialogProps
         </DialogHeader>
         
         <div className="mb-4">
-          <p className="text-sm text-muted-foreground mb-1">선택한 곡:</p>
-          <p className="font-medium">{song?.title}</p>
+          <p className="text-sm text-muted-foreground mb-1">
+            {songsToAdd.length === 1 ? "선택한 곡:" : `선택한 곡 (${songsToAdd.length}곡):`}
+          </p>
+          {songsToAdd.length === 1 ? (
+            <p className="font-medium">{songsToAdd[0]?.title}</p>
+          ) : (
+            <div className="max-h-32 overflow-y-auto space-y-1">
+              {songsToAdd.map((s, i) => (
+                <p key={s.id} className="text-sm">
+                  {i + 1}. {s.title} {s.artist && `- ${s.artist}`}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
         
         <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
