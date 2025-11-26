@@ -32,6 +32,8 @@ interface SongTableProps {
   onColumnFilter?: (column: string, value: string) => void;
   columnSort?: { column: string | null; direction: 'asc' | 'desc' | null };
   onColumnSort?: (column: string, direction: 'asc' | 'desc') => void;
+  cartSongs?: Set<string>;
+  onToggleCart?: (songId: string) => void;
 }
 
 export const SongTable = ({ 
@@ -48,7 +50,9 @@ export const SongTable = ({
   columnFilters = {},
   onColumnFilter,
   columnSort = { column: null, direction: null },
-  onColumnSort
+  onColumnSort,
+  cartSongs = new Set(),
+  onToggleCart,
 }: SongTableProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -243,6 +247,7 @@ export const SongTable = ({
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
+            <TableHead className="w-12"></TableHead>
             <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
           </TableHeader>
@@ -373,6 +378,18 @@ export const SongTable = ({
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {getLastUsedDate(song.id)}
+                  </TableCell>
+                  <TableCell className="w-12">
+                    {onToggleCart && (
+                      <Button
+                        variant={cartSongs.has(song.id) ? "default" : "ghost"}
+                        size="icon"
+                        onClick={() => onToggleCart(song.id)}
+                        className="h-8 w-8"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell>
                     {!bulkEditMode && (

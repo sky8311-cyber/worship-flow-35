@@ -14,6 +14,8 @@ import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { FloatingCartButton } from "@/components/FloatingCartButton";
+import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -46,6 +48,8 @@ const SongLibrary = () => {
     column: null,
     direction: null
   });
+  const [cartSongs, setCartSongs] = useState<Set<string>>(new Set());
+  const [isCartDialogOpen, setIsCartDialogOpen] = useState(false);
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -250,6 +254,25 @@ const SongLibrary = () => {
     setBulkEditMode(false);
     setEditedSongs({});
   };
+
+  const handleToggleCart = (songId: string) => {
+    setCartSongs(prev => {
+      const newCart = new Set(prev);
+      if (newCart.has(songId)) {
+        newCart.delete(songId);
+      } else {
+        newCart.add(songId);
+      }
+      return newCart;
+    });
+  };
+
+  const handleCartSuccess = () => {
+    setCartSongs(new Set());
+    setIsCartDialogOpen(false);
+  };
+
+  const cartSongsArray = sortedAndFilteredSongs.filter(song => cartSongs.has(song.id));
 
   const handleEnterBulkEdit = () => {
     if (selectedSongIds.size === 0) {
@@ -460,6 +483,8 @@ const SongLibrary = () => {
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
               onColumnSort={handleColumnSort}
+              cartSongs={cartSongs}
+              onToggleCart={handleToggleCart}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -472,6 +497,8 @@ const SongLibrary = () => {
                   selectionMode={selectionMode}
                   isSelected={selectedSongIds.has(song.id)}
                   onToggleSelection={handleToggleSelection}
+                  inCart={cartSongs.has(song.id)}
+                  onToggleCart={handleToggleCart}
                 />
               ))}
             </div>
@@ -560,6 +587,18 @@ const SongLibrary = () => {
           onCancelBulkEdit={handleCancelBulkEdit}
         />
       )}
+
+      <FloatingCartButton 
+        count={cartSongs.size}
+        onClick={() => setIsCartDialogOpen(true)}
+      />
+
+      <AddToSetDialog
+        open={isCartDialogOpen}
+        onOpenChange={setIsCartDialogOpen}
+        songs={cartSongsArray}
+        onSuccess={handleCartSuccess}
+      />
     </AppLayout>
   );
 };
