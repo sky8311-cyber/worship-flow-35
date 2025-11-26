@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { UserCard } from "@/components/admin/UserCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -20,6 +21,7 @@ const AdminUsers = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; userName: string }>({
     open: false,
     userId: "",
@@ -30,6 +32,12 @@ const AdminUsers = () => {
     email: "",
     userName: "",
   });
+  
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setViewMode("card");
+    }
+  }, []);
   
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -279,16 +287,34 @@ const AdminUsers = () => {
       <main className="container mx-auto px-4 py-8 pb-8">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <CardTitle className="text-2xl">{t("admin.users.title")}</CardTitle>
-              <div className="relative w-72">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder={t("admin.users.searchPlaceholder")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-72">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input
+                    placeholder={t("admin.users.searchPlaceholder")}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant={viewMode === "card" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("card")}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("table")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -297,6 +323,21 @@ const AdminUsers = () => {
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading users...</p>
+              </div>
+            ) : viewMode === "card" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredUsers?.map((user) => (
+                  <UserCard
+                    key={user.id}
+                    user={user}
+                    onAddRole={(userId, role) => addRoleMutation.mutate({ userId, role })}
+                    onRemoveRole={(userId, role) => removeRoleMutation.mutate({ userId, role })}
+                    onResetPassword={(email, userName) => setResetDialog({ open: true, email, userName })}
+                    onDelete={(userId, userName) => setDeleteDialog({ open: true, userId, userName })}
+                    onToggleSelection={toggleUserSelection}
+                    isSelected={selectedUsers.has(user.id)}
+                  />
+                ))}
               </div>
             ) : (
               <Table>

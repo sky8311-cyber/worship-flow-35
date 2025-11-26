@@ -95,6 +95,26 @@ export const translations = {
       more: "More",
       favorites: "Favorites",
     },
+    viewMode: {
+      card: "Card View",
+      table: "Table View",
+    },
+    tooltips: {
+      addAdmin: "Add Admin Role",
+      removeAdmin: "Remove Admin Role",
+      addWorshipLeader: "Add Worship Leader Role",
+      removeWorshipLeader: "Remove Worship Leader Role",
+      resetPassword: "Reset Password",
+      deleteUser: "Delete User",
+      approve: "Approve Application",
+      reject: "Reject Application",
+      promote: "Promote to Community Leader",
+      demote: "Demote to Member",
+      removeMember: "Remove from Community",
+      resendInvitation: "Resend Invitation",
+      cancelInvitation: "Cancel Invitation",
+      toggleActive: "Toggle Active Status",
+    },
     auth: {
       signUpChoice: {
         title: "Sign Up",
@@ -1118,6 +1138,26 @@ export const translations = {
       community: "예배공동체",
       more: "더보기",
       favorites: "즐겨찾기",
+    },
+    viewMode: {
+      card: "카드 보기",
+      table: "표 보기",
+    },
+    tooltips: {
+      addAdmin: "관리자 역할 추가",
+      removeAdmin: "관리자 역할 제거",
+      addWorshipLeader: "예배인도자 역할 추가",
+      removeWorshipLeader: "예배인도자 역할 제거",
+      resetPassword: "비밀번호 재설정",
+      deleteUser: "사용자 삭제",
+      approve: "승인",
+      reject: "거부",
+      promote: "커뮤니티 리더로 승격",
+      demote: "멤버로 강등",
+      removeMember: "커뮤니티에서 제거",
+      resendInvitation: "초대 재전송",
+      cancelInvitation: "초대 취소",
+      toggleActive: "활성 상태 토글",
     },
     auth: {
       signUpChoice: {

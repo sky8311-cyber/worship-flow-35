@@ -2,20 +2,27 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { WaitlistCard } from "@/components/admin/WaitlistCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { useState } from "react";
-import { Search, Download } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download, LayoutGrid, List } from "lucide-react";
 
 const AdminWaitlist = () => {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setViewMode("card");
+    }
+  }, []);
   
   const { data: waitlist, isLoading } = useQuery({
     queryKey: ["admin-waitlist"],
@@ -70,19 +77,35 @@ const AdminWaitlist = () => {
       <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
               <CardTitle className="text-2xl">{t("admin.waitlist.title")}</CardTitle>
-              <div className="flex items-center gap-4">
-                <div className="w-72">
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex-1 sm:w-72">
                   <SearchInput
                     placeholder={t("admin.waitlist.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button onClick={exportToCSV} variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  {t("admin.waitlist.export")}
+                <div className="flex gap-1">
+                  <Button
+                    variant={viewMode === "card" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("card")}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("table")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button onClick={exportToCSV} variant="outline" size="sm">
+                  <Download className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{t("admin.waitlist.export")}</span>
                 </Button>
               </div>
             </div>
@@ -92,6 +115,12 @@ const AdminWaitlist = () => {
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading waitlist...</p>
+              </div>
+            ) : viewMode === "card" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredWaitlist?.map((entry) => (
+                  <WaitlistCard key={entry.id} entry={entry} />
+                ))}
               </div>
             ) : (
               <div className="overflow-x-auto">

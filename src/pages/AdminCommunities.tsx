@@ -6,16 +6,25 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { CommunityCard } from "@/components/admin/CommunityCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
+import { Users, LayoutGrid, List } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const AdminCommunities = () => {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
   const queryClient = useQueryClient();
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setViewMode("card");
+    }
+  }, []);
   
   const { data: communities, isLoading } = useQuery({
     queryKey: ["admin-communities"],
@@ -92,13 +101,41 @@ const AdminCommunities = () => {
       <main className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">{t("admin.communities.title")}</CardTitle>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle className="text-2xl">{t("admin.communities.title")}</CardTitle>
+              <div className="flex gap-1">
+                <Button
+                  variant={viewMode === "card" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("card")}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
                 <p className="text-muted-foreground">Loading communities...</p>
+              </div>
+            ) : viewMode === "card" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {communities?.map((community) => (
+                  <CommunityCard
+                    key={community.id}
+                    community={community}
+                    onToggleActive={(id, isActive) => toggleActiveMutation.mutate({ id, isActive })}
+                  />
+                ))}
               </div>
             ) : (
               <Table>

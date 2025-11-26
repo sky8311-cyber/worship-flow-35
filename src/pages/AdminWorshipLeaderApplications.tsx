@@ -6,16 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AdminNav } from "@/components/admin/AdminNav";
+import { ApplicationCard } from "@/components/admin/ApplicationCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, LayoutGrid, List } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const AdminWorshipLeaderApplications = () => {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
   const queryClient = useQueryClient();
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setViewMode("card");
+    }
+  }, []);
 
   const { data: applications, isLoading } = useQuery({
     queryKey: ["worship-leader-applications"],
@@ -139,7 +148,25 @@ const AdminWorshipLeaderApplications = () => {
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.applications.title")}</CardTitle>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <CardTitle>{t("admin.applications.title")}</CardTitle>
+              <div className="flex gap-1">
+                <Button
+                  variant={viewMode === "card" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("card")}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -147,6 +174,18 @@ const AdminWorshipLeaderApplications = () => {
             ) : !applications || applications.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {t("admin.applications.noApplications")}
+              </div>
+            ) : viewMode === "card" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {applications.map((app: any) => (
+                  <ApplicationCard
+                    key={app.id}
+                    application={app}
+                    onApprove={(id) => approveMutation.mutate(id)}
+                    onReject={(id) => rejectMutation.mutate(id)}
+                    isLoading={approveMutation.isPending || rejectMutation.isPending}
+                  />
+                ))}
               </div>
             ) : (
               <Table>
