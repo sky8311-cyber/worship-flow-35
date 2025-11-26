@@ -15,6 +15,12 @@ import { Trash2, Mail, ArrowLeft, ArrowUp, ArrowDown, Send } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -294,160 +300,168 @@ export default function CommunityManagement() {
 
   return (
     <AppLayout>
-      <div className="container mx-auto py-6 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold">{t("community.manage")}</h1>
-            {!canManage && (
-              <Badge variant="outline" className="text-sm">
-                {t("community.readOnlyMode")}
-              </Badge>
+      <TooltipProvider>
+        <div className="container mx-auto py-6 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <h1 className="text-3xl font-bold">{t("community.manage")}</h1>
+              {!canManage && (
+                <Badge variant="outline" className="text-sm">
+                  {t("community.readOnlyMode")}
+                </Badge>
+              )}
+            </div>
+
+            <div className="space-y-6">
+            {/* Community Info - Only for managers */}
+            {canManage && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("community.editCommunity")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">{t("community.name")}</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">{t("community.description")}</Label>
+                    <Textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                  <Button onClick={() => updateMutation.mutate()}>
+                    {t("common.save")}
+                  </Button>
+                </CardContent>
+              </Card>
             )}
-          </div>
 
-          <div className="space-y-6">
-          {/* Community Info - Only for managers */}
-          {canManage && (
+            {/* Email Invitation */}
+            {canManage && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("community.inviteByEmail")}</CardTitle>
+                  <CardDescription>
+                    {t("community.inviteByEmailDescription")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      inviteMutation.mutate();
+                    }}
+                    className="flex flex-col sm:flex-row gap-2"
+                  >
+                    <Input
+                      type="email"
+                      placeholder={t("community.enterEmail")}
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      required
+                      className="flex-1"
+                    />
+                    <Button type="submit" disabled={inviteMutation.isPending} className="sm:w-auto">
+                      <Send className="h-4 w-4 mr-2" />
+                      {t("community.sendInvitation")}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Team Members */}
             <Card>
               <CardHeader>
-                <CardTitle>{t("community.editCommunity")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="name">{t("community.name")}</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">{t("community.description")}</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <Button onClick={() => updateMutation.mutate()}>
-                  {t("common.save")}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Email Invitation */}
-          {canManage && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("community.inviteByEmail")}</CardTitle>
+                <CardTitle>{t("community.members")}</CardTitle>
                 <CardDescription>
-                  {t("community.inviteByEmailDescription")}
+                  {t("community.memberCount", { count: (members?.length || 0) + (invitations?.length || 0) })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    inviteMutation.mutate();
-                  }}
-                  className="flex gap-2"
-                >
-                  <Input
-                    type="email"
-                    placeholder={t("community.enterEmail")}
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" disabled={inviteMutation.isPending}>
-                    <Send className="h-4 w-4 mr-2" />
-                    {t("community.sendInvitation")}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+                <div className="space-y-3">
+                  {/* Actual Members */}
+                  {members?.map((member) => {
+                    const isWorshipLeader = member.globalRoles?.includes('worship_leader');
+                    const isCommunityLeader = member.role === 'community_leader';
+                    const isLeaderOfCommunity = member.user_id === community.leader_id;
 
-          {/* Team Members */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("community.members")}</CardTitle>
-              <CardDescription>
-                {t("community.memberCount", { count: (members?.length || 0) + (invitations?.length || 0) })}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* Actual Members */}
-                {members?.map((member) => {
-                  const isWorshipLeader = member.globalRoles?.includes('worship_leader');
-                  const isCommunityLeader = member.role === 'community_leader';
-                  const isLeaderOfCommunity = member.user_id === community.leader_id;
-
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                          <AvatarFallback>{member.profiles?.full_name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{member.profiles?.full_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {member.profiles?.email}
-                          </p>
-                          {member.profiles?.birth_date && (
-                            <p className="text-xs text-muted-foreground">
-                              🎂 {new Date(member.profiles.birth_date).toLocaleDateString(
-                                language === "ko" ? "ko-KR" : "en-US",
-                                { month: "long", day: "numeric" }
-                              )}
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar>
+                            <AvatarImage src={member.profiles?.avatar_url || undefined} />
+                            <AvatarFallback>{member.profiles?.full_name?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium">{member.profiles?.full_name}</p>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {member.profiles?.email}
                             </p>
-                          )}
-                          
-                          {/* Role Badges */}
-                          <div className="flex gap-1 mt-1">
-                            {isLeaderOfCommunity && (
-                              <Badge variant="default">
-                                {t("community.communityOwner")}
-                              </Badge>
+                            {member.profiles?.birth_date && (
+                              <p className="text-xs text-muted-foreground">
+                                🎂 {new Date(member.profiles.birth_date).toLocaleDateString(
+                                  language === "ko" ? "ko-KR" : "en-US",
+                                  { month: "long", day: "numeric" }
+                                )}
+                              </p>
                             )}
-                            {isWorshipLeader && (
-                              <Badge className="bg-primary/10 text-primary dark:bg-primary/20">
-                                {t("community.worshipLeader")}
-                              </Badge>
-                            )}
-                            {isCommunityLeader && !isWorshipLeader && (
-                              <Badge className="bg-accent/10 text-accent dark:bg-accent/20">
-                                {t("community.communityLeader")}
-                              </Badge>
-                            )}
-                            {!isCommunityLeader && !isWorshipLeader && !isLeaderOfCommunity && (
-                              <Badge variant="outline">
-                                {t("community.member")}
-                              </Badge>
-                            )}
+                            
+                            {/* Role Badges */}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {isLeaderOfCommunity && (
+                                <Badge variant="default">
+                                  {t("community.communityOwner")}
+                                </Badge>
+                              )}
+                              {isWorshipLeader && (
+                                <Badge className="bg-primary/10 text-primary dark:bg-primary/20">
+                                  {t("community.worshipLeader")}
+                                </Badge>
+                              )}
+                              {isCommunityLeader && !isWorshipLeader && (
+                                <Badge className="bg-accent/10 text-accent dark:bg-accent/20">
+                                  {t("community.communityLeader")}
+                                </Badge>
+                              )}
+                              {!isCommunityLeader && !isWorshipLeader && !isLeaderOfCommunity && (
+                                <Badge variant="outline">
+                                  {t("community.member")}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
-                        {/* Column 1: Promote/Demote */}
-                        <div className="flex justify-end">
+                        <div className="flex flex-wrap gap-2 justify-end sm:justify-start">
+                          {/* Promote/Demote */}
                           {canManage && !isLeaderOfCommunity && !isWorshipLeader ? (
                             <>
                               {isCommunityLeader ? (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <ArrowDown className="h-4 w-4 mr-1" />
-                                      {t("community.demoteToMember")}
-                                    </Button>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                          <ArrowDown className="h-4 w-4 sm:mr-1" />
+                                          <span className="hidden sm:inline">{t("community.demoteToMember")}</span>
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="sm:hidden">
+                                        {t("community.demoteToMember")}
+                                      </TooltipContent>
+                                    </Tooltip>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -473,10 +487,17 @@ export default function CommunityManagement() {
                               ) : (
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <ArrowUp className="h-4 w-4 mr-1" />
-                                      {t("community.promoteToCommunityLeader")}
-                                    </Button>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                          <ArrowUp className="h-4 w-4 sm:mr-1" />
+                                          <span className="hidden sm:inline">{t("community.promoteToCommunityLeader")}</span>
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent className="sm:hidden">
+                                        {t("community.promoteToCommunityLeader")}
+                                      </TooltipContent>
+                                    </Tooltip>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
@@ -513,18 +534,15 @@ export default function CommunityManagement() {
                                 </AlertDialog>
                               )}
                             </>
-                          ) : (
-                            <div />
-                          )}
-                        </div>
+                          ) : null}
 
-                        {/* Column 2: Leave/Remove */}
-                        <div className="flex justify-end">
+                          {/* Leave/Remove */}
                           {member.user_id === user?.id && !isLeaderOfCommunity ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="sm">
-                                  {t("community.leaveCommunity")}
+                                  <span className="hidden sm:inline">{t("community.leaveCommunity")}</span>
+                                  <span className="sm:hidden">{t("community.leave")}</span>
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
@@ -547,9 +565,16 @@ export default function CommunityManagement() {
                           ) : canManage && member.user_id !== user?.id && !isLeaderOfCommunity ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {t("common.remove")}
+                                  </TooltipContent>
+                                </Tooltip>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
@@ -570,72 +595,77 @@ export default function CommunityManagement() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          ) : (
-                            <div />
-                          )}
+                          ) : null}
                         </div>
-
-                        {/* Column 3: Reserved for consistency */}
-                        <div />
                       </div>
+                    );
+                  })}
+                  
+                  {/* Pending Invitations - Only visible to managers */}
+                  {canManage && invitations && invitations.length > 0 && (
+                    <div className="mt-6 pt-6 border-t">
+                      <h3 className="text-sm font-semibold mb-3">{t("community.pendingInvitations")}</h3>
                     </div>
-                  );
-                })}
-                
-                {/* Pending Invitations - Only visible to managers */}
-                {canManage && invitations && invitations.length > 0 && (
-                  <div className="mt-6 pt-6 border-t">
-                    <h3 className="text-sm font-semibold mb-3">{t("community.pendingInvitations")}</h3>
-                  </div>
-                )}
-                {canManage && invitations?.map((invitation) => (
-                  <div
-                    key={invitation.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-muted/30"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          <Mail className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{invitation.email}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {t("community.invitedOn", {
-                            date: new Date(invitation.created_at!).toLocaleDateString(
-                              language === "ko" ? "ko-KR" : "en-US"
-                            ),
-                          })}
-                        </p>
-                        <Badge variant="secondary" className="mt-1">
-                          {t("community.statusPending")}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {canManage && (
-                      <div className="grid grid-cols-3 gap-2 items-center min-w-[400px]">
-                        {/* Column 1: Resend button */}
-                        <div className="flex justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => resendInviteMutation.mutate(invitation.id)}
-                            disabled={resendInviteMutation.isPending}
-                          >
-                            <Mail className="h-4 w-4 mr-1" />
-                            {t("community.resendInvitation")}
-                          </Button>
+                  )}
+                  {canManage && invitations?.map((invitation) => (
+                    <div
+                      key={invitation.id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            <Mail className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{invitation.email}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t("community.invitedOn", {
+                              date: new Date(invitation.created_at!).toLocaleDateString(
+                                language === "ko" ? "ko-KR" : "en-US"
+                              ),
+                            })}
+                          </p>
+                          <Badge variant="secondary" className="mt-1">
+                            {t("community.statusPending")}
+                          </Badge>
                         </div>
+                      </div>
 
-                        {/* Column 2: Cancel/Delete button */}
-                        <div className="flex justify-end">
+                      {canManage && (
+                        <div className="flex flex-wrap gap-2 justify-end sm:justify-start">
+                          {/* Resend button */}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resendInviteMutation.mutate(invitation.id)}
+                                disabled={resendInviteMutation.isPending}
+                              >
+                                <Mail className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">{t("community.resendInvitation")}</span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="sm:hidden">
+                              {t("community.resendInvitation")}
+                            </TooltipContent>
+                          </Tooltip>
+
+                          {/* Cancel/Delete button */}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {t("community.cancelInvitation")}
+                                </TooltipContent>
+                              </Tooltip>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
@@ -659,19 +689,16 @@ export default function CommunityManagement() {
                             </AlertDialogContent>
                           </AlertDialog>
                         </div>
-
-                        {/* Column 3: Empty for alignment */}
-                        <div />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            </div>
           </div>
         </div>
-      </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }
