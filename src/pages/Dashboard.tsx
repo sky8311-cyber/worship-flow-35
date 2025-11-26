@@ -680,6 +680,15 @@ const Dashboard = () => {
                       );
                     })}
                   </div> : <p className="text-sm text-muted-foreground text-center py-8">{t("dashboard.noUpcoming")}</p>}
+                  
+                  {/* View History Button at Bottom */}
+                  <div className="flex justify-center pt-4 border-t mt-4">
+                    <Link to="/worship-sets">
+                      <Button variant="outline" size="sm">
+                        {t("worshipSets.viewHistory")}
+                      </Button>
+                    </Link>
+                  </div>
               </CardContent>
             </Card>
 
