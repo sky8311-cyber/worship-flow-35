@@ -62,7 +62,7 @@ export default function WorshipSets() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("워십세트가 삭제되었습니다");
+      toast.success(t("worshipSets.deleted"));
       queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
@@ -82,24 +82,27 @@ export default function WorshipSets() {
       queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
-      toast.success("상태가 변경되었습니다");
+      toast.success(t("worshipSets.statusChanged"));
     },
   });
   
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">{t("worshipSets.history")}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">{t("worshipSets.title")}</h1>
+          </div>
           
           {canCreateSets && (
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => navigate("/set-import")}>
-                <Upload className="w-4 h-4 mr-1" />
+              <Button
+                variant="outline"
+                onClick={() => navigate("/set-import")}
+              >
                 {t("worshipSets.import")}
               </Button>
               <Button onClick={() => navigate("/set-builder")}>
-                <Plus className="w-4 h-4 mr-1" />
                 {t("worshipSets.createNew")}
               </Button>
             </div>
@@ -112,34 +115,34 @@ export default function WorshipSets() {
               variant={statusFilter === "all" ? "default" : "outline"}
               onClick={() => setStatusFilter("all")}
             >
-              전체
+              {t("worshipSets.filterAll")}
             </Button>
             <Button 
               variant={statusFilter === "draft" ? "default" : "outline"}
               onClick={() => setStatusFilter("draft")}
             >
-              📝 임시저장
+              {t("worshipSets.filterDraft")}
             </Button>
             <Button 
               variant={statusFilter === "published" ? "default" : "outline"}
               onClick={() => setStatusFilter("published")}
             >
-              ✅ 게시됨
+              {t("worshipSets.filterPublished")}
             </Button>
           </div>
           
           {isLoading ? (
-            <p>로딩 중...</p>
+            <p>{t("common.loading")}</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>날짜</TableHead>
-                  <TableHead>예배명</TableHead>
-                  <TableHead>예배인도자</TableHead>
-                  <TableHead>곡 수</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>액션</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.songCount")}</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
+                  <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -152,10 +155,10 @@ export default function WorshipSets() {
                     <TableCell>{format(new Date(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
                     <TableCell>{set.worship_leader || "-"}</TableCell>
-                    <TableCell>{set.set_songs?.[0]?.count || 0}곡</TableCell>
+                    <TableCell>{set.set_songs?.[0]?.count || 0}{t("common.songs")}</TableCell>
                     <TableCell>
                       <Badge variant={set.status === "published" ? "default" : "secondary"}>
-                        {set.status === "draft" ? "📝 임시저장" : "✅ 게시됨"}
+                        {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
@@ -175,7 +178,7 @@ export default function WorshipSets() {
                             size="icon" 
                             variant="ghost" 
                             onClick={() => {
-                              if (confirm("정말 삭제하시겠습니까?")) {
+                              if (confirm(t("worshipSets.confirmDelete"))) {
                                 deleteMutation.mutate(set.id);
                               }
                             }}
