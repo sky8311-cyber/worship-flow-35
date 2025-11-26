@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake } from "lucide-react";
+import { Cake, Music, Calendar } from "lucide-react";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -25,6 +25,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate(`/community/${notification.related_id}`);
     } else if (notification.related_type === "song" && notification.related_id) {
       navigate("/songs");
+    } else if (notification.related_type === "worship_set" && notification.related_id) {
+      navigate(`/band-view/${notification.related_id}`);
+    } else if (notification.related_type === "calendar_event" && notification.related_id) {
+      navigate("/dashboard");
     } else if (notification.related_type === "profile" && notification.related_id && notification.type === "birthday") {
       // Birthday notification - could open profile or stay on dashboard
       navigate("/dashboard");
@@ -35,6 +39,8 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const actorName = notification.metadata?.actor_name || "User";
   const timeAgo = formatDistanceToNow(parseLocalDate(notification.created_at), { addSuffix: true });
   const isBirthday = notification.type === "birthday";
+  const isWorshipSet = notification.type === "new_worship_set";
+  const isCalendarEvent = notification.type === "new_calendar_event";
 
   return (
     <div
@@ -49,6 +55,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       {isBirthday ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Cake className="h-5 w-5 text-primary" />
+        </div>
+      ) : isWorshipSet ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Music className="h-5 w-5 text-primary" />
+        </div>
+      ) : isCalendarEvent ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Calendar className="h-5 w-5 text-primary" />
         </div>
       ) : (
         <Avatar className="h-10 w-10 flex-shrink-0">
