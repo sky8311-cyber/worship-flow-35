@@ -19,7 +19,6 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
-import AdminWaitlist from "./pages/AdminWaitlist";
 import AdminCommunities from "./pages/AdminCommunities";
 import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplications";
 import CommunitySearch from "./pages/CommunitySearch";
@@ -86,7 +85,6 @@ const App = () => (
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-              <Route path="/admin/waitlist" element={<AdminRoute><AdminWaitlist /></AdminRoute>} />
               <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
               <Route path="/admin/applications" element={<AdminRoute><AdminWorshipLeaderApplications /></AdminRoute>} />
               

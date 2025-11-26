@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, ListChecks, Building2, ArrowLeft, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -18,11 +18,6 @@ export const AdminNav = () => {
       to: "/admin/users",
       label: t("admin.nav.users"),
       icon: Users,
-    },
-    {
-      to: "/admin/waitlist",
-      label: t("admin.nav.waitlist"),
-      icon: ListChecks,
     },
     {
       to: "/admin/communities",

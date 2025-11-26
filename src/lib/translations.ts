@@ -265,7 +265,6 @@ export const translations = {
       nav: {
         dashboard: "Dashboard",
         users: "Users",
-        waitlist: "Waitlist",
         communities: "Communities",
         backToDashboard: "Back to Dashboard",
       },
@@ -276,8 +275,6 @@ export const translations = {
       stats: {
         totalUsers: "Total Users",
         registeredUsers: "registered users",
-        waitlist: "Waitlist",
-        pendingSignups: "pending signups",
         communities: "Communities",
         activeCommunities: "active communities",
         serviceSets: "Worship Sets",
@@ -320,18 +317,6 @@ export const translations = {
         bulkRoleAddError: "Failed to add roles to some users",
         bulkRoleRemoveError: "Failed to remove roles from some users",
         bulkResetPasswordError: "Failed to send reset emails to some users",
-      },
-      waitlist: {
-        title: "Waitlist",
-        searchPlaceholder: "Search by email, name, or church...",
-        export: "Export CSV",
-        name: "Name",
-        email: "Email",
-        role: "Role",
-        church: "Church",
-        country: "Country",
-        kSpirit: "K-Spirit Meaning",
-        joined: "Joined",
       },
       communities: {
         title: "Community Management",
@@ -1333,7 +1318,6 @@ export const translations = {
       nav: {
         dashboard: "대시보드",
         users: "사용자 관리",
-        waitlist: "대기 목록",
         communities: "커뮤니티 관리",
         backToDashboard: "대시보드로 돌아가기",
       },
@@ -1344,8 +1328,6 @@ export const translations = {
       stats: {
         totalUsers: "전체 사용자",
         registeredUsers: "명의 사용자",
-        waitlist: "대기 목록",
-        pendingSignups: "명 대기 중",
         communities: "커뮤니티",
         activeCommunities: "개 활성",
         serviceSets: "워십세트",
@@ -1388,18 +1370,6 @@ export const translations = {
         bulkRoleAddError: "일부 사용자의 역할 추가에 실패했습니다",
         bulkRoleRemoveError: "일부 사용자의 역할 제거에 실패했습니다",
         bulkResetPasswordError: "일부 사용자에게 재설정 이메일 발송에 실패했습니다",
-      },
-      waitlist: {
-        title: "대기 목록",
-        searchPlaceholder: "이메일, 이름, 교회명으로 검색...",
-        export: "CSV 내보내기",
-        name: "이름",
-        email: "이메일",
-        role: "역할",
-        church: "교회",
-        country: "국가",
-        kSpirit: "K-Spirit 의미",
-        joined: "신청일",
       },
       communities: {
         title: "커뮤니티 관리",

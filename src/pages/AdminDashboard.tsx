@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ListChecks, Building2, Music, FileText } from "lucide-react";
+import { Users, Building2, Music, FileText } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -11,9 +11,8 @@ const AdminDashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [users, waitlist, communities, sets, songs] = await Promise.all([
+      const [users, communities, sets, songs] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
-        supabase.from("waitlist").select("*", { count: "exact", head: true }),
         supabase.from("worship_communities").select("*", { count: "exact", head: true }),
         supabase.from("service_sets").select("*", { count: "exact", head: true }),
         supabase.from("songs").select("*", { count: "exact", head: true }),
@@ -21,7 +20,6 @@ const AdminDashboard = () => {
       
       return {
         users: users.count || 0,
-        waitlist: waitlist.count || 0,
         communities: communities.count || 0,
         sets: sets.count || 0,
         songs: songs.count || 0,
@@ -36,13 +34,6 @@ const AdminDashboard = () => {
       icon: Users,
       description: t("admin.stats.registeredUsers"),
       color: "text-blue-500",
-    },
-    {
-      title: t("admin.stats.waitlist"),
-      value: stats?.waitlist || 0,
-      icon: ListChecks,
-      description: t("admin.stats.pendingSignups"),
-      color: "text-orange-500",
     },
     {
       title: t("admin.stats.communities"),
