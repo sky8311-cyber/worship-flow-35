@@ -336,7 +336,7 @@ const SongLibrary = () => {
                 <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {isWorshipLeader && (
                   <Button
                     variant={selectionMode ? "default" : "outline"}
@@ -345,7 +345,7 @@ const SongLibrary = () => {
                       setSelectionMode(!selectionMode);
                       setSelectedSongIds(new Set());
                     }}
-                    className="gap-2 text-xs sm:text-sm"
+                    className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                   >
                     <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
                     {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
@@ -357,7 +357,7 @@ const SongLibrary = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsCSVDialogOpen(true)}
-                      className="gap-2 text-xs sm:text-sm"
+                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                     >
                       <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
@@ -367,7 +367,7 @@ const SongLibrary = () => {
                       size="sm"
                       onClick={handleExportCSV}
                       disabled={!songs || songs.length === 0}
-                      className="gap-2 text-xs sm:text-sm"
+                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                     >
                       <Download className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
@@ -377,7 +377,7 @@ const SongLibrary = () => {
                       size="sm"
                       onClick={() => setIsDuplicateDialogOpen(true)}
                       disabled={!songs || songs.length < 2}
-                      className="gap-2 text-xs sm:text-sm"
+                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                     >
                       <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="hidden sm:inline">{t("songLibrary.findDuplicates")}</span>
