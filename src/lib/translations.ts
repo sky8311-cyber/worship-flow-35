@@ -1025,8 +1025,8 @@ export const translations = {
       deleted: "Worship set deleted",
       statusChanged: "Status changed",
       filterAll: "All",
-      filterDraft: "📝 Draft",
-      filterPublished: "✅ Published",
+      filterDraft: "Draft",
+      filterPublished: "Published",
       tableHeaders: {
         date: "Date",
         serviceName: "Service Name",
@@ -2073,8 +2073,8 @@ export const translations = {
       deleted: "워십세트가 삭제되었습니다",
       statusChanged: "상태가 변경되었습니다",
       filterAll: "전체",
-      filterDraft: "📝 임시저장",
-      filterPublished: "✅ 게시됨",
+      filterDraft: "임시저장",
+      filterPublished: "게시됨",
       tableHeaders: {
         date: "날짜",
         serviceName: "예배이름",
