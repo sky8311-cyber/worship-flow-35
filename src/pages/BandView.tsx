@@ -114,7 +114,7 @@ const BandView = () => {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <Music className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
-            <p className="text-muted-foreground">로딩 중...</p>
+            <p className="text-muted-foreground">{t("bandView.loading")}</p>
           </div>
         </div>
       </AppLayout>
@@ -127,7 +127,7 @@ const BandView = () => {
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">워십세트를 찾을 수 없습니다</p>
+            <p className="text-muted-foreground">{t("bandView.notFound")}</p>
           </div>
         </div>
       </AppLayout>
@@ -146,8 +146,8 @@ const BandView = () => {
               <Music className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">워십세트</h1>
-              {!canEdit && <Badge variant="secondary" className="text-xs">읽기 전용</Badge>}
+              <h1 className="text-2xl font-bold text-foreground">{t("bandView.pageTitle")}</h1>
+              {!canEdit && <Badge variant="secondary" className="text-xs">{t("bandView.readOnly")}</Badge>}
             </div>
           </div>
           
@@ -168,7 +168,7 @@ const BandView = () => {
               className="flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">인쇄</span>
+              <span className="hidden sm:inline">{t("bandView.print")}</span>
             </Button>
           </div>
         </div>
@@ -184,7 +184,7 @@ const BandView = () => {
                     {serviceSet.service_name}
                   </h2>
                   <Badge variant={serviceSet.status === "published" ? "default" : "secondary"}>
-                    {serviceSet.status === "published" ? "게시됨" : "임시저장"}
+                    {serviceSet.status === "published" ? t("bandView.published") : t("bandView.draft")}
                   </Badge>
                 </div>
                 <p className="text-lg text-muted-foreground mb-3">
@@ -194,34 +194,34 @@ const BandView = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                   {serviceSet.worship_leader && (
                     <p className="text-muted-foreground">
-                      <span className="font-semibold">인도자:</span> {serviceSet.worship_leader}
+                      <span className="font-semibold">{t("bandView.labels.leader")}:</span> {serviceSet.worship_leader}
                     </p>
                   )}
                   {serviceSet.band_name && (
                     <p className="text-muted-foreground">
-                      <span className="font-semibold">팀:</span> {serviceSet.band_name}
+                      <span className="font-semibold">{t("bandView.labels.team")}:</span> {serviceSet.band_name}
                     </p>
                   )}
                   {serviceSet.target_audience && (
                     <p className="text-muted-foreground">
-                      <span className="font-semibold">대상:</span> {serviceSet.target_audience}
+                      <span className="font-semibold">{t("bandView.labels.audience")}:</span> {serviceSet.target_audience}
                     </p>
                   )}
                   {serviceSet.worship_duration && (
                     <p className="text-muted-foreground">
-                      <span className="font-semibold">찬양시간:</span> {serviceSet.worship_duration}분
+                      <span className="font-semibold">{t("bandView.labels.duration")}:</span> {serviceSet.worship_duration}{t("bandView.minutes")}
                     </p>
                   )}
                 </div>
 
                 {serviceSet.theme && (
                   <p className="text-sm text-foreground mt-3">
-                    <span className="font-semibold">주제/설교제목:</span> {serviceSet.theme}
+                    <span className="font-semibold">{t("bandView.labels.theme")}:</span> {serviceSet.theme}
                   </p>
                 )}
                 {serviceSet.scripture_reference && (
                   <p className="text-sm text-foreground mt-2">
-                    <span className="font-semibold">본문:</span> {serviceSet.scripture_reference}
+                    <span className="font-semibold">{t("bandView.labels.scripture")}:</span> {serviceSet.scripture_reference}
                   </p>
                 )}
                 {serviceSet.notes && (
@@ -264,7 +264,7 @@ const BandView = () => {
 
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-bold text-foreground mb-1">
-                        {song?.title || "제목 없음"}
+                        {song?.title || t("bandView.noTitle")}
                       </h3>
                       {song?.subtitle && (
                         <p className="text-sm italic text-muted-foreground mb-2">
@@ -281,7 +281,7 @@ const BandView = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         {setSong.key && (
                           <Badge variant="default" className="text-sm">
-                            키: {setSong.key}
+                            {t("bandView.labels.key")}: {setSong.key}
                           </Badge>
                         )}
                         {setSong.bpm && (
@@ -296,7 +296,7 @@ const BandView = () => {
                         )}
                         {setSong.energy_level && (
                           <Badge variant="secondary" className="text-sm">
-                            에너지: {setSong.energy_level}/5
+                            {t("bandView.labels.energy")}: {setSong.energy_level}/5
                           </Badge>
                         )}
                       </div>
@@ -307,7 +307,7 @@ const BandView = () => {
                   {setSong.custom_notes && (
                     <div className="mb-4 p-3 bg-accent/50 rounded-lg">
                       <p className="text-sm text-foreground">
-                        <span className="font-semibold">진행설명:</span> {setSong.custom_notes}
+                        <span className="font-semibold">{t("bandView.labels.performanceNotes")}:</span> {setSong.custom_notes}
                       </p>
                     </div>
                   )}
@@ -332,7 +332,7 @@ const BandView = () => {
                   {scoreFiles.length > 0 ? (
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-foreground">
-                        악보 ({setSong.key} Key)
+                        {t("bandView.scoreForKey", { key: setSong.key })}
                       </p>
                       <div className="grid grid-cols-1 gap-3">
                         {scoreFiles.map((score: any, idx: number) => (
@@ -349,7 +349,7 @@ const BandView = () => {
                     </div>
                   ) : defaultScoreUrl ? (
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-foreground">악보</p>
+                      <p className="text-sm font-semibold text-foreground">{t("bandView.score")}</p>
                       <div className="border rounded-lg overflow-hidden bg-white">
                         <img
                           src={defaultScoreUrl}
@@ -371,7 +371,7 @@ const BandView = () => {
             <CardContent className="text-center py-12">
               <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                아직 곡이 추가되지 않았습니다
+                {t("bandView.noSongsAdded")}
               </p>
             </CardContent>
           </Card>
