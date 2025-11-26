@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Eye, Plus, Upload, Music, List, FileEdit, Globe } from "lucide-react";
+import { Edit, Trash2, Eye, Plus, Upload, Music } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -120,21 +120,18 @@ export default function WorshipSets() {
                 variant={statusFilter === "all" ? "default" : "outline"}
                 onClick={() => setStatusFilter("all")}
               >
-                <List className="w-4 h-4" />
                 {t("worshipSets.filterAll")}
               </Button>
               <Button 
                 variant={statusFilter === "draft" ? "default" : "outline"}
                 onClick={() => setStatusFilter("draft")}
               >
-                <FileEdit className="w-4 h-4" />
                 {t("worshipSets.filterDraft")}
               </Button>
               <Button 
                 variant={statusFilter === "published" ? "default" : "outline"}
                 onClick={() => setStatusFilter("published")}
               >
-                <Globe className="w-4 h-4" />
                 {t("worshipSets.filterPublished")}
               </Button>
             </div>
