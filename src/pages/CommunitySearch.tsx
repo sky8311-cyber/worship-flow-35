@@ -35,21 +35,21 @@ export default function CommunitySearch() {
       
       if (!communities || communities.length === 0) return [];
       
-      // Fetch leader profiles
+      // Fetch leader profiles - gracefully handle RLS restrictions
       const leaderIds = communities.map(c => c.leader_id);
-      const { data: profiles, error: profileError } = await supabase
+      const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name")
         .in("id", leaderIds);
-      if (profileError) throw profileError;
+      // Don't throw on profile errors - just use what we can get
       
-      // Fetch member counts
+      // Fetch member counts - gracefully handle RLS restrictions
       const communityIds = communities.map(c => c.id);
-      const { data: memberCounts, error: countError } = await supabase
+      const { data: memberCounts } = await supabase
         .from("community_members")
         .select("community_id")
         .in("community_id", communityIds);
-      if (countError) throw countError;
+      // Don't throw on count errors - just use what we can get
       
       // Count members per community
       const counts = memberCounts?.reduce((acc, m) => {
@@ -141,7 +141,7 @@ export default function CommunitySearch() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">{t("community.leader")}:</span>
-                      <span>{community.profiles?.full_name}</span>
+                      <span>{community.profiles?.full_name || t("community.unknownLeader")}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">{t("community.members")}:</span>
