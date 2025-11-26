@@ -156,7 +156,7 @@ export default function CommunitySearch() {
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={() => navigate("/dashboard")}
+                        onClick={() => navigate(`/community/${community.id}`)}
                       >
                         {t("community.alreadyMember")}
                       </Button>
