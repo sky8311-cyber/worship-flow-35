@@ -121,7 +121,7 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[300px] p-0">
+      <SheetContent side="left" className="w-[360px] sm:w-[380px] p-0">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-4">
             <ProfileSidebarCard stats={userStats} />
