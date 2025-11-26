@@ -501,6 +501,7 @@ export const translations = {
       cancelInvitation: "Cancel Invitation",
       cancelInvitationTitle: "Cancel Invitation",
       cancelInvitationDescription: "Are you sure you want to cancel the invitation for {email}?",
+      readOnlyMode: "Read Only",
     },
     profile: {
       title: "Profile",
@@ -1562,6 +1563,7 @@ export const translations = {
       cancelInvitation: "초대 취소",
       cancelInvitationTitle: "초대 취소",
       cancelInvitationDescription: "{email}님의 초대를 취소하시겠습니까?",
+      readOnlyMode: "읽기 전용",
     },
     profile: {
       title: "프로필",

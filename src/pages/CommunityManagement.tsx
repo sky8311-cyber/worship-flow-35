@@ -296,7 +296,14 @@ export default function CommunityManagement() {
     <AppLayout>
       <div className="container mx-auto py-6 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">{t("community.manage")}</h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-3xl font-bold">{t("community.manage")}</h1>
+            {!canManage && (
+              <Badge variant="outline" className="text-sm">
+                {t("community.readOnlyMode")}
+              </Badge>
+            )}
+          </div>
 
           <div className="space-y-6">
           {/* Community Info - Only for managers */}
@@ -575,13 +582,13 @@ export default function CommunityManagement() {
                   );
                 })}
                 
-                {/* Pending Invitations */}
-                {invitations && invitations.length > 0 && (
+                {/* Pending Invitations - Only visible to managers */}
+                {canManage && invitations && invitations.length > 0 && (
                   <div className="mt-6 pt-6 border-t">
                     <h3 className="text-sm font-semibold mb-3">{t("community.pendingInvitations")}</h3>
                   </div>
                 )}
-                {invitations?.map((invitation) => (
+                {canManage && invitations?.map((invitation) => (
                   <div
                     key={invitation.id}
                     className="flex items-center justify-between p-4 border rounded-lg bg-muted/30"
