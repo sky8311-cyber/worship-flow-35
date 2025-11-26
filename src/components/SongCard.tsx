@@ -204,25 +204,29 @@ export const SongCard = ({
 
           {/* Action buttons - mobile optimized layout */}
           <div className="flex flex-col gap-2 mt-4">
-            {/* First row: Icon-only buttons (Heart, Edit, Delete) */}
-            <div className="flex gap-2 justify-start">
-              <FavoriteButton songId={song.id} size="sm" variant="outline" />
+            {/* First row: Compact icon-only buttons (Heart, Edit, Delete) */}
+            <div className="flex gap-1.5 justify-start">
+              <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
               {onEdit && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => onEdit(song)}
-                  className="sm:flex-1"
+                  className="h-8 w-8 sm:h-9 sm:w-9 sm:flex-1"
                 >
-                  <Edit className="w-4 h-4 sm:mr-1" />
-                  <span className="hidden sm:inline">{t("common.edit")}</span>
+                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline sm:ml-1">{t("common.edit")}</span>
                 </Button>
               )}
               {onDelete && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
