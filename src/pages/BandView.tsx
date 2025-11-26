@@ -159,7 +159,7 @@ const BandView = () => {
                 className="flex items-center gap-2"
               >
                 <Edit className="w-4 h-4" />
-                {t("common.edit")}
+                <span className="hidden sm:inline">{t("common.edit")}</span>
               </Button>
             )}
             <Button
@@ -168,7 +168,7 @@ const BandView = () => {
               className="flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
-              인쇄
+              <span className="hidden sm:inline">인쇄</span>
             </Button>
           </div>
         </div>
