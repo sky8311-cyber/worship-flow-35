@@ -94,6 +94,7 @@ export const translations = {
       community: "Community",
       more: "More",
       favorites: "Favorites",
+      menu: "Menu",
     },
     viewMode: {
       card: "Card View",
@@ -1156,6 +1157,7 @@ export const translations = {
       community: "예배공동체",
       more: "더보기",
       favorites: "즐겨찾기",
+      menu: "메뉴",
     },
     viewMode: {
       card: "카드 보기",

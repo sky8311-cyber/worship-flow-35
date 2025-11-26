@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
+import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -29,6 +31,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -37,15 +40,25 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   };
 
   return (
-    <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-4">
-        <div className="grid grid-cols-3 items-center gap-4">
-          {/* Left: Home Icon (Desktop only) */}
-          <div className="justify-self-start">
-            <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <Home className="h-4 w-4" />
-            </Link>
-          </div>
+    <>
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="grid grid-cols-3 items-center gap-4">
+            {/* Left: Menu button (Mobile/Tablet) + Home Icon (Desktop) */}
+            <div className="justify-self-start flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="lg:hidden" 
+                onClick={() => setSidebarOpen(true)}
+                aria-label={t("navigation.menu")}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Home className="h-4 w-4" />
+              </Link>
+            </div>
           
           {/* Center: Logo */}
           <Link to="/dashboard" className="justify-self-center col-start-2">
@@ -159,5 +172,8 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
         </div>
       </div>
     </header>
+
+    <MobileSidebarDrawer open={sidebarOpen} onOpenChange={setSidebarOpen} />
+    </>
   );
 };
