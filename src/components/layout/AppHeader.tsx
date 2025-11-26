@@ -170,6 +170,13 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             </DropdownMenu>
           </div>
         </div>
+        
+        {/* Breadcrumb Row */}
+        {breadcrumb && (
+          <div className="container mx-auto px-4 pb-2 pt-2">
+            {breadcrumb}
+          </div>
+        )}
       </div>
     </header>
 
