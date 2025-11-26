@@ -101,9 +101,9 @@ const handler = async (req: Request): Promise<Response> => {
       invitationId = newInvitation.id;
     }
 
-    // Build invitation URL - use the origin from SUPABASE_URL
-    const originUrl = supabaseUrl.replace("https://", "https://").replace(".supabase.co", "");
-    const inviteUrl = `${originUrl}/accept-invitation/${invitationId}`;
+    // Build invitation URL - use production domain
+    const appUrl = "https://kworship.app";
+    const inviteUrl = `${appUrl}/accept-invitation/${invitationId}`;
 
     // Prepare email content based on language
     const isKorean = language === "ko";
