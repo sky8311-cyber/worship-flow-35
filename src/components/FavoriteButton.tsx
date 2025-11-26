@@ -8,9 +8,10 @@ interface FavoriteButtonProps {
   songId: string;
   variant?: "default" | "ghost" | "outline";
   size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 }
 
-export function FavoriteButton({ songId, variant = "ghost", size = "icon" }: FavoriteButtonProps) {
+export function FavoriteButton({ songId, variant = "ghost", size = "icon", className }: FavoriteButtonProps) {
   const queryClient = useQueryClient();
   
   const { data: isFavorite } = useQuery({
@@ -70,6 +71,7 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon" }: Fav
         e.stopPropagation();
         toggleFavoriteMutation.mutate();
       }}
+      className={className}
     >
       <Heart 
         className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
