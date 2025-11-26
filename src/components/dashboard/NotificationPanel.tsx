@@ -37,14 +37,14 @@ export function NotificationPanel() {
 
   if (isLoading) {
     return (
-      <div className="w-96 p-8 flex items-center justify-center">
+      <div className="w-[calc(100vw-2rem)] sm:w-96 p-8 flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="w-96 bg-background border rounded-lg shadow-lg">
+    <div className="w-[calc(100vw-2rem)] sm:w-96 bg-background border rounded-lg shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <h2 className="text-xl font-semibold">{t("notifications.title")}</h2>
