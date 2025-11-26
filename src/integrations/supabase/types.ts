@@ -905,6 +905,10 @@ export type Database = {
         Returns: boolean
       }
       notify_community_birthdays: { Args: never; Returns: undefined }
+      shares_community_membership: {
+        Args: { _target_community_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "worship_leader" | "user"
