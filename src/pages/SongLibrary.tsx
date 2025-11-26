@@ -336,7 +336,7 @@ const SongLibrary = () => {
                 <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="flex items-center justify-between gap-2">
                 {isWorshipLeader && (
                   <Button
                     variant={selectionMode ? "default" : "outline"}
@@ -345,44 +345,44 @@ const SongLibrary = () => {
                       setSelectionMode(!selectionMode);
                       setSelectedSongIds(new Set());
                     }}
-                    className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                    className="gap-1 px-2 text-[11px] sm:text-sm"
                   >
                     <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
                     {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
                   </Button>
                 )}
                 {isWorshipLeader && (
-                  <>
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={() => setIsCSVDialogOpen(true)}
-                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                      className="h-8 w-8"
+                      title={t("songLibrary.importCSV")}
                     >
                       <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">{t("songLibrary.importCSV")}</span>
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={handleExportCSV}
                       disabled={!songs || songs.length === 0}
-                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                      className="h-8 w-8"
+                      title={t("songLibrary.exportCSV")}
                     >
                       <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">{t("songLibrary.exportCSV")}</span>
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={() => setIsDuplicateDialogOpen(true)}
                       disabled={!songs || songs.length < 2}
-                      className="gap-2 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
+                      className="h-8 w-8"
+                      title={t("songLibrary.findDuplicates")}
                     >
                       <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">{t("songLibrary.findDuplicates")}</span>
                     </Button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
