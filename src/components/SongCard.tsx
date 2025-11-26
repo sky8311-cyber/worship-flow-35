@@ -202,60 +202,58 @@ export const SongCard = ({
             )}
           </div>
 
-          {/* Action buttons - stacked on mobile */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-4">
-            <div className="flex gap-2">
+          {/* Action buttons - mobile optimized layout */}
+          <div className="flex flex-col gap-2 mt-4">
+            {/* First row: Icon-only buttons (Heart, Edit, Delete) */}
+            <div className="flex gap-2 justify-start">
               <FavoriteButton songId={song.id} size="sm" variant="outline" />
-              {onToggleCart && (
+              {onEdit && (
                 <Button
-                  variant={inCart ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
-                  onClick={() => onToggleCart(song.id)}
-                  className="flex-1"
+                  onClick={() => onEdit(song)}
+                  className="sm:flex-1"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  <span>{inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}</span>
+                  <Edit className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">{t("common.edit")}</span>
                 </Button>
               )}
+              {onDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {t("songCard.deleteConfirm")}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        {t("common.delete")}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
-            {(onEdit || onDelete) && (
-              <div className="flex gap-2 flex-1">
-                {onEdit && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onEdit(song)}
-                    className="flex-1"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    <span className="hidden sm:inline">{t("common.edit")}</span>
-                    <span className="sm:hidden truncate">{t("common.edit")}</span>
-                  </Button>
-                )}
-                {onDelete && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t("songCard.deleteConfirm")}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
-                          {t("common.delete")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </div>
+            
+            {/* Second row: Full-width cart button */}
+            {onToggleCart && (
+              <Button
+                variant={inCart ? "default" : "outline"}
+                size="sm"
+                onClick={() => onToggleCart(song.id)}
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                <span>{inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}</span>
+              </Button>
             )}
           </div>
         </CardContent>
