@@ -306,13 +306,37 @@ const SongLibrary = () => {
     <AppLayout>
       <main className="container mx-auto px-4 py-6 pb-24 md:pb-8">
         <Card className="shadow-md mb-6">
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <CardHeader className="relative">
+            {/* View Mode Toggle - Top Right Corner */}
+            <div className="absolute top-4 right-4 z-10">
+              <div className="flex gap-1 border rounded-md p-1 bg-card">
+                <Button
+                  variant={viewMode === "card" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("card")}
+                  className="h-8 w-8"
+                  title={t("songLibrary.viewMode.card")}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("table")}
+                  className="h-8 w-8"
+                  title={t("songLibrary.viewMode.table")}
+                >
+                  <LayoutList className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pr-24">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
                 <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t("songLibrary.searchAndFilter")}
               </CardTitle>
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 flex-wrap">
                 {isWorshipLeader && (
                   <Button
                     variant={selectionMode ? "default" : "outline"}
@@ -327,26 +351,6 @@ const SongLibrary = () => {
                     {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
                   </Button>
                 )}
-                <div className="flex gap-1 border rounded-md p-1">
-                  <Button
-                    variant={viewMode === "card" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("card")}
-                    className="h-8 w-8"
-                    title={t("songLibrary.viewMode.card")}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "table" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("table")}
-                    className="h-8 w-8"
-                    title={t("songLibrary.viewMode.table")}
-                  >
-                    <LayoutList className="h-4 w-4" />
-                  </Button>
-                </div>
                 {isWorshipLeader && (
                   <>
                     <Button
