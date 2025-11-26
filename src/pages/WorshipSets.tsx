@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Eye, Plus, Upload, Music } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Save, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -177,7 +177,7 @@ export default function WorshipSets() {
                             variant="ghost"
                             onClick={() => togglePublishMutation.mutate({ id: set.id, currentStatus: set.status })}
                           >
-                            <Eye className="w-4 h-4" />
+                            {set.status === "draft" ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                           </Button>
                           <Button 
                             size="icon" 
@@ -193,7 +193,7 @@ export default function WorshipSets() {
                         </div>
                       ) : (
                         <Button size="icon" variant="ghost" onClick={() => navigate(`/band-view/${set.id}`)}>
-                          <Eye className="w-4 h-4" />
+                          <Check className="w-4 h-4" />
                         </Button>
                       )}
                     </TableCell>
