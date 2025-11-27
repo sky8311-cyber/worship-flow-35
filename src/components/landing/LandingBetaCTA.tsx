@@ -3,8 +3,11 @@ import { motion } from "framer-motion";
 import { fadeInUp, viewportOptions } from "@/lib/animations";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingBetaCTA = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="beta-cta" className="py-32 bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <div className="container mx-auto px-4">
@@ -18,7 +21,7 @@ export const LandingBetaCTA = () => {
           {/* Beta badge */}
           <div className="flex justify-center mb-6">
             <Badge className="bg-accent/10 text-accent border-accent/20 px-4 py-2 text-sm">
-              Beta Version
+              {t("landing.betaCta.badge")}
             </Badge>
           </div>
 
@@ -27,7 +30,7 @@ export const LandingBetaCTA = () => {
             className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight" 
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
-            워십리더를 기다립니다
+            {t("landing.betaCta.title")}
           </h2>
 
           {/* Subtext */}
@@ -35,8 +38,7 @@ export const LandingBetaCTA = () => {
             className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto" 
             style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
           >
-            K-Worship은 실제 예배 현장에서 사역하는 워십리더들과 함께 만들어 가고 있습니다. 
-            베타에 가입하시고, 가장 먼저 변화된 예배 준비를 경험해 보세요.
+            {t("landing.betaCta.description")}
           </p>
 
           {/* CTA button */}
@@ -46,15 +48,15 @@ export const LandingBetaCTA = () => {
             className="text-base px-12 py-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
           >
             <Link to="/signup">
-              베타 가입하기
+              {t("landing.betaCta.ctaButton")}
             </Link>
           </Button>
 
           {/* Supporting text */}
           <p className="text-xs md:text-sm text-muted-foreground mt-6">
-            이미 계정이 있으신가요?{" "}
+            {t("landing.betaCta.hasAccount")}{" "}
             <Link to="/login" className="text-primary hover:underline font-medium">
-              로그인
+              {t("landing.betaCta.login")}
             </Link>
           </p>
         </motion.div>

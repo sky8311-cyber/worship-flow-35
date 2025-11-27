@@ -7,17 +7,19 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scrolled = useScrollObserver(50);
+  const { t } = useTranslation();
 
   const navItems = [
-    { label: "소개", id: "intro" },
-    { label: "주요 기능", id: "features" },
-    { label: "어떻게 쓰이나요", id: "how-it-works" },
-    { label: "워십리더 커뮤니티", id: "community" },
-    { label: "FAQ", id: "faq" },
+    { label: t("landing.nav.intro"), id: "intro" },
+    { label: t("landing.nav.features"), id: "features" },
+    { label: t("landing.nav.howItWorks"), id: "how-it-works" },
+    { label: t("landing.nav.community"), id: "community" },
+    { label: t("landing.nav.faq"), id: "faq" },
   ];
 
   const handleNavClick = (id: string) => {
@@ -63,7 +65,7 @@ export const LandingNav = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Link to="/signup">
-                베타 가입
+                {t("landing.nav.betaSignup")}
               </Link>
             </Button>
           </div>
@@ -110,7 +112,7 @@ export const LandingNav = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Link to="/signup">
-                  베타 가입
+                  {t("landing.nav.betaSignup")}
                 </Link>
               </Button>
             </div>
