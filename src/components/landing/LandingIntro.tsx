@@ -40,9 +40,9 @@ export const LandingIntro = () => {
           className="text-center max-w-4xl mx-auto mb-20"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
-            예배를 만드는 찬양 콘티,
+            혼자 짜던 콘티에서,
             <br />
-            더 이상 흘려보내지 마세요.
+            함께 나누는 콘티로
           </h2>
           <div className="text-lg md:text-xl text-muted-foreground leading-relaxed space-y-4">
             <p>
