@@ -1,4 +1,7 @@
+import { useTranslation } from "@/hooks/useTranslation";
+
 export const LandingFooter = () => {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -14,15 +17,15 @@ export const LandingFooter = () => {
               href="mailto:hello@kworship.app"
               className="text-muted-foreground hover:text-foreground transition-colors"
             >
-              문의하기
+              {t("landing.footer.contact")}
             </a>
             <span className="text-muted-foreground">•</span>
             <button className="text-muted-foreground hover:text-foreground transition-colors">
-              개인정보처리방침
+              {t("landing.footer.privacy")}
             </button>
             <span className="text-muted-foreground">•</span>
             <button className="text-muted-foreground hover:text-foreground transition-colors">
-              이용약관
+              {t("landing.footer.terms")}
             </button>
           </div>
         </div>

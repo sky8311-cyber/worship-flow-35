@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { fadeInUp } from "@/lib/animations";
 import { smoothScrollTo } from "@/lib/smoothScroll";
 import { Music2, Youtube, FileText, ChevronRight } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const mockSongs = [
   {
@@ -23,6 +24,8 @@ const mockSongs = [
 ];
 
 export const LandingHero = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/5">
       {/* Animated background blobs */}
@@ -60,24 +63,24 @@ export const LandingHero = () => {
               style={{ wordBreak: "keep-all" }}
             >
               <span className="bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
-                예배 공동체를 위한
+                {t("landing.hero.title1")}
               </span>
               <br />
-              <span className="text-foreground">통합 플랫폼</span>
+              <span className="text-foreground">{t("landing.hero.title2")}</span>
             </h1>
             
             <p 
               className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 leading-relaxed" 
               style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
             >
-              K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 워십리더 커뮤니티를 한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.
+              {t("landing.hero.subtitle")}
             </p>
 
             <p 
               className="text-sm md:text-base lg:text-lg text-muted-foreground/80 mb-10 leading-relaxed" 
               style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
             >
-              사용했던 곡과 악보, 예배 흐름을 저장하고, 다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.
+              {t("landing.hero.description")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -86,7 +89,7 @@ export const LandingHero = () => {
                 onClick={() => smoothScrollTo("beta-cta")} 
                 className="text-base px-8 py-6 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                베타 가입하기
+                {t("landing.hero.ctaButton")}
               </Button>
               <Button 
                 size="lg" 
@@ -94,7 +97,7 @@ export const LandingHero = () => {
                 onClick={() => smoothScrollTo("how-it-works")} 
                 className="text-base px-8 py-6"
               >
-                어떻게 돕나요?
+                {t("landing.hero.learnMore")}
               </Button>
             </div>
           </motion.div>
@@ -112,13 +115,13 @@ export const LandingHero = () => {
                 <div className="flex items-start gap-3">
                   {/* Calendar date box - matching dashboard style */}
                   <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
-                    <span className="text-xs font-medium">Nov</span>
+                    <span className="text-xs font-medium">{t("landing.hero.mockup.date")}</span>
                     <span className="text-lg font-bold">17</span>
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base md:text-lg font-semibold">주일 2부 예배</h3>
-                    <p className="text-xs text-muted-foreground">서울한빛교회</p>
+                    <h3 className="text-base md:text-lg font-semibold">{t("landing.hero.mockup.serviceTitle")}</h3>
+                    <p className="text-xs text-muted-foreground">{t("landing.hero.mockup.church")}</p>
                   </div>
                 </div>
               </div>
@@ -161,11 +164,11 @@ export const LandingHero = () => {
               {/* Set footer */}
               <div className="mt-4 pt-3 border-t border-border">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>예배인도자: 홍길동</span>
+                  <span>{t("landing.hero.mockup.leader")}</span>
                   <span className="flex items-center gap-1">
-                    <span>팀원 7명</span>
+                    <span>{t("landing.hero.mockup.teamCount")}</span>
                     <span>•</span>
-                    <span>공유됨</span>
+                    <span>{t("landing.hero.mockup.shared")}</span>
                   </span>
                 </div>
               </div>
@@ -173,7 +176,7 @@ export const LandingHero = () => {
               {/* Expandable hint */}
               <div className="mt-3 text-center">
                 <span className="text-xs text-primary cursor-pointer hover:underline inline-flex items-center gap-1">
-                  전체 보기 
+                  {t("landing.hero.mockup.viewAll")}
                   <ChevronRight className="w-3 h-3" />
                 </span>
               </div>

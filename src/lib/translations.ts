@@ -1066,6 +1066,167 @@ export const translations = {
       noSongsAdded: "No songs added yet",
       minutes: "min",
     },
+    landing: {
+      nav: {
+        intro: "Intro",
+        features: "Features",
+        howItWorks: "How It Works",
+        community: "Community",
+        faq: "FAQ",
+        betaSignup: "Join Beta",
+      },
+      hero: {
+        title1: "Integrated Platform",
+        title2: "for Worship Communities",
+        subtitle: "K-Worship is an all-in-one worship preparation app where you can manage and share setlists, song libraries, and worship leader communities in one place.",
+        description: "Save songs you've used, scores, and worship flows, then naturally share them with other worship leaders and team members.",
+        ctaButton: "Join Beta",
+        learnMore: "How does it help?",
+        mockup: {
+          date: "Nov",
+          serviceTitle: "Sunday 2nd Service",
+          church: "Seoul Hanbit Church",
+          leader: "Worship Leader: John Doe",
+          teamCount: "7 members",
+          shared: "Shared",
+          viewAll: "View All",
+        },
+      },
+      intro: {
+        title1: "From setlists made alone,",
+        title2: "to setlists shared together",
+        description1: "In worship, a setlist is not just an order of songs,",
+        description1b: "but a 'spiritual flow' that helps the congregation draw near to God.",
+        description2: "K-Worship records that flow in a database, enabling worship leaders and teams,",
+        description2b: "to share it together with other worship leaders through an integrated platform.",
+        pillars: {
+          community: {
+            title: "Community-Centered",
+            description: "Worship leaders create worship communities and invite team members to prepare together.",
+          },
+          library: {
+            title: "Song Library + Worship Sets",
+            description: "Build a song database with songs used, scores, and message connections.",
+          },
+          network: {
+            title: "Worship Leader Community",
+            description: "View each other's setlists and reference how the same songs were used.",
+          },
+        },
+      },
+      features: {
+        title: "Features that unify your worship preparation",
+        items: {
+          library: {
+            title: "Song Library (Database)",
+            description: "Save songs used in worship, recording key, tags, messages, and which services they were used in.",
+            subtitle: "See how a song was used in past services later.",
+          },
+          reference: {
+            title: "Reference Songs & Scores",
+            description: "Store YouTube reference links and score files (images/PDF) with each song.",
+            subtitle: "When creating a new setlist, bring in already linked scores and links.",
+          },
+          setBuilder: {
+            title: "Worship Set (Setlist) Creation",
+            description: "Select songs from the library with drag and drop to build worship sets, recording song forms and notes.",
+            subtitle: "Ex: 'Bridge 2x repeat / Chorus softly / Sending song is congregational'",
+          },
+          community: {
+            title: "Worship Leader Community Viewing",
+            description: "When adding a song to your worship set, view setlists from other worship leaders who used that song.",
+            subtitle: "Learn and reference how others used the same song in their flow.",
+          },
+          team: {
+            title: "Create Community & Invite Team",
+            description: "Worship leaders create worship communities and invite team members to share sets and announcements.",
+            subtitle: "Share community news and align worship preparation as a team.",
+          },
+          export: {
+            title: "Bulk PDF Export",
+            description: "When a worship set is complete, export all scores with song forms and notes as a single PDF.",
+            subtitle: "Send the PDF via KakaoTalk or print it for rehearsal.",
+          },
+        },
+      },
+      howItWorks: {
+        title: "Your weekly worship prep",
+        subtitle: "transformed like this",
+        steps: {
+          step1: {
+            title: "Create Community & Invite Team",
+            description: "Worship leaders create church worship communities and invite praise team members and worship staff.",
+          },
+          step2: {
+            title: "Build Song Library",
+            description: "Register frequently used songs, storing reference YouTube links and scores. You can also import and connect previous setlists.",
+          },
+          step3: {
+            title: "Create Worship Set & Reference Community",
+            description: "While creating this week's worship set, reference setlists from other worship leaders who used the same songs. Refine song order and forms to match the message and atmosphere.",
+          },
+          step4: {
+            title: "Export to PDF & Share",
+            description: "Export the completed set as a bulk PDF to send via KakaoTalk to team members or print for rehearsal.",
+          },
+        },
+      },
+      community: {
+        title1: "From setlists made alone,",
+        title2: "to setlists shared together",
+        description1: "In K-Worship's worship leader community, you can share each other's setlists and see how the same song was used in different services.",
+        description2: "Even with different churches and ministries, we can share and continue the living spirituality of Korean worship together.",
+        mockup: {
+          songTitle: "Lift His Name High",
+          artist: "Hillsong",
+          key: "Key: G",
+          usedIn: "Worship sets using this song",
+          referenceNote: "Reference other worship leaders' setlists",
+        },
+      },
+      betaCta: {
+        badge: "Beta Version",
+        title: "We're waiting for worship leaders",
+        description: "K-Worship is being built together with worship leaders actively serving in real worship settings. Join the beta and be the first to experience transformed worship preparation.",
+        ctaButton: "Join Beta",
+        hasAccount: "Already have an account?",
+        login: "Login",
+      },
+      faq: {
+        title: "FAQ",
+        items: {
+          q1: {
+            question: "What kind of worship communities is K-Worship for?",
+            answer: "K-Worship is designed for Korean church worship leaders, praise teams, and worship communities. It's suitable for any community that wants to systematically manage worship flow and setlists, regardless of church size or format.",
+          },
+          q2: {
+            question: "Do team members also need to sign up?",
+            answer: "Yes, K-Worship requires all team members to create accounts for team collaboration. After a worship leader creates a worship community, team members can join and participate through an invitation link.",
+          },
+          q3: {
+            question: "How is the worship leader setlist sharing scope set?",
+            answer: "Worship sets are managed in two stages: 'Draft' and 'Published'. Drafts can only be viewed by the creator and invited collaborators. Published sets can be viewed by all members of the same worship community. Through the worship leader community feature, you can also reference setlists from other churches.",
+          },
+          q4: {
+            question: "What information is included in PDF exports?",
+            answer: "PDFs include worship title, date, message text, each song's title, artist, key, BPM, score images, and performance notes (song form notes). With one click, you can share or print the entire worship setlist for your team.",
+          },
+          q5: {
+            question: "When will it be available?",
+            answer: "K-Worship is currently in beta development. If you sign up for early access, you'll get the opportunity to participate in testing and be the first to receive news of the official launch.",
+          },
+          q6: {
+            question: "Is the song library managed separately for each church?",
+            answer: "The song library is a global database managed collaboratively by the entire worship leader community. All logged-in users can view songs, and worship leaders can add/edit/delete songs. This allows us to build collective knowledge of Korean worship music together.",
+          },
+        },
+      },
+      footer: {
+        contact: "Contact",
+        privacy: "Privacy Policy",
+        terms: "Terms of Service",
+      },
+    },
   },
   ko: {
     common: {
@@ -2115,6 +2276,167 @@ export const translations = {
       score: "악보",
       noSongsAdded: "아직 곡이 추가되지 않았습니다",
       minutes: "분",
+    },
+    landing: {
+      nav: {
+        intro: "소개",
+        features: "주요 기능",
+        howItWorks: "어떻게 쓰이나요",
+        community: "워십리더 커뮤니티",
+        faq: "FAQ",
+        betaSignup: "베타 가입",
+      },
+      hero: {
+        title1: "예배 공동체를 위한",
+        title2: "통합 플랫폼",
+        subtitle: "K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 워십리더 커뮤니티를 한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.",
+        description: "사용했던 곡과 악보, 예배 흐름을 저장하고, 다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.",
+        ctaButton: "베타 가입하기",
+        learnMore: "어떻게 돕나요?",
+        mockup: {
+          date: "Nov",
+          serviceTitle: "주일 2부 예배",
+          church: "서울한빛교회",
+          leader: "예배인도자: 홍길동",
+          teamCount: "팀원 7명",
+          shared: "공유됨",
+          viewAll: "전체 보기",
+        },
+      },
+      intro: {
+        title1: "혼자 짜던 콘티에서,",
+        title2: "함께 나누는 콘티로",
+        description1: "예배에서 찬양 콘티는 단순한 순서가 아니라,",
+        description1b: "회중이 하나님께 나아가는 길을 돕는 '영적인 흐름'입니다.",
+        description2: "K-Worship은 그 흐름을 데이터베이스로 기록하고, 예배 인도자와 팀,",
+        description2b: "그리고 다른 워십리더들과 함께 나눌 수 있는 통합 플랫폼입니다.",
+        pillars: {
+          community: {
+            title: "예배공동체 중심",
+            description: "워십리더가 예배 공동체를 생성하고, 팀원을 초대해 함께 준비합니다.",
+          },
+          library: {
+            title: "곡 라이브러리 + 워십세트",
+            description: "사용했던 곡, 악보, 메시지 연결까지 곡 데이터베이스로 쌓아 갑니다.",
+          },
+          network: {
+            title: "워십리더 커뮤니티",
+            description: "서로의 찬양 콘티를 열람하고, 같은 곡을 어떻게 사용했는지 참고할 수 있습니다.",
+          },
+        },
+      },
+      features: {
+        title: "예배 준비를 한 흐름으로 묶어 주는 기능들",
+        items: {
+          library: {
+            title: "곡 라이브러리(데이터베이스)",
+            description: "예배에서 사용한 곡을 저장하고, 키, 태그, 메시지, 사용했던 예배까지 기록합니다.",
+            subtitle: "한 곡이 어느 예배에서 어떻게 쓰였는지를 나중에 다시 볼 수 있습니다.",
+          },
+          reference: {
+            title: "레퍼런스 곡 & 악보 저장",
+            description: "각 곡마다 YouTube 레퍼런스 링크와 악보 파일(이미지/PDF)을 함께 저장해 둡니다.",
+            subtitle: "새 콘티를 만들 때, 이미 연결된 악보와 링크를 그대로 가져올 수 있습니다.",
+          },
+          setBuilder: {
+            title: "워십세트(콘티) 제작",
+            description: "곡 라이브러리에서 곡을 골라 드래그 앤 드롭으로 워십세트를 구성하고, 송폼과 특이사항을 기록합니다.",
+            subtitle: "예: \"브릿지 2번 반복 / 후렴 잔잔하게 / 파송곡은 회중 찬양\"",
+          },
+          community: {
+            title: "워십리더 커뮤니티 열람",
+            description: "내가 어떤 곡을 워십세트에 추가할 때, 그 곡을 사용했던 다른 워십리더의 콘티를 바로 열람할 수 있습니다.",
+            subtitle: "같은 곡을 어떤 흐름 속에서 썼는지 서로 참고하고 배울 수 있습니다.",
+          },
+          team: {
+            title: "예배공동체 생성 & 팀 초대",
+            description: "워십리더는 예배공동체를 만들고, 팀원들을 초대해 세트와 공지사항을 함께 나눕니다.",
+            subtitle: "커뮤니티 소식을 공유하고, 예배 준비를 팀 단위로 정렬할 수 있습니다.",
+          },
+          export: {
+            title: "PDF 일괄 내보내기",
+            description: "워십세트가 완성되면, 각 곡의 악보에 저장한 송폼·특이사항을 포함해 한 번에 PDF로 내보낼 수 있습니다.",
+            subtitle: "PDF를 바로 카톡으로 보내거나, 인쇄해서 리허설에 사용할 수 있습니다.",
+          },
+        },
+      },
+      howItWorks: {
+        title: "한 주 예배 준비",
+        subtitle: "이렇게 달라집니다.",
+        steps: {
+          step1: {
+            title: "예배공동체 만들기 & 팀 초대",
+            description: "워십리더가 교회 예배공동체를 생성하고, 찬양팀원과 예배 담당자를 초대합니다.",
+          },
+          step2: {
+            title: "곡 라이브러리 구축",
+            description: "자주 사용하는 곡을 등록하고, 레퍼런스 YouTube 링크와 악보를 함께 저장합니다. 이전에 사용했던 콘티도 불러와 연결할 수 있습니다.",
+          },
+          step3: {
+            title: "워십세트(콘티) 제작 & 커뮤니티 참고",
+            description: "이번 주 예배 세트를 만들면서, 같은 곡을 사용했던 다른 워십리더들의 콘티를 열람해 참고합니다. 메시지와 분위기에 맞게 곡 순서와 송폼을 다듬습니다.",
+          },
+          step4: {
+            title: "PDF로 내보내기 & 공유",
+            description: "완성된 세트를 PDF로 일괄 내보내 카톡으로 팀원에게 보내거나, 인쇄해서 리허설에 사용합니다.",
+          },
+        },
+      },
+      community: {
+        title1: "혼자 짜던 콘티에서,",
+        title2: "함께 나누는 콘티로",
+        description1: "K-Worship의 워십리더 커뮤니티에서는 서로의 찬양 콘티를 공유하고, 같은 곡이 다른 예배에서 어떻게 사용됐는지 볼 수 있습니다.",
+        description2: "교회와 사역지가 달라도, 한국 예배의 살아 있는 영성을 서로 나누고 이어갈 수 있습니다.",
+        mockup: {
+          songTitle: "주 이름 높이며",
+          artist: "Hillsong",
+          key: "Key: G",
+          usedIn: "이 곡을 사용한 예배세트",
+          referenceNote: "다른 워십리더들의 콘티 참고",
+        },
+      },
+      betaCta: {
+        badge: "Beta Version",
+        title: "워십리더를 기다립니다",
+        description: "K-Worship은 실제 예배 현장에서 사역하는 워십리더들과 함께 만들어 가고 있습니다. 베타에 가입하시고, 가장 먼저 변화된 예배 준비를 경험해 보세요.",
+        ctaButton: "베타 가입하기",
+        hasAccount: "이미 계정이 있으신가요?",
+        login: "로그인",
+      },
+      faq: {
+        title: "FAQ",
+        items: {
+          q1: {
+            question: "K-Worship은 어떤 예배 공동체를 위한 앱인가요?",
+            answer: "K-Worship은 한국 교회의 예배 인도자, 찬양팀, 예배 공동체를 위해 설계되었습니다. 교회 크기나 형태에 관계없이, 예배 흐름과 찬양 콘티를 체계적으로 관리하고 싶은 모든 공동체에 적합합니다.",
+          },
+          q2: {
+            question: "팀원들도 회원가입이 필요한가요?",
+            answer: "네, K-Worship은 팀 협업을 위해 모든 구성원이 계정을 만들어야 합니다. 워십리더가 예배공동체를 생성한 후, 초대 링크를 통해 팀원들이 가입하고 참여할 수 있습니다.",
+          },
+          q3: {
+            question: "워십리더 콘티 공유 범위는 어떻게 설정되나요?",
+            answer: "워십세트는 '임시저장'(Draft)과 '게시하기'(Published) 두 단계로 관리됩니다. 임시저장은 작성자와 초대된 협력자만 볼 수 있고, 게시된 세트는 같은 예배공동체의 모든 멤버가 열람할 수 있습니다. 워십리더 커뮤니티 기능을 통해 다른 교회의 콘티도 참고할 수 있습니다.",
+          },
+          q4: {
+            question: "PDF 내보내기 기능은 어떤 정보까지 포함하나요?",
+            answer: "PDF에는 예배 제목, 날짜, 메시지 본문, 각 곡의 제목, 아티스트, Key, BPM, 악보 이미지, 진행 설명(송폼 노트)이 포함됩니다. 한 번의 클릭으로 전체 예배 콘티를 팀원들과 공유하거나 인쇄할 수 있습니다.",
+          },
+          q5: {
+            question: "언제쯤 사용할 수 있게 되나요?",
+            answer: "K-Worship은 현재 베타 개발 중입니다. 얼리 액세스를 신청하시면, 테스트 참여 기회와 정식 출시 소식을 가장 먼저 받아보실 수 있습니다.",
+          },
+          q6: {
+            question: "곡 라이브러리는 교회마다 따로 관리되나요?",
+            answer: "곡 라이브러리는 전체 워십리더 커뮤니티가 함께 관리하는 글로벌 데이터베이스입니다. 모든 로그인 사용자가 곡을 열람할 수 있고, 워십리더는 곡을 추가/수정/삭제할 수 있습니다. 이를 통해 한국 예배 음악의 집단 지식을 함께 쌓아 갈 수 있습니다.",
+          },
+        },
+      },
+      footer: {
+        contact: "문의하기",
+        privacy: "개인정보처리방침",
+        terms: "이용약관",
+      },
     },
   },
 };

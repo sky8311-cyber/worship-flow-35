@@ -1,21 +1,28 @@
 import { Users, Database, Network } from "lucide-react";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, viewportOptions } from "@/lib/animations";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingIntro = () => {
-  const pillars = [{
-    icon: Users,
-    title: "예배공동체 중심",
-    description: "워십리더가 예배 공동체를 생성하고, 팀원을 초대해 함께 준비합니다."
-  }, {
-    icon: Database,
-    title: "곡 라이브러리 + 워십세트",
-    description: "사용했던 곡, 악보, 메시지 연결까지 곡 데이터베이스로 쌓아 갑니다."
-  }, {
-    icon: Network,
-    title: "워십리더 커뮤니티",
-    description: "서로의 찬양 콘티를 열람하고, 같은 곡을 어떻게 사용했는지 참고할 수 있습니다."
-  }];
+  const { t } = useTranslation();
+
+  const pillars = [
+    {
+      icon: Users,
+      title: t("landing.intro.pillars.community.title"),
+      description: t("landing.intro.pillars.community.description"),
+    },
+    {
+      icon: Database,
+      title: t("landing.intro.pillars.library.title"),
+      description: t("landing.intro.pillars.library.description"),
+    },
+    {
+      icon: Network,
+      title: t("landing.intro.pillars.network.title"),
+      description: t("landing.intro.pillars.network.description"),
+    },
+  ];
 
   return (
     <section id="intro" className="py-32 bg-accent/5">
@@ -40,20 +47,20 @@ export const LandingIntro = () => {
           className="text-center max-w-4xl mx-auto mb-20"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
-            혼자 짜던 콘티에서,
+            {t("landing.intro.title1")}
             <br />
-            함께 나누는 콘티로
+            {t("landing.intro.title2")}
           </h2>
           <div className="text-lg md:text-xl text-muted-foreground leading-relaxed space-y-4">
             <p>
-              예배에서 찬양 콘티는 단순한 순서가 아니라,
+              {t("landing.intro.description1")}
               <br />
-              회중이 하나님께 나아가는 길을 돕는 '영적인 흐름'입니다.
+              {t("landing.intro.description1b")}
             </p>
             <p>
-              K-Worship은 그 흐름을 데이터베이스로 기록하고, 예배 인도자와 팀,
+              {t("landing.intro.description2")}
               <br />
-              그리고 다른 워십리더들과 함께 나눌 수 있는 통합 플랫폼입니다.
+              {t("landing.intro.description2b")}
             </p>
           </div>
         </motion.div>
