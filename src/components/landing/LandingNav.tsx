@@ -6,6 +6,7 @@ import { useScrollObserver } from "@/hooks/useScrollObserver";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export const LandingNav = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,10 +56,11 @@ export const LandingNav = () => {
                 {item.label}
               </button>
             ))}
+            <LanguageToggle />
             <Button
               asChild
               size="sm"
-              className="ml-4 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Link to="/signup">
                 베타 가입
@@ -99,6 +101,9 @@ export const LandingNav = () => {
                   {item.label}
                 </button>
               ))}
+              <div className="py-2">
+                <LanguageToggle />
+              </div>
               <Button
                 asChild
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
