@@ -1039,7 +1039,15 @@ export const translations = {
       },
       confirmDelete: "Are you sure you want to delete this worship set?",
       view: "View",
+      edit: "Edit",
+      publish: "Publish",
+      unpublish: "Unpublish",
+      delete: "Delete",
       viewHistory: "View History",
+      viewMode: {
+        card: "Card View",
+        table: "Table View",
+      },
     },
     bandView: {
       pageTitle: "Worship Set",
@@ -2251,7 +2259,15 @@ export const translations = {
       },
       confirmDelete: "정말 이 워십세트를 삭제하시겠습니까?",
       view: "보기",
+      edit: "편집",
+      publish: "게시하기",
+      unpublish: "게시 취소",
+      delete: "삭제",
       viewHistory: "히스토리 보기",
+      viewMode: {
+        card: "카드뷰",
+        table: "테이블뷰",
+      },
     },
     bandView: {
       pageTitle: "워십세트",

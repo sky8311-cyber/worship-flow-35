@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { WorshipSetCard } from "@/components/WorshipSetCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -19,6 +21,15 @@ export default function WorshipSets() {
   const { t } = useTranslation();
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+  const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  
+  // Auto-switch to card view on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setViewMode("card");
+    }
+  }, [isMobile]);
   
   // Check if user can manage a specific set
   const canManage = (set: any) => {
@@ -86,6 +97,16 @@ export default function WorshipSets() {
     },
   });
   
+  const handleDelete = (setId: string) => {
+    if (confirm(t("worshipSets.confirmDelete"))) {
+      deleteMutation.mutate(setId);
+    }
+  };
+  
+  const handleTogglePublish = (id: string, currentStatus: string) => {
+    togglePublishMutation.mutate({ id, currentStatus });
+  };
+  
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
@@ -108,17 +129,40 @@ export default function WorshipSets() {
         </div>
         
         <Card className="shadow-md">
-          <CardHeader>
+          <CardHeader className="relative">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
               <Music className="w-4 h-4 sm:w-5 sm:h-5" />
               {t("worshipSets.title")}
             </CardTitle>
+            
+            {/* View mode toggle */}
+            <div className="absolute top-4 right-4 flex gap-1 bg-muted rounded-md p-1">
+              <Button
+                size="icon"
+                variant={viewMode === "card" ? "default" : "ghost"}
+                className="h-8 w-8"
+                onClick={() => setViewMode("card")}
+                title={t("worshipSets.viewMode.card")}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant={viewMode === "table" ? "default" : "ghost"}
+                className="h-8 w-8"
+                onClick={() => setViewMode("table")}
+                title={t("worshipSets.viewMode.table")}
+              >
+                <LayoutList className="w-4 h-4" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2 sm:gap-3 mb-6">
+            <div className="flex gap-2 sm:gap-3 mb-6 flex-wrap">
               <Button 
                 variant={statusFilter === "all" ? "default" : "outline"}
                 onClick={() => setStatusFilter("all")}
+                size="sm"
               >
                 <List className="w-4 h-4" />
                 {t("worshipSets.filterAll")}
@@ -126,6 +170,7 @@ export default function WorshipSets() {
               <Button 
                 variant={statusFilter === "draft" ? "default" : "outline"}
                 onClick={() => setStatusFilter("draft")}
+                size="sm"
               >
                 <FileEdit className="w-4 h-4" />
                 {t("worshipSets.filterDraft")}
@@ -133,6 +178,7 @@ export default function WorshipSets() {
               <Button 
                 variant={statusFilter === "published" ? "default" : "outline"}
                 onClick={() => setStatusFilter("published")}
+                size="sm"
               >
                 <CircleCheck className="w-4 h-4" />
                 {t("worshipSets.filterPublished")}
@@ -141,6 +187,18 @@ export default function WorshipSets() {
           
           {isLoading ? (
             <p>{t("common.loading")}</p>
+          ) : viewMode === "card" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sets?.map((set) => (
+                <WorshipSetCard
+                  key={set.id}
+                  set={set}
+                  canManage={canManage(set)}
+                  onDelete={handleDelete}
+                  onTogglePublish={handleTogglePublish}
+                />
+              ))}
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -170,35 +228,46 @@ export default function WorshipSets() {
                       </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      {canManage(set) ? (
-                        <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => navigate(`/set-builder/${set.id}`)}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost"
-                            onClick={() => togglePublishMutation.mutate({ id: set.id, currentStatus: set.status })}
-                          >
-                            {set.status === "draft" ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                          </Button>
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            onClick={() => {
-                              if (confirm(t("worshipSets.confirmDelete"))) {
-                                deleteMutation.mutate(set.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button size="icon" variant="ghost" onClick={() => navigate(`/band-view/${set.id}`)}>
-                          <Check className="w-4 h-4" />
+                      <div className="flex gap-1">
+                        {/* View button - always visible */}
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => navigate(`/band-view/${set.id}`)}
+                          title={t("worshipSets.view")}
+                        >
+                          <Eye className="w-4 h-4" />
                         </Button>
-                      )}
+                        
+                        {canManage(set) && (
+                          <>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => navigate(`/set-builder/${set.id}`)}
+                              title={t("worshipSets.edit")}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost"
+                              onClick={() => handleTogglePublish(set.id, set.status)}
+                              title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
+                            >
+                              {set.status === "draft" ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => handleDelete(set.id)}
+                              title={t("worshipSets.delete")}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
