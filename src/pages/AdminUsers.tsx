@@ -28,6 +28,10 @@ const AdminUsers = () => {
     userId: "",
     userName: "",
   });
+  const [bulkDeleteDialog, setBulkDeleteDialog] = useState<{ open: boolean; count: number }>({
+    open: false,
+    count: 0,
+  });
   const [resetDialog, setResetDialog] = useState<{ open: boolean; email: string; userName: string }>({
     open: false,
     email: "",
@@ -248,6 +252,38 @@ const AdminUsers = () => {
     },
     onError: () => {
       toast.error(t("admin.users.bulkResetPasswordError"));
+    },
+  });
+
+  const bulkDeleteUserMutation = useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
+      const results = await Promise.allSettled(
+        userIds.map(userId =>
+          fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId }),
+          }).then(r => r.ok ? r.json() : Promise.reject(r))
+        )
+      );
+      
+      const failures = results.filter(r => r.status === "rejected");
+      if (failures.length > 0) throw new Error(`${failures.length} deletions failed`);
+    },
+    onSuccess: (_, userIds) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(t("admin.users.bulkDeleteSuccess", { count: userIds.length }));
+      setSelectedUsers(new Set());
+      setBulkDeleteDialog({ open: false, count: 0 });
+    },
+    onError: () => {
+      toast.error(t("admin.users.bulkDeleteError"));
     },
   });
 
@@ -521,7 +557,7 @@ const AdminUsers = () => {
                   {t("common.clearSelection")}
                 </Button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
@@ -553,6 +589,14 @@ const AdminUsers = () => {
                   }}
                 >
                   {t("admin.users.bulkResetPassword")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setBulkDeleteDialog({ open: true, count: selectedUsers.size })}
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  {t("admin.users.bulkDelete")}
                 </Button>
               </div>
             </div>
@@ -594,6 +638,30 @@ const AdminUsers = () => {
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
               {t("admin.users.sendResetEmail")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.bulkDeleteConfirmTitle", { count: bulkDeleteDialog.count })}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.bulkDeleteConfirmDescription", { count: bulkDeleteDialog.count })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const userIds = Array.from(selectedUsers);
+                bulkDeleteUserMutation.mutate(userIds);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("admin.users.bulkDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

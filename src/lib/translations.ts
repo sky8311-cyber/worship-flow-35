@@ -44,7 +44,8 @@ export const translations = {
         thursday: "Thursday",
         friday: "Friday",
         saturday: "Saturday"
-      }
+      },
+      deletedUser: "Deleted User"
     },
     socialFeed: {
       postPlaceholder: "Share with your community...",
@@ -317,6 +318,11 @@ export const translations = {
         bulkRoleAddError: "Failed to add roles to some users",
         bulkRoleRemoveError: "Failed to remove roles from some users",
         bulkResetPasswordError: "Failed to send reset emails to some users",
+        bulkDelete: "Delete Selected",
+        bulkDeleteConfirmTitle: "Delete {{count}} Users?",
+        bulkDeleteConfirmDescription: "This will permanently delete {{count}} selected user accounts. Their posts and worship sets will be retained but show as created by 'Deleted User'. This action cannot be undone.",
+        bulkDeleteSuccess: "Successfully deleted {{count}} user(s)",
+        bulkDeleteError: "Failed to delete some users",
         viewProfile: "View Profile",
         basicInfo: "Basic Info",
         bio: "Bio",
@@ -1106,7 +1112,8 @@ export const translations = {
         thursday: "목요일",
         friday: "금요일",
         saturday: "토요일"
-      }
+      },
+      deletedUser: "삭제된 사용자"
     },
     socialFeed: {
       postPlaceholder: "공동체와 나눌 소식을 작성하세요...",
@@ -1379,6 +1386,11 @@ export const translations = {
         bulkRoleAddError: "일부 사용자의 역할 추가에 실패했습니다",
         bulkRoleRemoveError: "일부 사용자의 역할 제거에 실패했습니다",
         bulkResetPasswordError: "일부 사용자에게 재설정 이메일 발송에 실패했습니다",
+        bulkDelete: "선택 삭제",
+        bulkDeleteConfirmTitle: "{{count}}명의 사용자를 삭제하시겠습니까?",
+        bulkDeleteConfirmDescription: "{{count}}명의 사용자 계정이 영구적으로 삭제됩니다. 게시물과 워십세트는 '삭제된 사용자'로 표시되어 유지됩니다. 이 작업은 취소할 수 없습니다.",
+        bulkDeleteSuccess: "{{count}}명의 사용자가 삭제되었습니다",
+        bulkDeleteError: "일부 사용자 삭제에 실패했습니다",
         viewProfile: "프로필 보기",
         basicInfo: "기본 정보",
         bio: "소개",

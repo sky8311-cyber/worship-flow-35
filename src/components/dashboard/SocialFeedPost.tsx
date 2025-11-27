@@ -19,7 +19,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface Author {
-  id: string;
+  id: string | null;
   full_name: string | null;
   avatar_url: string | null;
 }
@@ -214,10 +214,11 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   });
 
   const handleDelete = () => {
-    const isOwnPost = user?.id === item.author.id;
+    const isOwnPost = user?.id === item.author?.id;
+    const authorName = item.author?.full_name || t("common.deletedUser");
     const confirmMessage = isOwnPost 
       ? t("common.confirmDelete")
-      : t("socialFeed.confirmDeleteOtherPost", { author: item.author.full_name || "Unknown" });
+      : t("socialFeed.confirmDeleteOtherPost", { author: authorName });
     
     if (window.confirm(confirmMessage)) {
       deleteMutation.mutate();
@@ -253,6 +254,9 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     return null;
   };
 
+  const authorName = item.author?.full_name || t("common.deletedUser");
+  const authorInitial = authorName.charAt(0) || "?";
+
   return (
     <>
       <Card className="hover:shadow-md transition-shadow">
@@ -260,18 +264,18 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
           {/* First row: Avatar, Name, 3-dots */}
           <div className="flex items-center gap-3">
             <Avatar 
-              className="cursor-pointer hover:opacity-80 transition-opacity w-10 h-10"
-              onClick={() => onProfileClick(item.author)}
+              className={`w-10 h-10 ${item.author?.id ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+              onClick={() => item.author?.id && onProfileClick(item.author)}
             >
-              <AvatarImage src={item.author.avatar_url || ""} />
+              <AvatarImage src={item.author?.avatar_url || ""} />
               <AvatarFallback>
-                {item.author.full_name?.charAt(0) || "U"}
+                {authorInitial}
               </AvatarFallback>
             </Avatar>
             
-            <p className="font-medium text-sm flex-1">{item.author.full_name || "Anonymous"}</p>
+            <p className="font-medium text-sm flex-1">{authorName}</p>
 
-            {(user?.id === item.author.id || isAdmin || isWorshipLeader) && item.type === "community_post" && (
+            {(user?.id === item.author?.id || isAdmin || isWorshipLeader) && item.type === "community_post" && item.author?.id && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -279,7 +283,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
                   </Button>
                 </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {user?.id === item.author.id && (
+                    {user?.id === item.author?.id && (
                       <DropdownMenuItem onClick={handleEdit}>
                         {t("socialFeed.edit")}
                       </DropdownMenuItem>
