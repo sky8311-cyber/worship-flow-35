@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowLeft, ArrowUp, ArrowDown, Send } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -121,26 +121,33 @@ export default function CommunityManagement() {
       queryClient.invalidateQueries({ queryKey: ["community", id] });
       toast({ title: t("community.updateSuccess") });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Update community error:", error);
       toast({ title: t("community.updateError"), variant: "destructive" });
     },
   });
 
   const promoteToCommunityLeaderMutation = useMutation({
     mutationFn: async (memberId: string) => {
+      console.log("Promoting member:", memberId);
       const { error } = await supabase
         .from("community_members")
         .update({ role: "community_leader" })
         .eq("id", memberId);
-      if (error) throw error;
+      if (error) {
+        console.error("Promote error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-members"] });
       toast({ title: t("community.promoteToCommunityLeaderSuccess") });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Promote mutation error:", error);
       toast({
         title: t("community.promoteToCommunityLeaderError"),
+        description: error?.message || "Unknown error",
         variant: "destructive",
       });
     },
@@ -148,19 +155,25 @@ export default function CommunityManagement() {
 
   const demoteToMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
+      console.log("Demoting member:", memberId);
       const { error } = await supabase
         .from("community_members")
         .update({ role: "member" })
         .eq("id", memberId);
-      if (error) throw error;
+      if (error) {
+        console.error("Demote error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-members"] });
       toast({ title: t("community.demoteToMemberSuccess") });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Demote mutation error:", error);
       toast({
         title: t("community.demoteToMemberError"),
+        description: error?.message || "Unknown error",
         variant: "destructive",
       });
     },
@@ -168,18 +181,27 @@ export default function CommunityManagement() {
 
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
+      console.log("Removing member:", memberId);
       const { error } = await supabase
         .from("community_members")
         .delete()
         .eq("id", memberId);
-      if (error) throw error;
+      if (error) {
+        console.error("Remove member error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-members"] });
       toast({ title: t("community.removeSuccess") });
     },
-    onError: () => {
-      toast({ title: t("community.removeError"), variant: "destructive" });
+    onError: (error: any) => {
+      console.error("Remove member mutation error:", error);
+      toast({ 
+        title: t("community.removeError"), 
+        description: error?.message || "Unknown error",
+        variant: "destructive" 
+      });
     },
   });
 
@@ -223,7 +245,8 @@ export default function CommunityManagement() {
     onSuccess: () => {
       toast({ title: t("community.invitationResent") });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Resend invitation error:", error);
       toast({
         title: t("community.invitationError"),
         variant: "destructive",
@@ -233,17 +256,22 @@ export default function CommunityManagement() {
 
   const cancelInviteMutation = useMutation({
     mutationFn: async (invitationId: string) => {
+      console.log("Cancelling invitation:", invitationId);
       const { error } = await supabase
         .from("community_invitations")
         .delete()
         .eq("id", invitationId);
-      if (error) throw error;
+      if (error) {
+        console.error("Cancel invitation error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-invitations", id] });
       toast({ title: t("community.invitationCancelled") });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Cancel invitation mutation error:", error);
       toast({
         title: t("community.invitationError"),
         variant: "destructive",
@@ -254,22 +282,28 @@ export default function CommunityManagement() {
   const leaveCommunityMutation = useMutation({
     mutationFn: async () => {
       const memberEntry = members?.find(m => m.user_id === user?.id);
+      console.log("Leaving community, member entry:", memberEntry);
       if (!memberEntry) throw new Error("Member entry not found");
       
       const { error } = await supabase
         .from("community_members")
         .delete()
         .eq("id", memberEntry.id);
-      if (error) throw error;
+      if (error) {
+        console.error("Leave community error details:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({ title: t("community.leaveSuccess") });
       navigate("/dashboard");
       queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Leave community mutation error:", error);
       toast({ 
         title: t("community.leaveError"), 
+        description: error?.message || "Unknown error",
         variant: "destructive" 
       });
     },
@@ -445,24 +479,24 @@ export default function CommunityManagement() {
                         </div>
 
                         <div className="flex flex-wrap gap-2 justify-end sm:justify-start">
-                          {/* Promote/Demote */}
+                          {/* Promote/Demote - Fixed: removed nested asChild pattern */}
                           {canManage && !isLeaderOfCommunity && !isWorshipLeader ? (
                             <>
                               {isCommunityLeader ? (
                                 <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <AlertDialogTrigger asChild>
                                         <Button variant="outline" size="sm">
                                           <ArrowDown className="h-4 w-4 sm:mr-1" />
                                           <span className="hidden sm:inline">{t("community.demoteToMember")}</span>
                                         </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="sm:hidden">
-                                        {t("community.demoteToMember")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </AlertDialogTrigger>
+                                      </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="sm:hidden">
+                                      {t("community.demoteToMember")}
+                                    </TooltipContent>
+                                  </Tooltip>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>
@@ -486,19 +520,19 @@ export default function CommunityManagement() {
                                 </AlertDialog>
                               ) : (
                                 <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <AlertDialogTrigger asChild>
                                         <Button variant="outline" size="sm">
                                           <ArrowUp className="h-4 w-4 sm:mr-1" />
                                           <span className="hidden sm:inline">{t("community.promoteToCommunityLeader")}</span>
                                         </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent className="sm:hidden">
-                                        {t("community.promoteToCommunityLeader")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </AlertDialogTrigger>
+                                      </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="sm:hidden">
+                                      {t("community.promoteToCommunityLeader")}
+                                    </TooltipContent>
+                                  </Tooltip>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>
@@ -536,7 +570,7 @@ export default function CommunityManagement() {
                             </>
                           ) : null}
 
-                          {/* Leave/Remove */}
+                          {/* Leave/Remove - Fixed: removed nested asChild pattern */}
                           {member.user_id === user?.id && !isLeaderOfCommunity ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -564,18 +598,18 @@ export default function CommunityManagement() {
                             </AlertDialog>
                           ) : canManage && member.user_id !== user?.id && !isLeaderOfCommunity ? (
                             <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="sm">
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    {t("common.remove")}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </AlertDialogTrigger>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {t("common.remove")}
+                                </TooltipContent>
+                              </Tooltip>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>{t("community.removeMember")}</AlertDialogTitle>
@@ -653,20 +687,20 @@ export default function CommunityManagement() {
                             </TooltipContent>
                           </Tooltip>
 
-                          {/* Cancel/Delete button */}
+                          {/* Cancel/Delete button - Fixed: removed nested asChild pattern */}
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
                                   <Button variant="ghost" size="sm">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {t("community.cancelInvitation")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </AlertDialogTrigger>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {t("community.cancelInvitation")}
+                              </TooltipContent>
+                            </Tooltip>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
