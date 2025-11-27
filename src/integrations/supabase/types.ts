@@ -19,7 +19,7 @@ export type Database = {
           attendees: string[] | null
           community_id: string
           created_at: string | null
-          created_by: string
+          created_by: string | null
           description: string | null
           end_time: string | null
           event_date: string
@@ -36,7 +36,7 @@ export type Database = {
           attendees?: string[] | null
           community_id: string
           created_at?: string | null
-          created_by: string
+          created_by?: string | null
           description?: string | null
           end_time?: string | null
           event_date: string
@@ -53,7 +53,7 @@ export type Database = {
           attendees?: string[] | null
           community_id?: string
           created_at?: string | null
-          created_by?: string
+          created_by?: string | null
           description?: string | null
           end_time?: string | null
           event_date?: string
@@ -151,7 +151,7 @@ export type Database = {
       }
       community_posts: {
         Row: {
-          author_id: string
+          author_id: string | null
           community_id: string
           content: string
           created_at: string | null
@@ -160,7 +160,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           community_id: string
           content: string
           created_at?: string | null
@@ -169,7 +169,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           community_id?: string
           content?: string
           created_at?: string | null
@@ -243,7 +243,7 @@ export type Database = {
       }
       post_comments: {
         Row: {
-          author_id: string
+          author_id: string | null
           content: string
           created_at: string | null
           id: string
@@ -252,7 +252,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          author_id: string
+          author_id?: string | null
           content: string
           created_at?: string | null
           id?: string
@@ -261,7 +261,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          author_id?: string
+          author_id?: string | null
           content?: string
           created_at?: string | null
           id?: string
