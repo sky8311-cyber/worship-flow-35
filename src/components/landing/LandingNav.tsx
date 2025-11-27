@@ -62,6 +62,15 @@ export const LandingNav = () => {
             <Button
               asChild
               size="sm"
+              variant="outline"
+            >
+              <Link to="/login">
+                {t("landing.nav.betaLogin")}
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Link to="/signup">
@@ -106,6 +115,16 @@ export const LandingNav = () => {
               <div className="py-2">
                 <LanguageToggle />
               </div>
+              <Button
+                asChild
+                variant="outline"
+                className="w-full"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Link to="/login">
+                  {t("landing.nav.betaLogin")}
+                </Link>
+              </Button>
               <Button
                 asChild
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
