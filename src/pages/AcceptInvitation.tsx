@@ -100,9 +100,12 @@ export default function AcceptInvitation() {
 
   useEffect(() => {
     if (!user) {
-      navigate("/auth/login");
+      // Store the invitation URL before redirecting to login
+      const invitationUrl = `/accept-invitation/${invitationId}`;
+      sessionStorage.setItem("redirectAfterLogin", invitationUrl);
+      navigate(`/auth/login?redirect=${encodeURIComponent(invitationUrl)}`);
     }
-  }, [user, navigate]);
+  }, [user, navigate, invitationId]);
 
   if (isLoading) {
     return (

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import logoMobile from "@/assets/kworship-logo-mobile.png";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,9 @@ const Login = () => {
     email: "",
     password: "",
   });
+
+  // Get redirect URL from query params or sessionStorage
+  const redirectUrl = searchParams.get("redirect") || sessionStorage.getItem("redirectAfterLogin");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +41,10 @@ const Login = () => {
       toast.error(error.message);
     } else {
       toast.success(t("auth.loginSuccess"));
-      navigate("/");
+      // Clear stored redirect URL
+      sessionStorage.removeItem("redirectAfterLogin");
+      // Navigate to redirect URL if present, otherwise dashboard
+      navigate(redirectUrl || "/");
     }
     setLoading(false);
   };
