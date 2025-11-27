@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserPlus, UserMinus, KeyRound, Trash2 } from "lucide-react";
+import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -100,7 +100,7 @@ export function UserCard({
                     onClick={() => onAddRole(user.id, "admin")}
                     className="flex-1 sm:flex-initial"
                   >
-                    <UserPlus className="w-4 h-4 sm:mr-1" />
+                    <Shield className="w-4 h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </TooltipTrigger>
@@ -117,7 +117,7 @@ export function UserCard({
                     onClick={() => onRemoveRole(user.id, "admin")}
                     className="flex-1 sm:flex-initial"
                   >
-                    <UserMinus className="w-4 h-4 sm:mr-1" />
+                    <ShieldOff className="w-4 h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Admin</span>
                   </Button>
                 </TooltipTrigger>
@@ -137,7 +137,7 @@ export function UserCard({
                     onClick={() => onAddRole(user.id, "worship_leader")}
                     className="flex-1 sm:flex-initial"
                   >
-                    <UserPlus className="w-4 h-4 sm:mr-1" />
+                    <Mic className="w-4 h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Leader</span>
                   </Button>
                 </TooltipTrigger>
@@ -154,7 +154,7 @@ export function UserCard({
                     onClick={() => onRemoveRole(user.id, "worship_leader")}
                     className="flex-1 sm:flex-initial"
                   >
-                    <UserMinus className="w-4 h-4 sm:mr-1" />
+                    <MicOff className="w-4 h-4 sm:mr-1" />
                     <span className="hidden sm:inline">Leader</span>
                   </Button>
                 </TooltipTrigger>

@@ -29,6 +29,8 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate(`/band-view/${notification.related_id}`);
     } else if (notification.related_type === "calendar_event" && notification.related_id) {
       navigate("/dashboard");
+    } else if (notification.related_type === "member" && notification.related_id) {
+      navigate("/admin/users");
     } else if (notification.related_type === "profile" && notification.related_id && notification.type === "birthday") {
       // Birthday notification - could open profile or stay on dashboard
       navigate("/dashboard");

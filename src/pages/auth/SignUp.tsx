@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signUp } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -23,6 +24,9 @@ const SignUp = () => {
     phone: "",
     birthDate: "",
   });
+
+  // Get redirect URL from query params or sessionStorage
+  const redirectUrl = searchParams.get("redirect") || sessionStorage.getItem("redirectAfterLogin");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +51,10 @@ const SignUp = () => {
           description: t("auth.alreadyRegisteredLoggedIn"),
         });
         setLoading(false);
-        navigate("/dashboard");
+        // Clear stored redirect URL
+        sessionStorage.removeItem("redirectAfterLogin");
+        // Navigate to redirect URL if present, otherwise dashboard
+        navigate(redirectUrl || "/dashboard");
         return;
       }
       
