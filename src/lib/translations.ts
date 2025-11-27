@@ -1074,6 +1074,7 @@ export const translations = {
         community: "Community",
         faq: "FAQ",
         betaSignup: "Join Beta",
+        betaLogin: "Login",
       },
       hero: {
         title1: "Integrated Platform",
@@ -2285,6 +2286,7 @@ export const translations = {
         community: "워십리더 커뮤니티",
         faq: "FAQ",
         betaSignup: "베타 가입",
+        betaLogin: "로그인",
       },
       hero: {
         title1: "예배 공동체를 위한",
