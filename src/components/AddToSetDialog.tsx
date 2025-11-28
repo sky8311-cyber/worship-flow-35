@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,8 @@ import { useNavigate } from "react-router-dom";
 interface AddToSetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  song?: any; // For backward compatibility with single song
-  songs?: any[]; // For multiple songs from cart
+  song?: any;
+  songs?: any[];
   onSuccess?: () => void;
 }
 
@@ -44,112 +44,109 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   });
   
   const songsToAdd = songs || (song ? [song] : []);
+  const canAddToSet = songsToAdd.length > 0;
   
   const addToSetMutation = useMutation({
     mutationFn: async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) {
-          console.error("Auth error:", authError);
-          throw authError;
-        }
-        if (!user) throw new Error("Not authenticated");
+      // Validate songs exist before proceeding
+      if (songsToAdd.length === 0) {
+        throw new Error("No songs to add");
+      }
+
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
+      if (!user) throw new Error("Not authenticated");
+      
+      let targetSetId: string;
+      
+      if (selectedOption === "new") {
+        const { data: insertedSets, error: setError } = await supabase
+          .from("service_sets")
+          .insert([{
+            date: format(new Date(), "yyyy-MM-dd"),
+            service_name: "새 워십세트",
+            status: "draft",
+            created_by: user.id,
+          }])
+          .select();
         
-        if (selectedOption === "new") {
-          // Use .select() without .single() to avoid edge cases
-          const { data: insertedSets, error: setError } = await supabase
-            .from("service_sets")
-            .insert([{
-              date: format(new Date(), "yyyy-MM-dd"),
-              service_name: "새 워십세트",
-              status: "draft",
-              created_by: user.id,
-            }])
-            .select();
-          
-          if (setError) {
-            console.error("Insert service_sets error:", setError);
-            throw setError;
-          }
-          
-          if (!insertedSets || insertedSets.length === 0) {
-            throw new Error("Failed to create worship set - no data returned");
-          }
-          
-          const newSet = insertedSets[0];
-          
-          const songInserts = songsToAdd.map((s, index) => ({
-            service_set_id: newSet.id,
-            song_id: s.id,
-            position: index + 1,
-            key: s.default_key,
-          }));
-          
-          const { error: songError } = await supabase
-            .from("set_songs")
-            .insert(songInserts);
-          
-          if (songError) {
-            console.error("Insert set_songs error:", songError);
-            throw songError;
-          }
-          
-          return { setId: newSet.id, count: songsToAdd.length };
-        } else {
-          const { data: existingSongs, error: fetchError } = await supabase
-            .from("set_songs")
-            .select("position")
-            .eq("service_set_id", selectedOption)
-            .order("position", { ascending: false })
-            .limit(1);
-          
-          if (fetchError) {
-            console.error("Fetch existing songs error:", fetchError);
-            throw fetchError;
-          }
-          
-          const startPosition = (existingSongs?.[0]?.position || 0) + 1;
-          
-          const songInserts = songsToAdd.map((s, index) => ({
-            service_set_id: selectedOption,
-            song_id: s.id,
-            position: startPosition + index,
-            key: s.default_key,
-          }));
-          
-          const { error: insertError } = await supabase
-            .from("set_songs")
-            .insert(songInserts);
-          
-          if (insertError) {
-            console.error("Insert set_songs error:", insertError);
-            throw insertError;
-          }
-          
-          return { setId: selectedOption, count: songsToAdd.length };
+        if (setError) {
+          console.error("Insert service_sets error:", setError);
+          throw setError;
         }
-      } catch (error) {
-        console.error("AddToSetDialog mutation error:", error);
-        throw error;
+        
+        if (!insertedSets || insertedSets.length === 0) {
+          throw new Error("Failed to create worship set - no data returned");
+        }
+        
+        targetSetId = insertedSets[0].id;
+      } else {
+        targetSetId = selectedOption;
       }
+      
+      // Get existing songs position for the target set
+      const { data: existingSongs, error: fetchError } = await supabase
+        .from("set_songs")
+        .select("position")
+        .eq("service_set_id", targetSetId)
+        .order("position", { ascending: false })
+        .limit(1);
+      
+      if (fetchError) {
+        console.error("Fetch existing songs error:", fetchError);
+        throw fetchError;
+      }
+      
+      const startPosition = (existingSongs?.[0]?.position || 0) + 1;
+      
+      // Build song inserts
+      const songInserts = songsToAdd.map((s, index) => ({
+        service_set_id: targetSetId,
+        song_id: s.id,
+        position: startPosition + index,
+        key: s.default_key,
+      }));
+      
+      // Only insert if we have songs
+      if (songInserts.length > 0) {
+        const { error: songError } = await supabase
+          .from("set_songs")
+          .insert(songInserts);
+        
+        if (songError) {
+          console.error("Insert set_songs error:", songError);
+          throw songError;
+        }
+      }
+      
+      return { setId: targetSetId, count: songsToAdd.length };
     },
-    onSuccess: ({ setId, count }) => {
-      const message = count === 1 
-        ? "곡이 워십세트에 추가되었습니다"
-        : `${count}곡이 워십세트에 추가되었습니다`;
-      toast.success(message);
-      
-      // Invalidate related queries (no await - SetBuilder will fetch fresh data on mount)
-      queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
-      queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
-      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      
-      if (onSuccess) {
-        onSuccess();
+    onSuccess: (result) => {
+      try {
+        const { setId, count } = result;
+        const message = count === 1 
+          ? "곡이 워십세트에 추가되었습니다"
+          : `${count}곡이 워십세트에 추가되었습니다`;
+        toast.success(message);
+        
+        queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+        queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
+        queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+        
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        onOpenChange(false);
+        navigate(`/set-builder/${setId}`);
+      } catch (err) {
+        console.error("onSuccess error:", err);
+        // Still close dialog even if something fails in onSuccess
+        onOpenChange(false);
       }
-      
-      onOpenChange(false);
-      navigate(`/set-builder/${setId}`);
     },
     onError: (error: any) => {
       console.error("Add to set error:", error);
@@ -162,13 +159,18 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       <DialogContent>
         <DialogHeader>
           <DialogTitle>워십세트에 추가</DialogTitle>
+          <DialogDescription>
+            선택한 곡을 새 워십세트에 추가하거나 기존 세트에 추가할 수 있습니다.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-1">
             {songsToAdd.length === 1 ? "선택한 곡:" : `선택한 곡 (${songsToAdd.length}곡):`}
           </p>
-          {songsToAdd.length === 1 ? (
+          {songsToAdd.length === 0 ? (
+            <p className="text-sm text-destructive">선택된 곡이 없습니다</p>
+          ) : songsToAdd.length === 1 ? (
             <p className="font-medium">{songsToAdd[0]?.title}</p>
           ) : (
             <div className="max-h-32 overflow-y-auto space-y-1">
@@ -219,7 +221,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
           </Button>
-          <Button onClick={() => addToSetMutation.mutate()} disabled={addToSetMutation.isPending}>
+          <Button 
+            onClick={() => addToSetMutation.mutate()} 
+            disabled={addToSetMutation.isPending || !canAddToSet}
+          >
             {addToSetMutation.isPending ? "추가 중..." : "추가하기"}
           </Button>
         </div>
