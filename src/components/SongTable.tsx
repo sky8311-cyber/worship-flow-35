@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { FavoriteButton } from "./FavoriteButton";
-import { AddToSetDialog } from "./AddToSetDialog";
 import { format } from "date-fns";
 
 interface SongTableProps {
@@ -61,8 +60,6 @@ export const SongTable = ({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
-  const [addToSetSong, setAddToSetSong] = useState<any>(null);
-  const [addToSetOpen, setAddToSetOpen] = useState(false);
 
   const renderColumnHeader = (
     columnKey: string,
@@ -247,7 +244,6 @@ export const SongTable = ({
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
-            <TableHead className="w-12"></TableHead>
             <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
           </TableHeader>
@@ -379,34 +375,21 @@ export const SongTable = ({
                   <TableCell className="text-sm text-muted-foreground">
                     {getLastUsedDate(song.id)}
                   </TableCell>
-                  <TableCell className="w-12">
-                    {onToggleCart && (
-                      <Button
-                        variant={cartSongs.has(song.id) ? "default" : "ghost"}
-                        size="icon"
-                        onClick={() => onToggleCart(song.id)}
-                        className="h-8 w-8"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </TableCell>
                   <TableCell>
                     {!bulkEditMode && (
                       <div className="flex items-center gap-1">
+                        {onToggleCart && (
+                          <Button
+                            variant={cartSongs.has(song.id) ? "default" : "ghost"}
+                            size="icon"
+                            onClick={() => onToggleCart(song.id)}
+                            className="h-8 w-8"
+                            title={cartSongs.has(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
                         <FavoriteButton songId={song.id} size="icon" variant="ghost" />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setAddToSetSong(song);
-                            setAddToSetOpen(true);
-                          }}
-                          title="워십세트에 추가"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -483,11 +466,6 @@ export const SongTable = ({
         scoreUrl={selectedSong?.score_file_url}
         songTitle={selectedSong?.title || ""}
         songId={selectedSong?.id}
-      />
-      <AddToSetDialog 
-        open={addToSetOpen}
-        onOpenChange={setAddToSetOpen}
-        song={addToSetSong}
       />
     </>
   );
