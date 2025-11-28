@@ -105,16 +105,14 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         return { setId: selectedOption, count: songsToAdd.length };
       }
     },
-    onSuccess: async ({ setId, count }) => {
+    onSuccess: ({ setId, count }) => {
       const message = count === 1 
         ? "곡이 워십세트에 추가되었습니다"
         : `${count}곡이 워십세트에 추가되었습니다`;
       toast.success(message);
       
-      // Wait for refetch to complete before navigating
-      await queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
-      await queryClient.refetchQueries({ queryKey: ["service-set", setId] });
-      
+      // Invalidate related queries (no await - SetBuilder will fetch fresh data on mount)
+      queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       
