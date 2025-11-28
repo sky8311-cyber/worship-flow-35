@@ -47,62 +47,90 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   
   const addToSetMutation = useMutation({
     mutationFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
-      
-      if (selectedOption === "new") {
-        const { data: newSet, error: setError } = await supabase
-          .from("service_sets")
-          .insert([{
-            date: format(new Date(), "yyyy-MM-dd"),
-            service_name: "새 워십세트",
-            status: "draft",
-            created_by: user.user.id,
-          }])
-          .select()
-          .single();
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.error("Auth error:", authError);
+          throw authError;
+        }
+        if (!user) throw new Error("Not authenticated");
         
-        if (setError) throw setError;
-        
-        // Add all songs sequentially
-        const songInserts = songsToAdd.map((s, index) => ({
-          service_set_id: newSet.id,
-          song_id: s.id,
-          position: index + 1,
-          key: s.default_key,
-        }));
-        
-        const { error: songError } = await supabase
-          .from("set_songs")
-          .insert(songInserts);
-        
-        if (songError) throw songError;
-        
-        return { setId: newSet.id, count: songsToAdd.length };
-      } else {
-        const { data: existingSongs } = await supabase
-          .from("set_songs")
-          .select("position")
-          .eq("service_set_id", selectedOption)
-          .order("position", { ascending: false })
-          .limit(1);
-        
-        const startPosition = (existingSongs?.[0]?.position || 0) + 1;
-        
-        const songInserts = songsToAdd.map((s, index) => ({
-          service_set_id: selectedOption,
-          song_id: s.id,
-          position: startPosition + index,
-          key: s.default_key,
-        }));
-        
-        const { error } = await supabase
-          .from("set_songs")
-          .insert(songInserts);
-        
-        if (error) throw error;
-        
-        return { setId: selectedOption, count: songsToAdd.length };
+        if (selectedOption === "new") {
+          // Use .select() without .single() to avoid edge cases
+          const { data: insertedSets, error: setError } = await supabase
+            .from("service_sets")
+            .insert([{
+              date: format(new Date(), "yyyy-MM-dd"),
+              service_name: "새 워십세트",
+              status: "draft",
+              created_by: user.id,
+            }])
+            .select();
+          
+          if (setError) {
+            console.error("Insert service_sets error:", setError);
+            throw setError;
+          }
+          
+          if (!insertedSets || insertedSets.length === 0) {
+            throw new Error("Failed to create worship set - no data returned");
+          }
+          
+          const newSet = insertedSets[0];
+          
+          const songInserts = songsToAdd.map((s, index) => ({
+            service_set_id: newSet.id,
+            song_id: s.id,
+            position: index + 1,
+            key: s.default_key,
+          }));
+          
+          const { error: songError } = await supabase
+            .from("set_songs")
+            .insert(songInserts);
+          
+          if (songError) {
+            console.error("Insert set_songs error:", songError);
+            throw songError;
+          }
+          
+          return { setId: newSet.id, count: songsToAdd.length };
+        } else {
+          const { data: existingSongs, error: fetchError } = await supabase
+            .from("set_songs")
+            .select("position")
+            .eq("service_set_id", selectedOption)
+            .order("position", { ascending: false })
+            .limit(1);
+          
+          if (fetchError) {
+            console.error("Fetch existing songs error:", fetchError);
+            throw fetchError;
+          }
+          
+          const startPosition = (existingSongs?.[0]?.position || 0) + 1;
+          
+          const songInserts = songsToAdd.map((s, index) => ({
+            service_set_id: selectedOption,
+            song_id: s.id,
+            position: startPosition + index,
+            key: s.default_key,
+          }));
+          
+          const { error: insertError } = await supabase
+            .from("set_songs")
+            .insert(songInserts);
+          
+          if (insertError) {
+            console.error("Insert set_songs error:", insertError);
+            throw insertError;
+          }
+          
+          return { setId: selectedOption, count: songsToAdd.length };
+        }
+      } catch (error) {
+        console.error("AddToSetDialog mutation error:", error);
+        throw error;
       }
     },
     onSuccess: ({ setId, count }) => {
