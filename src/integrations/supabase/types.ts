@@ -520,6 +520,7 @@ export type Database = {
           energy_level: number | null
           id: string
           key: string | null
+          lyrics: string | null
           override_score_file_url: string | null
           override_youtube_url: string | null
           position: number
@@ -534,6 +535,7 @@ export type Database = {
           energy_level?: number | null
           id?: string
           key?: string | null
+          lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
           position: number
@@ -548,6 +550,7 @@ export type Database = {
           energy_level?: number | null
           id?: string
           key?: string | null
+          lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
           position?: number
@@ -625,6 +628,7 @@ export type Database = {
           id: string
           interpretation: string | null
           language: string | null
+          lyrics: string | null
           notes: string | null
           score_file_url: string | null
           subtitle: string | null
@@ -641,6 +645,7 @@ export type Database = {
           id?: string
           interpretation?: string | null
           language?: string | null
+          lyrics?: string | null
           notes?: string | null
           score_file_url?: string | null
           subtitle?: string | null
@@ -657,6 +662,7 @@ export type Database = {
           id?: string
           interpretation?: string | null
           language?: string | null
+          lyrics?: string | null
           notes?: string | null
           score_file_url?: string | null
           subtitle?: string | null

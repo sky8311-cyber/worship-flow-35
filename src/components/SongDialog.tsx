@@ -54,6 +54,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     score_file_url: "",
     notes: "",
     interpretation: "",
+    lyrics: "",
   });
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         score_file_url: song.score_file_url || "",
         notes: song.notes || "",
         interpretation: song.interpretation || "",
+        lyrics: song.lyrics || "",
       });
       
       // Load score variations
@@ -89,6 +91,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         score_file_url: "",
         notes: "",
         interpretation: "",
+        lyrics: "",
       });
       setScoreVariations([{ key: "", files: [] }]);
     }
@@ -705,6 +708,18 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
+            <Textarea
+              id="lyrics"
+              value={formData.lyrics}
+              onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
+              placeholder={t("songDialog.lyricsPlaceholder")}
+              rows={6}
+              className="font-mono text-sm"
             />
           </div>
 

@@ -4,7 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { GripVertical, X, Youtube, FileText } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SetSongItemProps {
   setSong: any;
@@ -15,6 +19,8 @@ interface SetSongItemProps {
 
 export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: index });
+  const [lyricsOpen, setLyricsOpen] = useState(false);
+  const { t } = useTranslation();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -22,6 +28,13 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
   };
 
   const song = setSong.song || setSong.songs;
+
+  const handleCopyLyrics = () => {
+    if (setSong.lyrics) {
+      navigator.clipboard.writeText(setSong.lyrics);
+      toast.success(t("setSongItem.lyricsCopied"));
+    }
+  };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -98,6 +111,40 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
                   className="mt-1"
                 />
               </div>
+
+              {/* Lyrics Section */}
+              <Collapsible open={lyricsOpen} onOpenChange={setLyricsOpen}>
+                <div className="flex items-center justify-between">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                      <label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+                        {t("setSongItem.lyrics")}
+                        {lyricsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </label>
+                    </Button>
+                  </CollapsibleTrigger>
+                  {setSong.lyrics && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCopyLyrics}
+                      className="h-6 text-xs"
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      {t("setSongItem.copyLyrics")}
+                    </Button>
+                  )}
+                </div>
+                <CollapsibleContent>
+                  <Textarea
+                    value={setSong.lyrics || ""}
+                    onChange={(e) => onUpdate(index, { lyrics: e.target.value })}
+                    placeholder={t("setSongItem.lyricsPlaceholder")}
+                    rows={6}
+                    className="mt-1 font-mono text-sm"
+                  />
+                </CollapsibleContent>
+              </Collapsible>
 
               <div className="flex gap-2">
                 {song?.youtube_url && (

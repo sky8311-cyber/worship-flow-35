@@ -807,6 +807,8 @@ export const translations = {
       preview: "Preview",
       addMorePages: "Add More Pages",
       addKeyVariation: "Add Key Variation",
+      lyrics: "Lyrics",
+      lyricsPlaceholder: "Enter song lyrics here...",
     },
     artistSelector: {
       selectArtist: "Select artist",
@@ -906,6 +908,7 @@ export const translations = {
       usedTimes: "Used {count} times",
       addToSet: "Add",
       addNewSong: "Add New Song",
+      includeLyrics: "Include Lyrics",
     },
     setSongItem: {
       key: "Key",
@@ -914,6 +917,10 @@ export const translations = {
       notesPlaceholder: "e.g., Repeat chorus 2x, skip bridge",
       youtube: "YouTube",
       score: "Score",
+      lyrics: "Lyrics",
+      copyLyrics: "Copy",
+      lyricsCopied: "Lyrics copied to clipboard",
+      lyricsPlaceholder: "Enter lyrics or select 'Include Lyrics' when adding songs",
     },
     csvImport: {
       title: "Import Songs from CSV",
@@ -1067,12 +1074,15 @@ export const translations = {
         performanceNotes: "Performance Notes",
         energy: "Energy",
         key: "Key",
+        lyrics: "Lyrics",
       },
       noTitle: "Untitled",
       scoreForKey: "Score ({key} Key)",
       score: "Score",
       noSongsAdded: "No songs added yet",
       minutes: "min",
+      copyLyrics: "Copy",
+      lyricsCopied: "Lyrics copied to clipboard",
     },
     landing: {
       nav: {
@@ -2033,6 +2043,8 @@ export const translations = {
       preview: "미리보기",
       addMorePages: "페이지 추가",
       addKeyVariation: "키 변주 추가",
+      lyrics: "가사",
+      lyricsPlaceholder: "가사를 입력하세요...",
     },
     artistSelector: {
       selectArtist: "아티스트 선택",
@@ -2126,6 +2138,7 @@ export const translations = {
       usedTimes: "{count}번 사용됨",
       addToSet: "추가",
       addNewSong: "새 곡 추가",
+      includeLyrics: "가사 포함",
     },
     setSongItem: {
       key: "키",
@@ -2134,6 +2147,10 @@ export const translations = {
       notesPlaceholder: "예: 후렴 2번 반복, 브리지 생략",
       youtube: "유튜브",
       score: "악보",
+      lyrics: "가사",
+      copyLyrics: "복사",
+      lyricsCopied: "가사가 복사되었습니다",
+      lyricsPlaceholder: "가사를 입력하거나 곡 추가 시 '가사 포함'을 선택하세요",
     },
     csvImport: {
       title: "CSV로 곡 가져오기",
@@ -2287,12 +2304,15 @@ export const translations = {
         performanceNotes: "진행설명",
         energy: "에너지",
         key: "키",
+        lyrics: "가사",
       },
       noTitle: "제목 없음",
       scoreForKey: "악보 ({key} Key)",
       score: "악보",
       noSongsAdded: "아직 곡이 추가되지 않았습니다",
       minutes: "분",
+      copyLyrics: "복사",
+      lyricsCopied: "가사가 클립보드에 복사되었습니다",
     },
     landing: {
       nav: {

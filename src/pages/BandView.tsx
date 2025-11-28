@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { toast } from "sonner";
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -333,6 +334,30 @@ const BandView = () => {
                       <p className="text-sm text-foreground">
                         <span className="font-semibold">{t("bandView.labels.performanceNotes")}:</span> {setSong.custom_notes}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Lyrics Section */}
+                  {setSong.lyrics && (
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-semibold text-foreground">{t("bandView.labels.lyrics")}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(setSong.lyrics);
+                            toast.success(t("bandView.lyricsCopied"));
+                          }}
+                          className="print:hidden"
+                        >
+                          <Copy className="w-3 h-3 mr-1" />
+                          {t("bandView.copyLyrics")}
+                        </Button>
+                      </div>
+                      <div className="p-4 bg-muted/50 rounded-lg">
+                        <pre className="text-sm whitespace-pre-wrap font-sans text-foreground">{setSong.lyrics}</pre>
+                      </div>
                     </div>
                   )}
 

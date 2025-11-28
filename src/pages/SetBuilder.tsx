@@ -321,6 +321,7 @@ const SetBuilder = () => {
         custom_notes: ss.custom_notes || "",
         override_score_file_url: ss.override_score_file_url || null,
         override_youtube_url: ss.override_youtube_url || null,
+        lyrics: ss.lyrics || null,
       }));
 
       if (setSongsData.length > 0) {
@@ -392,6 +393,7 @@ const SetBuilder = () => {
       custom_notes: "",
       override_score_file_url: null,
       override_youtube_url: null,
+      lyrics: song._includeLyrics ? song.lyrics : null,
     }));
     
     setSongs(prev => [...prev, ...newSetSongs]);
