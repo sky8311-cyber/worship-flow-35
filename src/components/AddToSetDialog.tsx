@@ -47,10 +47,19 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   const canAddToSet = songsToAdd.length > 0;
   
   const addToSetMutation = useMutation({
-    mutationFn: async () => {
-      // Validate songs exist before proceeding
-      if (songsToAdd.length === 0) {
+    mutationFn: async (songsParam: typeof songsToAdd) => {
+      // Validate songs exist before proceeding - use the passed parameter, not closure
+      if (!songsParam || songsParam.length === 0) {
         throw new Error("No songs to add");
+      }
+
+      // Validate all songs have valid IDs
+      const validSongs = songsParam.filter(s => 
+        s && s.id && typeof s.id === 'string' && s.id.length === 36
+      );
+
+      if (validSongs.length === 0) {
+        throw new Error("No valid songs to add");
       }
 
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -102,27 +111,24 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       
       const startPosition = (existingSongs?.[0]?.position || 0) + 1;
       
-      // Build song inserts
-      const songInserts = songsToAdd.map((s, index) => ({
+      // Build song inserts using validSongs (the parameter, not closure)
+      const songInserts = validSongs.map((s, index) => ({
         service_set_id: targetSetId,
         song_id: s.id,
         position: startPosition + index,
         key: s.default_key,
       }));
       
-      // Only insert if we have songs
-      if (songInserts.length > 0) {
-        const { error: songError } = await supabase
-          .from("set_songs")
-          .insert(songInserts);
-        
-        if (songError) {
-          console.error("Insert set_songs error:", songError);
-          throw songError;
-        }
+      const { error: songError } = await supabase
+        .from("set_songs")
+        .insert(songInserts);
+      
+      if (songError) {
+        console.error("Insert set_songs error:", songError);
+        throw songError;
       }
       
-      return { setId: targetSetId, count: songsToAdd.length };
+      return { setId: targetSetId, count: validSongs.length };
     },
     onSuccess: (result) => {
       try {
@@ -222,7 +228,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
             취소
           </Button>
           <Button 
-            onClick={() => addToSetMutation.mutate()} 
+            onClick={() => addToSetMutation.mutate([...songsToAdd])} 
             disabled={addToSetMutation.isPending || !canAddToSet}
           >
             {addToSetMutation.isPending ? "추가 중..." : "추가하기"}
