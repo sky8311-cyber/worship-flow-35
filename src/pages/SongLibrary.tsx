@@ -483,8 +483,8 @@ const SongLibrary = () => {
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
               onColumnSort={handleColumnSort}
-              cartSongs={cartSongs}
-              onToggleCart={handleToggleCart}
+              cartSongs={isWorshipLeader ? cartSongs : new Set()}
+              onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -497,8 +497,8 @@ const SongLibrary = () => {
                   selectionMode={selectionMode}
                   isSelected={selectedSongIds.has(song.id)}
                   onToggleSelection={handleToggleSelection}
-                  inCart={cartSongs.has(song.id)}
-                  onToggleCart={handleToggleCart}
+                  inCart={isWorshipLeader ? cartSongs.has(song.id) : false}
+                  onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
                 />
               ))}
             </div>
@@ -588,17 +588,21 @@ const SongLibrary = () => {
         />
       )}
 
-      <FloatingCartButton 
-        count={cartSongs.size}
-        onClick={() => setIsCartDialogOpen(true)}
-      />
+      {isWorshipLeader && (
+        <>
+          <FloatingCartButton 
+            count={cartSongs.size}
+            onClick={() => setIsCartDialogOpen(true)}
+          />
 
-      <AddToSetDialog
-        open={isCartDialogOpen}
-        onOpenChange={setIsCartDialogOpen}
-        songs={cartSongsArray}
-        onSuccess={handleCartSuccess}
-      />
+          <AddToSetDialog
+            open={isCartDialogOpen}
+            onOpenChange={setIsCartDialogOpen}
+            songs={cartSongsArray}
+            onSuccess={handleCartSuccess}
+          />
+        </>
+      )}
     </AppLayout>
   );
 };
