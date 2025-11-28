@@ -125,6 +125,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       onOpenChange(false);
       navigate(`/set-builder/${setId}`);
     },
+    onError: (error: any) => {
+      console.error("Add to set error:", error);
+      toast.error("워십세트에 추가할 수 없습니다. 권한을 확인해주세요.");
+    },
   });
   
   return (
