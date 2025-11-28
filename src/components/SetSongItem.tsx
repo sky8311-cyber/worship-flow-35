@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -28,11 +30,24 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
   };
 
   const song = setSong.song || setSong.songs;
+  const hasImportedLyrics = Boolean(setSong.lyrics && setSong.lyrics.trim());
+  const songHasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
 
   const handleCopyLyrics = () => {
     if (setSong.lyrics) {
       navigator.clipboard.writeText(setSong.lyrics);
       toast.success(t("setSongItem.lyricsCopied"));
+    }
+  };
+
+  const handleLyricsToggle = (checked: boolean) => {
+    if (checked && songHasLyrics) {
+      // Import lyrics from song library
+      onUpdate(index, { lyrics: song.lyrics });
+      toast.success("가사를 가져왔습니다");
+    } else {
+      // Clear lyrics
+      onUpdate(index, { lyrics: "" });
     }
   };
 
@@ -115,15 +130,36 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
               {/* Lyrics Section */}
               <Collapsible open={lyricsOpen} onOpenChange={setLyricsOpen}>
                 <div className="flex items-center justify-between">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
-                      <label className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
-                        {t("setSongItem.lyrics")}
-                        {lyricsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      </label>
-                    </Button>
-                  </CollapsibleTrigger>
-                  {setSong.lyrics && (
+                  <div className="flex items-center gap-3">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                        <span className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+                          {t("setSongItem.lyrics")}
+                          {lyricsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </span>
+                      </Button>
+                    </CollapsibleTrigger>
+                    
+                    {/* Import Lyrics Toggle */}
+                    {songHasLyrics && (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          id={`lyrics-toggle-${index}`}
+                          checked={hasImportedLyrics}
+                          onCheckedChange={handleLyricsToggle}
+                        />
+                        <Label 
+                          htmlFor={`lyrics-toggle-${index}`} 
+                          className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" />
+                          가사 가져오기
+                        </Label>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {hasImportedLyrics && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -139,7 +175,7 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
                   <Textarea
                     value={setSong.lyrics || ""}
                     onChange={(e) => onUpdate(index, { lyrics: e.target.value })}
-                    placeholder={t("setSongItem.lyricsPlaceholder")}
+                    placeholder={songHasLyrics ? "토글을 켜서 가사를 가져오거나 직접 입력하세요" : t("setSongItem.lyricsPlaceholder")}
                     rows={6}
                     className="mt-1 font-mono text-sm"
                   />
