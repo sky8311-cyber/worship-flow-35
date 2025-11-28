@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FavoriteButton } from "./FavoriteButton";
-import { AddToSetDialog } from "./AddToSetDialog";
 import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,7 +47,6 @@ export const SongCard = ({
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
-  const [addToSetOpen, setAddToSetOpen] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -202,62 +200,58 @@ export const SongCard = ({
             )}
           </div>
 
-          {/* Action buttons - mobile optimized layout */}
-          <div className="flex flex-col gap-2 mt-4">
-            {/* First row: Compact icon-only buttons (Heart, Edit, Delete) */}
-            <div className="flex gap-1.5 justify-start">
-              <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
-              {onEdit && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onEdit(song)}
-                  className="h-8 w-8 sm:h-9 sm:w-9 sm:flex-1"
-                >
-                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline sm:ml-1">{t("common.edit")}</span>
-                </Button>
-              )}
-              {onDelete && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("songCard.deleteConfirm")}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete}>
-                        {t("common.delete")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-            
-            {/* Second row: Full-width cart button */}
+          {/* Action buttons - Cart first, then Heart, Edit, Delete */}
+          <div className="flex gap-1.5 justify-start mt-4">
             {onToggleCart && (
               <Button
                 variant={inCart ? "default" : "outline"}
-                size="sm"
+                size="icon"
                 onClick={() => onToggleCart(song.id)}
-                className="w-full"
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
               >
-                <Plus className="w-4 h-4 mr-1" />
-                <span>{inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}</span>
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
+            )}
+            <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onEdit(song)}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                title={t("common.edit")}
+              >
+                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Button>
+            )}
+            {onDelete && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive"
+                    title={t("common.delete")}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("songCard.deleteConfirm")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>
+                      {t("common.delete")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </CardContent>
@@ -269,11 +263,6 @@ export const SongCard = ({
         scoreUrl={song.score_file_url}
         songTitle={song.title}
         songId={song.id}
-      />
-      <AddToSetDialog 
-        open={addToSetOpen}
-        onOpenChange={setAddToSetOpen}
-        song={song}
       />
     </>
   );
