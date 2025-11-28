@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -23,6 +23,17 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<"new" | string>("new");
   
+  // CRITICAL: Capture songs in state when dialog opens to prevent closure issues
+  const [capturedSongs, setCapturedSongs] = useState<any[]>([]);
+  
+  useEffect(() => {
+    if (open) {
+      // Capture songs when dialog opens - this prevents race conditions
+      const songsToCapture = songs || (song ? [song] : []);
+      setCapturedSongs([...songsToCapture]); // Create a copy
+    }
+  }, [open, songs, song]);
+  
   const { data: sets } = useQuery({
     queryKey: ["my-draft-sets"],
     queryFn: async () => {
@@ -43,12 +54,13 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     enabled: open,
   });
   
-  const songsToAdd = songs || (song ? [song] : []);
-  const canAddToSet = songsToAdd.length > 0;
+  const canAddToSet = capturedSongs.length > 0;
   
   const addToSetMutation = useMutation({
-    mutationFn: async (songsParam: typeof songsToAdd) => {
-      // Validate songs exist before proceeding - use the passed parameter, not closure
+    mutationFn: async (songsParam: any[]) => {
+      console.log("Mutation started with songs:", songsParam);
+      
+      // Validate songs exist before proceeding
       if (!songsParam || songsParam.length === 0) {
         throw new Error("No songs to add");
       }
@@ -57,6 +69,8 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       const validSongs = songsParam.filter(s => 
         s && s.id && typeof s.id === 'string' && s.id.length === 36
       );
+
+      console.log("Valid songs after filtering:", validSongs.length);
 
       if (validSongs.length === 0) {
         throw new Error("No valid songs to add");
@@ -69,9 +83,12 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       }
       if (!user) throw new Error("Not authenticated");
       
+      console.log("User authenticated:", user.id);
+      
       let targetSetId: string;
       
       if (selectedOption === "new") {
+        console.log("Creating new worship set...");
         const { data: insertedSets, error: setError } = await supabase
           .from("service_sets")
           .insert([{
@@ -92,8 +109,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         }
         
         targetSetId = insertedSets[0].id;
+        console.log("Created new set with ID:", targetSetId);
       } else {
         targetSetId = selectedOption;
+        console.log("Using existing set ID:", targetSetId);
       }
       
       // Get existing songs position for the target set
@@ -110,14 +129,17 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       }
       
       const startPosition = (existingSongs?.[0]?.position || 0) + 1;
+      console.log("Start position:", startPosition);
       
-      // Build song inserts using validSongs (the parameter, not closure)
+      // Build song inserts
       const songInserts = validSongs.map((s, index) => ({
         service_set_id: targetSetId,
         song_id: s.id,
         position: startPosition + index,
         key: s.default_key,
       }));
+      
+      console.log("Inserting songs:", songInserts);
       
       const { error: songError } = await supabase
         .from("set_songs")
@@ -128,37 +150,46 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         throw songError;
       }
       
+      console.log("Songs inserted successfully");
       return { setId: targetSetId, count: validSongs.length };
     },
     onSuccess: (result) => {
-      try {
-        const { setId, count } = result;
-        const message = count === 1 
-          ? "곡이 워십세트에 추가되었습니다"
-          : `${count}곡이 워십세트에 추가되었습니다`;
-        toast.success(message);
-        
-        queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
-        queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
-        queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        onOpenChange(false);
-        navigate(`/set-builder/${setId}`);
-      } catch (err) {
-        console.error("onSuccess error:", err);
-        // Still close dialog even if something fails in onSuccess
-        onOpenChange(false);
+      console.log("Mutation onSuccess:", result);
+      const { setId, count } = result;
+      const message = count === 1 
+        ? "곡이 워십세트에 추가되었습니다"
+        : `${count}곡이 워십세트에 추가되었습니다`;
+      toast.success(message);
+      
+      queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+      queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      
+      if (onSuccess) {
+        onSuccess();
       }
+      
+      onOpenChange(false);
+      navigate(`/set-builder/${setId}`);
     },
     onError: (error: any) => {
-      console.error("Add to set error:", error);
+      console.error("Add to set mutation error:", error);
       toast.error("워십세트에 추가할 수 없습니다. 권한을 확인해주세요.");
     },
   });
+  
+  const handleAddToSet = () => {
+    // Create a snapshot of capturedSongs at click time
+    const songsSnapshot = [...capturedSongs];
+    console.log("handleAddToSet clicked, songs snapshot:", songsSnapshot);
+    
+    if (songsSnapshot.length === 0) {
+      toast.error("선택된 곡이 없습니다");
+      return;
+    }
+    
+    addToSetMutation.mutate(songsSnapshot);
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -172,15 +203,15 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-1">
-            {songsToAdd.length === 1 ? "선택한 곡:" : `선택한 곡 (${songsToAdd.length}곡):`}
+            {capturedSongs.length === 1 ? "선택한 곡:" : `선택한 곡 (${capturedSongs.length}곡):`}
           </p>
-          {songsToAdd.length === 0 ? (
+          {capturedSongs.length === 0 ? (
             <p className="text-sm text-destructive">선택된 곡이 없습니다</p>
-          ) : songsToAdd.length === 1 ? (
-            <p className="font-medium">{songsToAdd[0]?.title}</p>
+          ) : capturedSongs.length === 1 ? (
+            <p className="font-medium">{capturedSongs[0]?.title}</p>
           ) : (
             <div className="max-h-32 overflow-y-auto space-y-1">
-              {songsToAdd.map((s, i) => (
+              {capturedSongs.map((s, i) => (
                 <p key={s.id} className="text-sm">
                   {i + 1}. {s.title} {s.artist && `- ${s.artist}`}
                 </p>
@@ -228,7 +259,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
             취소
           </Button>
           <Button 
-            onClick={() => addToSetMutation.mutate([...songsToAdd])} 
+            onClick={handleAddToSet} 
             disabled={addToSetMutation.isPending || !canAddToSet}
           >
             {addToSetMutation.isPending ? "추가 중..." : "추가하기"}
