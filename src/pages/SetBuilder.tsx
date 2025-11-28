@@ -393,7 +393,7 @@ const SetBuilder = () => {
       custom_notes: "",
       override_score_file_url: null,
       override_youtube_url: null,
-      lyrics: song._includeLyrics ? song.lyrics : null,
+      lyrics: null, // Lyrics are imported on-demand in SetSongItem
     }));
     
     setSongs(prev => [...prev, ...newSetSongs]);

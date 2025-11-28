@@ -10,8 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { SongDialog } from "./SongDialog";
@@ -34,7 +32,6 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [previewSong, setPreviewSong] = useState<any>(null);
   const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
-  const [includeLyrics, setIncludeLyrics] = useState(false);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -118,12 +115,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   };
 
   const handleBulkAddToSet = () => {
-    // Add _includeLyrics flag to each song
-    const songsWithLyricsFlag = selectedSongs.map(song => ({
-      ...song,
-      _includeLyrics: includeLyrics,
-    }));
-    onSelect(songsWithLyricsFlag);
+    onSelect(selectedSongs);
     toast({
       title: "성공",
       description: `${selectedSongs.length}곡을 예배세트에 추가했습니다`,
@@ -200,32 +192,19 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
             onChange={(e) => setSearchQuery(e.target.value)}
           />
 
-          <div className="flex items-center gap-4">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="카테고리 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 카테고리</SelectItem>
-                <SelectItem value="오프닝">오프닝</SelectItem>
-                <SelectItem value="찬양">찬양</SelectItem>
-                <SelectItem value="헌금">헌금</SelectItem>
-                <SelectItem value="응답">응답</SelectItem>
-                <SelectItem value="파송">파송</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="includeLyrics" 
-                checked={includeLyrics} 
-                onCheckedChange={(checked) => setIncludeLyrics(checked === true)}
-              />
-              <Label htmlFor="includeLyrics" className="text-sm whitespace-nowrap cursor-pointer">
-                {t("songSelector.includeLyrics")}
-              </Label>
-            </div>
-          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="카테고리 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 카테고리</SelectItem>
+              <SelectItem value="오프닝">오프닝</SelectItem>
+              <SelectItem value="찬양">찬양</SelectItem>
+              <SelectItem value="헌금">헌금</SelectItem>
+              <SelectItem value="응답">응답</SelectItem>
+              <SelectItem value="파송">파송</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex-1 overflow-y-auto mt-4">
