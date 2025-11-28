@@ -274,6 +274,15 @@ const SongLibrary = () => {
 
   const cartSongsArray = sortedAndFilteredSongs.filter(song => cartSongs.has(song.id));
 
+  const handleOpenCartDialog = () => {
+    if (cartSongsArray.length > 0) {
+      setIsCartDialogOpen(true);
+    } else {
+      toast.error("장바구니에 곡이 없습니다");
+      setCartSongs(new Set());
+    }
+  };
+
   const handleEnterBulkEdit = () => {
     if (selectedSongIds.size === 0) {
       toast.error(t("songLibrary.selectSongsFirst"));
@@ -592,7 +601,7 @@ const SongLibrary = () => {
         <>
           <FloatingCartButton 
             count={cartSongs.size}
-            onClick={() => setIsCartDialogOpen(true)}
+            onClick={handleOpenCartDialog}
           />
 
           <AddToSetDialog
