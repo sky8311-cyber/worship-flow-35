@@ -60,86 +60,62 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     mutationFn: async (songsParam: any[]) => {
       console.log("Mutation started with songs:", songsParam);
       
-      // Validate songs exist before proceeding
       if (!songsParam || songsParam.length === 0) {
         throw new Error("No songs to add");
       }
 
-      // Validate all songs have valid IDs
       const validSongs = songsParam.filter(s => 
         s && s.id && typeof s.id === 'string' && s.id.length === 36
       );
-
-      console.log("Valid songs after filtering:", validSongs.length);
 
       if (validSongs.length === 0) {
         throw new Error("No valid songs to add");
       }
 
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError) {
-        console.error("Auth error:", authError);
-        throw authError;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      
-      console.log("User authenticated:", user.id);
       
       let targetSetId: string;
       
       if (selectedOption === "new") {
-        console.log("Creating new worship set...");
-        const { data: insertedSets, error: setError } = await supabase
+        // Use insert without select to avoid hanging
+        const newSetId = crypto.randomUUID();
+        const { error: setError } = await supabase
           .from("service_sets")
-          .insert([{
+          .insert({
+            id: newSetId,
             date: format(new Date(), "yyyy-MM-dd"),
             service_name: "새 워십세트",
             status: "draft",
             created_by: user.id,
-          }])
-          .select();
+          });
         
         if (setError) {
           console.error("Insert service_sets error:", setError);
           throw setError;
         }
         
-        if (!insertedSets || insertedSets.length === 0) {
-          throw new Error("Failed to create worship set - no data returned");
-        }
-        
-        targetSetId = insertedSets[0].id;
-        console.log("Created new set with ID:", targetSetId);
+        targetSetId = newSetId;
       } else {
         targetSetId = selectedOption;
-        console.log("Using existing set ID:", targetSetId);
       }
       
-      // Get existing songs position for the target set
-      const { data: existingSongs, error: fetchError } = await supabase
+      // Get existing songs position
+      const { data: existingSongs } = await supabase
         .from("set_songs")
         .select("position")
         .eq("service_set_id", targetSetId)
         .order("position", { ascending: false })
         .limit(1);
       
-      if (fetchError) {
-        console.error("Fetch existing songs error:", fetchError);
-        throw fetchError;
-      }
-      
       const startPosition = (existingSongs?.[0]?.position || 0) + 1;
-      console.log("Start position:", startPosition);
       
-      // Build song inserts
       const songInserts = validSongs.map((s, index) => ({
         service_set_id: targetSetId,
         song_id: s.id,
         position: startPosition + index,
         key: s.default_key,
       }));
-      
-      console.log("Inserting songs:", songInserts);
       
       const { error: songError } = await supabase
         .from("set_songs")
@@ -150,11 +126,9 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         throw songError;
       }
       
-      console.log("Songs inserted successfully");
       return { setId: targetSetId, count: validSongs.length };
     },
     onSuccess: (result) => {
-      console.log("Mutation onSuccess:", result);
       const { setId, count } = result;
       const message = count === 1 
         ? "곡이 워십세트에 추가되었습니다"
@@ -165,10 +139,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       
-      if (onSuccess) {
-        onSuccess();
-      }
-      
+      onSuccess?.();
       onOpenChange(false);
       navigate(`/set-builder/${setId}`);
     },
