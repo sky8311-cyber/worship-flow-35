@@ -28,6 +28,7 @@ import JoinCommunity from "./pages/JoinCommunity";
 import FavoritesList from "./pages/FavoritesList";
 import WorshipSets from "./pages/WorshipSets";
 import RequestWorshipLeader from "./pages/RequestWorshipLeader";
+import TemplateManager from "./pages/TemplateManager";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
+              <Route path="/templates" element={<ProtectedRoute><TemplateManager /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />

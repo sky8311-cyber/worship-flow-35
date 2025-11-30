@@ -641,14 +641,23 @@ const SetBuilder = () => {
               </Button>
             )}
 
-            {/* Save as Template button */}
+            {/* Template buttons */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/templates")}
+              className="gap-1.5"
+            >
+              <FileText className="w-4 h-4" />
+              {language === "ko" ? "템플릿 관리" : "Templates"}
+            </Button>
             <Button
               variant="secondary"
               size="sm"
               onClick={() => setShowSaveTemplate(true)}
               className="gap-1.5"
             >
-              <FileText className="w-4 h-4" />
+              <Save className="w-4 h-4" />
               {language === "ko" ? "템플릿 저장" : "Save Template"}
             </Button>
             
