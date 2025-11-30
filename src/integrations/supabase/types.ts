@@ -1215,6 +1215,83 @@ export type Database = {
         }
         Relationships: []
       }
+      worship_set_positions: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          role_id: string
+          service_set_id: string
+          slots: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          role_id: string
+          service_set_id: string
+          slots?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          role_id?: string
+          service_set_id?: string
+          slots?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worship_set_positions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "church_custom_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worship_set_positions_service_set_id_fkey"
+            columns: ["service_set_id"]
+            isOneToOne: false
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      worship_set_signups: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          id: string
+          position_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          position_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          position_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worship_set_signups_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "worship_set_positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worship_set_templates: {
         Row: {
           band_name: string | null
