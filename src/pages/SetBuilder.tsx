@@ -633,15 +633,15 @@ const SetBuilder = () => {
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {id && (
               <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                <Share2 className="w-4 h-4 mr-2" />
+                <Share2 className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">팀 링크 복사</span>
               </Button>
             )}
 
-            {/* Template buttons */}
+            {/* Template buttons - icon only on mobile */}
             <Button
               variant="outline"
               size="sm"
@@ -649,7 +649,7 @@ const SetBuilder = () => {
               className="gap-1.5"
             >
               <FileText className="w-4 h-4" />
-              {language === "ko" ? "템플릿 관리" : "Templates"}
+              <span className="hidden sm:inline">{language === "ko" ? "템플릿" : "Templates"}</span>
             </Button>
             <Button
               variant="secondary"
@@ -658,7 +658,7 @@ const SetBuilder = () => {
               className="gap-1.5"
             >
               <Save className="w-4 h-4" />
-              {language === "ko" ? "템플릿 저장" : "Save Template"}
+              <span className="hidden sm:inline">{language === "ko" ? "저장" : "Save"}</span>
             </Button>
             
             <Button 
@@ -667,8 +667,8 @@ const SetBuilder = () => {
               onClick={() => saveSetMutation.mutate(undefined)}
               disabled={saveSetMutation.isPending}
             >
-              <Save className="w-4 h-4 mr-2" />
-              {saveSetMutation.isPending ? "저장 중..." : "저장"}
+              <Save className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
             </Button>
             
             <Button 
