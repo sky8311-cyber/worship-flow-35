@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Building2, Users, Settings, Plus, Crown, Shield, User, Trash2, ChevronRight, CreditCard } from "lucide-react";
+import { Building2, Users, Settings, Plus, Crown, Shield, User, Trash2, ChevronRight, CreditCard, Tag } from "lucide-react";
 import { CreateChurchAccountDialog } from "@/components/church/CreateChurchAccountDialog";
 import { ChurchAccountMembersTab } from "@/components/church/ChurchAccountMembersTab";
 import { ChurchAccountCommunitiesTab } from "@/components/church/ChurchAccountCommunitiesTab";
 import { ChurchAccountSettingsTab } from "@/components/church/ChurchAccountSettingsTab";
+import { ChurchCustomRolesTab } from "@/components/church/ChurchCustomRolesTab";
 import { useNavigate } from "react-router-dom";
 
 interface ThemeConfig {
@@ -275,6 +276,10 @@ export default function ChurchAccount() {
                   <Users className="w-4 h-4" />
                   {language === "ko" ? "멤버" : "Members"}
                 </TabsTrigger>
+                <TabsTrigger value="roles" className="gap-2">
+                  <Tag className="w-4 h-4" />
+                  {language === "ko" ? "역할" : "Roles"}
+                </TabsTrigger>
                 <TabsTrigger value="billing" className="gap-2">
                   <CreditCard className="w-4 h-4" />
                   {language === "ko" ? "구독/결제" : "Billing"}
@@ -297,6 +302,13 @@ export default function ChurchAccount() {
                   churchAccountId={selectedAccount.id}
                   maxSeats={selectedAccount.max_seats}
                   usedSeats={selectedAccount.used_seats}
+                  isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
+                />
+              </TabsContent>
+
+              <TabsContent value="roles">
+                <ChurchCustomRolesTab 
+                  churchAccountId={selectedAccount.id}
                   isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
                 />
               </TabsContent>
