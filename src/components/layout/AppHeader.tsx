@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2 } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguageContext } from "@/contexts/LanguageContext";
+import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Home, Languages, User } from "lucide-react";
@@ -30,8 +31,12 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { unreadCount } = useNotifications();
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
+  const { isSubscriptionActive } = useChurchSubscription();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Show upgrade badge if user is worship leader/admin but doesn't have active church subscription
+  const showUpgradeBadge = (isWorshipLeader || isAdmin) && !isSubscriptionActive;
 
   const handleLogout = async () => {
     await signOut();
@@ -157,9 +162,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 
                 {(isWorshipLeader || isAdmin) && (
                   <DropdownMenuItem asChild>
-                    <Link to="/church-account">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      {language === "ko" ? "교회 계정" : "Church Account"}
+                    <Link to="/church-account" className="flex items-center justify-between w-full">
+                      <span className="flex items-center">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        {language === "ko" ? "교회 계정" : "Church Account"}
+                      </span>
+                      {showUpgradeBadge && (
+                        <Badge variant="destructive" className="text-xs ml-2 gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          {language === "ko" ? "업그레이드" : "+ Upgrade"}
+                        </Badge>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                 )}

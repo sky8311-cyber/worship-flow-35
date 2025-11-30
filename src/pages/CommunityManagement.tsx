@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock } from "lucide-react";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
+import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,6 +45,7 @@ export default function CommunityManagement() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
@@ -76,7 +78,12 @@ export default function CommunityManagement() {
     enabled: !!community?.church_account_id,
   });
 
+  // Check if rotation feature is available (active subscription or valid trial)
+  const isTrialValid = churchAccount?.subscription_status === "trial"; // We'd need trial_ends_at to properly check
   const hasRotationFeature = churchAccount && (churchAccount.subscription_status === "active" || churchAccount.subscription_status === "trial");
+  
+  // Show rotation tab but gate the content
+  const showRotationTab = !!community?.church_account_id;
 
   const { data: invitations } = useQuery({
     queryKey: ["community-invitations", id],
@@ -372,10 +379,11 @@ export default function CommunityManagement() {
                   <Users className="w-4 h-4" />
                   {language === "ko" ? "멤버" : "Members"}
                 </TabsTrigger>
-                {hasRotationFeature && (
+                {showRotationTab && (
                   <TabsTrigger value="rotation" className="gap-2">
                     <RefreshCw className="w-4 h-4" />
                     {language === "ko" ? "로테이션" : "Rotation"}
+                    {!hasRotationFeature && <Lock className="w-3 h-3 ml-1" />}
                   </TabsTrigger>
                 )}
                 {canManage && (
@@ -741,14 +749,33 @@ export default function CommunityManagement() {
             </Card>
               </TabsContent>
 
-              {/* Rotation Tab - Only for paid Church Account communities */}
-              {hasRotationFeature && (
+              {/* Rotation Tab - Only for Church Account communities */}
+              {showRotationTab && (
                 <TabsContent value="rotation">
-                  <CommunityTeamRotationTab 
-                    communityId={id!}
-                    churchAccountId={community?.church_account_id}
-                    isAdmin={canManage}
-                  />
+                  {hasRotationFeature ? (
+                    <CommunityTeamRotationTab 
+                      communityId={id!}
+                      churchAccountId={community?.church_account_id}
+                      isAdmin={canManage}
+                    />
+                  ) : (
+                    <Card className="border-dashed">
+                      <CardContent className="py-12 text-center">
+                        <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">
+                          {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                        </h3>
+                        <p className="text-muted-foreground mb-4">
+                          {language === "ko" 
+                            ? "팀 로테이션 기능을 사용하려면 교회 계정 구독이 필요합니다."
+                            : "Subscribe to Church Account to use team rotation feature."}
+                        </p>
+                        <Button onClick={() => setShowUpgradeDialog(true)}>
+                          {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
               )}
 
@@ -787,6 +814,11 @@ export default function CommunityManagement() {
             </Tabs>
           </div>
         </div>
+
+        <UpgradePlanDialog 
+          open={showUpgradeDialog} 
+          onOpenChange={setShowUpgradeDialog}
+        />
       </TooltipProvider>
     </AppLayout>
   );

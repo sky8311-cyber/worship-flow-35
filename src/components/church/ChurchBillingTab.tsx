@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useLanguageContext } from "@/contexts/LanguageContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, ExternalLink, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { CreditCard, ExternalLink, Loader2, CheckCircle, AlertCircle, Sparkles, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UpgradePlanDialog } from "./UpgradePlanDialog";
 
 interface ChurchBillingTabProps {
   churchAccount: {
@@ -23,21 +25,68 @@ interface ChurchBillingTabProps {
 
 export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabProps) {
   const { language } = useLanguageContext();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [isTrialLoading, setIsTrialLoading] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  // Check if subscription is active or in valid trial
+  const isTrialValid = churchAccount.subscription_status === "trial" && 
+    churchAccount.trial_ends_at && 
+    new Date(churchAccount.trial_ends_at) > new Date();
+  
+  const isActive = churchAccount.subscription_status === "active" || isTrialValid;
+  
+  // Can start trial if no subscription yet
+  const canStartTrial = !churchAccount.subscription_status || 
+    churchAccount.subscription_status === "inactive" || 
+    churchAccount.subscription_status === "";
 
   const getStatusBadge = (status: string) => {
+    if (isTrialValid) {
+      return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{language === "ko" ? "체험판" : "Trial"}</Badge>;
+    }
     switch (status) {
       case "active":
         return <Badge className="bg-green-500 gap-1"><CheckCircle className="w-3 h-3" />{language === "ko" ? "활성" : "Active"}</Badge>;
       case "trial":
-        return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{language === "ko" ? "체험판" : "Trial"}</Badge>;
+        return <Badge variant="outline" className="gap-1 text-destructive border-destructive"><Lock className="w-3 h-3" />{language === "ko" ? "만료됨" : "Expired"}</Badge>;
       case "past_due":
         return <Badge variant="destructive">{language === "ko" ? "결제 지연" : "Past Due"}</Badge>;
       case "canceled":
         return <Badge variant="outline">{language === "ko" ? "취소됨" : "Canceled"}</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className="gap-1"><Lock className="w-3 h-3" />{language === "ko" ? "미구독" : "Not Subscribed"}</Badge>;
+    }
+  };
+
+  const handleStartTrial = async () => {
+    setIsTrialLoading(true);
+    try {
+      // Update church account to start trial
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      
+      const { error } = await supabase
+        .from("church_accounts")
+        .update({ 
+          subscription_status: "trial",
+          trial_ends_at: trialEndDate.toISOString()
+        })
+        .eq("id", churchAccount.id);
+
+      if (error) throw error;
+      
+      toast.success(language === "ko" ? "30일 무료 체험이 시작되었습니다!" : "Your 30-day free trial has started!");
+      queryClient.invalidateQueries({ queryKey: ["churchAccounts"] });
+      queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
+      setShowUpgradeDialog(false);
+    } catch (error) {
+      console.error("Start trial error:", error);
+      toast.error(language === "ko" ? "체험 시작에 실패했습니다" : "Could not start trial");
+    } finally {
+      setIsTrialLoading(false);
     }
   };
 
@@ -57,6 +106,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       toast.error(language === "ko" ? "결제 페이지를 열 수 없습니다" : "Could not open checkout page");
     } finally {
       setIsLoading(false);
+      setShowUpgradeDialog(false);
     }
   };
 
@@ -83,6 +133,63 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
 
   return (
     <div className="space-y-6">
+      {/* Start Trial CTA - Show prominently if not subscribed */}
+      {canStartTrial && isOwner && (
+        <Card className="border-primary bg-gradient-to-br from-primary/5 to-accent/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              {language === "ko" ? "교회 계정 기능 체험하기" : "Try Church Account Features"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" 
+                ? "30일 무료 체험 - 신용카드 없이 지금 바로 시작하세요!"
+                : "30-day free trial - Start now without a credit card!"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                {language === "ko" ? "커스텀 역할 라벨" : "Custom Role Labels"}
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                {language === "ko" ? "팀 로테이션 시스템" : "Team Rotation System"}
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                {language === "ko" ? "포지션 사인업 관리" : "Position Sign-up Management"}
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                {language === "ko" ? "화이트 라벨 브랜딩" : "White-label Branding"}
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                {language === "ko" ? "커스텀 도메인 연결" : "Custom Domain Connection"}
+              </li>
+            </ul>
+            <Button 
+              onClick={handleStartTrial} 
+              disabled={isTrialLoading}
+              className="w-full gap-2"
+              size="lg"
+            >
+              {isTrialLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              {language === "ko" ? "30일 무료 체험 시작하기" : "Start 30-Day Free Trial"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              {language === "ko" ? "결제 정보 필요 없음" : "No payment information required"}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -109,7 +216,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
             </div>
 
             {/* Trial Info */}
-            {churchAccount.subscription_status === "trial" && churchAccount.trial_ends_at && (
+            {isTrialValid && churchAccount.trial_ends_at && (
               <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
                 <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
                   {language === "ko" 
@@ -120,6 +227,17 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   {language === "ko" 
                     ? `체험 종료일: ${new Date(churchAccount.trial_ends_at).toLocaleDateString("ko-KR")}`
                     : `Trial ends: ${new Date(churchAccount.trial_ends_at).toLocaleDateString("en-US")}`}
+                </p>
+              </div>
+            )}
+
+            {/* Expired Trial Warning */}
+            {churchAccount.subscription_status === "trial" && !isTrialValid && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg mb-4">
+                <p className="text-sm font-medium text-destructive">
+                  {language === "ko" 
+                    ? "체험 기간이 종료되었습니다. 기능을 계속 사용하려면 구독해주세요."
+                    : "Your trial has expired. Subscribe to continue using features."}
                 </p>
               </div>
             )}
@@ -141,23 +259,23 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
               <p className="text-sm font-medium mb-2">{language === "ko" ? "포함 기능" : "Included Features"}</p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {language === "ko" ? "커스텀 역할 라벨" : "Custom Role Labels"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {language === "ko" ? "팀 로테이션 시스템" : "Team Rotation System"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {language === "ko" ? "포지션 사인업 관리" : "Position Sign-up Management"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {language === "ko" ? "화이트 라벨 브랜딩" : "White-label Branding"}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {language === "ko" ? "커스텀 도메인 연결" : "Custom Domain Connection"}
                 </li>
               </ul>
@@ -167,7 +285,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
           {/* Action Buttons */}
           {isOwner && (
             <div className="flex flex-col sm:flex-row gap-3">
-              {churchAccount.subscription_status === "trial" ? (
+              {isTrialValid ? (
                 <Button 
                   onClick={handleSubscribe} 
                   disabled={isLoading}
@@ -180,7 +298,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   )}
                   {language === "ko" ? "유료 플랜으로 업그레이드" : "Upgrade to Paid Plan"}
                 </Button>
-              ) : churchAccount.stripe_customer_id ? (
+              ) : churchAccount.subscription_status === "active" && churchAccount.stripe_customer_id ? (
                 <Button 
                   onClick={handleManageBilling} 
                   disabled={isPortalLoading}
@@ -194,24 +312,26 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   )}
                   {language === "ko" ? "결제 관리" : "Manage Billing"}
                 </Button>
-              ) : (
+              ) : !canStartTrial ? (
                 <Button 
-                  onClick={handleSubscribe} 
-                  disabled={isLoading}
+                  onClick={() => setShowUpgradeDialog(true)}
                   className="gap-2 flex-1"
                 >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4" />
-                  )}
-                  {language === "ko" ? "구독 시작하기" : "Start Subscription"}
+                  <CreditCard className="w-4 h-4" />
+                  {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
                 </Button>
-              )}
+              ) : null}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <UpgradePlanDialog 
+        open={showUpgradeDialog} 
+        onOpenChange={setShowUpgradeDialog}
+        onStartTrial={handleStartTrial}
+        onSubscribe={handleSubscribe}
+      />
     </div>
   );
 }

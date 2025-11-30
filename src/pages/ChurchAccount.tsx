@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, Settings, Plus, Crown, Shield, User, ChevronRight, CreditCard, Tag, Globe } from "lucide-react";
+import { Building2, Users, Settings, Plus, Crown, Shield, User, ChevronRight, CreditCard, Tag, Globe, Lock } from "lucide-react";
 import { CreateChurchAccountDialog } from "@/components/church/CreateChurchAccountDialog";
 import { ChurchAccountMembersTab } from "@/components/church/ChurchAccountMembersTab";
 import { ChurchAccountCommunitiesTab } from "@/components/church/ChurchAccountCommunitiesTab";
@@ -18,6 +18,7 @@ import { ChurchAccountSettingsTab } from "@/components/church/ChurchAccountSetti
 import { ChurchCustomRolesTab } from "@/components/church/ChurchCustomRolesTab";
 import { ChurchBillingTab } from "@/components/church/ChurchBillingTab";
 import { ChurchCustomDomainTab } from "@/components/church/ChurchCustomDomainTab";
+import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
 import { useNavigate } from "react-router-dom";
 
 interface ThemeConfig {
@@ -55,6 +56,7 @@ export default function ChurchAccount() {
   const queryClient = useQueryClient();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<ChurchAccount | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   // Fetch church accounts user belongs to
   const { data: churchAccounts, isLoading } = useQuery({
@@ -83,18 +85,32 @@ export default function ChurchAccount() {
     return membership?.role;
   };
 
-  const getStatusBadge = (status: string) => {
+  // Check if subscription is active for selected account
+  const isSubscriptionActive = (account: ChurchAccount | null) => {
+    if (!account) return false;
+    if (account.subscription_status === "active") return true;
+    if (account.subscription_status === "trial" && account.trial_ends_at) {
+      return new Date(account.trial_ends_at) > new Date();
+    }
+    return false;
+  };
+
+  const getStatusBadge = (status: string, trialEndsAt?: string | null) => {
+    const isTrialValid = status === "trial" && trialEndsAt && new Date(trialEndsAt) > new Date();
+    if (isTrialValid) {
+      return <Badge variant="secondary">{language === "ko" ? "체험판" : "Trial"}</Badge>;
+    }
     switch (status) {
       case "active":
         return <Badge className="bg-green-500">{language === "ko" ? "활성" : "Active"}</Badge>;
       case "trial":
-        return <Badge variant="secondary">{language === "ko" ? "체험판" : "Trial"}</Badge>;
+        return <Badge variant="outline" className="text-destructive border-destructive">{language === "ko" ? "만료됨" : "Expired"}</Badge>;
       case "past_due":
         return <Badge variant="destructive">{language === "ko" ? "결제 지연" : "Past Due"}</Badge>;
       case "canceled":
         return <Badge variant="outline">{language === "ko" ? "취소됨" : "Canceled"}</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{language === "ko" ? "미구독" : "Not Subscribed"}</Badge>;
     }
   };
 
@@ -200,7 +216,7 @@ export default function ChurchAccount() {
                           <Building2 className="w-6 h-6" />
                         </AvatarFallback>
                       </Avatar>
-                      {getStatusBadge(account.subscription_status)}
+                      {getStatusBadge(account.subscription_status, account.trial_ends_at)}
                     </div>
                     <CardTitle className="mt-3">{account.name}</CardTitle>
                     {account.description && (
@@ -251,7 +267,7 @@ export default function ChurchAccount() {
                         <CardDescription className="mt-1">{selectedAccount.description}</CardDescription>
                       )}
                       <div className="flex items-center gap-2 mt-2">
-                        {getStatusBadge(selectedAccount.subscription_status)}
+                        {getStatusBadge(selectedAccount.subscription_status, selectedAccount.trial_ends_at)}
                         {getRoleBadge(getUserRole(selectedAccount as any))}
                       </div>
                     </div>
@@ -317,10 +333,29 @@ export default function ChurchAccount() {
               </TabsContent>
 
               <TabsContent value="roles">
-                <ChurchCustomRolesTab 
-                  churchAccountId={selectedAccount.id}
-                  isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
-                />
+                {isSubscriptionActive(selectedAccount) ? (
+                  <ChurchCustomRolesTab 
+                    churchAccountId={selectedAccount.id}
+                    isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
+                  />
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="py-12 text-center">
+                      <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {language === "ko" 
+                          ? "커스텀 역할 기능을 사용하려면 교회 계정 구독이 필요합니다."
+                          : "Subscribe to Church Account to use custom roles feature."}
+                      </p>
+                      <Button onClick={() => setShowUpgradeDialog(true)}>
+                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="billing">
@@ -331,23 +366,61 @@ export default function ChurchAccount() {
               </TabsContent>
 
               <TabsContent value="domain">
-                <ChurchCustomDomainTab 
-                  churchAccount={selectedAccount}
-                  isOwner={getUserRole(selectedAccount as any) === "owner"}
-                  onUpdate={() => {
-                    queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
-                  }}
-                />
+                {isSubscriptionActive(selectedAccount) ? (
+                  <ChurchCustomDomainTab 
+                    churchAccount={selectedAccount}
+                    isOwner={getUserRole(selectedAccount as any) === "owner"}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
+                    }}
+                  />
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="py-12 text-center">
+                      <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {language === "ko" 
+                          ? "커스텀 도메인 기능을 사용하려면 교회 계정 구독이 필요합니다."
+                          : "Subscribe to Church Account to use custom domain feature."}
+                      </p>
+                      <Button onClick={() => setShowUpgradeDialog(true)}>
+                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
 
               <TabsContent value="settings">
-                <ChurchAccountSettingsTab 
-                  churchAccount={selectedAccount}
-                  isOwner={getUserRole(selectedAccount as any) === "owner"}
-                  onUpdate={() => {
-                    queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
-                  }}
-                />
+                {isSubscriptionActive(selectedAccount) ? (
+                  <ChurchAccountSettingsTab 
+                    churchAccount={selectedAccount}
+                    isOwner={getUserRole(selectedAccount as any) === "owner"}
+                    onUpdate={() => {
+                      queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
+                    }}
+                  />
+                ) : (
+                  <Card className="border-dashed">
+                    <CardContent className="py-12 text-center">
+                      <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">
+                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {language === "ko" 
+                          ? "브랜딩 설정 기능을 사용하려면 교회 계정 구독이 필요합니다."
+                          : "Subscribe to Church Account to use branding settings."}
+                      </p>
+                      <Button onClick={() => setShowUpgradeDialog(true)}>
+                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </TabsContent>
             </Tabs>
           </div>
@@ -358,6 +431,40 @@ export default function ChurchAccount() {
           onOpenChange={setShowCreateDialog}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
+          }}
+        />
+
+        <UpgradePlanDialog 
+          open={showUpgradeDialog} 
+          onOpenChange={setShowUpgradeDialog}
+          onStartTrial={async () => {
+            if (!selectedAccount) return;
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+            
+            const { error } = await supabase
+              .from("church_accounts")
+              .update({ 
+                subscription_status: "trial",
+                trial_ends_at: trialEndDate.toISOString()
+              })
+              .eq("id", selectedAccount.id);
+
+            if (!error) {
+              queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
+              queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
+              setShowUpgradeDialog(false);
+            }
+          }}
+          onSubscribe={async () => {
+            if (!selectedAccount) return;
+            const { data, error } = await supabase.functions.invoke("create-church-checkout", {
+              body: { churchAccountId: selectedAccount.id },
+            });
+            if (data?.url) {
+              window.open(data.url, "_blank");
+            }
+            setShowUpgradeDialog(false);
           }}
         />
       </div>
