@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguageContext } from "@/contexts/LanguageContext";
@@ -10,13 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
-import { Building2, Users, Settings, Plus, Crown, Shield, User, Trash2, ChevronRight, CreditCard, Tag } from "lucide-react";
+import { Building2, Users, Settings, Plus, Crown, Shield, User, ChevronRight, CreditCard, Tag, RefreshCw, Globe } from "lucide-react";
 import { CreateChurchAccountDialog } from "@/components/church/CreateChurchAccountDialog";
 import { ChurchAccountMembersTab } from "@/components/church/ChurchAccountMembersTab";
 import { ChurchAccountCommunitiesTab } from "@/components/church/ChurchAccountCommunitiesTab";
 import { ChurchAccountSettingsTab } from "@/components/church/ChurchAccountSettingsTab";
 import { ChurchCustomRolesTab } from "@/components/church/ChurchCustomRolesTab";
+import { ChurchBillingTab } from "@/components/church/ChurchBillingTab";
+import { ChurchTeamRotationTab } from "@/components/church/ChurchTeamRotationTab";
+import { ChurchCustomDomainTab } from "@/components/church/ChurchCustomDomainTab";
 import { useNavigate } from "react-router-dom";
 
 interface ThemeConfig {
@@ -41,6 +43,9 @@ interface ChurchAccount {
   created_at: string;
   slogan: string | null;
   theme_config: ThemeConfig | Record<string, unknown> | null;
+  custom_domain: string | null;
+  domain_status: string | null;
+  domain_verified_at: string | null;
 }
 
 export default function ChurchAccount() {
@@ -280,9 +285,17 @@ export default function ChurchAccount() {
                   <Tag className="w-4 h-4" />
                   {language === "ko" ? "역할" : "Roles"}
                 </TabsTrigger>
+                <TabsTrigger value="rotation" className="gap-2">
+                  <RefreshCw className="w-4 h-4" />
+                  {language === "ko" ? "로테이션" : "Rotation"}
+                </TabsTrigger>
                 <TabsTrigger value="billing" className="gap-2">
                   <CreditCard className="w-4 h-4" />
                   {language === "ko" ? "구독/결제" : "Billing"}
+                </TabsTrigger>
+                <TabsTrigger value="domain" className="gap-2">
+                  <Globe className="w-4 h-4" />
+                  {language === "ko" ? "도메인" : "Domain"}
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="gap-2">
                   <Settings className="w-4 h-4" />
@@ -313,56 +326,28 @@ export default function ChurchAccount() {
                 />
               </TabsContent>
 
+              <TabsContent value="rotation">
+                <ChurchTeamRotationTab 
+                  churchAccountId={selectedAccount.id}
+                  isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
+                />
+              </TabsContent>
+
               <TabsContent value="billing">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{language === "ko" ? "구독 및 결제" : "Subscription & Billing"}</CardTitle>
-                    <CardDescription>
-                      {language === "ko" 
-                        ? "교회 계정의 구독 상태와 결제 정보를 관리합니다."
-                        : "Manage your church account subscription and billing information."}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h4 className="font-medium">{language === "ko" ? "현재 플랜" : "Current Plan"}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {selectedAccount.subscription_status === "trial" 
-                              ? (language === "ko" ? "30일 무료 체험" : "30-day free trial")
-                              : (language === "ko" ? "시트 기반 요금제" : "Seat-based plan")}
-                          </p>
-                        </div>
-                        {getStatusBadge(selectedAccount.subscription_status)}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">{language === "ko" ? "최대 시트" : "Max Seats"}</p>
-                          <p className="font-medium">{selectedAccount.max_seats}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">{language === "ko" ? "사용 중" : "Used"}</p>
-                          <p className="font-medium">{selectedAccount.used_seats}</p>
-                        </div>
-                        {selectedAccount.trial_ends_at && selectedAccount.subscription_status === "trial" && (
-                          <div className="col-span-2">
-                            <p className="text-muted-foreground">{language === "ko" ? "체험 종료일" : "Trial Ends"}</p>
-                            <p className="font-medium">
-                              {new Date(selectedAccount.trial_ends_at).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button className="w-full gap-2">
-                      <CreditCard className="w-4 h-4" />
-                      {selectedAccount.subscription_status === "trial"
-                        ? (language === "ko" ? "유료 플랜으로 업그레이드" : "Upgrade to Paid Plan")
-                        : (language === "ko" ? "결제 관리" : "Manage Billing")}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <ChurchBillingTab 
+                  churchAccount={selectedAccount}
+                  isOwner={getUserRole(selectedAccount as any) === "owner"}
+                />
+              </TabsContent>
+
+              <TabsContent value="domain">
+                <ChurchCustomDomainTab 
+                  churchAccount={selectedAccount}
+                  isOwner={getUserRole(selectedAccount as any) === "owner"}
+                  onUpdate={() => {
+                    queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
+                  }}
+                />
               </TabsContent>
 
               <TabsContent value="settings">
