@@ -632,54 +632,55 @@ const SetBuilder = () => {
               </Badge>
             )}
           </div>
-          
-          <div className="flex items-center gap-1">
-            {id && (
-              <Button variant="outline" size="sm" className="h-7 px-1.5 text-[10px] sm:h-9 sm:px-3 sm:text-sm gap-0.5 sm:gap-1.5" onClick={handleCopyLink}>
-                <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span>공유</span>
-              </Button>
-            )}
+        </div>
+        
+        {/* Action buttons - separate row on mobile */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {id && (
+            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
+              <Share2 className="w-4 h-4 shrink-0" />
+              <span>팀 링크 복사</span>
+            </Button>
+          )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-1.5 text-[10px] sm:h-9 sm:px-3 sm:text-sm gap-0.5 sm:gap-1.5"
-              onClick={() => navigate("/templates")}
-            >
-              <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span>템플릿</span>
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-7 px-1.5 text-[10px] sm:h-9 sm:px-3 sm:text-sm gap-0.5 sm:gap-1.5"
-              onClick={() => setShowSaveTemplate(true)}
-            >
-              <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span className="hidden xs:inline">템플릿</span>저장
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="h-7 px-1.5 text-[10px] sm:h-9 sm:px-3 sm:text-sm gap-0.5 sm:gap-1.5"
-              onClick={() => saveSetMutation.mutate(undefined)}
-              disabled={saveSetMutation.isPending}
-            >
-              <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span>저장</span>
-            </Button>
-            
-            <Button 
-              size="sm" 
-              className="h-7 px-1.5 text-[10px] sm:h-9 sm:px-3 sm:text-sm"
-              onClick={handlePublishToggle}
-              disabled={saveSetMutation.isPending}
-            >
-              {status === "draft" ? "게시" : "취소"}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => navigate("/templates")}
+          >
+            <FileText className="w-4 h-4 shrink-0" />
+            <span>{language === "ko" ? "템플릿" : "Templates"}</span>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => setShowSaveTemplate(true)}
+          >
+            <Copy className="w-4 h-4 shrink-0" />
+            <span>{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => saveSetMutation.mutate(undefined)}
+            disabled={saveSetMutation.isPending}
+          >
+            <Save className="w-4 h-4 shrink-0" />
+            <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+          </Button>
+          
+          <Button 
+            size="sm" 
+            className="h-8"
+            onClick={handlePublishToggle}
+            disabled={saveSetMutation.isPending}
+          >
+            {status === "draft" ? "게시하기" : "게시취소"}
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
