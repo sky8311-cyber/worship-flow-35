@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -19,6 +19,8 @@ import { SetComponentItem } from "@/components/SetComponentItem";
 import { SongSelector } from "@/components/SongSelector";
 import { SetCollaborators } from "@/components/SetCollaborators";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
+import { TemplateSelector } from "@/components/TemplateSelector";
+import { SaveTemplateDialog } from "@/components/SaveTemplateDialog";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +60,7 @@ const SetBuilder = () => {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Refs to ensure mutation always reads latest values
@@ -383,6 +386,8 @@ const SetBuilder = () => {
             label: item.data.label,
             notes: item.data.notes || null,
             duration_minutes: item.data.duration_minutes || null,
+            assigned_to: item.data.assigned_to || null,
+            content: item.data.content || null,
           });
         }
       });
@@ -488,6 +493,56 @@ const SetBuilder = () => {
     setItems(prev => [...prev, newComponent]);
   };
 
+  const handleSelectTemplate = (template: any) => {
+    // Apply template data to form
+    setFormData(prev => ({
+      ...prev,
+      service_name: template.service_name || prev.service_name,
+      community_id: template.community_id || prev.community_id,
+      target_audience: template.target_audience || prev.target_audience,
+      worship_leader: template.worship_leader || prev.worship_leader,
+      band_name: template.band_name || prev.band_name,
+      scripture_reference: template.scripture_reference || prev.scripture_reference,
+      theme: template.theme || prev.theme,
+      worship_duration: template.worship_duration?.toString() || prev.worship_duration,
+      service_time: template.service_time || prev.service_time,
+      notes: template.notes || prev.notes,
+    }));
+    
+    // Apply template components
+    if (template.template_components && template.template_components.length > 0) {
+      const sortedComponents = [...template.template_components].sort((a, b) => a.position - b.position);
+      const newItems: SetItem[] = sortedComponents.map((comp: any) => ({
+        type: "component" as const,
+        id: `component-template-${Date.now()}-${comp.position}`,
+        data: {
+          component_type: comp.component_type,
+          label: comp.label,
+          notes: comp.notes || "",
+          duration_minutes: comp.duration_minutes || null,
+          assigned_to: comp.default_assigned_to || "",
+          content: comp.default_content || "",
+        },
+      }));
+      
+      setItems(prev => [...newItems, ...prev]);
+      toast.success(language === "ko" ? "템플릿이 적용되었습니다" : "Template applied");
+    }
+  };
+
+  const getComponentsForTemplate = () => {
+    return items
+      .filter(item => item.type === "component")
+      .map(item => ({
+        component_type: item.data.component_type,
+        label: item.data.label,
+        notes: item.data.notes,
+        duration_minutes: item.data.duration_minutes,
+        assigned_to: item.data.assigned_to,
+        content: item.data.content,
+      }));
+  };
+
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
@@ -585,6 +640,17 @@ const SetBuilder = () => {
                 <span className="hidden sm:inline">팀 링크 복사</span>
               </Button>
             )}
+
+            {/* Save as Template button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSaveTemplate(true)}
+              disabled={items.filter(i => i.type === "component").length === 0}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
+            </Button>
             
             <Button 
               variant="outline" 
@@ -614,6 +680,14 @@ const SetBuilder = () => {
                 <CardTitle>예배 정보</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
+                {/* Template Selector - only show when creating new set */}
+                {!id && (
+                  <TemplateSelector
+                    communityId={formData.community_id}
+                    onSelectTemplate={handleSelectTemplate}
+                  />
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="text-sm">날짜 *</Label>
@@ -888,6 +962,13 @@ const SetBuilder = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SaveTemplateDialog
+        open={showSaveTemplate}
+        onOpenChange={setShowSaveTemplate}
+        formData={formData}
+        components={getComponentsForTemplate()}
+      />
     </AppLayout>
   );
 };
