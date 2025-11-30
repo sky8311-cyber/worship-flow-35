@@ -388,36 +388,6 @@ export default function CommunityManagement() {
 
               <TabsContent value="members" className="space-y-6">
 
-            {/* Email Invitation - Only for managers */}
-            {canManage && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t("community.inviteByEmail")}</CardTitle>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">{t("community.name")}</Label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">{t("community.description")}</Label>
-                    <Textarea
-                      id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  <Button onClick={() => updateMutation.mutate()}>
-                    {t("common.save")}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Email Invitation */}
             {canManage && (
               <Card>
