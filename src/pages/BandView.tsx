@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,52 @@ import {
   BreadcrumbPage, 
   BreadcrumbSeparator 
 } from "@/components/ui/breadcrumb";
+import { 
+  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
+  ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
+  Users, MessagesSquare, Circle
+} from "lucide-react";
+import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+
+const iconMap: Record<string, React.ComponentType<any>> = {
+  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
+  ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
+  Users, MessagesSquare, Circle,
+};
+
+const getIconForType = (type: WorshipComponentType): React.ComponentType<any> => {
+  const iconNames: Record<string, string> = {
+    countdown: "Timer",
+    welcome: "HandMetal",
+    prayer: "HandHeart",
+    bible_reading: "BookOpen",
+    sermon: "Mic",
+    offering: "Heart",
+    announcement: "Megaphone",
+    lords_prayer: "ScrollText",
+    apostles_creed: "ScrollText",
+    benediction: "Sparkles",
+    special_song: "Music2",
+    testimony: "MessageCircle",
+    communion: "Wine",
+    baptism: "Droplets",
+    small_group: "Users",
+    responsive_reading: "MessagesSquare",
+    custom: "Circle",
+  };
+  return iconMap[iconNames[type]] || Circle;
+};
+
+// Union type for items
+type SetItem = 
+  | { type: "song"; data: any; position: number }
+  | { type: "component"; data: any; position: number };
 
 const BandView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const { data: serviceSet, isLoading } = useQuery({
     queryKey: ["band-view", id],
@@ -57,6 +97,24 @@ const BandView = () => {
             song_scores(*)
           )
         `)
+        .eq("service_set_id", id)
+        .order("position", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  const { data: setComponents } = useQuery({
+    queryKey: ["band-view-components", id],
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("set_components")
+        .select("*")
         .eq("service_set_id", id)
         .order("position", { ascending: true });
 
@@ -117,6 +175,20 @@ const BandView = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
+  // Merge songs and components by position
+  const mergedItems: SetItem[] = [
+    ...(setSongs || []).map((song: any) => ({ 
+      type: "song" as const, 
+      data: song, 
+      position: song.position 
+    })),
+    ...(setComponents || []).map((comp: any) => ({ 
+      type: "component" as const, 
+      data: comp, 
+      position: comp.position 
+    })),
+  ].sort((a, b) => a.position - b.position);
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -142,8 +214,6 @@ const BandView = () => {
       </AppLayout>
     );
   }
-
-  const sortedSetSongs = setSongs || [];
 
   const breadcrumbNav = (
     <Breadcrumb>
@@ -259,9 +329,63 @@ const BandView = () => {
           </CardContent>
         </Card>
 
-        {/* Song List */}
+        {/* Items List (Songs + Components) */}
         <div className="space-y-6">
-          {sortedSetSongs.map((setSong: any) => {
+          {mergedItems.map((item) => {
+            if (item.type === "component") {
+              const component = item.data;
+              const IconComponent = getIconForType(component.component_type);
+              
+              return (
+                <Card key={`component-${component.id}`} className="shadow-md border-l-4 border-l-accent print:shadow-none print:break-inside-avoid">
+                  <CardContent className="p-4">
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center print:bg-gray-200">
+                          <span className="text-xl font-bold text-accent">
+                            {item.position}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="secondary" className="gap-1.5">
+                            <IconComponent className="w-3.5 h-3.5" />
+                            {component.component_type !== "custom" 
+                              ? getComponentLabel(component.component_type, language as "en" | "ko")
+                              : null
+                            }
+                          </Badge>
+                          {component.component_type === "custom" && (
+                            <span className="font-semibold text-foreground">{component.label}</span>
+                          )}
+                          {component.duration_minutes && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {component.duration_minutes}{language === "ko" ? "분" : "min"}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {component.label && component.component_type !== "custom" && (
+                          <p className="text-sm text-foreground">{component.label}</p>
+                        )}
+                        
+                        {component.notes && (
+                          <p className="text-sm text-muted-foreground mt-2 p-2 bg-accent/10 rounded">
+                            {component.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            // Song item
+            const setSong = item.data;
             const song = setSong.songs;
             const youtubeUrl = setSong.override_youtube_url || song?.youtube_url;
             const videoId = getYouTubeVideoId(youtubeUrl);
@@ -275,7 +399,7 @@ const BandView = () => {
             const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
 
             return (
-              <Card key={setSong.id} className="shadow-md print:shadow-none print:break-inside-avoid">
+              <Card key={`song-${setSong.id}`} className="shadow-md print:shadow-none print:break-inside-avoid">
                 <CardContent className="p-6">
                   {/* Song Header */}
                   <div className="flex gap-4 mb-4">
@@ -415,7 +539,7 @@ const BandView = () => {
           })}
         </div>
 
-        {sortedSetSongs.length === 0 && (
+        {mergedItems.length === 0 && (
           <Card className="shadow-md">
             <CardContent className="text-center py-12">
               <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

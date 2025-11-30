@@ -45,7 +45,16 @@ export const translations = {
         friday: "Friday",
         saturday: "Saturday"
       },
-      deletedUser: "Deleted User"
+      deletedUser: "Deleted User",
+      items: "items",
+    },
+    worshipComponents: {
+      title: "Worship Components",
+      addCustom: "Add Custom",
+      customPlaceholder: "Enter name",
+      duration: "Duration",
+      minutes: "min",
+      notes: "Notes",
     },
     socialFeed: {
       postPlaceholder: "Share with your community...",
@@ -1293,7 +1302,16 @@ export const translations = {
         friday: "금요일",
         saturday: "토요일"
       },
-      deletedUser: "삭제된 사용자"
+      deletedUser: "삭제된 사용자",
+      items: "항목",
+    },
+    worshipComponents: {
+      title: "예배 순서",
+      addCustom: "커스텀 추가",
+      customPlaceholder: "순서 이름 입력",
+      duration: "소요시간",
+      minutes: "분",
+      notes: "메모",
     },
     socialFeed: {
       postPlaceholder: "공동체와 나눌 소식을 작성하세요...",

@@ -512,6 +512,47 @@ export type Database = {
           },
         ]
       }
+      set_components: {
+        Row: {
+          component_type: string
+          created_at: string | null
+          duration_minutes: number | null
+          id: string
+          label: string
+          notes: string | null
+          position: number
+          service_set_id: string
+        }
+        Insert: {
+          component_type: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          label: string
+          notes?: string | null
+          position: number
+          service_set_id: string
+        }
+        Update: {
+          component_type?: string
+          created_at?: string | null
+          duration_minutes?: number | null
+          id?: string
+          label?: string
+          notes?: string | null
+          position?: number
+          service_set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_components_service_set_id_fkey"
+            columns: ["service_set_id"]
+            isOneToOne: false
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       set_songs: {
         Row: {
           bpm: number | null
