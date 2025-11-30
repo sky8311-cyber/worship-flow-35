@@ -183,6 +183,53 @@ export type Database = {
           },
         ]
       }
+      church_custom_roles: {
+        Row: {
+          church_account_id: string
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          name_ko: string | null
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          church_account_id: string
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          name_ko?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          church_account_id?: string
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          name_ko?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_custom_roles_church_account_id_fkey"
+            columns: ["church_account_id"]
+            isOneToOne: false
+            referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_invitations: {
         Row: {
           community_id: string
