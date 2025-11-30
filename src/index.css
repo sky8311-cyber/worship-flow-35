@@ -131,3 +131,26 @@ All colors MUST be HSL.
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Compact date/time inputs for mobile */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 2.25rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific: smaller date/time inputs */
+  input[type="date"],
+  input[type="time"] {
+    font-size: 14px;
+  }
+}

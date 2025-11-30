@@ -700,7 +700,7 @@ const SetBuilder = () => {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-2 min-w-0">
+                  <div className="space-y-1.5 min-w-0">
                     <Label htmlFor="date" className="text-sm">날짜 *</Label>
                     <Input
                       id="date"
@@ -708,18 +708,18 @@ const SetBuilder = () => {
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
-                      className="text-sm w-full"
+                      className="text-sm h-9"
                     />
                   </div>
 
-                  <div className="space-y-2 min-w-0">
+                  <div className="space-y-1.5 min-w-0">
                     <Label htmlFor="service_time" className="text-sm">시간</Label>
                     <Input
                       id="service_time"
                       type="time"
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
-                      className="text-sm w-full"
+                      className="text-sm h-9"
                     />
                   </div>
                 </div>
