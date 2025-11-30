@@ -19,11 +19,14 @@ import { useQueryClient } from "@tanstack/react-query";
 interface SetSongItemProps {
   setSong: any;
   index: number;
+  totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
 }
 
-export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemProps) => {
+export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetSongItemProps) => {
   // Use the setSong's id if available, otherwise fallback to index-based id
   const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
@@ -105,13 +108,31 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
       <Card className="shadow-sm">
         <CardContent className="p-4">
           <div className="flex gap-3">
-            <div className="flex flex-col items-center justify-start pt-1">
+            <div className="flex flex-col items-center justify-start pt-1 gap-1">
               <button {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
                 <GripVertical className="w-5 h-5" />
               </button>
-              <div className="text-2xl font-bold text-primary mt-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => onMoveUp(index)}
+                disabled={index === 0}
+              >
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+              <div className="text-2xl font-bold text-primary">
                 {index + 1}
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => onMoveDown(index)}
+                disabled={index === totalCount - 1}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="flex-1 space-y-3">

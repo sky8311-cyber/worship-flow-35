@@ -31,8 +31,11 @@ interface SetComponentItemProps {
     duration_minutes?: number;
   };
   index: number;
+  totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
+  onMoveUp: (index: number) => void;
+  onMoveDown: (index: number) => void;
 }
 
 const getIconForType = (type: WorshipComponentType): React.ComponentType<any> => {
@@ -58,7 +61,7 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
   return iconMap[iconNames[type]] || Circle;
 };
 
-export const SetComponentItem = ({ component, index, onRemove, onUpdate }: SetComponentItemProps) => {
+export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetComponentItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
   const [notesOpen, setNotesOpen] = useState(false);
   const { language } = useTranslation();
@@ -75,13 +78,31 @@ export const SetComponentItem = ({ component, index, onRemove, onUpdate }: SetCo
       <Card className="shadow-sm border-l-4 border-l-accent bg-accent/10">
         <CardContent className="p-3">
           <div className="flex gap-3">
-            <div className="flex flex-col items-center justify-start pt-1">
+            <div className="flex flex-col items-center justify-start pt-1 gap-1">
               <button {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
                 <GripVertical className="w-5 h-5" />
               </button>
-              <div className="text-xl font-bold text-accent mt-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => onMoveUp(index)}
+                disabled={index === 0}
+              >
+                <ChevronUp className="w-4 h-4" />
+              </Button>
+              <div className="text-xl font-bold text-accent">
                 {index + 1}
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => onMoveDown(index)}
+                disabled={index === totalCount - 1}
+              >
+                <ChevronDown className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="flex-1 space-y-2">

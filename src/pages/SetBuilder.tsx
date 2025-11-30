@@ -499,6 +499,16 @@ const SetBuilder = () => {
     }));
   };
 
+  const handleMoveUp = (index: number) => {
+    if (index <= 0) return;
+    setItems(prev => arrayMove(prev, index, index - 1));
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index >= items.length - 1) return;
+    setItems(prev => arrayMove(prev, index, index + 1));
+  };
+
   const handleLogout = async () => {
     await signOut();
     toast.success(t("dashboard.logout"));
@@ -797,16 +807,22 @@ const SetBuilder = () => {
                                 key={item.id}
                                 setSong={item.data}
                                 index={index}
+                                totalCount={items.length}
                                 onRemove={handleRemoveItem}
                                 onUpdate={handleUpdateItem}
+                                onMoveUp={handleMoveUp}
+                                onMoveDown={handleMoveDown}
                               />
                             ) : (
                               <SetComponentItem
                                 key={item.id}
                                 component={{ ...item.data, id: item.id }}
                                 index={index}
+                                totalCount={items.length}
                                 onRemove={handleRemoveItem}
                                 onUpdate={handleUpdateItem}
+                                onMoveUp={handleMoveUp}
+                                onMoveDown={handleMoveDown}
                               />
                             )
                           )}
