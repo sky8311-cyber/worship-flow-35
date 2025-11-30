@@ -104,15 +104,17 @@ export function ChurchCustomDomainTab({ churchAccount, isOwner, onUpdate }: Chur
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>{language === "ko" ? "도메인 입력" : "Enter Domain"}</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input 
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
                     placeholder="worship.yourchurch.com"
+                    className="flex-1"
                   />
                   <Button 
                     onClick={() => saveDomainMutation.mutate()}
                     disabled={saveDomainMutation.isPending}
+                    className="w-full sm:w-auto"
                   >
                     {saveDomainMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

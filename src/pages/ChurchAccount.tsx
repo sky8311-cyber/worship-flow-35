@@ -135,21 +135,21 @@ export default function ChurchAccount() {
     <AppLayout>
       <div className="container max-w-6xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Building2 className="w-6 h-6" />
               {language === "ko" ? "교회 계정" : "Church Account"}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               {language === "ko" 
                 ? "교회 단위로 여러 예배공동체와 팀원을 관리하세요"
                 : "Manage multiple communities and team members at the church level"}
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+          <Button onClick={() => setShowCreateDialog(true)} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
-            {language === "ko" ? "교회 계정 만들기" : "Create Church Account"}
+            <span className="sm:inline">{language === "ko" ? "교회 계정 만들기" : "Create Church Account"}</span>
           </Button>
         </div>
 
@@ -271,32 +271,34 @@ export default function ChurchAccount() {
 
             {/* Tabs */}
             <Tabs defaultValue="communities">
-              <TabsList className="mb-4">
-                <TabsTrigger value="communities" className="gap-2">
-                  <Building2 className="w-4 h-4" />
-                  {language === "ko" ? "예배공동체" : "Communities"}
-                </TabsTrigger>
-                <TabsTrigger value="members" className="gap-2">
-                  <Users className="w-4 h-4" />
-                  {language === "ko" ? "멤버" : "Members"}
-                </TabsTrigger>
-                <TabsTrigger value="roles" className="gap-2">
-                  <Tag className="w-4 h-4" />
-                  {language === "ko" ? "역할" : "Roles"}
-                </TabsTrigger>
-                <TabsTrigger value="billing" className="gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  {language === "ko" ? "구독/결제" : "Billing"}
-                </TabsTrigger>
-                <TabsTrigger value="domain" className="gap-2">
-                  <Globe className="w-4 h-4" />
-                  {language === "ko" ? "도메인" : "Domain"}
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="gap-2">
-                  <Settings className="w-4 h-4" />
-                  {language === "ko" ? "설정" : "Settings"}
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="mb-4 w-max sm:w-auto">
+                  <TabsTrigger value="communities" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <Building2 className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "예배공동체" : "Communities"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="members" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <Users className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "멤버" : "Members"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="roles" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <Tag className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "역할" : "Roles"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="billing" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <CreditCard className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "구독/결제" : "Billing"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="domain" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <Globe className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "도메인" : "Domain"}</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="settings" className="gap-1 sm:gap-2 px-2 sm:px-3">
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden sm:inline">{language === "ko" ? "설정" : "Settings"}</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="communities">
                 <ChurchAccountCommunitiesTab 

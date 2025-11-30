@@ -294,17 +294,17 @@ export function ChurchCustomRolesTab({ churchAccountId, isAdmin }: ChurchCustomR
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <CardTitle>{language === "ko" ? "커스텀 역할" : "Custom Roles"}</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               {language === "ko"
                 ? "교회 팀원들에게 지정할 수 있는 역할을 관리하고 할당합니다."
                 : "Manage and assign custom roles to church team members."}
             </CardDescription>
           </div>
           {isAdmin && (
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
+            <Button onClick={() => handleOpenDialog()} className="gap-2 w-full sm:w-auto">
               <Plus className="w-4 h-4" />
               {language === "ko" ? "역할 추가" : "Add Role"}
             </Button>
