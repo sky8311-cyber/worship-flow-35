@@ -258,9 +258,9 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
           <CardContent>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="gap-2">
+                <Button variant="destructive" className="gap-2 w-full sm:w-auto">
                   <Trash2 className="w-4 h-4" />
-                  {language === "ko" ? "교회 계정 삭제" : "Delete Church Account"}
+                  <span className="truncate">{language === "ko" ? "교회 계정 삭제" : "Delete Church Account"}</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
