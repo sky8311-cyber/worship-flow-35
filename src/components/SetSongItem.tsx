@@ -24,7 +24,9 @@ interface SetSongItemProps {
 }
 
 export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: index });
+  // Use the setSong's id if available, otherwise fallback to index-based id
+  const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { t } = useTranslation();

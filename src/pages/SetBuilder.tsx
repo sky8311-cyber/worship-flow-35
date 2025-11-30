@@ -15,8 +15,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
+import { SetComponentItem } from "@/components/SetComponentItem";
 import { SongSelector } from "@/components/SongSelector";
 import { SetCollaborators } from "@/components/SetCollaborators";
+import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,13 +26,19 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Home } from "lucide-react";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+
+// Union type for items in the worship set (songs and components)
+type SetItem = 
+  | { type: "song"; data: any; id: string }
+  | { type: "component"; data: any; id: string };
 
 const SetBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isAdmin, signOut } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
@@ -45,7 +53,7 @@ const SetBuilder = () => {
     worship_duration: "",
     notes: "",
   });
-  const [songs, setSongs] = useState<any[]>([]);
+  const [items, setItems] = useState<SetItem[]>([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
@@ -54,7 +62,7 @@ const SetBuilder = () => {
 
   // Refs to ensure mutation always reads latest values
   const formDataRef = useRef(formData);
-  const songsRef = useRef(songs);
+  const itemsRef = useRef(items);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -62,8 +70,8 @@ const SetBuilder = () => {
   }, [formData]);
 
   useEffect(() => {
-    songsRef.current = songs;
-  }, [songs]);
+    itemsRef.current = items;
+  }, [items]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -102,6 +110,24 @@ const SetBuilder = () => {
           *,
           songs(*, song_scores(id, key, file_url, page_number, position))
         `)
+        .eq("service_set_id", id)
+        .order("position", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  const { data: existingSetComponents } = useQuery({
+    queryKey: ["set-components", id],
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("set_components")
+        .select("*")
         .eq("service_set_id", id)
         .order("position", { ascending: true });
 
@@ -193,17 +219,31 @@ const SetBuilder = () => {
     }
   }, [existingSet, isLoading, isSaving, statusInitialized, user]);
 
-  // Load songs separately to prevent interference
+  // Merge and load songs + components by position
   useEffect(() => {
-    if (existingSetSongs && !isSaving) {
-      setSongs(
-        existingSetSongs.map((ss: any) => ({
-          ...ss,
-          song: ss.songs,
-        }))
-      );
-    }
-  }, [existingSetSongs, isSaving]);
+    if (isSaving) return;
+    
+    const songs: SetItem[] = (existingSetSongs || []).map((ss: any) => ({
+      type: "song" as const,
+      id: `song-${ss.id}`,
+      data: { ...ss, song: ss.songs },
+    }));
+    
+    const components: SetItem[] = (existingSetComponents || []).map((comp: any) => ({
+      type: "component" as const,
+      id: `component-${comp.id}`,
+      data: comp,
+    }));
+    
+    // Merge and sort by position
+    const merged = [...songs, ...components].sort((a, b) => {
+      const posA = a.type === "song" ? a.data.position : a.data.position;
+      const posB = b.type === "song" ? b.data.position : b.data.position;
+      return posA - posB;
+    });
+    
+    setItems(merged);
+  }, [existingSetSongs, existingSetComponents, isSaving]);
 
   const handlePublishToggle = () => {
     if (status === "draft") {
@@ -212,7 +252,8 @@ const SetBuilder = () => {
         toast.error("예배공동체를 선택해주세요");
         return;
       }
-      if (songs.length === 0) {
+      const songCount = items.filter(i => i.type === "song").length;
+      if (songCount === 0) {
         toast.error("최소 1곡 이상 추가해주세요");
         return;
       }
@@ -234,7 +275,7 @@ const SetBuilder = () => {
     mutationFn: async (publishStatus?: "draft" | "published") => {
       // Read from refs to ensure we have the latest values
       const currentForm = formDataRef.current;
-      const currentSongs = songsRef.current;
+      const currentItems = itemsRef.current;
 
       // Phase 2: Permission validation before save
       if (existingSet && user) {
@@ -248,7 +289,8 @@ const SetBuilder = () => {
       if (!currentForm.community_id) {
         throw new Error(t("setBuilder.errors.communityRequired"));
       }
-      if (publishStatus === "published" && currentSongs.length === 0) {
+      const songCount = currentItems.filter(i => i.type === "song").length;
+      if (publishStatus === "published" && songCount === 0) {
         throw new Error(t("setBuilder.errors.noSongsPublish"));
       }
 
@@ -307,25 +349,53 @@ const SetBuilder = () => {
         if (error) throw error;
       }
 
-      // Delete existing set_songs
+      // Delete existing set_songs and set_components
       if (setId) {
         await supabase.from("set_songs").delete().eq("service_set_id", setId);
+        await supabase.from("set_components").delete().eq("service_set_id", setId);
       }
 
-      // Insert new set_songs
-      const setSongsData = currentSongs.map((ss, index) => ({
-        service_set_id: setId,
-        song_id: ss.song_id || ss.song.id,
-        position: index + 1,
-        key: ss.key || ss.song.default_key,
-        custom_notes: ss.custom_notes || "",
-        override_score_file_url: ss.override_score_file_url || null,
-        override_youtube_url: ss.override_youtube_url || null,
-        lyrics: ss.lyrics || null,
-      }));
+      // Separate items into songs and components with positions
+      const songsData: any[] = [];
+      const componentsData: any[] = [];
+      
+      currentItems.forEach((item, index) => {
+        const position = index + 1;
+        if (item.type === "song") {
+          songsData.push({
+            service_set_id: setId,
+            song_id: item.data.song_id || item.data.song?.id,
+            position,
+            key: item.data.key || item.data.song?.default_key,
+            custom_notes: item.data.custom_notes || "",
+            override_score_file_url: item.data.override_score_file_url || null,
+            override_youtube_url: item.data.override_youtube_url || null,
+            lyrics: item.data.lyrics || null,
+            bpm: item.data.bpm || null,
+            time_signature: item.data.time_signature || null,
+            energy_level: item.data.energy_level || null,
+          });
+        } else {
+          componentsData.push({
+            service_set_id: setId,
+            position,
+            component_type: item.data.component_type,
+            label: item.data.label,
+            notes: item.data.notes || null,
+            duration_minutes: item.data.duration_minutes || null,
+          });
+        }
+      });
 
-      if (setSongsData.length > 0) {
-        const { error } = await supabase.from("set_songs").insert(setSongsData);
+      // Insert songs
+      if (songsData.length > 0) {
+        const { error } = await supabase.from("set_songs").insert(songsData);
+        if (error) throw error;
+      }
+
+      // Insert components
+      if (componentsData.length > 0) {
+        const { error } = await supabase.from("set_components").insert(componentsData);
         if (error) throw error;
       }
 
@@ -366,6 +436,7 @@ const SetBuilder = () => {
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
         queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
+        queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
         queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
         queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
       }, 100);
@@ -384,26 +455,48 @@ const SetBuilder = () => {
 
   const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
     // Single song addition with optional key variation
-    const newSetSong = {
-      song,
-      song_id: song.id,
-      key: selectedKey || song.default_key,
-      custom_notes: "",
-      override_score_file_url: selectedScoreUrl || null,
-      override_youtube_url: null,
-      lyrics: null, // Lyrics are imported on-demand in SetSongItem
+    const newSetItem: SetItem = {
+      type: "song",
+      id: `song-new-${Date.now()}`,
+      data: {
+        song,
+        song_id: song.id,
+        key: selectedKey || song.default_key,
+        custom_notes: "",
+        override_score_file_url: selectedScoreUrl || null,
+        override_youtube_url: null,
+        lyrics: null,
+      },
     };
     
-    setSongs(prev => [...prev, newSetSong]);
-    // Don't close selector here - let bulk add close it
+    setItems(prev => [...prev, newSetItem]);
   };
 
-  const handleRemoveSong = (index: number) => {
-    setSongs(songs.filter((_, i) => i !== index));
+  const handleAddComponent = (type: WorshipComponentType, customLabel?: string) => {
+    const label = customLabel || getComponentLabel(type, language as "en" | "ko");
+    const newComponent: SetItem = {
+      type: "component",
+      id: `component-new-${Date.now()}`,
+      data: {
+        component_type: type,
+        label,
+        notes: "",
+        duration_minutes: null,
+      },
+    };
+    
+    setItems(prev => [...prev, newComponent]);
   };
 
-  const handleUpdateSetSong = (index: number, updates: any) => {
-    setSongs(songs.map((ss, i) => (i === index ? { ...ss, ...updates } : ss)));
+  const handleRemoveItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateItem = (index: number, updates: any) => {
+    setItems(items.map((item, i) => {
+      if (i !== index) return item;
+      return { ...item, data: { ...item.data, ...updates } };
+    }));
   };
 
   const handleLogout = async () => {
@@ -415,11 +508,12 @@ const SetBuilder = () => {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
-    if (active.id !== over.id) {
-      setSongs((items) => {
-        const oldIndex = items.findIndex((item, i) => i === active.id);
-        const newIndex = items.findIndex((item, i) => i === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+    if (active.id !== over?.id) {
+      setItems((currentItems) => {
+        const oldIndex = currentItems.findIndex((item) => item.id === active.id);
+        const newIndex = currentItems.findIndex((item) => item.id === over?.id);
+        if (oldIndex === -1 || newIndex === -1) return currentItems;
+        return arrayMove(currentItems, oldIndex, newIndex);
       });
     }
   };
@@ -433,6 +527,9 @@ const SetBuilder = () => {
       toast.error("먼저 워십세트를 저장해주세요");
     }
   };
+
+  const songCount = items.filter(i => i.type === "song").length;
+  const componentCount = items.filter(i => i.type === "component").length;
 
   if (isLoading) {
     return (
@@ -498,14 +595,16 @@ const SetBuilder = () => {
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column - Worship Info */}
+          <div className="lg:col-span-1 space-y-4">
             <Card className="shadow-md">
               <CardHeader>
                 <CardTitle>예배 정보</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="text-sm">날짜 *</Label>
                     <Input
@@ -641,13 +740,19 @@ const SetBuilder = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Worship Components Palette */}
+            <WorshipComponentPalette onAddComponent={handleAddComponent} />
           </div>
 
-          <div className="lg:col-span-2">
+          {/* Main Content - Items List */}
+          <div className="lg:col-span-3">
             <Card className="shadow-md">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>곡 목록</CardTitle>
+                  <CardTitle>
+                    {language === "ko" ? "예배 순서" : "Worship Order"}
+                  </CardTitle>
                   <Button onClick={() => setShowSongSelector(true)} size="sm">
                     <Plus className="w-4 h-4 mr-2" />
                     곡 추가
@@ -655,14 +760,24 @@ const SetBuilder = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {songs.length === 0 ? (
+                {items.length === 0 ? (
                   <div className="text-center py-12">
                     <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground mb-4">아직 곡이 추가되지 않았습니다</p>
-                    <Button onClick={() => setShowSongSelector(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      첫 번째 곡 추가하기
-                    </Button>
+                    <p className="text-muted-foreground mb-4">
+                      {language === "ko" 
+                        ? "아직 순서가 추가되지 않았습니다" 
+                        : "No items added yet"}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button onClick={() => setShowSongSelector(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {language === "ko" ? "첫 번째 곡 추가하기" : "Add First Song"}
+                      </Button>
+                      <Button variant="outline" onClick={() => handleAddComponent("welcome")}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {language === "ko" ? "순서 추가하기" : "Add Component"}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <>
@@ -672,31 +787,52 @@ const SetBuilder = () => {
                       onDragEnd={handleDragEnd}
                     >
                       <SortableContext
-                        items={songs.map((_, i) => i)}
+                        items={items.map((item) => item.id)}
                         strategy={verticalListSortingStrategy}
                       >
                         <div className="space-y-3">
-                          {songs.map((setSong, index) => (
-                            <SetSongItem
-                              key={index}
-                              setSong={setSong}
-                              index={index}
-                              onRemove={handleRemoveSong}
-                              onUpdate={handleUpdateSetSong}
-                            />
-                          ))}
+                          {items.map((item, index) => 
+                            item.type === "song" ? (
+                              <SetSongItem
+                                key={item.id}
+                                setSong={item.data}
+                                index={index}
+                                onRemove={handleRemoveItem}
+                                onUpdate={handleUpdateItem}
+                              />
+                            ) : (
+                              <SetComponentItem
+                                key={item.id}
+                                component={{ ...item.data, id: item.id }}
+                                index={index}
+                                onRemove={handleRemoveItem}
+                                onUpdate={handleUpdateItem}
+                              />
+                            )
+                          )}
                         </div>
                       </SortableContext>
                     </DndContext>
 
                     <div className="mt-6 p-4 bg-accent/50 rounded-lg">
-                      <h4 className="font-semibold mb-2">요약</h4>
+                      <h4 className="font-semibold mb-2">
+                        {language === "ko" ? "요약" : "Summary"}
+                      </h4>
                       <p className="text-sm text-muted-foreground">
-                        총 {songs.length}곡
+                        {language === "ko" 
+                          ? `총 ${items.length}개 항목 (곡 ${songCount}개, 순서 ${componentCount}개)`
+                          : `Total ${items.length} items (${songCount} songs, ${componentCount} components)`
+                        }
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        키 순서: {songs.map((ss) => ss.key || ss.song?.default_key || "?").join(" → ")}
-                      </p>
+                      {songCount > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {language === "ko" ? "키 순서: " : "Key sequence: "}
+                          {items
+                            .filter(i => i.type === "song")
+                            .map((i) => i.data.key || i.data.song?.default_key || "?")
+                            .join(" → ")}
+                        </p>
+                      )}
                     </div>
                   </>
                 )}
