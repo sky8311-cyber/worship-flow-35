@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguageContext } from "@/contexts/LanguageContext";
+import type { Json } from "@/integrations/supabase/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +10,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Loader2, Trash2, Save } from "lucide-react";
+import { Loader2, Trash2, Save, Paintbrush } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { ChurchLogoUpload } from "./ChurchLogoUpload";
+import { ChurchThemeCustomizer } from "./ChurchThemeCustomizer";
+
+interface ThemeConfig {
+  primaryColor: string;
+  accentColor: string;
+}
 
 interface ChurchAccount {
   id: string;
@@ -19,6 +27,8 @@ interface ChurchAccount {
   logo_url: string | null;
   website: string | null;
   billing_email: string | null;
+  slogan: string | null;
+  theme_config: ThemeConfig | Record<string, unknown> | null;
 }
 
 interface ChurchAccountSettingsTabProps {
@@ -26,6 +36,22 @@ interface ChurchAccountSettingsTabProps {
   isOwner: boolean;
   onUpdate: () => void;
 }
+
+const DEFAULT_THEME: ThemeConfig = {
+  primaryColor: "#2b4b8a",
+  accentColor: "#d16265",
+};
+
+const parseThemeConfig = (config: ThemeConfig | Record<string, unknown> | null): ThemeConfig => {
+  if (!config) return DEFAULT_THEME;
+  if (typeof config === 'object' && 'primaryColor' in config && 'accentColor' in config) {
+    return {
+      primaryColor: String(config.primaryColor || DEFAULT_THEME.primaryColor),
+      accentColor: String(config.accentColor || DEFAULT_THEME.accentColor),
+    };
+  }
+  return DEFAULT_THEME;
+};
 
 export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: ChurchAccountSettingsTabProps) {
   const { language } = useLanguageContext();
@@ -36,6 +62,11 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
   const [description, setDescription] = useState(churchAccount.description || "");
   const [website, setWebsite] = useState(churchAccount.website || "");
   const [billingEmail, setBillingEmail] = useState(churchAccount.billing_email || "");
+  const [slogan, setSlogan] = useState(churchAccount.slogan || "");
+  const [logoUrl, setLogoUrl] = useState(churchAccount.logo_url);
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig>(
+    parseThemeConfig(churchAccount.theme_config)
+  );
 
   // Update mutation
   const updateMutation = useMutation({
@@ -47,6 +78,8 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
           description: description || null,
           website: website || null,
           billing_email: billingEmail || null,
+          slogan: slogan || null,
+          theme_config: themeConfig as unknown as Json,
         })
         .eq("id", churchAccount.id);
       
@@ -85,10 +118,64 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
     name !== churchAccount.name ||
     description !== (churchAccount.description || "") ||
     website !== (churchAccount.website || "") ||
-    billingEmail !== (churchAccount.billing_email || "");
+    billingEmail !== (churchAccount.billing_email || "") ||
+    slogan !== (churchAccount.slogan || "") ||
+    JSON.stringify(themeConfig) !== JSON.stringify(parseThemeConfig(churchAccount.theme_config));
 
   return (
     <div className="space-y-6">
+      {/* Logo & Branding Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Paintbrush className="w-5 h-5" />
+            {language === "ko" ? "브랜딩" : "Branding"}
+          </CardTitle>
+          <CardDescription>
+            {language === "ko"
+              ? "교회 로고, 슬로건, 테마 색상을 설정합니다."
+              : "Set your church logo, slogan, and theme colors."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Logo Upload */}
+          <div className="space-y-2">
+            <Label>{language === "ko" ? "교회 로고" : "Church Logo"}</Label>
+            <ChurchLogoUpload
+              churchAccountId={churchAccount.id}
+              currentLogoUrl={logoUrl}
+              churchName={name}
+              onUpload={(url) => setLogoUrl(url)}
+            />
+          </div>
+
+          {/* Slogan */}
+          <div className="space-y-2">
+            <Label htmlFor="slogan">{language === "ko" ? "슬로건" : "Slogan"}</Label>
+            <Input
+              id="slogan"
+              value={slogan}
+              onChange={(e) => setSlogan(e.target.value)}
+              placeholder={language === "ko" ? "예: 믿음과 사랑으로 하나 되는 교회" : "e.g., United in Faith and Love"}
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground">
+              {language === "ko" ? "교회의 비전이나 모토를 입력하세요 (최대 100자)" : "Enter your church's vision or motto (max 100 characters)"}
+            </p>
+          </div>
+
+          {/* Theme Customizer */}
+          <div className="space-y-2">
+            <Label>{language === "ko" ? "테마 색상" : "Theme Colors"}</Label>
+            <ChurchThemeCustomizer
+              themeConfig={themeConfig}
+              onChange={setThemeConfig}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Basic Information Card */}
       <Card>
         <CardHeader>
           <CardTitle>{language === "ko" ? "기본 정보" : "Basic Information"}</CardTitle>

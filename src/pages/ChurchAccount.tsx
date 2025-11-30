@@ -18,6 +18,11 @@ import { ChurchAccountCommunitiesTab } from "@/components/church/ChurchAccountCo
 import { ChurchAccountSettingsTab } from "@/components/church/ChurchAccountSettingsTab";
 import { useNavigate } from "react-router-dom";
 
+interface ThemeConfig {
+  primaryColor: string;
+  accentColor: string;
+}
+
 interface ChurchAccount {
   id: string;
   name: string;
@@ -33,6 +38,8 @@ interface ChurchAccount {
   stripe_subscription_id: string | null;
   trial_ends_at: string | null;
   created_at: string;
+  slogan: string | null;
+  theme_config: ThemeConfig | Record<string, unknown> | null;
 }
 
 export default function ChurchAccount() {
@@ -311,7 +318,7 @@ export default function ChurchAccount() {
                           <h4 className="font-medium">{language === "ko" ? "현재 플랜" : "Current Plan"}</h4>
                           <p className="text-sm text-muted-foreground">
                             {selectedAccount.subscription_status === "trial" 
-                              ? (language === "ko" ? "14일 무료 체험" : "14-day free trial")
+                              ? (language === "ko" ? "30일 무료 체험" : "30-day free trial")
                               : (language === "ko" ? "시트 기반 요금제" : "Seat-based plan")}
                           </p>
                         </div>

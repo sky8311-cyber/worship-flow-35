@@ -69,8 +69,8 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
           </DialogTitle>
           <DialogDescription>
             {language === "ko"
-              ? "교회 단위로 여러 예배공동체와 팀원을 관리할 수 있습니다. 14일 무료 체험이 제공됩니다."
-              : "Manage multiple communities and team members at the church level. Includes a 14-day free trial."}
+              ? "교회 단위로 여러 예배공동체와 팀원을 관리할 수 있습니다. 30일 무료 체험이 제공됩니다."
+              : "Manage multiple communities and team members at the church level. Includes a 30-day free trial."}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,7 +143,7 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
               {language === "ko" ? "무료 체험 포함" : "Free Trial Included"}
             </p>
             <ul className="text-muted-foreground space-y-1">
-              <li>• {language === "ko" ? "14일 무료 체험" : "14-day free trial"}</li>
+              <li>• {language === "ko" ? "30일 무료 체험" : "30-day free trial"}</li>
               <li>• {language === "ko" ? "최대 5명 시트" : "Up to 5 seats"}</li>
               <li>• {language === "ko" ? "모든 기능 이용 가능" : "Access to all features"}</li>
             </ul>

@@ -125,9 +125,11 @@ export type Database = {
           max_seats: number
           name: string
           owner_id: string
+          slogan: string | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_status: string
+          theme_config: Json | null
           trial_ends_at: string | null
           updated_at: string | null
           used_seats: number
@@ -142,9 +144,11 @@ export type Database = {
           max_seats?: number
           name: string
           owner_id: string
+          slogan?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
+          theme_config?: Json | null
           trial_ends_at?: string | null
           updated_at?: string | null
           used_seats?: number
@@ -159,9 +163,11 @@ export type Database = {
           max_seats?: number
           name?: string
           owner_id?: string
+          slogan?: string | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_status?: string
+          theme_config?: Json | null
           trial_ends_at?: string | null
           updated_at?: string | null
           used_seats?: number
