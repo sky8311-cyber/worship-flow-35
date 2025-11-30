@@ -10,14 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Users, Settings, Plus, Crown, Shield, User, ChevronRight, CreditCard, Tag, RefreshCw, Globe } from "lucide-react";
+import { Building2, Users, Settings, Plus, Crown, Shield, User, ChevronRight, CreditCard, Tag, Globe } from "lucide-react";
 import { CreateChurchAccountDialog } from "@/components/church/CreateChurchAccountDialog";
 import { ChurchAccountMembersTab } from "@/components/church/ChurchAccountMembersTab";
 import { ChurchAccountCommunitiesTab } from "@/components/church/ChurchAccountCommunitiesTab";
 import { ChurchAccountSettingsTab } from "@/components/church/ChurchAccountSettingsTab";
 import { ChurchCustomRolesTab } from "@/components/church/ChurchCustomRolesTab";
 import { ChurchBillingTab } from "@/components/church/ChurchBillingTab";
-import { ChurchTeamRotationTab } from "@/components/church/ChurchTeamRotationTab";
 import { ChurchCustomDomainTab } from "@/components/church/ChurchCustomDomainTab";
 import { useNavigate } from "react-router-dom";
 
@@ -285,10 +284,6 @@ export default function ChurchAccount() {
                   <Tag className="w-4 h-4" />
                   {language === "ko" ? "역할" : "Roles"}
                 </TabsTrigger>
-                <TabsTrigger value="rotation" className="gap-2">
-                  <RefreshCw className="w-4 h-4" />
-                  {language === "ko" ? "로테이션" : "Rotation"}
-                </TabsTrigger>
                 <TabsTrigger value="billing" className="gap-2">
                   <CreditCard className="w-4 h-4" />
                   {language === "ko" ? "구독/결제" : "Billing"}
@@ -321,13 +316,6 @@ export default function ChurchAccount() {
 
               <TabsContent value="roles">
                 <ChurchCustomRolesTab 
-                  churchAccountId={selectedAccount.id}
-                  isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
-                />
-              </TabsContent>
-
-              <TabsContent value="rotation">
-                <ChurchTeamRotationTab 
                   churchAccountId={selectedAccount.id}
                   isAdmin={getUserRole(selectedAccount as any) === "owner" || getUserRole(selectedAccount as any) === "admin"}
                 />

@@ -10,8 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings } from "lucide-react";
+import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -48,7 +50,7 @@ export default function CommunityManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("worship_communities")
-        .select("*")
+        .select("*, church_account_id")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -57,6 +59,24 @@ export default function CommunityManagement() {
       return data;
     },
   });
+
+  // Check if community has a paid church account
+  const { data: churchAccount } = useQuery({
+    queryKey: ["community-church-account", community?.church_account_id],
+    queryFn: async () => {
+      if (!community?.church_account_id) return null;
+      const { data, error } = await supabase
+        .from("church_accounts")
+        .select("id, subscription_status")
+        .eq("id", community.church_account_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!community?.church_account_id,
+  });
+
+  const hasRotationFeature = churchAccount && (churchAccount.subscription_status === "active" || churchAccount.subscription_status === "trial");
 
   const { data: invitations } = useQuery({
     queryKey: ["community-invitations", id],
@@ -346,13 +366,33 @@ export default function CommunityManagement() {
               )}
             </div>
 
-            <div className="space-y-6">
-            {/* Community Info - Only for managers */}
+            <Tabs defaultValue="members" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="members" className="gap-2">
+                  <Users className="w-4 h-4" />
+                  {language === "ko" ? "멤버" : "Members"}
+                </TabsTrigger>
+                {hasRotationFeature && (
+                  <TabsTrigger value="rotation" className="gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    {language === "ko" ? "로테이션" : "Rotation"}
+                  </TabsTrigger>
+                )}
+                {canManage && (
+                  <TabsTrigger value="settings" className="gap-2">
+                    <Settings className="w-4 h-4" />
+                    {language === "ko" ? "설정" : "Settings"}
+                  </TabsTrigger>
+                )}
+              </TabsList>
+
+              <TabsContent value="members" className="space-y-6">
+
+            {/* Email Invitation - Only for managers */}
             {canManage && (
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("community.editCommunity")}</CardTitle>
-                </CardHeader>
+                  <CardTitle>{t("community.inviteByEmail")}</CardTitle>
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="name">{t("community.name")}</Label>
@@ -729,7 +769,52 @@ export default function CommunityManagement() {
                 </div>
               </CardContent>
             </Card>
-            </div>
+              </TabsContent>
+
+              {/* Rotation Tab - Only for paid Church Account communities */}
+              {hasRotationFeature && (
+                <TabsContent value="rotation">
+                  <CommunityTeamRotationTab 
+                    communityId={id!}
+                    churchAccountId={community?.church_account_id}
+                    isAdmin={canManage}
+                  />
+                </TabsContent>
+              )}
+
+              {/* Settings Tab - Only for managers */}
+              {canManage && (
+                <TabsContent value="settings" className="space-y-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{t("community.editCommunity")}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label htmlFor="name">{t("community.name")}</Label>
+                        <Input
+                          id="name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="description">{t("community.description")}</Label>
+                        <Textarea
+                          id="description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <Button onClick={() => updateMutation.mutate()}>
+                        {t("common.save")}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
+            </Tabs>
           </div>
         </div>
       </TooltipProvider>
