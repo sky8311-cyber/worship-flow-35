@@ -29,6 +29,7 @@ import { Home } from "lucide-react";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetPositionsManager";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -150,7 +151,7 @@ const SetBuilder = () => {
         .from("community_members")
         .select(`
           community_id,
-          worship_communities(id, name)
+          worship_communities(id, name, church_account_id)
         `)
         .eq("user_id", user.id);
       
@@ -159,6 +160,10 @@ const SetBuilder = () => {
     },
     enabled: !!user,
   });
+
+  // Get church_account_id for the selected community
+  const selectedCommunity = userCommunities?.find((c: any) => c.id === formData.community_id);
+  const churchAccountId = selectedCommunity?.church_account_id;
 
   // Phase 2: Permission check and redirect logic
   useEffect(() => {
@@ -837,6 +842,15 @@ const SetBuilder = () => {
 
             {/* Worship Components Palette */}
             <WorshipComponentPalette onAddComponent={handleAddComponent} />
+
+            {/* Team Positions Manager - only for church accounts */}
+            {id && churchAccountId && (
+              <WorshipSetPositionsManager
+                serviceSetId={id}
+                communityId={formData.community_id}
+                churchAccountId={churchAccountId}
+              />
+            )}
           </div>
 
           {/* Main Content - Items List */}

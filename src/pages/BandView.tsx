@@ -25,6 +25,7 @@ import {
   Users, MessagesSquare, Circle
 } from "lucide-react";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -328,6 +329,9 @@ const BandView = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Team Positions Sign-up */}
+        {id && <PositionSignupCard serviceSetId={id} />}
 
         {/* Items List (Songs + Components) */}
         <div className="space-y-6">
