@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, CheckCircle } from "lucide-react";
 
 interface CreateChurchAccountDialogProps {
   open: boolean;
@@ -24,10 +25,15 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
   const [description, setDescription] = useState("");
   const [website, setWebsite] = useState("");
   const [billingEmail, setBillingEmail] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("Not authenticated");
+      
+      // Calculate trial end date (30 days from now)
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 30);
       
       const { data, error } = await supabase
         .from("church_accounts")
@@ -37,6 +43,8 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
           website: website || null,
           billing_email: billingEmail || user.email,
           owner_id: user.id,
+          subscription_status: "trial",
+          trial_ends_at: trialEndsAt.toISOString(),
         })
         .select()
         .single();
@@ -45,7 +53,7 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
       return data;
     },
     onSuccess: () => {
-      toast.success(language === "ko" ? "교회 계정이 생성되었습니다" : "Church account created");
+      toast.success(language === "ko" ? "교회 계정이 생성되었습니다. 30일 무료 체험이 시작되었습니다!" : "Church account created. Your 30-day free trial has started!");
       onOpenChange(false);
       onSuccess();
       // Reset form
@@ -53,15 +61,24 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
       setDescription("");
       setWebsite("");
       setBillingEmail("");
+      setAcceptedTerms(false);
     },
     onError: (error: any) => {
       toast.error(error.message || (language === "ko" ? "생성 중 오류가 발생했습니다" : "Failed to create"));
     },
   });
 
+  const features = [
+    language === "ko" ? "커스텀 역할 라벨" : "Custom role labels",
+    language === "ko" ? "팀 로테이션 시스템" : "Team rotation system",
+    language === "ko" ? "포지션 사인업 관리" : "Position sign-up management",
+    language === "ko" ? "화이트 라벨 브랜딩" : "White-label branding",
+    language === "ko" ? "커스텀 도메인 연결" : "Custom domain connection",
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5" />
@@ -69,8 +86,8 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
           </DialogTitle>
           <DialogDescription>
             {language === "ko"
-              ? "교회 단위로 여러 예배공동체와 팀원을 관리할 수 있습니다. 30일 무료 체험이 제공됩니다."
-              : "Manage multiple communities and team members at the church level. Includes a 30-day free trial."}
+              ? "30일 무료 체험으로 교회 계정의 모든 기능을 사용해 보세요."
+              : "Start your 30-day free trial and explore all Church Account features."}
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +120,7 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={language === "ko" ? "교회에 대한 간단한 설명" : "Brief description of your church"}
-              rows={3}
+              rows={2}
             />
           </div>
 
@@ -131,31 +148,43 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
               onChange={(e) => setBillingEmail(e.target.value)}
               placeholder={user?.email || "billing@yourchurch.org"}
             />
-            <p className="text-xs text-muted-foreground">
-              {language === "ko"
-                ? "결제 관련 알림을 받을 이메일 주소입니다."
-                : "Email address for billing notifications."}
-            </p>
           </div>
 
-          <div className="p-3 bg-muted rounded-lg text-sm">
-            <p className="font-medium mb-1">
-              {language === "ko" ? "무료 체험 포함" : "Free Trial Included"}
+          {/* Trial Features Summary */}
+          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <p className="font-medium text-sm mb-2 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-primary" />
+              {language === "ko" ? "30일 무료 체험에 포함된 기능" : "Features included in 30-day trial"}
             </p>
-            <ul className="text-muted-foreground space-y-1">
-              <li>• {language === "ko" ? "30일 무료 체험" : "30-day free trial"}</li>
-              <li>• {language === "ko" ? "최대 5명 시트" : "Up to 5 seats"}</li>
-              <li>• {language === "ko" ? "모든 기능 이용 가능" : "Access to all features"}</li>
+            <ul className="text-xs text-muted-foreground space-y-1">
+              {features.map((feature, idx) => (
+                <li key={idx}>• {feature}</li>
+              ))}
             </ul>
+          </div>
+
+          {/* Trial Terms Acceptance */}
+          <div className="flex items-start space-x-3 p-3 bg-muted rounded-lg">
+            <Checkbox
+              id="acceptTerms"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+              className="mt-0.5"
+            />
+            <Label htmlFor="acceptTerms" className="text-xs leading-relaxed cursor-pointer">
+              {language === "ko" 
+                ? "30일 무료 체험 이후에는 교회 계정 기능을 계속 사용하려면 월 $39.99의 구독이 필요합니다. 체험 기간 중 언제든지 취소할 수 있으며, 신용카드는 필요하지 않습니다."
+                : "I understand that after the 30-day free trial, a subscription of $39.99/month is required to continue using Church Account features. I can cancel anytime during the trial period. No credit card required."}
+            </Label>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {language === "ko" ? "취소" : "Cancel"}
             </Button>
-            <Button type="submit" disabled={!name || createMutation.isPending}>
+            <Button type="submit" disabled={!name || !acceptedTerms || createMutation.isPending}>
               {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {language === "ko" ? "만들기" : "Create"}
+              {language === "ko" ? "체험 시작하기" : "Start Free Trial"}
             </Button>
           </div>
         </form>

@@ -57,6 +57,18 @@ export default function ChurchAccount() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<ChurchAccount | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showPlanSelectionDialog, setShowPlanSelectionDialog] = useState(false);
+
+  // Handler for "Create Church Account" button - show plan selection first
+  const handleCreateClick = () => {
+    setShowPlanSelectionDialog(true);
+  };
+
+  // Handler when user accepts trial from plan dialog
+  const handleStartTrialFromPlan = () => {
+    setShowPlanSelectionDialog(false);
+    setShowCreateDialog(true);
+  };
 
   // Fetch church accounts user belongs to
   const { data: churchAccounts, isLoading } = useQuery({
@@ -163,7 +175,7 @@ export default function ChurchAccount() {
                 : "Manage multiple communities and team members at the church level"}
             </p>
           </div>
-          <Button onClick={() => setShowCreateDialog(true)} className="gap-2 w-full sm:w-auto">
+          <Button onClick={handleCreateClick} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             <span className="sm:inline">{language === "ko" ? "교회 계정 만들기" : "Create Church Account"}</span>
           </Button>
@@ -192,7 +204,7 @@ export default function ChurchAccount() {
                   ? "교회 계정을 만들어 여러 예배공동체와 팀원을 통합 관리하세요."
                   : "Create a church account to manage multiple communities and team members together."}
               </p>
-              <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+              <Button onClick={handleCreateClick} className="gap-2">
                 <Plus className="w-4 h-4" />
                 {language === "ko" ? "첫 교회 계정 만들기" : "Create Your First Church Account"}
               </Button>
@@ -434,6 +446,7 @@ export default function ChurchAccount() {
           }}
         />
 
+        {/* Upgrade dialog for existing accounts */}
         <UpgradePlanDialog 
           open={showUpgradeDialog} 
           onOpenChange={setShowUpgradeDialog}
@@ -466,6 +479,14 @@ export default function ChurchAccount() {
             }
             setShowUpgradeDialog(false);
           }}
+        />
+
+        {/* Plan selection dialog for new account creation */}
+        <UpgradePlanDialog 
+          open={showPlanSelectionDialog} 
+          onOpenChange={setShowPlanSelectionDialog}
+          onStartTrial={handleStartTrialFromPlan}
+          onSubscribe={handleStartTrialFromPlan}
         />
       </div>
     </AppLayout>
