@@ -643,13 +643,13 @@ const SetBuilder = () => {
 
             {/* Save as Template button */}
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => setShowSaveTemplate(true)}
-              disabled={items.filter(i => i.type === "component").length === 0}
+              className="gap-1.5"
             >
-              <FileText className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
+              <FileText className="w-4 h-4" />
+              {language === "ko" ? "템플릿 저장" : "Save Template"}
             </Button>
             
             <Button 
