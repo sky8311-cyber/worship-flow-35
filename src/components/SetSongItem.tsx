@@ -7,10 +7,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp, Download } from "lucide-react";
-import { useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
+import { SongDialog } from "./SongDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SetSongItemProps {
   setSong: any;
@@ -22,7 +26,9 @@ interface SetSongItemProps {
 export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: index });
   const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -33,6 +39,47 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
   const hasImportedLyrics = Boolean(setSong.lyrics && setSong.lyrics.trim());
   const songHasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
 
+  // Get available key variations from song_scores
+  const keyVariations = useMemo(() => {
+    const variations: { key: string; scoreUrl: string | null }[] = [];
+    
+    // Add variations from song_scores
+    if (song?.song_scores && song.song_scores.length > 0) {
+      const uniqueKeys = new Map<string, string>();
+      song.song_scores.forEach((score: any) => {
+        if (score.key && !uniqueKeys.has(score.key)) {
+          uniqueKeys.set(score.key, score.file_url);
+        }
+      });
+      uniqueKeys.forEach((url, key) => {
+        variations.push({ key, scoreUrl: url });
+      });
+    }
+    
+    // Add default key if not already in variations and has legacy score_file_url
+    if (song?.default_key && !variations.find(v => v.key === song.default_key)) {
+      variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url || null });
+    }
+    
+    return variations;
+  }, [song]);
+
+  const handleKeyVariationChange = (key: string) => {
+    const variation = keyVariations.find(v => v.key === key);
+    onUpdate(index, { 
+      key, 
+      override_score_file_url: variation?.scoreUrl || null 
+    });
+  };
+
+  const handleEditDialogClose = () => {
+    setShowEditDialog(false);
+    queryClient.invalidateQueries({ queryKey: ["set-songs"] });
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+  };
+
+  // Get the current score URL (override or default)
+  const currentScoreUrl = setSong.override_score_file_url || song?.score_file_url;
   const handleCopyLyrics = () => {
     if (setSong.lyrics) {
       navigator.clipboard.writeText(setSong.lyrics);
@@ -66,22 +113,64 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
             </div>
 
             <div className="flex-1 space-y-3">
-              <div>
-                <h4 className="font-semibold text-foreground">{song?.title}</h4>
-                {song?.artist && (
-                  <p className="text-sm text-muted-foreground">{song.artist}</p>
-                )}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="font-semibold text-foreground">{song?.title}</h4>
+                  {song?.artist && (
+                    <p className="text-sm text-muted-foreground">{song.artist}</p>
+                  )}
+                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        onClick={() => setShowEditDialog(true)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>곡 편집</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">키</label>
-                  <Input
-                    value={setSong.key || ""}
-                    onChange={(e) => onUpdate(index, { key: e.target.value })}
-                    placeholder={song?.default_key || "키 입력"}
-                    className="mt-1"
-                  />
+                  {keyVariations.length > 0 ? (
+                    <Select 
+                      value={setSong.key || ""} 
+                      onValueChange={handleKeyVariationChange}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder={song?.default_key || "키 선택"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {keyVariations.map((variation) => (
+                          <SelectItem key={variation.key} value={variation.key}>
+                            <div className="flex items-center gap-2">
+                              <span>{variation.key}</span>
+                              {variation.scoreUrl && (
+                                <FileText className="w-3 h-3 text-muted-foreground" />
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      value={setSong.key || ""}
+                      onChange={(e) => onUpdate(index, { key: e.target.value })}
+                      placeholder={song?.default_key || "키 입력"}
+                      className="mt-1"
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>
@@ -193,11 +282,11 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
                     유튜브
                   </Button>
                 )}
-                {song?.score_file_url && (
+                {currentScoreUrl && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(song.score_file_url, "_blank")}
+                    onClick={() => window.open(currentScoreUrl, "_blank")}
                   >
                     <FileText className="w-4 h-4 mr-1" />
                     악보
@@ -219,6 +308,13 @@ export const SetSongItem = ({ setSong, index, onRemove, onUpdate }: SetSongItemP
           </div>
         </CardContent>
       </Card>
+
+      <SongDialog 
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        song={song}
+        onClose={handleEditDialogClose}
+      />
     </div>
   );
 };

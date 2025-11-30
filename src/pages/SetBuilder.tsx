@@ -100,7 +100,7 @@ const SetBuilder = () => {
         .from("set_songs")
         .select(`
           *,
-          songs(*)
+          songs(*, song_scores(id, key, file_url, page_number, position))
         `)
         .eq("service_set_id", id)
         .order("position", { ascending: true });
@@ -382,22 +382,20 @@ const SetBuilder = () => {
     },
   });
 
-  const handleAddSong = (songOrSongs: any) => {
-    // Handle both single song and array of songs
-    const songsToAdd = Array.isArray(songOrSongs) ? songOrSongs : [songOrSongs];
-    
-    const newSetSongs = songsToAdd.map(song => ({
+  const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
+    // Single song addition with optional key variation
+    const newSetSong = {
       song,
       song_id: song.id,
-      key: song.default_key,
+      key: selectedKey || song.default_key,
       custom_notes: "",
-      override_score_file_url: null,
+      override_score_file_url: selectedScoreUrl || null,
       override_youtube_url: null,
       lyrics: null, // Lyrics are imported on-demand in SetSongItem
-    }));
+    };
     
-    setSongs(prev => [...prev, ...newSetSongs]);
-    setShowSongSelector(false);
+    setSongs(prev => [...prev, newSetSong]);
+    // Don't close selector here - let bulk add close it
   };
 
   const handleRemoveSong = (index: number) => {
