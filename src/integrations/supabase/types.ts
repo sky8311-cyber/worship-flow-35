@@ -202,6 +202,7 @@ export type Database = {
           id: string
           name: string
           name_ko: string | null
+          permission_level: string | null
           position: number | null
           updated_at: string | null
         }
@@ -214,6 +215,7 @@ export type Database = {
           id?: string
           name: string
           name_ko?: string | null
+          permission_level?: string | null
           position?: number | null
           updated_at?: string | null
         }
@@ -226,6 +228,7 @@ export type Database = {
           id?: string
           name?: string
           name_ko?: string | null
+          permission_level?: string | null
           position?: number | null
           updated_at?: string | null
         }
@@ -235,6 +238,98 @@ export type Database = {
             columns: ["church_account_id"]
             isOneToOne: false
             referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_role_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          community_id: string
+          id: string
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          community_id: string
+          id?: string
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          community_id?: string
+          id?: string
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_role_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "church_role_assignments_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "church_role_assignments_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "church_custom_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "church_role_assignments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_role_communities: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          id: string
+          role_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          id?: string
+          role_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          id?: string
+          role_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_role_communities_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "church_role_communities_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "church_custom_roles"
             referencedColumns: ["id"]
           },
         ]
@@ -1048,6 +1143,7 @@ export type Database = {
       team_rotation_schedules: {
         Row: {
           church_account_id: string
+          community_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -1060,6 +1156,7 @@ export type Database = {
         }
         Insert: {
           church_account_id: string
+          community_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -1072,6 +1169,7 @@ export type Database = {
         }
         Update: {
           church_account_id?: string
+          community_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -1088,6 +1186,13 @@ export type Database = {
             columns: ["church_account_id"]
             isOneToOne: false
             referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_rotation_schedules_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
             referencedColumns: ["id"]
           },
         ]
@@ -1509,6 +1614,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_church_roles: {
+        Args: { _church_account_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
