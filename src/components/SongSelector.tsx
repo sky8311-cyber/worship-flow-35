@@ -131,6 +131,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
       description: `${selectedSongs.length}곡을 예배세트에 추가했습니다`,
     });
     setSelectedSongs([]);
+    onClose(); // Auto-close after adding
   };
 
   const handleEditSong = (song: any, e: React.MouseEvent) => {
