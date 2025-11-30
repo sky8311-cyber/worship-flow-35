@@ -7,7 +7,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Search, Plus, Music, Youtube, FileText, ChevronLeft, ChevronRight, Check, Pencil } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
@@ -18,10 +18,16 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
+interface SelectedSongWithVariation {
+  song: any;
+  selectedKey?: string;
+  selectedScoreUrl?: string;
+}
+
 interface SongSelectorProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (song: any) => void;
+  onSelect: (song: any, selectedKey?: string, selectedScoreUrl?: string) => void;
 }
 
 export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => {
@@ -31,7 +37,8 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [selectedScoreIndexes, setSelectedScoreIndexes] = useState<Record<string, number>>({});
   const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [previewSong, setPreviewSong] = useState<any>(null);
-  const [selectedSongs, setSelectedSongs] = useState<any[]>([]);
+  const [selectedSongs, setSelectedSongs] = useState<SelectedSongWithVariation[]>([]);
+  const [editSong, setEditSong] = useState<any>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
@@ -99,23 +106,26 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
     }));
   };
 
-  const toggleSongSelection = (song: any) => {
+  const toggleSongSelection = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
     setSelectedSongs(prev => {
-      const isSelected = prev.some(s => s.id === song.id);
+      const isSelected = prev.some(s => s.song.id === song.id);
       if (isSelected) {
-        return prev.filter(s => s.id !== song.id);
+        return prev.filter(s => s.song.id !== song.id);
       } else {
-        return [...prev, song];
+        return [...prev, { song, selectedKey, selectedScoreUrl }];
       }
     });
   };
 
   const isSongSelected = (songId: string) => {
-    return selectedSongs.some(s => s.id === songId);
+    return selectedSongs.some(s => s.song.id === songId);
   };
 
   const handleBulkAddToSet = () => {
-    onSelect(selectedSongs);
+    // Pass songs with their selected key variations
+    selectedSongs.forEach(({ song, selectedKey, selectedScoreUrl }) => {
+      onSelect(song, selectedKey, selectedScoreUrl);
+    });
     toast({
       title: "성공",
       description: `${selectedSongs.length}곡을 예배세트에 추가했습니다`,
@@ -123,8 +133,14 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
     setSelectedSongs([]);
   };
 
+  const handleEditSong = (song: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditSong(song);
+  };
+
   const handleSongDialogClose = () => {
     setShowSongDialog(false);
+    setEditSong(null);
     queryClient.invalidateQueries({ queryKey: ["songs-selector"] });
   };
 
@@ -370,13 +386,30 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                             유튜브
                           </Button>
                         )}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={(e) => handleEditSong(song, e)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>곡 편집</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Button 
                           size="sm" 
                           variant={isSongSelected(song.id) ? "default" : "outline"}
                           className="flex-1 relative"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleSongSelection(song);
+                            // Pass currently selected key variation when adding
+                            toggleSongSelection(song, currentKey, currentScoreUrl || undefined);
                           }}
                         >
                           {isSongSelected(song.id) ? (
@@ -387,7 +420,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                           ) : (
                             <>
                               <Plus className="w-4 h-4 mr-1" />
-                              추가
+                              추가 {currentKey && `(${currentKey})`}
                             </>
                           )}
                         </Button>
@@ -406,9 +439,14 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
       </DialogContent>
 
       <SongDialog 
-        open={showSongDialog}
-        onOpenChange={setShowSongDialog}
-        song={undefined}
+        open={showSongDialog || !!editSong}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowSongDialog(false);
+            setEditSong(null);
+          }
+        }}
+        song={editSong}
         onClose={handleSongDialogClose}
       />
 
