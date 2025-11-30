@@ -110,30 +110,30 @@ export default function ChurchAccount() {
   const getStatusBadge = (status: string, trialEndsAt?: string | null) => {
     const isTrialValid = status === "trial" && trialEndsAt && new Date(trialEndsAt) > new Date();
     if (isTrialValid) {
-      return <Badge variant="secondary">{language === "ko" ? "체험판" : "Trial"}</Badge>;
+      return <Badge variant="secondary">{t("churchAccount.statusTrial")}</Badge>;
     }
     switch (status) {
       case "active":
-        return <Badge className="bg-green-500">{language === "ko" ? "활성" : "Active"}</Badge>;
+        return <Badge className="bg-green-500">{t("churchAccount.statusActive")}</Badge>;
       case "trial":
-        return <Badge variant="outline" className="text-destructive border-destructive">{language === "ko" ? "만료됨" : "Expired"}</Badge>;
+        return <Badge variant="outline" className="text-destructive border-destructive">{t("churchAccount.statusExpired")}</Badge>;
       case "past_due":
-        return <Badge variant="destructive">{language === "ko" ? "결제 지연" : "Past Due"}</Badge>;
+        return <Badge variant="destructive">{t("churchAccount.statusPastDue")}</Badge>;
       case "canceled":
-        return <Badge variant="outline">{language === "ko" ? "취소됨" : "Canceled"}</Badge>;
+        return <Badge variant="outline">{t("churchAccount.statusCanceled")}</Badge>;
       default:
-        return <Badge variant="outline">{language === "ko" ? "미구독" : "Not Subscribed"}</Badge>;
+        return <Badge variant="outline">{t("churchAccount.statusNotSubscribed")}</Badge>;
     }
   };
 
   const getRoleBadge = (role: string | null | undefined) => {
     switch (role) {
       case "owner":
-        return <Badge className="bg-yellow-500"><Crown className="w-3 h-3 mr-1" />{language === "ko" ? "소유자" : "Owner"}</Badge>;
+        return <Badge className="bg-yellow-500"><Crown className="w-3 h-3 mr-1" />{t("churchAccount.owner")}</Badge>;
       case "admin":
-        return <Badge className="bg-blue-500"><Shield className="w-3 h-3 mr-1" />{language === "ko" ? "관리자" : "Admin"}</Badge>;
+        return <Badge className="bg-blue-500"><Shield className="w-3 h-3 mr-1" />{t("churchAccount.admin")}</Badge>;
       default:
-        return <Badge variant="outline"><User className="w-3 h-3 mr-1" />{language === "ko" ? "멤버" : "Member"}</Badge>;
+        return <Badge variant="outline"><User className="w-3 h-3 mr-1" />{t("churchAccount.member")}</Badge>;
     }
   };
 
@@ -145,12 +145,10 @@ export default function ChurchAccount() {
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h2 className="text-xl font-semibold mb-2">
-                {language === "ko" ? "예배인도자 전용 기능" : "Worship Leader Feature"}
+                {t("churchAccount.worshipLeaderOnly")}
               </h2>
               <p className="text-muted-foreground">
-                {language === "ko" 
-                  ? "교회 계정 기능은 예배인도자만 사용할 수 있습니다."
-                  : "Church Account feature is only available for Worship Leaders."}
+                {t("churchAccount.worshipLeaderOnlyDesc")}
               </p>
             </CardContent>
           </Card>
@@ -167,17 +165,15 @@ export default function ChurchAccount() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Building2 className="w-6 h-6" />
-              {language === "ko" ? "교회 계정" : "Church Account"}
+              {t("churchAccount.title")}
             </h1>
             <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-              {language === "ko" 
-                ? "교회 단위로 여러 예배공동체와 팀원을 관리하세요"
-                : "Manage multiple communities and team members at the church level"}
+              {t("churchAccount.manageMultiple")}
             </p>
           </div>
           <Button onClick={handleCreateClick} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
-            <span className="sm:inline">{language === "ko" ? "교회 계정 만들기" : "Create Church Account"}</span>
+            <span className="sm:inline">{t("churchAccount.create")}</span>
           </Button>
         </div>
 
@@ -197,16 +193,14 @@ export default function ChurchAccount() {
             <CardContent className="py-12 text-center">
               <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">
-                {language === "ko" ? "교회 계정이 없습니다" : "No Church Accounts"}
+                {t("churchAccount.noChurchAccounts")}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {language === "ko" 
-                  ? "교회 계정을 만들어 여러 예배공동체와 팀원을 통합 관리하세요."
-                  : "Create a church account to manage multiple communities and team members together."}
+                {t("churchAccount.noChurchAccountsDesc")}
               </p>
               <Button onClick={handleCreateClick} className="gap-2">
                 <Plus className="w-4 h-4" />
-                {language === "ko" ? "첫 교회 계정 만들기" : "Create Your First Church Account"}
+                {t("churchAccount.createFirst")}
               </Button>
             </CardContent>
           </Card>
@@ -259,7 +253,7 @@ export default function ChurchAccount() {
               className="mb-4"
               onClick={() => setSelectedAccount(null)}
             >
-              ← {language === "ko" ? "목록으로" : "Back to list"}
+              ← {t("churchAccount.backToList")}
             </Button>
 
             {/* Selected account header */}
@@ -290,7 +284,7 @@ export default function ChurchAccount() {
                       {selectedAccount.used_seats}/{selectedAccount.max_seats}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {language === "ko" ? "사용 중인 시트" : "Seats used"}
+                      {t("churchAccount.seatsUsed")}
                     </p>
                   </div>
                 </div>
@@ -355,15 +349,13 @@ export default function ChurchAccount() {
                     <CardContent className="py-12 text-center">
                       <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">
-                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                        {t("churchAccount.subscriptionRequired")}
                       </h3>
                       <p className="text-muted-foreground mb-4">
-                        {language === "ko" 
-                          ? "커스텀 역할 기능을 사용하려면 교회 계정 구독이 필요합니다."
-                          : "Subscribe to Church Account to use custom roles feature."}
+                        {t("churchAccount.customRolesRequired")}
                       </p>
                       <Button onClick={() => setShowUpgradeDialog(true)}>
-                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                        {t("churchAccount.choosePlanButton")}
                       </Button>
                     </CardContent>
                   </Card>
@@ -391,15 +383,13 @@ export default function ChurchAccount() {
                     <CardContent className="py-12 text-center">
                       <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">
-                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                        {t("churchAccount.subscriptionRequired")}
                       </h3>
                       <p className="text-muted-foreground mb-4">
-                        {language === "ko" 
-                          ? "커스텀 도메인 기능을 사용하려면 교회 계정 구독이 필요합니다."
-                          : "Subscribe to Church Account to use custom domain feature."}
+                        {t("churchAccount.customDomainRequired")}
                       </p>
                       <Button onClick={() => setShowUpgradeDialog(true)}>
-                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                        {t("churchAccount.choosePlanButton")}
                       </Button>
                     </CardContent>
                   </Card>
@@ -420,15 +410,13 @@ export default function ChurchAccount() {
                     <CardContent className="py-12 text-center">
                       <Lock className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">
-                        {language === "ko" ? "구독이 필요한 기능" : "Subscription Required"}
+                        {t("churchAccount.subscriptionRequired")}
                       </h3>
                       <p className="text-muted-foreground mb-4">
-                        {language === "ko" 
-                          ? "브랜딩 설정 기능을 사용하려면 교회 계정 구독이 필요합니다."
-                          : "Subscribe to Church Account to use branding settings."}
+                        {t("churchAccount.brandingRequired")}
                       </p>
                       <Button onClick={() => setShowUpgradeDialog(true)}>
-                        {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                        {t("churchAccount.choosePlanButton")}
                       </Button>
                     </CardContent>
                   </Card>
