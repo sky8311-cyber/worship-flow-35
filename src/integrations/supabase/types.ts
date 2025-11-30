@@ -119,7 +119,10 @@ export type Database = {
         Row: {
           billing_email: string | null
           created_at: string | null
+          custom_domain: string | null
           description: string | null
+          domain_status: string | null
+          domain_verified_at: string | null
           id: string
           logo_url: string | null
           max_seats: number
@@ -138,7 +141,10 @@ export type Database = {
         Insert: {
           billing_email?: string | null
           created_at?: string | null
+          custom_domain?: string | null
           description?: string | null
+          domain_status?: string | null
+          domain_verified_at?: string | null
           id?: string
           logo_url?: string | null
           max_seats?: number
@@ -157,7 +163,10 @@ export type Database = {
         Update: {
           billing_email?: string | null
           created_at?: string | null
+          custom_domain?: string | null
           description?: string | null
+          domain_status?: string | null
+          domain_verified_at?: string | null
           id?: string
           logo_url?: string | null
           max_seats?: number
@@ -944,6 +953,144 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      team_rotation_assignments: {
+        Row: {
+          assigned_date: string
+          created_at: string | null
+          id: string
+          rotation_index: number
+          rotation_schedule_id: string
+          service_set_id: string | null
+        }
+        Insert: {
+          assigned_date: string
+          created_at?: string | null
+          id?: string
+          rotation_index?: number
+          rotation_schedule_id: string
+          service_set_id?: string | null
+        }
+        Update: {
+          assigned_date?: string
+          created_at?: string | null
+          id?: string
+          rotation_index?: number
+          rotation_schedule_id?: string
+          service_set_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_rotation_assignments_rotation_schedule_id_fkey"
+            columns: ["rotation_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "team_rotation_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_rotation_assignments_service_set_id_fkey"
+            columns: ["service_set_id"]
+            isOneToOne: false
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_rotation_members: {
+        Row: {
+          created_at: string | null
+          id: string
+          role_id: string | null
+          rotation_order: number
+          rotation_schedule_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role_id?: string | null
+          rotation_order?: number
+          rotation_schedule_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role_id?: string | null
+          rotation_order?: number
+          rotation_schedule_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_rotation_members_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "church_custom_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_rotation_members_rotation_schedule_id_fkey"
+            columns: ["rotation_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "team_rotation_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_rotation_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_rotation_schedules: {
+        Row: {
+          church_account_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          name_ko: string | null
+          rotation_pattern: string
+          rotation_start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          church_account_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          name_ko?: string | null
+          rotation_pattern?: string
+          rotation_start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          church_account_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          name_ko?: string | null
+          rotation_pattern?: string
+          rotation_start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_rotation_schedules_church_account_id_fkey"
+            columns: ["church_account_id"]
+            isOneToOne: false
+            referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_components: {
         Row: {
