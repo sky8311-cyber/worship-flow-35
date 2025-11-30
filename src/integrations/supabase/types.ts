@@ -76,6 +76,107 @@ export type Database = {
           },
         ]
       }
+      church_account_members: {
+        Row: {
+          church_account_id: string
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          church_account_id: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          church_account_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_account_members_church_account_id_fkey"
+            columns: ["church_account_id"]
+            isOneToOne: false
+            referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "church_account_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      church_accounts: {
+        Row: {
+          billing_email: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          logo_url: string | null
+          max_seats: number
+          name: string
+          owner_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string
+          trial_ends_at: string | null
+          updated_at: string | null
+          used_seats: number
+          website: string | null
+        }
+        Insert: {
+          billing_email?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          max_seats?: number
+          name: string
+          owner_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          used_seats?: number
+          website?: string | null
+        }
+        Update: {
+          billing_email?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          max_seats?: number
+          name?: string
+          owner_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          used_seats?: number
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "church_accounts_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_invitations: {
         Row: {
           community_id: string
@@ -924,6 +1025,7 @@ export type Database = {
       worship_communities: {
         Row: {
           avatar_url: string | null
+          church_account_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -935,6 +1037,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          church_account_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -946,6 +1049,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          church_account_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -955,7 +1059,15 @@ export type Database = {
           name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "worship_communities_church_account_id_fkey"
+            columns: ["church_account_id"]
+            isOneToOne: false
+            referencedRelation: "church_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       worship_leader_applications: {
         Row: {
@@ -1128,6 +1240,14 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_church_account_admin: {
+        Args: { _church_account_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_church_account_member: {
+        Args: { _church_account_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_community_leader: {
         Args: { _community_id: string; _user_id: string }
         Returns: boolean
