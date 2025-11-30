@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +151,15 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <Link to="/admin">
                       <Shield className="mr-2 h-4 w-4" />
                       {t("dashboard.adminMenu")}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
+                {(isWorshipLeader || isAdmin) && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/church-account">
+                      <Building2 className="mr-2 h-4 w-4" />
+                      {language === "ko" ? "교회 계정" : "Church Account"}
                     </Link>
                   </DropdownMenuItem>
                 )}
