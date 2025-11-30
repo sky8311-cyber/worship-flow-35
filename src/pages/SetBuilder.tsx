@@ -633,46 +633,48 @@ const SetBuilder = () => {
             )}
           </div>
           
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {id && (
-              <Button variant="outline" size="sm" onClick={handleCopyLink}>
-                <Share2 className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">팀 링크 복사</span>
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3" onClick={handleCopyLink}>
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline sm:ml-2">팀 링크 복사</span>
               </Button>
             )}
 
             {/* Template buttons - icon only on mobile */}
             <Button
               variant="outline"
-              size="sm"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
               onClick={() => navigate("/templates")}
-              className="gap-1.5"
             >
               <FileText className="w-4 h-4" />
-              <span className="hidden sm:inline">{language === "ko" ? "템플릿" : "Templates"}</span>
+              <span className="hidden sm:inline sm:ml-2">{language === "ko" ? "템플릿" : "Templates"}</span>
             </Button>
             <Button
               variant="secondary"
-              size="sm"
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
               onClick={() => setShowSaveTemplate(true)}
-              className="gap-1.5"
             >
               <Copy className="w-4 h-4" />
-              <span className="hidden sm:inline">{language === "ko" ? "템플릿 저장" : "Save as Template"}</span>
+              <span className="hidden sm:inline sm:ml-2">{language === "ko" ? "저장" : "Save"}</span>
             </Button>
             
             <Button 
               variant="outline" 
-              size="sm" 
+              size="icon"
+              className="h-8 w-8 sm:h-9 sm:w-auto sm:px-3"
               onClick={() => saveSetMutation.mutate(undefined)}
               disabled={saveSetMutation.isPending}
             >
-              <Save className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline sm:ml-2">{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
             </Button>
             
             <Button 
               size="sm" 
+              className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-4"
               onClick={handlePublishToggle}
               disabled={saveSetMutation.isPending}
             >
