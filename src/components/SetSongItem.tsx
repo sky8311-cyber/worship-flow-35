@@ -14,6 +14,7 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
+import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface SetSongItemProps {
@@ -32,6 +33,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showScorePreview, setShowScorePreview] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -305,11 +307,11 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     유튜브
                   </Button>
                 )}
-                {currentScoreUrl && (
+                {(currentScoreUrl || song?.id) && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(currentScoreUrl, "_blank")}
+                    onClick={() => setShowScorePreview(true)}
                   >
                     <FileText className="w-4 h-4 mr-1" />
                     악보
@@ -337,6 +339,14 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         onOpenChange={setShowEditDialog}
         song={song}
         onClose={handleEditDialogClose}
+      />
+
+      <ScorePreviewDialog
+        open={showScorePreview}
+        onOpenChange={setShowScorePreview}
+        scoreUrl={currentScoreUrl}
+        songTitle={song?.title || ""}
+        songId={song?.id}
       />
     </div>
   );
