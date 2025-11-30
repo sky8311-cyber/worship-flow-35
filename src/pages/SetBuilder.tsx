@@ -635,7 +635,7 @@ const SetBuilder = () => {
         </div>
         
         {/* Action buttons - separate row on mobile */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
           {id && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
               <Share2 className="w-4 h-4 shrink-0" />
