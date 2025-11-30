@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Users, Music, Building2, Sparkles } from "lucide-react";
-import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UpgradePlanDialogProps {
   open: boolean;
@@ -15,9 +15,9 @@ interface UpgradePlanDialogProps {
 }
 
 export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscribe }: UpgradePlanDialogProps) {
-  const { language } = useLanguageContext();
+  const { t } = useTranslation();
   const { isWorshipLeader, isAdmin } = useAuth();
-  const { isSubscriptionActive, isInTrial, canStartTrial, subscriptionStatus } = useChurchSubscription();
+  const { isSubscriptionActive, isInTrial, canStartTrial } = useChurchSubscription();
 
   // Determine current plan
   const getCurrentPlan = () => {
@@ -32,48 +32,42 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
   const plans = [
     {
       id: "member",
-      name: language === "ko" ? "팀 멤버" : "Team Member",
-      price: language === "ko" ? "무료" : "Free",
-      description: language === "ko" 
-        ? "예배공동체에 참여하고 워십세트를 확인하세요"
-        : "Join communities and view worship sets",
+      name: t("churchAccount.planMember"),
+      price: t("churchAccount.planMemberPrice"),
+      description: t("churchAccount.planMemberDescription"),
       features: [
-        language === "ko" ? "예배공동체 가입" : "Join worship communities",
-        language === "ko" ? "게시된 워십세트 보기" : "View published worship sets",
-        language === "ko" ? "팀 소통" : "Team communication",
+        t("churchAccount.featureJoinCommunity"),
+        t("churchAccount.featureViewSets"),
+        t("churchAccount.featureTeamComm"),
       ],
       icon: Users,
       isCurrent: currentPlan === "member",
     },
     {
       id: "worship-leader",
-      name: language === "ko" ? "예배인도자" : "Worship Leader",
-      price: language === "ko" ? "베타 무료" : "Beta Free",
-      description: language === "ko" 
-        ? "예배공동체를 만들고 워십세트를 관리하세요"
-        : "Create communities and manage worship sets",
+      name: t("churchAccount.planWorshipLeader"),
+      price: t("churchAccount.planWorshipLeaderPrice"),
+      description: t("churchAccount.planWorshipLeaderDescription"),
       features: [
-        language === "ko" ? "예배공동체 생성" : "Create worship communities",
-        language === "ko" ? "워십세트 생성 및 관리" : "Create & manage worship sets",
-        language === "ko" ? "곡 라이브러리 관리" : "Manage song library",
-        language === "ko" ? "템플릿 및 반복 예배" : "Templates & recurring sets",
+        t("churchAccount.featureCreateCommunity"),
+        t("churchAccount.featureManageSets"),
+        t("churchAccount.featureManageLibrary"),
+        t("churchAccount.featureTemplates"),
       ],
       icon: Music,
       isCurrent: currentPlan === "worship-leader",
     },
     {
       id: "church",
-      name: language === "ko" ? "교회 계정" : "Church Account",
-      price: "$39.99 / " + (language === "ko" ? "월" : "month"),
-      description: language === "ko" 
-        ? "팀 협업과 고급 기능으로 교회 전체를 관리하세요"
-        : "Manage your entire church with team collaboration",
+      name: t("churchAccount.planChurch"),
+      price: t("churchAccount.planChurchPrice"),
+      description: t("churchAccount.planChurchDescription"),
       features: [
-        language === "ko" ? "커스텀 역할 라벨" : "Custom role labels",
-        language === "ko" ? "팀 로테이션 시스템" : "Team rotation system",
-        language === "ko" ? "포지션 사인업 관리" : "Position sign-up management",
-        language === "ko" ? "화이트 라벨 브랜딩" : "White-label branding",
-        language === "ko" ? "커스텀 도메인 연결" : "Custom domain connection",
+        t("churchAccount.featureCustomRoles"),
+        t("churchAccount.featureTeamRotation"),
+        t("churchAccount.featurePositionSignup"),
+        t("churchAccount.featureWhiteLabel"),
+        t("churchAccount.featureCustomDomain"),
       ],
       icon: Building2,
       isCurrent: currentPlan === "church" || currentPlan === "church-trial",
@@ -87,12 +81,10 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            {language === "ko" ? "플랜 선택" : "Choose Your Plan"}
+            {t("churchAccount.choosePlan")}
           </DialogTitle>
           <DialogDescription>
-            {language === "ko" 
-              ? "교회의 필요에 맞는 플랜을 선택하세요"
-              : "Select the plan that fits your church's needs"}
+            {t("churchAccount.choosePlanDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -106,12 +98,12 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
               >
                 {plan.isCurrent && (
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary">
-                    {language === "ko" ? "현재 플랜" : "Your Plan"}
+                    {t("churchAccount.currentPlan")}
                   </Badge>
                 )}
                 {plan.isHighlighted && !plan.isCurrent && (
                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-accent">
-                    {language === "ko" ? "추천" : "Recommended"}
+                    {t("churchAccount.recommended")}
                   </Badge>
                 )}
                 <CardHeader className="pb-2">
@@ -142,7 +134,7 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
                           className="w-full"
                           variant="default"
                         >
-                          {language === "ko" ? "30일 무료 체험 시작" : "Start 30-Day Free Trial"}
+                          {t("churchAccount.startTrial")}
                         </Button>
                       )}
                       <Button 
@@ -150,7 +142,7 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
                         className="w-full"
                         variant={canStartTrial ? "outline" : "default"}
                       >
-                        {language === "ko" ? "지금 구독하기" : "Subscribe Now"}
+                        {t("churchAccount.subscribeNow")}
                       </Button>
                     </div>
                   )}
@@ -162,7 +154,7 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
                         className="w-full"
                         variant="default"
                       >
-                        {language === "ko" ? "유료 플랜으로 업그레이드" : "Upgrade to Paid Plan"}
+                        {t("churchAccount.upgradeToPaid")}
                       </Button>
                     </div>
                   )}
@@ -173,9 +165,7 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-4">
-          {language === "ko" 
-            ? "30일 무료 체험 - 신용카드 필요 없음"
-            : "30-day free trial - No credit card required"}
+          {t("churchAccount.trialNote")}
         </p>
       </DialogContent>
     </Dialog>

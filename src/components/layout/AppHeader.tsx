@@ -165,12 +165,12 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <Link to="/church-account" className="flex items-center justify-between w-full">
                       <span className="flex items-center">
                         <Building2 className="mr-2 h-4 w-4" />
-                        {language === "ko" ? "교회 계정" : "Church Account"}
+                        {t("churchAccount.title")}
                       </span>
                       {showUpgradeBadge && (
                         <Badge variant="destructive" className="text-xs ml-2 gap-1">
                           <Sparkles className="w-3 h-3" />
-                          {language === "ko" ? "업그레이드" : "+ Upgrade"}
+                          {t("churchAccount.upgrade")}
                         </Badge>
                       )}
                     </Link>

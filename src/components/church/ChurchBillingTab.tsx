@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { CreditCard, ExternalLink, Loader2, CheckCircle, AlertCircle, Sparkles, 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UpgradePlanDialog } from "./UpgradePlanDialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ChurchBillingTabProps {
   churchAccount: {
@@ -24,7 +24,7 @@ interface ChurchBillingTabProps {
 }
 
 export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabProps) {
-  const { language } = useLanguageContext();
+  const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
@@ -45,19 +45,19 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
 
   const getStatusBadge = (status: string) => {
     if (isTrialValid) {
-      return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{language === "ko" ? "체험판" : "Trial"}</Badge>;
+      return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{t("churchAccount.statusTrial")}</Badge>;
     }
     switch (status) {
       case "active":
-        return <Badge className="bg-green-500 gap-1"><CheckCircle className="w-3 h-3" />{language === "ko" ? "활성" : "Active"}</Badge>;
+        return <Badge className="bg-green-500 gap-1"><CheckCircle className="w-3 h-3" />{t("churchAccount.statusActive")}</Badge>;
       case "trial":
-        return <Badge variant="outline" className="gap-1 text-destructive border-destructive"><Lock className="w-3 h-3" />{language === "ko" ? "만료됨" : "Expired"}</Badge>;
+        return <Badge variant="outline" className="gap-1 text-destructive border-destructive"><Lock className="w-3 h-3" />{t("churchAccount.statusExpired")}</Badge>;
       case "past_due":
-        return <Badge variant="destructive">{language === "ko" ? "결제 지연" : "Past Due"}</Badge>;
+        return <Badge variant="destructive">{t("churchAccount.statusPastDue")}</Badge>;
       case "canceled":
-        return <Badge variant="outline">{language === "ko" ? "취소됨" : "Canceled"}</Badge>;
+        return <Badge variant="outline">{t("churchAccount.statusCanceled")}</Badge>;
       default:
-        return <Badge variant="outline" className="gap-1"><Lock className="w-3 h-3" />{language === "ko" ? "미구독" : "Not Subscribed"}</Badge>;
+        return <Badge variant="outline" className="gap-1"><Lock className="w-3 h-3" />{t("churchAccount.statusNotSubscribed")}</Badge>;
     }
   };
 
@@ -78,13 +78,13 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
 
       if (error) throw error;
       
-      toast.success(language === "ko" ? "30일 무료 체험이 시작되었습니다!" : "Your 30-day free trial has started!");
+      toast.success(t("churchAccount.trialStarted"));
       queryClient.invalidateQueries({ queryKey: ["churchAccounts"] });
       queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
       setShowUpgradeDialog(false);
     } catch (error) {
       console.error("Start trial error:", error);
-      toast.error(language === "ko" ? "체험 시작에 실패했습니다" : "Could not start trial");
+      toast.error(t("churchAccount.trialStartFailed"));
     } finally {
       setIsTrialLoading(false);
     }
@@ -103,7 +103,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       }
     } catch (error) {
       console.error("Checkout error:", error);
-      toast.error(language === "ko" ? "결제 페이지를 열 수 없습니다" : "Could not open checkout page");
+      toast.error(t("churchAccount.checkoutFailed"));
     } finally {
       setIsLoading(false);
       setShowUpgradeDialog(false);
@@ -121,7 +121,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       }
     } catch (error) {
       console.error("Portal error:", error);
-      toast.error(language === "ko" ? "결제 관리 페이지를 열 수 없습니다" : "Could not open billing portal");
+      toast.error(t("churchAccount.portalFailed"));
     } finally {
       setIsPortalLoading(false);
     }
@@ -131,6 +131,10 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
     ? Math.max(0, Math.ceil((new Date(churchAccount.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;
 
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US");
+  };
+
   return (
     <div className="space-y-6">
       {/* Start Trial CTA - Show prominently if not subscribed */}
@@ -139,35 +143,33 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              {language === "ko" ? "교회 계정 기능 체험하기" : "Try Church Account Features"}
+              {t("churchAccount.tryFeatures")}
             </CardTitle>
             <CardDescription>
-              {language === "ko" 
-                ? "30일 무료 체험 - 신용카드 없이 지금 바로 시작하세요!"
-                : "30-day free trial - Start now without a credit card!"}
+              {t("churchAccount.trialDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                {language === "ko" ? "커스텀 역할 라벨" : "Custom Role Labels"}
+                {t("churchAccount.featureCustomRoles")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                {language === "ko" ? "팀 로테이션 시스템" : "Team Rotation System"}
+                {t("churchAccount.featureTeamRotation")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                {language === "ko" ? "포지션 사인업 관리" : "Position Sign-up Management"}
+                {t("churchAccount.featurePositionSignup")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                {language === "ko" ? "화이트 라벨 브랜딩" : "White-label Branding"}
+                {t("churchAccount.featureWhiteLabel")}
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                {language === "ko" ? "커스텀 도메인 연결" : "Custom Domain Connection"}
+                {t("churchAccount.featureCustomDomain")}
               </li>
             </ul>
             <Button 
@@ -181,10 +183,10 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}
-              {language === "ko" ? "30일 무료 체험 시작하기" : "Start 30-Day Free Trial"}
+              {t("churchAccount.startTrial")}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
-              {language === "ko" ? "결제 정보 필요 없음" : "No payment information required"}
+              {t("churchAccount.noPaymentRequired")}
             </p>
           </CardContent>
         </Card>
@@ -194,12 +196,10 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
-            {language === "ko" ? "구독 및 결제" : "Subscription & Billing"}
+            {t("churchAccount.subscriptionBilling")}
           </CardTitle>
           <CardDescription>
-            {language === "ko" 
-              ? "교회 계정의 구독 상태와 결제 정보를 관리합니다."
-              : "Manage your church account subscription and billing information."}
+            {t("churchAccount.subscriptionDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -207,9 +207,9 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
           <div className="p-4 border rounded-lg bg-card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="font-semibold text-lg">{language === "ko" ? "K-Worship 교회 계정" : "K-Worship Church Account"}</h4>
+                <h4 className="font-semibold text-lg">K-Worship {t("churchAccount.planChurch")}</h4>
                 <p className="text-sm text-muted-foreground">
-                  {language === "ko" ? "$39.99 / 월" : "$39.99 / month"}
+                  {t("churchAccount.planChurchPrice")}
                 </p>
               </div>
               {getStatusBadge(churchAccount.subscription_status)}
@@ -219,14 +219,10 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
             {isTrialValid && churchAccount.trial_ends_at && (
               <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
                 <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-                  {language === "ko" 
-                    ? `30일 무료 체험 중 (${daysRemaining}일 남음)`
-                    : `30-day free trial (${daysRemaining} days remaining)`}
+                  {t("churchAccount.trialDaysRemaining", { days: daysRemaining })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {language === "ko" 
-                    ? `체험 종료일: ${new Date(churchAccount.trial_ends_at).toLocaleDateString("ko-KR")}`
-                    : `Trial ends: ${new Date(churchAccount.trial_ends_at).toLocaleDateString("en-US")}`}
+                  {t("churchAccount.trialEnds", { date: formatDate(churchAccount.trial_ends_at) })}
                 </p>
               </div>
             )}
@@ -235,9 +231,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
             {churchAccount.subscription_status === "trial" && !isTrialValid && (
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg mb-4">
                 <p className="text-sm font-medium text-destructive">
-                  {language === "ko" 
-                    ? "체험 기간이 종료되었습니다. 기능을 계속 사용하려면 구독해주세요."
-                    : "Your trial has expired. Subscribe to continue using features."}
+                  {t("churchAccount.trialExpiredMessage")}
                 </p>
               </div>
             )}
@@ -245,38 +239,38 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
             {/* Plan Details */}
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground">{language === "ko" ? "최대 시트" : "Max Seats"}</p>
+                <p className="text-muted-foreground">{t("churchAccount.maxSeats")}</p>
                 <p className="font-semibold text-lg">{churchAccount.max_seats}</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground">{language === "ko" ? "사용 중" : "Used"}</p>
+                <p className="text-muted-foreground">{t("churchAccount.usedSeats")}</p>
                 <p className="font-semibold text-lg">{churchAccount.used_seats}</p>
               </div>
             </div>
 
             {/* Features */}
             <div className="mt-4 pt-4 border-t">
-              <p className="text-sm font-medium mb-2">{language === "ko" ? "포함 기능" : "Included Features"}</p>
+              <p className="text-sm font-medium mb-2">{t("churchAccount.includedFeatures")}</p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li className="flex items-center gap-2">
                   {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {language === "ko" ? "커스텀 역할 라벨" : "Custom Role Labels"}
+                  {t("churchAccount.featureCustomRoles")}
                 </li>
                 <li className="flex items-center gap-2">
                   {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {language === "ko" ? "팀 로테이션 시스템" : "Team Rotation System"}
+                  {t("churchAccount.featureTeamRotation")}
                 </li>
                 <li className="flex items-center gap-2">
                   {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {language === "ko" ? "포지션 사인업 관리" : "Position Sign-up Management"}
+                  {t("churchAccount.featurePositionSignup")}
                 </li>
                 <li className="flex items-center gap-2">
                   {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {language === "ko" ? "화이트 라벨 브랜딩" : "White-label Branding"}
+                  {t("churchAccount.featureWhiteLabel")}
                 </li>
                 <li className="flex items-center gap-2">
                   {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {language === "ko" ? "커스텀 도메인 연결" : "Custom Domain Connection"}
+                  {t("churchAccount.featureCustomDomain")}
                 </li>
               </ul>
             </div>
@@ -296,7 +290,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   ) : (
                     <CreditCard className="w-4 h-4" />
                   )}
-                  {language === "ko" ? "유료 플랜으로 업그레이드" : "Upgrade to Paid Plan"}
+                  {t("churchAccount.upgradeToPaid")}
                 </Button>
               ) : churchAccount.subscription_status === "active" && churchAccount.stripe_customer_id ? (
                 <Button 
@@ -310,7 +304,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   ) : (
                     <ExternalLink className="w-4 h-4" />
                   )}
-                  {language === "ko" ? "결제 관리" : "Manage Billing"}
+                  {t("churchAccount.manageBilling")}
                 </Button>
               ) : !canStartTrial ? (
                 <Button 
@@ -318,7 +312,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   className="gap-2 flex-1"
                 >
                   <CreditCard className="w-4 h-4" />
-                  {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}
+                  {t("churchAccount.choosePlanButton")}
                 </Button>
               ) : null}
             </div>
