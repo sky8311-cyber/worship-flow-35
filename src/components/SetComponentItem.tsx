@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
-  GripVertical, X, ChevronDown, ChevronUp, Clock,
+  GripVertical, X, ChevronDown, ChevronUp, Clock, User,
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
   ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
-  Users, MessagesSquare, Circle
+  Users, MessagesSquare, Circle, FileText
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -29,6 +29,8 @@ interface SetComponentItemProps {
     label: string;
     notes?: string;
     duration_minutes?: number;
+    assigned_to?: string;
+    content?: string;
   };
   index: number;
   totalCount: number;
@@ -131,9 +133,31 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                 />
               )}
 
+              {/* Assigned To (담당자) field */}
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <Input
+                  value={component.assigned_to || ""}
+                  onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
+                  placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
+                  className="h-8 text-sm"
+                />
+              </div>
+
+              {/* Content (내용) field */}
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                <Input
+                  value={component.content || ""}
+                  onChange={(e) => onUpdate(index, { content: e.target.value })}
+                  placeholder={language === "ko" ? "내용 (선택)" : "Content (optional)"}
+                  className="h-8 text-sm"
+                />
+              </div>
+
               {/* Duration input */}
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground" />
+                <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <Input
                   type="number"
                   value={component.duration_minutes || ""}

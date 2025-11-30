@@ -360,6 +360,77 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_schedules: {
+        Row: {
+          create_at_time: string | null
+          create_days_before: number | null
+          created_at: string | null
+          day_of_month: number | null
+          days_of_week: number[] | null
+          end_date: string | null
+          id: string
+          interval_value: number | null
+          is_active: boolean | null
+          last_generated_date: string | null
+          next_generation_date: string | null
+          nth_weekday: number | null
+          occurrence_count: number | null
+          pattern: string
+          start_date: string
+          template_id: string
+          updated_at: string | null
+          weekday_for_nth: number | null
+        }
+        Insert: {
+          create_at_time?: string | null
+          create_days_before?: number | null
+          created_at?: string | null
+          day_of_month?: number | null
+          days_of_week?: number[] | null
+          end_date?: string | null
+          id?: string
+          interval_value?: number | null
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          nth_weekday?: number | null
+          occurrence_count?: number | null
+          pattern: string
+          start_date: string
+          template_id: string
+          updated_at?: string | null
+          weekday_for_nth?: number | null
+        }
+        Update: {
+          create_at_time?: string | null
+          create_days_before?: number | null
+          created_at?: string | null
+          day_of_month?: number | null
+          days_of_week?: number[] | null
+          end_date?: string | null
+          id?: string
+          interval_value?: number | null
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          nth_weekday?: number | null
+          occurrence_count?: number | null
+          pattern?: string
+          start_date?: string
+          template_id?: string
+          updated_at?: string | null
+          weekday_for_nth?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "worship_set_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_sets: {
         Row: {
           band_name: string | null
@@ -514,7 +585,9 @@ export type Database = {
       }
       set_components: {
         Row: {
+          assigned_to: string | null
           component_type: string
+          content: string | null
           created_at: string | null
           duration_minutes: number | null
           id: string
@@ -524,7 +597,9 @@ export type Database = {
           service_set_id: string
         }
         Insert: {
+          assigned_to?: string | null
           component_type: string
+          content?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
@@ -534,7 +609,9 @@ export type Database = {
           service_set_id: string
         }
         Update: {
+          assigned_to?: string | null
           component_type?: string
+          content?: string | null
           created_at?: string | null
           duration_minutes?: number | null
           id?: string
@@ -713,6 +790,53 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      template_components: {
+        Row: {
+          component_type: string
+          created_at: string | null
+          default_assigned_to: string | null
+          default_content: string | null
+          duration_minutes: number | null
+          id: string
+          label: string
+          notes: string | null
+          position: number
+          template_id: string
+        }
+        Insert: {
+          component_type: string
+          created_at?: string | null
+          default_assigned_to?: string | null
+          default_content?: string | null
+          duration_minutes?: number | null
+          id?: string
+          label: string
+          notes?: string | null
+          position: number
+          template_id: string
+        }
+        Update: {
+          component_type?: string
+          created_at?: string | null
+          default_assigned_to?: string | null
+          default_content?: string | null
+          duration_minutes?: number | null
+          id?: string
+          label?: string
+          notes?: string | null
+          position?: number
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_components_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "worship_set_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_favorite_songs: {
         Row: {
@@ -925,6 +1049,71 @@ export type Database = {
           years_serving?: number
         }
         Relationships: []
+      }
+      worship_set_templates: {
+        Row: {
+          band_name: string | null
+          community_id: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          is_recurring: boolean | null
+          name: string
+          notes: string | null
+          scripture_reference: string | null
+          service_name: string | null
+          service_time: string | null
+          target_audience: string | null
+          theme: string | null
+          updated_at: string | null
+          worship_duration: number | null
+          worship_leader: string | null
+        }
+        Insert: {
+          band_name?: string | null
+          community_id?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_recurring?: boolean | null
+          name: string
+          notes?: string | null
+          scripture_reference?: string | null
+          service_name?: string | null
+          service_time?: string | null
+          target_audience?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          worship_duration?: number | null
+          worship_leader?: string | null
+        }
+        Update: {
+          band_name?: string | null
+          community_id?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_recurring?: boolean | null
+          name?: string
+          notes?: string | null
+          scripture_reference?: string | null
+          service_name?: string | null
+          service_time?: string | null
+          target_audience?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          worship_duration?: number | null
+          worship_leader?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worship_set_templates_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
