@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -657,8 +657,8 @@ const SetBuilder = () => {
               onClick={() => setShowSaveTemplate(true)}
               className="gap-1.5"
             >
-              <Save className="w-4 h-4" />
-              <span className="hidden sm:inline">{language === "ko" ? "저장" : "Save"}</span>
+              <Copy className="w-4 h-4" />
+              <span className="hidden sm:inline">{language === "ko" ? "템플릿 저장" : "Save as Template"}</span>
             </Button>
             
             <Button 
@@ -697,7 +697,7 @@ const SetBuilder = () => {
                   />
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="date" className="text-sm">날짜 *</Label>
                     <Input
@@ -718,7 +718,6 @@ const SetBuilder = () => {
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
                       className="text-sm"
-                      placeholder="HH:MM"
                     />
                   </div>
                 </div>
