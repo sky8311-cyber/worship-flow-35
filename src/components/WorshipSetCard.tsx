@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, Check, Save, Music } from "lucide-react";
+import { Eye, Edit, Trash2, Check, Save } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,6 @@ interface WorshipSetCardProps {
     service_name: string;
     worship_leader: string | null;
     status: "draft" | "published";
-    set_songs?: { count: number }[];
   };
   canManage: boolean;
   onDelete: (id: string) => void;
@@ -25,7 +24,7 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish }: Wo
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
-  const songCount = set.set_songs?.[0]?.count || 0;
+  
   const dateLocale = language === "ko" ? ko : enUS;
   const formattedDate = format(new Date(set.date), language === "ko" ? "yyyy.MM.dd (EEE)" : "EEE, MMM d, yyyy", { locale: dateLocale });
   
@@ -97,12 +96,6 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish }: Wo
           </div>
         </div>
         
-        <div className="mt-3 flex items-center gap-2">
-          <Badge variant="outline" className="text-xs">
-            <Music className="w-3 h-3 mr-1" />
-            {songCount} {t("common.songs")}
-          </Badge>
-        </div>
       </CardContent>
     </Card>
   );

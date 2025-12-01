@@ -48,10 +48,7 @@ export default function WorshipSets() {
     queryFn: async () => {
       let query = supabase
         .from("service_sets")
-        .select(`
-          *,
-          set_songs(count)
-        `)
+        .select("*")
         .order("date", { ascending: false });
       
       if (statusFilter !== "all") {
@@ -206,7 +203,7 @@ export default function WorshipSets() {
                   <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
-                  <TableHead>{t("worshipSets.tableHeaders.songCount")}</TableHead>
+                  
                   <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
                 </TableRow>
@@ -221,7 +218,7 @@ export default function WorshipSets() {
                     <TableCell>{format(new Date(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
                     <TableCell>{set.worship_leader || "-"}</TableCell>
-                    <TableCell>{set.set_songs?.[0]?.count || 0}{t("common.songs")}</TableCell>
+                    
                     <TableCell>
                       <Badge variant={set.status === "published" ? "default" : "secondary"}>
                         {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
