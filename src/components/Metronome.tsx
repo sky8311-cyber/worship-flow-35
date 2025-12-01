@@ -22,6 +22,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
   const nextNoteTimeRef = useRef(0);
   const timerIdRef = useRef<number | null>(null);
   const currentBeatRef = useRef(0);
+  const isPlayingRef = useRef(false); // Sync ref to track playing state immediately
   
   // Parse time signature to get beats per measure
   const beatsPerMeasure = parseInt(timeSignature?.split("/")[0] || "4") || 4;
@@ -80,10 +81,12 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
     while (nextNoteTimeRef.current < audioContext.currentTime + scheduleAheadTime) {
       const isAccent = currentBeatRef.current === 0;
       
-      // Schedule the visual update
+      // Schedule the visual update - check ref to avoid updating after stop
       const beatToShow = currentBeatRef.current;
       setTimeout(() => {
-        setCurrentBeat(beatToShow);
+        if (isPlayingRef.current) {
+          setCurrentBeat(beatToShow);
+        }
       }, (nextNoteTimeRef.current - audioContext.currentTime) * 1000);
       
       // Play the click
@@ -99,6 +102,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
   const togglePlay = useCallback(() => {
     if (isPlaying) {
       // Stop
+      isPlayingRef.current = false;
       if (timerIdRef.current) {
         clearInterval(timerIdRef.current);
         timerIdRef.current = null;
@@ -117,6 +121,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
       currentBeatRef.current = 0;
       setCurrentBeat(0);
       
+      isPlayingRef.current = true;
       timerIdRef.current = window.setInterval(scheduler, 25);
       setIsPlaying(true);
     }
@@ -158,16 +163,15 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
     onBpmChange?.(workingBpm);
     setHasChanges(false);
     
-    // Stop metronome on save
-    if (isPlaying) {
-      if (timerIdRef.current) {
-        clearInterval(timerIdRef.current);
-        timerIdRef.current = null;
-      }
-      setIsPlaying(false);
-      setCurrentBeat(0);
-      currentBeatRef.current = 0;
+    // Stop metronome on save - update ref first to stop scheduled callbacks
+    isPlayingRef.current = false;
+    if (timerIdRef.current) {
+      clearInterval(timerIdRef.current);
+      timerIdRef.current = null;
     }
+    setIsPlaying(false);
+    setCurrentBeat(0);
+    currentBeatRef.current = 0;
   };
 
   return (
