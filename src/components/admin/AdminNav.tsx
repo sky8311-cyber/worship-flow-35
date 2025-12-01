@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -23,6 +23,11 @@ export const AdminNav = () => {
       to: "/admin/communities",
       label: t("admin.nav.communities"),
       icon: Building2,
+    },
+    {
+      to: "/admin/church-accounts",
+      label: t("admin.nav.churchAccounts"),
+      icon: Church,
     },
     {
       to: "/admin/applications",

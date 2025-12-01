@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building2, Music, FileText } from "lucide-react";
+import { Users, Building2, Music, FileText, Church } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -11,18 +11,25 @@ const AdminDashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [users, communities, sets, songs] = await Promise.all([
+      const [users, communities, sets, songs, churchAccounts] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("worship_communities").select("*", { count: "exact", head: true }),
         supabase.from("service_sets").select("*", { count: "exact", head: true }),
         supabase.from("songs").select("*", { count: "exact", head: true }),
+        supabase.from("church_accounts").select("subscription_status", { count: "exact" }),
       ]);
+      
+      const trialCount = churchAccounts.data?.filter(a => a.subscription_status === "trial").length || 0;
+      const activeCount = churchAccounts.data?.filter(a => a.subscription_status === "active").length || 0;
       
       return {
         users: users.count || 0,
         communities: communities.count || 0,
         sets: sets.count || 0,
         songs: songs.count || 0,
+        churchAccounts: churchAccounts.count || 0,
+        trialAccounts: trialCount,
+        activeAccounts: activeCount,
       };
     },
   });
@@ -55,6 +62,13 @@ const AdminDashboard = () => {
       icon: Music,
       description: t("admin.stats.totalSongs"),
       color: "text-pink-500",
+    },
+    {
+      title: t("admin.stats.churchAccounts"),
+      value: stats?.churchAccounts || 0,
+      icon: Church,
+      description: t("admin.stats.totalChurchAccounts"),
+      color: "text-orange-500",
     },
   ];
   
