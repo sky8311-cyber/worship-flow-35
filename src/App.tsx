@@ -20,6 +20,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminCommunities from "./pages/AdminCommunities";
+import AdminChurchAccounts from "./pages/AdminChurchAccounts";
 import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplications";
 import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
