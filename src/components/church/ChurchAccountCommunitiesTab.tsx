@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Plus, Users, Building2, Link2, Unlink, Loader2, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 
 interface ChurchAccountCommunitiesTabProps {
   churchAccountId: string;
@@ -35,6 +36,7 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
   const queryClient = useQueryClient();
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [selectedCommunityId, setSelectedCommunityId] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Fetch linked communities
   const { data: linkedCommunities, isLoading: loadingLinked } = useQuery({
@@ -158,7 +160,7 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
                       className="mt-2"
                       onClick={() => {
                         setShowLinkDialog(false);
-                        navigate("/dashboard");
+                        setShowCreateDialog(true);
                       }}
                     >
                       {language === "ko" ? "새 커뮤니티 만들기" : "Create New Community"}
@@ -274,6 +276,18 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
           </div>
         )}
       </CardContent>
+
+      {/* Create Community Dialog */}
+      <CreateCommunityDialog 
+        open={showCreateDialog} 
+        onOpenChange={(open) => {
+          setShowCreateDialog(open);
+          if (!open) {
+            // Invalidate unlinked communities query after potential creation
+            queryClient.invalidateQueries({ queryKey: ["unlinked-communities", user?.id] });
+          }
+        }} 
+      />
     </Card>
   );
 }

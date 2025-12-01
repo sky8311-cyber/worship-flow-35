@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
+import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Home, Languages, User } from "lucide-react";
@@ -34,6 +35,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { isSubscriptionActive } = useChurchSubscription();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Enable swipe from left edge to open sidebar on mobile
+  const handleEdgeSwipe = useCallback(() => {
+    setSidebarOpen(true);
+  }, []);
+  
+  useEdgeSwipe({
+    edgeThreshold: 30,
+    swipeThreshold: 50,
+    onSwipe: handleEdgeSwipe,
+  });
 
   // Show upgrade badge if user is worship leader/admin but doesn't have active church subscription
   const showUpgradeBadge = (isWorshipLeader || isAdmin) && !isSubscriptionActive;
