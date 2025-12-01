@@ -114,6 +114,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
+
+    // Send welcome email via Resend (don't block signup if it fails)
+    if (!error) {
+      try {
+        await supabase.functions.invoke('send-welcome-email', {
+          body: { email, name: fullName }
+        });
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Continue with signup flow even if email fails
+      }
+    }
+
     return { error };
   };
 
