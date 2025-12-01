@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock } from "lucide-react";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
+import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -46,6 +47,18 @@ export default function CommunityManagement() {
   const [description, setDescription] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<{
+    id: string;
+    full_name: string | null;
+    email: string;
+    avatar_url: string | null;
+    bio: string | null;
+    ministry_role: string | null;
+    instagram_url: string | null;
+    youtube_url: string | null;
+    location: string | null;
+    instrument: string | null;
+  } | null>(null);
 
   const { data: community, isLoading } = useQuery({
     queryKey: ["community", id],
@@ -117,7 +130,7 @@ export default function CommunityManagement() {
       const userIds = members.map(m => m.user_id);
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url, birth_date")
+        .select("id, full_name, email, avatar_url, birth_date, bio, ministry_role, instagram_url, youtube_url, location, instrument")
         .in("id", userIds);
       if (profileError) throw profileError;
       
@@ -452,7 +465,10 @@ export default function CommunityManagement() {
                         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border rounded-lg"
                       >
                         <div className="flex items-center gap-3">
-                          <Avatar>
+                          <Avatar 
+                            className="cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                            onClick={() => member.profiles && setSelectedProfile(member.profiles)}
+                          >
                             <AvatarImage src={member.profiles?.avatar_url || undefined} />
                             <AvatarFallback>{member.profiles?.full_name?.[0]}</AvatarFallback>
                           </Avatar>
@@ -818,6 +834,13 @@ export default function CommunityManagement() {
         <UpgradePlanDialog 
           open={showUpgradeDialog} 
           onOpenChange={setShowUpgradeDialog}
+        />
+
+        <ProfileDialog
+          open={!!selectedProfile}
+          onOpenChange={(open) => !open && setSelectedProfile(null)}
+          profileOverride={selectedProfile || undefined}
+          title={language === "ko" ? "멤버 프로필" : "Member Profile"}
         />
       </TooltipProvider>
     </AppLayout>
