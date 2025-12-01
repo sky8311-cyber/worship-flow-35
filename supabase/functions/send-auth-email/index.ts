@@ -238,7 +238,7 @@ serve(async (req: Request): Promise<Response> => {
 
     // Construct confirmation URL
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const confirmUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to}`;
+    const confirmUrl = `${supabaseUrl}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=https://kworship.app`;
 
     // Determine language (default to Korean)
     const lang = "ko"; // Could be enhanced to detect user preference
