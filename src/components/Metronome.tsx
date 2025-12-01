@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Play, Pause, Volume2, VolumeX, Check } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface MetronomeProps {
@@ -14,6 +15,8 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [currentBeat, setCurrentBeat] = useState(0);
+  const [workingBpm, setWorkingBpm] = useState(bpm || 120);
+  const [hasChanges, setHasChanges] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextNoteTimeRef = useRef(0);
@@ -23,8 +26,13 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
   // Parse time signature to get beats per measure
   const beatsPerMeasure = parseInt(timeSignature?.split("/")[0] || "4") || 4;
   
-  // Current BPM (default to 120 if not set)
-  const currentBpm = bpm || 120;
+  // Sync workingBpm when prop changes externally
+  useEffect(() => {
+    if (bpm !== null && bpm !== workingBpm) {
+      setWorkingBpm(bpm);
+      setHasChanges(false);
+    }
+  }, [bpm]);
   
   // Initialize audio context on first user interaction
   const initAudioContext = useCallback(() => {
@@ -66,7 +74,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
     const audioContext = audioContextRef.current;
     if (!audioContext) return;
     
-    const secondsPerBeat = 60.0 / currentBpm;
+    const secondsPerBeat = 60.0 / workingBpm;
     const scheduleAheadTime = 0.1; // Schedule 100ms ahead
     
     while (nextNoteTimeRef.current < audioContext.currentTime + scheduleAheadTime) {
@@ -85,7 +93,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
       currentBeatRef.current = (currentBeatRef.current + 1) % beatsPerMeasure;
       nextNoteTimeRef.current += secondsPerBeat;
     }
-  }, [currentBpm, beatsPerMeasure, playClick]);
+  }, [workingBpm, beatsPerMeasure, playClick]);
   
   // Start/stop the metronome
   const togglePlay = useCallback(() => {
@@ -129,12 +137,37 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
       clearInterval(timerIdRef.current);
       timerIdRef.current = window.setInterval(scheduler, 25);
     }
-  }, [currentBpm, scheduler, isPlaying]);
+  }, [workingBpm, scheduler, isPlaying]);
   
-  // Handle BPM adjustment
+  // Handle BPM adjustment by increment of 1
   const adjustBpm = (delta: number) => {
-    const newBpm = Math.max(40, Math.min(240, currentBpm + delta));
-    onBpmChange?.(newBpm);
+    const newBpm = Math.max(40, Math.min(240, workingBpm + delta));
+    setWorkingBpm(newBpm);
+    setHasChanges(newBpm !== bpm);
+  };
+  
+  // Handle direct BPM input
+  const handleBpmInput = (value: string) => {
+    const newBpm = Math.max(40, Math.min(240, parseInt(value) || 120));
+    setWorkingBpm(newBpm);
+    setHasChanges(newBpm !== bpm);
+  };
+  
+  // Save BPM and stop metronome
+  const handleSave = () => {
+    onBpmChange?.(workingBpm);
+    setHasChanges(false);
+    
+    // Stop metronome on save
+    if (isPlaying) {
+      if (timerIdRef.current) {
+        clearInterval(timerIdRef.current);
+        timerIdRef.current = null;
+      }
+      setIsPlaying(false);
+      setCurrentBeat(0);
+      currentBeatRef.current = 0;
+    }
   };
 
   return (
@@ -162,8 +195,8 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
         ))}
       </div>
       
-      {/* Controls */}
-      <div className="flex items-center gap-1">
+      {/* Play/Pause and Mute controls */}
+      <div className="flex items-center gap-0.5">
         <Button
           variant="ghost"
           size="icon"
@@ -196,27 +229,49 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
         </Button>
       </div>
       
-      {/* BPM adjustment buttons (optional, shown when onBpmChange is provided) */}
+      {/* BPM controls - always visible */}
+      <div className="flex items-center gap-0.5">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-xs"
+          onClick={() => adjustBpm(-1)}
+        >
+          -
+        </Button>
+        <Input
+          type="number"
+          value={workingBpm}
+          onChange={(e) => handleBpmInput(e.target.value)}
+          className="w-14 h-6 text-xs text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          min={40}
+          max={240}
+        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-xs"
+          onClick={() => adjustBpm(1)}
+        >
+          +
+        </Button>
+      </div>
+      
+      {/* Save button */}
       {onBpmChange && (
-        <div className="flex items-center gap-0.5 text-xs">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-xs"
-            onClick={() => adjustBpm(-5)}
-          >
-            -
-          </Button>
-          <span className="w-8 text-center text-muted-foreground">{currentBpm}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-xs"
-            onClick={() => adjustBpm(5)}
-          >
-            +
-          </Button>
-        </div>
+        <Button
+          variant={hasChanges ? "default" : "ghost"}
+          size="icon"
+          className={cn(
+            "h-7 w-7",
+            hasChanges && "bg-primary text-primary-foreground"
+          )}
+          onClick={handleSave}
+          title="Save BPM"
+          disabled={!hasChanges}
+        >
+          <Check className="w-3.5 h-3.5" />
+        </Button>
       )}
     </div>
   );
