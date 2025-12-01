@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2 } from "lucide-react";
+import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2, CheckCircle, XCircle, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,12 +14,15 @@ interface UserCardProps {
     email: string;
     full_name: string | null;
     created_at: string;
+    email_confirmed_at?: string | null;
     user_roles?: { role: string }[];
   };
   onAddRole: (userId: string, role: string) => void;
   onRemoveRole: (userId: string, role: string) => void;
   onResetPassword: (email: string, userName: string) => void;
   onDelete: (userId: string, userName: string) => void;
+  onConfirmUser: (userId: string) => void;
+  onResendVerification: (email: string, name: string) => void;
   onToggleSelection?: (userId: string) => void;
   isSelected?: boolean;
 }
@@ -30,6 +33,8 @@ export function UserCard({
   onRemoveRole, 
   onResetPassword, 
   onDelete,
+  onConfirmUser,
+  onResendVerification,
   onToggleSelection,
   isSelected 
 }: UserCardProps) {
@@ -81,6 +86,17 @@ export function UserCard({
         </div>
 
         <div className="flex gap-2 flex-wrap mb-3">
+          {user.email_confirmed_at ? (
+            <Badge variant="default" className="gap-1">
+              <CheckCircle className="w-3 h-3" />
+              {t("admin.users.verified")}
+            </Badge>
+          ) : (
+            <Badge variant="secondary" className="gap-1">
+              <XCircle className="w-3 h-3" />
+              {t("admin.users.unverified")}
+            </Badge>
+          )}
           {userRoles.map((role: string) => (
             <Badge key={role} variant={getRoleBadgeVariant(role)}>
               {role}
@@ -90,6 +106,44 @@ export function UserCard({
 
         <TooltipProvider>
           <div className="flex gap-2 flex-wrap">
+            {/* Verification Actions */}
+            {!user.email_confirmed_at && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => onConfirmUser(user.id)}
+                      className="flex-1 sm:flex-initial"
+                    >
+                      <CheckCircle className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">{t("admin.users.confirmUser")}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="sm:hidden">
+                    <p>{t("admin.users.confirmUser")}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onResendVerification(user.email, user.full_name || "")}
+                      className="flex-1 sm:flex-initial"
+                    >
+                      <Mail className="w-4 h-4 sm:mr-1" />
+                      <span className="hidden sm:inline">{t("admin.users.resendVerification")}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="sm:hidden">
+                    <p>{t("admin.users.resendVerification")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+            
             {/* Admin Role Buttons */}
             {!hasAdmin ? (
               <Tooltip>

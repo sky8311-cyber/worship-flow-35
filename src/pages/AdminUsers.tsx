@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { UserCard } from "@/components/admin/UserCard";
@@ -14,7 +15,7 @@ import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -23,6 +24,7 @@ const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [verificationFilter, setVerificationFilter] = useState<"all" | "verified" | "unverified">("all");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; userName: string }>({
     open: false,
     userId: "",
@@ -66,12 +68,25 @@ const AdminUsers = () => {
         .select("user_id, role");
       
       if (rolesError) throw rolesError;
+
+      // Get auth data including email_confirmed_at via edge function
+      const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users");
+
+      if (authError) {
+        console.error("Error fetching auth data:", authError);
+      }
+
+      const authUsers = authData?.users || [];
       
       // Combine the data
-      return profiles.map(profile => ({
-        ...profile,
-        user_roles: roles?.filter(r => r.user_id === profile.id) || [],
-      }));
+      return profiles.map(profile => {
+        const authUser = authUsers.find((u: any) => u.id === profile.id);
+        return {
+          ...profile,
+          user_roles: roles?.filter(r => r.user_id === profile.id) || [],
+          email_confirmed_at: authUser?.email_confirmed_at || null,
+        };
+      });
     },
   });
   
@@ -185,6 +200,41 @@ const AdminUsers = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || t("admin.users.resetPasswordError"));
+    },
+  });
+
+  // Confirm user mutation
+  const confirmUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke("admin-confirm-user", {
+        body: { userId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(t("admin.users.confirmSuccess"));
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Resend verification mutation
+  const resendVerificationMutation = useMutation({
+    mutationFn: async ({ email, name }: { email: string; name: string }) => {
+      const { data, error } = await supabase.functions.invoke("admin-resend-verification", {
+        body: { email, name },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success(t("admin.users.resendSuccess"));
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 
@@ -305,10 +355,22 @@ const AdminUsers = () => {
     }
   };
   
-  const filteredUsers = users?.filter(user => 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredUsers = users?.filter(user => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      user.full_name?.toLowerCase().includes(searchLower) ||
+      user.email.toLowerCase().includes(searchLower);
+    
+    // Apply verification filter
+    let matchesVerification = true;
+    if (verificationFilter === "verified") {
+      matchesVerification = !!user.email_confirmed_at;
+    } else if (verificationFilter === "unverified") {
+      matchesVerification = !user.email_confirmed_at;
+    }
+    
+    return matchesSearch && matchesVerification;
+  }) || [];
   
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -358,6 +420,13 @@ const AdminUsers = () => {
                 </div>
               </div>
             </div>
+            <Tabs value={verificationFilter} onValueChange={(v) => setVerificationFilter(v as any)}>
+              <TabsList>
+                <TabsTrigger value="all">{t("admin.users.filterAll")}</TabsTrigger>
+                <TabsTrigger value="verified">{t("admin.users.filterVerified")}</TabsTrigger>
+                <TabsTrigger value="unverified">{t("admin.users.filterUnverified")}</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -379,6 +448,8 @@ const AdminUsers = () => {
                       onRemoveRole={(userId, role) => removeRoleMutation.mutate({ userId, role })}
                       onResetPassword={(email, userName) => setResetDialog({ open: true, email, userName })}
                       onDelete={(userId, userName) => setDeleteDialog({ open: true, userId, userName })}
+                      onConfirmUser={(userId) => confirmUserMutation.mutate(userId)}
+                      onResendVerification={(email, name) => resendVerificationMutation.mutate({ email, name })}
                       onToggleSelection={toggleUserSelection}
                       isSelected={selectedUsers.has(user.id)}
                     />
@@ -399,6 +470,7 @@ const AdminUsers = () => {
                     </TableHead>
                     <TableHead>{t("admin.users.email")}</TableHead>
                     <TableHead>{t("admin.users.name")}</TableHead>
+                    <TableHead>{t("admin.users.verification")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
                     <TableHead>{t("admin.users.roleManagement")}</TableHead>
@@ -430,6 +502,19 @@ const AdminUsers = () => {
                         <TableCell className="font-medium">{user.email}</TableCell>
                         <TableCell>{user.full_name || "-"}</TableCell>
                         <TableCell>
+                          {user.email_confirmed_at ? (
+                            <Badge variant="default" className="gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              {t("admin.users.verified")}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="gap-1">
+                              <XCircle className="w-3 h-3" />
+                              {t("admin.users.unverified")}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex gap-2 flex-wrap">
                             {userRoles.map((role: string) => (
                               <Badge key={role} variant={getRoleBadgeVariant(role)}>
@@ -452,7 +537,7 @@ const AdminUsers = () => {
                                   addRoleMutation.mutate({ userId: user.id, role: "admin" });
                                 }}
                               >
-                                <UserPlus className="w-3 h-3 mr-1" />
+                                <UserPlus className="w-4 h-4 mr-1" />
                                 Admin
                               </Button>
                             )}
@@ -465,7 +550,7 @@ const AdminUsers = () => {
                                   removeRoleMutation.mutate({ userId: user.id, role: "admin" });
                                 }}
                               >
-                                <UserMinus className="w-3 h-3 mr-1" />
+                                <UserMinus className="w-4 h-4 mr-1" />
                                 Admin
                               </Button>
                             )}
@@ -478,7 +563,7 @@ const AdminUsers = () => {
                                   addRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
                                 }}
                               >
-                                <UserPlus className="w-3 h-3 mr-1" />
+                                <UserPlus className="w-4 h-4 mr-1" />
                                 Leader
                               </Button>
                             )}
@@ -491,14 +576,45 @@ const AdminUsers = () => {
                                   removeRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
                                 }}
                               >
-                                <UserMinus className="w-3 h-3 mr-1" />
+                                <UserMinus className="w-4 h-4 mr-1" />
                                 Leader
                               </Button>
                             )}
                           </div>
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap">
+                            {!user.email_confirmed_at && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    confirmUserMutation.mutate(user.id);
+                                  }}
+                                  disabled={confirmUserMutation.isPending}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  {t("admin.users.confirmUser")}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    resendVerificationMutation.mutate({ 
+                                      email: user.email, 
+                                      name: user.full_name || "" 
+                                    });
+                                  }}
+                                  disabled={resendVerificationMutation.isPending}
+                                >
+                                  <Mail className="w-4 h-4 mr-1" />
+                                  {t("admin.users.resendVerification")}
+                                </Button>
+                              </>
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
@@ -507,7 +623,7 @@ const AdminUsers = () => {
                                 setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email });
                               }}
                             >
-                              <KeyRound className="w-3 h-3 mr-1" />
+                              <KeyRound className="w-4 h-4 mr-1" />
                               {t("admin.users.resetPassword")}
                             </Button>
                             <Button
@@ -518,7 +634,7 @@ const AdminUsers = () => {
                                 setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email });
                               }}
                             >
-                              <Trash2 className="w-3 h-3 mr-1" />
+                              <Trash2 className="w-4 h-4 mr-1" />
                               {t("admin.users.delete")}
                             </Button>
                           </div>
@@ -532,62 +648,39 @@ const AdminUsers = () => {
           </CardContent>
         </Card>
 
-        {/* Profile Dialog */}
-        <AdminUserProfileDialog
-          userId={profileDialog.userId}
-          open={profileDialog.open}
-          onOpenChange={(open) => setProfileDialog({ open, userId: open ? profileDialog.userId : null })}
-        />
-      </main>
-
-      {/* Bulk Actions Bar */}
-      {selectedUsers.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {t("admin.users.selectedCount", { count: selectedUsers.size })}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedUsers(new Set())}
-                >
-                  {t("common.clearSelection")}
-                </Button>
-              </div>
+        {/* Bulk Actions Bar */}
+        {selectedUsers.size > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border p-4 shadow-lg z-50">
+            <div className="container mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                {t("admin.users.selectedCount", { count: selectedUsers.size })}
+              </p>
               <div className="flex gap-2 flex-wrap">
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const userIds = Array.from(selectedUsers);
-                    bulkAddRoleMutation.mutate({ userIds, role: "worship_leader" });
-                  }}
+                  onClick={() => bulkAddRoleMutation.mutate({ userIds: Array.from(selectedUsers), role: "worship_leader" })}
                 >
+                  <UserPlus className="w-4 h-4 mr-1" />
                   {t("admin.users.bulkAddWorshipLeader")}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    const userIds = Array.from(selectedUsers);
-                    bulkRemoveRoleMutation.mutate({ userIds, role: "worship_leader" });
-                  }}
+                  onClick={() => bulkRemoveRoleMutation.mutate({ userIds: Array.from(selectedUsers), role: "worship_leader" })}
                 >
+                  <UserMinus className="w-4 h-4 mr-1" />
                   {t("admin.users.bulkRemoveWorshipLeader")}
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const emails = filteredUsers
-                      ?.filter(u => selectedUsers.has(u.id))
-                      .map(u => u.email) || [];
+                    const emails = filteredUsers?.filter(u => selectedUsers.has(u.id)).map(u => u.email) || [];
                     bulkResetPasswordMutation.mutate(emails);
                   }}
                 >
+                  <KeyRound className="w-4 h-4 mr-1" />
                   {t("admin.users.bulkResetPassword")}
                 </Button>
                 <Button
@@ -595,77 +688,81 @@ const AdminUsers = () => {
                   variant="destructive"
                   onClick={() => setBulkDeleteDialog({ open: true, count: selectedUsers.size })}
                 >
-                  <Trash2 className="w-3 h-3 mr-1" />
+                  <Trash2 className="w-4 h-4 mr-1" />
                   {t("admin.users.bulkDelete")}
                 </Button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delete User Confirmation Dialog */}
-      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("admin.users.deleteConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("admin.users.deleteConfirmDescription", { name: deleteDialog.userName })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => deleteUserMutation.mutate(deleteDialog.userId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("admin.users.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Delete Dialog */}
+        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("admin.users.deleteConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("admin.users.deleteConfirmDescription", { name: deleteDialog.userName })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteUserMutation.mutate(deleteDialog.userId)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("admin.users.delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-      {/* Reset Password Confirmation Dialog */}
-      <AlertDialog open={resetDialog.open} onOpenChange={(open) => setResetDialog({ ...resetDialog, open })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
-              {t("admin.users.sendResetEmail")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Bulk Delete Dialog */}
+        <AlertDialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("admin.users.bulkDeleteConfirmTitle", { count: bulkDeleteDialog.count })}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("admin.users.bulkDeleteConfirmDescription", { count: bulkDeleteDialog.count })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => bulkDeleteUserMutation.mutate(Array.from(selectedUsers))}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {t("admin.users.bulkDelete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
-      {/* Bulk Delete Confirmation Dialog */}
-      <AlertDialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("admin.users.bulkDeleteConfirmTitle", { count: bulkDeleteDialog.count })}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("admin.users.bulkDeleteConfirmDescription", { count: bulkDeleteDialog.count })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                const userIds = Array.from(selectedUsers);
-                bulkDeleteUserMutation.mutate(userIds);
-              }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t("admin.users.bulkDelete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Reset Password Dialog */}
+        <AlertDialog open={resetDialog.open} onOpenChange={(open) => setResetDialog({ ...resetDialog, open })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
+                {t("admin.users.sendResetEmail")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Profile Dialog */}
+        <AdminUserProfileDialog
+          open={profileDialog.open}
+          onOpenChange={(open) => setProfileDialog({ open, userId: profileDialog.userId })}
+          userId={profileDialog.userId}
+        />
+      </main>
     </div>
   );
 };

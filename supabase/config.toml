@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.send-auth-email]
 verify_jwt = false
+
+[functions.admin-list-users]
+verify_jwt = true
+
+[functions.admin-confirm-user]
+verify_jwt = true
+
+[functions.admin-resend-verification]
+verify_jwt = true
