@@ -3,11 +3,31 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, ExternalLink, Loader2, CheckCircle, AlertCircle, Sparkles, Lock } from "lucide-react";
+import { 
+  CreditCard, 
+  ExternalLink, 
+  Loader2, 
+  CheckCircle, 
+  AlertCircle, 
+  Sparkles, 
+  Lock, 
+  Users, 
+  Music, 
+  Building2,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { UpgradePlanDialog } from "./UpgradePlanDialog";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ChurchBillingTabProps {
   churchAccount: {
@@ -23,13 +43,15 @@ interface ChurchBillingTabProps {
   isOwner: boolean;
 }
 
+type PlanType = "member" | "worship-leader" | "church";
+
 export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabProps) {
   const { t, language } = useTranslation();
+  const { isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isTrialLoading, setIsTrialLoading] = useState(false);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   // Check if subscription is active or in valid trial
   const isTrialValid = churchAccount.subscription_status === "trial" && 
@@ -43,28 +65,30 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
     churchAccount.subscription_status === "inactive" || 
     churchAccount.subscription_status === "";
 
-  const getStatusBadge = (status: string) => {
-    if (isTrialValid) {
-      return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{t("churchAccount.statusTrial")}</Badge>;
+  // Determine current plan
+  const getCurrentPlan = (): PlanType => {
+    if (churchAccount.subscription_status === "active" || isTrialValid) {
+      return "church";
     }
-    switch (status) {
-      case "active":
-        return <Badge className="bg-green-500 gap-1"><CheckCircle className="w-3 h-3" />{t("churchAccount.statusActive")}</Badge>;
-      case "trial":
-        return <Badge variant="outline" className="gap-1 text-destructive border-destructive"><Lock className="w-3 h-3" />{t("churchAccount.statusExpired")}</Badge>;
-      case "past_due":
-        return <Badge variant="destructive">{t("churchAccount.statusPastDue")}</Badge>;
-      case "canceled":
-        return <Badge variant="outline">{t("churchAccount.statusCanceled")}</Badge>;
-      default:
-        return <Badge variant="outline" className="gap-1"><Lock className="w-3 h-3" />{t("churchAccount.statusNotSubscribed")}</Badge>;
+    if (isWorshipLeader) {
+      return "worship-leader";
     }
+    return "member";
+  };
+
+  const currentPlan = getCurrentPlan();
+
+  const daysRemaining = churchAccount.trial_ends_at 
+    ? Math.max(0, Math.ceil((new Date(churchAccount.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US");
   };
 
   const handleStartTrial = async () => {
     setIsTrialLoading(true);
     try {
-      // Update church account to start trial
       const trialEndDate = new Date();
       trialEndDate.setDate(trialEndDate.getDate() + 30);
       
@@ -81,7 +105,6 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       toast.success(t("churchAccount.trialStarted"));
       queryClient.invalidateQueries({ queryKey: ["churchAccounts"] });
       queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
-      setShowUpgradeDialog(false);
     } catch (error) {
       console.error("Start trial error:", error);
       toast.error(t("churchAccount.trialStartFailed"));
@@ -106,7 +129,6 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       toast.error(t("churchAccount.checkoutFailed"));
     } finally {
       setIsLoading(false);
-      setShowUpgradeDialog(false);
     }
   };
 
@@ -127,163 +149,157 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
     }
   };
 
-  const daysRemaining = churchAccount.trial_ends_at 
-    ? Math.max(0, Math.ceil((new Date(churchAccount.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0;
+  // Plan data
+  const plans = [
+    {
+      id: "member" as PlanType,
+      icon: Users,
+      name: t("churchAccount.planMember"),
+      price: t("churchAccount.planMemberPrice"),
+      priceNote: t("churchAccount.freeForever"),
+      description: t("churchAccount.planMemberDescription"),
+      features: [
+        t("churchAccount.featureJoinCommunity"),
+        t("churchAccount.featureViewSets"),
+        t("churchAccount.featureTeamComm"),
+      ],
+    },
+    {
+      id: "worship-leader" as PlanType,
+      icon: Music,
+      name: t("churchAccount.planWorshipLeader"),
+      price: t("churchAccount.planWorshipLeaderPrice"),
+      priceNote: t("churchAccount.betaFree"),
+      description: t("churchAccount.planWorshipLeaderDescription"),
+      features: [
+        t("churchAccount.featureCreateCommunity"),
+        t("churchAccount.featureManageSets"),
+        t("churchAccount.featureManageLibrary"),
+        t("churchAccount.featureTemplates"),
+      ],
+    },
+    {
+      id: "church" as PlanType,
+      icon: Building2,
+      name: t("churchAccount.planChurch"),
+      price: t("churchAccount.planChurchPrice"),
+      priceNote: t("churchAccount.trialNote"),
+      description: t("churchAccount.planChurchDescription"),
+      features: [
+        t("churchAccount.featureCustomRoles"),
+        t("churchAccount.featureTeamRotation"),
+        t("churchAccount.featurePositionSignup"),
+        t("churchAccount.featureWhiteLabel"),
+        t("churchAccount.featureCustomDomain"),
+      ],
+      isRecommended: true,
+    },
+  ];
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US");
+  const getStatusBadge = () => {
+    if (churchAccount.subscription_status === "active") {
+      return <Badge className="bg-green-500 gap-1"><CheckCircle className="w-3 h-3" />{t("churchAccount.statusActive")}</Badge>;
+    }
+    if (isTrialValid) {
+      return <Badge variant="secondary" className="gap-1"><AlertCircle className="w-3 h-3" />{t("churchAccount.statusTrial")}</Badge>;
+    }
+    if (churchAccount.subscription_status === "trial" && !isTrialValid) {
+      return <Badge variant="outline" className="gap-1 text-destructive border-destructive"><Lock className="w-3 h-3" />{t("churchAccount.statusExpired")}</Badge>;
+    }
+    if (churchAccount.subscription_status === "past_due") {
+      return <Badge variant="destructive">{t("churchAccount.statusPastDue")}</Badge>;
+    }
+    if (churchAccount.subscription_status === "canceled") {
+      return <Badge variant="outline">{t("churchAccount.statusCanceled")}</Badge>;
+    }
+    return null;
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Start Trial CTA - Show prominently if not subscribed */}
-      {canStartTrial && isOwner && (
-        <Card className="border-primary bg-gradient-to-br from-primary/5 to-accent/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              {t("churchAccount.tryFeatures")}
-            </CardTitle>
-            <CardDescription>
-              {t("churchAccount.trialDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                {t("churchAccount.featureCustomRoles")}
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                {t("churchAccount.featureTeamRotation")}
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                {t("churchAccount.featurePositionSignup")}
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                {t("churchAccount.featureWhiteLabel")}
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                {t("churchAccount.featureCustomDomain")}
-              </li>
-            </ul>
-            <Button 
-              onClick={handleStartTrial} 
-              disabled={isTrialLoading}
-              className="w-full gap-2"
-              size="lg"
-            >
-              {isTrialLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              {t("churchAccount.startTrial")}
-            </Button>
-            <p className="text-xs text-muted-foreground text-center">
-              {t("churchAccount.noPaymentRequired")}
-            </p>
-          </CardContent>
-        </Card>
-      )}
+  const renderPlanCard = (plan: typeof plans[0], isMobile = false) => {
+    const isCurrent = plan.id === currentPlan;
+    const Icon = plan.icon;
+    
+    return (
+      <Card 
+        key={plan.id}
+        className={`relative h-full flex flex-col ${
+          isCurrent 
+            ? "ring-2 ring-primary border-primary" 
+            : ""
+        } ${isMobile ? "mx-2" : ""}`}
+      >
+        {/* Badges */}
+        <div className="absolute -top-3 left-4 flex gap-2">
+          {isCurrent && (
+            <Badge className="bg-primary">
+              {t("churchAccount.yourCurrentPlan")}
+            </Badge>
+          )}
+          {plan.isRecommended && !isCurrent && (
+            <Badge variant="secondary" className="gap-1">
+              <Sparkles className="w-3 h-3" />
+              {t("churchAccount.recommended")}
+            </Badge>
+          )}
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            {t("churchAccount.subscriptionBilling")}
-          </CardTitle>
-          <CardDescription>
-            {t("churchAccount.subscriptionDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Current Plan */}
-          <div className="p-4 border rounded-lg bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="font-semibold text-lg">K-Worship {t("churchAccount.planChurch")}</h4>
-                <p className="text-sm text-muted-foreground">
-                  {t("churchAccount.planChurchPrice")}
-                </p>
-              </div>
-              {getStatusBadge(churchAccount.subscription_status)}
+        <CardHeader className="pt-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Icon className="w-5 h-5 text-primary" />
             </div>
-
-            {/* Trial Info */}
-            {isTrialValid && churchAccount.trial_ends_at && (
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg mb-4">
-                <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
-                  {t("churchAccount.trialDaysRemaining", { days: daysRemaining })}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {t("churchAccount.trialEnds", { date: formatDate(churchAccount.trial_ends_at) })}
-                </p>
-              </div>
-            )}
-
-            {/* Expired Trial Warning */}
-            {churchAccount.subscription_status === "trial" && !isTrialValid && (
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg mb-4">
-                <p className="text-sm font-medium text-destructive">
-                  {t("churchAccount.trialExpiredMessage")}
-                </p>
-              </div>
-            )}
-
-            {/* Plan Details */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground">{t("churchAccount.maxSeats")}</p>
-                <p className="font-semibold text-lg">{churchAccount.max_seats}</p>
-              </div>
-              <div className="p-3 bg-muted/50 rounded-lg">
-                <p className="text-muted-foreground">{t("churchAccount.usedSeats")}</p>
-                <p className="font-semibold text-lg">{churchAccount.used_seats}</p>
-              </div>
-            </div>
-
-            {/* Features */}
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-sm font-medium mb-2">{t("churchAccount.includedFeatures")}</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li className="flex items-center gap-2">
-                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {t("churchAccount.featureCustomRoles")}
-                </li>
-                <li className="flex items-center gap-2">
-                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {t("churchAccount.featureTeamRotation")}
-                </li>
-                <li className="flex items-center gap-2">
-                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {t("churchAccount.featurePositionSignup")}
-                </li>
-                <li className="flex items-center gap-2">
-                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {t("churchAccount.featureWhiteLabel")}
-                </li>
-                <li className="flex items-center gap-2">
-                  {isActive ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  {t("churchAccount.featureCustomDomain")}
-                </li>
-              </ul>
-            </div>
+            <CardTitle className="text-xl">{plan.name}</CardTitle>
           </div>
+          <div className="space-y-1">
+            <p className="text-2xl font-bold">{plan.price}</p>
+            <p className="text-xs text-muted-foreground">{plan.priceNote}</p>
+          </div>
+          <CardDescription className="mt-2">{plan.description}</CardDescription>
+        </CardHeader>
 
-          {/* Action Buttons */}
-          {isOwner && (
-            <div className="flex flex-col sm:flex-row gap-3">
-              {isTrialValid ? (
+        <CardContent className="flex-1 flex flex-col">
+          {/* Features */}
+          <ul className="space-y-2 text-sm flex-1">
+            {plan.features.map((feature, idx) => (
+              <li key={idx} className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* Action Button */}
+          {isOwner && plan.id === "church" && (
+            <div className="mt-6 space-y-3">
+              {canStartTrial ? (
+                <>
+                  <Button 
+                    onClick={handleStartTrial}
+                    disabled={isTrialLoading}
+                    className="w-full gap-2"
+                  >
+                    {isTrialLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    {t("churchAccount.startTrial")}
+                  </Button>
+                  <Button 
+                    onClick={handleSubscribe}
+                    disabled={isLoading}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {t("churchAccount.subscribeNow")}
+                  </Button>
+                </>
+              ) : isTrialValid ? (
                 <Button 
-                  onClick={handleSubscribe} 
+                  onClick={handleSubscribe}
                   disabled={isLoading}
-                  className="gap-2 flex-1"
+                  className="w-full gap-2"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -292,40 +308,138 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   )}
                   {t("churchAccount.upgradeToPaid")}
                 </Button>
-              ) : churchAccount.subscription_status === "active" && churchAccount.stripe_customer_id ? (
+              ) : churchAccount.subscription_status === "active" ? (
                 <Button 
-                  onClick={handleManageBilling} 
+                  onClick={handleManageBilling}
                   disabled={isPortalLoading}
                   variant="outline"
-                  className="gap-2 flex-1"
+                  className="w-full gap-2"
                 >
                   {isPortalLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <ExternalLink className="w-4 h-4" />
                   )}
-                  {t("churchAccount.manageBilling")}
+                  {t("churchAccount.manageSubscription")}
                 </Button>
-              ) : !canStartTrial ? (
+              ) : (
                 <Button 
-                  onClick={() => setShowUpgradeDialog(true)}
-                  className="gap-2 flex-1"
+                  onClick={handleSubscribe}
+                  disabled={isLoading}
+                  className="w-full gap-2"
                 >
-                  <CreditCard className="w-4 h-4" />
-                  {t("churchAccount.choosePlanButton")}
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t("churchAccount.subscribeNow")}
                 </Button>
-              ) : null}
+              )}
+            </div>
+          )}
+
+          {/* Show current badge for non-church plans */}
+          {isCurrent && plan.id !== "church" && (
+            <div className="mt-6">
+              <Badge variant="outline" className="w-full justify-center py-2">
+                {t("churchAccount.yourCurrentPlan")}
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Status Banner */}
+      <Card className="bg-gradient-to-r from-primary/5 to-accent/5">
+        <CardContent className="py-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-primary/10">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{t("churchAccount.subscriptionBilling")}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {t("churchAccount.subscriptionDescription")}
+                </p>
+              </div>
+            </div>
+            {getStatusBadge()}
+          </div>
+
+          {/* Trial Warning */}
+          {isTrialValid && churchAccount.trial_ends_at && (
+            <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                {t("churchAccount.trialDaysRemaining", { days: daysRemaining })}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("churchAccount.trialEnds", { date: formatDate(churchAccount.trial_ends_at) })}
+              </p>
+            </div>
+          )}
+
+          {/* Expired Trial Warning */}
+          {churchAccount.subscription_status === "trial" && !isTrialValid && (
+            <div className="mt-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-sm font-medium text-destructive">
+                {t("churchAccount.trialExpiredMessage")}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <UpgradePlanDialog 
-        open={showUpgradeDialog} 
-        onOpenChange={setShowUpgradeDialog}
-        onStartTrial={handleStartTrial}
-        onSubscribe={handleSubscribe}
-      />
+      {/* Plan Comparison */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">{t("churchAccount.comparePlans")}</h3>
+        
+        {/* Desktop: Grid View */}
+        <div className="hidden md:grid md:grid-cols-3 gap-6">
+          {plans.map((plan) => renderPlanCard(plan))}
+        </div>
+
+        {/* Mobile: Carousel View */}
+        <div className="md:hidden">
+          <Carousel
+            opts={{
+              align: "center",
+              startIndex: plans.findIndex(p => p.id === currentPlan),
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {plans.map((plan) => (
+                <CarouselItem key={plan.id} className="pl-2 md:pl-4 basis-[85%]">
+                  {renderPlanCard(plan, true)}
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <CarouselPrevious className="static translate-y-0" />
+              <p className="text-sm text-muted-foreground">
+                {t("churchAccount.swipeToCompare")}
+              </p>
+              <CarouselNext className="static translate-y-0" />
+            </div>
+          </Carousel>
+        </div>
+      </div>
+
+      {/* Cancel/Downgrade Link */}
+      {isOwner && (churchAccount.subscription_status === "active" || isTrialValid) && churchAccount.stripe_customer_id && (
+        <div className="text-center pt-4 border-t">
+          <button
+            onClick={handleManageBilling}
+            disabled={isPortalLoading}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors inline-flex items-center gap-1"
+          >
+            {isPortalLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            {t("churchAccount.needToCancel")} {t("churchAccount.manageSubscription")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
