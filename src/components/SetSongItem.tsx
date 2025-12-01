@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GripVertical, X, Youtube, FileText, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
 import { useState, useMemo } from "react";
+import { Metronome } from "./Metronome";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
@@ -199,13 +200,20 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>
-                  <Input
-                    type="number"
-                    value={setSong.bpm || ""}
-                    onChange={(e) => onUpdate(index, { bpm: e.target.value ? parseInt(e.target.value) : null })}
-                    placeholder="BPM"
-                    className="mt-1"
-                  />
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="number"
+                      value={setSong.bpm || ""}
+                      onChange={(e) => onUpdate(index, { bpm: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder="BPM"
+                      className="flex-1"
+                    />
+                    <Metronome 
+                      bpm={setSong.bpm}
+                      timeSignature={setSong.time_signature}
+                      onBpmChange={(newBpm) => onUpdate(index, { bpm: newBpm })}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">박자</label>
