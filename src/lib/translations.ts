@@ -930,6 +930,12 @@ export const translations = {
       copyLyrics: "Copy",
       lyricsCopied: "Lyrics copied to clipboard",
       lyricsPlaceholder: "Enter lyrics or select 'Include Lyrics' when adding songs",
+      metronome: {
+        start: "Start Metronome",
+        stop: "Stop Metronome",
+        mute: "Mute",
+        unmute: "Unmute",
+      },
     },
     csvImport: {
       title: "Import Songs from CSV",
@@ -2265,6 +2271,12 @@ export const translations = {
       copyLyrics: "복사",
       lyricsCopied: "가사가 복사되었습니다",
       lyricsPlaceholder: "가사를 입력하거나 곡 추가 시 '가사 포함'을 선택하세요",
+      metronome: {
+        start: "메트로놈 시작",
+        stop: "메트로놈 정지",
+        mute: "음소거",
+        unmute: "음소거 해제",
+      },
     },
     csvImport: {
       title: "CSV로 곡 가져오기",
