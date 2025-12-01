@@ -70,7 +70,13 @@ const AdminUsers = () => {
       if (rolesError) throw rolesError;
 
       // Get auth data including email_confirmed_at via edge function
-      const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users");
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users", {
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      });
 
       if (authError) {
         console.error("Error fetching auth data:", authError);
@@ -206,8 +212,14 @@ const AdminUsers = () => {
   // Confirm user mutation
   const confirmUserMutation = useMutation({
     mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
       const { data, error } = await supabase.functions.invoke("admin-confirm-user", {
         body: { userId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
       if (error) throw error;
       return data;
@@ -224,8 +236,14 @@ const AdminUsers = () => {
   // Resend verification mutation
   const resendVerificationMutation = useMutation({
     mutationFn: async ({ email, name }: { email: string; name: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+
       const { data, error } = await supabase.functions.invoke("admin-resend-verification", {
         body: { email, name },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
       if (error) throw error;
       return data;
