@@ -1000,6 +1000,7 @@ export type Database = {
           artist: string | null
           category: string | null
           created_at: string
+          created_by: string | null
           default_key: string | null
           id: string
           interpretation: string | null
@@ -1017,6 +1018,7 @@ export type Database = {
           artist?: string | null
           category?: string | null
           created_at?: string
+          created_by?: string | null
           default_key?: string | null
           id?: string
           interpretation?: string | null
@@ -1034,6 +1036,7 @@ export type Database = {
           artist?: string | null
           category?: string | null
           created_at?: string
+          created_by?: string | null
           default_key?: string | null
           id?: string
           interpretation?: string | null
