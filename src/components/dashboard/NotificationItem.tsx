@@ -43,6 +43,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isBirthday = notification.type === "birthday";
   const isWorshipSet = notification.type === "new_worship_set";
   const isCalendarEvent = notification.type === "new_calendar_event";
+  const isNewSong = notification.type === "new_song";
 
   return (
     <div
@@ -66,6 +67,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Calendar className="h-5 w-5 text-primary" />
         </div>
+      ) : isNewSong ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Music className="h-5 w-5 text-primary" />
+        </div>
       ) : (
         <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={actorAvatar} alt={actorName} />
@@ -73,12 +78,39 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         </Avatar>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm">
-          <span className="font-semibold">{actorName}</span>{" "}
-          <span className="text-muted-foreground">
-            {notification.message.replace(actorName, "").trim()}
-          </span>
-        </p>
+        {isNewSong ? (
+          <p className="text-sm">
+            {actorName && actorName !== "User" && actorName !== "A user" ? (
+              <>
+                <span className="font-semibold">{actorName}</span>
+                <span className="text-muted-foreground"> added a new song</span>
+                {notification.metadata?.song_title && (
+                  <span className="font-medium"> "{notification.metadata.song_title}"</span>
+                )}
+                {notification.metadata?.song_artist && (
+                  <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-muted-foreground">New song added</span>
+                {notification.metadata?.song_title && (
+                  <span className="font-medium"> "{notification.metadata.song_title}"</span>
+                )}
+                {notification.metadata?.song_artist && (
+                  <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
+                )}
+              </>
+            )}
+          </p>
+        ) : (
+          <p className="text-sm">
+            <span className="font-semibold">{actorName}</span>{" "}
+            <span className="text-muted-foreground">
+              {notification.message.replace(actorName, "").trim()}
+            </span>
+          </p>
+        )}
         <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
       </div>
     </div>
