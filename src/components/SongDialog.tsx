@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +34,7 @@ interface SongDialogProps {
 
 export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProps) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -259,7 +261,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       } else {
         const { data: newSong, error } = await supabase
           .from("songs")
-          .insert([data])
+          .insert([{ ...data, created_by: user?.id }])
           .select()
           .single();
         if (error) throw error;
