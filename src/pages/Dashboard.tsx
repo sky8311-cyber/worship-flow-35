@@ -346,6 +346,9 @@ const Dashboard = () => {
     enabled: !!user
   });
   return <AppLayout>
+      {/* Worship Leader Profile Completion Dialog */}
+      <CompleteWorshipLeaderProfileDialog />
+      
       {/* Main Content - Desktop Layout (3 columns) */}
       <div className="container mx-auto px-4 py-8 hidden lg:block">
         <div className="grid grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
