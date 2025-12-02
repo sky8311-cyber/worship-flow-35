@@ -92,27 +92,27 @@ export const SeedLeaderboard = () => {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="w-5 h-5 text-yellow-500" />;
+        return <Trophy className="w-3.5 h-3.5 text-yellow-500" />;
       case 2:
-        return <Medal className="w-5 h-5 text-gray-400" />;
+        return <Medal className="w-3.5 h-3.5 text-gray-400" />;
       case 3:
-        return <Award className="w-5 h-5 text-amber-600" />;
+        return <Award className="w-3.5 h-3.5 text-amber-600" />;
       default:
-        return <span className="text-muted-foreground font-medium">#{rank}</span>;
+        return <span className="text-[10px] text-muted-foreground font-medium">#{rank}</span>;
     }
   };
 
   const renderLeaderboard = (data: typeof weeklyData) => {
     if (!data || data.length === 0) {
       return (
-        <p className="text-center text-muted-foreground py-8">
-          아직 데이터가 없습니다
+        <p className="text-center text-muted-foreground py-4 text-xs">
+          {t('seeds.noData')}
         </p>
       );
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {data.map((entry, index) => {
           const rank = index + 1;
           const isCurrentUser = entry.userId === user?.id;
@@ -120,11 +120,11 @@ export const SeedLeaderboard = () => {
           return (
             <div
               key={entry.userId}
-              className={`flex items-center gap-4 p-3 rounded-lg border ${
-                isCurrentUser ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'
+              className={`flex items-center gap-2 p-2 rounded-md border ${
+                isCurrentUser ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-transparent'
               }`}
             >
-              <div className="w-8 flex justify-center">
+              <div className="w-5 flex justify-center shrink-0">
                 {getRankIcon(rank)}
               </div>
 
@@ -132,24 +132,25 @@ export const SeedLeaderboard = () => {
                 userId={entry.userId}
                 avatarUrl={entry.avatarUrl}
                 fallback={entry.name.substring(0, 2).toUpperCase()}
-                size="md"
+                size="sm"
+                showLevel={false}
               />
 
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">
+                <p className="text-xs font-medium truncate leading-tight">
                   {entry.name}
                   {isCurrentUser && (
-                    <Badge variant="secondary" className="ml-2">
-                      나
+                    <Badge variant="secondary" className="ml-1 text-[9px] px-1 py-0 h-3.5">
+                      {t('seeds.me')}
                     </Badge>
                   )}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  Level {entry.level}
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Lv.{entry.level}
                 </p>
               </div>
 
-              <Badge variant="default" className="ml-auto">
+              <Badge variant="default" className="ml-auto text-[10px] px-1.5 py-0 h-4 shrink-0">
                 {entry.seeds} 🌱
               </Badge>
             </div>
@@ -161,29 +162,29 @@ export const SeedLeaderboard = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="w-5 h-5" />
+      <CardHeader className="pb-2 px-4 pt-4">
+        <CardTitle className="text-sm font-medium flex items-center gap-1.5">
+          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
           {t('seeds.leaderboard')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-4">
         <Tabs defaultValue="weekly" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="weekly">{t('seeds.weekly')}</TabsTrigger>
-            <TabsTrigger value="monthly">{t('seeds.monthly')}</TabsTrigger>
-            <TabsTrigger value="allTime">{t('seeds.allTime')}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-7 mb-2">
+            <TabsTrigger value="weekly" className="text-[10px] px-1">{t('seeds.weekly')}</TabsTrigger>
+            <TabsTrigger value="monthly" className="text-[10px] px-1">{t('seeds.monthly')}</TabsTrigger>
+            <TabsTrigger value="allTime" className="text-[10px] px-1">{t('seeds.allTime')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="weekly" className="mt-4">
+          <TabsContent value="weekly" className="mt-2">
             {renderLeaderboard(weeklyData)}
           </TabsContent>
 
-          <TabsContent value="monthly" className="mt-4">
+          <TabsContent value="monthly" className="mt-2">
             {renderLeaderboard(monthlyData)}
           </TabsContent>
 
-          <TabsContent value="allTime" className="mt-4">
+          <TabsContent value="allTime" className="mt-2">
             {renderLeaderboard(allTimeData)}
           </TabsContent>
         </Tabs>
