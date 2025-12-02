@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings, Instagram, Youtube, Calendar, Users, UserCheck, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
@@ -67,13 +68,19 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
           {/* Avatar + Edit Icon */}
           <div className="relative group mx-auto w-40">
             <div className="cursor-pointer" onClick={() => setAvatarDialogOpen(true)}>
-              <AvatarWithLevel
-                userId={profile.id}
-                avatarUrl={profile?.avatar_url}
-                fallback={initials}
-                size="lg"
-                className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
-              />
+              {profile?.id ? (
+                <AvatarWithLevel
+                  userId={profile.id}
+                  avatarUrl={profile.avatar_url}
+                  fallback={initials}
+                  size="lg"
+                  className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
+                />
+              ) : (
+                <Avatar className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20">
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+              )}
             </div>
             {!profileOverride && (
               <Button

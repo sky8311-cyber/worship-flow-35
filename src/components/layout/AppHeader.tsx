@@ -117,13 +117,19 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                  <AvatarWithLevel
-                    userId={profile!.id}
-                    avatarUrl={profile?.avatar_url}
-                    fallback={profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
-                    size="md"
-                    className="h-10 w-10"
-                  />
+                  {profile ? (
+                    <AvatarWithLevel
+                      userId={profile.id}
+                      avatarUrl={profile.avatar_url}
+                      fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+                      size="md"
+                      className="h-10 w-10"
+                    />
+                  ) : (
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">
