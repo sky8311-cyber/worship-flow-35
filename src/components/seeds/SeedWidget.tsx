@@ -51,33 +51,43 @@ export const SeedWidget = () => {
     enabled: !!user?.id
   });
 
-  if (!seedData) return null;
+  // Default to Level 1 with 0 seeds if no data
+  const defaultData = {
+    totalSeeds: 0,
+    currentLevel: { level: 1, name_ko: '새싹', name_en: 'Seedling', emoji: '🌱', min_seeds: 0, max_seeds: 99, badge_color: '#a3e635' },
+    nextLevel: { level: 2, name_ko: '새순', name_en: 'Sprout', min_seeds: 100, emoji: '🌿', badge_color: '#84cc16' },
+    progress: 0
+  };
+
+  const displayData = seedData || defaultData;
+
+  if (!user?.id) return null;
 
   return (
-    <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
+      <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{seedData.currentLevel.emoji}</span>
+          <span className="text-2xl">{displayData.currentLevel.emoji}</span>
           <div>
             <p className="text-sm font-medium">
-              {t('seeds.currentLevel')}: {seedData.currentLevel.name_ko}
+              {t('seeds.currentLevel')}: {displayData.currentLevel.name_ko}
             </p>
             <p className="text-xs text-muted-foreground">
-              {seedData.totalSeeds} {t('seeds.title')}
+              {displayData.totalSeeds} {t('seeds.title')}
             </p>
           </div>
         </div>
       </div>
 
-      {seedData.nextLevel && (
+      {displayData.nextLevel && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{t('seeds.nextLevel')}</span>
             <span>
-              {seedData.nextLevel.min_seeds - seedData.totalSeeds} {t('seeds.seedsToNextLevel')}
+              {displayData.nextLevel.min_seeds - displayData.totalSeeds} {t('seeds.seedsToNextLevel')}
             </span>
           </div>
-          <Progress value={seedData.progress} className="h-2" />
+          <Progress value={displayData.progress} className="h-2" />
         </div>
       )}
 
