@@ -60,10 +60,38 @@ export const useSongUsage = (songId: string) => {
 
       if (error) throw error;
 
-      // Process usage data
+      // Process usage data - OPTIMIZED with batch queries
       const history: SongUsageItem[] = [];
       let totalCount = 0;
 
+      // Collect all set IDs and community IDs for batch queries
+      const setIds = (usageData || []).map(item => item.service_sets?.id).filter(Boolean) as string[];
+      const communityIds = [...new Set((usageData || [])
+        .map(item => item.service_sets?.community_id)
+        .filter(id => id && userCommunityIds.has(id))
+      )] as string[];
+
+      // Batch fetch collaborator status for all sets
+      const { data: collaborators } = await supabase
+        .from("set_collaborators")
+        .select("service_set_id")
+        .in("service_set_id", setIds)
+        .eq("user_id", user?.id || "");
+
+      const collaboratorSetIds = new Set(collaborators?.map(c => c.service_set_id) || []);
+
+      // Batch fetch community leader status for all communities
+      const { data: memberRoles } = await supabase
+        .from("community_members")
+        .select("community_id, role")
+        .in("community_id", communityIds)
+        .eq("user_id", user?.id || "");
+
+      const leaderCommunityIds = new Set(
+        memberRoles?.filter(m => m.role === "community_leader").map(m => m.community_id) || []
+      );
+
+      // Process each usage item using cached data
       for (const item of usageData || []) {
         const set = item.service_sets;
         if (!set) continue;
@@ -73,28 +101,12 @@ export const useSongUsage = (songId: string) => {
 
         // Filter logic: show all sets from same community, only published from other communities
         if (isSameCommunity || set.status === 'published') {
-          // Check if user can edit
+          // Check if user can edit using cached data
           let canEdit = false;
           if (isAdmin || isCreator) {
             canEdit = true;
           } else if (set.community_id && isSameCommunity) {
-            // Check collaborator status
-            const { data: collaborator } = await supabase
-              .from("set_collaborators")
-              .select("id")
-              .eq("service_set_id", set.id)
-              .eq("user_id", user?.id || "")
-              .maybeSingle();
-
-            // Check community leader status
-            const { data: member } = await supabase
-              .from("community_members")
-              .select("role")
-              .eq("community_id", set.community_id)
-              .eq("user_id", user?.id || "")
-              .maybeSingle();
-
-            canEdit = !!collaborator || member?.role === "community_leader";
+            canEdit = collaboratorSetIds.has(set.id) || leaderCommunityIds.has(set.community_id);
           }
 
           history.push({

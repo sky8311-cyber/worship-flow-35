@@ -10,9 +10,9 @@ interface LevelBadgeProps {
 
 export const LevelBadge = ({ level, emoji, badgeColor, size = 'md', className }: LevelBadgeProps) => {
   const sizeClasses = {
-    sm: 'w-5 h-5 text-[8px]',
-    md: 'w-6 h-6 text-[9px]',
-    lg: 'w-8 h-8 text-xs'
+    sm: 'w-3 h-3 text-[6px]',
+    md: 'w-3.5 h-3.5 text-[7px]',
+    lg: 'w-4 h-4 text-[8px]'
   };
 
   return (

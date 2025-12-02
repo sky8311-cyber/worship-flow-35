@@ -164,7 +164,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-xl">
         <DialogHeader>
           <DialogTitle>워십세트에 추가</DialogTitle>
           <DialogDescription>
