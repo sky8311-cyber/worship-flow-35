@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { AvatarWithLevel } from "./AvatarWithLevel";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Trophy, Medal, Award } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -92,27 +92,27 @@ export const SeedLeaderboard = () => {
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1:
-        return <Trophy className="w-3.5 h-3.5 text-yellow-500" />;
+        return <Trophy className="w-4 h-4 text-yellow-500" />;
       case 2:
-        return <Medal className="w-3.5 h-3.5 text-gray-400" />;
+        return <Medal className="w-4 h-4 text-gray-400" />;
       case 3:
-        return <Award className="w-3.5 h-3.5 text-amber-600" />;
+        return <Award className="w-4 h-4 text-amber-600" />;
       default:
-        return <span className="text-[10px] text-muted-foreground font-medium">#{rank}</span>;
+        return <span className="text-xs text-muted-foreground font-medium">#{rank}</span>;
     }
   };
 
   const renderLeaderboard = (data: typeof weeklyData) => {
     if (!data || data.length === 0) {
       return (
-        <p className="text-center text-muted-foreground py-4 text-xs">
+        <p className="text-center text-muted-foreground py-6 text-sm">
           {t('seeds.noData')}
         </p>
       );
     }
 
     return (
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {data.map((entry, index) => {
           const rank = index + 1;
           const isCurrentUser = entry.userId === user?.id;
@@ -120,37 +120,34 @@ export const SeedLeaderboard = () => {
           return (
             <div
               key={entry.userId}
-              className={`flex items-center gap-2 p-2 rounded-md border ${
-                isCurrentUser ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-transparent'
+              className={`flex items-center gap-3 p-2 rounded-lg ${
+                isCurrentUser ? 'bg-primary/10 border border-primary/20' : 'bg-muted/30'
               }`}
             >
-              <div className="w-5 flex justify-center shrink-0">
+              <div className="w-6 flex justify-center shrink-0">
                 {getRankIcon(rank)}
               </div>
 
-              <AvatarWithLevel
-                userId={entry.userId}
-                avatarUrl={entry.avatarUrl}
-                fallback={entry.name.substring(0, 2).toUpperCase()}
-                size="sm"
-                showLevel={false}
-              />
+              <Avatar className="w-8 h-8 shrink-0">
+                <AvatarImage src={entry.avatarUrl || undefined} />
+                <AvatarFallback className="text-xs">
+                  {entry.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
 
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate leading-tight">
-                  {entry.name}
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate">{entry.name}</p>
                   {isCurrentUser && (
-                    <Badge variant="secondary" className="ml-1 text-[9px] px-1 py-0 h-3.5">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
                       {t('seeds.me')}
                     </Badge>
                   )}
-                </p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
-                  Lv.{entry.level}
-                </p>
+                </div>
+                <p className="text-xs text-muted-foreground">Lv.{entry.level}</p>
               </div>
 
-              <Badge variant="default" className="ml-auto text-[10px] px-1.5 py-0 h-4 shrink-0">
+              <Badge variant="outline" className="text-xs shrink-0">
                 {entry.seeds} 🌱
               </Badge>
             </div>
@@ -162,29 +159,29 @@ export const SeedLeaderboard = () => {
 
   return (
     <Card>
-      <CardHeader className="pb-2 px-4 pt-4">
-        <CardTitle className="text-sm font-medium flex items-center gap-1.5">
-          <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-yellow-500" />
           {t('seeds.leaderboard')}
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-4">
+      <CardContent>
         <Tabs defaultValue="weekly" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-7 mb-2">
-            <TabsTrigger value="weekly" className="text-[10px] px-1">{t('seeds.weekly')}</TabsTrigger>
-            <TabsTrigger value="monthly" className="text-[10px] px-1">{t('seeds.monthly')}</TabsTrigger>
-            <TabsTrigger value="allTime" className="text-[10px] px-1">{t('seeds.allTime')}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 h-8 mb-3">
+            <TabsTrigger value="weekly" className="text-xs">{t('seeds.weekly')}</TabsTrigger>
+            <TabsTrigger value="monthly" className="text-xs">{t('seeds.monthly')}</TabsTrigger>
+            <TabsTrigger value="allTime" className="text-xs">{t('seeds.allTime')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="weekly" className="mt-2">
+          <TabsContent value="weekly" className="mt-0">
             {renderLeaderboard(weeklyData)}
           </TabsContent>
 
-          <TabsContent value="monthly" className="mt-2">
+          <TabsContent value="monthly" className="mt-0">
             {renderLeaderboard(monthlyData)}
           </TabsContent>
 
-          <TabsContent value="allTime" className="mt-2">
+          <TabsContent value="allTime" className="mt-0">
             {renderLeaderboard(allTimeData)}
           </TabsContent>
         </Tabs>
