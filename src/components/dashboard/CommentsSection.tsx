@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -89,12 +90,22 @@ export function CommentsSection({ postId, postType }: CommentsSectionProps) {
         <>
           {comments?.map((comment: any) => (
             <div key={comment.id} className="flex gap-3">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={comment.profiles?.avatar_url || ""} />
-                <AvatarFallback>
-                  {comment.profiles?.full_name?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
+              {comment.profiles?.id ? (
+                <AvatarWithLevel
+                  userId={comment.profiles.id}
+                  avatarUrl={comment.profiles.avatar_url}
+                  fallback={comment.profiles?.full_name?.charAt(0) || "U"}
+                  size="sm"
+                  className="w-8 h-8"
+                />
+              ) : (
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={comment.profiles?.avatar_url || ""} />
+                  <AvatarFallback>
+                    {comment.profiles?.full_name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              )}
               <div className="flex-1">
                 <div className="bg-muted rounded-lg px-4 py-2">
                   <p className="font-medium text-sm">
@@ -126,10 +137,20 @@ export function CommentsSection({ postId, postType }: CommentsSectionProps) {
 
       {user && (
         <div className="flex gap-3">
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={profile?.avatar_url || ""} />
-            <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
-          </Avatar>
+          {user.id && profile ? (
+            <AvatarWithLevel
+              userId={user.id}
+              avatarUrl={profile.avatar_url}
+              fallback={profile?.full_name?.charAt(0) || "U"}
+              size="sm"
+              className="w-8 h-8"
+            />
+          ) : (
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={profile?.avatar_url || ""} />
+              <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
+            </Avatar>
+          )}
           <div className="flex-1 flex gap-2">
             <Input
               placeholder={t("socialFeed.writeComment")}
