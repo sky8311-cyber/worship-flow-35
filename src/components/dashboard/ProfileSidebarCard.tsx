@@ -125,9 +125,6 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
             {profile?.bio || t("profile.addBio")}
           </p>
 
-          {/* Seed Widget */}
-          {!profileOverride && <SeedWidget />}
-
           {/* Social Links */}
           <div className="flex justify-center gap-2 mt-4">
             {profile?.instagram_url ? (
@@ -177,6 +174,9 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
               />
             </div>
           )}
+
+          {/* Seed Widget */}
+          {!profileOverride && <SeedWidget />}
         </CardContent>
       </Card>
 
