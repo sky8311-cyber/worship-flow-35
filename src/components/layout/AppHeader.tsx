@@ -123,6 +123,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                       avatarUrl={profile.avatar_url}
                       fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
                       size="md"
+                      showLevel={false}
                       className="h-10 w-10"
                     />
                   ) : (

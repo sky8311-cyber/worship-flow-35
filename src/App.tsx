@@ -81,6 +81,7 @@ const App = () => (
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><TemplateManager /></ProtectedRoute>} />
+              <Route path="/seeds" element={<ProtectedRoute><SeedHistory /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />

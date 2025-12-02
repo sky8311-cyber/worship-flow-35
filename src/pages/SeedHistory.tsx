@@ -9,6 +9,7 @@ import { Sprout, TrendingUp, Trophy, Calendar } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function SeedHistory() {
   const { user } = useAuth();
@@ -135,7 +136,8 @@ export default function SeedHistory() {
   if (!seedData) return null;
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+    <AppLayout>
+      <div className="container max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <Sprout className="w-8 h-8 text-primary" />
         <div>
@@ -303,6 +305,7 @@ export default function SeedHistory() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
