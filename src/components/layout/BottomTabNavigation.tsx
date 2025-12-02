@@ -49,13 +49,13 @@ export const BottomTabNavigation = () => {
       }}
     >
       <div className="grid grid-cols-5 h-16">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const isActive = tab.match(location.pathname);
           const Icon = tab.icon;
           
           return (
             <Link
-              key={tab.to}
+              key={`${tab.to}-${index}`}
               to={tab.to}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-colors",
