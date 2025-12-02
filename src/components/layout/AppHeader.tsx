@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -115,13 +116,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             {/* Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar>
-                    <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                  <AvatarWithLevel
+                    userId={profile!.id}
+                    avatarUrl={profile?.avatar_url}
+                    fallback={profile?.full_name?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
+                    size="md"
+                    className="h-10 w-10"
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64">

@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Settings, Instagram, Youtube, Calendar, Users, UserCheck, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
+import { SeedWidget } from "@/components/seeds/SeedWidget";
 
 interface ProfileStats {
   sets: number;
@@ -64,14 +65,16 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
       <Card>
         <CardContent className="p-6">
           {/* Avatar + Edit Icon */}
-          <div className="relative group">
-            <Avatar
-              className="cursor-pointer mx-auto w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
-              onClick={() => setAvatarDialogOpen(true)}
-            >
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-            </Avatar>
+          <div className="relative group mx-auto w-40">
+            <div className="cursor-pointer" onClick={() => setAvatarDialogOpen(true)}>
+              <AvatarWithLevel
+                userId={profile.id}
+                avatarUrl={profile?.avatar_url}
+                fallback={initials}
+                size="lg"
+                className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
+              />
+            </div>
             {!profileOverride && (
               <Button
                 size="icon"
@@ -114,6 +117,9 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
           <p className="text-sm text-muted-foreground text-center mt-2 line-clamp-2 min-h-[40px]">
             {profile?.bio || t("profile.addBio")}
           </p>
+
+          {/* Seed Widget */}
+          {!profileOverride && <SeedWidget />}
 
           {/* Social Links */}
           <div className="flex justify-center gap-2 mt-4">

@@ -730,6 +730,117 @@ export type Database = {
           },
         ]
       }
+      seed_achievements: {
+        Row: {
+          achievement_type: Database["public"]["Enums"]["seed_activity_type"]
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_type: Database["public"]["Enums"]["seed_activity_type"]
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_type?: Database["public"]["Enums"]["seed_activity_type"]
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seed_daily_caps: {
+        Row: {
+          activity_date: string
+          activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          count: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_date?: string
+          activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          count?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_type?: Database["public"]["Enums"]["seed_activity_type"]
+          count?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seed_levels: {
+        Row: {
+          badge_color: string
+          created_at: string | null
+          emoji: string
+          id: number
+          level: number
+          max_seeds: number | null
+          min_seeds: number
+          name_en: string
+          name_ko: string
+        }
+        Insert: {
+          badge_color: string
+          created_at?: string | null
+          emoji: string
+          id?: number
+          level: number
+          max_seeds?: number | null
+          min_seeds: number
+          name_en: string
+          name_ko: string
+        }
+        Update: {
+          badge_color?: string
+          created_at?: string | null
+          emoji?: string
+          id?: number
+          level?: number
+          max_seeds?: number | null
+          min_seeds?: number
+          name_en?: string
+          name_ko?: string
+        }
+        Relationships: []
+      }
+      seed_transactions: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          created_at: string | null
+          description: string | null
+          id: string
+          related_id: string | null
+          seeds_earned: number
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_id?: string | null
+          seeds_earned: number
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["seed_activity_type"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          related_id?: string | null
+          seeds_earned?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_sets: {
         Row: {
           band_name: string | null
@@ -1338,6 +1449,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_seeds: {
+        Row: {
+          created_at: string | null
+          current_level: number
+          id: string
+          total_seeds: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_level?: number
+          id?: string
+          total_seeds?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_level?: number
+          id?: string
+          total_seeds?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_seeds_current_level_fkey"
+            columns: ["current_level"]
+            isOneToOne: false
+            referencedRelation: "seed_levels"
+            referencedColumns: ["level"]
+          },
+        ]
+      }
       waitlist: {
         Row: {
           church_name: string | null
@@ -1658,6 +1804,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_seeds: {
+        Args: {
+          _activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          _description?: string
+          _related_id?: string
+          _seeds: number
+          _user_id: string
+        }
+        Returns: number
+      }
       can_manage_church_roles: {
         Args: { _church_account_id: string; _user_id: string }
         Returns: boolean
@@ -1699,6 +1855,22 @@ export type Database = {
     Enums: {
       app_role: "admin" | "worship_leader" | "user"
       collaborator_role: "editor" | "viewer"
+      seed_activity_type:
+        | "profile_setup"
+        | "avatar_upload"
+        | "first_song_added"
+        | "first_set_created"
+        | "first_set_published"
+        | "first_team_invite"
+        | "first_community_post"
+        | "song_added"
+        | "song_edited"
+        | "worship_set_created"
+        | "worship_set_published"
+        | "community_post"
+        | "score_uploaded"
+        | "lyrics_added"
+        | "admin_bonus"
       set_status: "draft" | "published"
     }
     CompositeTypes: {
@@ -1829,6 +2001,23 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "worship_leader", "user"],
       collaborator_role: ["editor", "viewer"],
+      seed_activity_type: [
+        "profile_setup",
+        "avatar_upload",
+        "first_song_added",
+        "first_set_created",
+        "first_set_published",
+        "first_team_invite",
+        "first_community_post",
+        "song_added",
+        "song_edited",
+        "worship_set_created",
+        "worship_set_published",
+        "community_post",
+        "score_uploaded",
+        "lyrics_added",
+        "admin_bonus",
+      ],
       set_status: ["draft", "published"],
     },
   },

@@ -31,6 +31,7 @@ import WorshipSets from "./pages/WorshipSets";
 import RequestWorshipLeader from "./pages/RequestWorshipLeader";
 import TemplateManager from "./pages/TemplateManager";
 import ChurchAccount from "./pages/ChurchAccount";
+import SeedHistory from "./pages/SeedHistory";
 
 const queryClient = new QueryClient();
 
