@@ -18,13 +18,12 @@ export const LevelBadge = ({ level, emoji, badgeColor, size = 'md', className }:
   return (
     <div
       className={cn(
-        "absolute bottom-0 right-0 rounded-full border-2 border-background flex items-center justify-center font-bold shadow-sm",
+        "absolute bottom-0 right-0 rounded-full border-2 border-background bg-white flex items-center justify-center font-bold shadow-sm",
         sizeClasses[size],
         className
       )}
-      style={{ backgroundColor: badgeColor }}
     >
-      <span className="text-white drop-shadow-sm">
+      <span>
         {emoji}
       </span>
     </div>
