@@ -46,6 +46,15 @@ export const AvatarWithLevel = ({
     enabled: showLevel
   });
 
+  // Default to Level 1 if no data
+  const defaultSeedData = {
+    level: 1,
+    emoji: '🌱',
+    badgeColor: '#a3e635'
+  };
+
+  const displayData = seedData || defaultSeedData;
+
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
@@ -58,11 +67,11 @@ export const AvatarWithLevel = ({
         <AvatarImage src={avatarUrl || undefined} className="object-cover" />
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
-      {showLevel && seedData && (
+      {showLevel && (
         <LevelBadge
-          level={seedData.level}
-          emoji={seedData.emoji}
-          badgeColor={seedData.badgeColor}
+          level={displayData.level}
+          emoji={displayData.emoji}
+          badgeColor={displayData.badgeColor}
           size={size}
         />
       )}
