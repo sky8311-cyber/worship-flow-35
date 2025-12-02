@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy, Clock } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
+import { useEffect } from "react";
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -66,6 +67,19 @@ const BandView = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { t, language } = useTranslation();
+
+  // Check if user is viewing from a different community
+  const { data: userCommunities } = useQuery({
+    queryKey: ["user-communities", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .eq("user_id", user?.id || "");
+      return data?.map(c => c.community_id) || [];
+    },
+    enabled: !!user,
+  });
 
   const { data: serviceSet, isLoading } = useQuery({
     queryKey: ["band-view", id],
@@ -168,6 +182,23 @@ const BandView = () => {
 
   const canEdit = canEditData?.canEdit || false;
 
+  // Check if this is a cross-community view
+  const isCrossCommunity = serviceSet?.community_id && 
+    userCommunities && 
+    !userCommunities.includes(serviceSet.community_id);
+
+  // Increment view count for cross-community published sets (once per session)
+  useEffect(() => {
+    if (id && serviceSet && isCrossCommunity && serviceSet.status === 'published') {
+      const viewKey = `viewed_set_${id}`;
+      if (!sessionStorage.getItem(viewKey)) {
+        supabase.rpc('increment_set_view_count', { set_id: id }).then(() => {
+          sessionStorage.setItem(viewKey, 'true');
+        });
+      }
+    }
+  }, [id, serviceSet, isCrossCommunity]);
+
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string) => {
     if (!url) return null;
@@ -235,6 +266,24 @@ const BandView = () => {
   return (
     <AppLayout breadcrumb={breadcrumbNav}>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {/* Cross-community read-only banner */}
+        {isCrossCommunity && serviceSet?.status === 'published' && (
+          <div className="mb-6 p-4 bg-accent/10 border border-accent/30 rounded-lg flex items-center gap-3">
+            <Lock className="w-5 h-5 text-accent flex-shrink-0" />
+            <div className="flex-1" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
+              <p className="text-sm font-medium text-foreground">
+                {t("songUsage.crossCommunityReadOnly")}
+              </p>
+              {serviceSet.view_count > 0 && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5" />
+                  {t("songUsage.viewCount")}: {serviceSet.view_count}{t("songUsage.times")}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="flex items-center justify-between mb-6 print:hidden">
           <div className="flex items-center gap-3">
