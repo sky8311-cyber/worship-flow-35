@@ -3,7 +3,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar, Users } from "lucide-react";
+import { Cake, Music, Calendar, Users, Sparkles } from "lucide-react";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
+import { useState, useEffect } from "react";
+import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -12,10 +15,25 @@ interface NotificationItemProps {
 
 export function NotificationItem({ notification, onRead }: NotificationItemProps) {
   const navigate = useNavigate();
+  const [showLevelUpDialog, setShowLevelUpDialog] = useState(false);
+
+  const isLevelUp = notification.type === "level_up";
+
+  useEffect(() => {
+    if (isLevelUp && !notification.is_read) {
+      setShowLevelUpDialog(true);
+    }
+  }, [isLevelUp, notification.is_read]);
 
   const handleClick = () => {
     if (!notification.is_read) {
       onRead(notification.id);
+    }
+
+    // Level up opens dialog instead of navigating
+    if (isLevelUp) {
+      setShowLevelUpDialog(true);
+      return;
     }
 
     // Navigate to related content
@@ -35,11 +53,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate("/dashboard");
     } else if (notification.related_type === "join_request" && notification.metadata?.community_id) {
       navigate(`/community/${notification.metadata.community_id}`);
+    } else if (notification.related_type === "seeds") {
+      navigate("/seeds");
     }
   };
 
   const actorAvatar = notification.metadata?.actor_avatar;
   const actorName = notification.metadata?.actor_name || "User";
+  const actorUserId = notification.metadata?.actor_id || notification.user_id;
   const timeAgo = formatDistanceToNow(parseLocalDate(notification.created_at), { addSuffix: true });
   const isBirthday = notification.type === "birthday";
   const isWorshipSet = notification.type === "new_worship_set";
@@ -79,11 +100,33 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
         </div>
+      ) : isLevelUp ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center">
+          <Sparkles className="h-5 w-5 text-white" />
+        </div>
+      ) : actorUserId ? (
+        <AvatarWithLevel
+          userId={actorUserId}
+          avatarUrl={actorAvatar}
+          fallback={actorName.charAt(0)}
+          size="md"
+          className="h-10 w-10 flex-shrink-0"
+        />
       ) : (
         <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={actorAvatar} alt={actorName} />
           <AvatarFallback>{actorName.charAt(0)}</AvatarFallback>
         </Avatar>
+      )}
+      
+      {isLevelUp && notification.metadata && (
+        <LevelUpDialog
+          open={showLevelUpDialog}
+          onOpenChange={setShowLevelUpDialog}
+          level={notification.metadata.new_level as number}
+          levelName={notification.metadata.level_name_ko as string}
+          emoji={notification.metadata.emoji as string}
+        />
       )}
       <div className="flex-1 min-w-0">
         {isNewSong ? (

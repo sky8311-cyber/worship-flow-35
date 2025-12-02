@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -263,15 +264,25 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
         <CardHeader className="flex flex-col space-y-2">
           {/* First row: Avatar, Name, 3-dots */}
           <div className="flex items-center gap-3">
-            <Avatar 
-              className={`w-10 h-10 ${item.author?.id ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
-              onClick={() => item.author?.id && onProfileClick(item.author)}
-            >
-              <AvatarImage src={item.author?.avatar_url || ""} />
-              <AvatarFallback>
-                {authorInitial}
-              </AvatarFallback>
-            </Avatar>
+            {item.author?.id ? (
+              <div
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => onProfileClick(item.author)}
+              >
+                <AvatarWithLevel
+                  userId={item.author.id}
+                  avatarUrl={item.author.avatar_url}
+                  fallback={authorInitial}
+                  size="md"
+                  className="w-10 h-10"
+                />
+              </div>
+            ) : (
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={item.author?.avatar_url || ""} />
+                <AvatarFallback>{authorInitial}</AvatarFallback>
+              </Avatar>
+            )}
             
             <p className="font-medium text-sm flex-1">{authorName}</p>
 

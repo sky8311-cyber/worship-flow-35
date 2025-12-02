@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -281,12 +282,22 @@ export function ChurchAccountMembersTab({ churchAccountId, maxSeats, usedSeats, 
             {members.map((member) => (
               <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={member.profile?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {member.profile?.full_name?.charAt(0) || member.profile?.email?.charAt(0) || "?"}
-                    </AvatarFallback>
-                  </Avatar>
+                  {member.profile?.id ? (
+                    <AvatarWithLevel
+                      userId={member.profile.id}
+                      avatarUrl={member.profile.avatar_url}
+                      fallback={member.profile?.full_name?.charAt(0) || member.profile?.email?.charAt(0) || "?"}
+                      size="md"
+                      className="w-10 h-10"
+                    />
+                  ) : (
+                    <Avatar>
+                      <AvatarImage src={member.profile?.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {member.profile?.full_name?.charAt(0) || member.profile?.email?.charAt(0) || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
                   <div>
                     <p className="font-medium">
                       {member.profile?.full_name || (language === "ko" ? "이름 없음" : "No name")}
