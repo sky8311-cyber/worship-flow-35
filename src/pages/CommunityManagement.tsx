@@ -149,6 +149,34 @@ export default function CommunityManagement() {
     },
   });
 
+  const { data: joinRequests } = useQuery({
+    queryKey: ["community-join-requests", id],
+    queryFn: async () => {
+      const { data: requests, error } = await supabase
+        .from("community_join_requests")
+        .select("*")
+        .eq("community_id", id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      
+      if (!requests || requests.length === 0) return [];
+      
+      // Fetch requester profiles
+      const userIds = requests.map(r => r.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url")
+        .in("id", userIds);
+      
+      return requests.map(r => ({
+        ...r,
+        profiles: profiles?.find(p => p.id === r.user_id)
+      }));
+    },
+    enabled: !!id,
+  });
+
   const updateMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
@@ -319,6 +347,39 @@ export default function CommunityManagement() {
     },
   });
 
+  const approveJoinRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from("community_join_requests")
+        .update({ status: "approved", reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
+        .eq("id", requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-join-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      toast({
+        title: t("community.joinRequestApproveSuccess"),
+      });
+    },
+  });
+
+  const rejectJoinRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from("community_join_requests")
+        .update({ status: "rejected", reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
+        .eq("id", requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-join-requests"] });
+      toast({
+        title: t("community.joinRequestRejectSuccess"),
+      });
+    },
+  });
+
   const leaveCommunityMutation = useMutation({
     mutationFn: async () => {
       const memberEntry = members?.find(m => m.user_id === user?.id);
@@ -408,6 +469,63 @@ export default function CommunityManagement() {
               </TabsList>
 
               <TabsContent value="members" className="space-y-6">
+                {/* Join Requests Section - Only shown to managers */}
+                {canManage && joinRequests && joinRequests.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5" />
+                        {t("community.joinRequestsTitle")}
+                        <Badge variant="default">{joinRequests.length}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {joinRequests.map((request: any) => (
+                          <div
+                            key={request.id}
+                            className="flex items-center justify-between p-4 border rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarImage src={request.profiles?.avatar_url || undefined} />
+                                <AvatarFallback>
+                                  {request.profiles?.full_name?.charAt(0) || "U"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium">{request.profiles?.full_name}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {request.profiles?.email}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {t("community.requestDate")}: {new Date(request.created_at).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => approveJoinRequestMutation.mutate(request.id)}
+                                disabled={approveJoinRequestMutation.isPending}
+                              >
+                                {t("community.joinRequestApprove")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => rejectJoinRequestMutation.mutate(request.id)}
+                                disabled={rejectJoinRequestMutation.isPending}
+                              >
+                                {t("community.joinRequestReject")}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
             {/* Email Invitation */}
             {canManage && (

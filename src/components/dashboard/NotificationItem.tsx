@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar } from "lucide-react";
+import { Cake, Music, Calendar, Users } from "lucide-react";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -32,8 +32,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
     } else if (notification.related_type === "member" && notification.related_id) {
       navigate("/admin/users");
     } else if (notification.related_type === "profile" && notification.related_id && notification.type === "birthday") {
-      // Birthday notification - could open profile or stay on dashboard
       navigate("/dashboard");
+    } else if (notification.related_type === "join_request" && notification.metadata?.community_id) {
+      navigate(`/community/${notification.metadata.community_id}`);
     }
   };
 
@@ -44,6 +45,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isWorshipSet = notification.type === "new_worship_set";
   const isCalendarEvent = notification.type === "new_calendar_event";
   const isNewSong = notification.type === "new_song";
+  const isJoinRequest = notification.type === "join_request";
+  const isJoinApproved = notification.type === "join_approved";
+  const isJoinRejected = notification.type === "join_rejected";
 
   return (
     <div
@@ -70,6 +74,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       ) : isNewSong ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Music className="h-5 w-5 text-primary" />
+        </div>
+      ) : isJoinRequest || isJoinApproved || isJoinRejected ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Users className="h-5 w-5 text-primary" />
         </div>
       ) : (
         <Avatar className="h-10 w-10 flex-shrink-0">
