@@ -858,6 +858,7 @@ export type Database = {
           target_audience: string | null
           theme: string | null
           updated_at: string
+          view_count: number | null
           worship_duration: number | null
           worship_leader: string | null
         }
@@ -877,6 +878,7 @@ export type Database = {
           target_audience?: string | null
           theme?: string | null
           updated_at?: string
+          view_count?: number | null
           worship_duration?: number | null
           worship_leader?: string | null
         }
@@ -896,6 +898,7 @@ export type Database = {
           target_audience?: string | null
           theme?: string | null
           updated_at?: string
+          view_count?: number | null
           worship_duration?: number | null
           worship_leader?: string | null
         }
@@ -1825,6 +1828,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_set_view_count: { Args: { set_id: string }; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_church_account_admin: {
         Args: { _church_account_id: string; _user_id: string }

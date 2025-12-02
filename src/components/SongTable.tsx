@@ -7,14 +7,41 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
 import { format } from "date-fns";
+import { useSongUsage } from "@/hooks/useSongUsage";
+
+// Helper component to display usage statistics for each song row
+const SongUsageCell = ({ songId }: { songId: string }) => {
+  const { t } = useTranslation();
+  const { data: usageData } = useSongUsage(songId);
+
+  return (
+    <>
+      <TableCell className="text-center text-sm">
+        {usageData ? (
+          <span className="font-medium">{usageData.usage_count}{t("songUsage.times")}</span>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+      </TableCell>
+      <TableCell className="text-sm text-muted-foreground">
+        {usageData?.last_used_at ? (
+          format(new Date(usageData.last_used_at), "yyyy-MM-dd")
+        ) : (
+          t("songUsage.neverUsed")
+        )}
+      </TableCell>
+    </>
+  );
+};
 
 interface SongTableProps {
   songs: any[];
@@ -58,6 +85,7 @@ export const SongTable = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
+  const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
 
@@ -243,7 +271,8 @@ export const SongTable = ({
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
-            <TableHead>{t("songLibrary.tableHeaders.lastUsed")}</TableHead>
+            <TableHead className="text-center">{t("songUsage.usageCount")}</TableHead>
+            <TableHead>{t("songUsage.lastUsedDate")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
           </TableHeader>
@@ -371,25 +400,35 @@ export const SongTable = ({
                         </div>
                       ) : "-"
                     )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {getLastUsedDate(song.id)}
-                  </TableCell>
-                  <TableCell>
-                    {!bulkEditMode && (
-                      <div className="flex items-center gap-1">
-                        {onToggleCart && (
-                          <Button
-                            variant={cartSongs.has(song.id) ? "default" : "ghost"}
-                            size="icon"
-                            onClick={() => onToggleCart(song.id)}
-                            className="h-8 w-8"
-                            title={cartSongs.has(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <FavoriteButton songId={song.id} size="icon" variant="ghost" />
+                   </TableCell>
+                   <SongUsageCell songId={song.id} />
+                   <TableCell>
+                     {!bulkEditMode && (
+                       <div className="flex items-center gap-1">
+                         {onToggleCart && (
+                           <Button
+                             variant={cartSongs.has(song.id) ? "default" : "ghost"}
+                             size="icon"
+                             onClick={() => onToggleCart(song.id)}
+                             className="h-8 w-8"
+                             title={cartSongs.has(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                           >
+                             <Plus className="h-4 w-4" />
+                           </Button>
+                         )}
+                         <Button
+                           variant="ghost"
+                           size="icon"
+                           className="h-8 w-8"
+                           onClick={() => {
+                             setSelectedSong(song);
+                             setUsageHistoryOpen(true);
+                           }}
+                           title={t("songUsage.viewUsageHistory")}
+                         >
+                           <BarChart3 className="h-4 w-4" />
+                         </Button>
+                         <FavoriteButton songId={song.id} size="icon" variant="ghost" />
                         <Button
                           variant="ghost"
                           size="icon"
@@ -466,6 +505,13 @@ export const SongTable = ({
         scoreUrl={selectedSong?.score_file_url}
         songTitle={selectedSong?.title || ""}
         songId={selectedSong?.id}
+      />
+
+      <SongUsageHistoryDialog
+        open={usageHistoryOpen}
+        onOpenChange={setUsageHistoryOpen}
+        songId={selectedSong?.id || ""}
+        songTitle={selectedSong?.title || ""}
       />
     </>
   );

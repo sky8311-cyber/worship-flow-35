@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -21,6 +21,10 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
+import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
+import { useSongUsage } from "@/hooks/useSongUsage";
+import { format } from "date-fns";
+import { ko, enUS } from "date-fns/locale";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
@@ -34,11 +38,13 @@ interface SongDialogProps {
 }
 
 export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProps) => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [usageHistoryExpanded, setUsageHistoryExpanded] = useState(false);
+  const { data: usageData } = useSongUsage(song?.id || "");
   const [scoreVariations, setScoreVariations] = useState<Array<{
     id?: string;
     key: string;
@@ -638,6 +644,50 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           </div>
         </DialogHeader>
 
+        {/* Usage Statistics Section - Only for existing songs */}
+        {song && usageData && usageData.usage_count > 0 && (
+          <div className="mb-4 p-4 bg-accent/10 border border-border rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-sm">{t("songUsage.recentUsage")}</h3>
+            </div>
+            
+            <div className="space-y-2 mb-3">
+              <p className="text-sm">
+                <span className="font-medium">{t("songUsage.totalUsageCount")}:</span>{" "}
+                <span className="text-primary">{usageData.usage_count}{t("songUsage.times")}</span>
+              </p>
+              {usageData.last_used_at && usageData.last_used_service_name && (
+                <p className="text-sm text-muted-foreground">
+                  {t("songUsage.lastUsedAt")}: {format(new Date(usageData.last_used_at), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy", { locale: language === "ko" ? ko : enUS })} · {usageData.last_used_service_name}
+                </p>
+              )}
+            </div>
+
+            {/* Recent usage list */}
+            {usageData.usage_history.slice(0, 3).length > 0 && (
+              <div className="space-y-2 mb-3">
+                {usageData.usage_history.slice(0, 3).map((item, idx) => (
+                  <div key={idx} className="text-xs text-muted-foreground pl-3 border-l-2 border-border">
+                    {format(new Date(item.date), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy")} · {item.service_name}
+                    {item.community_name && ` · ${item.community_name}`}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => setUsageHistoryExpanded(true)}
+              className="h-auto p-0 text-primary"
+            >
+              {t("songUsage.viewAllHistory")} →
+            </Button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">{t("songDialog.title")} *</Label>
@@ -843,6 +893,15 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             tags: formData.tags
           }}
           onApply={handleApplySuggestions}
+        />
+      )}
+
+      {song && (
+        <SongUsageHistoryDialog
+          open={usageHistoryExpanded}
+          onOpenChange={setUsageHistoryExpanded}
+          songId={song.id}
+          songTitle={song.title}
         />
       )}
     </Dialog>

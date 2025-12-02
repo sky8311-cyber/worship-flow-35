@@ -4,13 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus } from "lucide-react";
+import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
+import { useSongUsage } from "@/hooks/useSongUsage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +49,8 @@ export const SongCard = ({
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
+  const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
+  const { data: usageData } = useSongUsage(song.id);
 
   const handleDelete = async () => {
     try {
@@ -163,14 +167,19 @@ export const SongCard = ({
               </span>
             </div>
 
-            {lastUsed && (
-              <p className="text-xs text-muted-foreground truncate">
-                {t("songCard.lastUsed")}: {format(lastUsed, language === "ko" ? "yyyy년 M월 d일" : "MMM d, yyyy", { locale })} ({usageCount})
-              </p>
-            )}
-
-            {!lastUsed && usageCount === 0 && (
-              <p className="text-xs text-muted-foreground">{t("songCard.neverUsed")}</p>
+            {/* Usage Statistics */}
+            {usageData && usageData.usage_count > 0 ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>
+                  {t("songUsage.usageCount")} {usageData.usage_count}{t("songUsage.times")}
+                </span>
+                <span>·</span>
+                <span>
+                  {t("songUsage.lastUsedDate")}: {usageData.last_used_at ? format(new Date(usageData.last_used_at), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy", { locale }) : "-"}
+                </span>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t("songUsage.neverUsed")}</p>
             )}
           </div>
 
@@ -200,7 +209,7 @@ export const SongCard = ({
             )}
           </div>
 
-          {/* Action buttons - Cart first, then Heart, Edit, Delete */}
+          {/* Action buttons - Cart first, Usage History, then Heart, Edit, Delete */}
           <div className="flex gap-1.5 justify-start mt-4">
             {onToggleCart && (
               <Button
@@ -213,6 +222,15 @@ export const SongCard = ({
                 <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setUsageHistoryOpen(true)}
+              className="h-8 w-8 sm:h-9 sm:w-9"
+              title={t("songUsage.viewUsageHistory")}
+            >
+              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
             <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
             {onEdit && (
               <Button
@@ -263,6 +281,13 @@ export const SongCard = ({
         scoreUrl={song.score_file_url}
         songTitle={song.title}
         songId={song.id}
+      />
+      
+      <SongUsageHistoryDialog
+        open={usageHistoryOpen}
+        onOpenChange={setUsageHistoryOpen}
+        songId={song.id}
+        songTitle={song.title}
       />
     </>
   );
