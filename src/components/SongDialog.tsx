@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
@@ -150,6 +151,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
   const [isDragging, setIsDragging] = useState(false);
   const [showYouTubeSearch, setShowYouTubeSearch] = useState(false);
+  const [aiEnriching, setAiEnriching] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
+  const [showAIDialog, setShowAIDialog] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -392,6 +396,77 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     setScoreVariations(updated);
   };
 
+  const handleAIEnrich = async () => {
+    if (!formData.title.trim()) {
+      toast.error(t('aiEnrich.titleRequired'));
+      return;
+    }
+
+    setAiEnriching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('enrich-song', {
+        body: {
+          title: formData.title,
+          artist: formData.artist,
+          language: formData.language
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        if (data.error.includes('Rate limit')) {
+          toast.error(t('aiEnrich.rateLimitError'));
+        } else if (data.error.includes('Payment required')) {
+          toast.error(t('aiEnrich.paymentRequiredError'));
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
+
+      if (!data.suggestions) {
+        toast.error(t('aiEnrich.noSuggestionsFound'));
+        return;
+      }
+
+      setAiSuggestions(data.suggestions);
+      setShowAIDialog(true);
+    } catch (error: any) {
+      console.error('AI enrichment error:', error);
+      toast.error(t('aiEnrich.enrichError'));
+    } finally {
+      setAiEnriching(false);
+    }
+  };
+
+  const handleApplySuggestions = (selectedFields: any) => {
+    const updates: any = {};
+    
+    if (selectedFields.lyrics) updates.lyrics = selectedFields.lyrics;
+    if (selectedFields.bpm) updates.bpm = selectedFields.bpm;
+    if (selectedFields.default_key) {
+      updates.default_key = selectedFields.default_key;
+      // Also update first score variation key
+      if (scoreVariations.length > 0) {
+        const updated = [...scoreVariations];
+        updated[0].key = selectedFields.default_key;
+        setScoreVariations(updated);
+      }
+    }
+    if (selectedFields.energy_level) updates.energy_level = selectedFields.energy_level;
+    if (selectedFields.category) updates.category = selectedFields.category;
+    if (selectedFields.tags && selectedFields.tags.length > 0) {
+      // Merge with existing tags
+      const existingTags = new Set(formData.tags);
+      selectedFields.tags.forEach((tag: string) => existingTags.add(tag));
+      updates.tags = Array.from(existingTags);
+    }
+
+    setFormData(prev => ({ ...prev, ...updates }));
+    toast.success(t('aiEnrich.appliedSuccess'));
+  };
+
   // Sortable variation item component
   interface ScoreVariationItemProps {
     variation: { key: string; files: Array<{ url: string; page: number; id?: string }> };
@@ -538,9 +613,31 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {song ? t("songDialog.editSong") : t("songDialog.addSong")}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>
+              {song ? t("songDialog.editSong") : t("songDialog.addSong")}
+            </DialogTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAIEnrich}
+              disabled={aiEnriching || !formData.title.trim()}
+              className="flex items-center gap-2"
+            >
+              {aiEnriching ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('aiEnrich.loading')}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  {t('aiEnrich.buttonLabel')}
+                </>
+              )}
+            </Button>
+          </div>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -735,6 +832,23 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           </div>
         </form>
       </DialogContent>
+
+      {aiSuggestions && (
+        <AIEnrichmentDialog
+          open={showAIDialog}
+          onOpenChange={setShowAIDialog}
+          suggestions={aiSuggestions}
+          currentValues={{
+            lyrics: formData.lyrics,
+            bpm: undefined,
+            default_key: formData.default_key,
+            energy_level: undefined,
+            category: formData.category,
+            tags: formData.tags
+          }}
+          onApply={handleApplySuggestions}
+        />
+      )}
     </Dialog>
   );
 };
