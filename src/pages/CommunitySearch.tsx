@@ -79,21 +79,36 @@ export default function CommunitySearch() {
     enabled: !!user?.id,
   });
 
-  const joinMutation = useMutation({
+  const { data: userJoinRequests } = useQuery({
+    queryKey: ["user-join-requests", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_join_requests")
+        .select("community_id, status")
+        .eq("user_id", user?.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      return data.map(r => r.community_id);
+    },
+    enabled: !!user?.id,
+  });
+
+  const joinRequestMutation = useMutation({
     mutationFn: async (communityId: string) => {
       const { error } = await supabase
-        .from("community_members")
+        .from("community_join_requests")
         .insert({
           community_id: communityId,
           user_id: user?.id,
-          role: "member",
+          status: "pending",
         });
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-memberships"] });
+      queryClient.invalidateQueries({ queryKey: ["user-join-requests"] });
       toast({
-        title: t("community.joinSuccess"),
+        title: t("community.joinRequestSent"),
+        description: t("community.joinRequestSentDesc"),
       });
     },
     onError: () => {
@@ -106,6 +121,10 @@ export default function CommunitySearch() {
 
   const isMember = (communityId: string) => {
     return userMemberships?.includes(communityId);
+  };
+
+  const hasPendingRequest = (communityId: string) => {
+    return userJoinRequests?.includes(communityId);
   };
 
   return (
@@ -160,13 +179,21 @@ export default function CommunitySearch() {
                       >
                         {t("community.alreadyMember")}
                       </Button>
+                    ) : hasPendingRequest(community.id) ? (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        disabled
+                      >
+                        {t("community.joinRequestPending")}
+                      </Button>
                     ) : (
                       <Button
                         className="w-full"
-                        onClick={() => joinMutation.mutate(community.id)}
-                        disabled={joinMutation.isPending}
+                        onClick={() => joinRequestMutation.mutate(community.id)}
+                        disabled={joinRequestMutation.isPending}
                       >
-                        {t("community.join")}
+                        {t("community.joinRequest")}
                       </Button>
                     )}
                   </div>
