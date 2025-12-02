@@ -176,7 +176,11 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
           )}
 
           {/* Seed Widget */}
-          {!profileOverride && <SeedWidget />}
+          {!profileOverride && (
+            <div className="mt-6">
+              <SeedWidget />
+            </div>
+          )}
         </CardContent>
       </Card>
 
