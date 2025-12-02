@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Sprout } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -50,47 +50,65 @@ const AdminUsers = () => {
     }
   }, []);
   
+  // Optimized parallel query fetching
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
-      // First get all profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, created_at")
-        .order("created_at", { ascending: false });
-      
-      if (profilesError) throw profilesError;
-      if (!profiles) return [];
-      
-      // Then get all user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-      
-      if (rolesError) throw rolesError;
-
-      // Get auth data including email_confirmed_at via edge function
+      // Get session first
       const { data: { session } } = await supabase.auth.getSession();
       
-      const { data: authData, error: authError } = await supabase.functions.invoke("admin-list-users", {
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-      });
-
-      if (authError) {
-        console.error("Error fetching auth data:", authError);
-      }
-
-      const authUsers = authData?.users || [];
+      // Fetch all data in parallel
+      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, email, full_name, created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("user_roles")
+          .select("user_id, role"),
+        supabase.functions.invoke("admin-list-users", {
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }),
+        supabase
+          .from("user_seeds")
+          .select("user_id, total_seeds, current_level"),
+        supabase
+          .from("seed_levels")
+          .select("level, emoji, badge_color, name_ko, name_en")
+      ]);
+      
+      if (profilesResult.error) throw profilesResult.error;
+      if (!profilesResult.data) return [];
+      
+      const profiles = profilesResult.data;
+      const roles = rolesResult.data || [];
+      const authUsers = authResult.data?.users || [];
+      const seeds = seedsResult.data || [];
+      const levels = levelsResult.data || [];
+      
+      // Create lookup maps for O(1) access
+      const seedsMap = new Map(seeds.map(s => [s.user_id, s]));
+      const levelsMap = new Map(levels.map(l => [l.level, l]));
       
       // Combine the data
       return profiles.map(profile => {
         const authUser = authUsers.find((u: any) => u.id === profile.id);
+        const seedData = seedsMap.get(profile.id);
+        const levelInfo = seedData ? levelsMap.get(seedData.current_level) : null;
+        
         return {
           ...profile,
           user_roles: roles?.filter(r => r.user_id === profile.id) || [],
           email_confirmed_at: authUser?.email_confirmed_at || null,
+          seedData: seedData ? {
+            totalSeeds: seedData.total_seeds,
+            level: seedData.current_level,
+            emoji: levelInfo?.emoji || "🌱",
+            badgeColor: levelInfo?.badge_color || "#22c55e",
+            levelName: language === "ko" ? levelInfo?.name_ko : levelInfo?.name_en
+          } : null
         };
       });
     },
@@ -462,6 +480,7 @@ const AdminUsers = () => {
                   >
                     <UserCard
                       user={user}
+                      seedData={user.seedData}
                       onAddRole={(userId, role) => addRoleMutation.mutate({ userId, role })}
                       onRemoveRole={(userId, role) => removeRoleMutation.mutate({ userId, role })}
                       onResetPassword={(email, userName) => setResetDialog({ open: true, email, userName })}
@@ -490,6 +509,8 @@ const AdminUsers = () => {
                     <TableHead>{t("admin.users.name")}</TableHead>
                     <TableHead>{t("admin.users.verification")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
+                    <TableHead>{t("admin.users.level")}</TableHead>
+                    <TableHead>{t("admin.users.seeds")}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
                     <TableHead>{t("admin.users.roleManagement")}</TableHead>
                     <TableHead>{t("admin.users.userActions")}</TableHead>
@@ -540,6 +561,24 @@ const AdminUsers = () => {
                               </Badge>
                             ))}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {user.seedData ? (
+                            <Badge variant="outline" className="gap-1">
+                              {user.seedData.emoji} Lv.{user.seedData.level}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.seedData ? (
+                            <span className="text-sm font-medium">
+                              {user.seedData.totalSeeds} 🌱
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">0</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {format(new Date(user.created_at), "PPP", { locale: dateLocale })}
@@ -713,74 +752,74 @@ const AdminUsers = () => {
             </div>
           </div>
         )}
-
-        {/* Delete Dialog */}
-        <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("admin.users.deleteConfirmTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("admin.users.deleteConfirmDescription", { name: deleteDialog.userName })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => deleteUserMutation.mutate(deleteDialog.userId)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("admin.users.delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Bulk Delete Dialog */}
-        <AlertDialog open={bulkDeleteDialog.open} onOpenChange={(open) => setBulkDeleteDialog({ ...bulkDeleteDialog, open })}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("admin.users.bulkDeleteConfirmTitle", { count: bulkDeleteDialog.count })}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("admin.users.bulkDeleteConfirmDescription", { count: bulkDeleteDialog.count })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => bulkDeleteUserMutation.mutate(Array.from(selectedUsers))}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {t("admin.users.bulkDelete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Reset Password Dialog */}
-        <AlertDialog open={resetDialog.open} onOpenChange={(open) => setResetDialog({ ...resetDialog, open })}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
-                {t("admin.users.sendResetEmail")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Profile Dialog */}
-        <AdminUserProfileDialog
-          open={profileDialog.open}
-          onOpenChange={(open) => setProfileDialog({ open, userId: profileDialog.userId })}
-          userId={profileDialog.userId}
-        />
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, userId: "", userName: "" })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.deleteConfirmDescription", { name: deleteDialog.userName })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteUserMutation.mutate(deleteDialog.userId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialog.open} onOpenChange={(open) => !open && setBulkDeleteDialog({ open: false, count: 0 })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.bulkDeleteConfirmTitle", { count: bulkDeleteDialog.count })}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.bulkDeleteConfirmDescription", { count: bulkDeleteDialog.count })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteUserMutation.mutate(Array.from(selectedUsers))}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reset Password Confirmation Dialog */}
+      <AlertDialog open={resetDialog.open} onOpenChange={(open) => !open && setResetDialog({ open: false, email: "", userName: "" })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
+              {t("admin.users.sendResetEmail")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Profile Dialog */}
+      <AdminUserProfileDialog
+        userId={profileDialog.userId}
+        open={profileDialog.open}
+        onOpenChange={(open) => setProfileDialog({ open, userId: open ? profileDialog.userId : null })}
+      />
     </div>
   );
 };

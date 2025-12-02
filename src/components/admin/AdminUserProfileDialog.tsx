@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Users, Briefcase } from "lucide-react";
+import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Users, Briefcase, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 
@@ -71,7 +71,57 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
     enabled: !!userId && open,
   });
 
-  const isLoading = profileLoading || worshipProfileLoading || rolesLoading;
+  // Fetch seed data
+  const { data: seedInfo, isLoading: seedLoading } = useQuery({
+    queryKey: ["admin-user-seeds", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+
+      const { data: seeds, error: seedsError } = await supabase
+        .from("user_seeds")
+        .select("total_seeds, current_level")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (seedsError) throw seedsError;
+      if (!seeds) return null;
+
+      const { data: levelInfo, error: levelError } = await supabase
+        .from("seed_levels")
+        .select("name_ko, name_en, emoji, badge_color, min_seeds, max_seeds")
+        .eq("level", seeds.current_level)
+        .single();
+
+      if (levelError) throw levelError;
+
+      // Calculate progress to next level
+      const currentSeeds = seeds.total_seeds;
+      const minSeeds = levelInfo.min_seeds;
+      const maxSeeds = levelInfo.max_seeds;
+      let progress = 100;
+      let seedsToNext = 0;
+      
+      if (maxSeeds) {
+        const range = maxSeeds - minSeeds;
+        const currentProgress = currentSeeds - minSeeds;
+        progress = Math.min(100, Math.round((currentProgress / range) * 100));
+        seedsToNext = maxSeeds - currentSeeds;
+      }
+
+      return {
+        totalSeeds: seeds.total_seeds,
+        currentLevel: seeds.current_level,
+        levelName: language === "ko" ? levelInfo.name_ko : levelInfo.name_en,
+        emoji: levelInfo.emoji,
+        badgeColor: levelInfo.badge_color,
+        progress,
+        seedsToNext
+      };
+    },
+    enabled: !!userId && open,
+  });
+
+  const isLoading = profileLoading || worshipProfileLoading || rolesLoading || seedLoading;
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -86,7 +136,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("admin.users.viewProfile")}</DialogTitle>
         </DialogHeader>
@@ -130,6 +180,51 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
             </div>
 
             <Separator />
+
+            {/* Seed Info Section */}
+            {seedInfo && (
+              <>
+                <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Sprout className="h-4 w-4 text-green-600" />
+                    {t("admin.users.seedInfo")}
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">{seedInfo.emoji}</div>
+                      <div className="text-xs text-muted-foreground">{t("admin.users.level")}</div>
+                      <div className="font-semibold">Lv.{seedInfo.currentLevel}</div>
+                      <div className="text-xs text-green-600">{seedInfo.levelName}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">🌱</div>
+                      <div className="text-xs text-muted-foreground">{t("admin.users.totalSeeds")}</div>
+                      <div className="font-semibold">{seedInfo.totalSeeds}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">📈</div>
+                      <div className="text-xs text-muted-foreground">{t("seeds.dailyProgress")}</div>
+                      <div className="font-semibold">{seedInfo.progress}%</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">🎯</div>
+                      <div className="text-xs text-muted-foreground">{t("seeds.seedsToNextLevel")}</div>
+                      <div className="font-semibold">{seedInfo.seedsToNext > 0 ? seedInfo.seedsToNext : "MAX"}</div>
+                    </div>
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="mt-4">
+                    <div className="h-2 bg-green-200 dark:bg-green-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-green-500 transition-all duration-300"
+                        style={{ width: `${seedInfo.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <Separator />
+              </>
+            )}
 
             {/* Basic Info Section */}
             <div>
