@@ -706,6 +706,9 @@ const Dashboard = () => {
               <CommunityFeed />
             </CardContent>
           </Card>
+
+          {/* Seed Leaderboard */}
+          <SeedLeaderboard />
         </div>
       </div>
     </AppLayout>;
