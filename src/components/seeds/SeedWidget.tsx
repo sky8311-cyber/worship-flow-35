@@ -64,7 +64,7 @@ export const SeedWidget = () => {
   if (!user?.id) return null;
 
   return (
-      <div className="space-y-3 p-4 rounded-lg bg-muted/30 border">
+      <div className="space-y-3 p-4 rounded-lg bg-muted/30">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-2xl">{displayData.currentLevel.emoji}</span>
