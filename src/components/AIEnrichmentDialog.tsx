@@ -16,9 +16,7 @@ interface BilingualTag {
 
 interface Suggestions {
   lyrics?: string;
-  bpm?: number;
   default_key?: string;
-  energy_level?: number;
   category?: string;
   tags?: BilingualTag[];
   confidence?: 'high' | 'medium' | 'low';
@@ -31,17 +29,13 @@ interface AIEnrichmentDialogProps {
   suggestions: Suggestions;
   currentValues: {
     lyrics?: string;
-    bpm?: number;
     default_key?: string;
-    energy_level?: number;
     category?: string;
     tags?: string[];
   };
   onApply: (selectedFields: {
     lyrics?: string;
-    bpm?: number;
     default_key?: string;
-    energy_level?: number;
     category?: string;
     tags?: string[];
   }) => void;
@@ -57,9 +51,7 @@ export const AIEnrichmentDialog = ({
   const { t } = useTranslation();
   const [selectedFields, setSelectedFields] = useState({
     lyrics: !!suggestions.lyrics,
-    bpm: !!suggestions.bpm,
     default_key: !!suggestions.default_key,
-    energy_level: !!suggestions.energy_level,
     category: !!suggestions.category,
     tags: new Set(suggestions.tags?.map((_, index) => index) || [])
   });
@@ -88,14 +80,8 @@ export const AIEnrichmentDialog = ({
     if (selectedFields.lyrics && suggestions.lyrics) {
       result.lyrics = suggestions.lyrics;
     }
-    if (selectedFields.bpm && suggestions.bpm) {
-      result.bpm = suggestions.bpm;
-    }
     if (selectedFields.default_key && suggestions.default_key) {
       result.default_key = suggestions.default_key;
-    }
-    if (selectedFields.energy_level && suggestions.energy_level) {
-      result.energy_level = suggestions.energy_level;
     }
     if (selectedFields.category && suggestions.category) {
       result.category = suggestions.category;
@@ -158,25 +144,6 @@ export const AIEnrichmentDialog = ({
               </Alert>
             )}
 
-            {/* BPM */}
-            {suggestions.bpm && (
-              <div className="flex items-center space-x-2 p-3 rounded-lg border">
-                <Checkbox
-                  id="bpm"
-                  checked={selectedFields.bpm}
-                  onCheckedChange={() => handleToggleField('bpm')}
-                />
-                <label htmlFor="bpm" className="flex-1 cursor-pointer">
-                  <span className="font-medium">BPM:</span> {suggestions.bpm}
-                  {currentValues.bpm && (
-                    <span className="text-sm text-muted-foreground ml-2">
-                      ({t('aiEnrich.currentValue', { value: currentValues.bpm })})
-                    </span>
-                  )}
-                </label>
-              </div>
-            )}
-
             {/* Key */}
             {suggestions.default_key && (
               <div className="flex items-center space-x-2 p-3 rounded-lg border">
@@ -190,25 +157,6 @@ export const AIEnrichmentDialog = ({
                   {currentValues.default_key && (
                     <span className="text-sm text-muted-foreground ml-2">
                       ({t('aiEnrich.currentValue', { value: currentValues.default_key })})
-                    </span>
-                  )}
-                </label>
-              </div>
-            )}
-
-            {/* Energy Level */}
-            {suggestions.energy_level && (
-              <div className="flex items-center space-x-2 p-3 rounded-lg border">
-                <Checkbox
-                  id="energy"
-                  checked={selectedFields.energy_level}
-                  onCheckedChange={() => handleToggleField('energy_level')}
-                />
-                <label htmlFor="energy" className="flex-1 cursor-pointer">
-                  <span className="font-medium">{t('aiEnrich.energy')}:</span> {suggestions.energy_level}
-                  {currentValues.energy_level && (
-                    <span className="text-sm text-muted-foreground ml-2">
-                      ({t('aiEnrich.currentValue', { value: currentValues.energy_level })})
                     </span>
                   )}
                 </label>

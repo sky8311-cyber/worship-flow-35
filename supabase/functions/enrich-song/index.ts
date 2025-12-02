@@ -36,11 +36,9 @@ Language: ${language || 'Unknown'}
 
 Please find and suggest:
 1. Full lyrics (if available online)
-2. BPM (tempo)
-3. Musical key
-4. Energy level (1-5 scale, where 1=slow/meditative, 5=fast/energetic)
-5. Category (choose one: 찬송가, 모던워십 (한국), 모던워십 (서양), 모던워십 (기타), 한국 복음성가)
-6. Bilingual tags in Korean and English that describe the song's themes, mood, and worship context (e.g., grace, repentance, thanksgiving, fast tempo, etc.)
+2. Musical key
+3. Category (choose one: 찬송가, 모던워십 (한국), 모던워십 (서양), 모던워십 (기타), 한국 복음성가)
+4. Bilingual tags in Korean and English that describe the song's themes, mood, and worship context (e.g., grace, repentance, thanksgiving, etc.)
 
 Be accurate and research-based. If you cannot find information, indicate that clearly.`;
 
@@ -71,22 +69,10 @@ Be accurate and research-based. If you cannot find information, indicate that cl
                   type: 'string', 
                   description: 'Full song lyrics if found. If not found, return empty string.' 
                 },
-                bpm: { 
-                  type: 'number', 
-                  minimum: 40, 
-                  maximum: 220,
-                  description: 'Suggested tempo/BPM. If unknown, suggest typical range for this style.'
-                },
                 default_key: { 
                   type: 'string', 
                   enum: ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
                   description: 'Suggested musical key'
-                },
-                energy_level: { 
-                  type: 'number', 
-                  minimum: 1, 
-                  maximum: 5,
-                  description: '1=slow/meditative, 5=fast/energetic'
                 },
                 category: { 
                   type: 'string', 
@@ -115,7 +101,7 @@ Be accurate and research-based. If you cannot find information, indicate that cl
                   description: 'Any additional notes about the song or limitations of the information found'
                 }
               },
-              required: ['bpm', 'default_key', 'energy_level', 'category', 'tags', 'confidence'],
+              required: ['default_key', 'category', 'tags', 'confidence'],
               additionalProperties: false
             }
           }

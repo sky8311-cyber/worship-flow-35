@@ -444,7 +444,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     const updates: any = {};
     
     if (selectedFields.lyrics) updates.lyrics = selectedFields.lyrics;
-    if (selectedFields.bpm) updates.bpm = selectedFields.bpm;
     if (selectedFields.default_key) {
       updates.default_key = selectedFields.default_key;
       // Also update first score variation key
@@ -454,7 +453,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         setScoreVariations(updated);
       }
     }
-    if (selectedFields.energy_level) updates.energy_level = selectedFields.energy_level;
     if (selectedFields.category) updates.category = selectedFields.category;
     if (selectedFields.tags && selectedFields.tags.length > 0) {
       // Merge with existing tags
@@ -840,9 +838,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           suggestions={aiSuggestions}
           currentValues={{
             lyrics: formData.lyrics,
-            bpm: undefined,
             default_key: formData.default_key,
-            energy_level: undefined,
             category: formData.category,
             tags: formData.tags
           }}
