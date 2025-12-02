@@ -617,8 +617,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>
+          <div className="flex items-center justify-between gap-2">
+            <DialogTitle className="flex-1 min-w-0">
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <Button
@@ -627,17 +627,17 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               size="sm"
               onClick={handleAIEnrich}
               disabled={aiEnriching || !formData.title.trim()}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 shrink-0"
             >
               {aiEnriching ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('aiEnrich.loading')}
+                  <span className="hidden sm:inline">{t('aiEnrich.loading')}</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  {t('aiEnrich.buttonLabel')}
+                  <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
                 </>
               )}
             </Button>
