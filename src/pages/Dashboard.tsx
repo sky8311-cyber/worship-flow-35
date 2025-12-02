@@ -37,6 +37,7 @@ import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -352,7 +353,7 @@ const Dashboard = () => {
       {/* Main Content - Desktop Layout (3 columns) */}
       <div className="container mx-auto px-4 py-8 hidden lg:block">
         <div className="grid grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
-          {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services) */}
+          {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services, Leaderboard) */}
           <div className="space-y-4">
             <ProfileSidebarCard stats={userStats} />
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={5} />
@@ -364,6 +365,7 @@ const Dashboard = () => {
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
+            <SeedLeaderboard />
           </div>
 
           {/* Columns A+B: Main Feed */}

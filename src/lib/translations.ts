@@ -420,6 +420,10 @@ export const translations = {
         churchInfo: "Church Info",
         serviceInfo: "Service Info",
         introduction: "Introduction",
+        level: "Level",
+        seeds: "Seeds",
+        totalSeeds: "Total Seeds",
+        seedInfo: "Seed Info",
       },
       communities: {
         title: "Community Management",
@@ -1924,6 +1928,10 @@ export const translations = {
         churchInfo: "교회 정보",
         serviceInfo: "사역 정보",
         introduction: "자기소개",
+        level: "레벨",
+        seeds: "씨앗",
+        totalSeeds: "총 씨앗",
+        seedInfo: "씨앗 정보",
       },
       communities: {
         title: "커뮤니티 관리",

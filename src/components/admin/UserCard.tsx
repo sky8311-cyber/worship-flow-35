@@ -3,10 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2, CheckCircle, XCircle, Mail } from "lucide-react";
+import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2, CheckCircle, XCircle, Mail, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
+
+interface SeedData {
+  totalSeeds: number;
+  level: number;
+  emoji: string;
+  badgeColor: string;
+  levelName?: string;
+}
 
 interface UserCardProps {
   user: {
@@ -17,6 +25,7 @@ interface UserCardProps {
     email_confirmed_at?: string | null;
     user_roles?: { role: string }[];
   };
+  seedData?: SeedData | null;
   onAddRole: (userId: string, role: string) => void;
   onRemoveRole: (userId: string, role: string) => void;
   onResetPassword: (email: string, userName: string) => void;
@@ -29,6 +38,7 @@ interface UserCardProps {
 
 export function UserCard({ 
   user, 
+  seedData,
   onAddRole, 
   onRemoveRole, 
   onResetPassword, 
@@ -102,6 +112,13 @@ export function UserCard({
               {role}
             </Badge>
           ))}
+          {/* Seed Level Badge */}
+          {seedData && (
+            <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <Sprout className="w-3 h-3 text-green-600" />
+              {seedData.emoji} Lv.{seedData.level} ({seedData.totalSeeds} 🌱)
+            </Badge>
+          )}
         </div>
 
         <TooltipProvider>
