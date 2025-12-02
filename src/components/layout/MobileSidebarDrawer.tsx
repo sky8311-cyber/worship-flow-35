@@ -7,7 +7,7 @@ import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
 import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSidebarList";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
-
+import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 interface MobileSidebarDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -134,6 +134,7 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
+            <SeedLeaderboard />
           </div>
         </ScrollArea>
       </SheetContent>
