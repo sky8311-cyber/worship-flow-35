@@ -33,6 +33,7 @@ interface SongCardProps {
   inCart?: boolean;
   onToggleCart?: (songId: string) => void;
   isFavorite?: boolean;
+  favoriteCount?: number;
 }
 
 export const SongCard = ({ 
@@ -44,7 +45,8 @@ export const SongCard = ({
   onToggleSelection,
   inCart = false,
   onToggleCart,
-  isFavorite = false
+  isFavorite = false,
+  favoriteCount = 0
 }: SongCardProps) => {
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
@@ -210,6 +212,7 @@ export const SongCard = ({
             <FavoriteButton 
               songId={song.id} 
               isFavorite={isFavorite}
+              favoriteCount={favoriteCount}
               size="icon" 
               variant="outline" 
               className="h-8 w-8 sm:h-9 sm:w-9" 

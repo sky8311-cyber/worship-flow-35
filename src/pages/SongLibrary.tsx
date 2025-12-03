@@ -69,7 +69,24 @@ const SongLibrary = () => {
         .select("song_id")
         .eq("user_id", user.user.id);
       
-      return new Set(data?.map(f => f.song_id) || []);
+    return new Set(data?.map(f => f.song_id) || []);
+    },
+  });
+
+  // Batch fetch favorite counts for all songs in ONE query
+  const { data: favoriteCounts } = useQuery({
+    queryKey: ["song-favorite-counts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_favorite_songs")
+        .select("song_id");
+      
+      // Count favorites per song_id client-side
+      const counts = new Map<string, number>();
+      data?.forEach(({ song_id }) => {
+        counts.set(song_id, (counts.get(song_id) || 0) + 1);
+      });
+      return counts;
     },
   });
 
@@ -511,6 +528,7 @@ const SongLibrary = () => {
               cartSongs={isWorshipLeader ? cartSongs : new Set()}
               onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
               favoriteIds={userFavorites || new Set()}
+              favoriteCounts={favoriteCounts || new Map()}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -526,6 +544,7 @@ const SongLibrary = () => {
                   inCart={isWorshipLeader ? cartSongs.has(song.id) : false}
                   onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
+                  favoriteCount={favoriteCounts?.get(song.id) || 0}
                 />
               ))}
             </div>
