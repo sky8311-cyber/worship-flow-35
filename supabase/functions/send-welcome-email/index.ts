@@ -31,7 +31,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "K-Worship <onboarding@resend.dev>",
+        from: "K-Worship <noreply@kworship.app>",
         to: [email],
         subject: "K-Worship에 오신 것을 환영합니다! 🎵",
         html: `
