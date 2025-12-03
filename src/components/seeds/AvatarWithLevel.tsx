@@ -61,9 +61,13 @@ export const AvatarWithLevel = ({
     lg: 'w-12 h-12'
   };
 
+  // Use className for wrapper sizing when provided (for custom large avatars like profile)
+  // Otherwise fall back to default size classes
+  const wrapperSizeClass = className ? '' : sizeClasses[size];
+
   return (
-    <div className={`relative inline-block ${sizeClasses[size]}`}>
-      <Avatar className={className}>
+    <div className={`relative inline-block ${wrapperSizeClass} ${className || ''}`}>
+      <Avatar className="w-full h-full">
         <AvatarImage src={avatarUrl || undefined} className="object-cover" />
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
