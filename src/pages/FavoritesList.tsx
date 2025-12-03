@@ -42,6 +42,22 @@ export default function FavoritesList() {
     },
   });
 
+  // Batch fetch favorite counts for all songs
+  const { data: favoriteCounts } = useQuery({
+    queryKey: ["song-favorite-counts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_favorite_songs")
+        .select("song_id");
+      
+      const counts = new Map<string, number>();
+      data?.forEach(({ song_id }) => {
+        counts.set(song_id, (counts.get(song_id) || 0) + 1);
+      });
+      return counts;
+    },
+  });
+
   // Create a Set of favorite song IDs for the FavoriteButton
   const favoriteIds = useMemo(() => {
     return new Set(favoriteSongs?.map(s => s.id) || []);
@@ -76,11 +92,11 @@ export default function FavoritesList() {
             <p>{t("common.loading")}</p>
           ) : favoriteSongs && favoriteSongs.length > 0 ? (
             viewMode === "table" ? (
-              <SongTable songs={favoriteSongs} favoriteIds={favoriteIds} />
+              <SongTable songs={favoriteSongs} favoriteIds={favoriteIds} favoriteCounts={favoriteCounts || new Map()} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {favoriteSongs.map((song) => (
-                  <SongCard key={song.id} song={song} isFavorite={true} />
+                  <SongCard key={song.id} song={song} isFavorite={true} favoriteCount={favoriteCounts?.get(song.id) || 0} />
                 ))}
               </div>
             )

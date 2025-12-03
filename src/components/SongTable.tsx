@@ -35,6 +35,7 @@ interface SongTableProps {
   cartSongs?: Set<string>;
   onToggleCart?: (songId: string) => void;
   favoriteIds?: Set<string>;
+  favoriteCounts?: Map<string, number>;
 }
 
 export const SongTable = ({ 
@@ -55,6 +56,7 @@ export const SongTable = ({
   cartSongs = new Set(),
   onToggleCart,
   favoriteIds = new Set(),
+  favoriteCounts = new Map(),
 }: SongTableProps) => {
   const { t } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
@@ -382,13 +384,14 @@ export const SongTable = ({
                              <BarChart3 className="h-4 w-4" />
                            </Button>
                          )}
-                         <FavoriteButton 
-                           songId={song.id} 
-                           isFavorite={favoriteIds.has(song.id)}
-                           size="icon" 
-                           variant="ghost" 
-                           className="h-8 w-8" 
-                         />
+                          <FavoriteButton 
+                            songId={song.id} 
+                            isFavorite={favoriteIds.has(song.id)}
+                            favoriteCount={favoriteCounts.get(song.id) || 0}
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8" 
+                          />
                          {song.youtube_url && (
                            <Button
                              variant="ghost"
