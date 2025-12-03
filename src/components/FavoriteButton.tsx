@@ -33,11 +33,11 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
   });
   
   const toggleFavoriteMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (currentFavorite: boolean) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
       
-      if (isFavorite) {
+      if (currentFavorite) {
         const { error } = await supabase
           .from("user_favorite_songs")
           .delete()
@@ -55,11 +55,32 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
         
         if (error) throw error;
       }
+      return currentFavorite;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["is-favorite", songId] });
+      
+      // Snapshot the previous value
+      const previousValue = queryClient.getQueryData(["is-favorite", songId]);
+      
+      // Optimistically update to the new value
+      queryClient.setQueryData(["is-favorite", songId], !isFavorite);
+      
+      return { previousValue };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      queryClient.setQueryData(["is-favorite", songId], context?.previousValue);
+      toast.error("오류가 발생했습니다");
+    },
+    onSettled: () => {
+      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ["is-favorite", songId] });
       queryClient.invalidateQueries({ queryKey: ["favorite-songs"] });
-      toast.success(isFavorite ? "즐겨찾기에서 제거되었습니다" : "즐겨찾기에 추가되었습니다");
+    },
+    onSuccess: (wasRemoved) => {
+      toast.success(wasRemoved ? "즐겨찾기에서 제거되었습니다" : "즐겨찾기에 추가되었습니다");
     },
   });
   
@@ -69,7 +90,7 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
       size={size}
       onClick={(e) => {
         e.stopPropagation();
-        toggleFavoriteMutation.mutate();
+        toggleFavoriteMutation.mutate(!!isFavorite);
       }}
       className={className}
     >

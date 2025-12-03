@@ -10,6 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
@@ -81,6 +82,7 @@ export const SongTable = ({
   onToggleCart,
 }: SongTableProps) => {
   const { t } = useTranslation();
+  const { isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
@@ -88,6 +90,9 @@ export const SongTable = ({
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
+  
+  // Check if user can see usage history (admin or worship leader only)
+  const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const renderColumnHeader = (
     columnKey: string,
@@ -416,18 +421,20 @@ export const SongTable = ({
                              <Plus className="h-4 w-4" />
                            </Button>
                          )}
-                         <Button
-                           variant="ghost"
-                           size="icon"
-                           className="h-8 w-8"
-                           onClick={() => {
-                             setSelectedSong(song);
-                             setUsageHistoryOpen(true);
-                           }}
-                           title={t("songUsage.viewUsageHistory")}
-                         >
-                           <BarChart3 className="h-4 w-4" />
-                         </Button>
+                         {canViewUsageHistory && (
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="h-8 w-8"
+                             onClick={() => {
+                               setSelectedSong(song);
+                               setUsageHistoryOpen(true);
+                             }}
+                             title={t("songUsage.viewUsageHistory")}
+                           >
+                             <BarChart3 className="h-4 w-4" />
+                           </Button>
+                         )}
                          <FavoriteButton songId={song.id} size="icon" variant="ghost" />
                         <Button
                           variant="ghost"

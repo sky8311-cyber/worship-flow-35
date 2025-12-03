@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
@@ -47,10 +48,14 @@ export const SongCard = ({
   onToggleCart
 }: SongCardProps) => {
   const { t, language } = useTranslation();
+  const { isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   const { data: usageData } = useSongUsage(song.id);
+  
+  // Check if user can see usage history (admin or worship leader only)
+  const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const handleDelete = async () => {
     try {
@@ -222,15 +227,17 @@ export const SongCard = ({
                 <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setUsageHistoryOpen(true)}
-              className="h-8 w-8 sm:h-9 sm:w-9"
-              title={t("songUsage.viewUsageHistory")}
-            >
-              <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </Button>
+            {canViewUsageHistory && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setUsageHistoryOpen(true)}
+                className="h-8 w-8 sm:h-9 sm:w-9"
+                title={t("songUsage.viewUsageHistory")}
+              >
+                <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </Button>
+            )}
             <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
             {onEdit && (
               <Button
