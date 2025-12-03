@@ -68,14 +68,16 @@ const SignUp = () => {
       return;
     }
     
-    // Success - new signup
+    // Success - new signup (auto-confirm enabled, redirect immediately)
     toast({
       title: t("auth.success"),
-      description: t("auth.checkEmailToConfirm"),
-      duration: 8000,
+      description: t("auth.accountCreated"),
     });
     setLoading(false);
-    // Don't navigate - let user check email
+    // Clear stored redirect URL
+    sessionStorage.removeItem("redirectAfterLogin");
+    // Navigate to redirect URL if present, otherwise dashboard
+    navigate(redirectUrl || "/dashboard");
   };
 
   return (
