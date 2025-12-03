@@ -9,40 +9,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
-import { format } from "date-fns";
-import { useSongUsage } from "@/hooks/useSongUsage";
-
-// Helper component to display usage statistics for each song row
-const SongUsageCell = ({ songId }: { songId: string }) => {
-  const { t } = useTranslation();
-  const { data: usageData } = useSongUsage(songId);
-
-  return (
-    <>
-      <TableCell className="text-center text-sm">
-        {usageData ? (
-          <span className="font-medium">{usageData.usage_count}{t("songUsage.times")}</span>
-        ) : (
-          <span className="text-muted-foreground">-</span>
-        )}
-      </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {usageData?.last_used_at ? (
-          format(new Date(usageData.last_used_at), "yyyy-MM-dd")
-        ) : (
-          t("songUsage.neverUsed")
-        )}
-      </TableCell>
-    </>
-  );
-};
 
 interface SongTableProps {
   songs: any[];
@@ -61,6 +34,7 @@ interface SongTableProps {
   onColumnSort?: (column: string, direction: 'asc' | 'desc') => void;
   cartSongs?: Set<string>;
   onToggleCart?: (songId: string) => void;
+  favoriteIds?: Set<string>;
 }
 
 export const SongTable = ({ 
@@ -80,6 +54,7 @@ export const SongTable = ({
   onColumnSort,
   cartSongs = new Set(),
   onToggleCart,
+  favoriteIds = new Set(),
 }: SongTableProps) => {
   const { t } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
@@ -180,18 +155,6 @@ export const SongTable = ({
     );
   };
 
-  const { data: serviceSets } = useQuery({
-    queryKey: ["service-sets-for-songs"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("service_sets")
-        .select("id, date, set_songs(song_id)")
-        .order("date", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
   const getCategoryTranslation = (category: string | null) => {
     if (!category) return t("songLibrary.categories.uncategorized");
     const categoryMap: Record<string, string> = {
@@ -212,19 +175,6 @@ export const SongTable = ({
       "KO/EN": t("songLibrary.languages.koen"),
     };
     return languageMap[language] || language;
-  };
-
-  const getLastUsedDate = (songId: string) => {
-    if (!serviceSets) return t("songCard.never");
-    
-    const setsWithSong = serviceSets.filter(set => 
-      set.set_songs?.some((ss: any) => ss.song_id === songId)
-    );
-    
-    if (setsWithSong.length === 0) return t("songCard.never");
-    
-    const latestSet = setsWithSong[0];
-    return format(new Date(latestSet.date), "yyyy-MM-dd");
   };
 
   const handleDelete = async (song: any) => {
@@ -276,8 +226,6 @@ export const SongTable = ({
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
-            <TableHead className="text-center">{t("songUsage.usageCount")}</TableHead>
-            <TableHead>{t("songUsage.lastUsedDate")}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
           </TableRow>
           </TableHeader>
@@ -406,7 +354,6 @@ export const SongTable = ({
                       ) : "-"
                     )}
                    </TableCell>
-                   <SongUsageCell songId={song.id} />
                    <TableCell>
                      {!bulkEditMode && (
                        <div className="flex items-center gap-1">
@@ -425,87 +372,99 @@ export const SongTable = ({
                            <Button
                              variant="ghost"
                              size="icon"
-                             className="h-8 w-8"
                              onClick={() => {
                                setSelectedSong(song);
                                setUsageHistoryOpen(true);
                              }}
+                             className="h-8 w-8"
                              title={t("songUsage.viewUsageHistory")}
                            >
                              <BarChart3 className="h-4 w-4" />
                            </Button>
                          )}
-                         <FavoriteButton songId={song.id} size="icon" variant="ghost" />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleYoutubeClick(song.youtube_url)}
-                          disabled={!song.youtube_url}
-                          title={song.youtube_url ? t("songCard.viewYouTube") : "No YouTube link"}
-                        >
-                          <Youtube className={`h-4 w-4 ${!song.youtube_url ? 'opacity-50' : ''}`} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handlePreviewScore(song)}
-                          disabled={!song.score_file_url}
-                          title={song.score_file_url ? t("songLibrary.previewScore") : "No score file"}
-                        >
-                          <Eye className={`h-4 w-4 ${!song.score_file_url ? 'opacity-50' : ''}`} />
-                        </Button>
-                        {onEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => onEdit(song)}
-                            title={t("songCard.edit")}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {onDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => {
-                              setSongToDelete(song);
-                              setDeleteDialogOpen(true);
-                            }}
-                            title={t("songCard.delete")}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                         <FavoriteButton 
+                           songId={song.id} 
+                           isFavorite={favoriteIds.has(song.id)}
+                           size="icon" 
+                           variant="ghost" 
+                           className="h-8 w-8" 
+                         />
+                         {song.youtube_url && (
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => handleYoutubeClick(song.youtube_url)}
+                             className="h-8 w-8"
+                             title={t("songCard.viewYouTube")}
+                           >
+                             <Youtube className="h-4 w-4 text-red-500" />
+                           </Button>
+                         )}
+                         {song.score_file_url && (
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => handlePreviewScore(song)}
+                             className="h-8 w-8"
+                             title={t("songCard.viewScore")}
+                           >
+                             <Eye className="h-4 w-4" />
+                           </Button>
+                         )}
+                         {onEdit && (
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             onClick={() => onEdit(song)}
+                             className="h-8 w-8"
+                             title={t("common.edit")}
+                           >
+                             <Edit className="h-4 w-4" />
+                           </Button>
+                         )}
+                         {onDelete && (
+                           <Button
+                             variant="ghost"
+                             size="icon"
+                             className="h-8 w-8 text-destructive hover:text-destructive"
+                             onClick={() => {
+                               setSongToDelete(song);
+                               setDeleteDialogOpen(true);
+                             }}
+                             title={t("common.delete")}
+                           >
+                             <Trash2 className="h-4 w-4" />
+                           </Button>
+                         )}
+                       </div>
+                     )}
+                   </TableCell>
+                 </TableRow>
+               );
+             })}
+           </TableBody>
+         </Table>
+       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("songCard.confirmDelete")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("songCard.confirmDeleteDesc")}</AlertDialogDescription>
+            <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("songCard.deleteConfirm")} ({songToDelete?.title})
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => songToDelete && handleDelete(songToDelete)}>
+            <AlertDialogCancel onClick={() => setSongToDelete(null)}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(songToDelete)}>
               {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
+      
       <ScorePreviewDialog
         open={scorePreviewOpen}
         onOpenChange={setScorePreviewOpen}
@@ -513,7 +472,7 @@ export const SongTable = ({
         songTitle={selectedSong?.title || ""}
         songId={selectedSong?.id}
       />
-
+      
       <SongUsageHistoryDialog
         open={usageHistoryOpen}
         onOpenChange={setUsageHistoryOpen}

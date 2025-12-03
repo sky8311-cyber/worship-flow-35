@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -41,6 +41,11 @@ export default function FavoritesList() {
       return data.map(f => f.songs).filter(Boolean);
     },
   });
+
+  // Create a Set of favorite song IDs for the FavoriteButton
+  const favoriteIds = useMemo(() => {
+    return new Set(favoriteSongs?.map(s => s.id) || []);
+  }, [favoriteSongs]);
   
   return (
     <AppLayout>
@@ -71,11 +76,11 @@ export default function FavoritesList() {
             <p>{t("common.loading")}</p>
           ) : favoriteSongs && favoriteSongs.length > 0 ? (
             viewMode === "table" ? (
-              <SongTable songs={favoriteSongs} />
+              <SongTable songs={favoriteSongs} favoriteIds={favoriteIds} />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {favoriteSongs.map((song) => (
-                  <SongCard key={song.id} song={song} />
+                  <SongCard key={song.id} song={song} isFavorite={true} />
                 ))}
               </div>
             )
