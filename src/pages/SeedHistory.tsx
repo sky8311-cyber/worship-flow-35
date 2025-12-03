@@ -138,173 +138,176 @@ export default function SeedHistory() {
   return (
     <AppLayout>
       <div className="container max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Sprout className="w-8 h-8 text-primary" />
-        <div>
-          <h1 className="text-3xl font-bold">{t('seeds.history')}</h1>
-          <p className="text-muted-foreground">{t('seeds.title')} {t('common.and')} {t('seeds.achievements')}</p>
-        </div>
-      </div>
-
-      {/* Current Level Card */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-5xl">{seedData.levelInfo?.emoji}</span>
-              <div>
-                <CardTitle className="text-2xl">
-                  {language === 'ko' ? seedData.levelInfo?.name_ko : seedData.levelInfo?.name_en}
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  {t('seeds.totalSeeds')}: {seedData.totalSeeds}
-                </CardDescription>
-              </div>
-            </div>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              Lv. {seedData.currentLevel}
-            </Badge>
+        <div className="flex items-center gap-3 mb-6">
+          <Sprout className="w-7 h-7 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">{t('seeds.history')}</h1>
+            <p className="text-sm text-muted-foreground">{t('seeds.historySubtitle')}</p>
           </div>
-        </CardHeader>
-        {seedData.nextLevel && (
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{t('seeds.nextLevel')}</span>
-                <span className="font-medium">
-                  {seedData.nextLevel.min_seeds - seedData.totalSeeds} {t('seeds.seedsToNextLevel')}
-                </span>
+        </div>
+
+        {/* Current Level Card */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-4xl">{seedData.levelInfo?.emoji}</span>
+                <div>
+                  <CardTitle className="text-xl">
+                    {language === 'ko' ? seedData.levelInfo?.name_ko : seedData.levelInfo?.name_en}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('seeds.totalSeeds')}: {seedData.totalSeeds}
+                  </CardDescription>
+                </div>
               </div>
-              <Progress value={seedData.progress} className="h-3" />
+              <Badge variant="secondary" className="text-base px-3 py-1">
+                Lv. {seedData.currentLevel}
+              </Badge>
             </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Tabs */}
-      <Tabs defaultValue="history" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="history">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            {t('seeds.history')}
-          </TabsTrigger>
-          <TabsTrigger value="achievements">
-            <Trophy className="w-4 h-4 mr-2" />
-            {t('seeds.achievements')}
-          </TabsTrigger>
-          <TabsTrigger value="daily">
-            <Calendar className="w-4 h-4 mr-2" />
-            {t('seeds.dailyProgress')}
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Transaction History */}
-        <TabsContent value="history" className="space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('seeds.history')}</CardTitle>
-              <CardDescription>최근 씨앗 획득 내역</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {transactions && transactions.length > 0 ? (
-                transactions.map((tx) => (
-                  <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
-                    <div className="flex-1">
-                      <p className="font-medium">{tx.description}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(tx.created_at), {
-                          addSuffix: true,
-                          locale: language === 'ko' ? ko : undefined
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="ml-3">
-                      +{tx.seeds_earned} 🌱
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  아직 활동 내역이 없습니다
-                </p>
-              )}
+          </CardHeader>
+          {seedData.nextLevel && (
+            <CardContent className="pt-0">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{t('seeds.nextLevel')}</span>
+                  <span className="font-medium">
+                    {seedData.nextLevel.min_seeds - seedData.totalSeeds} {t('seeds.seedsToNextLevel')}
+                  </span>
+                </div>
+                <Progress value={seedData.progress} className="h-2" />
+              </div>
             </CardContent>
-          </Card>
-        </TabsContent>
+          )}
+        </Card>
 
-        {/* Achievements */}
-        <TabsContent value="achievements" className="space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('seeds.achievements')}</CardTitle>
-              <CardDescription>일회성 업적</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              {oneTimeAchievements.map((achievement) => {
-                const earned = achievements?.some((a) => a.achievement_type === achievement.type);
-                return (
-                  <div
-                    key={achievement.type}
-                    className={`p-3 rounded-lg border ${
-                      earned ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">
-                          {t(`seeds.activities.${achievement.nameKey}` as any)}
-                        </p>
+        {/* Tabs */}
+        <Tabs defaultValue="history" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="history" className="text-xs sm:text-sm">
+              <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('seeds.history')}</span>
+              <span className="sm:hidden">{language === 'ko' ? '내역' : 'History'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="text-xs sm:text-sm">
+              <Trophy className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('seeds.achievements')}</span>
+              <span className="sm:hidden">{language === 'ko' ? '업적' : 'Badge'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="daily" className="text-xs sm:text-sm">
+              <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('seeds.dailyProgress')}</span>
+              <span className="sm:hidden">{language === 'ko' ? '오늘' : 'Today'}</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Transaction History */}
+          <TabsContent value="history" className="space-y-3 mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('seeds.history')}</CardTitle>
+                <CardDescription>{t('seeds.recentHistory')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {transactions && transactions.length > 0 ? (
+                  transactions.map((tx) => (
+                    <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{tx.description}</p>
                         <p className="text-xs text-muted-foreground">
-                          +{achievement.seeds} 🌱
+                          {formatDistanceToNow(new Date(tx.created_at), {
+                            addSuffix: true,
+                            locale: language === 'ko' ? ko : undefined
+                          })}
                         </p>
                       </div>
-                      {earned && <Trophy className="w-5 h-5 text-primary" />}
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Daily Progress */}
-        <TabsContent value="daily" className="space-y-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('seeds.dailyProgress')}</CardTitle>
-              <CardDescription>오늘의 활동 현황</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {dailyActivities.map((activity) => {
-                const capData = dailyCaps?.find((c) => c.activity_type === activity.type);
-                const count = capData?.count || 0;
-                const remaining = activity.cap - count;
-
-                return (
-                  <div key={activity.type} className="p-3 rounded-lg bg-muted/30 border">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium">
-                        {t(`seeds.activities.${activity.nameKey}` as any)}
-                      </p>
-                      <Badge variant={remaining > 0 ? 'default' : 'secondary'}>
-                        {count}/{activity.cap}
+                      <Badge variant="secondary" className="ml-3 text-xs">
+                        +{tx.seeds_earned} 🌱
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>+{activity.seeds} 🌱 per activity</span>
-                      <span>
-                        {remaining > 0
-                          ? `${remaining} ${t('seeds.remainingToday')}`
-                          : '일일 한도 도달'}
-                      </span>
+                  ))
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    {t('seeds.noActivityYet')}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Achievements */}
+          <TabsContent value="achievements" className="space-y-3 mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('seeds.achievements')}</CardTitle>
+                <CardDescription>{t('seeds.oneTimeAchievements')}</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-2 md:grid-cols-2">
+                {oneTimeAchievements.map((achievement) => {
+                  const earned = achievements?.some((a) => a.achievement_type === achievement.type);
+                  return (
+                    <div
+                      key={achievement.type}
+                      className={`p-3 rounded-lg border ${
+                        earned ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {t(`seeds.activities.${achievement.nameKey}` as any)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            +{achievement.seeds} 🌱
+                          </p>
+                        </div>
+                        {earned && <Trophy className="w-4 h-4 text-primary" />}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Daily Progress */}
+          <TabsContent value="daily" className="space-y-3 mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">{t('seeds.dailyProgress')}</CardTitle>
+                <CardDescription>{t('seeds.todayProgress')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {dailyActivities.map((activity) => {
+                  const capData = dailyCaps?.find((c) => c.activity_type === activity.type);
+                  const count = capData?.count || 0;
+                  const remaining = activity.cap - count;
+
+                  return (
+                    <div key={activity.type} className="p-3 rounded-lg bg-muted/30 border">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-sm font-medium">
+                          {t(`seeds.activities.${activity.nameKey}` as any)}
+                        </p>
+                        <Badge variant={remaining > 0 ? 'default' : 'secondary'} className="text-xs">
+                          {count}/{activity.cap}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>+{activity.seeds} 🌱 {t('seeds.perActivity')}</span>
+                        <span>
+                          {remaining > 0
+                            ? `${remaining} ${t('seeds.remainingToday')}`
+                            : t('seeds.dailyLimitReached')}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
