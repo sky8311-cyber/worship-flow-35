@@ -7,7 +7,11 @@ import { Sprout } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export const SeedWidget = () => {
+interface SeedWidgetProps {
+  onNavigate?: () => void;
+}
+
+export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -61,6 +65,13 @@ export const SeedWidget = () => {
 
   const displayData = seedData || defaultData;
 
+  const handleNavigate = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+    navigate('/seeds');
+  };
+
   if (!user?.id) return null;
 
   return (
@@ -95,7 +106,7 @@ export const SeedWidget = () => {
         variant="outline"
         size="sm"
         className="w-full"
-        onClick={() => navigate('/seeds')}
+        onClick={handleNavigate}
       >
         <Sprout className="w-4 h-4 mr-2" />
         {t('seeds.history')}

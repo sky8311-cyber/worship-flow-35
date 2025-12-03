@@ -8,6 +8,7 @@ import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSideba
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
 import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
+
 interface MobileSidebarDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -15,6 +16,11 @@ interface MobileSidebarDrawerProps {
 
 export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerProps) {
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
+
+  // Close the drawer
+  const handleClose = () => {
+    onOpenChange(false);
+  };
 
   // Fetch user stats
   const { data: userStats } = useQuery({
@@ -124,7 +130,7 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
       <SheetContent side="left" className="w-[360px] sm:w-[380px] p-0">
         <ScrollArea className="h-full">
           <div className="p-4 space-y-4">
-            <ProfileSidebarCard stats={userStats} />
+            <ProfileSidebarCard stats={userStats} onNavigate={handleClose} />
             <CommunitiesSidebarList communities={joinedCommunities} maxVisible={5} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
             <UpcomingEventsWidget 

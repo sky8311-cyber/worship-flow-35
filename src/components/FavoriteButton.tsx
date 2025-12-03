@@ -57,15 +57,15 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
       }
       return currentFavorite;
     },
-    onMutate: async () => {
+    onMutate: async (currentFavorite: boolean) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["is-favorite", songId] });
       
       // Snapshot the previous value
       const previousValue = queryClient.getQueryData(["is-favorite", songId]);
       
-      // Optimistically update to the new value
-      queryClient.setQueryData(["is-favorite", songId], !isFavorite);
+      // Optimistically update to the new value (opposite of current)
+      queryClient.setQueryData(["is-favorite", songId], !currentFavorite);
       
       return { previousValue };
     },
@@ -88,6 +88,7 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
     <Button
       variant={variant}
       size={size}
+      disabled={toggleFavoriteMutation.isPending}
       onClick={(e) => {
         e.stopPropagation();
         toggleFavoriteMutation.mutate(!!isFavorite);
