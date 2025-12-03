@@ -7,13 +7,10 @@ import { FavoriteButton } from "./FavoriteButton";
 import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
-import { useSongUsage } from "@/hooks/useSongUsage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +32,7 @@ interface SongCardProps {
   onToggleSelection?: (songId: string) => void;
   inCart?: boolean;
   onToggleCart?: (songId: string) => void;
+  isFavorite?: boolean;
 }
 
 export const SongCard = ({ 
@@ -45,14 +43,14 @@ export const SongCard = ({
   isSelected = false,
   onToggleSelection,
   inCart = false,
-  onToggleCart
+  onToggleCart,
+  isFavorite = false
 }: SongCardProps) => {
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
-  const { data: usageData } = useSongUsage(song.id);
   
   // Check if user can see usage history (admin or worship leader only)
   const canViewUsageHistory = isAdmin || isWorshipLeader;
@@ -70,25 +68,11 @@ export const SongCard = ({
       await queryClient.invalidateQueries({ queryKey: ["songs"] });
       
       toast.success(t("songCard.songDeleted"));
-      onDelete();
+      onDelete?.();
     } catch (error: any) {
       toast.error("Error: " + error.message);
     }
   };
-
-  const getLastUsedDate = () => {
-    if (!song.set_songs || song.set_songs.length === 0) return null;
-    const dates = song.set_songs
-      .map((ss: any) => ss.service_sets?.date)
-      .filter(Boolean)
-      .sort()
-      .reverse();
-    return dates[0] ? new Date(dates[0]) : null;
-  };
-
-  const lastUsed = getLastUsedDate();
-  const usageCount = song.set_songs?.length || 0;
-  const locale = language === "ko" ? ko : enUS;
 
   const getCategoryTranslation = (category: string | null) => {
     if (!category) {
@@ -171,21 +155,6 @@ export const SongCard = ({
                 {getCategoryTranslation(song.category)}
               </span>
             </div>
-
-            {/* Usage Statistics */}
-            {usageData && usageData.usage_count > 0 ? (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>
-                  {t("songUsage.usageCount")} {usageData.usage_count}{t("songUsage.times")}
-                </span>
-                <span>·</span>
-                <span>
-                  {t("songUsage.lastUsedDate")}: {usageData.last_used_at ? format(new Date(usageData.last_used_at), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy", { locale }) : "-"}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t("songUsage.neverUsed")}</p>
-            )}
           </div>
 
           {/* Media buttons - stacked on mobile */}
@@ -238,7 +207,13 @@ export const SongCard = ({
                 <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             )}
-            <FavoriteButton songId={song.id} size="icon" variant="outline" className="h-8 w-8 sm:h-9 sm:w-9" />
+            <FavoriteButton 
+              songId={song.id} 
+              isFavorite={isFavorite}
+              size="icon" 
+              variant="outline" 
+              className="h-8 w-8 sm:h-9 sm:w-9" 
+            />
             {onEdit && (
               <Button
                 variant="outline"

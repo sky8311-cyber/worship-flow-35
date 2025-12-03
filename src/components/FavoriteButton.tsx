@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
@@ -6,38 +7,36 @@ import { toast } from "sonner";
 
 interface FavoriteButtonProps {
   songId: string;
+  isFavorite?: boolean;
   variant?: "default" | "ghost" | "outline";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
 }
 
-export function FavoriteButton({ songId, variant = "ghost", size = "icon", className }: FavoriteButtonProps) {
+export function FavoriteButton({ 
+  songId, 
+  isFavorite: initialFavorite = false, 
+  variant = "ghost", 
+  size = "icon", 
+  className 
+}: FavoriteButtonProps) {
   const queryClient = useQueryClient();
   
-  const { data: isFavorite } = useQuery({
-    queryKey: ["is-favorite", songId],
-    queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return false;
-      
-      const { data, error } = await supabase
-        .from("user_favorite_songs")
-        .select("id")
-        .eq("user_id", user.user.id)
-        .eq("song_id", songId)
-        .maybeSingle();
-      
-      if (error && error.code !== "PGRST116") throw error;
-      return !!data;
-    },
-  });
+  // Local optimistic state for instant visual feedback
+  const [optimisticFavorite, setOptimisticFavorite] = useState(initialFavorite);
+  
+  // Sync with prop when it changes (e.g., after refetch)
+  useEffect(() => {
+    setOptimisticFavorite(initialFavorite);
+  }, [initialFavorite]);
   
   const toggleFavoriteMutation = useMutation({
-    mutationFn: async (currentFavorite: boolean) => {
+    mutationFn: async (shouldAdd: boolean) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error("Not authenticated");
       
-      if (currentFavorite) {
+      if (!shouldAdd) {
+        // Remove from favorites
         const { error } = await supabase
           .from("user_favorite_songs")
           .delete()
@@ -46,6 +45,7 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
         
         if (error) throw error;
       } else {
+        // Add to favorites
         const { error } = await supabase
           .from("user_favorite_songs")
           .insert([{
@@ -55,48 +55,43 @@ export function FavoriteButton({ songId, variant = "ghost", size = "icon", class
         
         if (error) throw error;
       }
-      return currentFavorite;
+      return shouldAdd;
     },
-    onMutate: async (currentFavorite: boolean) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["is-favorite", songId] });
-      
-      // Snapshot the previous value
-      const previousValue = queryClient.getQueryData(["is-favorite", songId]);
-      
-      // Optimistically update to the new value (opposite of current)
-      queryClient.setQueryData(["is-favorite", songId], !currentFavorite);
-      
-      return { previousValue };
-    },
-    onError: (err, variables, context) => {
-      // Rollback on error
-      queryClient.setQueryData(["is-favorite", songId], context?.previousValue);
+    onError: (err, shouldAdd) => {
+      // Rollback optimistic state on error
+      setOptimisticFavorite(!shouldAdd);
       toast.error("오류가 발생했습니다");
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey: ["is-favorite", songId] });
+      // Refetch to sync state
+      queryClient.invalidateQueries({ queryKey: ["user-favorites-set"] });
       queryClient.invalidateQueries({ queryKey: ["favorite-songs"] });
     },
-    onSuccess: (wasRemoved) => {
-      toast.success(wasRemoved ? "즐겨찾기에서 제거되었습니다" : "즐겨찾기에 추가되었습니다");
+    onSuccess: (wasAdded) => {
+      toast.success(wasAdded ? "즐겨찾기에 추가되었습니다" : "즐겨찾기에서 제거되었습니다");
     },
   });
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    // Instant visual feedback
+    const newState = !optimisticFavorite;
+    setOptimisticFavorite(newState);
+    
+    // Then perform the actual mutation
+    toggleFavoriteMutation.mutate(newState);
+  };
   
   return (
     <Button
       variant={variant}
       size={size}
-      disabled={toggleFavoriteMutation.isPending}
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleFavoriteMutation.mutate(!!isFavorite);
-      }}
+      onClick={handleClick}
       className={className}
     >
       <Heart 
-        className={`w-4 h-4 ${isFavorite ? "fill-red-500 text-red-500" : ""}`}
+        className={`w-4 h-4 transition-colors ${optimisticFavorite ? "fill-red-500 text-red-500" : ""}`}
       />
     </Button>
   );

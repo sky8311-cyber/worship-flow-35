@@ -57,6 +57,22 @@ const SongLibrary = () => {
     }
   }, []);
 
+  // Batch fetch all user favorites in ONE query (eliminates 520+ individual queries)
+  const { data: userFavorites } = useQuery({
+    queryKey: ["user-favorites-set"],
+    queryFn: async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return new Set<string>();
+      
+      const { data } = await supabase
+        .from("user_favorite_songs")
+        .select("song_id")
+        .eq("user_id", user.user.id);
+      
+      return new Set(data?.map(f => f.song_id) || []);
+    },
+  });
+
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
     queryFn: async () => {
@@ -494,6 +510,7 @@ const SongLibrary = () => {
               onColumnSort={handleColumnSort}
               cartSongs={isWorshipLeader ? cartSongs : new Set()}
               onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
+              favoriteIds={userFavorites || new Set()}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -508,6 +525,7 @@ const SongLibrary = () => {
                   onToggleSelection={handleToggleSelection}
                   inCart={isWorshipLeader ? cartSongs.has(song.id) : false}
                   onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
+                  isFavorite={userFavorites?.has(song.id) || false}
                 />
               ))}
             </div>
