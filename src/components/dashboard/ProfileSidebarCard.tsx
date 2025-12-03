@@ -84,12 +84,13 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
           <div className="relative group mx-auto w-40">
             <div className="cursor-pointer" onClick={handleAvatarClick}>
               {profile?.id ? (
-                <AvatarWithLevel
+              <AvatarWithLevel
                   userId={profile.id}
                   avatarUrl={profile.avatar_url}
                   fallback={initials}
                   size="lg"
-                  className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20 hover:ring-primary/40 transition-all"
+                  showLevel={false}
+                  className="w-40 h-40"
                 />
               ) : (
                 <Avatar className="w-40 h-40 ring-2 ring-offset-2 ring-primary/20">
