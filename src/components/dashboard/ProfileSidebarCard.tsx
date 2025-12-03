@@ -34,9 +34,10 @@ interface Profile {
 interface ProfileSidebarCardProps {
   stats?: ProfileStats;
   profileOverride?: Profile;
+  onNavigate?: () => void;
 }
 
-export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCardProps) {
+export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: ProfileSidebarCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { profile: authProfile, user } = useAuth();
@@ -61,13 +62,27 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
     </div>
   );
 
+  const handleAvatarClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+    setAvatarDialogOpen(true);
+  };
+
+  const handleEditClick = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+    setEditDialogOpen(true);
+  };
+
   return (
     <>
       <Card>
         <CardContent className="p-6">
           {/* Avatar + Edit Icon */}
           <div className="relative group mx-auto w-40">
-            <div className="cursor-pointer" onClick={() => setAvatarDialogOpen(true)}>
+            <div className="cursor-pointer" onClick={handleAvatarClick}>
               {profile?.id ? (
                 <AvatarWithLevel
                   userId={profile.id}
@@ -87,7 +102,7 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
                 size="icon"
                 variant="ghost"
                 className="absolute -top-1 -right-1 rounded-full bg-card shadow-md border opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                onClick={() => setEditDialogOpen(true)}
+                onClick={handleEditClick}
               >
                 <Settings className="w-4 h-4" />
               </Button>
@@ -145,7 +160,7 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setEditDialogOpen(true)}
+                onClick={handleEditClick}
                 className="text-xs"
               >
                 <Plus className="w-3 h-3 mr-1" />
@@ -178,7 +193,7 @@ export function ProfileSidebarCard({ stats, profileOverride }: ProfileSidebarCar
           {/* Seed Widget */}
           {!profileOverride && (
             <div className="mt-6">
-              <SeedWidget />
+              <SeedWidget onNavigate={onNavigate} />
             </div>
           )}
         </CardContent>
