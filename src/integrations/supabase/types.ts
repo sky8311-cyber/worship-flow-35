@@ -1821,6 +1821,19 @@ export type Database = {
         Args: { _church_account_id: string; _user_id: string }
         Returns: boolean
       }
+      get_song_usage_sets: {
+        Args: { p_song_id: string }
+        Returns: {
+          community_id: string
+          created_by: string
+          service_name: string
+          set_date: string
+          set_id: string
+          set_status: string
+          song_position: number
+          worship_leader: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
