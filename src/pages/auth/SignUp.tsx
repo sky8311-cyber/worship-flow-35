@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +74,16 @@ const SignUp = () => {
       title: t("auth.success"),
       description: t("auth.accountCreated"),
     });
+    
+    // Send welcome email
+    try {
+      await supabase.functions.invoke('send-welcome-email', {
+        body: { email: formData.email, name: formData.fullName }
+      });
+    } catch (emailError) {
+      console.log('Welcome email failed, but signup succeeded:', emailError);
+    }
+    
     setLoading(false);
     // Clear stored redirect URL
     sessionStorage.removeItem("redirectAfterLogin");
