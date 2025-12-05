@@ -31,15 +31,33 @@ export const SeedLeaderboard = () => {
   const [selectedProfile, setSelectedProfile] = useState<SelectedProfile | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
+  const [profileStats, setProfileStats] = useState<{ sets: number; communities: number; collaborations: number } | undefined>();
+
   const handleAvatarClick = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, avatar_url, bio, ministry_role, instagram_url, youtube_url, location, instrument')
-      .eq('id', userId)
-      .single();
+    // Fetch profile and stats in parallel
+    const [profileRes, setsRes, communitiesRes] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url, bio, ministry_role, instagram_url, youtube_url, location, instrument')
+        .eq('id', userId)
+        .single(),
+      supabase
+        .from('service_sets')
+        .select('id', { count: 'exact', head: true })
+        .eq('created_by', userId),
+      supabase
+        .from('community_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+    ]);
     
-    if (profile) {
-      setSelectedProfile(profile);
+    if (profileRes.data) {
+      setSelectedProfile(profileRes.data);
+      setProfileStats({
+        sets: setsRes.count || 0,
+        communities: communitiesRes.count || 0,
+        collaborations: 0
+      });
       setProfileDialogOpen(true);
     }
   };
@@ -224,6 +242,7 @@ export const SeedLeaderboard = () => {
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
         profileOverride={selectedProfile || undefined}
+        stats={profileStats}
       />
     </Card>
   );
