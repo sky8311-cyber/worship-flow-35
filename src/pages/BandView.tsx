@@ -65,8 +65,16 @@ type SetItem =
 const BandView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { t, language } = useTranslation();
+
+  // Redirect non-authenticated users to login with redirect URL
+  useEffect(() => {
+    if (!authLoading && !user) {
+      const currentPath = `/band-view/${id}`;
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+    }
+  }, [authLoading, user, id, navigate]);
 
   // Check if user is viewing from a different community
   const { data: userCommunities } = useQuery({
@@ -93,7 +101,7 @@ const BandView = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && !!user,
     refetchOnMount: "always",
     staleTime: 0,
   });
@@ -221,7 +229,8 @@ const BandView = () => {
     })),
   ].sort((a, b) => a.position - b.position);
 
-  if (isLoading) {
+  // Show loading while checking auth or fetching data
+  if (authLoading || isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
@@ -234,13 +243,23 @@ const BandView = () => {
     );
   }
 
+  // If not authenticated, show nothing (redirect is happening)
+  if (!user) {
+    return null;
+  }
+
   if (!serviceSet) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">{t("bandView.notFound")}</p>
+            <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-lg font-medium text-foreground mb-2">
+              {t("bandView.accessDenied")}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {t("bandView.notMemberOrNotExists")}
+            </p>
           </div>
         </div>
       </AppLayout>

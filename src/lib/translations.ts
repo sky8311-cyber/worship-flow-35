@@ -1214,6 +1214,8 @@ export const translations = {
       draft: "Draft",
       loading: "Loading...",
       notFound: "Worship set not found",
+      accessDenied: "Access Denied",
+      notMemberOrNotExists: "This worship set doesn't exist or you don't have permission to view it.",
       labels: {
         leader: "Leader",
         team: "Team",
@@ -2714,6 +2716,8 @@ export const translations = {
       draft: "임시저장",
       loading: "로딩 중...",
       notFound: "워십세트를 찾을 수 없습니다",
+      accessDenied: "접근 권한 없음",
+      notMemberOrNotExists: "이 예배세트가 존재하지 않거나 접근 권한이 없습니다.",
       labels: {
         leader: "인도자",
         team: "팀",
