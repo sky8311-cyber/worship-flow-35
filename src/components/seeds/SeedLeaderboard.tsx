@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,12 +8,41 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Trophy, Medal, Award } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 
 type TimeRange = 'weekly' | 'monthly' | 'allTime';
+
+interface SelectedProfile {
+  id: string;
+  full_name: string | null;
+  email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  ministry_role: string | null;
+  instagram_url: string | null;
+  youtube_url: string | null;
+  location: string | null;
+  instrument: string | null;
+}
 
 export const SeedLeaderboard = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const [selectedProfile, setSelectedProfile] = useState<SelectedProfile | null>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+
+  const handleAvatarClick = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, avatar_url, bio, ministry_role, instagram_url, youtube_url, location, instrument')
+      .eq('id', userId)
+      .single();
+    
+    if (profile) {
+      setSelectedProfile(profile);
+      setProfileDialogOpen(true);
+    }
+  };
 
   const getLeaderboardData = async (timeRange: TimeRange) => {
     let dateFilter = '';
@@ -128,7 +158,10 @@ export const SeedLeaderboard = () => {
                 {getRankIcon(rank)}
               </div>
 
-              <Avatar className="w-8 h-8 shrink-0">
+              <Avatar 
+                className="w-8 h-8 shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                onClick={() => handleAvatarClick(entry.userId)}
+              >
                 <AvatarImage src={entry.avatarUrl || undefined} />
                 <AvatarFallback className="text-xs">
                   {entry.name.substring(0, 2).toUpperCase()}
@@ -186,6 +219,12 @@ export const SeedLeaderboard = () => {
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <ProfileDialog
+        open={profileDialogOpen}
+        onOpenChange={setProfileDialogOpen}
+        profileOverride={selectedProfile || undefined}
+      />
     </Card>
   );
 };
