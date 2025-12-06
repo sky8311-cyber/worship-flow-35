@@ -295,8 +295,18 @@ export default function CommunityManagement() {
       let sent = 0;
       let failed = 0;
 
-      // Send invitations for each valid email
-      for (const email of validEmails) {
+      // Helper to add delay between requests (Resend API rate limit: 2 req/sec)
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+      // Send invitations for each valid email with rate limiting
+      for (let i = 0; i < validEmails.length; i++) {
+        const email = validEmails[i];
+        
+        // Add delay between requests to avoid rate limiting
+        if (i > 0) {
+          await delay(500);
+        }
+        
         try {
           const { error } = await supabase.functions.invoke("send-community-invitation", {
             body: {
