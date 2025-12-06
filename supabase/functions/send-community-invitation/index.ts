@@ -11,6 +11,7 @@ interface InvitationRequest {
   communityId: string;
   communityName: string;
   inviterName: string;
+  inviterId: string;
   language: string;
 }
 
@@ -32,10 +33,13 @@ const handler = async (req: Request): Promise<Response> => {
     const body = await req.json();
     
     let email: string;
+    let communityId: string;
     let communityName: string;
     let inviterName: string;
+    let inviterId: string;
     let language: string;
     let invitationId: string;
+    let isNewInvitation = false;
 
     // Check if this is a resend request
     if ('invitationId' in body) {
@@ -54,6 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
 
       email = invitation.email;
+      communityId = invitation.community_id;
 
       // Fetch community
       const { data: community, error: commError } = await supabase
@@ -74,36 +79,32 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (profileError) throw profileError;
       inviterName = profile.full_name || "A worship leader";
+      inviterId = invitation.invited_by;
       language = "ko"; // Default to Korean for resends
     } else {
-      // New invitation
-      const { email: reqEmail, communityId, communityName: reqName, inviterName: reqInviter, language: reqLang } = body as InvitationRequest;
-      email = reqEmail;
-      communityName = reqName;
-      inviterName = reqInviter;
-      language = reqLang;
+      // New invitation - store details but DON'T insert yet
+      const inviteBody = body as InvitationRequest;
+      email = inviteBody.email;
+      communityId = inviteBody.communityId;
+      communityName = inviteBody.communityName;
+      inviterName = inviteBody.inviterName;
+      inviterId = inviteBody.inviterId;
+      language = inviteBody.language;
+      isNewInvitation = true;
+      invitationId = ""; // Will be set after successful email send
+    }
 
-      // Create invitation record
-      const { data: newInvitation, error: createError } = await supabase
-        .from("community_invitations")
-        .insert({
-          email,
-          community_id: communityId,
-          invited_by: body.inviterId,
-          role: "member",
-          status: "pending",
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        })
-        .select()
-        .single();
-
-      if (createError) throw createError;
-      invitationId = newInvitation.id;
+    // For new invitations, we'll create a temporary ID for the email link
+    // then insert the record only after email sends successfully
+    let tempInvitationId = invitationId;
+    if (isNewInvitation) {
+      // Generate a UUID for the invitation link
+      tempInvitationId = crypto.randomUUID();
     }
 
     // Build invitation URL - use production domain
     const appUrl = "https://kworship.app";
-    const inviteUrl = `${appUrl}/accept-invitation/${invitationId}`;
+    const inviteUrl = `${appUrl}/accept-invitation/${tempInvitationId}`;
 
     // Prepare email content based on language
     const isKorean = language === "ko";
@@ -185,7 +186,8 @@ const handler = async (req: Request): Promise<Response> => {
       </html>
     `;
 
-    // Send email using Resend API
+    // Send email FIRST before creating database record
+    console.log(`Sending invitation email to ${email} for community ${communityName}`);
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -206,10 +208,34 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to send email: ${errorText}`);
     }
 
-    console.log(`Invitation email sent to ${email} for community ${communityName}`);
+    console.log(`Email sent successfully to ${email}`);
+
+    // Only create invitation record AFTER email sends successfully
+    if (isNewInvitation) {
+      const { data: newInvitation, error: createError } = await supabase
+        .from("community_invitations")
+        .insert({
+          id: tempInvitationId, // Use the same ID we used in the email
+          email,
+          community_id: communityId,
+          invited_by: inviterId,
+          role: "member",
+          status: "pending",
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Failed to create invitation record after email sent:", createError);
+        throw new Error(`Email sent but failed to create invitation record: ${createError.message}`);
+      }
+      invitationId = newInvitation.id;
+      console.log(`Invitation record created: ${invitationId}`);
+    }
 
     return new Response(
-      JSON.stringify({ success: true, invitationId }),
+      JSON.stringify({ success: true, invitationId: invitationId || tempInvitationId }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
