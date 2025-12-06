@@ -422,8 +422,8 @@ export default function CommunityManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-join-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      queryClient.invalidateQueries({ queryKey: ["community-join-requests", id] });
+      queryClient.invalidateQueries({ queryKey: ["community-members", id] });
       toast({
         title: t("community.joinRequestApproveSuccess"),
       });
@@ -439,9 +439,30 @@ export default function CommunityManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-join-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["community-join-requests", id] });
       toast({
         title: t("community.joinRequestRejectSuccess"),
+      });
+    },
+  });
+
+  const deleteJoinRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const { error } = await supabase
+        .from("community_join_requests")
+        .delete()
+        .eq("id", requestId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-join-requests", id] });
+      toast({ title: t("community.joinRequestDeleted") });
+    },
+    onError: (error: any) => {
+      console.error("Delete join request error:", error);
+      toast({
+        title: t("community.deleteJoinRequestError"),
+        variant: "destructive",
       });
     },
   });
@@ -556,35 +577,62 @@ export default function CommunityManagement() {
                               <Avatar>
                                 <AvatarImage src={request.profiles?.avatar_url || undefined} />
                                 <AvatarFallback>
-                                  {request.profiles?.full_name?.charAt(0) || "U"}
+                                  {request.profiles?.full_name?.charAt(0) || "?"}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
-                                <p className="font-medium">{request.profiles?.full_name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {request.profiles?.email}
-                                </p>
+                                {request.profiles ? (
+                                  <>
+                                    <p className="font-medium">{request.profiles.full_name}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {request.profiles.email}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <p className="font-medium text-muted-foreground italic">
+                                    {t("common.deletedUser")}
+                                  </p>
+                                )}
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {t("community.requestDate")}: {new Date(request.created_at).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
                                 </p>
                               </div>
                             </div>
                             <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => approveJoinRequestMutation.mutate(request.id)}
-                                disabled={approveJoinRequestMutation.isPending}
-                              >
-                                {t("community.joinRequestApprove")}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => rejectJoinRequestMutation.mutate(request.id)}
-                                disabled={rejectJoinRequestMutation.isPending}
-                              >
-                                {t("community.joinRequestReject")}
-                              </Button>
+                              {request.profiles ? (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => approveJoinRequestMutation.mutate(request.id)}
+                                    disabled={approveJoinRequestMutation.isPending}
+                                  >
+                                    {t("community.joinRequestApprove")}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => rejectJoinRequestMutation.mutate(request.id)}
+                                    disabled={rejectJoinRequestMutation.isPending}
+                                  >
+                                    {t("community.joinRequestReject")}
+                                  </Button>
+                                </>
+                              ) : null}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => deleteJoinRequestMutation.mutate(request.id)}
+                                    disabled={deleteJoinRequestMutation.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {t("common.delete")}
+                                </TooltipContent>
+                              </Tooltip>
                             </div>
                           </div>
                         ))}
