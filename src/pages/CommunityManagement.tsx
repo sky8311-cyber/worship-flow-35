@@ -275,23 +275,79 @@ export default function CommunityManagement() {
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
-      if (!user || !community) return;
+      if (!user || !community) return { sent: 0, failed: 0, invalidEmails: [] as string[] };
 
-      const { error } = await supabase.functions.invoke("send-community-invitation", {
-        body: {
-          email: inviteEmail,
-          communityId: id,
-          communityName: community.name,
-          inviterName: user.email || "A worship leader",
-          inviterId: user.id,
-          language,
-        },
-      });
-      if (error) throw error;
+      // Parse comma-separated emails
+      const emails = inviteEmail
+        .split(',')
+        .map(e => e.trim())
+        .filter(e => e.length > 0);
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const validEmails = emails.filter(e => emailRegex.test(e));
+      const invalidEmails = emails.filter(e => !emailRegex.test(e));
+
+      if (validEmails.length === 0) {
+        throw new Error("No valid emails provided");
+      }
+
+      let sent = 0;
+      let failed = 0;
+
+      // Send invitations for each valid email
+      for (const email of validEmails) {
+        try {
+          const { error } = await supabase.functions.invoke("send-community-invitation", {
+            body: {
+              email,
+              communityId: id,
+              communityName: community.name,
+              inviterName: user.email || "A worship leader",
+              inviterId: user.id,
+              language,
+            },
+          });
+          if (error) {
+            console.error(`Failed to send invitation to ${email}:`, error);
+            failed++;
+          } else {
+            sent++;
+          }
+        } catch (err) {
+          console.error(`Failed to send invitation to ${email}:`, err);
+          failed++;
+        }
+      }
+
+      return { sent, failed, invalidEmails };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (!result) return;
+      
       queryClient.invalidateQueries({ queryKey: ["community-invitations", id] });
-      toast({ title: t("community.invitationSent") });
+      
+      const { sent, failed, invalidEmails } = result;
+      
+      if (sent > 0 && failed === 0 && invalidEmails.length === 0) {
+        toast({ 
+          title: t("community.invitationsSentCount", { count: sent.toString() }),
+        });
+      } else if (sent > 0) {
+        toast({ 
+          title: t("community.invitationsPartialSuccess", { 
+            sent: sent.toString(), 
+            failed: (failed + invalidEmails.length).toString() 
+          }),
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: t("community.invitationError"),
+          variant: "destructive",
+        });
+      }
+      
       setInviteEmail("");
     },
     onError: (error: any) => {
@@ -542,20 +598,25 @@ export default function CommunityManagement() {
                       e.preventDefault();
                       inviteMutation.mutate();
                     }}
-                    className="flex flex-col sm:flex-row gap-2"
+                    className="flex flex-col gap-2"
                   >
-                    <Input
-                      type="email"
-                      placeholder={t("community.enterEmail")}
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      required
-                      className="flex-1"
-                    />
-                    <Button type="submit" disabled={inviteMutation.isPending} className="sm:w-auto">
-                      <Send className="h-4 w-4 mr-2" />
-                      {t("community.sendInvitation")}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        type="text"
+                        placeholder={t("community.inviteEmailPlaceholder")}
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        required
+                        className="flex-1"
+                      />
+                      <Button type="submit" disabled={inviteMutation.isPending || !inviteEmail.trim()} className="sm:w-auto">
+                        <Send className="h-4 w-4 mr-2" />
+                        {t("community.sendInvitations")}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {t("community.multipleEmailsHint")}
+                    </p>
                   </form>
                 </CardContent>
               </Card>
