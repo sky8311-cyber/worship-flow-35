@@ -11,7 +11,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 
 export default function AcceptInvitation() {
   const { invitationId } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [accepted, setAccepted] = useState(false);
@@ -99,17 +99,20 @@ export default function AcceptInvitation() {
   });
 
   useEffect(() => {
+    // Wait for auth loading to complete before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       // Store the invitation URL before redirecting to login
       const invitationUrl = `/accept-invitation/${invitationId}`;
       sessionStorage.setItem("redirectAfterLogin", invitationUrl);
       navigate(`/auth/login?redirect=${encodeURIComponent(invitationUrl)}`);
     }
-  }, [user, navigate, invitationId]);
+  }, [user, authLoading, navigate, invitationId]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-[100dvh] container mx-auto py-8 pb-8 flex justify-center">
+      <div className="min-h-[100dvh] container mx-auto py-8 pb-8 flex justify-center items-center">
         <p>{t("common.loading")}</p>
       </div>
     );
