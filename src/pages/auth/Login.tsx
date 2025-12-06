@@ -252,7 +252,7 @@ const Login = () => {
                       type="button"
                       variant="link" 
                       className="p-0 h-auto text-sm font-semibold"
-                      onClick={() => navigate("/signup")}
+                      onClick={() => navigate(redirectUrl ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/signup")}
                     >
                       {t("auth.signUp")}
                     </Button>
