@@ -66,12 +66,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Return users with relevant auth data
+    // Return users with relevant auth data including last_sign_in_at
     const userData = authUsers.users.map(u => ({
       id: u.id,
       email: u.email,
       email_confirmed_at: u.email_confirmed_at,
       created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at,
     }));
 
     return new Response(

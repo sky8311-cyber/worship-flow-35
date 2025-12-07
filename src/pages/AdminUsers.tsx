@@ -102,6 +102,7 @@ const AdminUsers = () => {
           ...profile,
           user_roles: roles?.filter(r => r.user_id === profile.id) || [],
           email_confirmed_at: authUser?.email_confirmed_at || null,
+          last_sign_in_at: authUser?.last_sign_in_at || null,
           seedData: seedData ? {
             totalSeeds: seedData.total_seeds,
             level: seedData.current_level,
@@ -512,6 +513,7 @@ const AdminUsers = () => {
                     <TableHead>{t("admin.users.level")}</TableHead>
                     <TableHead>{t("admin.users.seeds")}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
+                    <TableHead>{t("admin.users.lastLogin")}</TableHead>
                     <TableHead>{t("admin.users.roleManagement")}</TableHead>
                     <TableHead>{t("admin.users.userActions")}</TableHead>
                   </TableRow>
@@ -582,6 +584,13 @@ const AdminUsers = () => {
                         </TableCell>
                         <TableCell>
                           {format(new Date(user.created_at), "PPP", { locale: dateLocale })}
+                        </TableCell>
+                        <TableCell>
+                          {user.last_sign_in_at ? (
+                            format(new Date(user.last_sign_in_at), "PP p", { locale: dateLocale })
+                          ) : (
+                            <span className="text-muted-foreground text-sm">{language === "ko" ? "없음" : "Never"}</span>
+                          )}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-2 flex-wrap">

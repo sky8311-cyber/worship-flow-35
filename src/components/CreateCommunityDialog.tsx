@@ -28,21 +28,29 @@ export const CreateCommunityDialog = ({ open, onOpenChange }: CreateCommunityDia
     mutationFn: async () => {
       if (!user) throw new Error("User not authenticated");
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("worship_communities")
         .insert({
           name: formData.name,
           description: formData.description,
           leader_id: user.id,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["my-communities"] });
+      queryClient.invalidateQueries({ queryKey: ["user-communities"] });
       toast.success(t("community.createDialog.success"));
       setFormData({ name: "", description: "" });
       onOpenChange(false);
+      // Return the new community ID for parent components to use
+      if (data?.id) {
+        return data.id;
+      }
     },
     onError: (error) => {
       toast.error(t("community.createDialog.error"));

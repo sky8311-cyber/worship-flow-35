@@ -63,16 +63,12 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
   );
 
   const handleAvatarClick = () => {
-    if (onNavigate) {
-      onNavigate();
-    }
+    // Don't call onNavigate() - it closes the sidebar which unmounts the dialog
     setAvatarDialogOpen(true);
   };
 
   const handleEditClick = () => {
-    if (onNavigate) {
-      onNavigate();
-    }
+    // Don't call onNavigate() - it closes the sidebar which unmounts the dialog
     setEditDialogOpen(true);
   };
 

@@ -21,15 +21,17 @@ import { SetCollaborators } from "@/components/SetCollaborators";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 import { TemplateSelector } from "@/components/TemplateSelector";
 import { SaveTemplateDialog } from "@/components/SaveTemplateDialog";
+import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Home } from "lucide-react";
+import { Home, AlertCircle } from "lucide-react";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetPositionsManager";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -62,6 +64,7 @@ const SetBuilder = () => {
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Refs to ensure mutation always reads latest values
@@ -746,9 +749,13 @@ const SetBuilder = () => {
                   </Label>
                   <Select
                     value={formData.community_id}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, community_id: value })
-                    }
+                    onValueChange={(value) => {
+                      if (value === "__create_new__") {
+                        setShowCreateCommunity(true);
+                      } else {
+                        setFormData({ ...formData, community_id: value });
+                      }
+                    }}
                   >
                     <SelectTrigger id="community_id">
                       <SelectValue placeholder={t("setBuilder.selectCommunity")} />
@@ -759,8 +766,23 @@ const SetBuilder = () => {
                           {community.name}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__create_new__" className="text-primary font-medium">
+                        <span className="flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          {t("setBuilder.createCommunity")}
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                  {/* Warning when no communities available */}
+                  {(!userCommunities || userCommunities.length === 0) && (
+                    <Alert variant="default" className="mt-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        {t("setBuilder.noCommunityWarning")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -992,6 +1014,11 @@ const SetBuilder = () => {
         onOpenChange={setShowSaveTemplate}
         formData={formData}
         components={getComponentsForTemplate()}
+      />
+
+      <CreateCommunityDialog
+        open={showCreateCommunity}
+        onOpenChange={setShowCreateCommunity}
       />
     </AppLayout>
   );
