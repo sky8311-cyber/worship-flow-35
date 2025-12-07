@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
+import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -67,6 +69,8 @@ const BandView = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { t, language } = useTranslation();
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -229,6 +233,49 @@ const BandView = () => {
     })),
   ].sort((a, b) => a.position - b.position);
 
+  // Collect all scores for fullscreen viewer
+  const allScores = useMemo(() => {
+    const scores: Array<{
+      songTitle: string;
+      songKey: string;
+      imageUrl: string;
+      position: number;
+      pageNumber: number;
+    }> = [];
+
+    setSongs?.forEach((setSong: any) => {
+      const song = setSong.songs;
+      const scoreFiles = song?.song_scores?.song_scores?.filter(
+        (score: any) => score.key === setSong.key
+      ).sort((a: any, b: any) => (a.position || 0) - (b.position || 0)) || [];
+
+      if (scoreFiles.length > 0) {
+        scoreFiles.forEach((score: any, idx: number) => {
+          scores.push({
+            songTitle: song?.title || "",
+            songKey: setSong.key || "",
+            imageUrl: score.file_url,
+            position: setSong.position,
+            pageNumber: idx + 1,
+          });
+        });
+      } else {
+        const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
+        if (defaultScoreUrl) {
+          scores.push({
+            songTitle: song?.title || "",
+            songKey: setSong.key || "",
+            imageUrl: defaultScoreUrl,
+            position: setSong.position,
+            pageNumber: 1,
+          });
+        }
+      }
+    });
+
+    return scores;
+  }, [setSongs]);
+
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
     return (
@@ -328,12 +375,22 @@ const BandView = () => {
             )}
             <Button
               variant="outline"
-              onClick={() => window.print()}
+              onClick={() => setPrintDialogOpen(true)}
               className="flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline">{t("bandView.print")}</span>
             </Button>
+            {allScores.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setFullscreenOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Maximize2 className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("bandView.fullscreenScores")}</span>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -629,6 +686,22 @@ const BandView = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Print Options Dialog */}
+        <PrintOptionsDialog
+          open={printDialogOpen}
+          onOpenChange={setPrintDialogOpen}
+          serviceSet={serviceSet}
+          setSongs={setSongs || []}
+          setComponents={setComponents || []}
+        />
+
+        {/* Fullscreen Score Viewer */}
+        <FullscreenScoreViewer
+          open={fullscreenOpen}
+          onClose={() => setFullscreenOpen(false)}
+          scores={allScores}
+        />
       </div>
     </AppLayout>
   );
