@@ -25,6 +25,7 @@ import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplicatio
 import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import InvitedSignUp from "./pages/InvitedSignUp";
 import JoinCommunity from "./pages/JoinCommunity";
 import FavoritesList from "./pages/FavoritesList";
 import WorshipSets from "./pages/WorshipSets";
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
+              <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
               
