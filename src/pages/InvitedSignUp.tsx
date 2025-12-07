@@ -272,7 +272,7 @@ const InvitedSignUp = () => {
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {t("invitedSignUp.invitedBy", { inviterName: invitation.inviter?.full_name || "A worship leader" })}
+              {t("invitedSignUp.invitedBy", { inviterName: invitation.inviter?.full_name || t("common.aWorshipLeader") })}
             </p>
             <p className="font-semibold text-lg text-foreground">
               {invitation.community?.name}
