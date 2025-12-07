@@ -28,29 +28,28 @@ const InvitedSignUp = () => {
     birthDate: "",
   });
 
-  // Fetch invitation details
+  // Fetch invitation details using SECURITY DEFINER function (works for unauthenticated users)
   const { data: invitation, isLoading: invitationLoading, error: invitationError } = useQuery({
     queryKey: ["invitation", invitationId],
     queryFn: async () => {
       if (!invitationId) throw new Error("No invitation ID");
       
-      // First get invitation
+      // Use SECURITY DEFINER function to bypass RLS for unauthenticated users
       const { data: inviteData, error: inviteError } = await supabase
-        .from("community_invitations")
-        .select("*")
-        .eq("id", invitationId)
-        .single();
+        .rpc("get_invitation_by_id", { invitation_uuid: invitationId })
+        .maybeSingle();
       
       if (inviteError) throw inviteError;
+      if (!inviteData) return null;
       
-      // Then get community
+      // Then get community (public data)
       const { data: community } = await supabase
         .from("worship_communities")
         .select("id, name, description, avatar_url")
         .eq("id", inviteData.community_id)
         .single();
       
-      // Then get inviter
+      // Then get inviter (public data)
       const { data: inviter } = await supabase
         .from("profiles")
         .select("full_name, avatar_url")
