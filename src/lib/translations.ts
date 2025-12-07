@@ -229,6 +229,23 @@ export const translations = {
         signUpPrompt: "Don't have an account?"
       }
     },
+    invitedSignUp: {
+      title: "Join Community",
+      description: "Create your account to join the community",
+      invitedBy: "{{inviterName}} invited you to join",
+      joinCommunity: "Create Account & Join",
+      emailLocked: "This email address is linked to your invitation",
+      success: "Welcome!",
+      welcomeToCommunity: "You've successfully joined {{communityName}}!",
+      accountExists: "Account Already Exists",
+      pleaseLogin: "Please log in with your existing account to accept this invitation.",
+      invalidInvitation: "Invalid Invitation",
+      invalidInvitationDesc: "This invitation link is invalid or has been removed.",
+      expiredInvitation: "Invitation Expired",
+      expiredInvitationDesc: "This invitation has expired. Please ask for a new invitation.",
+      alreadyAccepted: "Already Accepted",
+      alreadyAcceptedDesc: "This invitation has already been accepted. Please log in to continue.",
+    },
     dashboard: {
       title: "K-Worship Set Builder",
       subtitle: "Worship Set Management System",
@@ -1755,6 +1772,23 @@ export const translations = {
         loggingIn: "로그인 중...",
         signUpPrompt: "계정이 없으신가요?"
       }
+    },
+    invitedSignUp: {
+      title: "예배공동체 가입",
+      description: "계정을 생성하여 공동체에 가입하세요",
+      invitedBy: "{{inviterName}}님이 초대하셨습니다",
+      joinCommunity: "계정 생성 및 가입",
+      emailLocked: "이 이메일은 초대장에 연결되어 있습니다",
+      success: "환영합니다!",
+      welcomeToCommunity: "{{communityName}}에 성공적으로 가입했습니다!",
+      accountExists: "계정이 이미 존재합니다",
+      pleaseLogin: "기존 계정으로 로그인하여 초대를 수락해주세요.",
+      invalidInvitation: "유효하지 않은 초대",
+      invalidInvitationDesc: "이 초대 링크가 유효하지 않거나 삭제되었습니다.",
+      expiredInvitation: "초대 만료",
+      expiredInvitationDesc: "이 초대가 만료되었습니다. 새 초대를 요청해주세요.",
+      alreadyAccepted: "이미 수락됨",
+      alreadyAcceptedDesc: "이 초대는 이미 수락되었습니다. 로그인하여 계속하세요.",
     },
     dashboard: {
       title: "K-Worship Set Builder",

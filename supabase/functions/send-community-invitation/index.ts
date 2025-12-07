@@ -102,9 +102,9 @@ const handler = async (req: Request): Promise<Response> => {
       tempInvitationId = crypto.randomUUID();
     }
 
-    // Build invitation URL - use production domain
+    // Build invitation URL - use production domain with dedicated invite signup page
     const appUrl = "https://kworship.app";
-    const inviteUrl = `${appUrl}/accept-invitation/${tempInvitationId}`;
+    const inviteUrl = `${appUrl}/invite/${tempInvitationId}`;
 
     // Prepare email content based on language
     const isKorean = language === "ko";
