@@ -369,13 +369,13 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     }
   };
 
-  const handleDownloadFromUrl = async (variationIndex: number) => {
-    if (!scoreUrlInput.trim()) return;
+  const handleDownloadFromUrl = async (variationIndex: number, url: string) => {
+    if (!url.trim()) return;
     setDownloadingScore(true);
     
     try {
       const { data, error } = await supabase.functions.invoke('download-score-image', {
-        body: { url: scoreUrlInput }
+        body: { url }
       });
       
       if (error) throw error;
@@ -386,7 +386,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         page: updated[variationIndex].files.length + 1,
       });
       setScoreVariations(updated);
-      setScoreUrlInput("");
       toast.success(t("songDialog.scoreDownloaded"));
     } catch (error: any) {
       toast.error(t("songDialog.scoreDownloadError"));
@@ -569,6 +568,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
     onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
     isDragging: boolean;
+    onDownloadFromUrl: (index: number, url: string) => void;
+    downloadingScore: boolean;
   }
 
   const ScoreVariationItem = ({ 
@@ -582,8 +583,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     onDrop,
     onDragOver,
     onDragLeave,
-    isDragging
+    isDragging,
+    onDownloadFromUrl,
+    downloadingScore
   }: ScoreVariationItemProps) => {
+    const [urlInput, setUrlInput] = useState("");
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ 
       id: `variation-${index}` 
     });
@@ -593,106 +597,144 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       transition,
     };
 
+    const handleDownload = () => {
+      if (urlInput.trim()) {
+        onDownloadFromUrl(index, urlInput);
+        setUrlInput("");
+      }
+    };
+
     return (
       <div 
         ref={setNodeRef} 
         style={style} 
         {...attributes}
-        className="flex items-center gap-3 mb-3"
+        className="border border-border rounded-lg p-3 mb-3"
         onDrop={(e) => onDrop(e, index)}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
       >
-        {/* Drag Handle */}
-        <div {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
-          <GripVertical className="h-5 w-5" />
-        </div>
+        <div className="flex items-center gap-3">
+          {/* Drag Handle */}
+          <div {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+            <GripVertical className="h-5 w-5" />
+          </div>
 
-        {/* Key Selector */}
-        <Select 
-          value={variation.key} 
-          onValueChange={(value) => onKeyChange(index, value)}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder={t('songDialog.selectKey') || '키 선택'} />
-          </SelectTrigger>
-          <SelectContent>
-            {MUSICAL_KEYS.map((key) => (
-              <SelectItem key={key} value={key}>
-                {key}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        {/* Hidden file input */}
-        <Input
-          type="file"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onFileUpload(file, index);
-          }}
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-          className="hidden"
-          id={`file-upload-${index}`}
-        />
-        
-        {/* Upload button with drag-drop visual feedback */}
-        <Button
-          type="button"
-          variant={isDragging ? "default" : "outline"}
-          size="sm"
-          onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
-          disabled={uploadingVariationIndex === index}
-          className={isDragging ? "border-2 border-dashed border-primary" : ""}
-        >
-          {uploadingVariationIndex === index ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              업로드 중
-            </>
-          ) : (
-            <>
-              <Upload className="w-4 h-4 mr-2" />
-              악보 업로드
-            </>
-          )}
-        </Button>
-        
-        {/* File preview badges (inline) */}
-        <div className="flex-1 flex items-center gap-1 flex-wrap">
-          {variation.files.map((file, fileIndex) => (
-            <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
-              <FileText className="h-3 w-3" />
-              <span className="text-xs">Page {fileIndex + 1}</span>
-              <button
-                type="button"
-                onClick={() => window.open(file.url, "_blank")}
-                className="ml-1 hover:text-primary transition-colors"
-              >
-                👁️
-              </button>
-              <button
-                type="button"
-                onClick={() => onFileRemove(index, fileIndex)}
-                className="ml-1 hover:text-destructive transition-colors"
-              >
-                ✕
-              </button>
-            </Badge>
-          ))}
-        </div>
-        
-        {/* Delete variation (only show if index > 0) */}
-        {index > 0 && (
+          {/* Key Selector */}
+          <Select 
+            value={variation.key} 
+            onValueChange={(value) => onKeyChange(index, value)}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder={t('songDialog.selectKey') || '키 선택'} />
+            </SelectTrigger>
+            <SelectContent>
+              {MUSICAL_KEYS.map((key) => (
+                <SelectItem key={key} value={key}>
+                  {key}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {/* Hidden file input */}
+          <Input
+            type="file"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onFileUpload(file, index);
+            }}
+            accept=".pdf,.jpg,.jpeg,.png,.webp"
+            className="hidden"
+            id={`file-upload-${index}`}
+          />
+          
+          {/* Upload button with drag-drop visual feedback */}
           <Button
             type="button"
-            variant="destructive"
+            variant={isDragging ? "default" : "outline"}
             size="sm"
-            onClick={() => onRemoveVariation(index)}
+            onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
+            disabled={uploadingVariationIndex === index}
+            className={isDragging ? "border-2 border-dashed border-primary" : ""}
           >
-            <Trash2 className="h-4 w-4" />
+            {uploadingVariationIndex === index ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                업로드 중
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                악보 업로드
+              </>
+            )}
           </Button>
+          
+          {/* Delete variation (only show if index > 0) */}
+          {index > 0 && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => onRemoveVariation(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* URL input for downloading from external link */}
+        <div className="flex items-center gap-2 mt-3">
+          <Input
+            type="url"
+            placeholder={t('songDialog.pasteScoreUrl') || "이미지 URL 붙여넣기 (예: https://...)"}
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={downloadingScore || !urlInput.trim()}
+          >
+            {downloadingScore ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-1" />
+                {t('songDialog.downloadFromUrl') || '다운로드'}
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {/* File preview badges */}
+        {variation.files.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap mt-3">
+            {variation.files.map((file, fileIndex) => (
+              <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
+                <FileText className="h-3 w-3" />
+                <span className="text-xs">Page {fileIndex + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => window.open(file.url, "_blank")}
+                  className="ml-1 hover:text-primary transition-colors"
+                >
+                  👁️
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onFileRemove(index, fileIndex)}
+                  className="ml-1 hover:text-destructive transition-colors"
+                >
+                  ✕
+                </button>
+              </Badge>
+            ))}
+          </div>
         )}
       </div>
     );
@@ -866,6 +908,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     isDragging={isDragging}
+                    onDownloadFromUrl={handleDownloadFromUrl}
+                    downloadingScore={downloadingScore}
                   />
                 ))}
               </SortableContext>
