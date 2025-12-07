@@ -1807,6 +1807,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: { Args: { invitation_uuid: string }; Returns: boolean }
       award_seeds: {
         Args: {
           _activity_type: Database["public"]["Enums"]["seed_activity_type"]
@@ -1819,6 +1820,10 @@ export type Database = {
       }
       can_manage_church_roles: {
         Args: { _church_account_id: string; _user_id: string }
+        Returns: boolean
+      }
+      decline_invitation: {
+        Args: { invitation_uuid: string }
         Returns: boolean
       }
       get_invitation_by_id: {

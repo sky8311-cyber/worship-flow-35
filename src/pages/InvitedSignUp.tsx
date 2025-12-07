@@ -155,11 +155,9 @@ const InvitedSignUp = () => {
       // Don't block - they can accept invitation later
     }
     
-    // Update invitation status
+    // Update invitation status using RPC (bypasses RLS for new users)
     const { error: inviteUpdateError } = await supabase
-      .from("community_invitations")
-      .update({ status: "accepted" })
-      .eq("id", invitationId);
+      .rpc("accept_invitation", { invitation_uuid: invitationId });
     
     if (inviteUpdateError) {
       console.error("Failed to update invitation:", inviteUpdateError);
