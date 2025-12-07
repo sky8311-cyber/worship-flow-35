@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +97,58 @@ export default function CommunityManagement() {
   
   // Show rotation tab but gate the content
   const showRotationTab = !!community?.church_account_id;
+
+  // Real-time subscription for community members updates
+  useEffect(() => {
+    if (!id) return;
+    
+    const channel = supabase
+      .channel(`community-members-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'community_members',
+          filter: `community_id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Member change:', payload);
+          queryClient.invalidateQueries({ queryKey: ["community-members", id] });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
+
+  // Real-time subscription for community invitations updates
+  useEffect(() => {
+    if (!id) return;
+    
+    const channel = supabase
+      .channel(`community-invitations-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'community_invitations',
+          filter: `community_id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Invitation change:', payload);
+          queryClient.invalidateQueries({ queryKey: ["community-invitations", id] });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, queryClient]);
 
   const { data: invitations } = useQuery({
     queryKey: ["community-invitations", id],

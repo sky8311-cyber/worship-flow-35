@@ -65,11 +65,9 @@ export default function AcceptInvitation() {
         });
       if (memberError) throw memberError;
 
-      // Update invitation status
+      // Update invitation status using RPC (bypasses RLS)
       const { error: inviteError } = await supabase
-        .from("community_invitations")
-        .update({ status: "accepted" })
-        .eq("id", invitationId);
+        .rpc("accept_invitation", { invitation_uuid: invitationId });
       if (inviteError) throw inviteError;
     },
     onSuccess: () => {
@@ -85,9 +83,7 @@ export default function AcceptInvitation() {
   const declineMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
-        .from("community_invitations")
-        .update({ status: "declined" })
-        .eq("id", invitationId);
+        .rpc("decline_invitation", { invitation_uuid: invitationId });
       if (error) throw error;
     },
     onSuccess: () => {
