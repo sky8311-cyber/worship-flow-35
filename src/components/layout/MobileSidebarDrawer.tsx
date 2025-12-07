@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
@@ -16,6 +17,7 @@ interface MobileSidebarDrawerProps {
 
 export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerProps) {
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
+  const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
 
   // Close the drawer
   const handleClose = () => {
@@ -140,7 +142,7 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
-            <SeedLeaderboard />
+            {!settingsLoading && isLeaderboardEnabled && <SeedLeaderboard />}
           </div>
         </ScrollArea>
       </SheetContent>
