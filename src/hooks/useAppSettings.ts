@@ -40,6 +40,8 @@ export function useAppSettings() {
 
       return settingsMap;
     },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const updateSettingMutation = useMutation({
@@ -85,9 +87,9 @@ export function useAppSettings() {
   };
 
   return {
-    isLeaderboardEnabled: settings?.leaderboard_enabled ?? true,
-    isChurchSubscriptionEnabled: settings?.church_subscription_enabled ?? true,
-    isChurchMenuVisible: settings?.church_menu_visible ?? true,
+    isLeaderboardEnabled: !isLoading && (settings?.leaderboard_enabled ?? false),
+    isChurchSubscriptionEnabled: !isLoading && (settings?.church_subscription_enabled ?? false),
+    isChurchMenuVisible: !isLoading && (settings?.church_menu_visible ?? false),
     isLoading,
     toggleLeaderboard,
     toggleChurchSubscription,
