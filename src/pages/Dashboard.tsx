@@ -38,6 +38,8 @@ import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
+import { useAppSettings } from "@/hooks/useAppSettings";
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -55,6 +57,7 @@ const Dashboard = () => {
     user
   } = useAuth();
   const { unreadCount } = useNotifications();
+  const { isLeaderboardEnabled } = useAppSettings();
   const dateLocale = language === "ko" ? ko : enUS;
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
@@ -365,7 +368,7 @@ const Dashboard = () => {
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
-            <SeedLeaderboard />
+            {isLeaderboardEnabled && <SeedLeaderboard />}
           </div>
 
           {/* Columns A+B: Main Feed */}

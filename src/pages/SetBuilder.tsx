@@ -670,25 +670,46 @@ const SetBuilder = () => {
             <span>{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
           </Button>
           
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => saveSetMutation.mutate(undefined)}
-            disabled={saveSetMutation.isPending}
-          >
-            <Save className="w-4 h-4 shrink-0" />
-            <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="h-8 gap-1.5"
+                  onClick={() => saveSetMutation.mutate(undefined)}
+                  disabled={saveSetMutation.isPending}
+                >
+                  <Save className="w-4 h-4 shrink-0" />
+                  <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p>{t("tooltips.setBuilder.save")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
-          <Button 
-            size="sm" 
-            className="h-8"
-            onClick={handlePublishToggle}
-            disabled={saveSetMutation.isPending}
-          >
-            {status === "draft" ? "게시하기" : "게시취소"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="sm" 
+                  className="h-8"
+                  onClick={handlePublishToggle}
+                  disabled={saveSetMutation.isPending}
+                >
+                  {status === "draft" ? "게시하기" : "게시취소"}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p>{status === "draft" 
+                  ? t("tooltips.setBuilder.publish") 
+                  : t("tooltips.setBuilder.unpublish")
+                }</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
