@@ -19,14 +19,12 @@ export default function AcceptInvitation() {
   const { data: invitation, isLoading, error } = useQuery({
     queryKey: ["invitation", invitationId],
     queryFn: async () => {
+      // Use SECURITY DEFINER function to bypass RLS
       const { data: invitation, error } = await supabase
-        .from("community_invitations")
-        .select("*")
-        .eq("id", invitationId)
-        .eq("status", "pending")
+        .rpc("get_invitation_by_id", { invitation_uuid: invitationId })
         .maybeSingle();
       if (error) throw error;
-      if (!invitation) return null;
+      if (!invitation || invitation.status !== "pending") return null;
       
       // Fetch community
       const { data: community, error: commError } = await supabase

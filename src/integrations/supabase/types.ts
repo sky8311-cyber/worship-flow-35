@@ -1821,6 +1821,19 @@ export type Database = {
         Args: { _church_account_id: string; _user_id: string }
         Returns: boolean
       }
+      get_invitation_by_id: {
+        Args: { invitation_uuid: string }
+        Returns: {
+          community_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+        }[]
+      }
       get_song_usage_sets: {
         Args: { p_song_id: string }
         Returns: {
