@@ -57,7 +57,7 @@ const Dashboard = () => {
     user
   } = useAuth();
   const { unreadCount } = useNotifications();
-  const { isLeaderboardEnabled } = useAppSettings();
+  const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
   const dateLocale = language === "ko" ? ko : enUS;
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
@@ -368,7 +368,7 @@ const Dashboard = () => {
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
-            {isLeaderboardEnabled && <SeedLeaderboard />}
+            {!settingsLoading && isLeaderboardEnabled && <SeedLeaderboard />}
           </div>
 
           {/* Columns A+B: Main Feed */}

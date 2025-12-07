@@ -8,7 +8,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 export const AdminNav = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { isChurchMenuVisible } = useAppSettings();
+  const { isChurchMenuVisible, isLoading } = useAppSettings();
   
   const baseLinks = [
     {
@@ -41,7 +41,7 @@ export const AdminNav = () => {
     icon: UserPlus,
   };
 
-  const links = isChurchMenuVisible 
+  const links = (!isLoading && isChurchMenuVisible) 
     ? [...baseLinks, churchAccountLink, applicationsLink]
     : [...baseLinks, applicationsLink];
   
