@@ -444,6 +444,14 @@ const BandView = () => {
                           <p className="text-sm text-foreground">{component.label}</p>
                         )}
                         
+                        {/* Rich content rendering */}
+                        {component.content && (
+                          <div 
+                            className="prose prose-sm max-w-none mt-3 p-3 bg-background rounded-lg border"
+                            dangerouslySetInnerHTML={{ __html: component.content }}
+                          />
+                        )}
+
                         {component.notes && (
                           <p className="text-sm text-muted-foreground mt-2 p-2 bg-accent/10 rounded">
                             {component.notes}

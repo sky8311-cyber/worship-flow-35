@@ -15,6 +15,7 @@ import {
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -66,7 +67,8 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
 export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetComponentItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
   const [notesOpen, setNotesOpen] = useState(false);
-  const { language } = useTranslation();
+  const [contentOpen, setContentOpen] = useState(!!component.content);
+  const { language, t } = useTranslation();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -144,17 +146,6 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                 />
               </div>
 
-              {/* Content (내용) field */}
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={component.content || ""}
-                  onChange={(e) => onUpdate(index, { content: e.target.value })}
-                  placeholder={language === "ko" ? "내용 (선택)" : "Content (optional)"}
-                  className="h-8 text-sm"
-                />
-              </div>
-
               {/* Duration input */}
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -166,6 +157,26 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                   className="h-8 text-sm w-32"
                 />
               </div>
+
+              {/* Rich Content Editor Section */}
+              <Collapsible open={contentOpen} onOpenChange={setContentOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                    <span className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {t("setBuilder.richEditor.editContent")}
+                      {contentOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  <RichTextEditor
+                    content={component.content || ""}
+                    onChange={(html) => onUpdate(index, { content: html })}
+                    placeholder={t("setBuilder.richEditor.placeholder")}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Notes Section */}
               <Collapsible open={notesOpen} onOpenChange={setNotesOpen}>
