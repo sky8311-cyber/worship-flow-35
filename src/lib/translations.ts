@@ -146,6 +146,11 @@ export const translations = {
       resendInvitation: "Resend Invitation",
       cancelInvitation: "Cancel Invitation",
       toggleActive: "Toggle Active Status",
+      setBuilder: {
+        save: "Save as draft without publishing. Only you can see drafts.",
+        publish: "Publish this worship set to make it visible to all team members in your community. Only community members can view published sets.",
+        unpublish: "Unpublish to hide this set from team members. Only you will be able to see and edit it.",
+      },
     },
     auth: {
       signUpChoice: {
@@ -373,6 +378,16 @@ export const translations = {
       dashboard: {
         title: "Admin Dashboard",
         subtitle: "System management and statistics",
+      },
+      settings: {
+        title: "Platform Settings",
+        subtitle: "Configure platform-wide features and visibility",
+        leaderboard: "Leaderboard",
+        leaderboardDesc: "Show seed leaderboard on dashboard",
+        churchSubscription: "Church Account Subscription",
+        churchSubscriptionDesc: "Enable church account tier subscription feature",
+        churchMenu: "Church Account Menu",
+        churchMenuDesc: "Show church account menu in navigation",
       },
       stats: {
         totalUsers: "Total Users",
@@ -1726,6 +1741,11 @@ export const translations = {
       resendInvitation: "초대 재전송",
       cancelInvitation: "초대 취소",
       toggleActive: "활성 상태 토글",
+      setBuilder: {
+        save: "게시하지 않고 임시저장합니다. 임시저장된 세트는 작성자만 볼 수 있습니다.",
+        publish: "게시하면 선택한 예배공동체의 모든 팀멤버가 볼 수 있습니다. 다른 예배공동체에서는 볼 수 없습니다.",
+        unpublish: "게시 취소하면 팀멤버에게 더 이상 보이지 않습니다. 작성자만 볼 수 있는 임시저장 상태가 됩니다.",
+      },
     },
     auth: {
       signUpChoice: {
@@ -1953,6 +1973,16 @@ export const translations = {
       dashboard: {
         title: "관리자 대시보드",
         subtitle: "시스템 관리 및 통계",
+      },
+      settings: {
+        title: "플랫폼 설정",
+        subtitle: "플랫폼 전체 기능 및 표시 설정",
+        leaderboard: "리더보드",
+        leaderboardDesc: "대시보드에 씨앗 리더보드 표시",
+        churchSubscription: "교회계정 구독 기능",
+        churchSubscriptionDesc: "교회계정 Tier 구독 기능 활성화",
+        churchMenu: "교회계정 메뉴",
+        churchMenuDesc: "네비게이션에 교회계정 메뉴 표시",
       },
       stats: {
         totalUsers: "전체 사용자",

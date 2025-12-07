@@ -1,12 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Users, Building2, Music, FileText, Church, Settings } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
 const AdminDashboard = () => {
   const { t } = useTranslation();
+  const {
+    isLeaderboardEnabled,
+    isChurchSubscriptionEnabled,
+    isChurchMenuVisible,
+    toggleLeaderboard,
+    toggleChurchSubscription,
+    toggleChurchMenu,
+    isUpdating,
+  } = useAppSettings();
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
@@ -92,29 +105,92 @@ const AdminDashboard = () => {
             <p className="text-muted-foreground">Loading statistics...</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {statCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <Card key={card.title} className="shadow-md hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{card.title}</CardTitle>
-                      <Icon className={`w-5 h-5 ${card.color}`} />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-foreground mb-1">
-                      {card.value}
-                    </div>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+              {statCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <Card key={card.title} className="shadow-md hover:shadow-lg transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{card.title}</CardTitle>
+                        <Icon className={`w-5 h-5 ${card.color}`} />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-foreground mb-1">
+                        {card.value}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {card.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Platform Settings */}
+            <Card className="shadow-md">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Settings className="w-5 h-5 text-muted-foreground" />
+                  <CardTitle>{t("admin.settings.title")}</CardTitle>
+                </div>
+                <CardDescription>{t("admin.settings.subtitle")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Leaderboard Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">{t("admin.settings.leaderboard")}</Label>
                     <p className="text-sm text-muted-foreground">
-                      {card.description}
+                      {t("admin.settings.leaderboardDesc")}
                     </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                  </div>
+                  <Switch
+                    checked={isLeaderboardEnabled}
+                    onCheckedChange={toggleLeaderboard}
+                    disabled={isUpdating}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Church Subscription Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">{t("admin.settings.churchSubscription")}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("admin.settings.churchSubscriptionDesc")}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isChurchSubscriptionEnabled}
+                    onCheckedChange={toggleChurchSubscription}
+                    disabled={isUpdating}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Church Menu Toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">{t("admin.settings.churchMenu")}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("admin.settings.churchMenuDesc")}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={isChurchMenuVisible}
+                    onCheckedChange={toggleChurchMenu}
+                    disabled={isUpdating}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
       </main>
     </div>

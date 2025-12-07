@@ -3,12 +3,14 @@ import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church } from "
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export const AdminNav = () => {
   const location = useLocation();
   const { t } = useTranslation();
+  const { isChurchMenuVisible } = useAppSettings();
   
-  const links = [
+  const baseLinks = [
     {
       to: "/admin",
       label: t("admin.nav.dashboard"),
@@ -24,17 +26,24 @@ export const AdminNav = () => {
       label: t("admin.nav.communities"),
       icon: Building2,
     },
-    {
-      to: "/admin/church-accounts",
-      label: t("admin.nav.churchAccounts"),
-      icon: Church,
-    },
-    {
-      to: "/admin/applications",
-      label: t("admin.applications.title"),
-      icon: UserPlus,
-    },
   ];
+
+  // Conditionally add Church Accounts link
+  const churchAccountLink = {
+    to: "/admin/church-accounts",
+    label: t("admin.nav.churchAccounts"),
+    icon: Church,
+  };
+
+  const applicationsLink = {
+    to: "/admin/applications",
+    label: t("admin.applications.title"),
+    icon: UserPlus,
+  };
+
+  const links = isChurchMenuVisible 
+    ? [...baseLinks, churchAccountLink, applicationsLink]
+    : [...baseLinks, applicationsLink];
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
