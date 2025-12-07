@@ -48,6 +48,7 @@ export const translations = {
       },
       deletedUser: "Deleted User",
       items: "items",
+      aWorshipLeader: "A worship leader",
     },
     worshipComponents: {
       title: "Worship Components",
@@ -1592,6 +1593,7 @@ export const translations = {
       },
       deletedUser: "삭제된 사용자",
       items: "항목",
+      aWorshipLeader: "예배인도자",
     },
     worshipComponents: {
       title: "예배 순서",
@@ -1733,7 +1735,7 @@ export const translations = {
       resetEmailSent: "비밀번호 재설정 이메일이 전송되었습니다",
       passwordResetSuccess: "비밀번호가 재설정되었습니다",
       backToLogin: "로그인으로 돌아가기",
-      hasAccount: "이미 계정이 있으신가요? 로그인",
+      hasAccount: "이미 계정이 있으신가요?",
       noAccount: "계정이 없으신가요?",
       loading: "처리중...",
       error: "오류",
