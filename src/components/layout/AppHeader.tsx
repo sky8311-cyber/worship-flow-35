@@ -18,6 +18,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Home, Languages, User } from "lucide-react";
@@ -34,6 +35,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const { isSubscriptionActive } = useChurchSubscription();
+  const { isChurchMenuVisible, isLoading: settingsLoading } = useAppSettings();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -181,7 +183,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {(isWorshipLeader || isAdmin) && (
+                {!settingsLoading && isChurchMenuVisible && (isWorshipLeader || isAdmin) && (
                   <DropdownMenuItem asChild>
                     <Link to="/church-account" className="flex items-center justify-between w-full">
                       <span className="flex items-center">
