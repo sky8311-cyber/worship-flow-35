@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
@@ -32,6 +33,8 @@ const SongLibrary = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
+  const [selectedKey, setSelectedKey] = useState<string>("all");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("title-asc");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -90,6 +93,24 @@ const SongLibrary = () => {
     },
   });
 
+  // Fetch unique tags from all songs
+  const { data: uniqueTags } = useQuery({
+    queryKey: ["unique-tags"],
+    queryFn: async () => {
+      const { data } = await supabase.from("songs").select("tags");
+      const tagSet = new Set<string>();
+      data?.forEach(song => {
+        if (song.tags) {
+          song.tags.split(",").forEach((tag: string) => {
+            const trimmed = tag.trim();
+            if (trimmed) tagSet.add(trimmed);
+          });
+        }
+      });
+      return Array.from(tagSet).sort();
+    },
+  });
+
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
     queryFn: async () => {
@@ -138,8 +159,23 @@ const SongLibrary = () => {
     },
   });
 
-  // Apply client-side column filters
+  // Apply client-side column filters + key filter + tag filter
   const filteredSongs = (songs || []).filter(song => {
+    // Key filter
+    if (selectedKey !== "all" && song.default_key !== selectedKey) {
+      return false;
+    }
+    
+    // Tag filter
+    if (selectedTags.length > 0) {
+      const songTags = song.tags ? song.tags.split(",").map((t: string) => t.trim().toLowerCase()) : [];
+      const hasAllTags = selectedTags.every(tag => 
+        songTags.some((st: string) => st.includes(tag.toLowerCase()))
+      );
+      if (!hasAllTags) return false;
+    }
+    
+    // Column filters
     for (const [column, filterValue] of Object.entries(columnFilters)) {
       if (!filterValue) continue;
       
@@ -458,7 +494,7 @@ const SongLibrary = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("songLibrary.selectCategory")} />
@@ -486,6 +522,18 @@ const SongLibrary = () => {
                 </SelectContent>
               </Select>
 
+              <Select value={selectedKey} onValueChange={setSelectedKey}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("songLibrary.filterByKey")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("songLibrary.allKeys")}</SelectItem>
+                  {["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"].map(key => (
+                    <SelectItem key={key} value={key}>{key}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("songLibrary.sortBy")} />
@@ -498,6 +546,75 @@ const SongLibrary = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Tag filter chips */}
+            {uniqueTags && uniqueTags.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">{t("songLibrary.filterByTags")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {uniqueTags.slice(0, 20).map(tag => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTags.includes(tag) ? "default" : "outline"}
+                      className="cursor-pointer text-xs"
+                      onClick={() => {
+                        setSelectedTags(prev => 
+                          prev.includes(tag) 
+                            ? prev.filter(t => t !== tag) 
+                            : [...prev, tag]
+                        );
+                      }}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Active filters display */}
+            {(selectedCategory !== "all" || selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0) && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">{t("songLibrary.activeFilters")}:</span>
+                {selectedCategory !== "all" && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {selectedCategory}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory("all")} />
+                  </Badge>
+                )}
+                {selectedLanguage !== "all" && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    {selectedLanguage}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedLanguage("all")} />
+                  </Badge>
+                )}
+                {selectedKey !== "all" && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Key: {selectedKey}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedKey("all")} />
+                  </Badge>
+                )}
+                {selectedTags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                    {tag}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))} />
+                  </Badge>
+                ))}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs h-6 px-2"
+                  onClick={() => {
+                    setSelectedCategory("all");
+                    setSelectedLanguage("all");
+                    setSelectedKey("all");
+                    setSelectedTags([]);
+                  }}
+                >
+                  {t("songLibrary.clearAllFilters")}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
