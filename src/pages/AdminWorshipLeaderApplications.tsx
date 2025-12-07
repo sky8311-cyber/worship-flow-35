@@ -192,11 +192,10 @@ const AdminWorshipLeaderApplications = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("admin.applications.applicant")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.churchName")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.churchWebsite")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.denomination")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.communityName")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.website")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.country")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.position")}</TableHead>
+                    <TableHead>{t("worshipLeaderRequest.servingPosition")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.yearsServing")}</TableHead>
                     <TableHead>{t("admin.applications.appliedDate")}</TableHead>
                     <TableHead>{t("admin.applications.status")}</TableHead>
@@ -237,7 +236,6 @@ const AdminWorshipLeaderApplications = () => {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell>{app.denomination || "-"}</TableCell>
                       <TableCell>{app.country || "-"}</TableCell>
                       <TableCell>{app.position}</TableCell>
                       <TableCell>{app.years_serving}년</TableCell>

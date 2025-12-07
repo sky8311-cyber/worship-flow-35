@@ -73,16 +73,12 @@ export function ApplicationCard({ application, onApprove, onReject, isLoading }:
 
         <div className="grid grid-cols-2 gap-2 text-sm mb-3">
           <div>
-            <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.churchName")}</p>
+            <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.communityName")}</p>
             <p className="font-medium truncate">{application.church_name}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.position")}</p>
+            <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.servingPosition")}</p>
             <p className="font-medium truncate">{application.position}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.denomination")}</p>
-            <p className="font-medium truncate">{application.denomination || "-"}</p>
           </div>
           <div>
             <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.country")}</p>
@@ -94,7 +90,7 @@ export function ApplicationCard({ application, onApprove, onReject, isLoading }:
           </div>
           {application.church_website && (
             <div className="col-span-2">
-              <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.churchWebsite")}</p>
+              <p className="text-muted-foreground text-xs">{t("worshipLeaderRequest.website")}</p>
               <a 
                 href={application.church_website} 
                 target="_blank" 

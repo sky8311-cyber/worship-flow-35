@@ -8,8 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
 export const CompleteWorshipLeaderProfileDialog = () => {
@@ -18,12 +16,12 @@ export const CompleteWorshipLeaderProfileDialog = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
   const [formData, setFormData] = useState({
-    churchName: "",
-    churchWebsite: "",
-    denomination: "",
+    communityName: "",
+    website: "",
     country: "",
-    position: "",
+    servingPosition: "",
     yearsServing: "",
     introduction: "",
   });
@@ -33,16 +31,84 @@ export const CompleteWorshipLeaderProfileDialog = () => {
       if (!user || !profile?.needs_worship_leader_profile) return;
 
       // Check if worship_leader_profile already exists
-      const { data } = await supabase
+      const { data: existingProfile } = await supabase
         .from("worship_leader_profiles")
-        .select("id")
+        .select("*")
         .eq("user_id", user.id)
         .single();
 
-      // Only show dialog if profile doesn't exist and flag is set
-      if (!data && profile.needs_worship_leader_profile) {
-        setOpen(true);
+      if (existingProfile) {
+        // Profile already exists, clear the flag and don't show dialog
+        await supabase
+          .from("profiles")
+          .update({ needs_worship_leader_profile: false })
+          .eq("id", user.id);
+        await refreshProfile();
+        return;
       }
+
+      // Check if there's an approved application to use
+      const { data: approvedApplication } = await supabase
+        .from("worship_leader_applications")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .single();
+
+      if (approvedApplication) {
+        // Auto-create profile from approved application
+        const { error: profileError } = await supabase
+          .from("worship_leader_profiles")
+          .insert({
+            user_id: user.id,
+            church_name: approvedApplication.church_name,
+            church_website: approvedApplication.church_website,
+            denomination: approvedApplication.denomination || null,
+            country: approvedApplication.country,
+            position: approvedApplication.position,
+            years_serving: approvedApplication.years_serving,
+            introduction: approvedApplication.introduction,
+          });
+
+        if (!profileError) {
+          // Clear the flag
+          await supabase
+            .from("profiles")
+            .update({ needs_worship_leader_profile: false })
+            .eq("id", user.id);
+          
+          toast({
+            title: t("worshipLeaderRequest.profileUpdated"),
+            description: t("worshipLeaderRequest.profileUpdatedDesc"),
+          });
+          
+          await refreshProfile();
+          return;
+        }
+      }
+
+      // Check if there's a pending application to pre-fill from
+      const { data: pendingApplication } = await supabase
+        .from("worship_leader_applications")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (pendingApplication) {
+        // Pre-fill form with existing application data
+        setFormData({
+          communityName: pendingApplication.church_name || "",
+          website: pendingApplication.church_website || "",
+          country: pendingApplication.country || "",
+          servingPosition: pendingApplication.position || "",
+          yearsServing: pendingApplication.years_serving?.toString() || "",
+          introduction: pendingApplication.introduction || "",
+        });
+      }
+
+      setOpen(true);
     };
 
     checkProfileCompletion();
@@ -61,11 +127,11 @@ export const CompleteWorshipLeaderProfileDialog = () => {
         .from("worship_leader_profiles")
         .insert({
           user_id: user.id,
-          church_name: formData.churchName,
-          church_website: formData.churchWebsite,
-          denomination: formData.denomination,
+          church_name: formData.communityName,
+          church_website: formData.website,
+          denomination: null,
           country: formData.country,
-          position: formData.position,
+          position: formData.servingPosition,
           years_serving: parseInt(formData.yearsServing),
           introduction: formData.introduction,
         });
@@ -81,8 +147,8 @@ export const CompleteWorshipLeaderProfileDialog = () => {
       if (updateError) throw updateError;
 
       toast({
-        title: t("worshipLeaderRequest.profileComplete"),
-        description: t("worshipLeaderRequest.profileCompleteDesc"),
+        title: t("worshipLeaderRequest.profileUpdated"),
+        description: t("worshipLeaderRequest.profileUpdatedDesc"),
       });
 
       setOpen(false);
@@ -100,20 +166,13 @@ export const CompleteWorshipLeaderProfileDialog = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("worshipLeaderRequest.completeProfile")}</DialogTitle>
+          <DialogTitle>{t("worshipLeaderRequest.editProfile")}</DialogTitle>
           <DialogDescription>
-            {t("worshipLeaderRequest.completeProfileDesc")}
+            {t("worshipLeaderRequest.editProfileDesc")}
           </DialogDescription>
         </DialogHeader>
-
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {t("worshipLeaderRequest.requiredInfo")}
-          </AlertDescription>
-        </Alert>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -126,38 +185,28 @@ export const CompleteWorshipLeaderProfileDialog = () => {
               onUploadSuccess={() => refreshProfile()} 
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="churchName">{t("worshipLeaderRequest.churchName")}</Label>
+            <Label htmlFor="communityName">{t("worshipLeaderRequest.communityName")}</Label>
             <Input
-              id="churchName"
+              id="communityName"
               type="text"
               required
-              value={formData.churchName}
-              onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+              placeholder={t("worshipLeaderRequest.communityNamePlaceholder")}
+              value={formData.communityName}
+              onChange={(e) => setFormData({ ...formData, communityName: e.target.value })}
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="churchWebsite">{t("worshipLeaderRequest.churchWebsite")}</Label>
+            <Label htmlFor="website">{t("worshipLeaderRequest.website")}</Label>
             <Input
-              id="churchWebsite"
+              id="website"
               type="url"
               required
-              placeholder={t("worshipLeaderRequest.churchWebsitePlaceholder")}
-              value={formData.churchWebsite}
-              onChange={(e) => setFormData({ ...formData, churchWebsite: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="denomination">{t("worshipLeaderRequest.denomination")}</Label>
-            <Input
-              id="denomination"
-              type="text"
-              required
-              placeholder={t("worshipLeaderRequest.denominationPlaceholder")}
-              value={formData.denomination}
-              onChange={(e) => setFormData({ ...formData, denomination: e.target.value })}
+              placeholder={t("worshipLeaderRequest.websitePlaceholder")}
+              value={formData.website}
+              onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             />
           </div>
 
@@ -174,14 +223,14 @@ export const CompleteWorshipLeaderProfileDialog = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position">{t("worshipLeaderRequest.position")}</Label>
+            <Label htmlFor="servingPosition">{t("worshipLeaderRequest.servingPosition")}</Label>
             <Input
-              id="position"
+              id="servingPosition"
               type="text"
               required
-              placeholder={t("worshipLeaderRequest.positionPlaceholder")}
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+              placeholder={t("worshipLeaderRequest.servingPositionPlaceholder")}
+              value={formData.servingPosition}
+              onChange={(e) => setFormData({ ...formData, servingPosition: e.target.value })}
             />
           </div>
 

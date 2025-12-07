@@ -1573,7 +1573,7 @@ export type Database = {
           church_website: string
           country: string
           created_at: string | null
-          denomination: string
+          denomination: string | null
           id: string
           introduction: string
           position: string
@@ -1589,7 +1589,7 @@ export type Database = {
           church_website: string
           country: string
           created_at?: string | null
-          denomination: string
+          denomination?: string | null
           id?: string
           introduction: string
           position: string
@@ -1605,7 +1605,7 @@ export type Database = {
           church_website?: string
           country?: string
           created_at?: string | null
-          denomination?: string
+          denomination?: string | null
           id?: string
           introduction?: string
           position?: string
@@ -1624,7 +1624,7 @@ export type Database = {
           church_website: string
           country: string
           created_at: string | null
-          denomination: string
+          denomination: string | null
           id: string
           introduction: string
           position: string
@@ -1637,7 +1637,7 @@ export type Database = {
           church_website: string
           country: string
           created_at?: string | null
-          denomination: string
+          denomination?: string | null
           id?: string
           introduction: string
           position: string
@@ -1650,7 +1650,7 @@ export type Database = {
           church_website?: string
           country?: string
           created_at?: string | null
-          denomination?: string
+          denomination?: string | null
           id?: string
           introduction?: string
           position?: string

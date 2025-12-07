@@ -19,11 +19,10 @@ const RequestWorshipLeader = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    churchName: "",
-    churchWebsite: "",
-    denomination: "",
+    communityName: "",
+    website: "",
     country: "",
-    position: "",
+    servingPosition: "",
     yearsServing: "",
     introduction: "",
   });
@@ -54,16 +53,16 @@ const RequestWorshipLeader = () => {
         return;
       }
 
-      // Create application
+      // Create application (denomination is now optional/null)
       const { error } = await supabase
         .from("worship_leader_applications")
         .insert({
           user_id: user.id,
-          church_name: formData.churchName,
-          church_website: formData.churchWebsite,
-          denomination: formData.denomination,
+          church_name: formData.communityName,
+          church_website: formData.website,
+          denomination: null,
           country: formData.country,
-          position: formData.position,
+          position: formData.servingPosition,
           years_serving: parseInt(formData.yearsServing),
           introduction: formData.introduction,
         });
@@ -116,37 +115,26 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="churchName">{t("worshipLeaderRequest.churchName")}</Label>
+                <Label htmlFor="communityName">{t("worshipLeaderRequest.communityName")}</Label>
                 <Input
-                  id="churchName"
+                  id="communityName"
                   type="text"
                   required
-                  value={formData.churchName}
-                  onChange={(e) => setFormData({ ...formData, churchName: e.target.value })}
+                  placeholder={t("worshipLeaderRequest.communityNamePlaceholder")}
+                  value={formData.communityName}
+                  onChange={(e) => setFormData({ ...formData, communityName: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="churchWebsite">{t("worshipLeaderRequest.churchWebsite")}</Label>
+                <Label htmlFor="website">{t("worshipLeaderRequest.website")}</Label>
                 <Input
-                  id="churchWebsite"
+                  id="website"
                   type="url"
                   required
-                  placeholder={t("worshipLeaderRequest.churchWebsitePlaceholder")}
-                  value={formData.churchWebsite}
-                  onChange={(e) => setFormData({ ...formData, churchWebsite: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="denomination">{t("worshipLeaderRequest.denomination")}</Label>
-                <Input
-                  id="denomination"
-                  type="text"
-                  required
-                  placeholder={t("worshipLeaderRequest.denominationPlaceholder")}
-                  value={formData.denomination}
-                  onChange={(e) => setFormData({ ...formData, denomination: e.target.value })}
+                  placeholder={t("worshipLeaderRequest.websitePlaceholder")}
+                  value={formData.website}
+                  onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                 />
               </div>
 
@@ -163,14 +151,14 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="position">{t("worshipLeaderRequest.position")}</Label>
+                <Label htmlFor="servingPosition">{t("worshipLeaderRequest.servingPosition")}</Label>
                 <Input
-                  id="position"
+                  id="servingPosition"
                   type="text"
                   required
-                  placeholder={t("worshipLeaderRequest.positionPlaceholder")}
-                  value={formData.position}
-                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                  placeholder={t("worshipLeaderRequest.servingPositionPlaceholder")}
+                  value={formData.servingPosition}
+                  onChange={(e) => setFormData({ ...formData, servingPosition: e.target.value })}
                 />
               </div>
 
