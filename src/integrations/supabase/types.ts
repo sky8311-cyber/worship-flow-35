@@ -1150,6 +1150,41 @@ export type Database = {
           },
         ]
       }
+      song_youtube_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          label: string
+          position: number | null
+          song_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          label: string
+          position?: number | null
+          song_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          label?: string
+          position?: number | null
+          song_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_youtube_links_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       songs: {
         Row: {
           artist: string | null

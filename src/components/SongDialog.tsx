@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -51,6 +51,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     files: Array<{ url: string; page: number; id?: string }>;
   }>>([]);
   const [uploadingVariationIndex, setUploadingVariationIndex] = useState<number | null>(null);
+  const [youtubeLinks, setYoutubeLinks] = useState<Array<{ id?: string; label: string; url: string }>>([]);
+  const [scoreUrlInput, setScoreUrlInput] = useState("");
+  const [downloadingScore, setDownloadingScore] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
@@ -83,9 +86,10 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         lyrics: song.lyrics || "",
       });
       
-      // Load score variations
+      // Load score variations and youtube links
       if (song.id) {
         loadScoreVariations(song.id);
+        loadYoutubeLinks(song.id);
       }
     } else {
       setFormData({
@@ -103,8 +107,31 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         lyrics: "",
       });
       setScoreVariations([{ key: "", files: [] }]);
+      setYoutubeLinks([{ label: "", url: "" }]);
     }
   }, [song, open]);
+
+  const loadYoutubeLinks = async (songId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("song_youtube_links")
+        .select("*")
+        .eq("song_id", songId)
+        .order("position", { ascending: true });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setYoutubeLinks(data.map(link => ({ id: link.id, label: link.label, url: link.url })));
+      } else {
+        // Migrate from old youtube_url field
+        setYoutubeLinks(song.youtube_url ? [{ label: "YouTube", url: song.youtube_url }] : [{ label: "", url: "" }]);
+      }
+    } catch (error) {
+      console.error("Error loading youtube links:", error);
+      setYoutubeLinks([{ label: "", url: "" }]);
+    }
+  };
 
   const loadScoreVariations = async (songId: string) => {
     try {
@@ -279,8 +306,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         toast.success(t("songDialog.songAdded"));
       }
 
-      // Save score variations
+      // Save score variations and youtube links
       await saveScoreVariations(songId);
+      await saveYoutubeLinks(songId);
 
       // Invalidate queries for real-time UI update
       await queryClient.invalidateQueries({ queryKey: ["songs"] });
@@ -317,6 +345,63 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       console.error("Error saving score variations:", error);
       throw error;
     }
+  };
+
+  const saveYoutubeLinks = async (songId: string) => {
+    try {
+      await supabase.from("song_youtube_links").delete().eq("song_id", songId);
+      
+      const linksToInsert = youtubeLinks
+        .filter(link => link.url.trim())
+        .map((link, index) => ({
+          song_id: songId,
+          label: link.label || "YouTube",
+          url: link.url,
+          position: index + 1,
+        }));
+      
+      if (linksToInsert.length > 0) {
+        const { error } = await supabase.from("song_youtube_links").insert(linksToInsert);
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error("Error saving youtube links:", error);
+    }
+  };
+
+  const handleDownloadFromUrl = async (variationIndex: number) => {
+    if (!scoreUrlInput.trim()) return;
+    setDownloadingScore(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('download-score-image', {
+        body: { url: scoreUrlInput }
+      });
+      
+      if (error) throw error;
+      
+      const updated = [...scoreVariations];
+      updated[variationIndex].files.push({
+        url: data.url,
+        page: updated[variationIndex].files.length + 1,
+      });
+      setScoreVariations(updated);
+      setScoreUrlInput("");
+      toast.success(t("songDialog.scoreDownloaded"));
+    } catch (error: any) {
+      toast.error(t("songDialog.scoreDownloadError"));
+      console.error("Score download error:", error);
+    } finally {
+      setDownloadingScore(false);
+    }
+  };
+
+  const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
+  const removeYoutubeLink = (index: number) => setYoutubeLinks(youtubeLinks.filter((_, i) => i !== index));
+  const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
+    const updated = [...youtubeLinks];
+    updated[index][field] = value;
+    setYoutubeLinks(updated);
   };
 
   const addVariation = () => {
@@ -807,43 +892,36 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           </div>
 
           <div>
-            <Label htmlFor="youtube_url">
-              {t("songDialog.youtubeUrl")} <span className="text-destructive">*</span>
-            </Label>
+            <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
+            <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
             
-            <div className="space-y-3">
-              <Collapsible open={showYouTubeSearch} onOpenChange={setShowYouTubeSearch}>
-                <CollapsibleTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="w-full">
-                    <Youtube className="w-4 h-4 mr-2" />
-                    {showYouTubeSearch ? t("songDialog.hideYoutubeSearch") : t("songDialog.searchYouTube")}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-2">
-                  <div className="p-4 rounded-lg border-2 border-accent bg-accent/30">
-                    <YouTubeSearchBar
-                      onSelectVideo={(url) => {
-                        setFormData({ ...formData, youtube_url: url });
-                        setShowYouTubeSearch(false);
-                      }}
-                      defaultQuery={formData.title && formData.artist ? `${formData.title} ${formData.artist}` : formData.title}
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-
-              <div>
-                <Label htmlFor="youtube_url_input" className="text-xs text-muted-foreground mb-1 block">
-                  {t("songDialog.youtubeUrl")}
-                </Label>
-                <Input
-                  id="youtube_url_input"
-                  type="url"
-                  value={formData.youtube_url}
-                  onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-                  placeholder={t("songDialog.youtubePlaceholder")}
-                />
-              </div>
+            <div className="space-y-2">
+              {youtubeLinks.map((link, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <Input
+                    placeholder={t("songDialog.youtubeLabel")}
+                    value={link.label}
+                    onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
+                    className="w-1/3"
+                  />
+                  <Input
+                    type="url"
+                    placeholder="https://youtube.com/..."
+                    value={link.url}
+                    onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
+                    className="flex-1"
+                  />
+                  {youtubeLinks.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeYoutubeLink(index)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("songDialog.addYoutubeLink")}
+              </Button>
             </div>
           </div>
 
