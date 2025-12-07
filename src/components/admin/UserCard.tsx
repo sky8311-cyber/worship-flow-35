@@ -23,6 +23,7 @@ interface UserCardProps {
     full_name: string | null;
     created_at: string;
     email_confirmed_at?: string | null;
+    last_sign_in_at?: string | null;
     user_roles?: { role: string }[];
   };
   seedData?: SeedData | null;
@@ -91,6 +92,11 @@ export function UserCard({
               <p className="text-xs text-muted-foreground">
                 {t("admin.users.joined")}: {format(new Date(user.created_at), "PP", { locale: dateLocale })}
               </p>
+              {user.last_sign_in_at && (
+                <p className="text-xs text-muted-foreground">
+                  {t("admin.users.lastLogin")}: {format(new Date(user.last_sign_in_at), "PP p", { locale: dateLocale })}
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -549,6 +549,31 @@ export default function CommunityManagement() {
     },
   });
 
+  // Delete community mutation - only for owner
+  const deleteCommunityMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("worship_communities")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: t("community.deleteSuccess") });
+      navigate("/dashboard");
+      queryClient.invalidateQueries({ queryKey: ["my-communities"] });
+      queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+    },
+    onError: (error: any) => {
+      console.error("Delete community error:", error);
+      toast({ 
+        title: t("community.deleteError"), 
+        description: error?.message || "Unknown error",
+        variant: "destructive" 
+      });
+    },
+  });
+
   // Check if user can manage this community
   const canManage = 
     isAdmin || // Admins can manage all communities
@@ -1114,6 +1139,45 @@ export default function CommunityManagement() {
                       </Button>
                     </CardContent>
                   </Card>
+
+                  {/* Delete Community - Only for owner */}
+                  {isOwner && (
+                    <Card className="border-destructive/50">
+                      <CardHeader>
+                        <CardTitle className="text-destructive">{t("community.dangerZone")}</CardTitle>
+                        <CardDescription>
+                          {t("community.dangerZoneDescription")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              {t("community.deleteCommunity")}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t("community.deleteConfirmTitle")}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t("community.deleteConfirmDescription")}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteCommunityMutation.mutate()}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {t("community.delete")}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
               )}
             </Tabs>
