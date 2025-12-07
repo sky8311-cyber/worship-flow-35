@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ const InvitedSignUp = () => {
   const { toast } = useToast();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const signupInProgress = useRef(false); // Flag to prevent redirect during fresh signup
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -65,9 +66,10 @@ const InvitedSignUp = () => {
     enabled: !!invitationId,
   });
 
-  // If user is already logged in, redirect to AcceptInvitation page
+  // If user is already logged in (before visiting this page), redirect to AcceptInvitation
+  // Skip redirect if signup is in progress (we handle the flow locally)
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !signupInProgress.current) {
       navigate(`/accept-invitation/${invitationId}`);
     }
   }, [authLoading, user, navigate, invitationId]);
@@ -92,11 +94,14 @@ const InvitedSignUp = () => {
     }
 
     setLoading(true);
+    signupInProgress.current = true; // Prevent useEffect redirect during signup flow
     
     // Sign up the user
     const { error } = await signUp(formData.email, formData.password, formData.fullName, formData.phone, formData.birthDate);
     
     if (error) {
+      signupInProgress.current = false; // Reset flag on error
+      
       // Check if user already exists
       if (error.message?.includes("already registered") || error.message?.includes("already been registered")) {
         toast({
@@ -133,17 +138,20 @@ const InvitedSignUp = () => {
       return;
     }
     
-    // Add user to community
+    // Add user to community using upsert to handle duplicates gracefully
     const { error: memberError } = await supabase
       .from("community_members")
-      .insert({
+      .upsert({
         community_id: invitation?.community_id,
         user_id: newUser.id,
         role: invitation?.role || "member",
-      });
+      }, { onConflict: 'community_id,user_id' });
     
     if (memberError) {
-      console.error("Failed to add to community:", memberError);
+      // Suppress duplicate key errors - user is already a member (which is fine)
+      if (!memberError.message?.includes('duplicate')) {
+        console.error("Failed to add to community:", memberError);
+      }
       // Don't block - they can accept invitation later
     }
     
