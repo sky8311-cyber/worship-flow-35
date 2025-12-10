@@ -44,8 +44,8 @@ export default function AcceptInvitation() {
       
       return {
         ...invitation,
-        worship_communities: community,
-        profiles: profile
+        community,
+        inviter: profile
       };
     },
     enabled: !!invitationId,
@@ -168,17 +168,17 @@ export default function AcceptInvitation() {
           <div className="space-y-2">
             <div>
               <span className="font-medium">{t("community.name")}: </span>
-              <span>{invitation.worship_communities?.name}</span>
+              <span>{invitation.community?.name}</span>
             </div>
             <div>
               <span className="font-medium">Invited by: </span>
-              <span>{invitation.profiles?.full_name}</span>
+              <span>{invitation.inviter?.full_name}</span>
             </div>
-            {invitation.worship_communities?.description && (
+            {invitation.community?.description && (
               <div>
                 <span className="font-medium">{t("community.description")}: </span>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {invitation.worship_communities.description}
+                  {invitation.community.description}
                 </p>
               </div>
             )}
