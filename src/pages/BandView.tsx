@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useMemo } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
+import DOMPurify from "dompurify";
 import { 
   Breadcrumb, 
   BreadcrumbList, 
@@ -505,7 +506,7 @@ const BandView = () => {
                         {component.content && (
                           <div 
                             className="prose prose-sm max-w-none mt-3 p-3 bg-background rounded-lg border"
-                            dangerouslySetInnerHTML={{ __html: component.content }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(component.content) }}
                           />
                         )}
 
