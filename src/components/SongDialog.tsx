@@ -263,7 +263,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       return;
     }
 
-    if (!formData.youtube_url.trim()) {
+    const hasValidYoutubeLink = youtubeLinks.some(link => link.url.trim());
+    if (!hasValidYoutubeLink) {
       toast.error(t("songDialog.youtubeRequired"));
       return;
     }
