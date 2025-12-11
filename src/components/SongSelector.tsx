@@ -260,7 +260,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
 
             <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder={t("songLibrary.languageLabel")} />
+                <SelectValue placeholder={t("songLibrary.allLanguages")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("songSelector.allLanguages")}</SelectItem>
@@ -272,7 +272,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
 
             <Select value={selectedKey} onValueChange={setSelectedKey}>
               <SelectTrigger className="h-9 text-sm">
-                <SelectValue placeholder={t("songLibrary.keyLabel")} />
+                <SelectValue placeholder={t("songLibrary.tableHeaders.key")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("songSelector.allKeys")}</SelectItem>
