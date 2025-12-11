@@ -300,7 +300,7 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
         {/* Messages area (scrollable) */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-4 py-4"
+          className="flex-1 overflow-y-auto px-2 sm:px-4 py-4"
         >
           {feedItems.map((item) => {
             // System messages for worship sets, events, birthdays
