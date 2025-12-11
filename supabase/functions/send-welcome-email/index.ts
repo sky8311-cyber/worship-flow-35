@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -21,7 +22,46 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, name }: WelcomeEmailRequest = await req.json();
 
-    console.log("Sending welcome email to:", email);
+    console.log("Sending welcome email request for:", email);
+
+    // Validate that the caller's email matches the target email
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create Supabase client to verify user
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Get the authenticated user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      console.error("Failed to get user:", userError?.message);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid authentication" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Security check: Only allow sending welcome email to the authenticated user's own email
+    if (user.email?.toLowerCase() !== email.toLowerCase()) {
+      console.error("Email mismatch - user:", user.email, "target:", email);
+      return new Response(
+        JSON.stringify({ success: false, error: "You can only send welcome emails to your own email address" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Validated user, sending welcome email to:", email);
 
     // Send email using Resend API
     const resendResponse = await fetch("https://api.resend.com/emails", {
