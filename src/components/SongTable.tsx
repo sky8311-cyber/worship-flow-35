@@ -17,6 +17,15 @@ import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
 
+// Helper function to check if song is new (within 14 days)
+const isNewSong = (createdAt: string | null) => {
+  if (!createdAt) return false;
+  const created = new Date(createdAt);
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  return created > fourteenDaysAgo;
+};
+
 interface SongTableProps {
   songs: any[];
   onEdit?: (song: any) => void;
@@ -264,7 +273,14 @@ export const SongTable = ({
                       />
                     ) : (
                       <div>
-                        <div>{song.title}</div>
+                        <div className="flex items-center gap-2">
+                          <span>{song.title}</span>
+                          {isNewSong(song.created_at) && (
+                            <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-1.5 py-0 h-4 shrink-0">
+                              NEW
+                            </Badge>
+                          )}
+                        </div>
                         {song.subtitle && (
                           <div className="text-xs text-muted-foreground">{song.subtitle}</div>
                         )}

@@ -34,7 +34,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>("title-asc");
+  const [sortBy, setSortBy] = useState<string>("recent");
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [showSongDialog, setShowSongDialog] = useState(false);
   const [selectedSongs, setSelectedSongs] = useState<SelectedSongWithVariation[]>([]);
