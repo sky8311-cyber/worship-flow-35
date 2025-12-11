@@ -35,7 +35,7 @@ const SongLibrary = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<string>("title-asc");
+  const [sortBy, setSortBy] = useState<string>("recent");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);

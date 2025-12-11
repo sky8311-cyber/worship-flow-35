@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "./FavoriteButton";
 import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+// Helper function to check if song is new (within 14 days)
+const isNewSong = (createdAt: string | null) => {
+  if (!createdAt) return false;
+  const created = new Date(createdAt);
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  return created > fourteenDaysAgo;
+};
 
 interface SongCardProps {
   song: any;
@@ -148,7 +158,14 @@ export const SongCard = ({
         <CardContent className="p-5">
           <div className="flex items-start justify-between mb-3 gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-base sm:text-lg text-foreground mb-1 truncate">{song.title}</h3>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{song.title}</h3>
+                {isNewSong(song.created_at) && (
+                  <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-1.5 py-0 h-4 shrink-0">
+                    NEW
+                  </Badge>
+                )}
+              </div>
               {song.artist && (
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">{song.artist}</p>
               )}
