@@ -101,6 +101,23 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
     enabled: open,
   });
 
+  // Fetch usage counts in batch
+  const { data: usageCounts } = useQuery({
+    queryKey: ["song-usage-counts-selector"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("set_songs")
+        .select("song_id");
+      
+      const counts = new Map<string, number>();
+      data?.forEach(({ song_id }) => {
+        counts.set(song_id, (counts.get(song_id) || 0) + 1);
+      });
+      return counts;
+    },
+    enabled: open,
+  });
+
   // Extract unique tags from all songs
   const uniqueTags = useMemo(() => {
     if (!songs) return [];
@@ -397,6 +414,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                     selectedScoreUrl={song.score_file_url}
                     isFavorite={userFavorites?.has(song.id) || false}
                     favoriteCount={favoriteCounts?.get(song.id) || 0}
+                    usageCount={usageCounts?.get(song.id) || 0}
                   />
                 ))}
               </div>
@@ -410,6 +428,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                 onSelectForSet={toggleSongSelection}
                 favoriteIds={userFavorites || new Set()}
                 favoriteCounts={favoriteCounts || new Map()}
+                usageCounts={usageCounts || new Map()}
               />
             )
           ) : (

@@ -34,6 +34,7 @@ interface SongCardProps {
   onToggleCart?: (songId: string) => void;
   isFavorite?: boolean;
   favoriteCount?: number;
+  usageCount?: number;
   // Selector mode props - for use in SongSelector dialog
   selectorMode?: boolean;
   isSelectedForSet?: boolean;
@@ -53,6 +54,7 @@ export const SongCard = ({
   onToggleCart,
   isFavorite = false,
   favoriteCount = 0,
+  usageCount = 0,
   selectorMode = false,
   isSelectedForSet = false,
   onSelectForSet,
@@ -230,10 +232,15 @@ export const SongCard = ({
                 variant="outline"
                 size="icon"
                 onClick={() => setUsageHistoryOpen(true)}
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="h-8 w-8 sm:h-9 sm:w-9 relative"
                 title={t("songUsage.viewUsageHistory")}
               >
                 <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                {usageCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full min-w-[16px] h-[16px] flex items-center justify-center font-semibold px-0.5">
+                    {usageCount > 99 ? "99+" : usageCount}
+                  </span>
+                )}
               </Button>
             )}
             <FavoriteButton 

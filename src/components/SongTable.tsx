@@ -36,6 +36,7 @@ interface SongTableProps {
   onToggleCart?: (songId: string) => void;
   favoriteIds?: Set<string>;
   favoriteCounts?: Map<string, number>;
+  usageCounts?: Map<string, number>;
   // Selector mode props - for use in SongSelector dialog
   selectorMode?: boolean;
   selectedForSet?: Set<string>;
@@ -61,6 +62,7 @@ export const SongTable = ({
   onToggleCart,
   favoriteIds = new Set(),
   favoriteCounts = new Map(),
+  usageCounts = new Map(),
   selectorMode = false,
   selectedForSet = new Set(),
   onSelectForSet,
@@ -399,10 +401,15 @@ export const SongTable = ({
                                setSelectedSong(song);
                                setUsageHistoryOpen(true);
                              }}
-                             className="h-8 w-8"
+                             className="h-8 w-8 relative"
                              title={t("songUsage.viewUsageHistory")}
                            >
                              <BarChart3 className="h-4 w-4" />
+                             {(usageCounts.get(song.id) || 0) > 0 && (
+                               <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center font-semibold px-0.5">
+                                 {(usageCounts.get(song.id) || 0) > 99 ? "99+" : usageCounts.get(song.id)}
+                               </span>
+                             )}
                            </Button>
                          )}
                           <FavoriteButton 

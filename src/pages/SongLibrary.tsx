@@ -93,6 +93,23 @@ const SongLibrary = () => {
     },
   });
 
+  // Batch fetch usage counts for all songs in ONE query
+  const { data: usageCounts } = useQuery({
+    queryKey: ["song-usage-counts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("set_songs")
+        .select("song_id");
+      
+      // Count usage per song_id client-side
+      const counts = new Map<string, number>();
+      data?.forEach(({ song_id }) => {
+        counts.set(song_id, (counts.get(song_id) || 0) + 1);
+      });
+      return counts;
+    },
+  });
+
   // Fetch unique tags from all songs
   const { data: uniqueTags } = useQuery({
     queryKey: ["unique-tags"],
@@ -646,6 +663,7 @@ const SongLibrary = () => {
               onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
               favoriteIds={userFavorites || new Set()}
               favoriteCounts={favoriteCounts || new Map()}
+              usageCounts={usageCounts || new Map()}
             />
           ) : (
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -662,6 +680,7 @@ const SongLibrary = () => {
                   onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
                   favoriteCount={favoriteCounts?.get(song.id) || 0}
+                  usageCount={usageCounts?.get(song.id) || 0}
                 />
               ))}
             </div>
