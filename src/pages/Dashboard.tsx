@@ -180,8 +180,8 @@ const Dashboard = () => {
       if (isAdmin) {
         // Admin sees all drafts + published future sets
         query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${today})`);
-      } else if (isCommunityLeaderInAnyCommunity) {
-        // Community Leader: show own drafts + published future sets
+      } else if (isWorshipLeader || isCommunityLeaderInAnyCommunity) {
+        // Worship Leader & Community Leader: show own drafts + published future sets
         query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${today})`);
       } else {
         // Team Member: show ONLY published future sets
