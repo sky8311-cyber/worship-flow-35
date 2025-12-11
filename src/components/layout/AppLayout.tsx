@@ -1,6 +1,8 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { AppHeader } from "./AppHeader";
 import { BottomTabNavigation } from "./BottomTabNavigation";
+import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
+import { FloatingChatBox } from "@/components/chat/FloatingChatBox";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -10,6 +12,8 @@ interface AppLayoutProps {
 }
 
 export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: AppLayoutProps) => {
+  const [chatOpen, setChatOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-soft">
       <AppHeader showBackButton={showBackButton} backPath={backPath} breadcrumb={breadcrumb} />
@@ -20,6 +24,16 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
       </main>
       
       <BottomTabNavigation />
+      
+      {/* Desktop floating chat */}
+      <FloatingChatButton 
+        onClick={() => setChatOpen(!chatOpen)} 
+        isOpen={chatOpen} 
+      />
+      <FloatingChatBox 
+        isOpen={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+      />
     </div>
   );
 };

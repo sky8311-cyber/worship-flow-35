@@ -126,6 +126,11 @@ export const translations = {
       more: "More",
       favorites: "Favorites",
       menu: "Menu",
+      feed: "Feed",
+    },
+    chat: {
+      communityFeed: "Community Feed",
+      close: "Close",
     },
     viewMode: {
       card: "Card View",
@@ -1759,6 +1764,11 @@ export const translations = {
       more: "더보기",
       favorites: "즐겨찾기",
       menu: "메뉴",
+      feed: "피드",
+    },
+    chat: {
+      communityFeed: "커뮤니티 피드",
+      close: "닫기",
     },
     viewMode: {
       card: "카드 보기",
