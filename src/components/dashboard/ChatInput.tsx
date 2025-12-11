@@ -127,59 +127,51 @@ export function ChatInput() {
         </div>
       )}
 
-      {/* Input row */}
-      <div className="flex items-center gap-2 p-3">
-        {/* Avatar */}
-        <Avatar className="w-8 h-8 shrink-0">
-          <AvatarImage src={profile?.avatar_url || ""} />
-          <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
-        </Avatar>
+      {/* First row: Avatar, community selector, image upload, send button */}
+      <div className="flex items-center justify-between gap-2 px-3 pt-3">
+        <div className="flex items-center gap-2">
+          {/* Avatar */}
+          <Avatar className="w-8 h-8 shrink-0">
+            <AvatarImage src={profile?.avatar_url || ""} />
+            <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
+          </Avatar>
 
-        {/* Community selector (if multiple) */}
-        {communities.length > 1 && (
-          <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
-            <SelectTrigger className="w-[100px] h-9 text-xs shrink-0">
-              <SelectValue placeholder={communities[0]?.name?.substring(0, 8) + "..."} />
-            </SelectTrigger>
-            <SelectContent>
-              {communities.map((c: any) => (
-                <SelectItem key={c.id} value={c.id} className="text-xs">
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+          {/* Community selector (if multiple) */}
+          {communities.length > 1 && (
+            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
+              <SelectTrigger className="w-[120px] h-9 text-xs shrink-0">
+                <SelectValue placeholder={communities[0]?.name?.substring(0, 10) + "..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {communities.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
-        {/* Image upload button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 shrink-0"
-          disabled={uploading}
-          onClick={() => document.getElementById("chat-image-upload")?.click()}
-        >
-          <ImagePlus className="w-5 h-5" />
-        </Button>
-        <input
-          id="chat-image-upload"
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
-          multiple
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-
-        {/* Input */}
-        <Input
-          placeholder={t("socialFeed.postPlaceholder")}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="flex-1 rounded-full h-9"
-          disabled={postMutation.isPending}
-        />
+          {/* Image upload button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            disabled={uploading}
+            onClick={() => document.getElementById("chat-image-upload")?.click()}
+          >
+            <ImagePlus className="w-5 h-5" />
+          </Button>
+          <input
+            id="chat-image-upload"
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            multiple
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+        </div>
 
         {/* Send button */}
         <Button
@@ -190,6 +182,18 @@ export function ChatInput() {
         >
           <Send className="w-4 h-4" />
         </Button>
+      </div>
+
+      {/* Second row: Full-width text input */}
+      <div className="px-3 pb-3 pt-2">
+        <Input
+          placeholder={t("socialFeed.postPlaceholder")}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full rounded-full h-10"
+          disabled={postMutation.isPending}
+        />
       </div>
     </div>
   );
