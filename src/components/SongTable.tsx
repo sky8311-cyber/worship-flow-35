@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3 } from "lucide-react";
+import { Eye, Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +36,10 @@ interface SongTableProps {
   onToggleCart?: (songId: string) => void;
   favoriteIds?: Set<string>;
   favoriteCounts?: Map<string, number>;
+  // Selector mode props - for use in SongSelector dialog
+  selectorMode?: boolean;
+  selectedForSet?: Set<string>;
+  onSelectForSet?: (song: any, selectedKey?: string, selectedScoreUrl?: string) => void;
 }
 
 export const SongTable = ({ 
@@ -57,6 +61,9 @@ export const SongTable = ({
   onToggleCart,
   favoriteIds = new Set(),
   favoriteCounts = new Map(),
+  selectorMode = false,
+  selectedForSet = new Set(),
+  onSelectForSet,
 }: SongTableProps) => {
   const { t } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
@@ -359,7 +366,21 @@ export const SongTable = ({
                    <TableCell>
                      {!bulkEditMode && (
                        <div className="flex items-center gap-1">
-                         {onToggleCart && (
+                         {selectorMode && onSelectForSet && (
+                           <Button
+                             variant={selectedForSet.has(song.id) ? "default" : "ghost"}
+                             size="sm"
+                             onClick={() => onSelectForSet(song, song.default_key, song.score_file_url)}
+                             className="h-8"
+                           >
+                             {selectedForSet.has(song.id) ? (
+                               <><Check className="h-4 w-4 mr-1" />{t("songSelector.selected")}</>
+                             ) : (
+                               <><Plus className="h-4 w-4 mr-1" />{t("songSelector.addToSet")}</>
+                             )}
+                           </Button>
+                         )}
+                         {!selectorMode && onToggleCart && (
                            <Button
                              variant={cartSongs.has(song.id) ? "default" : "ghost"}
                              size="icon"

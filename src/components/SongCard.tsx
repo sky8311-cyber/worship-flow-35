@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3 } from "lucide-react";
+import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -34,6 +34,12 @@ interface SongCardProps {
   onToggleCart?: (songId: string) => void;
   isFavorite?: boolean;
   favoriteCount?: number;
+  // Selector mode props - for use in SongSelector dialog
+  selectorMode?: boolean;
+  isSelectedForSet?: boolean;
+  onSelectForSet?: (song: any, selectedKey?: string, selectedScoreUrl?: string) => void;
+  selectedScoreKey?: string;
+  selectedScoreUrl?: string;
 }
 
 export const SongCard = ({ 
@@ -46,7 +52,12 @@ export const SongCard = ({
   inCart = false,
   onToggleCart,
   isFavorite = false,
-  favoriteCount = 0
+  favoriteCount = 0,
+  selectorMode = false,
+  isSelectedForSet = false,
+  onSelectForSet,
+  selectedScoreKey,
+  selectedScoreUrl
 }: SongCardProps) => {
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
@@ -105,6 +116,8 @@ export const SongCard = ({
         selectionMode && isSelected ? "ring-2 ring-primary shadow-lg" : ""
       } ${
         inCart ? "ring-2 ring-blue-500 shadow-lg" : ""
+      } ${
+        selectorMode && isSelectedForSet ? "ring-2 ring-primary shadow-lg" : ""
       }`}>
         {selectionMode && (
           <div className="absolute top-2 right-2 z-10">
@@ -185,9 +198,23 @@ export const SongCard = ({
             )}
           </div>
 
-          {/* Action buttons - Cart first, Usage History, then Heart, Edit, Delete */}
+          {/* Action buttons - Selector mode or Cart first, Usage History, then Heart, Edit, Delete */}
           <div className="flex gap-1.5 justify-start mt-4">
-            {onToggleCart && (
+            {selectorMode && onSelectForSet && (
+              <Button
+                variant={isSelectedForSet ? "default" : "outline"}
+                size="sm"
+                onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
+                className="h-8 sm:h-9"
+              >
+                {isSelectedForSet ? (
+                  <><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{t("songSelector.selected")}</>
+                ) : (
+                  <><Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{t("songSelector.addToSet")}</>
+                )}
+              </Button>
+            )}
+            {!selectorMode && onToggleCart && (
               <Button
                 variant={inCart ? "default" : "outline"}
                 size="icon"
