@@ -1758,9 +1758,9 @@ export const translations = {
     },
     navigation: {
       home: "홈",
-      worshipSets: "예배세트",
-      songs: "곡 라이브러리",
-      community: "예배공동체",
+      worshipSets: "세트",
+      songs: "라이브러리",
+      community: "공동체",
       more: "더보기",
       favorites: "즐겨찾기",
       menu: "메뉴",
