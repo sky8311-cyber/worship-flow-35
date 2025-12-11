@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { ImageGrid } from "./ImageGrid";
 import { LikersDialog } from "./LikersDialog";
 import { CommentsSection } from "./CommentsSection";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Author {
   id: string | null;
@@ -57,6 +58,29 @@ export function ChatBubble({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [showLikersDialog, setShowLikersDialog] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const isMobile = useIsMobile();
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = useCallback(() => {
+    longPressTimer.current = setTimeout(() => {
+      setShowActions(true);
+    }, 500);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const handleTouchCancel = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
 
   const authorName = author?.full_name || t("common.deletedUser");
   const authorInitial = authorName.charAt(0) || "?";
@@ -173,12 +197,70 @@ export function ChatBubble({
   const isLiked = !!likeData;
   const canManage = isOwn || isAdmin || isWorshipLeader;
 
+  // Action buttons component
+  const ActionButtons = ({ align = "left" }: { align?: "left" | "right" }) => (
+    <div 
+      className={`flex items-center gap-0.5 ${
+        isMobile 
+          ? (showActions ? "opacity-100" : "opacity-0 pointer-events-none") 
+          : "opacity-0 group-hover:opacity-100"
+      } transition-opacity`}
+    >
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0"
+        onClick={() => likeMutation.mutate()}
+      >
+        <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0"
+        onClick={() => setShowComments(!showComments)}
+      >
+        <MessageCircle className="w-3.5 h-3.5" />
+      </Button>
+      {canManage && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+              <MoreVertical className="w-3.5 h-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align={align === "left" ? "start" : "end"}>
+            {isOwn && (
+              <DropdownMenuItem onClick={() => { setEditContent(content); setEditDialogOpen(true); }}>
+                {t("socialFeed.edit")}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+              {t("socialFeed.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+
   // Own message (right aligned)
   if (isOwn) {
     return (
       <>
-        <div className="flex justify-end gap-2 mb-4 group">
-          <div className="flex flex-col items-end max-w-[75%]">
+        <div 
+          className="flex justify-end gap-2 mb-2 group"
+          onTouchStart={isMobile ? handleTouchStart : undefined}
+          onTouchEnd={isMobile ? handleTouchEnd : undefined}
+          onTouchCancel={isMobile ? handleTouchCancel : undefined}
+          onClick={isMobile && showActions ? () => setShowActions(false) : undefined}
+        >
+          {/* Action buttons - left of bubble */}
+          <div className="flex items-center self-center">
+            <ActionButtons align="right" />
+          </div>
+
+          <div className="flex flex-col items-end max-w-[70%]">
             {/* Bubble */}
             <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5">
               <p className="whitespace-pre-wrap text-sm">{content}</p>
@@ -190,7 +272,7 @@ export function ChatBubble({
             </div>
             
             {/* Metadata row */}
-            <div className="flex items-center gap-2 mt-1.5 px-1">
+            <div className="flex items-center gap-2 mt-1 px-1">
               <span className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(createdAt), {
                   addSuffix: true,
@@ -207,45 +289,6 @@ export function ChatBubble({
                   <Heart className="w-3 h-3 fill-current" />
                   {likeCount}
                 </button>
-              )}
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => likeMutation.mutate()}
-              >
-                <Heart className={`w-3 h-3 mr-1 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => setShowComments(!showComments)}
-              >
-                <MessageCircle className="w-3 h-3" />
-              </Button>
-              {canManage && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <MoreVertical className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {isOwn && (
-                      <DropdownMenuItem onClick={() => { setEditContent(content); setEditDialogOpen(true); }}>
-                        {t("socialFeed.edit")}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                      {t("socialFeed.delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               )}
             </div>
 
@@ -314,7 +357,13 @@ export function ChatBubble({
   // Other's message (left aligned)
   return (
     <>
-      <div className="flex gap-2 mb-4 group">
+      <div 
+        className="flex gap-2 mb-2 group"
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
+        onTouchCancel={isMobile ? handleTouchCancel : undefined}
+        onClick={isMobile && showActions ? () => setShowActions(false) : undefined}
+      >
         {/* Avatar */}
         {author?.id ? (
           <div
@@ -336,9 +385,9 @@ export function ChatBubble({
           </Avatar>
         )}
 
-        <div className="flex flex-col max-w-[75%]">
+        <div className="flex flex-col max-w-[70%]">
           {/* Name */}
-          <span className="text-xs font-medium text-muted-foreground mb-1 px-1">
+          <span className="text-xs font-medium text-muted-foreground mb-0.5 px-1">
             {authorName}
           </span>
 
@@ -353,7 +402,7 @@ export function ChatBubble({
           </div>
 
           {/* Metadata row */}
-          <div className="flex items-center gap-2 mt-1.5 px-1">
+          <div className="flex items-center gap-2 mt-1 px-1">
             <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(createdAt), {
                 addSuffix: true,
@@ -376,46 +425,17 @@ export function ChatBubble({
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => likeMutation.mutate()}
-            >
-              <Heart className={`w-3 h-3 mr-1 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setShowComments(!showComments)}
-            >
-              <MessageCircle className="w-3 h-3" />
-            </Button>
-            {canManage && author?.id && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <MoreVertical className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
-                    {t("socialFeed.delete")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
           {/* Comments inline */}
           {showComments && (
             <div className="w-full mt-2 bg-muted/50 rounded-lg p-2">
               <CommentsSection postId={id} postType="community_post" />
             </div>
           )}
+        </div>
+
+        {/* Action buttons - right of bubble content */}
+        <div className="flex items-center self-center">
+          <ActionButtons align="left" />
         </div>
       </div>
 
