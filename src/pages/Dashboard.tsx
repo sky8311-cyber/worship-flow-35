@@ -30,7 +30,7 @@ import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
 import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSidebarList";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
-import { CommunityFeed } from "@/components/dashboard/CommunityFeed";
+import { ChatFeed } from "@/components/dashboard/ChatFeed";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { CompleteWorshipLeaderProfileDialog } from "@/components/CompleteWorshipLeaderProfileDialog";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -537,13 +537,13 @@ const Dashboard = () => {
               {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => setImportSetOpen(true)} />}
             </div>
 
-            {/* Community Feed */}
-            <Card>
-              <CardHeader>
+            {/* Community Chat Feed */}
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-2">
                 <CardTitle>{t("community.joined")}</CardTitle>
               </CardHeader>
-              <CardContent>
-        <CommunityFeed userStats={userStats} />
+              <CardContent className="p-0 h-[600px]">
+                <ChatFeed userStats={userStats} />
               </CardContent>
             </Card>
           </div>
@@ -700,13 +700,13 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          {/* Community Feed */}
-          <Card>
-            <CardHeader>
+          {/* Community Chat Feed */}
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-2">
               <CardTitle className="text-lg">{t("community.joined")}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <CommunityFeed />
+            <CardContent className="p-0 h-[500px]">
+              <ChatFeed />
             </CardContent>
           </Card>
         </div>
