@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Music2, Trash2, Youtube, FileText, Eye, Plus, BarChart3, Check } from "lucide-react";
+import { Edit, Trash2, Youtube, FileText, Eye, Plus, BarChart3, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -156,21 +156,18 @@ export const SongCard = ({
           </div>
         )}
         <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-3 gap-2">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{song.title}</h3>
-                {isNewSong(song.created_at) && (
-                  <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-1.5 py-0 h-4 shrink-0">
-                    NEW
-                  </Badge>
-                )}
-              </div>
-              {song.artist && (
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">{song.artist}</p>
+          <div className="mb-3">
+            <div className="flex items-baseline mb-1">
+              <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{song.title}</h3>
+              {isNewSong(song.created_at) && (
+                <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
+                  N
+                </sup>
               )}
             </div>
-            <Music2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+            {song.artist && (
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">{song.artist}</p>
+            )}
           </div>
 
           <div className="space-y-2 mb-4">

@@ -273,12 +273,12 @@ export const SongTable = ({
                       />
                     ) : (
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-baseline">
                           <span>{song.title}</span>
                           {isNewSong(song.created_at) && (
-                            <Badge className="bg-green-500 hover:bg-green-500 text-white text-[10px] px-1.5 py-0 h-4 shrink-0">
-                              NEW
-                            </Badge>
+                            <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
+                              N
+                            </sup>
                           )}
                         </div>
                         {song.subtitle && (
