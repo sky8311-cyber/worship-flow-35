@@ -260,7 +260,7 @@ export function ChatBubble({
             <ActionButtons align="right" />
           </div>
 
-          <div className="flex flex-col items-end max-w-[85%] sm:max-w-[70%]">
+          <div className="flex flex-col items-end max-w-[90%] sm:max-w-[70%]">
             {/* Bubble */}
             <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2.5">
               <p className="whitespace-pre-wrap text-sm">{content}</p>
@@ -385,7 +385,7 @@ export function ChatBubble({
           </Avatar>
         )}
 
-        <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
+        <div className="flex flex-col max-w-[90%] sm:max-w-[70%]">
           {/* Name */}
           <span className="text-xs font-medium text-muted-foreground mb-0.5 px-1">
             {authorName}
