@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -63,9 +63,31 @@ const SetBuilder = () => {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Delete mutation
+  const deleteSetMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error("No set ID");
+      const { error } = await supabase
+        .from("service_sets")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["service-sets"] });
+      toast.success(language === "ko" ? "예배세트가 삭제되었습니다" : "Worship set deleted");
+      navigate("/worship-sets");
+    },
+    onError: (error: any) => {
+      toast.error(language === "ko" ? "삭제 중 오류가 발생했습니다" : "Failed to delete worship set");
+      console.error("Delete error:", error);
+    },
+  });
 
   // Refs to ensure mutation always reads latest values
   const formDataRef = useRef(formData);
@@ -105,6 +127,9 @@ const SetBuilder = () => {
     refetchOnWindowFocus: false,
     staleTime: 0,
   });
+
+  // Permission check for delete (only creator or admin)
+  const canDelete = existingSet && (existingSet.created_by === user?.id || isAdmin);
 
   const { data: existingSetSongs } = useQuery({
     queryKey: ["set-songs", id],
@@ -678,6 +703,19 @@ const SetBuilder = () => {
         
         {/* Action buttons - separate row on mobile */}
         <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
+          {id && canDelete && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="h-8 gap-1.5" 
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleteSetMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 shrink-0" />
+              <span>{language === "ko" ? "삭제" : "Delete"}</span>
+            </Button>
+          )}
+          
           {id && (
             <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
               <Share2 className="w-4 h-4 shrink-0" />
@@ -1060,6 +1098,32 @@ const SetBuilder = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction onClick={confirmPublish}>게시하기</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ko" ? "예배세트를 삭제하시겠습니까?" : "Delete Worship Set?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ko" 
+                ? "이 작업은 되돌릴 수 없습니다. 모든 곡과 순서 항목이 함께 삭제됩니다."
+                : "This action cannot be undone. All songs and components will be permanently deleted."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "취소" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteSetMutation.mutate()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {language === "ko" ? "삭제" : "Delete"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
