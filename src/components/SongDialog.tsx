@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, Search } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -750,32 +750,40 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto" hideCloseButton>
         <DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex-1 min-w-0">
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAIEnrich}
-              disabled={aiEnriching || !formData.title.trim()}
-              className="flex items-center gap-1 shrink-0"
-            >
-              {aiEnriching ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="hidden sm:inline">{t('aiEnrich.loading')}</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAIEnrich}
+                disabled={aiEnriching || !formData.title.trim()}
+                className="flex items-center gap-1"
+              >
+                {aiEnriching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="hidden sm:inline">{t('aiEnrich.loading')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
+                  </>
+                )}
+              </Button>
+              <DialogClose asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </DialogClose>
+            </div>
           </div>
         </DialogHeader>
 
