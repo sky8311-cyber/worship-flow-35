@@ -639,12 +639,18 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             </SelectContent>
           </Select>
           
-          {/* Hidden file input */}
+          {/* Hidden file input - supports multiple files */}
           <Input
             type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onFileUpload(file, index);
+            multiple
+            onChange={async (e) => {
+              const files = e.target.files;
+              if (files && files.length > 0) {
+                // Process files sequentially to avoid race conditions
+                for (const file of Array.from(files)) {
+                  await onFileUpload(file, index);
+                }
+              }
             }}
             accept=".pdf,.jpg,.jpeg,.png,.webp"
             className="hidden"
