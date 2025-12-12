@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard";
+import { parseLocalDate } from "@/lib/countdownHelper";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -410,7 +411,7 @@ const BandView = () => {
                   </Badge>
                 </div>
                 <p className="text-lg text-muted-foreground mb-3">
-                  {format(new Date(serviceSet.date), "yyyy년 M월 d일 (EEEE)", { locale: ko })}
+                  {format(parseLocalDate(serviceSet.date), "yyyy년 M월 d일 (EEEE)", { locale: ko })}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
