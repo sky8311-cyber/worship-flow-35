@@ -181,27 +181,29 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
         avatar_url: null,
       };
 
-      // Build birthday items
-      const birthdayItems = await Promise.all(
-        birthdaysThisWeek.map(async (profile) => {
-          const memberCommunity = (await supabase
+      // Batch fetch birthday memberships to avoid N+1
+      const birthdayUserIds = birthdaysThisWeek.map(p => p.id);
+      const { data: birthdayMemberships } = birthdayUserIds.length > 0
+        ? await supabase
             .from("community_members")
-            .select("community_id")
-            .eq("user_id", profile.id)
+            .select("user_id, community_id")
+            .in("user_id", birthdayUserIds)
             .in("community_id", communityIds)
-            .limit(1)
-            .single()
-          ).data;
-          
-          return {
-            id: `birthday-${profile.id}`,
-            type: "birthday" as const,
-            profile: profile,
-            community: memberCommunity ? communityMap.get(memberCommunity.community_id) || fallbackCommunity : fallbackCommunity,
-            created_at: profile.birth_date || new Date().toISOString(),
-          };
-        })
+        : { data: [] };
+
+      // Create a map for O(1) lookup
+      const birthdayMembershipMap = new Map(
+        (birthdayMemberships || []).map(m => [m.user_id, m.community_id])
       );
+
+      // Build birthday items without N+1 queries
+      const birthdayItems = birthdaysThisWeek.map((profile) => ({
+        id: `birthday-${profile.id}`,
+        type: "birthday" as const,
+        profile: profile,
+        community: communityMap.get(birthdayMembershipMap.get(profile.id) || "") || fallbackCommunity,
+        created_at: profile.birth_date || new Date().toISOString(),
+      }));
 
       // Build unified feed items
       const allItems = [

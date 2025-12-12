@@ -50,7 +50,7 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     <div
       ref={containerRef}
       className={cn(
-        "fixed bottom-20 left-4 z-40 lg:hidden transition-all duration-300 ease-out",
+        "fixed bottom-6 left-6 z-40 lg:hidden transition-all duration-300 ease-out",
         isExpanded ? "left-4 right-4" : ""
       )}
     >
@@ -83,10 +83,10 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
       ) : (
         <Button
           size="icon"
-          className="h-12 w-12 rounded-full shadow-lg"
+          className="h-14 w-14 rounded-full shadow-lg"
           onClick={() => setIsExpanded(true)}
         >
-          <Search className="h-5 w-5" />
+          <Search className="h-6 w-6" />
           {value && (
             <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
           )}
