@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShoppingCart, X, Trash2 } from "lucide-react";
+import { Music, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,7 +28,7 @@ export const SongCartPopover = () => {
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative">
-            <ShoppingCart className="h-5 w-5" />
+            <Music className="h-5 w-5" />
             <Badge 
               className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs font-bold"
               variant="destructive"

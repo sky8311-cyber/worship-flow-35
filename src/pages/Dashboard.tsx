@@ -240,19 +240,23 @@ const Dashboard = () => {
       } = await supabase.from("worship_communities").select("id, name, avatar_url, leader_id").in("id", communityIds);
       if (communitiesError) throw communitiesError;
 
-      // Fetch member counts
-      const communitiesWithDetails = await Promise.all(communities.map(async community => {
-        const {
-          count
-        } = await supabase.from("community_members").select("*", {
-          count: "exact",
-          head: true
-        }).eq("community_id", community.id);
-        return {
-          ...community,
-          memberCount: count || 0,
-          userRole: roleMap.get(community.id) || 'member'
-        };
+      // Batch fetch all member counts in one query
+      const { data: allMemberCounts } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .in("community_id", communityIds);
+
+      // Create count map
+      const countMap = (allMemberCounts || []).reduce((acc, m) => {
+        acc[m.community_id] = (acc[m.community_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Map without N+1 queries
+      const communitiesWithDetails = communities.map(community => ({
+        ...community,
+        memberCount: countMap[community.id] || 0,
+        userRole: roleMap.get(community.id) || 'member'
       }));
       return communitiesWithDetails;
     },
