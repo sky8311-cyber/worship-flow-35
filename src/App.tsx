@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { SongCartProvider } from "@/contexts/SongCartContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Landing from "./pages/Landing";
@@ -58,10 +59,11 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <SongCartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
             <ScrollToTop />
             <Routes>
               {/* Public Landing Page */}
@@ -101,8 +103,9 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SongCartProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
