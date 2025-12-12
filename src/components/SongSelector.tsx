@@ -41,7 +41,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const [editSong, setEditSong] = useState<any>(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isAdmin, isWorshipLeader } = useAuth();
 
   const { data: songs, isLoading } = useQuery({
     queryKey: ["songs-selector", searchQuery, selectedCategory, selectedLanguage],
@@ -407,6 +407,11 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                     key={song.id}
                     song={song}
                     onEdit={handleEditSong}
+                    onDelete={(isWorshipLeader || isAdmin) ? () => {
+                      queryClient.invalidateQueries({ queryKey: ["songs-selector"] });
+                      queryClient.invalidateQueries({ queryKey: ["song-favorite-counts-selector"] });
+                      queryClient.invalidateQueries({ queryKey: ["song-usage-counts-selector"] });
+                    } : undefined}
                     selectorMode={true}
                     isSelectedForSet={isSongSelected(song.id)}
                     onSelectForSet={toggleSongSelection}
@@ -423,6 +428,11 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
               <SongTable
                 songs={filteredAndSortedSongs}
                 onEdit={handleEditSong}
+                onDelete={(isWorshipLeader || isAdmin) ? () => {
+                  queryClient.invalidateQueries({ queryKey: ["songs-selector"] });
+                  queryClient.invalidateQueries({ queryKey: ["song-favorite-counts-selector"] });
+                  queryClient.invalidateQueries({ queryKey: ["song-usage-counts-selector"] });
+                } : undefined}
                 selectorMode={true}
                 selectedForSet={new Set(selectedSongs.map(s => s.song.id))}
                 onSelectForSet={toggleSongSelection}
