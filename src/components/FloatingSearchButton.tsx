@@ -35,16 +35,6 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isExpanded]);
 
-  // Close on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isExpanded && !value) {
-        setIsExpanded(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isExpanded, value]);
 
   return (
     <div
