@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,16 +15,18 @@ import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { FloatingCartButton } from "@/components/FloatingCartButton";
+import { FloatingSearchButton } from "@/components/FloatingSearchButton";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSongCart } from "@/hooks/useSongCart";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { Home } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { cn } from "@/lib/utils";
 
 const SongLibrary = () => {
   const { t } = useTranslation();
@@ -51,8 +53,14 @@ const SongLibrary = () => {
     column: null,
     direction: null
   });
-  const [cartSongs, setCartSongs] = useState<Set<string>>(new Set());
   const [isCartDialogOpen, setIsCartDialogOpen] = useState(false);
+  const [isSearchSticky, setIsSearchSticky] = useState(false);
+  const [isSearchMini, setIsSearchMini] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchSentinelRef = useRef<HTMLDivElement>(null);
+  
+  // Use global song cart
+  const { cartItems, toggleCart, isInCart, clearCart, cartCount } = useSongCart();
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -341,32 +349,18 @@ const SongLibrary = () => {
     setEditedSongs({});
   };
 
-  const handleToggleCart = (songId: string) => {
-    setCartSongs(prev => {
-      const newCart = new Set(prev);
-      if (newCart.has(songId)) {
-        newCart.delete(songId);
-      } else {
-        newCart.add(songId);
-      }
-      return newCart;
+  const handleToggleCart = (song: any) => {
+    toggleCart({ 
+      id: song.id, 
+      title: song.title, 
+      artist: song.artist, 
+      default_key: song.default_key 
     });
   };
 
   const handleCartSuccess = () => {
-    setCartSongs(new Set());
+    clearCart();
     setIsCartDialogOpen(false);
-  };
-
-  const cartSongsArray = sortedAndFilteredSongs.filter(song => cartSongs.has(song.id));
-
-  const handleOpenCartDialog = () => {
-    if (cartSongsArray.length > 0) {
-      setIsCartDialogOpen(true);
-    } else {
-      toast.error("장바구니에 곡이 없습니다");
-      setCartSongs(new Set());
-    }
   };
 
   const handleEnterBulkEdit = () => {
@@ -659,8 +653,8 @@ const SongLibrary = () => {
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
               onColumnSort={handleColumnSort}
-              cartSongs={isWorshipLeader ? cartSongs : new Set()}
-              onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
+              isInCart={isWorshipLeader ? isInCart : undefined}
+              onToggleCart={isWorshipLeader ? (song: any) => handleToggleCart(song) : undefined}
               favoriteIds={userFavorites || new Set()}
               favoriteCounts={favoriteCounts || new Map()}
               usageCounts={usageCounts || new Map()}
@@ -676,8 +670,8 @@ const SongLibrary = () => {
                   selectionMode={selectionMode}
                   isSelected={selectedSongIds.has(song.id)}
                   onToggleSelection={handleToggleSelection}
-                  inCart={isWorshipLeader ? cartSongs.has(song.id) : false}
-                  onToggleCart={isWorshipLeader ? handleToggleCart : undefined}
+                  inCart={isWorshipLeader ? isInCart(song.id) : false}
+                  onToggleCart={isWorshipLeader ? () => handleToggleCart(song) : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
                   favoriteCount={favoriteCounts?.get(song.id) || 0}
                   usageCount={usageCounts?.get(song.id) || 0}
@@ -770,21 +764,12 @@ const SongLibrary = () => {
         />
       )}
 
-      {isWorshipLeader && (
-        <>
-          <FloatingCartButton 
-            count={cartSongs.size}
-            onClick={handleOpenCartDialog}
-          />
-
-          <AddToSetDialog
-            open={isCartDialogOpen}
-            onOpenChange={setIsCartDialogOpen}
-            songs={cartSongsArray}
-            onSuccess={handleCartSuccess}
-          />
-        </>
-      )}
+      {/* Floating Search Button - Mobile only */}
+      <FloatingSearchButton
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder={t("songLibrary.searchPlaceholder")}
+      />
     </AppLayout>
   );
 };

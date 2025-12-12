@@ -12,6 +12,7 @@ import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
+import { SongCartPopover } from "@/components/SongCartPopover";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -96,6 +97,9 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")} className="hidden md:flex">
               <Heart className="h-5 w-5" />
             </Button>
+            
+            {/* Song Cart - Shows only when items in cart */}
+            {(isWorshipLeader || isAdmin) && <SongCartPopover />}
             
             {/* Notification Bell - Always visible */}
             <Popover>

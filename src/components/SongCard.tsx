@@ -41,7 +41,7 @@ interface SongCardProps {
   isSelected?: boolean;
   onToggleSelection?: (songId: string) => void;
   inCart?: boolean;
-  onToggleCart?: (songId: string) => void;
+  onToggleCart?: () => void;
   isFavorite?: boolean;
   favoriteCount?: number;
   usageCount?: number;
@@ -234,7 +234,7 @@ export const SongCard = ({
               <Button
                 variant={inCart ? "default" : "outline"}
                 size="icon"
-                onClick={() => onToggleCart(song.id)}
+                onClick={() => onToggleCart()}
                 className="h-8 w-8 sm:h-9 sm:w-9"
                 title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
               >
