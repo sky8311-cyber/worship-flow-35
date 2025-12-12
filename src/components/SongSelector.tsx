@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,6 +30,15 @@ const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb"
 
 export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query - wait 300ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
@@ -44,15 +53,15 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
   const { user, isAdmin, isWorshipLeader } = useAuth();
 
   const { data: songs, isLoading } = useQuery({
-    queryKey: ["songs-selector", searchQuery, selectedCategory, selectedLanguage],
+    queryKey: ["songs-selector", debouncedSearchQuery, selectedCategory, selectedLanguage],
     queryFn: async () => {
       let query = supabase
         .from("songs")
         .select("*")
         .order("title");
 
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,subtitle.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`);
+      if (debouncedSearchQuery) {
+        query = query.or(`title.ilike.%${debouncedSearchQuery}%,subtitle.ilike.%${debouncedSearchQuery}%,artist.ilike.%${debouncedSearchQuery}%,tags.ilike.%${debouncedSearchQuery}%`);
       }
 
       if (selectedCategory !== "all") {

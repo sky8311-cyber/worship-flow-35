@@ -33,6 +33,15 @@ const SongLibrary = () => {
   const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  // Debounce search query - wait 300ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
@@ -137,12 +146,12 @@ const SongLibrary = () => {
   });
 
   const { data: songs, isLoading, refetch } = useQuery({
-    queryKey: ["songs", searchQuery, selectedCategory, selectedLanguage, sortBy],
+    queryKey: ["songs", debouncedSearchQuery, selectedCategory, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select("*");
 
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,tags.ilike.%${searchQuery}%`);
+      if (debouncedSearchQuery) {
+        query = query.or(`title.ilike.%${debouncedSearchQuery}%,tags.ilike.%${debouncedSearchQuery}%`);
       }
 
       if (selectedCategory !== "all") {
