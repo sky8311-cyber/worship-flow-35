@@ -7,6 +7,7 @@ import { Cake, Music, Calendar, Users, Sparkles } from "lucide-react";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useState, useEffect } from "react";
 import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface NotificationItemProps {
   notification: Notification;
@@ -15,6 +16,7 @@ interface NotificationItemProps {
 
 export function NotificationItem({ notification, onRead }: NotificationItemProps) {
   const navigate = useNavigate();
+  const { language } = useTranslation();
   const [showLevelUpDialog, setShowLevelUpDialog] = useState(false);
 
   const isLevelUp = notification.type === "level_up";
@@ -24,6 +26,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       setShowLevelUpDialog(true);
     }
   }, [isLevelUp, notification.is_read]);
+
+  const formatBirthDate = (dateString: string) => {
+    const date = parseLocalDate(dateString);
+    if (language === "ko") {
+      return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+    }
+    return date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  };
 
   const handleClick = () => {
     if (!notification.is_read) {
@@ -129,7 +139,17 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         />
       )}
       <div className="flex-1 min-w-0">
-        {isNewSong ? (
+        {isBirthday ? (
+          <p className="text-sm">
+            <span className="font-semibold">{actorName}</span>{" "}
+            <span className="text-muted-foreground">
+              {notification.message.replace(actorName, "").trim()}
+            </span>
+            {notification.metadata?.birth_date && (
+              <span className="text-muted-foreground"> ({formatBirthDate(notification.metadata.birth_date as string)})</span>
+            )}
+          </p>
+        ) : isNewSong ? (
           <p className="text-sm">
             {actorName && actorName !== "User" && actorName !== "A user" ? (
               <>
