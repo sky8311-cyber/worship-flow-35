@@ -1,43 +1,17 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Calendar, Music, Users, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNotifications } from "@/hooks/useNotifications";
 import { ChatFullScreenOverlay } from "@/components/chat/ChatFullScreenOverlay";
+import { navigationTabs, chatTab } from "@/lib/navigationConfig";
+import type { TranslationPath } from "@/hooks/useTranslation";
 
 export const BottomTabNavigation = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const { unreadCount } = useNotifications();
   const [chatOpen, setChatOpen] = useState(false);
-  
-  const tabs = [
-    {
-      to: "/dashboard",
-      icon: Home,
-      label: t("navigation.home"),
-      match: (path: string) => path === "/dashboard",
-    },
-    {
-      to: "/worship-sets",
-      icon: Calendar,
-      label: t("navigation.worshipSets"),
-      match: (path: string) => path.includes("/worship-sets") || path.includes("/set-builder"),
-    },
-    {
-      to: "/songs",
-      icon: Music,
-      label: t("navigation.songs"),
-      match: (path: string) => path === "/songs" || path === "/favorites",
-    },
-    {
-      to: "/community/search",
-      icon: Users,
-      label: t("navigation.community"),
-      match: (path: string) => path.includes("/community"),
-    },
-  ];
   
   return (
     <>
@@ -48,7 +22,7 @@ export const BottomTabNavigation = () => {
         }}
       >
         <div className="grid grid-cols-5 h-16">
-          {tabs.map((tab, index) => {
+          {navigationTabs.map((tab, index) => {
             const isActive = tab.match(location.pathname);
             const Icon = tab.icon;
             
@@ -64,7 +38,7 @@ export const BottomTabNavigation = () => {
                 )}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium">{tab.label}</span>
+                <span className="text-xs font-medium">{t(tab.labelKey as TranslationPath)}</span>
               </Link>
             );
           })}
@@ -75,14 +49,14 @@ export const BottomTabNavigation = () => {
             className="flex flex-col items-center justify-center gap-1 transition-colors text-muted-foreground hover:text-foreground relative"
           >
             <div className="relative">
-              <MessageCircle className="h-5 w-5" />
+              <chatTab.icon className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
             </div>
-            <span className="text-xs font-medium">{t("navigation.feed")}</span>
+            <span className="text-xs font-medium">{t(chatTab.labelKey as TranslationPath)}</span>
           </button>
         </div>
       </nav>

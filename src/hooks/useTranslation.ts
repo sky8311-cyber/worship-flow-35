@@ -7,7 +7,7 @@ type NestedKeyOf<ObjectType extends object> = {
     : `${Key}`;
 }[keyof ObjectType & (string | number)];
 
-type TranslationPath = NestedKeyOf<TranslationKeys>;
+export type TranslationPath = NestedKeyOf<TranslationKeys>;
 
 export const useTranslation = () => {
   const { language } = useLanguageContext();
