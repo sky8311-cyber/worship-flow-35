@@ -570,6 +570,7 @@ const BandView = () => {
                         {setSong.key && (
                           <Badge variant="default" className="text-sm">
                             {t("bandView.labels.key")}: {setSong.key}
+                            {setSong.key_change_to && ` → ${setSong.key_change_to}`}
                           </Badge>
                         )}
                         {setSong.bpm && (
