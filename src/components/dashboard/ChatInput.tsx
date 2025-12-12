@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, Send, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -11,22 +10,30 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
 
-export function ChatInput() {
+interface ChatInputProps {
+  selectedCommunityId?: string;
+}
+
+export function ChatInput({ selectedCommunityId }: ChatInputProps) {
   const { user, profile } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
-  const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const { data: communitiesData } = useUserCommunities();
   const communities = communitiesData?.communities || [];
 
+  // Use the selected community from parent, or fallback to first community
+  const targetCommunityId = selectedCommunityId || communities?.[0]?.id;
+
   const postMutation = useMutation({
     mutationFn: async () => {
+      if (!targetCommunityId) throw new Error("No community selected");
+      
       const { error } = await supabase.from("community_posts").insert({
-        community_id: selectedCommunity || communities?.[0]?.id,
+        community_id: targetCommunityId,
         author_id: user!.id,
         content: content.trim(),
         image_urls: uploadedImages.length > 0 ? uploadedImages : null,
@@ -37,7 +44,7 @@ export function ChatInput() {
       toast.success(t("socialFeed.postSuccess"));
       setContent("");
       setUploadedImages([]);
-      queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -117,7 +124,7 @@ export function ChatInput() {
         </div>
       )}
 
-      {/* First row: Avatar, community selector, image upload, send button */}
+      {/* First row: Avatar, image upload, send button */}
       <div className="flex items-center justify-between gap-2 px-3 pt-3">
         <div className="flex items-center gap-2">
           {/* Avatar */}
@@ -125,22 +132,6 @@ export function ChatInput() {
             <AvatarImage src={profile?.avatar_url || ""} />
             <AvatarFallback>{profile?.full_name?.charAt(0) || "U"}</AvatarFallback>
           </Avatar>
-
-          {/* Community selector (if multiple) */}
-          {communities.length > 1 && (
-            <Select value={selectedCommunity} onValueChange={setSelectedCommunity}>
-              <SelectTrigger className="w-[120px] h-9 text-xs shrink-0">
-                <SelectValue placeholder={communities[0]?.name?.substring(0, 10) + "..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {communities.map((c: any) => (
-                  <SelectItem key={c.id} value={c.id} className="text-xs">
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
 
           {/* Image upload button */}
           <Button
