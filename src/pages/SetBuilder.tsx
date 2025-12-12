@@ -164,6 +164,39 @@ const SetBuilder = () => {
     enabled: !!user,
   });
 
+  // Check if user is a collaborator for this set
+  const { data: isCollaborator } = useQuery({
+    queryKey: ["set-collaborator-check", id, user?.id],
+    queryFn: async () => {
+      if (!id || !user) return false;
+      const { data } = await supabase
+        .from("set_collaborators")
+        .select("id")
+        .eq("service_set_id", id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  // Check if user is a community leader for the set's community
+  const { data: isCommunityLeaderForSet } = useQuery({
+    queryKey: ["community-leader-check", existingSet?.community_id, user?.id],
+    queryFn: async () => {
+      if (!existingSet?.community_id || !user) return false;
+      const { data } = await supabase
+        .from("community_members")
+        .select("role")
+        .eq("community_id", existingSet.community_id)
+        .eq("user_id", user.id)
+        .eq("role", "community_leader")
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!existingSet?.community_id && !!user,
+  });
+
   // Get church_account_id for the selected community
   const selectedCommunity = userCommunities?.find((c: any) => c.id === formData.community_id);
   const churchAccountId = selectedCommunity?.church_account_id;
@@ -173,22 +206,23 @@ const SetBuilder = () => {
     if (existingSet && user) {
       const isCreator = existingSet.created_by === user.id;
       const isPublished = existingSet.status === 'published';
+      const hasEditPermission = isCreator || isAdmin || isCollaborator || isCommunityLeaderForSet;
       
       // For published sets, redirect non-owners to BandView
-      if (isPublished && !isCreator && !isAdmin) {
+      if (isPublished && !hasEditPermission) {
         navigate(`/band-view/${id}`, { replace: true });
         toast.info("게시된 워십세트를 읽기 전용으로 보고 있습니다");
         return;
       }
       
       // For draft sets, check if user has any permission
-      if (!isPublished && !isCreator && !isAdmin) {
+      if (!isPublished && !hasEditPermission) {
         navigate('/dashboard', { replace: true });
         toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
         return;
       }
     }
-  }, [existingSet, user, isAdmin, navigate, id]);
+  }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, navigate, id]);
 
   // Load form data from existing set with merge strategy
   useEffect(() => {
@@ -291,7 +325,7 @@ const SetBuilder = () => {
       // Phase 2: Permission validation before save
       if (existingSet && user) {
         const isCreator = existingSet.created_by === user.id;
-        if (!isCreator && !isAdmin) {
+        if (!isCreator && !isAdmin && !isCollaborator && !isCommunityLeaderForSet) {
           throw new Error("이 워십세트를 수정할 권한이 없습니다");
         }
       }
