@@ -663,6 +663,91 @@ const SetBuilder = () => {
   const songCount = items.filter(i => i.type === "song").length;
   const componentCount = items.filter(i => i.type === "component").length;
 
+  // Reusable Action Buttons Component
+  const renderActionButtons = (className?: string) => (
+    <div className={`flex items-center justify-center gap-2 flex-wrap ${className || 'mb-4'}`}>
+      {id && canDelete && (
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          className="h-8 gap-1.5" 
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={deleteSetMutation.isPending}
+        >
+          <Trash2 className="w-4 h-4 shrink-0" />
+          <span>{language === "ko" ? "삭제" : "Delete"}</span>
+        </Button>
+      )}
+      
+      {id && (
+        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
+          <Share2 className="w-4 h-4 shrink-0" />
+          <span>팀 링크 복사</span>
+        </Button>
+      )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 gap-1.5"
+        onClick={() => navigate("/templates")}
+      >
+        <FileText className="w-4 h-4 shrink-0" />
+        <span>{language === "ko" ? "템플릿" : "Templates"}</span>
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="h-8 gap-1.5"
+        onClick={() => setShowSaveTemplate(true)}
+      >
+        <Copy className="w-4 h-4 shrink-0" />
+        <span>{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
+      </Button>
+      
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => saveSetMutation.mutate(undefined)}
+              disabled={saveSetMutation.isPending}
+            >
+              <Save className="w-4 h-4 shrink-0" />
+              <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p>{t("tooltips.setBuilder.save")}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              size="sm" 
+              className="h-8"
+              onClick={handlePublishToggle}
+              disabled={saveSetMutation.isPending}
+            >
+              {status === "draft" ? "게시하기" : "게시취소"}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <p>{status === "draft" 
+              ? t("tooltips.setBuilder.publish") 
+              : t("tooltips.setBuilder.unpublish")
+            }</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -701,88 +786,8 @@ const SetBuilder = () => {
           </div>
         </div>
         
-        {/* Action buttons - separate row on mobile */}
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
-          {id && canDelete && (
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              className="h-8 gap-1.5" 
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleteSetMutation.isPending}
-            >
-              <Trash2 className="w-4 h-4 shrink-0" />
-              <span>{language === "ko" ? "삭제" : "Delete"}</span>
-            </Button>
-          )}
-          
-          {id && (
-            <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
-              <Share2 className="w-4 h-4 shrink-0" />
-              <span>팀 링크 복사</span>
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => navigate("/templates")}
-          >
-            <FileText className="w-4 h-4 shrink-0" />
-            <span>{language === "ko" ? "템플릿" : "Templates"}</span>
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => setShowSaveTemplate(true)}
-          >
-            <Copy className="w-4 h-4 shrink-0" />
-            <span>{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
-          </Button>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="h-8 gap-1.5"
-                  onClick={() => saveSetMutation.mutate(undefined)}
-                  disabled={saveSetMutation.isPending}
-                >
-                  <Save className="w-4 h-4 shrink-0" />
-                  <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{t("tooltips.setBuilder.save")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  size="sm" 
-                  className="h-8"
-                  onClick={handlePublishToggle}
-                  disabled={saveSetMutation.isPending}
-                >
-                  {status === "draft" ? "게시하기" : "게시취소"}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{status === "draft" 
-                  ? t("tooltips.setBuilder.publish") 
-                  : t("tooltips.setBuilder.unpublish")
-                }</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        {/* Action Buttons Component */}
+        {renderActionButtons()}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Worship Info */}
@@ -1000,8 +1005,11 @@ const SetBuilder = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
-                    </div>
-                  </div>
+        </div>
+
+        {/* Bottom Action Buttons */}
+        {renderActionButtons("mt-6 pt-6 border-t")}
+      </div>
                 ) : (
                   <>
                     <DndContext
