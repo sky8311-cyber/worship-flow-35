@@ -83,6 +83,13 @@ export function SystemMessage({ type, data, community, createdAt }: SystemMessag
   }
 
   if (type === "birthday") {
+    const birthDateText = data.birth_date
+      ? parseLocalDate(data.birth_date).toLocaleDateString(
+          language === "ko" ? "ko-KR" : "en-US",
+          { month: "long", day: "numeric" }
+        )
+      : null;
+
     return (
       <div className="flex justify-center my-4">
         <div className="inline-flex items-center gap-2 bg-pink-500/10 rounded-full px-4 py-2">
@@ -91,6 +98,9 @@ export function SystemMessage({ type, data, community, createdAt }: SystemMessag
             🎂{" "}
             <span className="font-semibold">{data.full_name}</span>
             {language === "ko" ? "님의 생일입니다!" : "'s birthday!"}
+            {birthDateText && (
+              <span className="text-muted-foreground"> ({birthDateText})</span>
+            )}
           </span>
         </div>
       </div>
