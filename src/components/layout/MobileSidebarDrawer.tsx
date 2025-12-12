@@ -9,6 +9,7 @@ import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSideba
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
 import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
 
 interface MobileSidebarDrawerProps {
   open: boolean;
@@ -18,13 +19,16 @@ interface MobileSidebarDrawerProps {
 export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerProps) {
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
+  
+  const { data: communitiesData } = useUserCommunities();
+  const communityIds = communitiesData?.communityIds || [];
 
   // Close the drawer
   const handleClose = () => {
     onOpenChange(false);
   };
 
-  // Fetch user stats
+  // Fetch user stats (reuses the same query key as Dashboard for caching)
   const { data: userStats } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async () => {
@@ -43,56 +47,37 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
       };
     },
     enabled: !!user,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch joined communities
+  // Build joined communities from shared data
   const { data: joinedCommunities = [] } = useQuery({
-    queryKey: ["joined-communities", user?.id],
+    queryKey: ["joined-communities-sidebar", user?.id, communityIds],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || communityIds.length === 0) return [];
 
-      const { data: memberData } = await supabase
-        .from("community_members")
-        .select("community_id, role")
-        .eq("user_id", user.id);
-
-      if (!memberData || memberData.length === 0) return [];
-
-      const communityIds = memberData.map((m) => m.community_id);
-      const { data: communities } = await supabase
-        .from("worship_communities")
-        .select("*")
-        .in("id", communityIds);
-
-      if (!communities) return [];
-
+      // Batch fetch member counts
       const { data: memberCounts } = await supabase
         .from("community_members")
         .select("community_id")
         .in("community_id", communityIds);
 
-      const countMap = memberCounts?.reduce((acc: Record<string, number>, curr) => {
+      const countMap = (memberCounts || []).reduce((acc: Record<string, number>, curr) => {
         acc[curr.community_id] = (acc[curr.community_id] || 0) + 1;
         return acc;
-      }, {}) || {};
+      }, {});
 
-      return communities.map((c) => {
-        const memberInfo = memberData.find((m) => m.community_id === c.id);
-        return {
-          id: c.id,
-          name: c.name,
-          avatar_url: c.avatar_url,
-          member_count: countMap[c.id] || 0,
-          user_role: memberInfo?.role || "member",
-          leader_id: c.leader_id,
-        };
-      });
+      return (communitiesData?.communities || []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        avatar_url: c.avatar_url,
+        member_count: countMap[c.id] || 0,
+        user_role: communitiesData?.roleMap.get(c.id) || "member",
+        leader_id: c.leader_id,
+      }));
     },
-    enabled: !!user,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    enabled: !!user && communityIds.length > 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch upcoming sets

@@ -17,6 +17,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
 
 interface ServiceSet {
   id: string;
@@ -73,6 +74,9 @@ export function UpcomingEventsWidget({
   const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  
+  const { data: communitiesData } = useUserCommunities();
+  const communityIds = communitiesData?.communityIds || [];
 
   const deleteMutation = useMutation({
     mutationFn: async (setId: string) => {
@@ -198,20 +202,11 @@ export function UpcomingEventsWidget({
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
   };
 
-  // Fetch calendar events
+  // Fetch calendar events using shared community IDs
   const { data: calendarEvents } = useQuery({
-    queryKey: ["calendar-events", user?.id],
+    queryKey: ["calendar-events", user?.id, communityIds],
     queryFn: async () => {
-      if (!user) return [];
-
-      // Get user's communities
-      const { data: memberData } = await supabase
-        .from("community_members")
-        .select("community_id")
-        .eq("user_id", user.id);
-
-      const communityIds = memberData?.map((m) => m.community_id) || [];
-      if (communityIds.length === 0) return [];
+      if (!user || communityIds.length === 0) return [];
 
       // Get upcoming calendar events
       const today = new Date().toISOString().split("T")[0];
@@ -225,7 +220,7 @@ export function UpcomingEventsWidget({
 
       return events || [];
     },
-    enabled: !!user,
+    enabled: !!user && communityIds.length > 0,
   });
 
 

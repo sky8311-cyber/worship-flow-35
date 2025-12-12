@@ -8,36 +8,21 @@ import { ImagePlus, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
+
 export function PostComposer() {
-  const {
-    user,
-    profile
-  } = useAuth();
-  const {
-    t
-  } = useTranslation();
+  const { user, profile } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const {
-    data: communities
-  } = useQuery({
-    queryKey: ["user-communities", user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const {
-        data,
-        error
-      } = await supabase.from("community_members").select("community_id, worship_communities(id, name)").eq("user_id", user.id);
-      if (error) throw error;
-      return data.map(m => m.worship_communities).filter(Boolean);
-    },
-    enabled: !!user
-  });
+  
+  const { data: communitiesData } = useUserCommunities();
+  const communities = communitiesData?.communities || [];
   const postMutation = useMutation({
     mutationFn: async () => {
       const {

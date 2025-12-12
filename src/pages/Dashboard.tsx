@@ -39,6 +39,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -153,21 +154,16 @@ const Dashboard = () => {
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
   };
+  // Use shared community data
+  const { data: communitiesData } = useUserCommunities();
+  const communityIds = communitiesData?.communityIds || [];
+
   // Fetch upcoming worship sets with role-based filtering
   // Show max 4 sets: all drafts (any date) + published (future only)
   const { data: upcomingSets, isLoading } = useQuery({
-    queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity],
+    queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, communityIds],
     queryFn: async () => {
-      if (!user) return [];
-      
-      // Get user's communities
-      const { data: memberData } = await supabase
-        .from("community_members")
-        .select("community_id")
-        .eq("user_id", user.id);
-      
-      const communityIds = memberData?.map(m => m.community_id) || [];
-      if (communityIds.length === 0) return [];
+      if (!user || communityIds.length === 0) return [];
       
       const today = new Date().toISOString().split('T')[0];
       
@@ -195,7 +191,7 @@ const Dashboard = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && communityIds.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -216,30 +212,14 @@ const Dashboard = () => {
     }
   });
 
-  // Fetch joined communities
+  // Build joined communities from shared data
   const {
     data: joinedCommunities
   } = useQuery({
-    queryKey: ["joined-communities", user?.id],
+    queryKey: ["joined-communities", user?.id, communityIds],
     queryFn: async () => {
-      if (!user) return [];
-      const {
-        data: memberData,
-        error
-      } = await supabase.from("community_members").select("community_id, role").eq("user_id", user.id);
-      if (error) throw error;
-      if (!memberData || memberData.length === 0) return [];
-      const communityIds = memberData.map(m => m.community_id);
+      if (!user || communityIds.length === 0) return [];
       
-      // Create a role map for quick lookup
-      const roleMap = new Map(memberData.map(m => [m.community_id, m.role]));
-      
-      const {
-        data: communities,
-        error: communitiesError
-      } = await supabase.from("worship_communities").select("id, name, avatar_url, leader_id").in("id", communityIds);
-      if (communitiesError) throw communitiesError;
-
       // Batch fetch all member counts in one query
       const { data: allMemberCounts } = await supabase
         .from("community_members")
@@ -252,15 +232,15 @@ const Dashboard = () => {
         return acc;
       }, {} as Record<string, number>);
 
-      // Map without N+1 queries
-      const communitiesWithDetails = communities.map(community => ({
+      // Map using shared data without additional queries
+      const communitiesWithDetails = (communitiesData?.communities || []).map(community => ({
         ...community,
         memberCount: countMap[community.id] || 0,
-        userRole: roleMap.get(community.id) || 'member'
+        userRole: communitiesData?.roleMap.get(community.id) || 'member'
       }));
       return communitiesWithDetails;
     },
-    enabled: !!user
+    enabled: !!user && communityIds.length > 0
   });
 
   // Fetch songs for worship sets in dashboard
