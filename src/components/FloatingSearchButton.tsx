@@ -50,7 +50,7 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     <div
       ref={containerRef}
       className={cn(
-        "fixed bottom-6 left-6 z-40 lg:hidden transition-all duration-300 ease-out",
+        "fixed bottom-24 left-4 z-40 lg:hidden transition-all duration-300 ease-out",
         isExpanded ? "left-4 right-4" : ""
       )}
     >
