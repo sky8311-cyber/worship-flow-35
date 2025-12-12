@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2, Check, Save } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
+import { parseLocalDate } from "@/lib/countdownHelper";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -26,7 +27,7 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish }: Wo
   
   
   const dateLocale = language === "ko" ? ko : enUS;
-  const formattedDate = format(new Date(set.date), language === "ko" ? "yyyy.MM.dd (EEE)" : "EEE, MMM d, yyyy", { locale: dateLocale });
+  const formattedDate = format(parseLocalDate(set.date), language === "ko" ? "yyyy.MM.dd (EEE)" : "EEE, MMM d, yyyy", { locale: dateLocale });
   
   const handleCardClick = () => {
     navigate(canManage ? `/set-builder/${set.id}` : `/band-view/${set.id}`);
