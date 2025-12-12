@@ -1075,7 +1075,7 @@ const SetBuilder = () => {
             </Card>
 
             {/* Bottom Action Buttons */}
-            {renderActionButtons("mt-6 pt-6 border-t")}
+            {renderActionButtons("mt-6 pt-6 border-t mb-8")}
 
             {id && user && existingSet && (
               <SetCollaborators

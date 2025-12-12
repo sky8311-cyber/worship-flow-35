@@ -92,6 +92,14 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     }
   };
 
+  const handleKeyChangeToChange = (keyChangeTo: string) => {
+    if (keyChangeTo === "none") {
+      onUpdate(index, { key_change_to: null });
+    } else {
+      onUpdate(index, { key_change_to: keyChangeTo });
+    }
+  };
+
   const handleEditDialogClose = () => {
     setShowEditDialog(false);
     queryClient.invalidateQueries({ queryKey: ["set-songs"] });
@@ -210,24 +218,47 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                 </div>
                 
                 {/* Performance Key Override - the actual key to play */}
-                <div>
-                  <label className="text-xs text-muted-foreground">실제 연주키</label>
-                  <Select 
-                    value={setSong.key || "none"} 
-                    onValueChange={handlePerformanceKeyChange}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="선택 안함" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">선택 안함</SelectItem>
-                      {MUSICAL_KEYS.map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {key}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <label className="text-xs text-muted-foreground">실제 연주키</label>
+                    <Select 
+                      value={setSong.key || "none"} 
+                      onValueChange={handlePerformanceKeyChange}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">-</SelectItem>
+                        {MUSICAL_KEYS.map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {key}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <span className="text-muted-foreground mb-2">→</span>
+                  <div className="flex-1">
+                    <label className="text-xs text-muted-foreground">전조 키</label>
+                    <Select 
+                      value={setSong.key_change_to || "none"} 
+                      onValueChange={handleKeyChangeToChange}
+                      disabled={!setSong.key}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">-</SelectItem>
+                        {MUSICAL_KEYS.map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {key}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>

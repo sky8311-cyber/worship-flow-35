@@ -1078,6 +1078,7 @@ export type Database = {
           energy_level: number | null
           id: string
           key: string | null
+          key_change_to: string | null
           lyrics: string | null
           override_score_file_url: string | null
           override_youtube_url: string | null
@@ -1093,6 +1094,7 @@ export type Database = {
           energy_level?: number | null
           id?: string
           key?: string | null
+          key_change_to?: string | null
           lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
@@ -1108,6 +1110,7 @@ export type Database = {
           energy_level?: number | null
           id?: string
           key?: string | null
+          key_change_to?: string | null
           lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
