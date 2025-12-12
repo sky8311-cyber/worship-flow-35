@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { parseLocalDate } from "@/lib/countdownHelper";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -215,7 +216,7 @@ export default function WorshipSets() {
                     className="cursor-pointer hover:bg-accent"
                     onClick={() => navigate(canManage(set) ? `/set-builder/${set.id}` : `/band-view/${set.id}`)}
                   >
-                    <TableCell>{format(new Date(set.date), "yyyy-MM-dd")}</TableCell>
+                    <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
                     <TableCell>{set.worship_leader || "-"}</TableCell>
                     
