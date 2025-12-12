@@ -72,12 +72,24 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     return variations;
   }, [song]);
 
-  const handleKeyVariationChange = (key: string) => {
-    const variation = keyVariations.find(v => v.key === key);
+  // Standard musical keys for performance key override
+  const MUSICAL_KEYS = [
+    "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"
+  ];
+
+  const handleKeyVariationChange = (selectedKey: string) => {
+    const variation = keyVariations.find(v => v.key === selectedKey);
     onUpdate(index, { 
-      key, 
       override_score_file_url: variation?.scoreUrl || null 
     });
+  };
+
+  const handlePerformanceKeyChange = (performanceKey: string) => {
+    if (performanceKey === "none") {
+      onUpdate(index, { key: null });
+    } else {
+      onUpdate(index, { key: performanceKey });
+    }
   };
 
   const handleEditDialogClose = () => {
@@ -166,15 +178,16 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Score Key Selection - which score file to use */}
                 <div>
-                  <label className="text-xs text-muted-foreground">키</label>
+                  <label className="text-xs text-muted-foreground">악보 키</label>
                   {keyVariations.length > 0 ? (
                     <Select 
-                      value={setSong.key || ""} 
+                      value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""} 
                       onValueChange={handleKeyVariationChange}
                     >
                       <SelectTrigger className="mt-1">
-                        <SelectValue placeholder={song?.default_key || "키 선택"} />
+                        <SelectValue placeholder={song?.default_key || "악보 선택"} />
                       </SelectTrigger>
                       <SelectContent>
                         {keyVariations.map((variation) => (
@@ -190,13 +203,31 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                       </SelectContent>
                     </Select>
                   ) : (
-                    <Input
-                      value={setSong.key || ""}
-                      onChange={(e) => onUpdate(index, { key: e.target.value })}
-                      placeholder={song?.default_key || "키 입력"}
-                      className="mt-1"
-                    />
+                    <div className="mt-1 text-sm text-muted-foreground py-2">
+                      {song?.default_key || "-"}
+                    </div>
                   )}
+                </div>
+                
+                {/* Performance Key Override - the actual key to play */}
+                <div>
+                  <label className="text-xs text-muted-foreground">실제 연주키</label>
+                  <Select 
+                    value={setSong.key || "none"} 
+                    onValueChange={handlePerformanceKeyChange}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="선택 안함" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">선택 안함</SelectItem>
+                      {MUSICAL_KEYS.map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {key}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>
