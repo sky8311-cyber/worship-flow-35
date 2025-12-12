@@ -41,8 +41,8 @@ interface SongTableProps {
   onColumnFilter?: (column: string, value: string) => void;
   columnSort?: { column: string | null; direction: 'asc' | 'desc' | null };
   onColumnSort?: (column: string, direction: 'asc' | 'desc') => void;
-  cartSongs?: Set<string>;
-  onToggleCart?: (songId: string) => void;
+  isInCart?: (songId: string) => boolean;
+  onToggleCart?: (song: any) => void;
   favoriteIds?: Set<string>;
   favoriteCounts?: Map<string, number>;
   usageCounts?: Map<string, number>;
@@ -67,7 +67,7 @@ export const SongTable = ({
   onColumnFilter,
   columnSort = { column: null, direction: null },
   onColumnSort,
-  cartSongs = new Set(),
+  isInCart,
   onToggleCart,
   favoriteIds = new Set(),
   favoriteCounts = new Map(),
@@ -400,11 +400,11 @@ export const SongTable = ({
                          )}
                          {!selectorMode && onToggleCart && (
                            <Button
-                             variant={cartSongs.has(song.id) ? "default" : "ghost"}
+                             variant={isInCart?.(song.id) ? "default" : "ghost"}
                              size="icon"
-                             onClick={() => onToggleCart(song.id)}
+                             onClick={() => onToggleCart(song)}
                              className="h-8 w-8"
-                             title={cartSongs.has(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                             title={isInCart?.(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
                            >
                              <Plus className="h-4 w-4" />
                            </Button>

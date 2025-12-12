@@ -1,0 +1,108 @@
+import { useState } from "react";
+import { ShoppingCart, X, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useSongCart } from "@/hooks/useSongCart";
+import { useTranslation } from "@/hooks/useTranslation";
+import { AddToSetDialog } from "@/components/AddToSetDialog";
+
+export const SongCartPopover = () => {
+  const { cartItems, removeFromCart, clearCart, cartCount } = useSongCart();
+  const { t } = useTranslation();
+  const [isAddToSetOpen, setIsAddToSetOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  if (cartCount === 0) return null;
+
+  const handleAddToSetSuccess = () => {
+    clearCart();
+    setIsAddToSetOpen(false);
+    setPopoverOpen(false);
+  };
+
+  return (
+    <>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" className="relative">
+            <ShoppingCart className="h-5 w-5" />
+            <Badge 
+              className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs font-bold"
+              variant="destructive"
+            >
+              {cartCount > 99 ? "99+" : cartCount}
+            </Badge>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-80 p-0">
+          <div className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-sm">
+                {t("songLibrary.cartTitle")} ({cartCount})
+              </h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                onClick={clearCart}
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                {t("songLibrary.clearCart")}
+              </Button>
+            </div>
+          </div>
+          <Separator />
+          <ScrollArea className="max-h-64">
+            <div className="p-2">
+              {cartItems.map((song) => (
+                <div
+                  key={song.id}
+                  className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group"
+                >
+                  <div className="flex-1 min-w-0 mr-2">
+                    <p className="text-sm font-medium truncate">{song.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {song.artist || "-"} {song.default_key && `• ${song.default_key}`}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeFromCart(song.id)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          <Separator />
+          <div className="p-3">
+            <Button 
+              className="w-full" 
+              onClick={() => setIsAddToSetOpen(true)}
+            >
+              {t("songLibrary.addToSet")}
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <AddToSetDialog
+        open={isAddToSetOpen}
+        onOpenChange={setIsAddToSetOpen}
+        songs={cartItems.map(item => ({
+          id: item.id,
+          title: item.title,
+          artist: item.artist,
+          default_key: item.default_key
+        }))}
+        onSuccess={handleAddToSetSuccess}
+      />
+    </>
+  );
+};
