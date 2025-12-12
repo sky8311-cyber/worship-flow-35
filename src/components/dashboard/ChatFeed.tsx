@@ -8,6 +8,7 @@ import { ChatBubble } from "./ChatBubble";
 import { ChatInput } from "./ChatInput";
 import { SystemMessage } from "./SystemMessage";
 import { ProfileDialog } from "./ProfileDialog";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
 
 interface Author {
   id: string;
@@ -43,24 +44,25 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [selectedProfileStats, setSelectedProfileStats] = useState<any>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  const { data: communitiesData } = useUserCommunities();
+  const communityIds = communitiesData?.communityIds || [];
 
   const { data: feedItems, isLoading } = useQuery({
-    queryKey: ["unified-community-feed", user?.id],
+    queryKey: ["unified-community-feed", user?.id, communityIds],
     queryFn: async () => {
-      if (!user) return [];
-
-      // Get user's communities
-      const { data: memberData } = await supabase
-        .from("community_members")
-        .select("community_id")
-        .eq("user_id", user.id);
-
-      const communityIds = memberData?.map((m) => m.community_id) || [];
-
-      if (communityIds.length === 0) return [];
+      if (!user || communityIds.length === 0) return [];
 
       // Calculate date range for birthdays this week
       const today = new Date();
+
+      // First, fetch community member user IDs (needed for birthday query)
+      const { data: communityMemberIds } = await supabase
+        .from("community_members")
+        .select("user_id")
+        .in("community_id", communityIds);
+      
+      const memberUserIds = communityMemberIds?.map(m => m.user_id) || [];
 
       // Fetch all post types in parallel with simple selects
       const [postsData, setsData, eventsData, birthdayData] = await Promise.all([
@@ -90,17 +92,13 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
           .limit(50),
 
         // Birthday profiles - members with birthdays this week
-        supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, birth_date")
-          .not("birth_date", "is", null)
-          .in("id", 
-            (await supabase
-              .from("community_members")
-              .select("user_id")
-              .in("community_id", communityIds)
-            ).data?.map(m => m.user_id) || []
-          ),
+        memberUserIds.length > 0
+          ? supabase
+              .from("profiles")
+              .select("id, full_name, avatar_url, birth_date")
+              .not("birth_date", "is", null)
+              .in("id", memberUserIds)
+          : { data: [], error: null },
       ]);
 
       // Explicit error checking
