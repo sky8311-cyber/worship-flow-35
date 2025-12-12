@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useSongCart } from "@/hooks/useSongCart";
+import { useSongCart } from "@/contexts/SongCartContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 
