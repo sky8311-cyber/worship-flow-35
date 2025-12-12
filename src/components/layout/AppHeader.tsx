@@ -125,10 +125,10 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
               <MessageCircle className="h-5 w-5" />
             </Button>
             
-            {/* Navigation Hamburger Menu - Mobile/Tablet only */}
+            {/* Navigation Hamburger Menu - Desktop only */}
             <Sheet open={navSheetOpen} onOpenChange={setNavSheetOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden">
+                <Button variant="ghost" size="icon" className="hidden lg:flex">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
