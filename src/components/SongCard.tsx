@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ interface SongCardProps {
   selectedScoreUrl?: string;
 }
 
-export const SongCard = ({ 
+export const SongCard = memo(function SongCard({ 
   song, 
   onEdit, 
   onDelete,
@@ -70,7 +70,7 @@ export const SongCard = ({
   onSelectForSet,
   selectedScoreKey,
   selectedScoreUrl
-}: SongCardProps) => {
+}: SongCardProps) {
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
@@ -324,4 +324,4 @@ export const SongCard = ({
       />
     </>
   );
-};
+});
