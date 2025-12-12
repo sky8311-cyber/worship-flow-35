@@ -59,8 +59,8 @@ const SongLibrary = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const searchSentinelRef = useRef<HTMLDivElement>(null);
   
-  // Use global song cart
-  const { cartItems, toggleCart, isInCart, clearCart, cartCount } = useSongCart();
+  // Use global song cart - use cartIds Set for O(1) lookups
+  const { cartItems, cartIds, toggleCart, clearCart, cartCount } = useSongCart();
 
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -653,7 +653,7 @@ const SongLibrary = () => {
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
               onColumnSort={handleColumnSort}
-              isInCart={isWorshipLeader ? isInCart : undefined}
+              isInCart={isWorshipLeader ? (id: string) => cartIds.has(id) : undefined}
               onToggleCart={isWorshipLeader ? (song: any) => handleToggleCart(song) : undefined}
               favoriteIds={userFavorites || new Set()}
               favoriteCounts={favoriteCounts || new Map()}
@@ -670,7 +670,7 @@ const SongLibrary = () => {
                   selectionMode={selectionMode}
                   isSelected={selectedSongIds.has(song.id)}
                   onToggleSelection={handleToggleSelection}
-                  inCart={isWorshipLeader ? isInCart(song.id) : false}
+                  inCart={isWorshipLeader ? cartIds.has(song.id) : false}
                   onToggleCart={isWorshipLeader ? () => handleToggleCart(song) : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
                   favoriteCount={favoriteCounts?.get(song.id) || 0}

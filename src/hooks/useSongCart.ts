@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 export interface CartSong {
   id: string;
@@ -49,6 +49,9 @@ export const useSongCart = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
+  // Memoized Set for O(1) lookups instead of O(n) Array.some()
+  const cartIds = useMemo(() => new Set(cartItems.map(item => item.id)), [cartItems]);
+
   const addToCart = useCallback((song: { id: string; title: string; artist?: string | null; default_key?: string | null }) => {
     setCartItems((prev) => {
       if (prev.some((item) => item.id === song.id)) {
@@ -86,14 +89,16 @@ export const useSongCart = () => {
     setCartItems([]);
   }, []);
 
+  // Keep isInCart for backwards compatibility, now uses O(1) Set lookup
   const isInCart = useCallback((songId: string) => {
-    return cartItems.some((item) => item.id === songId);
-  }, [cartItems]);
+    return cartIds.has(songId);
+  }, [cartIds]);
 
   const cartCount = cartItems.length;
 
   return {
     cartItems,
+    cartIds,  // Export Set for direct O(1) lookups
     addToCart,
     removeFromCart,
     toggleCart,
