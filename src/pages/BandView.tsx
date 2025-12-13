@@ -121,13 +121,29 @@ const BandView = () => {
         .from("set_songs")
         .select(`
           *,
-          songs(*),
-          song_scores:songs(
-            song_scores(*)
-          )
+          songs(*)
         `)
         .eq("service_set_id", id)
         .order("position", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  // Separate query for song scores to avoid nested alias issues with multi-page scores
+  const songIds = setSongs?.map((s: any) => s.song_id) || [];
+  const { data: allSongScores } = useQuery({
+    queryKey: ["band-view-song-scores", id, songIds],
+    enabled: !!setSongs && songIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("song_scores")
+        .select("*")
+        .in("song_id", songIds)
+        .order("page_number", { ascending: true });
 
       if (error) throw error;
       return data || [];
@@ -236,30 +252,22 @@ const BandView = () => {
   ].sort((a, b) => a.position - b.position);
 
   // Helper function to get score files with fallback to any available key
-  // Helper function to get score files with fallback to any available key
-  const getScoreFilesWithFallback = (setSong: any, selectedKey: string) => {
-    // The data structure from the query is: setSong.song_scores.song_scores (nested)
-    // setSong.song_scores is from the alias, .song_scores inside is the actual array
-    const allSongScores = setSong?.song_scores?.song_scores || [];
-    
-    console.log('Score debug:', { 
-      songTitle: setSong?.songs?.title,
-      selectedKey, 
-      allSongScores,
-      rawSongScores: setSong?.song_scores
-    });
+  // Uses the separate allSongScores query for reliable multi-page score access
+  const getScoreFilesWithFallback = (songId: string, selectedKey: string) => {
+    // Filter scores for this specific song from the separate query
+    const songScores = allSongScores?.filter((s: any) => s.song_id === songId) || [];
     
     // First try exact key match
-    let scoreFiles = allSongScores
+    let scoreFiles = songScores
       .filter((score: any) => score.key === selectedKey)
       .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
     
     let scoreKeyUsed = selectedKey;
     
     // If no exact match, fallback to first available key's scores
-    if (scoreFiles.length === 0 && allSongScores.length > 0) {
-      scoreKeyUsed = allSongScores[0]?.key;
-      scoreFiles = allSongScores
+    if (scoreFiles.length === 0 && songScores.length > 0) {
+      scoreKeyUsed = songScores[0]?.key;
+      scoreFiles = songScores
         .filter((s: any) => s.key === scoreKeyUsed)
         .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
     }
@@ -279,7 +287,7 @@ const BandView = () => {
 
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
-      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong, setSong.key);
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, setSong.key);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
@@ -306,7 +314,7 @@ const BandView = () => {
     });
 
     return scores;
-  }, [setSongs]);
+  }, [setSongs, allSongScores]);
 
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
@@ -560,7 +568,7 @@ const BandView = () => {
             const videoId = getYouTubeVideoId(youtubeUrl);
             
             // Get score files for the selected key with fallback
-            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong, setSong.key);
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, setSong.key);
 
             // Fallback to default score_file_url if no key-specific scores at all
             const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;

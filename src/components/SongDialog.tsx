@@ -646,10 +646,10 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             onChange={async (e) => {
               const files = e.target.files;
               if (files && files.length > 0) {
-                // Process files sequentially to avoid race conditions
-                for (const file of Array.from(files)) {
-                  await onFileUpload(file, index);
-                }
+                // Process all files in parallel for speed
+                await Promise.all(
+                  Array.from(files).map(file => onFileUpload(file, index))
+                );
               }
             }}
             accept=".pdf,.jpg,.jpeg,.png,.webp"
