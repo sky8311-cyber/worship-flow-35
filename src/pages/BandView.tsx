@@ -235,6 +235,28 @@ const BandView = () => {
     })),
   ].sort((a, b) => a.position - b.position);
 
+  // Helper function to get score files with fallback to any available key
+  const getScoreFilesWithFallback = (song: any, selectedKey: string) => {
+    const allSongScores = song?.song_scores?.song_scores || [];
+    
+    // First try exact key match
+    let scoreFiles = allSongScores
+      .filter((score: any) => score.key === selectedKey)
+      .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+    
+    let scoreKeyUsed = selectedKey;
+    
+    // If no exact match, fallback to first available key's scores
+    if (scoreFiles.length === 0 && allSongScores.length > 0) {
+      scoreKeyUsed = allSongScores[0]?.key;
+      scoreFiles = allSongScores
+        .filter((s: any) => s.key === scoreKeyUsed)
+        .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+    }
+    
+    return { scoreFiles, scoreKeyUsed, isUsingFallback: scoreKeyUsed !== selectedKey && scoreFiles.length > 0 };
+  };
+
   // Collect all scores for fullscreen viewer
   const allScores = useMemo(() => {
     const scores: Array<{
@@ -247,15 +269,13 @@ const BandView = () => {
 
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
-      const scoreFiles = song?.song_scores?.song_scores?.filter(
-        (score: any) => score.key === setSong.key
-      ).sort((a: any, b: any) => (a.position || 0) - (b.position || 0)) || [];
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(song, setSong.key);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
           scores.push({
             songTitle: song?.title || "",
-            songKey: setSong.key || "",
+            songKey: scoreKeyUsed || "",
             imageUrl: score.file_url,
             position: setSong.position,
             pageNumber: idx + 1,
@@ -529,12 +549,10 @@ const BandView = () => {
             const youtubeUrl = setSong.override_youtube_url || song?.youtube_url;
             const videoId = getYouTubeVideoId(youtubeUrl);
             
-            // Get score files for the selected key
-            const scoreFiles = song?.song_scores?.song_scores?.filter(
-              (score: any) => score.key === setSong.key
-            ).sort((a: any, b: any) => (a.position || 0) - (b.position || 0)) || [];
+            // Get score files for the selected key with fallback
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(song, setSong.key);
 
-            // Fallback to default score_file_url if no key-specific scores
+            // Fallback to default score_file_url if no key-specific scores at all
             const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
 
             return (
@@ -644,9 +662,16 @@ const BandView = () => {
                   {/* Embedded Score Images */}
                   {scoreFiles.length > 0 ? (
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-foreground">
-                        {t("bandView.scoreForKey", { key: setSong.key })}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">
+                          {t("bandView.scoreForKey", { key: scoreKeyUsed })}
+                        </p>
+                        {isUsingFallback && (
+                          <Badge variant="outline" className="text-xs text-amber-600 border-amber-400 bg-amber-50 dark:bg-amber-900/20">
+                            {language === "ko" ? `선택된 키: ${setSong.key}` : `Selected: ${setSong.key}`}
+                          </Badge>
+                        )}
+                      </div>
                       <div className="grid grid-cols-1 gap-3">
                         {scoreFiles.map((score: any, idx: number) => (
                           <div key={score.id} className="border rounded-lg overflow-hidden bg-white">
