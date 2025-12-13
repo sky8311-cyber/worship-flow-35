@@ -112,6 +112,14 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     }
   }, [song, open]);
 
+  // Sync formData.youtube_url with first youtubeLink for backward compatibility
+  useEffect(() => {
+    const firstUrl = youtubeLinks[0]?.url || "";
+    if (formData.youtube_url !== firstUrl) {
+      setFormData(prev => ({ ...prev, youtube_url: firstUrl }));
+    }
+  }, [youtubeLinks]);
+
   const loadYoutubeLinks = async (songId: string) => {
     try {
       const { data, error } = await supabase
