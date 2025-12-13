@@ -236,13 +236,23 @@ const BandView = () => {
   ].sort((a, b) => a.position - b.position);
 
   // Helper function to get score files with fallback to any available key
-  const getScoreFilesWithFallback = (song: any, selectedKey: string) => {
-    const allSongScores = song?.song_scores?.song_scores || [];
+  // Helper function to get score files with fallback to any available key
+  const getScoreFilesWithFallback = (setSong: any, selectedKey: string) => {
+    // The data structure from the query is: setSong.song_scores.song_scores (nested)
+    // setSong.song_scores is from the alias, .song_scores inside is the actual array
+    const allSongScores = setSong?.song_scores?.song_scores || [];
+    
+    console.log('Score debug:', { 
+      songTitle: setSong?.songs?.title,
+      selectedKey, 
+      allSongScores,
+      rawSongScores: setSong?.song_scores
+    });
     
     // First try exact key match
     let scoreFiles = allSongScores
       .filter((score: any) => score.key === selectedKey)
-      .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+      .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
     
     let scoreKeyUsed = selectedKey;
     
@@ -251,7 +261,7 @@ const BandView = () => {
       scoreKeyUsed = allSongScores[0]?.key;
       scoreFiles = allSongScores
         .filter((s: any) => s.key === scoreKeyUsed)
-        .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+        .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
     }
     
     return { scoreFiles, scoreKeyUsed, isUsingFallback: scoreKeyUsed !== selectedKey && scoreFiles.length > 0 };
@@ -269,7 +279,7 @@ const BandView = () => {
 
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
-      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(song, setSong.key);
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong, setSong.key);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
@@ -550,7 +560,7 @@ const BandView = () => {
             const videoId = getYouTubeVideoId(youtubeUrl);
             
             // Get score files for the selected key with fallback
-            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(song, setSong.key);
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong, setSong.key);
 
             // Fallback to default score_file_url if no key-specific scores at all
             const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
