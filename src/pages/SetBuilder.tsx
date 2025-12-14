@@ -437,6 +437,7 @@ const SetBuilder = () => {
             song_id: item.data.song_id || item.data.song?.id,
             position,
             key: item.data.key || item.data.song?.default_key,
+            key_change_to: item.data.key_change_to || null,
             custom_notes: item.data.custom_notes || "",
             override_score_file_url: item.data.override_score_file_url || null,
             override_youtube_url: item.data.override_youtube_url || null,
