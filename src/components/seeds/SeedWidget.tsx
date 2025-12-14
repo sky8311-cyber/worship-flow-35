@@ -56,14 +56,15 @@ export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
   });
 
   // Default to Level 1 with 0 seeds if no data
-  const defaultData = {
-    totalSeeds: 0,
-    currentLevel: { level: 1, name_ko: '새싹', name_en: 'Seedling', emoji: '🌱', min_seeds: 0, max_seeds: 99, badge_color: '#a3e635' },
-    nextLevel: { level: 2, name_ko: '새순', name_en: 'Sprout', min_seeds: 100, emoji: '🌿', badge_color: '#84cc16' },
-    progress: 0
+  const defaultLevel = { level: 1, name_ko: '새싹', name_en: 'Seedling', emoji: '🌱', min_seeds: 0, max_seeds: 99, badge_color: '#a3e635' };
+  const defaultNextLevel = { level: 2, name_ko: '새순', name_en: 'Sprout', min_seeds: 100, emoji: '🌿', badge_color: '#84cc16' };
+  
+  const displayData = {
+    totalSeeds: seedData?.totalSeeds ?? 0,
+    currentLevel: seedData?.currentLevel ?? defaultLevel,
+    nextLevel: seedData?.nextLevel ?? defaultNextLevel,
+    progress: seedData?.progress ?? 0
   };
-
-  const displayData = seedData || defaultData;
 
   const handleNavigate = () => {
     if (onNavigate) {
