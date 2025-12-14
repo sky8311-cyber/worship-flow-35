@@ -86,14 +86,12 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
     queryFn: async () => {
       if (!user) return [];
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
 
       let query = supabase
         .from("service_sets")
         .select("*")
-        .gte("date", thirtyDaysAgoStr)
+        .gte("date", today)
         .order("date", { ascending: true });
 
       if (!isAdmin) {
