@@ -1954,6 +1954,24 @@ export type Database = {
           song_id: string
         }[]
       }
+      get_public_worship_set: {
+        Args: { share_token: string }
+        Returns: {
+          band_name: string
+          community_id: string
+          community_name: string
+          date: string
+          id: string
+          notes: string
+          scripture_reference: string
+          service_name: string
+          service_time: string
+          target_audience: string
+          theme: string
+          worship_duration: number
+          worship_leader: string
+        }[]
+      }
       get_song_usage_sets: {
         Args: { p_song_id: string }
         Returns: {
