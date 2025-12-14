@@ -224,9 +224,13 @@ export function UpcomingEventsWidget({
   });
 
 
+  // Filter sets to show only future events (safeguard)
+  const today = new Date().toISOString().split("T")[0];
+  const futureSets = sets?.filter(set => set.date >= today) || [];
+
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [
-    ...(sets?.map((set: any) => ({
+    ...futureSets.map((set: any) => ({
       id: set.id,
       type: "service_set" as const,
       date: set.date,
@@ -237,7 +241,7 @@ export function UpcomingEventsWidget({
       badgeLabel: set.status === "published" ? "게시됨" : "임시저장",
       created_by: set.created_by,
       status: set.status,
-    })) || []),
+    })),
     ...(calendarEvents?.map((event) => {
       const iconMap = {
         rehearsal: <Music className="w-4 h-4" />,
