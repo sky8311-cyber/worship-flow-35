@@ -16,6 +16,9 @@ export interface Notification {
   metadata: any;
 }
 
+// Chat-related notification types
+const CHAT_NOTIFICATION_TYPES = ['post_like', 'post_comment', 'new_member', 'invitation_accepted', 'birthday'];
+
 export function useNotifications() {
   const { user, isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
@@ -43,6 +46,11 @@ export function useNotifications() {
 
   // Count unread notifications
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+  
+  // Count unread chat notifications specifically
+  const chatUnreadCount = notifications.filter(
+    (n) => !n.is_read && CHAT_NOTIFICATION_TYPES.includes(n.type)
+  ).length;
 
   // Mark notification as read
   const markAsReadMutation = useMutation({
@@ -69,6 +77,30 @@ export function useNotifications() {
         .update({ is_read: true })
         .eq("user_id", user.id)
         .eq("is_read", false);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  // Mark chat-related notifications as read
+  const markChatNotificationsAsReadMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) return;
+
+      const unreadChatNotifications = notifications.filter(
+        (n) => !n.is_read && CHAT_NOTIFICATION_TYPES.includes(n.type)
+      );
+
+      if (unreadChatNotifications.length === 0) return;
+
+      const ids = unreadChatNotifications.map((n) => n.id);
+      const { error } = await supabase
+        .from("notifications")
+        .update({ is_read: true })
+        .in("id", ids);
 
       if (error) throw error;
     },
@@ -105,8 +137,10 @@ export function useNotifications() {
   return {
     notifications,
     unreadCount,
+    chatUnreadCount,
     isLoading,
     markAsRead: markAsReadMutation.mutate,
     markAllAsRead: markAllAsReadMutation.mutate,
+    markChatNotificationsAsRead: markChatNotificationsAsReadMutation.mutate,
   };
 }

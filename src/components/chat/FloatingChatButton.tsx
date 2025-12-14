@@ -9,7 +9,7 @@ interface FloatingChatButtonProps {
 }
 
 export function FloatingChatButton({ onClick, isOpen }: FloatingChatButtonProps) {
-  const { unreadCount } = useNotifications();
+  const { chatUnreadCount } = useNotifications();
 
   return (
     <Button
@@ -23,9 +23,9 @@ export function FloatingChatButton({ onClick, isOpen }: FloatingChatButtonProps)
       )}
     >
       <MessageCircle className="h-6 w-6" />
-      {unreadCount > 0 && (
+      {chatUnreadCount > 0 && (
         <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold text-destructive-foreground">
-          {unreadCount > 99 ? "99+" : unreadCount}
+          {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
         </span>
       )}
     </Button>
