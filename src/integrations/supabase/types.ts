@@ -878,6 +878,8 @@ export type Database = {
           id: string
           is_public: boolean | null
           notes: string | null
+          public_share_enabled: boolean | null
+          public_share_token: string | null
           scripture_reference: string | null
           service_name: string
           service_time: string | null
@@ -898,6 +900,8 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           notes?: string | null
+          public_share_enabled?: boolean | null
+          public_share_token?: string | null
           scripture_reference?: string | null
           service_name: string
           service_time?: string | null
@@ -918,6 +922,8 @@ export type Database = {
           id?: string
           is_public?: boolean | null
           notes?: string | null
+          public_share_enabled?: boolean | null
+          public_share_token?: string | null
           scripture_reference?: string | null
           service_name?: string
           service_time?: string | null
