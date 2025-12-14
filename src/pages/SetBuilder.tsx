@@ -1155,9 +1155,9 @@ const SetBuilder = () => {
           open={showShareDialog}
           onOpenChange={setShowShareDialog}
           setId={id}
-          publicShareToken={(serviceSet as any)?.public_share_token || null}
-          publicShareEnabled={(serviceSet as any)?.public_share_enabled || false}
-          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["worship-set", id] })}
+          publicShareToken={(existingSet as any)?.public_share_token || null}
+          publicShareEnabled={(existingSet as any)?.public_share_enabled || false}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["service-set", id] })}
         />
       )}
     </AppLayout>
