@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SetImportDialog } from "@/components/SetImportDialog";
 import { SongDialog } from "@/components/SongDialog";
+import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
 import logoDesktop from "@/assets/kworship-logo-desktop.png";
 import { getCountdown } from "@/lib/countdownHelper";
@@ -63,6 +64,8 @@ const Dashboard = () => {
   const [importSetOpen, setImportSetOpen] = useState(false);
   const [addSongOpen, setAddSongOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
+  const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
@@ -118,12 +121,11 @@ const Dashboard = () => {
     publishMutation.mutate({ id: set.id, status: set.status });
   };
 
-  const handleShareLink = async (set: any, e: React.MouseEvent) => {
+  const handleShareLink = (set: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const bandViewUrl = `${window.location.origin}/band-view/${set.id}`;
-    await navigator.clipboard.writeText(bandViewUrl);
-    toast.success("링크가 복사되었습니다");
+    setSelectedSetForShare(set);
+    setShareLinkDialogOpen(true);
   };
 
   const handleDelete = async (setId: string, setName: string, e: React.MouseEvent) => {
@@ -482,7 +484,7 @@ const Dashboard = () => {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
                                     <LinkIcon className="w-4 h-4 mr-2" />
-                                    링크 복사
+                                    링크 공유
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={(e) => handleDelete(set.id, set.service_name, e)}
@@ -656,7 +658,7 @@ const Dashboard = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
                                   <LinkIcon className="mr-2 h-4 w-4" />
-                                  링크 복사
+                                  링크 공유
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
                                   onClick={(e) => handleDelete(set.id, set.service_name, e)}
@@ -695,6 +697,19 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
+      {/* Share Link Dialog */}
+      {selectedSetForShare && (
+        <ShareLinkDialog
+          open={shareLinkDialogOpen}
+          onOpenChange={setShareLinkDialogOpen}
+          setId={selectedSetForShare.id}
+          publicShareToken={selectedSetForShare.public_share_token}
+          publicShareEnabled={selectedSetForShare.public_share_enabled || false}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+          }}
+        />
+      )}
     </AppLayout>;
 };
 export default Dashboard;
