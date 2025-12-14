@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ interface AppHeaderProps {
 
 export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderProps) => {
   const { isAdmin, signOut, profile, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
-  const { unreadCount } = useNotifications();
+  const { unreadCount, markAllAsRead } = useNotifications();
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const { isSubscriptionActive } = useChurchSubscription();
@@ -46,6 +46,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navSheetOpen, setNavSheetOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  
+  // Auto-mark all notifications as read when panel opens
+  useEffect(() => {
+    if (notificationOpen && unreadCount > 0) {
+      markAllAsRead();
+    }
+  }, [notificationOpen, unreadCount, markAllAsRead]);
   // Enable swipe from left edge to open sidebar on mobile
   const handleEdgeSwipe = useCallback(() => {
     setSidebarOpen(true);
@@ -108,7 +116,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             {(isWorshipLeader || isAdmin) && <SongCartPopover />}
             
             {/* Notification Bell - Always visible */}
-            <Popover>
+            <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
