@@ -10,7 +10,7 @@ import type { TranslationPath } from "@/hooks/useTranslation";
 export const BottomTabNavigation = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const { unreadCount } = useNotifications();
+  const { chatUnreadCount } = useNotifications();
   const [chatOpen, setChatOpen] = useState(false);
   
   return (
@@ -50,9 +50,9 @@ export const BottomTabNavigation = () => {
           >
             <div className="relative">
               <chatTab.icon className="h-5 w-5" />
-              {unreadCount > 0 && (
+              {chatUnreadCount > 0 && (
                 <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {unreadCount > 99 ? "99+" : unreadCount}
+                  {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
                 </span>
               )}
             </div>

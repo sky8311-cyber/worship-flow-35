@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatFeed } from "@/components/dashboard/ChatFeed";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useNotifications } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 
 interface FloatingChatBoxProps {
@@ -11,6 +13,14 @@ interface FloatingChatBoxProps {
 
 export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
   const { t } = useTranslation();
+  const { markChatNotificationsAsRead } = useNotifications();
+
+  // Mark chat notifications as read when opened
+  useEffect(() => {
+    if (isOpen) {
+      markChatNotificationsAsRead();
+    }
+  }, [isOpen, markChatNotificationsAsRead]);
 
   if (!isOpen) return null;
 

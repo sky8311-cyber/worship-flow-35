@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/drawer";
 import { ChatFeed } from "@/components/dashboard/ChatFeed";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface ChatFullScreenOverlayProps {
   isOpen: boolean;
@@ -16,6 +18,14 @@ interface ChatFullScreenOverlayProps {
 
 export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlayProps) {
   const { t } = useTranslation();
+  const { markChatNotificationsAsRead } = useNotifications();
+
+  // Mark chat notifications as read when opened
+  useEffect(() => {
+    if (isOpen) {
+      markChatNotificationsAsRead();
+    }
+  }, [isOpen, markChatNotificationsAsRead]);
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
