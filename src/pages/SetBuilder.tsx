@@ -32,6 +32,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetPositionsManager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -66,6 +67,7 @@ const SetBuilder = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete mutation
@@ -653,9 +655,7 @@ const SetBuilder = () => {
 
   const handleCopyLink = () => {
     if (id) {
-      const url = `${window.location.origin}/band-view/${id}`;
-      navigator.clipboard.writeText(url);
-      toast.success("팀 링크가 복사되었습니다");
+      setShowShareDialog(true);
     } else {
       toast.error("먼저 워십세트를 저장해주세요");
     }
@@ -683,7 +683,7 @@ const SetBuilder = () => {
       {id && (
         <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
           <Share2 className="w-4 h-4 shrink-0" />
-          <span>팀 링크 복사</span>
+          <span>{language === "ko" ? "링크 공유" : "Share Link"}</span>
         </Button>
       )}
 
@@ -1149,6 +1149,17 @@ const SetBuilder = () => {
         open={showCreateCommunity}
         onOpenChange={setShowCreateCommunity}
       />
+
+      {id && (
+        <ShareLinkDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          setId={id}
+          publicShareToken={(serviceSet as any)?.public_share_token || null}
+          publicShareEnabled={(serviceSet as any)?.public_share_enabled || false}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["worship-set", id] })}
+        />
+      )}
     </AppLayout>
   );
 };

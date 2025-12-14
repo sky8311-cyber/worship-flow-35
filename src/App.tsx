@@ -34,6 +34,7 @@ import RequestWorshipLeader from "./pages/RequestWorshipLeader";
 import TemplateManager from "./pages/TemplateManager";
 import ChurchAccount from "./pages/ChurchAccount";
 import SeedHistory from "./pages/SeedHistory";
+import PublicBandView from "./pages/PublicBandView";
 
 const queryClient = new QueryClient();
 
@@ -91,7 +92,8 @@ const App = () => (
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
               <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
-              <Route path="/band-view/:id" element={<BandView />} /> {/* Public for sharing */}
+              <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
+              <Route path="/public-view/:token" element={<PublicBandView />} /> {/* Public share link */}
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

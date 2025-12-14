@@ -1904,6 +1904,50 @@ export type Database = {
           status: string
         }[]
       }
+      get_public_set_components: {
+        Args: { share_token: string }
+        Returns: {
+          assigned_to: string
+          component_position: number
+          component_type: string
+          content: string
+          duration_minutes: number
+          id: string
+          label: string
+          notes: string
+        }[]
+      }
+      get_public_set_songs: {
+        Args: { share_token: string }
+        Returns: {
+          bpm: number
+          custom_notes: string
+          id: string
+          key_change_to: string
+          lyrics: string
+          override_score_file_url: string
+          override_youtube_url: string
+          song_artist: string
+          song_default_key: string
+          song_id: string
+          song_key: string
+          song_position: number
+          song_score_file_url: string
+          song_title: string
+          song_youtube_url: string
+        }[]
+      }
+      get_public_song_scores: {
+        Args: { share_token: string }
+        Returns: {
+          file_url: string
+          id: string
+          page_number: number
+          score_key: string
+          score_position: number
+          song_id: string
+        }[]
+      }
       get_song_usage_sets: {
         Args: { p_song_id: string }
         Returns: {
