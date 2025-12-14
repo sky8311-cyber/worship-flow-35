@@ -612,11 +612,11 @@ const SetBuilder = () => {
   };
 
   const handleRemoveItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleUpdateItem = (index: number, updates: any) => {
-    setItems(items.map((item, i) => {
+    setItems(prev => prev.map((item, i) => {
       if (i !== index) return item;
       return { ...item, data: { ...item.data, ...updates } };
     }));
