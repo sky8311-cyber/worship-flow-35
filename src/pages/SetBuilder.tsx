@@ -1157,7 +1157,10 @@ const SetBuilder = () => {
           setId={id}
           publicShareToken={(existingSet as any)?.public_share_token || null}
           publicShareEnabled={(existingSet as any)?.public_share_enabled || false}
-          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["service-set", id] })}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ["service-set", id] });
+            queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+          }}
         />
       )}
     </AppLayout>

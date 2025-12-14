@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,20 @@ export const ShareLinkDialog = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [copiedTeam, setCopiedTeam] = useState(false);
   const [copiedPublic, setCopiedPublic] = useState(false);
+  
+  // Local state for immediate UI updates
+  const [localEnabled, setLocalEnabled] = useState(publicShareEnabled);
+  const [localToken, setLocalToken] = useState(publicShareToken);
+
+  // Sync with props when dialog opens or props change
+  useEffect(() => {
+    setLocalEnabled(publicShareEnabled);
+    setLocalToken(publicShareToken);
+  }, [publicShareEnabled, publicShareToken, open]);
 
   const teamLink = `${window.location.origin}/band-view/${setId}`;
-  const publicLink = publicShareToken 
-    ? `${window.location.origin}/public-view/${publicShareToken}` 
+  const publicLink = localToken 
+    ? `${window.location.origin}/public-view/${localToken}` 
     : null;
 
   const handleCopyTeamLink = async () => {
@@ -62,13 +72,18 @@ export const ShareLinkDialog = ({
   };
 
   const handleTogglePublicLink = async (enabled: boolean) => {
+    // Immediately update UI
+    setLocalEnabled(enabled);
     setIsUpdating(true);
+    
     try {
       const updates: Record<string, any> = { public_share_enabled: enabled };
       
       // Generate token if enabling for the first time
-      if (enabled && !publicShareToken) {
-        updates.public_share_token = generateToken();
+      if (enabled && !localToken) {
+        const newToken = generateToken();
+        updates.public_share_token = newToken;
+        setLocalToken(newToken);
       }
 
       const { error } = await supabase
@@ -85,6 +100,8 @@ export const ShareLinkDialog = ({
       );
       onUpdate();
     } catch (error) {
+      // Rollback on error
+      setLocalEnabled(!enabled);
       console.error("Error updating public share:", error);
       toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
     } finally {
@@ -175,7 +192,7 @@ export const ShareLinkDialog = ({
                 </Label>
               </div>
               <Switch
-                checked={publicShareEnabled}
+                checked={localEnabled}
                 onCheckedChange={handleTogglePublicLink}
                 disabled={isUpdating}
               />
@@ -187,7 +204,7 @@ export const ShareLinkDialog = ({
               }
             </p>
 
-            {publicShareEnabled && publicLink && (
+            {localEnabled && publicLink && (
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input 
@@ -237,7 +254,7 @@ export const ShareLinkDialog = ({
               </div>
             )}
 
-            {!publicShareEnabled && (
+            {!localEnabled && (
               <div className="p-3 bg-muted/50 rounded-lg text-center">
                 <p className="text-sm text-muted-foreground">
                   {language === "ko" 

@@ -707,6 +707,7 @@ const Dashboard = () => {
           publicShareEnabled={selectedSetForShare.public_share_enabled || false}
           onUpdate={() => {
             queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+            queryClient.invalidateQueries({ queryKey: ["service-set", selectedSetForShare.id] });
           }}
         />
       )}
