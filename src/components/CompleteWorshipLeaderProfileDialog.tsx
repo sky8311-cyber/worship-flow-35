@@ -16,7 +16,6 @@ export const CompleteWorshipLeaderProfileDialog = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
   const [formData, setFormData] = useState({
     communityName: "",
     website: "",
@@ -30,15 +29,15 @@ export const CompleteWorshipLeaderProfileDialog = () => {
     const checkProfileCompletion = async () => {
       if (!user || !profile?.needs_worship_leader_profile) return;
 
-      // Check if worship_leader_profile already exists
+      // Check if worship leader fields are already filled in profiles table
       const { data: existingProfile } = await supabase
-        .from("worship_leader_profiles")
-        .select("*")
-        .eq("user_id", user.id)
+        .from("profiles")
+        .select("church_name, serving_position")
+        .eq("id", user.id)
         .single();
 
-      if (existingProfile) {
-        // Profile already exists, clear the flag and don't show dialog
+      if (existingProfile?.church_name && existingProfile?.serving_position) {
+        // Profile already has worship leader data, clear the flag
         await supabase
           .from("profiles")
           .update({ needs_worship_leader_profile: false })
@@ -47,7 +46,7 @@ export const CompleteWorshipLeaderProfileDialog = () => {
         return;
       }
 
-      // Check if there's an approved application to use
+      // Check if there's an approved application to use for pre-fill
       const { data: approvedApplication } = await supabase
         .from("worship_leader_applications")
         .select("*")
@@ -56,27 +55,21 @@ export const CompleteWorshipLeaderProfileDialog = () => {
         .single();
 
       if (approvedApplication) {
-        // Auto-create profile from approved application
-        const { error: profileError } = await supabase
-          .from("worship_leader_profiles")
-          .insert({
-            user_id: user.id,
+        // Auto-fill profile from approved application
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
             church_name: approvedApplication.church_name,
             church_website: approvedApplication.church_website,
-            denomination: approvedApplication.denomination || null,
             country: approvedApplication.country,
-            position: approvedApplication.position,
+            serving_position: approvedApplication.position,
             years_serving: approvedApplication.years_serving,
-            introduction: approvedApplication.introduction,
-          });
+            worship_leader_intro: approvedApplication.introduction,
+            needs_worship_leader_profile: false,
+          })
+          .eq("id", user.id);
 
-        if (!profileError) {
-          // Clear the flag
-          await supabase
-            .from("profiles")
-            .update({ needs_worship_leader_profile: false })
-            .eq("id", user.id);
-          
+        if (!updateError) {
           toast({
             title: t("worshipLeaderRequest.profileUpdated"),
             description: t("worshipLeaderRequest.profileUpdatedDesc"),
@@ -122,26 +115,19 @@ export const CompleteWorshipLeaderProfileDialog = () => {
     setLoading(true);
 
     try {
-      // Create worship_leader_profile
-      const { error: profileError } = await supabase
-        .from("worship_leader_profiles")
-        .insert({
-          user_id: user.id,
-          church_name: formData.communityName,
-          church_website: formData.website,
-          denomination: null,
-          country: formData.country,
-          position: formData.servingPosition,
-          years_serving: parseInt(formData.yearsServing),
-          introduction: formData.introduction,
-        });
-
-      if (profileError) throw profileError;
-
-      // Clear the flag
+      // Update profiles table with worship leader fields
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ needs_worship_leader_profile: false })
+        .update({
+          church_name: formData.communityName,
+          church_website: formData.website,
+          country: formData.country,
+          serving_position: formData.servingPosition,
+          years_serving: parseInt(formData.yearsServing) || null,
+          worship_leader_intro: formData.introduction,
+          needs_worship_leader_profile: false,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", user.id);
 
       if (updateError) throw updateError;

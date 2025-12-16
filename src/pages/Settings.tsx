@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -13,9 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
-import { EditWorshipLeaderProfileDialog } from "@/components/profile/EditWorshipLeaderProfileDialog";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle } from "lucide-react";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -28,14 +27,12 @@ const Settings = () => {
   const [emailLoading, setEmailLoading] = useState(false);
 
   // Password change state
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Dialog states
   const [profileEditOpen, setProfileEditOpen] = useState(false);
-  const [worshipLeaderProfileOpen, setWorshipLeaderProfileOpen] = useState(false);
 
   // Fetch application status
   const { data: applicationStatus } = useQuery({
@@ -110,7 +107,6 @@ const Settings = () => {
       const { error } = await updatePassword(newPassword);
       if (error) throw error;
       toast.success(language === "ko" ? "비밀번호가 변경되었습니다" : "Password changed successfully");
-      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
@@ -218,21 +214,17 @@ const Settings = () => {
               {language === "ko" ? "프로필 관리" : "Profile Management"}
             </CardTitle>
             <CardDescription>
-              {language === "ko" ? "기본 프로필과 예배인도자 프로필을 관리합니다" : "Manage your basic and worship leader profiles"}
+              {isWorshipLeader 
+                ? (language === "ko" ? "기본 프로필과 예배인도자 정보를 관리합니다" : "Manage your basic profile and worship leader info")
+                : (language === "ko" ? "기본 프로필을 관리합니다" : "Manage your basic profile")
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button variant="outline" className="w-full justify-start" onClick={() => setProfileEditOpen(true)}>
               <User className="mr-2 h-4 w-4" />
-              {language === "ko" ? "기본 프로필 변경" : "Edit Basic Profile"}
+              {language === "ko" ? "프로필 변경" : "Edit Profile"}
             </Button>
-
-            {isWorshipLeader && (
-              <Button variant="outline" className="w-full justify-start" onClick={() => setWorshipLeaderProfileOpen(true)}>
-                <UserCog className="mr-2 h-4 w-4" />
-                {language === "ko" ? "예배인도자 프로필 변경" : "Edit Worship Leader Profile"}
-              </Button>
-            )}
           </CardContent>
         </Card>
 
@@ -367,11 +359,8 @@ const Settings = () => {
           </Card>
         )}
 
-        {/* Dialogs */}
+        {/* Dialog */}
         <ProfileEditDialog open={profileEditOpen} onOpenChange={setProfileEditOpen} />
-        {isWorshipLeader && (
-          <EditWorshipLeaderProfileDialog open={worshipLeaderProfileOpen} onOpenChange={setWorshipLeaderProfileOpen} />
-        )}
       </div>
     </AppLayout>
   );
