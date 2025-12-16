@@ -38,8 +38,10 @@ export function FeedbackBoard() {
   const [uploading, setUploading] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState("");
+  const [editPostType, setEditPostType] = useState("general");
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [filterType, setFilterType] = useState<string | null>(null);
 
   // Fetch feedback posts
   const { data: feedbackPosts, isLoading } = useQuery({
@@ -69,6 +71,11 @@ export function FeedbackBoard() {
     enabled: !!user,
   });
 
+  // Filter posts by type
+  const filteredPosts = filterType
+    ? feedbackPosts?.filter(post => post.post_type === filterType)
+    : feedbackPosts;
+
   // Create post mutation
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -86,6 +93,7 @@ export function FeedbackBoard() {
       setPostType("general");
       setUploadedImages([]);
       queryClient.invalidateQueries({ queryKey: ["feedback-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feedback-count"] });
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -94,10 +102,10 @@ export function FeedbackBoard() {
 
   // Edit post mutation
   const editMutation = useMutation({
-    mutationFn: async (newContent: string) => {
+    mutationFn: async ({ newContent, newPostType }: { newContent: string; newPostType: string }) => {
       const { error } = await supabase
         .from("feedback_posts")
-        .update({ content: newContent, updated_at: new Date().toISOString() })
+        .update({ content: newContent, post_type: newPostType, updated_at: new Date().toISOString() })
         .eq("id", editingPostId);
       if (error) throw error;
     },
@@ -121,6 +129,7 @@ export function FeedbackBoard() {
     onSuccess: () => {
       toast.success(t("common.deleteSuccess"));
       queryClient.invalidateQueries({ queryKey: ["feedback-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["feedback-count"] });
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -159,6 +168,46 @@ export function FeedbackBoard() {
     }
   };
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        const fileExt = file.type.split('/')[1] || 'png';
+        const fileName = `${user!.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("profile-images")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("profile-images")
+          .getPublicUrl(fileName);
+        uploadedUrls.push(publicUrl);
+      }
+      
+      setUploadedImages(prev => [...prev, ...uploadedUrls]);
+      toast.success(language === "ko" ? "이미지가 업로드되었습니다" : "Image uploaded");
+    } catch (error) {
+      console.error("Paste upload error:", error);
+      toast.error(t("common.uploadError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const removeImage = (index: number) => {
     setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   };
@@ -171,6 +220,7 @@ export function FeedbackBoard() {
   const handleEdit = (post: any) => {
     setEditingPostId(post.id);
     setEditContent(post.content);
+    setEditPostType(post.post_type);
     setEditDialogOpen(true);
   };
 
@@ -220,6 +270,7 @@ export function FeedbackBoard() {
                 placeholder={language === "ko" ? "피드백, 버그 리포트, 또는 제안을 공유해주세요..." : "Share your feedback, bug reports, or suggestions..."}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste}
                 className="min-h-[80px] resize-none"
               />
 
@@ -288,9 +339,31 @@ export function FeedbackBoard() {
         </CardContent>
       </Card>
 
+      {/* Filter Buttons */}
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          variant={filterType === null ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilterType(null)}
+        >
+          {language === "ko" ? "전체" : "All"}
+        </Button>
+        {POST_TYPES.map((type) => (
+          <Button
+            key={type.value}
+            variant={filterType === type.value ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilterType(type.value)}
+          >
+            <type.icon className="w-4 h-4 mr-1" />
+            {language === "ko" ? type.labelKo : type.labelEn}
+          </Button>
+        ))}
+      </div>
+
       {/* Feedback Posts */}
-      {feedbackPosts && feedbackPosts.length > 0 ? (
-        feedbackPosts.map((post) => {
+      {filteredPosts && filteredPosts.length > 0 ? (
+        filteredPosts.map((post) => {
           const typeInfo = getPostTypeInfo(post.post_type);
           const TypeIcon = typeInfo.icon;
           const authorName = post.author?.full_name || t("common.deletedUser");
@@ -390,16 +463,36 @@ export function FeedbackBoard() {
           <DialogHeader>
             <DialogTitle>{t("socialFeed.editPost")}</DialogTitle>
           </DialogHeader>
-          <Textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className="min-h-[120px]"
-          />
+          <div className="space-y-4">
+            <Select value={editPostType} onValueChange={setEditPostType}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {POST_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    <div className="flex items-center gap-2">
+                      <type.icon className="w-4 h-4" />
+                      {language === "ko" ? type.labelKo : type.labelEn}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="min-h-[120px]"
+            />
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button onClick={() => editMutation.mutate(editContent)} disabled={editMutation.isPending}>
+            <Button 
+              onClick={() => editMutation.mutate({ newContent: editContent, newPostType: editPostType })} 
+              disabled={editMutation.isPending}
+            >
               {t("common.save")}
             </Button>
           </DialogFooter>

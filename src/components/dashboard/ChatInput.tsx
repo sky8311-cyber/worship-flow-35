@@ -16,7 +16,7 @@ interface ChatInputProps {
 
 export function ChatInput({ selectedCommunityId }: ChatInputProps) {
   const { user, profile } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -77,6 +77,46 @@ export function ChatInput({ selectedCommunityId }: ChatInputProps) {
       setUploadedImages([...uploadedImages, ...uploadedUrls]);
     } catch (error) {
       console.error("Upload error:", error);
+      toast.error(t("common.uploadError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handlePaste = async (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+
+    e.preventDefault();
+    setUploading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (const item of imageItems) {
+        const file = item.getAsFile();
+        if (!file) continue;
+
+        const fileExt = file.type.split('/')[1] || 'png';
+        const fileName = `${user!.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from("profile-images")
+          .upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("profile-images")
+          .getPublicUrl(fileName);
+        uploadedUrls.push(publicUrl);
+      }
+      
+      setUploadedImages(prev => [...prev, ...uploadedUrls]);
+      toast.success(language === "ko" ? "이미지가 업로드되었습니다" : "Image uploaded");
+    } catch (error) {
+      console.error("Paste upload error:", error);
       toast.error(t("common.uploadError"));
     } finally {
       setUploading(false);
@@ -172,6 +212,7 @@ export function ChatInput({ selectedCommunityId }: ChatInputProps) {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className="w-full rounded-full h-10"
           disabled={postMutation.isPending}
         />
