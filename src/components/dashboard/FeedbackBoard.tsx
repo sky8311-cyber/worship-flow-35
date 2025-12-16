@@ -255,7 +255,7 @@ export function FeedbackBoard() {
   }
 
   return (
-    <div className="space-y-4 p-4 overflow-y-auto h-full">
+    <div className="space-y-4 p-4">
       {/* Post Composer */}
       <Card>
         <CardContent className="pt-6">
