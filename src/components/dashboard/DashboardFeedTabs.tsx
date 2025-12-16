@@ -56,11 +56,11 @@ export function DashboardFeedTabs({
 
   return (
     <Tabs defaultValue={defaultTab}>
-      <TabsList className="w-full justify-start px-4 py-2 h-auto bg-muted/50 rounded-none border-b shrink-0">
+      <TabsList className="w-full justify-start px-4 py-2 h-auto bg-transparent rounded-none border-b shrink-0">
         {showFeedbackTab && (
           <TabsTrigger
             value="feedback"
-            className="flex items-center gap-2 data-[state=active]:bg-background"
+            className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent hover:text-foreground"
           >
             <MessageSquareText className="w-4 h-4" />
             <span className="hidden sm:inline">
@@ -79,7 +79,7 @@ export function DashboardFeedTabs({
         {showCommunityTab && (
           <TabsTrigger
             value="community"
-            className="flex items-center gap-2 data-[state=active]:bg-background"
+            className="flex items-center gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-muted-foreground transition-all data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent hover:text-foreground"
           >
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">
