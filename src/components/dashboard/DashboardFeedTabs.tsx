@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquareText, Users } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -5,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedbackBoard } from "./FeedbackBoard";
 import { CommunityNewsfeed } from "./CommunityNewsfeed";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface DashboardFeedTabsProps {
   isWorshipLeader: boolean;
@@ -26,6 +28,7 @@ export function DashboardFeedTabs({
   userStats,
 }: DashboardFeedTabsProps) {
   const { language } = useTranslation();
+  const { chatUnreadCount, markChatNotificationsAsRead } = useNotifications();
 
   // Fetch feedback count for badge
   const { data: feedbackCount = 0 } = useQuery({
@@ -53,9 +56,17 @@ export function DashboardFeedTabs({
 
   // Default to feedback tab for leaders
   const defaultTab = "feedback";
+  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "community") {
+      markChatNotificationsAsRead();
+    }
+  };
 
   return (
-    <Tabs defaultValue={defaultTab}>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <TabsList className="w-full justify-start px-4 py-2 h-auto bg-transparent rounded-none border-b shrink-0">
         {showFeedbackTab && (
           <TabsTrigger
@@ -88,6 +99,11 @@ export function DashboardFeedTabs({
             <span className="sm:hidden">
               {language === "ko" ? "공동체" : "Community"}
             </span>
+            {chatUnreadCount > 0 && (
+              <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-medium">
+                {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+              </span>
+            )}
           </TabsTrigger>
         )}
       </TabsList>
