@@ -132,6 +132,16 @@ export const translations = {
       communityFeed: "Community Feed",
       close: "Close",
     },
+    feedbackBoard: {
+      title: "Feedback Board",
+      subtitle: "For Worship & Community Leaders",
+      general: "General",
+      bugReport: "Bug Report",
+      featureRequest: "Feature Request",
+      improvement: "Improvement",
+      placeholder: "Share your feedback, bug reports, or suggestions...",
+      noFeedback: "No feedback yet. Be the first to share!",
+    },
     viewMode: {
       card: "Card View",
       table: "Table View",
@@ -1772,6 +1782,16 @@ export const translations = {
     chat: {
       communityFeed: "커뮤니티 피드",
       close: "닫기",
+    },
+    feedbackBoard: {
+      title: "피드백 보드",
+      subtitle: "예배인도자 & 공동체 리더 전용",
+      general: "일반",
+      bugReport: "버그 리포트",
+      featureRequest: "기능 요청",
+      improvement: "개선점",
+      placeholder: "피드백, 버그 리포트, 또는 제안을 공유해주세요...",
+      noFeedback: "아직 피드백이 없습니다. 첫 번째 피드백을 작성해보세요!",
     },
     viewMode: {
       card: "카드 보기",

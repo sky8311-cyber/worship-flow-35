@@ -9,7 +9,7 @@ import { LikersDialog } from "./LikersDialog";
 
 interface LikeButtonProps {
   postId: string;
-  postType: "community_post" | "worship_set" | "calendar_event";
+  postType: "community_post" | "worship_set" | "calendar_event" | "feedback_post";
 }
 
 export function LikeButton({ postId, postType }: LikeButtonProps) {
