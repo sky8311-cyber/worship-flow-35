@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PostComposer } from "./PostComposer";
 import { SocialFeedPost } from "./SocialFeedPost";
 import { ProfileDialog } from "./ProfileDialog";
-import { BirthdayFeedCard } from "./BirthdayFeedCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -51,7 +50,6 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
 
   const { data: communitiesData, isLoading: communitiesLoading } = useUserCommunities();
   const communities = communitiesData?.communities || [];
-  const communityIds = communitiesData?.communityIds || [];
 
   // Set default selected community
   const activeCommunityId = selectedCommunityId || communities[0]?.id;
@@ -61,71 +59,20 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
     queryFn: async () => {
       if (!user || !activeCommunityId) return [];
 
-      const today = new Date();
+      // Fetch only community posts
+      const { data: postsData, error } = await supabase
+        .from("community_posts")
+        .select("*")
+        .eq("community_id", activeCommunityId)
+        .order("created_at", { ascending: false })
+        .limit(50);
 
-      // Fetch posts, sets, events for this community
-      const [postsData, setsData, eventsData, memberData] = await Promise.all([
-        supabase
-          .from("community_posts")
-          .select("*")
-          .eq("community_id", activeCommunityId)
-          .order("created_at", { ascending: false })
-          .limit(50),
-        supabase
-          .from("service_sets")
-          .select("*")
-          .eq("community_id", activeCommunityId)
-          .eq("status", "published")
-          .order("created_at", { ascending: false })
-          .limit(50),
-        supabase
-          .from("calendar_events")
-          .select("*")
-          .eq("community_id", activeCommunityId)
-          .order("created_at", { ascending: false })
-          .limit(50),
-        supabase
-          .from("community_members")
-          .select("user_id")
-          .eq("community_id", activeCommunityId),
-      ]);
-
-      if (postsData.error) throw postsData.error;
-      if (setsData.error) throw setsData.error;
-      if (eventsData.error) throw eventsData.error;
-
-      // Fetch birthday profiles for this community
-      const memberUserIds = memberData.data?.map(m => m.user_id) || [];
-      const { data: birthdayData } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, birth_date")
-        .not("birth_date", "is", null)
-        .in("id", memberUserIds);
-
-      // Filter birthdays to this week
-      const birthdaysThisWeek = (birthdayData || []).filter((profile) => {
-        if (!profile.birth_date) return false;
-        const birthDate = new Date(profile.birth_date);
-        for (let i = 0; i < 7; i++) {
-          const checkDate = new Date(today);
-          checkDate.setDate(today.getDate() + i);
-          if (checkDate.getMonth() === birthDate.getMonth() && checkDate.getDate() === birthDate.getDate()) {
-            return true;
-          }
-        }
-        return false;
-      });
+      if (error) throw error;
 
       // Collect author IDs
       const authorIds = new Set<string>();
-      (postsData.data || []).forEach((post) => {
+      (postsData || []).forEach((post) => {
         if (post.author_id) authorIds.add(post.author_id);
-      });
-      (setsData.data || []).forEach((set) => {
-        if (set.created_by) authorIds.add(set.created_by);
-      });
-      (eventsData.data || []).forEach((event) => {
-        if (event.created_by) authorIds.add(event.created_by);
       });
 
       // Fetch profiles
@@ -144,43 +91,17 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
 
       const fallbackAuthor = { id: "", full_name: "Unknown User", avatar_url: null };
 
-      // Build unified feed
-      const allItems = [
-        ...(postsData.data || []).map((post) => ({
-          id: post.id,
-          type: "community_post" as const,
-          author: authorMap.get(post.author_id) || fallbackAuthor,
-          community,
-          content: post.content,
-          images: post.image_urls,
-          created_at: post.created_at,
-        })),
-        ...(setsData.data || []).map((set) => ({
-          id: set.id,
-          type: "worship_set" as const,
-          author: authorMap.get(set.created_by) || fallbackAuthor,
-          community,
-          set,
-          created_at: set.created_at,
-        })),
-        ...(eventsData.data || []).map((event) => ({
-          id: event.id,
-          type: "calendar_event" as const,
-          author: authorMap.get(event.created_by) || fallbackAuthor,
-          community,
-          event,
-          created_at: event.created_at,
-        })),
-        ...birthdaysThisWeek.map((profile) => ({
-          id: `birthday-${profile.id}`,
-          type: "birthday" as const,
-          profile,
-          community,
-          created_at: profile.birth_date || new Date().toISOString(),
-        })),
-      ];
+      // Build feed with only community posts
+      const allItems = (postsData || []).map((post) => ({
+        id: post.id,
+        type: "community_post" as const,
+        author: authorMap.get(post.author_id) || fallbackAuthor,
+        community,
+        content: post.content,
+        images: post.image_urls,
+        created_at: post.created_at,
+      }));
 
-      allItems.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       return allItems;
     },
     enabled: !!user && !!activeCommunityId,
@@ -207,7 +128,7 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
     }
   };
 
-  // Check if user can post in community
+  // Admin, Worship Leader, Community Leader can post
   const canPostInCommunity = canPost || isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
 
   if (communitiesLoading) {
@@ -270,7 +191,6 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
                   canPostInCommunity={canPostInCommunity}
                   openProfile={openProfile}
                   language={language}
-                  t={t}
                 />
               </TabsContent>
             ))}
@@ -283,7 +203,6 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
               canPostInCommunity={canPostInCommunity}
               openProfile={openProfile}
               language={language}
-              t={t}
             />
           </div>
         )}
@@ -306,14 +225,12 @@ function FeedContent({
   canPostInCommunity,
   openProfile,
   language,
-  t,
 }: {
   feedItems: any[] | undefined;
   feedLoading: boolean;
   canPostInCommunity: boolean;
   openProfile: (author: Author) => void;
   language: string;
-  t: (key: any) => string;
 }) {
   if (feedLoading) {
     return (
@@ -328,25 +245,13 @@ function FeedContent({
       {canPostInCommunity && <PostComposer />}
 
       {feedItems && feedItems.length > 0 ? (
-        feedItems.map((item) => {
-          if (item.type === "birthday") {
-            return (
-              <BirthdayFeedCard
-                key={`${item.type}-${item.id}`}
-                profile={item.profile}
-                community={item.community}
-                onProfileClick={openProfile}
-              />
-            );
-          }
-          return (
-            <SocialFeedPost
-              key={`${item.type}-${item.id}`}
-              item={item}
-              onProfileClick={openProfile}
-            />
-          );
-        })
+        feedItems.map((item) => (
+          <SocialFeedPost
+            key={`${item.type}-${item.id}`}
+            item={item}
+            onProfileClick={openProfile}
+          />
+        ))
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           <p className="text-sm">
