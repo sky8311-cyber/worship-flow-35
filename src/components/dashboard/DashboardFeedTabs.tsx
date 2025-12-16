@@ -1,6 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquareText, Users } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { FeedbackBoard } from "./FeedbackBoard";
 import { CommunityNewsfeed } from "./CommunityNewsfeed";
 
@@ -24,6 +26,17 @@ export function DashboardFeedTabs({
   userStats,
 }: DashboardFeedTabsProps) {
   const { language } = useTranslation();
+
+  // Fetch feedback count for badge
+  const { data: feedbackCount = 0 } = useQuery({
+    queryKey: ["feedback-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("feedback_posts")
+        .select("*", { count: "exact", head: true });
+      return count || 0;
+    },
+  });
 
   // Determine which tabs to show
   const showFeedbackTab = isWorshipLeader || isAdmin || isCommunityLeader;
@@ -56,6 +69,11 @@ export function DashboardFeedTabs({
             <span className="sm:hidden">
               {language === "ko" ? "피드백" : "Feedback"}
             </span>
+            {feedbackCount > 0 && (
+              <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-medium">
+                {feedbackCount > 99 ? "99+" : feedbackCount}
+              </span>
+            )}
           </TabsTrigger>
         )}
         {showCommunityTab && (
