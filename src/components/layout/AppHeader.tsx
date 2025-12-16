@@ -128,11 +128,6 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
               </PopoverContent>
             </Popover>
             
-            {/* Message Icon - Tablet & Desktop only */}
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-            
             {/* Navigation Hamburger Menu - Desktop only */}
             <Sheet open={navSheetOpen} onOpenChange={setNavSheetOpen}>
               <SheetTrigger asChild>
