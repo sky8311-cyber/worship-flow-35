@@ -664,6 +664,9 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           birth_date: string | null
+          church_name: string | null
+          church_website: string | null
+          country: string | null
           cover_image_url: string | null
           created_at: string | null
           email: string
@@ -675,13 +678,19 @@ export type Database = {
           ministry_role: string | null
           needs_worship_leader_profile: boolean | null
           phone: string | null
+          serving_position: string | null
           updated_at: string | null
+          worship_leader_intro: string | null
+          years_serving: number | null
           youtube_url: string | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          church_name?: string | null
+          church_website?: string | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           email: string
@@ -693,13 +702,19 @@ export type Database = {
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
+          serving_position?: string | null
           updated_at?: string | null
+          worship_leader_intro?: string | null
+          years_serving?: number | null
           youtube_url?: string | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
           birth_date?: string | null
+          church_name?: string | null
+          church_website?: string | null
+          country?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           email?: string
@@ -711,7 +726,10 @@ export type Database = {
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
+          serving_position?: string | null
           updated_at?: string | null
+          worship_leader_intro?: string | null
+          years_serving?: number | null
           youtube_url?: string | null
         }
         Relationships: []
