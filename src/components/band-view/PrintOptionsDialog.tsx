@@ -111,11 +111,11 @@ export function PrintOptionsDialog({
       });
 
       content = allScores.map((score, idx) => `
-        <div class="score-page" style="page-break-after: always; text-align: center; padding: 20px;">
-          <div style="margin-bottom: 10px; font-size: 14px; color: #666;">
-            ${score.title} ${score.key ? `(${score.key})` : ""} - ${idx + 1}/${allScores.length}
+        <div class="score-page">
+          <img src="${score.url}" />
+          <div class="score-overlay">
+            ${score.title} ${score.key ? `(${score.key})` : ""} · ${idx + 1}/${allScores.length}
           </div>
-          <img src="${score.url}" style="max-width: 100%; max-height: calc(100vh - 80px); object-fit: contain;" />
         </div>
       `).join("");
     } else if (printMode === "order") {
@@ -202,9 +202,48 @@ export function PrintOptionsDialog({
               padding: 24px;
               color: #1f2937;
             }
+            .score-page {
+              page-break-after: always;
+              height: 100vh;
+              width: 100vw;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: black;
+              padding: 0;
+              margin: 0;
+              position: relative;
+            }
+            .score-page img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .score-overlay {
+              position: absolute;
+              bottom: 16px;
+              left: 0;
+              right: 0;
+              text-align: center;
+              color: rgba(255,255,255,0.7);
+              font-size: 12px;
+              background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+              padding: 24px 16px 16px;
+            }
             @media print {
-              body { padding: 0; }
+              @page { margin: 0; size: auto; }
+              body { margin: 0; padding: 0; background: black; }
+              .score-page { 
+                page-break-inside: avoid;
+                height: 100vh !important;
+                width: 100vw !important;
+              }
               .score-page:last-child { page-break-after: avoid; }
+              .score-page img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+              }
             }
           </style>
         </head>
