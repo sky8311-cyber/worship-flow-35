@@ -236,13 +236,13 @@ export function FullscreenScoreViewer({
         </div>
       </div>
 
-      {/* Score Image */}
-      <div className="flex-1 flex items-center justify-center overflow-auto">
+      {/* Score Image - iPad Photos style fill-to-screen */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden bg-black">
         {scores.length > 0 ? (
           <img
             src={currentScore?.imageUrl}
             alt={`${currentScore?.songTitle} - Page ${currentScore?.pageNumber}`}
-            className="max-w-full max-h-full object-contain transition-transform duration-200"
+            className="w-full h-full object-contain transition-transform duration-200"
             style={{ transform: `scale(${zoom})` }}
             draggable={false}
           />
