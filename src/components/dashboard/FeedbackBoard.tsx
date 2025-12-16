@@ -21,10 +21,10 @@ import { CommentsSection } from "./CommentsSection";
 import { ImageGrid } from "./ImageGrid";
 
 const POST_TYPES = [
-  { value: "general", labelEn: "General", labelKo: "일반", icon: MessageSquare, color: "bg-muted" },
+  { value: "general", labelEn: "General", labelKo: "일반", icon: MessageSquare, color: "bg-muted text-muted-foreground" },
   { value: "bug", labelEn: "Bug Report", labelKo: "버그 리포트", icon: Bug, color: "bg-destructive/10 text-destructive" },
-  { value: "feature", labelEn: "Feature Request", labelKo: "기능 요청", icon: Lightbulb, color: "bg-yellow-500/10 text-yellow-600" },
-  { value: "improvement", labelEn: "Improvement", labelKo: "개선점", icon: TrendingUp, color: "bg-green-500/10 text-green-600" },
+  { value: "feature", labelEn: "Feature Request", labelKo: "기능 요청", icon: Lightbulb, color: "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400" },
+  { value: "improvement", labelEn: "Improvement", labelKo: "개선점", icon: TrendingUp, color: "bg-green-500/10 text-green-700 dark:text-green-400" },
 ];
 
 export function FeedbackBoard() {
