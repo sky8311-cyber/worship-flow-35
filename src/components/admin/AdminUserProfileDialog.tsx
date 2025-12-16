@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Users, Briefcase, Sprout } from "lucide-react";
+import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 
@@ -38,22 +38,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
     enabled: !!userId && open,
   });
 
-  const { data: worshipLeaderProfile, isLoading: worshipProfileLoading } = useQuery({
-    queryKey: ["admin-worship-leader-profile", userId],
-    queryFn: async () => {
-      if (!userId) return null;
-
-      const { data, error } = await supabase
-        .from("worship_leader_profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId && open,
-  });
+  // Worship leader info is now in profiles table, no separate query needed
 
   const { data: userRoles, isLoading: rolesLoading } = useQuery({
     queryKey: ["admin-user-roles", userId],
@@ -121,7 +106,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
     enabled: !!userId && open,
   });
 
-  const isLoading = profileLoading || worshipProfileLoading || rolesLoading || seedLoading;
+  const isLoading = profileLoading || rolesLoading || seedLoading;
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
@@ -308,8 +293,8 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
               </>
             )}
 
-            {/* Worship Leader Profile Section */}
-            {worshipLeaderProfile && (
+            {/* Worship Leader Profile Section - using profiles table fields */}
+            {profile.church_name && (
               <>
                 <Separator className="my-4" />
                 <div className="bg-primary/5 p-4 rounded-lg space-y-4">
@@ -326,29 +311,27 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <Church className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{worshipLeaderProfile.church_name}</span>
+                        <span className="font-medium">{profile.church_name}</span>
                       </div>
-                      {worshipLeaderProfile.church_website && (
+                      {profile.church_website && (
                         <div className="flex items-center gap-2 text-sm">
                           <Globe className="h-4 w-4 text-muted-foreground" />
                           <a
-                            href={worshipLeaderProfile.church_website}
+                            href={profile.church_website}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"
                           >
-                            {worshipLeaderProfile.church_website}
+                            {profile.church_website}
                           </a>
                         </div>
                       )}
-                      <div className="flex items-center gap-2 text-sm">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{worshipLeaderProfile.denomination}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{worshipLeaderProfile.country}</span>
-                      </div>
+                      {profile.country && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{profile.country}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -358,28 +341,32 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                       {t("admin.users.serviceInfo")}
                     </h5>
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
-                        <span>{worshipLeaderProfile.position}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {worshipLeaderProfile.years_serving}{" "}
-                          {language === "ko" ? "년" : "years"}
-                        </span>
-                      </div>
+                      {profile.serving_position && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          <span>{profile.serving_position}</span>
+                        </div>
+                      )}
+                      {profile.years_serving && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {profile.years_serving}{" "}
+                            {language === "ko" ? "년" : "years"}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Introduction */}
-                  {worshipLeaderProfile.introduction && (
+                  {profile.worship_leader_intro && (
                     <div>
                       <h5 className="text-xs font-medium text-muted-foreground mb-2">
                         {t("admin.users.introduction")}
                       </h5>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {worshipLeaderProfile.introduction}
+                        {profile.worship_leader_intro}
                       </p>
                     </div>
                   )}

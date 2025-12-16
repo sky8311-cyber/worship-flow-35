@@ -176,15 +176,8 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error deleting worship_leader_applications:", applicationsError);
     }
 
-    // Delete from worship_leader_profiles
-    const { error: profilesError } = await supabaseAdmin
-      .from("worship_leader_profiles")
-      .delete()
-      .eq("user_id", userId);
-    
-    if (profilesError) {
-      console.error("Error deleting worship_leader_profiles:", profilesError);
-    }
+    // worship_leader_profiles table is deprecated - worship leader info is now in profiles table
+    // No need to delete from worship_leader_profiles
 
     console.log(`User data cleanup completed for user: ${userId}`);
 
