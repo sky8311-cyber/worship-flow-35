@@ -123,16 +123,16 @@ const AdminUsers = () => {
       
       if (error) throw error;
 
-      // If adding worship_leader role, check for existing application data
+      // If adding worship_leader role, check for existing application data and update profiles table
       if (role === "worship_leader") {
-        // First check if profile already exists
+        // Check if profile already has worship leader info
         const { data: existingProfile } = await supabase
-          .from("worship_leader_profiles")
-          .select("id")
-          .eq("user_id", userId)
+          .from("profiles")
+          .select("church_name, serving_position")
+          .eq("id", userId)
           .single();
 
-        if (!existingProfile) {
+        if (!existingProfile?.church_name || !existingProfile?.serving_position) {
           // Check for approved or any application with data
           const { data: application } = await supabase
             .from("worship_leader_applications")
@@ -143,27 +143,21 @@ const AdminUsers = () => {
             .single();
 
           if (application) {
-            // Create profile from application data
-            const { error: profileCreateError } = await supabase
-              .from("worship_leader_profiles")
-              .insert({
-                user_id: userId,
+            // Update profiles table with application data
+            const { error: profileUpdateError } = await supabase
+              .from("profiles")
+              .update({
                 church_name: application.church_name,
                 church_website: application.church_website,
-                denomination: application.denomination || null,
                 country: application.country,
-                position: application.position,
+                serving_position: application.position,
                 years_serving: application.years_serving,
-                introduction: application.introduction,
-              });
+                worship_leader_intro: application.introduction,
+                needs_worship_leader_profile: false
+              })
+              .eq("id", userId);
 
-            if (!profileCreateError) {
-              // Profile created from application, no need to prompt
-              await supabase
-                .from("profiles")
-                .update({ needs_worship_leader_profile: false })
-                .eq("id", userId);
-              
+            if (!profileUpdateError) {
               // Mark application as approved if it was pending
               if (application.status === "pending") {
                 const { data: { user } } = await supabase.auth.getUser();

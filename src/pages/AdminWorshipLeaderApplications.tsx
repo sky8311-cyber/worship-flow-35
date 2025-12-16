@@ -70,19 +70,19 @@ const AdminWorshipLeaderApplications = () => {
 
       if (roleError) throw roleError;
 
-      // Create worship_leader_profile
+      // Update profiles table with worship leader info
       const { error: profileError } = await supabase
-        .from("worship_leader_profiles")
-        .insert({
-          user_id: application.user_id,
+        .from("profiles")
+        .update({
           church_name: application.church_name,
           church_website: application.church_website,
-          denomination: application.denomination,
           country: application.country,
-          position: application.position,
+          serving_position: application.position,
           years_serving: application.years_serving,
-          introduction: application.introduction,
-        });
+          worship_leader_intro: application.introduction,
+          needs_worship_leader_profile: false
+        })
+        .eq("id", application.user_id);
 
       if (profileError) throw profileError;
 
