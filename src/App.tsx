@@ -35,6 +35,7 @@ import TemplateManager from "./pages/TemplateManager";
 import ChurchAccount from "./pages/ChurchAccount";
 import SeedHistory from "./pages/SeedHistory";
 import PublicBandView from "./pages/PublicBandView";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ const App = () => (
               <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><TemplateManager /></ProtectedRoute>} />
               <Route path="/seeds" element={<ProtectedRoute><SeedHistory /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />

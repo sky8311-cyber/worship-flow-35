@@ -1,0 +1,380 @@
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
+import { EditWorshipLeaderProfileDialog } from "@/components/profile/EditWorshipLeaderProfileDialog";
+import { toast } from "sonner";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+
+const Settings = () => {
+  const navigate = useNavigate();
+  const { t, language } = useTranslation();
+  const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, updatePassword, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Email change state
+  const [newEmail, setNewEmail] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Dialog states
+  const [profileEditOpen, setProfileEditOpen] = useState(false);
+  const [worshipLeaderProfileOpen, setWorshipLeaderProfileOpen] = useState(false);
+
+  // Fetch application status
+  const { data: applicationStatus } = useQuery({
+    queryKey: ["worship-leader-application", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("worship_leader_applications")
+        .select("status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      return data;
+    },
+    enabled: !!user && !isWorshipLeader,
+  });
+
+  // Fetch user communities for management link
+  const { data: userCommunities } = useQuery({
+    queryKey: ["user-communities-settings", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from("community_members")
+        .select(`
+          community_id,
+          role,
+          worship_communities (id, name)
+        `)
+        .eq("user_id", user.id);
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  const leaderCommunities = userCommunities?.filter(c => c.role === "community_leader") || [];
+
+  // Handle email change
+  const handleEmailChange = async () => {
+    if (!newEmail.trim()) {
+      toast.error(language === "ko" ? "새 이메일을 입력하세요" : "Please enter new email");
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      toast.success(language === "ko" ? "확인 이메일이 발송되었습니다" : "Confirmation email sent");
+      setNewEmail("");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  // Handle password change
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error(t("auth.passwordMismatch"));
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error(language === "ko" ? "비밀번호는 6자 이상이어야 합니다" : "Password must be at least 6 characters");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const { error } = await updatePassword(newPassword);
+      if (error) throw error;
+      toast.success(language === "ko" ? "비밀번호가 변경되었습니다" : "Password changed successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  // Cancel worship leader role mutation
+  const cancelWorshipLeaderMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("role", "worship_leader");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(language === "ko" ? "예배인도자 역할이 취소되었습니다" : "Worship leader role cancelled");
+      refreshProfile();
+      queryClient.invalidateQueries({ queryKey: ["worship-leader-application"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  return (
+    <AppLayout>
+      <div className="container max-w-2xl mx-auto py-6 px-4 space-y-6">
+        <h1 className="text-2xl font-bold">{language === "ko" ? "설정" : "Settings"}</h1>
+
+        {/* Account Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              {language === "ko" ? "계정 설정" : "Account Settings"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" ? "이메일과 비밀번호를 변경합니다" : "Change your email and password"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Email Change */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                {language === "ko" ? "이메일 변경" : "Change Email"}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {language === "ko" ? "현재 이메일: " : "Current email: "}{profile?.email}
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder={language === "ko" ? "새 이메일 주소" : "New email address"}
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
+                <Button onClick={handleEmailChange} disabled={emailLoading}>
+                  {emailLoading ? "..." : language === "ko" ? "변경" : "Change"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {language === "ko" ? "새 이메일 주소로 확인 메일이 발송됩니다" : "A confirmation email will be sent to your new address"}
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Password Change */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                {language === "ko" ? "비밀번호 변경" : "Change Password"}
+              </Label>
+              <Input
+                type="password"
+                placeholder={language === "ko" ? "새 비밀번호" : "New password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <Input
+                type="password"
+                placeholder={language === "ko" ? "새 비밀번호 확인" : "Confirm new password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+              <Button onClick={handlePasswordChange} disabled={passwordLoading}>
+                {passwordLoading ? "..." : language === "ko" ? "비밀번호 변경" : "Change Password"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Profile Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              {language === "ko" ? "프로필 관리" : "Profile Management"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" ? "기본 프로필과 예배인도자 프로필을 관리합니다" : "Manage your basic and worship leader profiles"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button variant="outline" className="w-full justify-start" onClick={() => setProfileEditOpen(true)}>
+              <User className="mr-2 h-4 w-4" />
+              {language === "ko" ? "기본 프로필 변경" : "Edit Basic Profile"}
+            </Button>
+
+            {isWorshipLeader && (
+              <Button variant="outline" className="w-full justify-start" onClick={() => setWorshipLeaderProfileOpen(true)}>
+                <UserCog className="mr-2 h-4 w-4" />
+                {language === "ko" ? "예배인도자 프로필 변경" : "Edit Worship Leader Profile"}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Role Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5" />
+              {language === "ko" ? "역할 관리" : "Role Management"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" ? "예배인도자 역할을 관리합니다" : "Manage your worship leader role"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Current Roles */}
+            <div className="flex flex-wrap gap-2">
+              {isAdmin && <Badge variant="destructive">{t("roles.admin")}</Badge>}
+              {isWorshipLeader && <Badge className="bg-primary">{t("roles.worshipLeader")}</Badge>}
+              {isCommunityLeaderInAnyCommunity && <Badge className="bg-accent text-accent-foreground">{t("roles.communityLeader")}</Badge>}
+              {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && (
+                <Badge variant="outline">{t("roles.member")}</Badge>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Apply for Worship Leader (if not already one) */}
+            {!isWorshipLeader && (
+              <div className="space-y-3">
+                {applicationStatus?.status === "pending" ? (
+                  <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <Clock className="h-5 w-5 text-yellow-600" />
+                    <div>
+                      <p className="font-medium text-yellow-700 dark:text-yellow-400">
+                        {language === "ko" ? "신청 검토 중" : "Application Pending"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" ? "관리자가 신청을 검토하고 있습니다" : "Admin is reviewing your application"}
+                      </p>
+                    </div>
+                  </div>
+                ) : applicationStatus?.status === "rejected" ? (
+                  <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <XCircle className="h-5 w-5 text-red-600" />
+                    <div>
+                      <p className="font-medium text-red-700 dark:text-red-400">
+                        {language === "ko" ? "신청이 거절되었습니다" : "Application Rejected"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" ? "다시 신청할 수 있습니다" : "You can apply again"}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => navigate("/request-worship-leader")}
+                  disabled={applicationStatus?.status === "pending"}
+                >
+                  <UserCog className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "예배인도자 승급 신청" : "Apply for Worship Leader"}
+                </Button>
+              </div>
+            )}
+
+            {/* Cancel Worship Leader Role (if already worship leader) */}
+            {isWorshipLeader && !isAdmin && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full justify-start">
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    {language === "ko" ? "예배인도자 승급 취소" : "Cancel Worship Leader Status"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      {language === "ko" ? "예배인도자 역할을 취소하시겠습니까?" : "Cancel Worship Leader Status?"}
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {language === "ko" 
+                        ? "예배인도자 권한이 제거됩니다. 곡 추가/편집, 워십세트 생성 등의 기능을 사용할 수 없게 됩니다."
+                        : "Your worship leader privileges will be removed. You will lose access to features like adding/editing songs, creating worship sets, etc."}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => cancelWorshipLeaderMutation.mutate()}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {language === "ko" ? "역할 취소" : "Cancel Role"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Community Management */}
+        {(isCommunityLeaderInAnyCommunity || isWorshipLeader || isAdmin) && leaderCommunities.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {language === "ko" ? "예배공동체 관리" : "Community Management"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ko" ? "리더로 있는 예배공동체를 관리합니다" : "Manage communities where you are a leader"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {leaderCommunities.map((community: any) => (
+                <Button
+                  key={community.community_id}
+                  variant="outline"
+                  className="w-full justify-between"
+                  onClick={() => navigate(`/community/${community.community_id}`)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {community.worship_communities?.name}
+                  </span>
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dialogs */}
+        <ProfileEditDialog open={profileEditOpen} onOpenChange={setProfileEditOpen} />
+        {isWorshipLeader && (
+          <EditWorshipLeaderProfileDialog open={worshipLeaderProfileOpen} onOpenChange={setWorshipLeaderProfileOpen} />
+        )}
+      </div>
+    </AppLayout>
+  );
+};
+
+export default Settings;
