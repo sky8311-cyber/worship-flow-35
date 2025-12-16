@@ -216,10 +216,10 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
         ...birthdayItems,
       ];
 
-      // Sort by created_at descending
+      // Sort by created_at ascending (oldest at top, newest at bottom - chat style)
       allItems.sort(
         (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
       return allItems;
@@ -248,10 +248,10 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
     }
   };
 
-  // Auto-scroll to top on community change or new messages
+  // Auto-scroll to bottom on community change or new messages (chat style)
   useEffect(() => {
     if (scrollContainerRef.current && feedItems?.length) {
-      scrollContainerRef.current.scrollTop = 0;
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
     }
   }, [feedItems?.length, selectedCommunityId]);
 
