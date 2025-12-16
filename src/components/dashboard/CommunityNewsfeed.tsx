@@ -163,10 +163,10 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
 
   return (
     <>
-      <div className="h-full flex flex-col">
+      <div>
         {/* Community Tabs (only show if multiple communities) */}
         {communities.length > 1 ? (
-          <Tabs value={activeCommunityId} onValueChange={setSelectedCommunityId} className="h-full flex flex-col">
+          <Tabs value={activeCommunityId} onValueChange={setSelectedCommunityId}>
             <TabsList className="w-full justify-start px-4 py-2 h-auto flex-wrap gap-1 bg-muted/50 rounded-none border-b">
               {communities.map((community) => (
                 <TabsTrigger
@@ -183,7 +183,7 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
               <TabsContent
                 key={community.id}
                 value={community.id}
-                className="flex-1 overflow-y-auto p-4 space-y-4 mt-0"
+                className="p-4 space-y-4 mt-0"
               >
                 <FeedContent
                   feedItems={feedItems}
@@ -196,7 +196,7 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
             ))}
           </Tabs>
         ) : (
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="p-4 space-y-4">
             <FeedContent
               feedItems={feedItems}
               feedLoading={feedLoading}

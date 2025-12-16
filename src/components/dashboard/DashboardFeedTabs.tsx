@@ -55,7 +55,7 @@ export function DashboardFeedTabs({
   const defaultTab = "feedback";
 
   return (
-    <Tabs defaultValue={defaultTab} className="h-full flex flex-col">
+    <Tabs defaultValue={defaultTab}>
       <TabsList className="w-full justify-start px-4 py-2 h-auto bg-muted/50 rounded-none border-b shrink-0">
         {showFeedbackTab && (
           <TabsTrigger
@@ -93,13 +93,13 @@ export function DashboardFeedTabs({
       </TabsList>
 
       {showFeedbackTab && (
-        <TabsContent value="feedback" className="flex-1 overflow-hidden mt-0">
+        <TabsContent value="feedback" className="mt-0">
           <FeedbackBoard />
         </TabsContent>
       )}
 
       {showCommunityTab && (
-        <TabsContent value="community" className="flex-1 overflow-hidden mt-0">
+        <TabsContent value="community" className="mt-0">
           <CommunityNewsfeed 
             userStats={userStats} 
             canPost={isWorshipLeader || isAdmin || isCommunityLeader}

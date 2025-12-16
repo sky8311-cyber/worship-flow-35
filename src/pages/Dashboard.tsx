@@ -343,7 +343,7 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8 hidden lg:block">
         <div className="grid grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_80px] gap-6 max-w-[1400px] mx-auto">
           {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services, Leaderboard) */}
-          <div className="space-y-4">
+          <div className="space-y-4 sticky top-24 self-start">
             <ProfileSidebarCard stats={userStats} />
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={5} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
@@ -524,8 +524,8 @@ const Dashboard = () => {
             </div>
 
             {/* Community Feed Tabs */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-0 h-[600px]">
+            <Card>
+              <CardContent className="p-0">
                 <DashboardFeedTabs 
                   isWorshipLeader={isWorshipLeader}
                   isAdmin={isAdmin}
