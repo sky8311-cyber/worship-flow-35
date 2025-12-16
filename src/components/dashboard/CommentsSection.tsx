@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 
 interface CommentsSectionProps {
   postId: string;
-  postType: "community_post" | "worship_set" | "calendar_event";
+  postType: "community_post" | "worship_set" | "calendar_event" | "feedback_post";
 }
 
 export function CommentsSection({ postId, postType }: CommentsSectionProps) {

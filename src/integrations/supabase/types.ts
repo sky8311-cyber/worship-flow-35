@@ -520,6 +520,36 @@ export type Database = {
           },
         ]
       }
+      feedback_posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string | null
+          id: string
+          image_urls: string[] | null
+          post_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          post_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          post_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1994,6 +2024,7 @@ export type Database = {
       }
       increment_set_view_count: { Args: { set_id: string }; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_any_community_leader: { Args: { _user_id: string }; Returns: boolean }
       is_church_account_admin: {
         Args: { _church_account_id: string; _user_id: string }
         Returns: boolean

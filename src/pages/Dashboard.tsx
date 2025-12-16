@@ -31,7 +31,7 @@ import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
 import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSidebarList";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
-import { ChatFeed } from "@/components/dashboard/ChatFeed";
+import { DashboardFeedTabs } from "@/components/dashboard/DashboardFeedTabs";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { CompleteWorshipLeaderProfileDialog } from "@/components/CompleteWorshipLeaderProfileDialog";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -523,13 +523,16 @@ const Dashboard = () => {
               {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => setImportSetOpen(true)} />}
             </div>
 
-            {/* Community Chat Feed */}
+            {/* Community Feed Tabs */}
             <Card className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <CardTitle>{t("community.joined")}</CardTitle>
-              </CardHeader>
               <CardContent className="p-0 h-[600px]">
-                <ChatFeed userStats={userStats} />
+                <DashboardFeedTabs 
+                  isWorshipLeader={isWorshipLeader}
+                  isAdmin={isAdmin}
+                  isCommunityLeader={isCommunityLeaderInAnyCommunity}
+                  hasCommunities={communityIds.length > 0}
+                  userStats={userStats}
+                />
               </CardContent>
             </Card>
           </div>
@@ -686,13 +689,16 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          {/* Community Chat Feed */}
+          {/* Community Feed Tabs */}
           <Card className="overflow-hidden">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg">{t("community.joined")}</CardTitle>
-            </CardHeader>
             <CardContent className="p-0 h-[500px]">
-              <ChatFeed />
+              <DashboardFeedTabs 
+                isWorshipLeader={isWorshipLeader}
+                isAdmin={isAdmin}
+                isCommunityLeader={isCommunityLeaderInAnyCommunity}
+                hasCommunities={communityIds.length > 0}
+                userStats={userStats}
+              />
             </CardContent>
           </Card>
         </div>
