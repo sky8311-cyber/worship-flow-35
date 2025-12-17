@@ -690,8 +690,8 @@ const Dashboard = () => {
             </Card>
 
           {/* Community Feed Tabs */}
-          <Card className="overflow-hidden">
-            <CardContent className="p-0 h-[500px]">
+          <Card>
+            <CardContent className="p-0">
               <DashboardFeedTabs 
                 isWorshipLeader={isWorshipLeader}
                 isAdmin={isAdmin}
