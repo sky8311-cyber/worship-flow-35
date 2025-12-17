@@ -45,15 +45,6 @@ export function DashboardFeedTabs({
   const showFeedbackTab = isWorshipLeader || isAdmin || isCommunityLeader;
   const showCommunityTab = true; // Always show, but content depends on hasCommunities
 
-  // If only community tab (team member), don't show tab UI at all
-  if (!showFeedbackTab) {
-    return (
-      <div className="h-full">
-        <CommunityNewsfeed userStats={userStats} canPost={false} />
-      </div>
-    );
-  }
-
   // Default to feedback tab for leaders
   const defaultTab = "feedback";
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -64,6 +55,15 @@ export function DashboardFeedTabs({
       markChatNotificationsAsRead();
     }
   };
+
+  // If only community tab (team member), don't show tab UI at all
+  if (!showFeedbackTab) {
+    return (
+      <div className="h-full">
+        <CommunityNewsfeed userStats={userStats} canPost={false} />
+      </div>
+    );
+  }
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
