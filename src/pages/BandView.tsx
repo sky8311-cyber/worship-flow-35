@@ -1,8 +1,9 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2 } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2, Share2 } from "lucide-react";
+import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -69,10 +70,12 @@ type SetItem =
 const BandView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { t, language } = useTranslation();
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -404,14 +407,24 @@ const BandView = () => {
           
           <div className="flex items-center gap-2">
             {canEdit && (
-              <Button
-                variant="default"
-                onClick={() => navigate(`/set-builder/${id}`)}
-                className="flex items-center gap-2"
-              >
-                <Edit className="w-4 h-4" />
-                <span className="hidden sm:inline">{t("common.edit")}</span>
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowShareDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">{language === "ko" ? "공유" : "Share"}</span>
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => navigate(`/set-builder/${id}`)}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("common.edit")}</span>
+                </Button>
+              </>
             )}
             <Button
               variant="outline"
@@ -747,6 +760,15 @@ const BandView = () => {
           open={fullscreenOpen}
           onClose={() => setFullscreenOpen(false)}
           scores={allScores}
+        />
+
+        <ShareLinkDialog
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+          setId={id || ""}
+          publicShareToken={serviceSet?.public_share_token || null}
+          publicShareEnabled={serviceSet?.public_share_enabled || false}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["band-view", id] })}
         />
       </div>
     </AppLayout>
