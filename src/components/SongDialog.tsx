@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, Search, X } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, Search, X, ListMusic } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -22,6 +23,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from "@dnd-kit/utilities";
 import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
+import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -196,6 +198,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const [aiEnriching, setAiEnriching] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any>(null);
   const [showAIDialog, setShowAIDialog] = useState(false);
+  
+  // State for "Add to Worship Set?" prompt after creating a new song
+  const [showAddToSetPrompt, setShowAddToSetPrompt] = useState(false);
+  const [newlyCreatedSong, setNewlyCreatedSong] = useState<any>(null);
+  const [showAddToSetDialog, setShowAddToSetDialog] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -296,6 +303,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       };
 
       let songId: string;
+      let isNewSong = false;
 
       if (song) {
         const { error } = await supabase
@@ -313,7 +321,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           .single();
         if (error) throw error;
         songId = newSong.id;
+        isNewSong = true;
         toast.success(t("songDialog.songAdded"));
+        
+        // Store the newly created song for the "Add to Set" prompt
+        setNewlyCreatedSong({
+          id: newSong.id,
+          title: newSong.title,
+          artist: newSong.artist,
+          default_key: newSong.default_key,
+        });
       }
 
       // Save score variations and youtube links
@@ -323,7 +340,13 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
       // Invalidate queries for real-time UI update
       await queryClient.invalidateQueries({ queryKey: ["songs"] });
 
-      onClose();
+      // For new songs, show the "Add to Worship Set?" prompt
+      // For editing, just close
+      if (isNewSong) {
+        setShowAddToSetPrompt(true);
+      } else {
+        onClose();
+      }
     } catch (error: any) {
       toast.error("Error: " + error.message);
     } finally {
@@ -1075,6 +1098,60 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           songTitle={song.title}
         />
       )}
+
+      {/* "Add to Worship Set?" prompt after creating a new song */}
+      <AlertDialog open={showAddToSetPrompt} onOpenChange={setShowAddToSetPrompt}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <ListMusic className="w-5 h-5 text-primary" />
+              </div>
+              <AlertDialogTitle>
+                {language === "ko" ? "워십세트에 추가하시겠습니까?" : "Add to Worship Set?"}
+              </AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              {language === "ko" 
+                ? `"${newlyCreatedSong?.title}" 곡이 라이브러리에 추가되었습니다. 이 곡을 워십세트에 바로 추가하시겠습니까?`
+                : `"${newlyCreatedSong?.title}" has been added to the library. Would you like to add it to a worship set now?`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowAddToSetPrompt(false);
+              setNewlyCreatedSong(null);
+              onClose();
+            }}>
+              {language === "ko" ? "나중에" : "Later"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowAddToSetPrompt(false);
+              setShowAddToSetDialog(true);
+            }}>
+              {language === "ko" ? "워십세트에 추가" : "Add to Set"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* AddToSetDialog for the newly created song */}
+      <AddToSetDialog
+        open={showAddToSetDialog}
+        onOpenChange={(open) => {
+          setShowAddToSetDialog(open);
+          if (!open) {
+            setNewlyCreatedSong(null);
+            onClose();
+          }
+        }}
+        song={newlyCreatedSong}
+        onSuccess={() => {
+          setNewlyCreatedSong(null);
+          onClose();
+        }}
+      />
     </Dialog>
   );
 };
