@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquareText, Users } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedbackBoard } from "./FeedbackBoard";
 import { CommunityNewsfeed } from "./CommunityNewsfeed";
@@ -29,14 +29,26 @@ export function DashboardFeedTabs({
 }: DashboardFeedTabsProps) {
   const { language } = useTranslation();
   const { chatUnreadCount, markChatNotificationsAsRead } = useNotifications();
+  const queryClient = useQueryClient();
 
-  // Fetch feedback count for badge
-  const { data: feedbackCount = 0 } = useQuery({
-    queryKey: ["feedback-count"],
+  // Track last viewed feedback timestamp
+  const [lastViewedFeedback, setLastViewedFeedback] = useState<string | null>(
+    () => localStorage.getItem("lastViewedFeedback")
+  );
+
+  // Fetch NEW feedback count (posts since last viewed)
+  const { data: newFeedbackCount = 0 } = useQuery({
+    queryKey: ["new-feedback-count", lastViewedFeedback],
     queryFn: async () => {
-      const { count } = await supabase
+      let query = supabase
         .from("feedback_posts")
         .select("*", { count: "exact", head: true });
+      
+      if (lastViewedFeedback) {
+        query = query.gt("created_at", lastViewedFeedback);
+      }
+      
+      const { count } = await query;
       return count || 0;
     },
   });
@@ -49,8 +61,23 @@ export function DashboardFeedTabs({
   const defaultTab = "feedback";
   const [activeTab, setActiveTab] = useState(defaultTab);
 
+  // Mark feedback as viewed when tab is active on mount
+  useEffect(() => {
+    if (activeTab === "feedback" && showFeedbackTab) {
+      const now = new Date().toISOString();
+      localStorage.setItem("lastViewedFeedback", now);
+      setLastViewedFeedback(now);
+    }
+  }, []);
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    if (value === "feedback") {
+      const now = new Date().toISOString();
+      localStorage.setItem("lastViewedFeedback", now);
+      setLastViewedFeedback(now);
+      queryClient.invalidateQueries({ queryKey: ["new-feedback-count"] });
+    }
     if (value === "community") {
       markChatNotificationsAsRead();
     }
@@ -80,9 +107,9 @@ export function DashboardFeedTabs({
             <span className="sm:hidden">
               {language === "ko" ? "피드백" : "Feedback"}
             </span>
-            {feedbackCount > 0 && (
+            {newFeedbackCount > 0 && (
               <span className="bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-medium">
-                {feedbackCount > 99 ? "99+" : feedbackCount}
+                {newFeedbackCount > 99 ? "99+" : newFeedbackCount}
               </span>
             )}
           </TabsTrigger>

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ImagePlus, X, MoreHorizontal, Bug, Lightbulb, TrendingUp, MessageSquare, Loader2 } from "lucide-react";
+import { ImagePlus, X, MoreHorizontal, Bug, Lightbulb, TrendingUp, MessageSquare, Loader2, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { toast } from "sonner";
@@ -256,6 +256,16 @@ export function FeedbackBoard() {
 
   return (
     <div className="space-y-4 p-4">
+      {/* Beta Notice */}
+      <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+        <p className="text-sm text-primary font-medium flex items-center gap-2">
+          <Info className="w-4 h-4 shrink-0" />
+          {language === "ko" 
+            ? "베타 테스트 기간 동안 이 피드백 보드는 Admin과 Worship Leader에게만 표시됩니다."
+            : "During beta testing, this Feedback Board is only visible to Admin and Worship Leaders."}
+        </p>
+      </div>
+
       {/* Post Composer */}
       <Card>
         <CardContent className="pt-6">
