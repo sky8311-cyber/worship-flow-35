@@ -50,7 +50,7 @@ export const BottomTabNavigation = () => {
           {navigationTabs.map((tab, index) => {
             const isActive = tab.match(location.pathname);
             const Icon = tab.icon;
-            const isDraftTab = tab.to === "/worship-sets";
+            const isDraftTab = tab.to.startsWith("/worship-sets");
             const isSongsTab = tab.to === "/songs";
             
             return (
