@@ -1,14 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Check } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface AddToSetDialogProps {
   open: boolean;
@@ -20,8 +20,19 @@ interface AddToSetDialogProps {
 
 export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: AddToSetDialogProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
-  const [selectedOption, setSelectedOption] = useState<"new" | string>("new");
+  
+  // Detect currently editing set from URL (/set-builder/:id)
+  const currentEditingSetId = useMemo(() => {
+    const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
+    return match ? match[1] : null;
+  }, [location.pathname]);
+  
+  // Default to current editing set if available, otherwise "new"
+  const [selectedOption, setSelectedOption] = useState<"new" | string>(
+    currentEditingSetId || "new"
+  );
   
   // CRITICAL: Capture songs in state when dialog opens to prevent closure issues
   const [capturedSongs, setCapturedSongs] = useState<any[]>([]);
@@ -31,8 +42,15 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       // Capture songs when dialog opens - this prevents race conditions
       const songsToCapture = songs || (song ? [song] : []);
       setCapturedSongs([...songsToCapture]); // Create a copy
+      
+      // Reset selection to current editing set if available
+      if (currentEditingSetId) {
+        setSelectedOption(currentEditingSetId);
+      } else {
+        setSelectedOption("new");
+      }
     }
-  }, [open, songs, song]);
+  }, [open, songs, song, currentEditingSetId]);
   
   const { data: sets } = useQuery({
     queryKey: ["my-draft-sets"],
@@ -192,6 +210,38 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         </div>
         
         <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
+          {/* Show currently editing set at the top with highlight */}
+          {currentEditingSetId && sets?.find(s => s.id === currentEditingSetId) && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 text-sm text-primary mb-2">
+                <Check className="w-4 h-4" />
+                <span className="font-medium">현재 편집 중인 세트</span>
+              </div>
+              {(() => {
+                const currentSet = sets.find(s => s.id === currentEditingSetId)!;
+                return (
+                  <div 
+                    key={currentSet.id} 
+                    className="flex items-center space-x-2 p-3 border-2 border-primary rounded-lg bg-primary/5 cursor-pointer"
+                  >
+                    <RadioGroupItem value={currentSet.id} id={`current-${currentSet.id}`} />
+                    <Label htmlFor={`current-${currentSet.id}`} className="flex-1 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <div className="flex-1">
+                          <p className="font-medium">{currentSet.service_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(currentSet.date), "yyyy-MM-dd")} | {currentSet.worship_leader || "인도자 미정"}
+                          </p>
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
             <RadioGroupItem value="new" id="new" />
             <Label htmlFor="new" className="flex-1 cursor-pointer">
@@ -202,10 +252,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
             </Label>
           </div>
           
-          {sets && sets.length > 0 && (
+          {sets && sets.filter(s => s.id !== currentEditingSetId).length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-medium mb-2">기존 워십세트에 추가:</p>
-              {sets.map((set) => (
+              <p className="text-sm font-medium mb-2">다른 워십세트에 추가:</p>
+              {sets.filter(s => s.id !== currentEditingSetId).map((set) => (
                 <div key={set.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer mb-2">
                   <RadioGroupItem value={set.id} id={set.id} />
                   <Label htmlFor={set.id} className="flex-1 cursor-pointer">
