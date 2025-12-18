@@ -27,12 +27,13 @@ interface ApplicationCardProps {
       avatar_url: string | null;
     };
   };
+  hasWorshipLeaderRole?: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   isLoading?: boolean;
 }
 
-export function ApplicationCard({ application, onApprove, onReject, isLoading }: ApplicationCardProps) {
+export function ApplicationCard({ application, hasWorshipLeaderRole, onApprove, onReject, isLoading }: ApplicationCardProps) {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
 
@@ -66,8 +67,13 @@ export function ApplicationCard({ application, onApprove, onReject, isLoading }:
               {t("admin.applications.appliedDate")}: {format(new Date(application.created_at), "PP", { locale: dateLocale })}
             </p>
           </div>
-          <div>
+          <div className="flex flex-col items-end gap-1">
             {getStatusBadge(application.status)}
+            {hasWorshipLeaderRole && application.status === "pending" && (
+              <Badge className="bg-blue-500 text-white text-xs">
+                {t("admin.applications.alreadyWorshipLeader")}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -115,7 +121,11 @@ export function ApplicationCard({ application, onApprove, onReject, isLoading }:
                     className="flex-1"
                   >
                     <CheckCircle className="h-4 w-4 sm:mr-1" />
-                    <span className="hidden sm:inline">{t("admin.applications.approve")}</span>
+                    <span className="hidden sm:inline">
+                      {hasWorshipLeaderRole 
+                        ? t("admin.applications.confirmStatus") 
+                        : t("admin.applications.approve")}
+                    </span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="sm:hidden">
