@@ -26,6 +26,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useScrollPosition, clearScrollPosition } from "@/hooks/useScrollPosition";
 import { Home, AlertCircle } from "lucide-react";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -47,6 +48,9 @@ const SetBuilder = () => {
   const { isAdmin, signOut } = useAuth();
   const { t, language } = useTranslation();
   const { user } = useAuth();
+  
+  // Remember scroll position per set
+  useScrollPosition(id ? `set-builder-${id}` : "set-builder-new");
   const [formData, setFormData] = useState({
     date: format(new Date(), "yyyy-MM-dd"),
     service_time: "",
@@ -109,6 +113,8 @@ const SetBuilder = () => {
       queryClient.invalidateQueries({ queryKey: ["user-draft-count"] });
       // Clear last edited draft if deleting the same set
       clearLastEditedDraft();
+      // Clear scroll position for this set
+      if (id) clearScrollPosition(`set-builder-${id}`);
       toast.success(language === "ko" ? "예배세트가 삭제되었습니다" : "Worship set deleted");
       navigate("/worship-sets");
     },
