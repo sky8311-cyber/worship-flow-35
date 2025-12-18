@@ -27,7 +27,7 @@ export const SongCartPopover = () => {
     <>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" className="relative bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl">
             <Music className="h-5 w-5" />
             <Badge 
               className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs font-bold"
