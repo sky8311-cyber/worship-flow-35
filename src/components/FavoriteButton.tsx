@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
   songId: string;
@@ -98,18 +99,16 @@ export function FavoriteButton({
       variant={variant}
       size={size}
       onClick={handleClick}
-      className={className}
+      className={cn("relative", className)}
     >
-      <div className="relative">
-        <Heart 
-          className={`w-4 h-4 transition-colors ${optimisticFavorite ? "fill-red-500 text-red-500" : ""}`}
-        />
-        {optimisticCount > 0 && (
-          <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
-            {optimisticCount > 99 ? "99+" : optimisticCount}
-          </span>
-        )}
-      </div>
+      <Heart 
+        className={`w-4 h-4 transition-colors ${optimisticFavorite ? "fill-red-500 text-red-500" : ""}`}
+      />
+      {optimisticCount > 0 && (
+        <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+          {optimisticCount > 99 ? "99+" : optimisticCount}
+        </span>
+      )}
     </Button>
   );
 }
