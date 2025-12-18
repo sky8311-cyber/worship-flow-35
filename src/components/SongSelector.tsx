@@ -640,11 +640,8 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                   size="icon"
                   className="h-9 w-9 shrink-0"
                   onClick={() => {
-                    if (searchQuery) {
-                      setSearchQuery("");
-                    } else {
-                      setIsSearchExpanded(false);
-                    }
+                    setSearchQuery("");
+                    setIsSearchExpanded(false);
                   }}
                 >
                   <X className="h-4 w-4" />
