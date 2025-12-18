@@ -15,7 +15,7 @@ export const navigationTabs: NavigationTab[] = [
     match: (path: string) => path === "/dashboard",
   },
   {
-    to: "/worship-sets",
+    to: "/worship-sets?continue=true",
     icon: Calendar,
     labelKey: "navigation.worshipSets",
     match: (path: string) => path.includes("/worship-sets") || path.includes("/set-builder"),

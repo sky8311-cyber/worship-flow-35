@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList, Share2 } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/countdownHelper";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import { getLastEditedDraftId, clearLastEditedDraft } from "@/hooks/useAutoSaveD
 
 export default function WorshipSets() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
@@ -30,6 +31,9 @@ export default function WorshipSets() {
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   const [hasCheckedLastDraft, setHasCheckedLastDraft] = useState(false);
   
+  // Check if we should continue to last draft (only when ?continue=true)
+  const shouldContinueDraft = searchParams.get("continue") === "true";
+  
   // Auto-switch to card view on mobile
   useEffect(() => {
     if (isMobile) {
@@ -37,9 +41,9 @@ export default function WorshipSets() {
     }
   }, [isMobile]);
 
-  // Check for last edited draft and redirect
+  // Check for last edited draft and redirect (only when ?continue=true)
   useEffect(() => {
-    if (hasCheckedLastDraft || !user?.id) return;
+    if (hasCheckedLastDraft || !user?.id || !shouldContinueDraft) return;
     
     const checkLastEditedDraft = async () => {
       const lastEditedDraftId = getLastEditedDraftId();
@@ -62,17 +66,20 @@ export default function WorshipSets() {
               : `Returning to draft "${data.service_name || 'New Worship Set'}"`
           );
           navigate(`/set-builder/${lastEditedDraftId}`, { replace: true });
+          return;
         } else {
           // Draft no longer exists, clear localStorage
           clearLastEditedDraft();
         }
       }
       
+      // No draft found or draft invalid, show history list (remove ?continue param)
+      navigate("/worship-sets", { replace: true });
       setHasCheckedLastDraft(true);
     };
     
     checkLastEditedDraft();
-  }, [user?.id, hasCheckedLastDraft, navigate, language]);
+  }, [user?.id, hasCheckedLastDraft, navigate, language, shouldContinueDraft]);
 
   // Check if user can manage a specific set
   const canManage = (set: any) => {
