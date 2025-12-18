@@ -209,18 +209,18 @@ export function ChatBubble({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0"
+        className="h-8 w-8 p-0"
         onClick={() => likeMutation.mutate()}
       >
-        <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
+        <Heart className={`w-5 h-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`} />
       </Button>
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 p-0"
+        className="h-8 w-8 p-0"
         onClick={() => setShowComments(!showComments)}
       >
-        <MessageCircle className="w-3.5 h-3.5" />
+        <MessageCircle className="w-4 h-4" />
       </Button>
       {canManage && (
         <DropdownMenu>
@@ -284,10 +284,10 @@ export function ChatBubble({
               {likeCount !== undefined && likeCount > 0 && (
                 <button
                   onClick={() => setShowLikersDialog(true)}
-                  className="flex items-center gap-0.5 text-xs text-red-500 hover:underline"
+                  className="flex items-center gap-1 text-red-500 hover:underline"
                 >
-                  <Heart className="w-3 h-3 fill-current" />
-                  {likeCount}
+                  <Heart className="w-4 h-4 fill-current" />
+                  <span className="text-sm font-semibold">{likeCount}</span>
                 </button>
               )}
             </div>
@@ -417,10 +417,10 @@ export function ChatBubble({
             {likeCount !== undefined && likeCount > 0 && (
               <button
                 onClick={() => setShowLikersDialog(true)}
-                className="flex items-center gap-0.5 text-xs text-red-500 hover:underline"
+                className="flex items-center gap-1 text-red-500 hover:underline"
               >
-                <Heart className="w-3 h-3 fill-current" />
-                {likeCount}
+                <Heart className="w-4 h-4 fill-current" />
+                <span className="text-sm font-semibold">{likeCount}</span>
               </button>
             )}
           </div>
