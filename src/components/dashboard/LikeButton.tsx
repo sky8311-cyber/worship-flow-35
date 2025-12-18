@@ -79,21 +79,20 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => likeMutation.mutate()}
           disabled={!user || likeMutation.isPending}
-          className={isLiked ? "text-red-500" : ""}
+          className={`h-8 w-8 p-0 ${isLiked ? "text-red-500" : ""}`}
         >
-          <Heart className={`w-4 h-4 mr-1 ${isLiked ? "fill-current" : ""}`} />
-          {t("socialFeed.like")}
+          <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
         </Button>
         {likeCount !== undefined && likeCount > 0 && (
           <button
             onClick={() => setShowLikersDialog(true)}
-            className="text-sm text-muted-foreground hover:underline"
+            className="text-base font-semibold hover:underline"
           >
             {likeCount}
           </button>
