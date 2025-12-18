@@ -251,7 +251,7 @@ export const SongCard = memo(function SongCard({
               >
                 <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 {usageCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full min-w-[16px] h-[16px] flex items-center justify-center font-semibold px-0.5">
+                  <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
                     {usageCount > 99 ? "99+" : usageCount}
                   </span>
                 )}

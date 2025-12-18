@@ -105,7 +105,7 @@ export function FavoriteButton({
           className={`w-4 h-4 transition-colors ${optimisticFavorite ? "fill-red-500 text-red-500" : ""}`}
         />
         {optimisticCount > 0 && (
-          <span className="absolute -top-2 -right-3 bg-destructive text-destructive-foreground text-[10px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center font-semibold px-0.5">
+          <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
             {optimisticCount > 99 ? "99+" : optimisticCount}
           </span>
         )}

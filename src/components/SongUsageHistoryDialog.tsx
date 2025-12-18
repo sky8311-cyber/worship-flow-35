@@ -27,11 +27,7 @@ export const SongUsageHistoryDialog = ({
 
   const handleOpenSet = (item: SongUsageItem) => {
     onOpenChange(false);
-    if (item.is_same_community && item.can_edit) {
-      navigate(`/set-builder/${item.service_set_id}`);
-    } else {
-      navigate(`/band-view/${item.service_set_id}`);
-    }
+    navigate(`/band-view/${item.service_set_id}`);
   };
 
   const formatDate = (dateStr: string) => {
