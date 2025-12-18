@@ -20,6 +20,7 @@ import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSongCart } from "@/contexts/SongCartContext";
 import { toast } from "sonner";
@@ -32,6 +33,9 @@ const SongLibrary = () => {
   const { t } = useTranslation();
   const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
+  
+  // Remember scroll position
+  useScrollPosition("song-library");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 

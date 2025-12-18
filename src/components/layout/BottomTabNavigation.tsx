@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSongCart } from "@/contexts/SongCartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatFullScreenOverlay } from "@/components/chat/ChatFullScreenOverlay";
 import { navigationTabs, chatTab } from "@/lib/navigationConfig";
@@ -15,6 +16,7 @@ export const BottomTabNavigation = () => {
   const { t } = useTranslation();
   const { chatUnreadCount } = useNotifications();
   const { user } = useAuth();
+  const { cartCount } = useSongCart();
   const [chatOpen, setChatOpen] = useState(false);
 
   // Fetch user's draft count
@@ -49,6 +51,7 @@ export const BottomTabNavigation = () => {
             const isActive = tab.match(location.pathname);
             const Icon = tab.icon;
             const isDraftTab = tab.to === "/worship-sets";
+            const isSongsTab = tab.to === "/songs";
             
             return (
               <Link
@@ -66,6 +69,11 @@ export const BottomTabNavigation = () => {
                   {isDraftTab && draftCount > 0 && (
                     <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                       {draftCount > 9 ? "9+" : draftCount}
+                    </span>
+                  )}
+                  {isSongsTab && cartCount > 0 && (
+                    <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                      {cartCount > 9 ? "9+" : cartCount}
                     </span>
                   )}
                 </div>
