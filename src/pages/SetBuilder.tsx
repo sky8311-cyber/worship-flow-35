@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -768,7 +768,17 @@ const SetBuilder = () => {
               onClick={handlePublishToggle}
               disabled={saveSetMutation.isPending}
             >
-              {status === "draft" ? "게시하기" : "게시취소"}
+              {status === "draft" ? (
+                <>
+                  <Upload className="w-4 h-4 mr-1.5" />
+                  게시하기
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4 mr-1.5" />
+                  게시취소
+                </>
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
