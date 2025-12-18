@@ -72,7 +72,7 @@ export const BottomTabNavigation = () => {
                     </span>
                   )}
                   {isSongsTab && cartCount > 0 && (
-                    <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                    <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                       {cartCount > 9 ? "9+" : cartCount}
                     </span>
                   )}

@@ -421,11 +421,11 @@ export const SongTable = ({
                              title={t("songUsage.viewUsageHistory")}
                            >
                              <BarChart3 className="h-4 w-4" />
-                             {(usageCounts.get(song.id) || 0) > 0 && (
-                               <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[10px] rounded-full min-w-[14px] h-[14px] flex items-center justify-center font-semibold px-0.5">
-                                 {(usageCounts.get(song.id) || 0) > 99 ? "99+" : usageCounts.get(song.id)}
-                               </span>
-                             )}
+                              {(usageCounts.get(song.id) || 0) > 0 && (
+                                <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+                                  {(usageCounts.get(song.id) || 0) > 99 ? "99+" : usageCounts.get(song.id)}
+                                </span>
+                              )}
                            </Button>
                          )}
                           <FavoriteButton 

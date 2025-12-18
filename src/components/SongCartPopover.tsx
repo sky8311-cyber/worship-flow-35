@@ -29,7 +29,7 @@ export const SongCartPopover = () => {
         <PopoverTrigger asChild>
           <Button variant="ghost" size="icon" className="relative bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl">
             <Music className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+            <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
               {cartCount > 99 ? "99+" : cartCount}
             </span>
           </Button>
