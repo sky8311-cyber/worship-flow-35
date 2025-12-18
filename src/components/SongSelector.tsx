@@ -13,6 +13,7 @@ import { SongTable } from "./SongTable";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SelectedSongWithVariation {
   song: any;
@@ -29,6 +30,7 @@ interface SongSelectorProps {
 const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
 export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
@@ -238,9 +240,22 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
       }
       onClose();
     }}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pr-12">
-          <DialogTitle>{t("songSelector.title")}</DialogTitle>
+      <DialogContent 
+        className={isMobile 
+          ? "w-full h-full max-w-full max-h-full rounded-none border-0 flex flex-col p-4" 
+          : "max-w-4xl max-h-[85vh] overflow-hidden flex flex-col"
+        }
+        hideCloseButton={isMobile}
+      >
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pr-2">
+          <div className="flex items-center gap-2">
+            {isMobile && (
+              <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+                <X className="h-5 w-5" />
+              </Button>
+            )}
+            <DialogTitle>{t("songSelector.title")}</DialogTitle>
+          </div>
           
           <div className="flex gap-2">
             {selectedSongs.length > 0 && (
@@ -410,7 +425,7 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           ) : filteredAndSortedSongs.length > 0 ? (
             viewMode === "card" ? (
               // Card View - using unified SongCard component
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-3">
                 {filteredAndSortedSongs.map((song) => (
                   <SongCard
                     key={song.id}

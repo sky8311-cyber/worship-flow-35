@@ -54,24 +54,22 @@ export const WorshipComponentPalette = ({ onAddComponent }: WorshipComponentPale
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-0">
-        <ScrollArea className="h-[400px] pr-2">
-          <div className="flex flex-wrap gap-2">
-            {WORSHIP_COMPONENTS.map((component) => {
-              const IconComponent = iconMap[component.icon] || Circle;
-              return (
-                <Badge
-                  key={component.type}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-accent transition-colors py-1.5 px-2.5 text-xs"
-                  onClick={() => onAddComponent(component.type)}
-                >
-                  <IconComponent className="w-3 h-3 mr-1.5" />
-                  {language === "ko" ? component.labelKo : component.labelEn}
-                </Badge>
-              );
-            })}
-          </div>
-        </ScrollArea>
+        <div className="flex flex-wrap gap-2">
+          {WORSHIP_COMPONENTS.map((component) => {
+            const IconComponent = iconMap[component.icon] || Circle;
+            return (
+              <Badge
+                key={component.type}
+                variant="outline"
+                className="cursor-pointer hover:bg-accent transition-colors py-1.5 px-2.5 text-xs"
+                onClick={() => onAddComponent(component.type)}
+              >
+                <IconComponent className="w-3 h-3 mr-1.5" />
+                {language === "ko" ? component.labelKo : component.labelEn}
+              </Badge>
+            );
+          })}
+        </div>
 
         {/* Custom component input */}
         <div className="mt-4 pt-3 border-t">
