@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList, Share2 } from "lucide-react";
+import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/countdownHelper";
@@ -19,11 +20,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export default function WorshipSets() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
+  const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   
   // Auto-switch to card view on mobile
   useEffect(() => {
@@ -103,6 +106,11 @@ export default function WorshipSets() {
   
   const handleTogglePublish = (id: string, currentStatus: string) => {
     togglePublishMutation.mutate({ id, currentStatus });
+  };
+  
+  const handleShare = (set: any) => {
+    setSelectedSetForShare(set);
+    setShareLinkDialogOpen(true);
   };
   
   return (
@@ -194,6 +202,7 @@ export default function WorshipSets() {
                   canManage={canManage(set)}
                   onDelete={handleDelete}
                   onTogglePublish={handleTogglePublish}
+                  onShare={handleShare}
                 />
               ))}
             </div>
@@ -242,6 +251,14 @@ export default function WorshipSets() {
                             <Button 
                               size="icon" 
                               variant="ghost" 
+                              onClick={() => handleShare(set)}
+                              title={language === "ko" ? "공유" : "Share"}
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
                               onClick={() => navigate(`/set-builder/${set.id}`)}
                               title={t("worshipSets.edit")}
                             >
@@ -274,6 +291,14 @@ export default function WorshipSets() {
           )}
           </CardContent>
         </Card>
+        <ShareLinkDialog
+          open={shareLinkDialogOpen}
+          onOpenChange={setShareLinkDialogOpen}
+          setId={selectedSetForShare?.id || ""}
+          publicShareToken={selectedSetForShare?.public_share_token || null}
+          publicShareEnabled={selectedSetForShare?.public_share_enabled || false}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] })}
+        />
       </div>
     </AppLayout>
   );

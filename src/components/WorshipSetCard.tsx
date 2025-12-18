@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, Check, Save } from "lucide-react";
+import { Eye, Edit, Trash2, Check, Save, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/countdownHelper";
@@ -15,13 +15,16 @@ interface WorshipSetCardProps {
     service_name: string;
     worship_leader: string | null;
     status: "draft" | "published";
+    public_share_token?: string | null;
+    public_share_enabled?: boolean;
   };
   canManage: boolean;
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, currentStatus: string) => void;
+  onShare?: (set: any) => void;
 }
 
-export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish }: WorshipSetCardProps) {
+export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onShare }: WorshipSetCardProps) {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
@@ -65,6 +68,17 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish }: Wo
             </Button>
             {canManage && (
               <>
+                {onShare && (
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-8 w-8"
+                    onClick={() => onShare(set)}
+                    title={language === "ko" ? "공유" : "Share"}
+                  >
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button 
                   size="icon" 
                   variant="ghost" 

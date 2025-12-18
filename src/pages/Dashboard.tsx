@@ -385,7 +385,7 @@ const Dashboard = () => {
                   {isLoading ? <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div> : upcomingSets && upcomingSets.length > 0 ? <div className="grid gap-3 md:grid-cols-2">
                       {upcomingSets.slice(0, 4).map(set => {
                         const isPast = isPastDate(set.date);
-                        const canManage = isAdmin || (isCommunityLeaderInAnyCommunity && set.created_by === user?.id);
+                        const canManage = isAdmin || ((isWorshipLeader || isCommunityLeaderInAnyCommunity) && set.created_by === user?.id);
                         const songs = setSongsData?.[set.id] || [];
                         const countdown = getCountdown(set.date, set.service_time);
                         
