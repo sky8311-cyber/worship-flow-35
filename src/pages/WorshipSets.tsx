@@ -16,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipSetCard } from "@/components/WorshipSetCard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getLastEditedDraftId, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function WorshipSets() {
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
+  const [hasCheckedLastDraft, setHasCheckedLastDraft] = useState(false);
   
   // Auto-switch to card view on mobile
   useEffect(() => {
@@ -34,7 +36,44 @@ export default function WorshipSets() {
       setViewMode("card");
     }
   }, [isMobile]);
-  
+
+  // Check for last edited draft and redirect
+  useEffect(() => {
+    if (hasCheckedLastDraft || !user?.id) return;
+    
+    const checkLastEditedDraft = async () => {
+      const lastEditedDraftId = getLastEditedDraftId();
+      
+      if (lastEditedDraftId) {
+        // Verify the draft still exists and belongs to user
+        const { data, error } = await supabase
+          .from("service_sets")
+          .select("id, status, service_name")
+          .eq("id", lastEditedDraftId)
+          .eq("status", "draft")
+          .eq("created_by", user.id)
+          .maybeSingle();
+        
+        if (data && !error) {
+          // Redirect to the last edited draft
+          toast.info(
+            language === "ko" 
+              ? `"${data.service_name || '새 워십세트'}" 작성 중인 드래프트로 이동합니다` 
+              : `Returning to draft "${data.service_name || 'New Worship Set'}"`
+          );
+          navigate(`/set-builder/${lastEditedDraftId}`, { replace: true });
+        } else {
+          // Draft no longer exists, clear localStorage
+          clearLastEditedDraft();
+        }
+      }
+      
+      setHasCheckedLastDraft(true);
+    };
+    
+    checkLastEditedDraft();
+  }, [user?.id, hasCheckedLastDraft, navigate, language]);
+
   // Check if user can manage a specific set
   const canManage = (set: any) => {
     if (isAdmin) return true;

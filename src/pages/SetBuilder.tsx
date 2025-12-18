@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents
 import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetPositionsManager";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
+import { useAutoSaveDraft, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -68,6 +69,29 @@ const SetBuilder = () => {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
+  // Auto-save draft hook
+  const { 
+    hasUnsavedChanges: autoSaveHasChanges, 
+    isSaving: autoSaveIsSaving, 
+    lastSavedAt,
+    forceSave,
+    newSetId
+  } = useAutoSaveDraft({
+    id,
+    formData,
+    items,
+    status,
+    enabled: status === "draft",
+  });
+
+  // Navigate to new set URL if created via auto-save
+  useEffect(() => {
+    if (newSetId && !id) {
+      navigate(`/set-builder/${newSetId}`, { replace: true });
+    }
+  }, [newSetId, id, navigate]);
+
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete mutation
@@ -82,6 +106,9 @@ const SetBuilder = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["service-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["user-draft-count"] });
+      // Clear last edited draft if deleting the same set
+      clearLastEditedDraft();
       toast.success(language === "ko" ? "예배세트가 삭제되었습니다" : "Worship set deleted");
       navigate("/worship-sets");
     },
@@ -772,7 +799,29 @@ const SetBuilder = () => {
             뒤로
           </Button>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Auto-save status indicator */}
+            {status === "draft" && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {autoSaveIsSaving ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>저장 중...</span>
+                  </>
+                ) : autoSaveHasChanges ? (
+                  <>
+                    <Circle className="h-2 w-2 fill-orange-500 text-orange-500" />
+                    <span>저장 대기</span>
+                  </>
+                ) : lastSavedAt ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    <span>자동 저장됨</span>
+                  </>
+                ) : null}
+              </div>
+            )}
+
             {status === "draft" ? (
               <Badge variant="outline">
                 <Lock className="w-3 h-3 mr-1" />
