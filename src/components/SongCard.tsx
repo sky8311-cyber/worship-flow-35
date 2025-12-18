@@ -215,18 +215,18 @@ export const SongCard = memo(function SongCard({
           </div>
 
           {/* Action buttons - Selector mode or Cart first, Usage History, then Heart, Edit, Delete */}
-          <div className="flex gap-1.5 justify-start mt-4">
+          <div className="flex gap-1 justify-start mt-4">
             {selectorMode && onSelectForSet && (
               <Button
                 variant={isSelectedForSet ? "default" : "outline"}
                 size="sm"
                 onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
-                className="h-8 sm:h-9"
+                className="h-7 sm:h-8 px-2 tracking-tight"
               >
                 {isSelectedForSet ? (
-                  <><Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{t("songSelector.selected")}</>
+                  <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
                 ) : (
-                  <><Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />{t("songSelector.addToSet")}</>
+                  <><Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.addToSet")}</>
                 )}
               </Button>
             )}
@@ -235,10 +235,10 @@ export const SongCard = memo(function SongCard({
                 variant={inCart ? "default" : "outline"}
                 size="icon"
                 onClick={() => onToggleCart()}
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="h-7 w-7 sm:h-8 sm:w-8"
                 title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </Button>
             )}
             {canViewUsageHistory && (
@@ -246,10 +246,10 @@ export const SongCard = memo(function SongCard({
                 variant="outline"
                 size="icon"
                 onClick={() => setUsageHistoryOpen(true)}
-                className="h-8 w-8 sm:h-9 sm:w-9 relative"
+                className="h-7 w-7 sm:h-8 sm:w-8 relative"
                 title={t("songUsage.viewUsageHistory")}
               >
-                <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 {usageCount > 0 && (
                   <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
                     {usageCount > 99 ? "99+" : usageCount}
@@ -263,17 +263,17 @@ export const SongCard = memo(function SongCard({
               favoriteCount={favoriteCount}
               size="icon" 
               variant="outline" 
-              className="h-8 w-8 sm:h-9 sm:w-9" 
+              className="h-7 w-7 sm:h-8 sm:w-8" 
             />
             {onEdit && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={() => onEdit(song)}
-                className="h-8 w-8 sm:h-9 sm:w-9"
+                className="h-7 w-7 sm:h-8 sm:w-8"
                 title={t("common.edit")}
               >
-                <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               </Button>
             )}
             {onDelete && (
@@ -282,10 +282,10 @@ export const SongCard = memo(function SongCard({
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive"
+                    className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
                     title={t("common.delete")}
                   >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
