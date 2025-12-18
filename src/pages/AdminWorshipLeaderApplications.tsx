@@ -47,13 +47,22 @@ const AdminWorshipLeaderApplications = () => {
         .select("id, full_name, email, avatar_url")
         .in("id", userIds);
 
-      // Step 4: Build lookup map
-      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      // Step 4: Batch fetch user_roles to check existing worship_leader roles
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds)
+        .eq("role", "worship_leader");
 
-      // Step 5: Reconstruct data
+      // Step 5: Build lookup maps
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+      const worshipLeaderUserIds = new Set((userRoles || []).map(r => r.user_id));
+
+      // Step 6: Reconstruct data with hasWorshipLeaderRole flag
       return apps.map(app => ({
         ...app,
-        profiles: profileMap.get(app.user_id)
+        profiles: profileMap.get(app.user_id),
+        hasWorshipLeaderRole: worshipLeaderUserIds.has(app.user_id)
       }));
     },
   });
@@ -63,30 +72,62 @@ const AdminWorshipLeaderApplications = () => {
       const application = applications?.find(app => app.id === applicationId);
       if (!application) throw new Error("Application not found");
 
-      // Add worship_leader role
-      const { error: roleError } = await supabase
+      // Step 1: Check if worship_leader role already exists
+      const { data: existingRole } = await supabase
         .from("user_roles")
-        .insert({ user_id: application.user_id, role: "worship_leader" });
+        .select("id")
+        .eq("user_id", application.user_id)
+        .eq("role", "worship_leader")
+        .maybeSingle();
 
-      if (roleError) throw roleError;
+      // Step 2: Add role only if not already exists
+      if (!existingRole) {
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({ user_id: application.user_id, role: "worship_leader" });
 
-      // Update profiles table with worship leader info
+        if (roleError) throw roleError;
+      }
+
+      // Step 3: Fetch existing profile to merge (only update empty fields)
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("church_name, church_website, country, serving_position, years_serving, worship_leader_intro")
+        .eq("id", application.user_id)
+        .single();
+
+      // Step 4: Build profile update object - only fill empty fields
+      const profileUpdate: Record<string, any> = {
+        needs_worship_leader_profile: false
+      };
+
+      if (!existingProfile?.church_name && application.church_name) {
+        profileUpdate.church_name = application.church_name;
+      }
+      if (!existingProfile?.church_website && application.church_website) {
+        profileUpdate.church_website = application.church_website;
+      }
+      if (!existingProfile?.country && application.country) {
+        profileUpdate.country = application.country;
+      }
+      if (!existingProfile?.serving_position && application.position) {
+        profileUpdate.serving_position = application.position;
+      }
+      if (!existingProfile?.years_serving && application.years_serving) {
+        profileUpdate.years_serving = application.years_serving;
+      }
+      if (!existingProfile?.worship_leader_intro && application.introduction) {
+        profileUpdate.worship_leader_intro = application.introduction;
+      }
+
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({
-          church_name: application.church_name,
-          church_website: application.church_website,
-          country: application.country,
-          serving_position: application.position,
-          years_serving: application.years_serving,
-          worship_leader_intro: application.introduction,
-          needs_worship_leader_profile: false
-        })
+        .update(profileUpdate)
         .eq("id", application.user_id);
 
       if (profileError) throw profileError;
 
-      // Update application status
+      // Step 5: Update application status to approved
       const { error: statusError } = await supabase
         .from("worship_leader_applications")
         .update({
@@ -181,6 +222,7 @@ const AdminWorshipLeaderApplications = () => {
                   <ApplicationCard
                     key={app.id}
                     application={app}
+                    hasWorshipLeaderRole={app.hasWorshipLeaderRole}
                     onApprove={(id) => approveMutation.mutate(id)}
                     onReject={(id) => rejectMutation.mutate(id)}
                     isLoading={approveMutation.isPending || rejectMutation.isPending}
@@ -242,7 +284,16 @@ const AdminWorshipLeaderApplications = () => {
                       <TableCell>
                         {format(new Date(app.created_at), "PPP", { locale: dateLocale })}
                       </TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(app.status)}
+                          {app.hasWorshipLeaderRole && app.status === "pending" && (
+                            <Badge className="bg-blue-500 text-white text-xs">
+                              {t("admin.applications.alreadyWorshipLeader")}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {app.status === "pending" && (
                           <div className="flex gap-2">
@@ -252,7 +303,9 @@ const AdminWorshipLeaderApplications = () => {
                               disabled={approveMutation.isPending}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              {t("admin.applications.approve")}
+                              {app.hasWorshipLeaderRole 
+                                ? t("admin.applications.confirmStatus") 
+                                : t("admin.applications.approve")}
                             </Button>
                             <Button
                               size="sm"

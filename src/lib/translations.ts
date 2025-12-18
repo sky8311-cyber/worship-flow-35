@@ -514,6 +514,8 @@ export const translations = {
         rejectedSuccess: "Application rejected successfully",
         approveError: "Failed to approve application",
         rejectError: "Failed to reject application",
+        alreadyWorshipLeader: "Already Worship Leader",
+        confirmStatus: "Confirm Status",
       },
       churchAccounts: {
         title: "Church Account Management",
@@ -2165,6 +2167,8 @@ export const translations = {
         rejectedSuccess: "신청이 거절되었습니다",
         approveError: "신청 승인에 실패했습니다",
         rejectError: "신청 거절에 실패했습니다",
+        alreadyWorshipLeader: "이미 워십리더",
+        confirmStatus: "승인으로 변경",
       },
       churchAccounts: {
         title: "교회계정 관리",
