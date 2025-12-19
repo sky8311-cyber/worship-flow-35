@@ -65,6 +65,7 @@ const SetBuilder = () => {
   });
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
+  const prevIdRef = useRef<string | undefined>(undefined);
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
@@ -377,10 +378,15 @@ const SetBuilder = () => {
     }
   }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, user]);
 
-  // Reset initialization flag when navigating to a different set
+  // Reset initialization flag when navigating to a DIFFERENT set (not on mount/remount)
   useEffect(() => {
-    setHasInitializedItems(false);
-    setItems([]);
+    // Only reset if we're actually navigating to a different set
+    // Skip on initial mount (prevIdRef.current will be undefined)
+    if (prevIdRef.current !== undefined && prevIdRef.current !== id) {
+      setHasInitializedItems(false);
+      setItems([]);
+    }
+    prevIdRef.current = id;
   }, [id]);
 
   // Merge and load songs + components by position - ONLY on initial load
