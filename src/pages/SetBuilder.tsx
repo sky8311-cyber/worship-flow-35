@@ -19,7 +19,7 @@ import { SetComponentItem } from "@/components/SetComponentItem";
 import { SongSelector } from "@/components/SongSelector";
 import { SetCollaborators } from "@/components/SetCollaborators";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
-import { TemplateSelector } from "@/components/TemplateSelector";
+
 import { SaveTemplateDialog } from "@/components/SaveTemplateDialog";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -752,60 +752,21 @@ const SetBuilder = () => {
   const songCount = items.filter(i => i.type === "song").length;
   const componentCount = items.filter(i => i.type === "component").length;
 
-  // Reusable Action Buttons Component
+  // Reusable Action Buttons Component - 저장, 삭제, 게시하기, 링크공유 순서 (우측 정렬)
   const renderActionButtons = (className?: string) => (
-    <div className={`flex items-center justify-center gap-2 flex-wrap ${className || 'mb-4'}`}>
-      {id && (
-        <Button 
-          variant="destructive" 
-          size="sm" 
-          className="h-8 gap-1.5" 
-          onClick={() => setShowDeleteConfirm(true)}
-          disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending}
-        >
-          <Trash2 className="w-4 h-4 shrink-0" />
-          <span>{language === "ko" ? "삭제" : "Delete"}</span>
-        </Button>
-      )}
-      
-      {id && (
-        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={handleCopyLink}>
-          <Share2 className="w-4 h-4 shrink-0" />
-          <span>{language === "ko" ? "링크 공유" : "Share Link"}</span>
-        </Button>
-      )}
-
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-8 gap-1.5"
-        onClick={() => navigate("/templates")}
-      >
-        <FileText className="w-4 h-4 shrink-0" />
-        <span>{language === "ko" ? "템플릿" : "Templates"}</span>
-      </Button>
-      <Button
-        variant="secondary"
-        size="sm"
-        className="h-8 gap-1.5"
-        onClick={() => setShowSaveTemplate(true)}
-      >
-        <Copy className="w-4 h-4 shrink-0" />
-        <span>{language === "ko" ? "템플릿 저장" : "Save Template"}</span>
-      </Button>
-      
+    <div className={`flex items-center justify-end gap-2 ${className || 'mb-4'}`}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
               variant="outline" 
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 gap-1 px-2 sm:px-3"
               onClick={() => saveSetMutation.mutate(undefined)}
               disabled={saveSetMutation.isPending}
             >
               <Save className="w-4 h-4 shrink-0" />
-              <span>{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+              <span className="text-xs sm:text-sm">{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
@@ -813,25 +774,38 @@ const SetBuilder = () => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {id && (
+        <Button 
+          variant="destructive" 
+          size="sm" 
+          className="h-8 gap-1 px-2 sm:px-3" 
+          onClick={() => setShowDeleteConfirm(true)}
+          disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending}
+        >
+          <Trash2 className="w-4 h-4 shrink-0" />
+          <span className="text-xs sm:text-sm">{language === "ko" ? "삭제" : "Delete"}</span>
+        </Button>
+      )}
       
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button 
               size="sm" 
-              className="h-8"
+              className="h-8 gap-1 px-2 sm:px-3"
               onClick={handlePublishToggle}
               disabled={saveSetMutation.isPending}
             >
               {status === "draft" ? (
                 <>
-                  <Upload className="w-4 h-4 mr-1.5" />
-                  게시하기
+                  <Upload className="w-4 h-4 shrink-0" />
+                  <span className="text-xs sm:text-sm">게시하기</span>
                 </>
               ) : (
                 <>
-                  <XCircle className="w-4 h-4 mr-1.5" />
-                  게시취소
+                  <XCircle className="w-4 h-4 shrink-0" />
+                  <span className="text-xs sm:text-sm">게시취소</span>
                 </>
               )}
             </Button>
@@ -844,6 +818,13 @@ const SetBuilder = () => {
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      {id && (
+        <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
+          <Share2 className="w-4 h-4 shrink-0" />
+          <span className="text-xs sm:text-sm">{language === "ko" ? "링크공유" : "Share"}</span>
+        </Button>
+      )}
     </div>
   );
 
@@ -914,18 +895,32 @@ const SetBuilder = () => {
           {/* Left Column - Worship Info */}
           <div className="lg:col-span-1 space-y-4">
             <Card className="shadow-md">
-              <CardHeader>
-                <CardTitle>예배 정보</CardTitle>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle>예배 정보</CardTitle>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => navigate("/templates")}
+                    >
+                      <FileText className="w-3.5 h-3.5 shrink-0" />
+                      <span>템플릿 불러오기</span>
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => setShowSaveTemplate(true)}
+                    >
+                      <Copy className="w-3.5 h-3.5 shrink-0" />
+                      <span>템플릿으로 만들기</span>
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
-                {/* Template Selector - only show when creating new set */}
-                {!id && (
-                  <TemplateSelector
-                    communityId={formData.community_id}
-                    onSelectTemplate={handleSelectTemplate}
-                  />
-                )}
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5 min-w-0">
                     <Label htmlFor="date" className="text-sm">날짜 *</Label>
