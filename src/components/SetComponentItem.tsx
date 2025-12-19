@@ -16,7 +16,7 @@ import {
 import { 
   GripVertical, X, ChevronDown, ChevronUp, Clock, User,
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
-  ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
+  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets, 
   Users, MessagesSquare, Circle, FileText, Check, Plus, Settings
 } from "lucide-react";
 import { useState } from "react";
@@ -26,7 +26,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
-  ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
+  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets, 
   Users, MessagesSquare, Circle,
 };
 

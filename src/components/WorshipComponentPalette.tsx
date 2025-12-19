@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
-  ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
+  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets, 
   Users, MessagesSquare, Plus, Circle
 } from "lucide-react";
 import { WORSHIP_COMPONENTS, WorshipComponentType } from "@/lib/worshipComponents";
@@ -22,6 +22,7 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   Megaphone,
   ScrollText,
   Sparkles,
+  Music,
   Music2,
   MessageCircle,
   Wine,

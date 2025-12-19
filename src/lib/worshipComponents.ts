@@ -2,6 +2,7 @@
 
 export type WorshipComponentType =
   | "prayer"
+  | "decision_hymn"
   | "welcome"
   | "bible_reading"
   | "small_group"
@@ -30,6 +31,7 @@ export const WORSHIP_COMPONENTS: WorshipComponentDef[] = [
   { type: "countdown", labelEn: "Countdown", labelKo: "카운트다운", icon: "Timer" },
   { type: "welcome", labelEn: "Welcome", labelKo: "환영", icon: "HandMetal" },
   { type: "prayer", labelEn: "Prayer", labelKo: "기도", icon: "HandHeart" },
+  { type: "decision_hymn", labelEn: "Decision Hymn", labelKo: "결단찬양", icon: "Music" },
   { type: "bible_reading", labelEn: "Bible Reading", labelKo: "성경봉독", icon: "BookOpen" },
   { type: "sermon", labelEn: "Sermon", labelKo: "설교", icon: "Mic" },
   { type: "offering", labelEn: "Offering", labelKo: "헌금", icon: "Heart" },
