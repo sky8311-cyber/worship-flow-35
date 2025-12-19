@@ -45,9 +45,8 @@ const SetBuilder = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useTranslation();
-  const { user } = useAuth();
   
   // Remember scroll position per set
   useScrollPosition(id ? `set-builder-${id}` : "set-builder-new");
@@ -163,8 +162,8 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
-  // Permission check for delete (only creator or admin)
-  const canDelete = existingSet?.created_by && (existingSet.created_by === user?.id || isAdmin);
+  // Permission check for delete (only creator or admin) - ensure user is loaded
+  const canDelete = !!user && !!existingSet?.created_by && (existingSet.created_by === user.id || isAdmin);
 
   const { data: existingSetSongs } = useQuery({
     queryKey: ["set-songs", id],
