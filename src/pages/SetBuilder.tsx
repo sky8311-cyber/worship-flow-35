@@ -225,7 +225,7 @@ const SetBuilder = () => {
   });
 
   // Check if user is a collaborator for this set
-  const { data: isCollaborator } = useQuery({
+  const { data: isCollaborator, isLoading: isCollaboratorLoading } = useQuery({
     queryKey: ["set-collaborator-check", id, user?.id],
     queryFn: async () => {
       if (!id || !user) return false;
@@ -241,7 +241,7 @@ const SetBuilder = () => {
   });
 
   // Check if user is a community leader for the set's community
-  const { data: isCommunityLeaderForSet } = useQuery({
+  const { data: isCommunityLeaderForSet, isLoading: isCommunityLeaderLoading } = useQuery({
     queryKey: ["community-leader-check", existingSet?.community_id, user?.id],
     queryFn: async () => {
       if (!existingSet?.community_id || !user) return false;
@@ -263,26 +263,43 @@ const SetBuilder = () => {
 
   // Phase 2: Permission check and redirect logic
   useEffect(() => {
-    if (existingSet && user) {
-      const isCreator = existingSet.created_by === user.id;
-      const isPublished = existingSet.status === 'published';
-      const hasEditPermission = isCreator || isAdmin || isCollaborator || isCommunityLeaderForSet;
-      
-      // For published sets, redirect non-owners to BandView
-      if (isPublished && !hasEditPermission) {
-        navigate(`/band-view/${id}`, { replace: true });
-        toast.info("게시된 워십세트를 읽기 전용으로 보고 있습니다");
-        return;
-      }
-      
-      // For draft sets, check if user has any permission
-      if (!isPublished && !hasEditPermission) {
-        navigate('/dashboard', { replace: true });
-        toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
-        return;
-      }
+    // Wait for existingSet and user to be available
+    if (!existingSet || !user) return;
+    
+    // Wait for collaborator check to complete (always runs when id and user exist)
+    if (id && isCollaboratorLoading) return;
+    
+    // Wait for community leader check to complete (only if set has a community)
+    if (existingSet.community_id && isCommunityLeaderLoading) return;
+    
+    const isCreator = existingSet.created_by === user.id;
+    const isPublished = existingSet.status === 'published';
+    const hasEditPermission = isCreator || isAdmin || isCollaborator || isCommunityLeaderForSet;
+    
+    console.log('SetBuilder permission check:', {
+      isCreator,
+      createdBy: existingSet.created_by,
+      userId: user.id,
+      isAdmin,
+      isCollaborator,
+      isCommunityLeaderForSet,
+      hasEditPermission,
+    });
+    
+    // For published sets, redirect non-owners to BandView
+    if (isPublished && !hasEditPermission) {
+      navigate(`/band-view/${id}`, { replace: true });
+      toast.info("게시된 워십세트를 읽기 전용으로 보고 있습니다");
+      return;
     }
-  }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, navigate, id]);
+    
+    // For draft sets, check if user has any permission
+    if (!isPublished && !hasEditPermission) {
+      navigate('/dashboard', { replace: true });
+      toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
+      return;
+    }
+  }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
 
   // Load form data from existing set with merge strategy
   useEffect(() => {
