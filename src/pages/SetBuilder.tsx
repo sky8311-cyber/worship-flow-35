@@ -144,7 +144,7 @@ const SetBuilder = () => {
     })
   );
 
-  const { data: existingSet, isLoading } = useQuery({
+  const { data: existingSet, isLoading: isExistingSetLoading } = useQuery({
     queryKey: ["service-set", id],
     queryFn: async () => {
       if (!id) return null;
@@ -263,8 +263,17 @@ const SetBuilder = () => {
 
   // Phase 2: Permission check and redirect logic
   useEffect(() => {
+    // Wait for existingSet query to complete loading first
+    if (isExistingSetLoading) return;
+    
     // Wait for existingSet and user to be available
     if (!existingSet || !user) return;
+    
+    // Additional safety check - make sure created_by is defined
+    if (!existingSet.created_by) {
+      console.warn('SetBuilder: existingSet.created_by is undefined, waiting for complete data');
+      return;
+    }
     
     // Wait for collaborator check to complete (always runs when id and user exist)
     if (id && isCollaboratorLoading) return;
@@ -299,11 +308,11 @@ const SetBuilder = () => {
       toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
       return;
     }
-  }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
+  }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isExistingSetLoading, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
 
   // Load form data from existing set with merge strategy
   useEffect(() => {
-    if (!existingSet || isLoading || isSaving) return;
+    if (!existingSet || isExistingSetLoading || isSaving) return;
 
     setFormData(current => ({
       date: existingSet.date ?? current.date,
@@ -339,7 +348,7 @@ const SetBuilder = () => {
           }
         });
     }
-  }, [existingSet, isLoading, isSaving, statusInitialized, user]);
+  }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, user]);
 
   // Merge and load songs + components by position
   useEffect(() => {
@@ -809,7 +818,7 @@ const SetBuilder = () => {
     </div>
   );
 
-  if (isLoading) {
+  if (isExistingSetLoading) {
     return (
       <AppLayout>
         <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
