@@ -175,16 +175,16 @@ const BandView = () => {
 
   // Check if user can edit this worship set
   const { data: canEditData } = useQuery({
-    queryKey: ["can-edit-set", id, user?.id],
-    enabled: !!id && !!user,
+    queryKey: ["can-edit-set", id, user?.id, serviceSet?.created_by, serviceSet?.community_id],
+    enabled: !!id && !!user && !!serviceSet,
     queryFn: async () => {
-      if (!id || !user) return { canEdit: false };
+      if (!id || !user || !serviceSet) return { canEdit: false };
       
       // Admin can always edit
       if (isAdmin) return { canEdit: true };
       
-      // Check if user is creator
-      if (serviceSet?.created_by === user.id) return { canEdit: true };
+      // Check if user is creator (worship leader who created the set)
+      if (serviceSet.created_by === user.id) return { canEdit: true };
       
       // Check if user is collaborator
       const { data: collaborator } = await supabase
@@ -197,7 +197,7 @@ const BandView = () => {
       if (collaborator) return { canEdit: true };
       
       // Check if user is community leader
-      if (serviceSet?.community_id) {
+      if (serviceSet.community_id) {
         const { data: member } = await supabase
           .from("community_members")
           .select("role")
