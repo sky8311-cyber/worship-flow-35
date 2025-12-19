@@ -18,18 +18,7 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
   const checkedIdRef = useRef<string | null>(null);
   const patchedCreatedByRef = useRef<string | null>(null);
 
-  // Reset guard state only when the set id changes
-  useEffect(() => {
-    if (!id) {
-      setState("allowed");
-      checkedIdRef.current = null;
-      return;
-    }
-    setState("checking");
-    checkedIdRef.current = null;
-  }, [id]);
-
-  const { data: setMeta, isLoading: isSetLoading, refetch: refetchSetMeta } = useQuery({
+  const { data: setMeta, isLoading: isSetLoading, isFetching: isSetFetching, refetch: refetchSetMeta } = useQuery({
     queryKey: ["set-builder-guard", id],
     queryFn: async () => {
       if (!id) return null;
@@ -48,7 +37,7 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
     staleTime: 30000,
   });
 
-  const { data: isCollaborator, isLoading: isCollaboratorLoading } = useQuery({
+  const { data: isCollaborator, isFetching: isCollaboratorFetching } = useQuery({
     queryKey: ["set-builder-guard-collab", id, user?.id],
     queryFn: async () => {
       if (!id || !user) return false;
@@ -66,7 +55,8 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
     staleTime: 30000,
   });
 
-  const { data: isCommunityLeaderForSet, isLoading: isCommunityLeaderLoading } = useQuery({
+  const communityLeaderQueryEnabled = !!setMeta?.community_id && !!user;
+  const { data: isCommunityLeaderForSet, isFetching: isCommunityLeaderFetching } = useQuery({
     queryKey: ["set-builder-guard-leader", setMeta?.community_id, user?.id],
     queryFn: async () => {
       if (!setMeta?.community_id || !user) return false;
@@ -81,19 +71,41 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       return !!data;
     },
-    enabled: !!setMeta?.community_id && !!user,
+    enabled: communityLeaderQueryEnabled,
     staleTime: 30000,
   });
 
   useEffect(() => {
-    if (!id) return; // new set: always allowed by this guard
+    // No id = new set, always allowed
+    if (!id) {
+      setState("allowed");
+      checkedIdRef.current = null;
+      return;
+    }
+
+    // Wait for user to be available
     if (!user) return;
 
-    // If we've already allowed this id, don't ever re-decide (prevents redirect flicker)
+    // If we've already allowed this exact id, don't re-evaluate
     if (checkedIdRef.current === id && state === "allowed") return;
 
-    if (isSetLoading) return;
-    if (!setMeta) return;
+    // Fast track: admins always have access
+    if (isAdmin) {
+      checkedIdRef.current = id;
+      setState("allowed");
+      return;
+    }
+
+    // Wait for set metadata to load
+    if (isSetLoading || isSetFetching) return;
+    
+    // If no setMeta found, the set doesn't exist
+    if (!setMeta) {
+      setState("denied");
+      toast.error("워십세트를 찾을 수 없습니다");
+      navigate("/dashboard", { replace: true });
+      return;
+    }
 
     // Preserve existing behavior: legacy sets with created_by null get patched once
     if (setMeta.created_by === null) {
@@ -110,13 +122,15 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Wait for related permission signals to finish
-    if (isCollaboratorLoading) return;
-    if (setMeta.community_id && isCommunityLeaderLoading) return;
+    // Wait for collaborator query to finish
+    if (isCollaboratorFetching) return;
+
+    // Wait for community leader query only if it's enabled
+    if (communityLeaderQueryEnabled && isCommunityLeaderFetching) return;
 
     const isCreator = setMeta.created_by === user.id;
     const isPublished = setMeta.status === "published";
-    const hasEditPermission = isCreator || isAdmin || !!isCollaborator || !!isCommunityLeaderForSet;
+    const hasEditPermission = isCreator || !!isCollaborator || !!isCommunityLeaderForSet;
 
     if (isPublished && !hasEditPermission) {
       setState("denied");
@@ -140,10 +154,12 @@ export function SetBuilderGuard({ children }: { children: React.ReactNode }) {
     isAdmin,
     setMeta,
     isSetLoading,
+    isSetFetching,
     isCollaborator,
-    isCollaboratorLoading,
+    isCollaboratorFetching,
     isCommunityLeaderForSet,
-    isCommunityLeaderLoading,
+    isCommunityLeaderFetching,
+    communityLeaderQueryEnabled,
     navigate,
     state,
     refetchSetMeta,
