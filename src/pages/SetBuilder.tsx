@@ -35,7 +35,7 @@ import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetP
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useAutoSaveDraft, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
-import { SetBuilderGuard } from "@/components/SetBuilderGuard";
+// SetBuilderGuard is now applied at the route level in App.tsx
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -821,8 +821,7 @@ const SetBuilder = () => {
   }
 
   return (
-    <SetBuilderGuard>
-      <AppLayout>
+    <AppLayout>
         <div className="container mx-auto px-4 py-6">
           {/* Action Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -886,8 +885,7 @@ const SetBuilder = () => {
         </div>
 
         {/* ... keep existing code (SongSelector + dialogs below) */}
-      </AppLayout>
-    </SetBuilderGuard>
+    </AppLayout>
   );
 };
 
