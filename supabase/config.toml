@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.download-score-image]
 verify_jwt = true
+
+[functions.process-recurring-schedules]
+verify_jwt = false
