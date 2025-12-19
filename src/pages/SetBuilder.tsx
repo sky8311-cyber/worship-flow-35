@@ -77,6 +77,18 @@ const SetBuilder = () => {
 
   const [isSaving, setIsSaving] = useState(false);
 
+  // Track if permission check has passed to prevent re-checks on re-renders
+  const permissionCheckedRef = useRef(false);
+  const lastCheckedIdRef = useRef<string | undefined>(undefined);
+
+  // Reset permission check when navigating to a different set
+  useEffect(() => {
+    if (id !== lastCheckedIdRef.current) {
+      permissionCheckedRef.current = false;
+      lastCheckedIdRef.current = id;
+    }
+  }, [id]);
+
   // Delete mutation
   const deleteSetMutation = useMutation({
     mutationFn: async () => {
@@ -290,6 +302,9 @@ const SetBuilder = () => {
 
   // Phase 2: Permission check and redirect logic
   useEffect(() => {
+    // Skip if permission check already passed for this set
+    if (permissionCheckedRef.current) return;
+    
     // Wait for existingSet query to complete loading first
     if (isExistingSetLoading) return;
     
@@ -302,15 +317,15 @@ const SetBuilder = () => {
       return;
     }
     
-    // Wait for collaborator check to complete (always runs when id and user exist)
-    if (id && isCollaboratorLoading) return;
+    // Wait for collaborator check to complete (loading OR data not yet available)
+    if (id && (isCollaboratorLoading || isCollaborator === undefined)) return;
     
     // Wait for community leader check to complete (only if set has a community)
-    if (existingSet.community_id && isCommunityLeaderLoading) return;
+    if (existingSet.community_id && (isCommunityLeaderLoading || isCommunityLeaderForSet === undefined)) return;
     
     const isCreator = existingSet.created_by === user.id;
     const isPublished = existingSet.status === 'published';
-    const hasEditPermission = isCreator || isAdmin || isCollaborator || isCommunityLeaderForSet;
+    const hasEditPermission = isCreator || isAdmin || !!isCollaborator || !!isCommunityLeaderForSet;
     
     console.log('SetBuilder permission check:', {
       isCreator,
@@ -335,6 +350,9 @@ const SetBuilder = () => {
       toast.error("이 임시저장 워십세트를 볼 권한이 없습니다");
       return;
     }
+    
+    // Permission check passed - mark as checked to prevent re-runs
+    permissionCheckedRef.current = true;
   }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isExistingSetLoading, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
 
   // Load form data from existing set with merge strategy
