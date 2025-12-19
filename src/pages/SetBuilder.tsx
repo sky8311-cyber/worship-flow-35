@@ -163,8 +163,8 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
-  // Permission check for delete (only creator or admin)
-  const canDelete = existingSet && (existingSet.created_by === user?.id || isAdmin);
+  // Permission check for delete (only creator or admin) - only evaluate after loading complete
+  const canDelete = !isExistingSetLoading && existingSet && existingSet.created_by && (existingSet.created_by === user?.id || isAdmin);
 
   const { data: existingSetSongs } = useQuery({
     queryKey: ["set-songs", id],
@@ -404,12 +404,22 @@ const SetBuilder = () => {
 
   const saveSetMutation = useMutation({
     mutationFn: async (publishStatus?: "draft" | "published") => {
+      // Validate user is logged in
+      if (!user?.id) {
+        throw new Error("로그인이 필요합니다");
+      }
+
       // Read from refs to ensure we have the latest values
       const currentForm = formDataRef.current;
       const currentItems = itemsRef.current;
 
       // Phase 2: Permission validation before save
-      if (existingSet && user) {
+      if (existingSet) {
+        // Make sure existingSet.created_by is loaded before checking permissions
+        if (!existingSet.created_by) {
+          throw new Error("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요");
+        }
+        
         const isCreator = existingSet.created_by === user.id;
         if (!isCreator && !isAdmin && !isCollaborator && !isCommunityLeaderForSet) {
           throw new Error("이 워십세트를 수정할 권한이 없습니다");
@@ -420,6 +430,8 @@ const SetBuilder = () => {
       if (!currentForm.community_id) {
         throw new Error(t("setBuilder.errors.communityRequired"));
       }
+      
+      // Validate songs exist for publishing
       const songCount = currentItems.filter(i => i.type === "song").length;
       if (publishStatus === "published" && songCount === 0) {
         throw new Error(t("setBuilder.errors.noSongsPublish"));
