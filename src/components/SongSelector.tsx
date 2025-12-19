@@ -640,8 +640,11 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
                   size="icon"
                   className="h-9 w-9 shrink-0"
                   onClick={() => {
-                    setSearchQuery("");
-                    setIsSearchExpanded(false);
+                    if (searchQuery) {
+                      setSearchQuery("");
+                    } else {
+                      setIsSearchExpanded(false);
+                    }
                   }}
                 >
                   <X className="h-4 w-4" />
@@ -662,12 +665,11 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           </div>
         )}
 
-        {/* Mobile: Backdrop for closing search bar */}
+        {/* Mobile: Backdrop for closing search bar - keeps search query */}
         {isMobile && isSearchExpanded && (
           <div 
-            className="fixed inset-0 z-40 bg-black/20"
+            className="fixed inset-0 z-40"
             onClick={() => {
-              setSearchQuery("");
               setIsSearchExpanded(false);
             }}
           />
