@@ -65,6 +65,12 @@ export const useAutoSaveDraft = ({
   // Auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async () => {
+      // Validate user is logged in with valid UUID
+      if (!user?.id) {
+        console.log('AutoSave: Skipping - no user id');
+        return null;
+      }
+
       const currentForm = formDataRef.current;
       const currentItems = itemsRef.current;
 
