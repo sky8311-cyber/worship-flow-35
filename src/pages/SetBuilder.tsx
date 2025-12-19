@@ -64,6 +64,7 @@ const SetBuilder = () => {
     notes: "",
   });
   const [items, setItems] = useState<SetItem[]>([]);
+  const [hasInitializedItems, setHasInitializedItems] = useState(false);
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
@@ -204,8 +205,8 @@ const SetBuilder = () => {
   });
 
   // Determine if existing data is fully loaded for auto-save safety
-  // For new sets, always consider loaded. For existing sets, wait for songs/components queries.
-  const isExistingDataLoaded = !id || (existingSetSongs !== undefined && existingSetComponents !== undefined);
+  // For new sets, always consider loaded. For existing sets, wait until items are initialized.
+  const isExistingDataLoaded = !id || hasInitializedItems;
 
   // Auto-save draft hook - placed after queries to ensure data loading check works
   const { 
@@ -376,9 +377,21 @@ const SetBuilder = () => {
     }
   }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, user]);
 
-  // Merge and load songs + components by position
+  // Reset initialization flag when navigating to a different set
   useEffect(() => {
-    if (isSaving) return;
+    setHasInitializedItems(false);
+    setItems([]);
+  }, [id]);
+
+  // Merge and load songs + components by position - ONLY on initial load
+  useEffect(() => {
+    // Skip if already initialized or currently saving
+    if (hasInitializedItems || isSaving) return;
+    
+    // For existing sets, wait until queries have completed
+    if (id) {
+      if (existingSetSongs === undefined || existingSetComponents === undefined) return;
+    }
     
     const songs: SetItem[] = (existingSetSongs || []).map((ss: any) => ({
       type: "song" as const,
@@ -400,7 +413,8 @@ const SetBuilder = () => {
     });
     
     setItems(merged);
-  }, [existingSetSongs, existingSetComponents, isSaving]);
+    setHasInitializedItems(true); // Prevent future refetches from overwriting
+  }, [existingSetSongs, existingSetComponents, isSaving, id, hasInitializedItems]);
 
   const handlePublishToggle = () => {
     if (status === "draft") {
