@@ -149,6 +149,8 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                       <Badge 
                         variant="secondary" 
                         className="cursor-pointer gap-1.5 py-1 hover:bg-accent transition-colors"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <IconComponent className="w-3.5 h-3.5" />
                         {component.component_type !== "custom" 
