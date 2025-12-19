@@ -29,6 +29,7 @@ interface UseAutoSaveDraftOptions {
   items: SetItem[];
   status: "draft" | "published";
   enabled?: boolean;
+  isDataLoaded?: boolean; // For existing sets, indicates if songs/components are loaded
 }
 
 const LAST_EDITED_DRAFT_KEY = "lastEditedDraftId";
@@ -40,6 +41,7 @@ export const useAutoSaveDraft = ({
   items,
   status,
   enabled = true,
+  isDataLoaded = true,
 }: UseAutoSaveDraftOptions) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -79,6 +81,13 @@ export const useAutoSaveDraft = ({
       
       // Must have community_id to save
       if (!currentForm.community_id) return null;
+
+      // CRITICAL: When editing existing set, prevent saving with empty items
+      // This prevents data loss when navigating to a set before data loads
+      if (id && currentItems.length === 0) {
+        console.log('AutoSave: Skipping - editing existing set with empty items (data not loaded yet)');
+        return null;
+      }
 
       let setId = id;
 
@@ -190,6 +199,12 @@ export const useAutoSaveDraft = ({
   const triggerAutoSave = useCallback(() => {
     if (!enabled || status !== "draft") return;
     
+    // Don't trigger auto-save if data hasn't loaded yet for existing sets
+    if (!isDataLoaded) {
+      console.log('AutoSave: Skipping trigger - data not loaded yet');
+      return;
+    }
+    
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -201,7 +216,7 @@ export const useAutoSaveDraft = ({
         autoSaveMutation.mutate();
       }
     }, AUTO_SAVE_DELAY);
-  }, [enabled, status, autoSaveMutation]);
+  }, [enabled, status, isDataLoaded, autoSaveMutation]);
 
   // Track changes to formData and items
   useEffect(() => {

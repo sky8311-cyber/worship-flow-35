@@ -73,28 +73,6 @@ const SetBuilder = () => {
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
-  // Auto-save draft hook
-  const { 
-    hasUnsavedChanges: autoSaveHasChanges, 
-    isSaving: autoSaveIsSaving, 
-    lastSavedAt,
-    forceSave,
-    newSetId
-  } = useAutoSaveDraft({
-    id,
-    formData,
-    items,
-    status,
-    enabled: status === "draft",
-  });
-
-  // Navigate to new set URL if created via auto-save
-  useEffect(() => {
-    if (newSetId && !id) {
-      navigate(`/set-builder/${newSetId}`, { replace: true });
-    }
-  }, [newSetId, id, navigate]);
-
   const [isSaving, setIsSaving] = useState(false);
 
   // Delete mutation
@@ -224,6 +202,33 @@ const SetBuilder = () => {
     refetchOnMount: "always",
     staleTime: 0,
   });
+
+  // Determine if existing data is fully loaded for auto-save safety
+  // For new sets, always consider loaded. For existing sets, wait for songs/components queries.
+  const isExistingDataLoaded = !id || (existingSetSongs !== undefined && existingSetComponents !== undefined);
+
+  // Auto-save draft hook - placed after queries to ensure data loading check works
+  const { 
+    hasUnsavedChanges: autoSaveHasChanges, 
+    isSaving: autoSaveIsSaving, 
+    lastSavedAt,
+    forceSave,
+    newSetId
+  } = useAutoSaveDraft({
+    id,
+    formData,
+    items,
+    status,
+    enabled: status === "draft" && isExistingDataLoaded,
+    isDataLoaded: isExistingDataLoaded,
+  });
+
+  // Navigate to new set URL if created via auto-save
+  useEffect(() => {
+    if (newSetId && !id) {
+      navigate(`/set-builder/${newSetId}`, { replace: true });
+    }
+  }, [newSetId, id, navigate]);
 
   // Fetch user's communities
   const { data: userCommunities } = useQuery({
