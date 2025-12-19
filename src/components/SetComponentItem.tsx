@@ -6,15 +6,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   GripVertical, X, ChevronDown, ChevronUp, Clock, User,
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
   ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
-  Users, MessagesSquare, Circle, FileText
+  Users, MessagesSquare, Circle, FileText, Check, Plus, Settings
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+import { WorshipComponentType, getComponentLabel, WORSHIP_COMPONENTS } from "@/lib/worshipComponents";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -68,6 +75,11 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
   const [notesOpen, setNotesOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(!!component.content);
+  const [showDetails, setShowDetails] = useState(
+    !!component.assigned_to || !!component.duration_minutes
+  );
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customName, setCustomName] = useState("");
   const { language, t } = useTranslation();
 
   const style = {
@@ -76,6 +88,25 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
   };
 
   const IconComponent = getIconForType(component.component_type);
+
+  const handleTypeChange = (newType: WorshipComponentType) => {
+    const newLabel = getComponentLabel(newType, language as "en" | "ko");
+    onUpdate(index, { 
+      component_type: newType, 
+      label: newLabel 
+    });
+  };
+
+  const handleCustomSubmit = () => {
+    if (customName.trim()) {
+      onUpdate(index, { 
+        component_type: "custom", 
+        label: customName.trim() 
+      });
+      setShowCustomInput(false);
+      setCustomName("");
+    }
+  };
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -111,52 +142,105 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="gap-1.5 py-1">
-                    <IconComponent className="w-3.5 h-3.5" />
-                    {component.component_type !== "custom" 
-                      ? getComponentLabel(component.component_type, language as "en" | "ko")
-                      : null
-                    }
-                  </Badge>
-                  {component.component_type === "custom" && (
-                    <span className="font-medium text-foreground">{component.label}</span>
-                  )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Type selector dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Badge 
+                        variant="secondary" 
+                        className="cursor-pointer gap-1.5 py-1 hover:bg-accent transition-colors"
+                      >
+                        <IconComponent className="w-3.5 h-3.5" />
+                        {component.component_type !== "custom" 
+                          ? getComponentLabel(component.component_type, language as "en" | "ko")
+                          : component.label
+                        }
+                        <ChevronDown className="w-3 h-3 ml-0.5 opacity-60" />
+                      </Badge>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto bg-background z-50">
+                      {WORSHIP_COMPONENTS.map((comp) => {
+                        const CompIcon = getIconForType(comp.type);
+                        return (
+                          <DropdownMenuItem
+                            key={comp.type}
+                            onClick={() => handleTypeChange(comp.type)}
+                            className="gap-2"
+                          >
+                            <CompIcon className="w-4 h-4" />
+                            {language === "ko" ? comp.labelKo : comp.labelEn}
+                            {comp.type === component.component_type && (
+                              <Check className="w-4 h-4 ml-auto" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowCustomInput(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        {language === "ko" ? "커스텀 순서" : "Custom"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
-              {/* Editable label for non-custom types */}
-              {component.component_type !== "custom" && (
-                <Input
-                  value={component.label}
-                  onChange={(e) => onUpdate(index, { label: e.target.value })}
-                  placeholder={language === "ko" ? "라벨 (선택)" : "Label (optional)"}
-                  className="h-8 text-sm"
-                />
+              {/* Custom name input */}
+              {showCustomInput && (
+                <div className="flex gap-2">
+                  <Input
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder={language === "ko" ? "순서 이름" : "Component name"}
+                    className="h-8 text-sm"
+                    autoFocus
+                    onKeyDown={(e) => e.key === "Enter" && handleCustomSubmit()}
+                  />
+                  <Button size="sm" onClick={handleCustomSubmit} disabled={!customName.trim()}>
+                    {language === "ko" ? "확인" : "OK"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setShowCustomInput(false)}>
+                    {language === "ko" ? "취소" : "Cancel"}
+                  </Button>
+                </div>
               )}
 
-              {/* Assigned To (담당자) field */}
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={component.assigned_to || ""}
-                  onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
-                  placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
-                  className="h-8 text-sm"
-                />
-              </div>
+              {/* Details Section (담당자, 소요시간) - Initially hidden */}
+              <Collapsible open={showDetails} onOpenChange={setShowDetails}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                    <span className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+                      <Settings className="w-3 h-3" />
+                      {language === "ko" ? "세부 정보" : "Details"}
+                      {showDetails ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </span>
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 mt-2">
+                  {/* Assigned To (담당자) field */}
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <Input
+                      value={component.assigned_to || ""}
+                      onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
+                      placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
+                      className="h-8 text-sm"
+                    />
+                  </div>
 
-              {/* Duration input */}
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  type="number"
-                  value={component.duration_minutes || ""}
-                  onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
-                  placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
-                  className="h-8 text-sm w-32"
-                />
-              </div>
+                  {/* Duration input */}
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                    <Input
+                      type="number"
+                      value={component.duration_minutes || ""}
+                      onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
+                      className="h-8 text-sm w-32"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Rich Content Editor Section */}
               <Collapsible open={contentOpen} onOpenChange={setContentOpen}>

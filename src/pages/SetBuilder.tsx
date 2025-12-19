@@ -1081,8 +1081,10 @@ const SetBuilder = () => {
               </CardContent>
             </Card>
 
-            {/* Worship Components Palette */}
-            <WorshipComponentPalette onAddComponent={handleAddComponent} />
+            {/* Worship Components Palette - Desktop only */}
+            <div className="hidden lg:block">
+              <WorshipComponentPalette onAddComponent={handleAddComponent} />
+            </div>
 
             {/* Team Positions Manager - only for church accounts */}
             {id && churchAccountId && (
@@ -1102,10 +1104,22 @@ const SetBuilder = () => {
                   <CardTitle>
                     {language === "ko" ? "예배 순서" : "Worship Order"}
                   </CardTitle>
-                  <Button onClick={() => setShowSongSelector(true)} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    곡 추가
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={() => setShowSongSelector(true)} size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      곡 추가
+                    </Button>
+                    {/* Mobile only - add component button */}
+                    <Button 
+                      onClick={() => handleAddComponent("welcome")} 
+                      size="sm" 
+                      variant="outline"
+                      className="lg:hidden"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      순서 추가
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1169,6 +1183,28 @@ const SetBuilder = () => {
                         </div>
                       </SortableContext>
                     </DndContext>
+
+                    {/* Mobile add buttons */}
+                    <div className="flex gap-2 mt-4 lg:hidden">
+                      <Button 
+                        onClick={() => setShowSongSelector(true)} 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        곡 추가
+                      </Button>
+                      <Button 
+                        onClick={() => handleAddComponent("welcome")} 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        순서 추가
+                      </Button>
+                    </div>
 
                     <div className="mt-6 p-4 bg-accent/50 rounded-lg">
                       <h4 className="font-semibold mb-2">
