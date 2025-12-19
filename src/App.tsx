@@ -12,7 +12,6 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import SongLibrary from "./pages/SongLibrary";
 import SetBuilder from "./pages/SetBuilder";
-import { SetBuilderGuard } from "@/components/SetBuilderGuard";
 import BandView from "./pages/BandView";
 import NotFound from "./pages/NotFound";
 import SignUp from "./pages/auth/SignUp";
@@ -84,7 +83,7 @@ const App = () => (
               <Route path="/favorites" element={<ProtectedRoute><FavoritesList /></ProtectedRoute>} />
               <Route path="/worship-sets" element={<ProtectedRoute><WorshipSets /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
-              <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilderGuard><SetBuilder /></SetBuilderGuard></ProtectedRoute>} />
+              <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><TemplateManager /></ProtectedRoute>} />
               <Route path="/seeds" element={<ProtectedRoute><SeedHistory /></ProtectedRoute>} />
