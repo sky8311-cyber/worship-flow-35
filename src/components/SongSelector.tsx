@@ -252,8 +252,8 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
         setSelectedSongs([]);
         setIsSearchExpanded(false);
         setIsFiltersExpanded(false);
+        onClose();
       }
-      onClose();
     }}>
       <DialogContent 
         className={isMobile 
