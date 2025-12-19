@@ -162,8 +162,29 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
+  // Separate lightweight query for delete permission to avoid cache overwrites
+  const { data: setOwner, isLoading: isSetOwnerLoading } = useQuery({
+    queryKey: ["service-set-owner", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("service_sets")
+        .select("id, created_by")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+  });
+
   // Permission check for delete (only creator or admin) - ensure user is loaded
-  const canDelete = !!user && !!existingSet?.created_by && (existingSet.created_by === user.id || isAdmin);
+  const canDelete =
+    !!user && !!setOwner?.created_by && (setOwner.created_by === user.id || isAdmin);
 
   const { data: existingSetSongs } = useQuery({
     queryKey: ["set-songs", id],
@@ -332,8 +353,8 @@ const SetBuilder = () => {
       setStatusInitialized(true);
     }
 
-    // Safety patch for legacy sets without created_by
-    if (!existingSet.created_by && user?.id) {
+    // Safety patch for legacy sets without created_by (only when DB value is explicitly null)
+    if (existingSet.id && existingSet.created_by === null && user?.id) {
       supabase
         .from("service_sets")
         .update({ created_by: user.id })
@@ -342,6 +363,7 @@ const SetBuilder = () => {
           if (!error) {
             setTimeout(() => {
               queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
+              queryClient.invalidateQueries({ queryKey: ["service-set-owner", existingSet.id] });
               queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
             }, 100);
           }
@@ -739,7 +761,7 @@ const SetBuilder = () => {
           size="sm" 
           className="h-8 gap-1.5" 
           onClick={() => setShowDeleteConfirm(true)}
-          disabled={isExistingSetLoading || !canDelete || deleteSetMutation.isPending}
+          disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending}
         >
           <Trash2 className="w-4 h-4 shrink-0" />
           <span>{language === "ko" ? "삭제" : "Delete"}</span>
