@@ -665,15 +665,6 @@ export const SongSelector = ({ open, onClose, onSelect }: SongSelectorProps) => 
           </div>
         )}
 
-        {/* Mobile: Backdrop for closing search bar - keeps search query */}
-        {isMobile && isSearchExpanded && (
-          <div 
-            className="fixed inset-0 z-40"
-            onClick={() => {
-              setIsSearchExpanded(false);
-            }}
-          />
-        )}
 
         {/* Mobile: Floating Add Song Button - hidden when search expanded */}
         {isMobile && !isSearchExpanded && (
