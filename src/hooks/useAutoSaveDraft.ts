@@ -78,7 +78,7 @@ export const useAutoSaveDraft = ({
 
       // Only save drafts, not published sets
       if (status !== "draft") return null;
-      
+
       // Must have community_id to save
       if (!currentForm.community_id) return null;
 
@@ -182,10 +182,10 @@ export const useAutoSaveDraft = ({
       if (setId) {
         setHasUnsavedChanges(false);
         setLastSavedAt(new Date());
-        
+
         // Store last edited draft ID
         localStorage.setItem(LAST_EDITED_DRAFT_KEY, setId);
-        
+
         // Invalidate draft count query
         queryClient.invalidateQueries({ queryKey: ["user-draft-count"] });
       }
@@ -195,16 +195,22 @@ export const useAutoSaveDraft = ({
     },
   });
 
+  // Keep a stable reference to mutate to avoid re-creating triggerAutoSave every render
+  const autoSaveMutateRef = useRef(autoSaveMutation.mutate);
+  useEffect(() => {
+    autoSaveMutateRef.current = autoSaveMutation.mutate;
+  }, [autoSaveMutation.mutate]);
+
   // Debounced auto-save trigger
   const triggerAutoSave = useCallback(() => {
     if (!enabled || status !== "draft") return;
-    
+
     // Don't trigger auto-save if data hasn't loaded yet for existing sets
     if (!isDataLoaded) {
       console.log('AutoSave: Skipping trigger - data not loaded yet');
       return;
     }
-    
+
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -213,10 +219,11 @@ export const useAutoSaveDraft = ({
     // Set new timeout
     saveTimeoutRef.current = setTimeout(() => {
       if (formDataRef.current.community_id) {
-        autoSaveMutation.mutate();
+        autoSaveMutateRef.current();
       }
     }, AUTO_SAVE_DELAY);
-  }, [enabled, status, isDataLoaded, autoSaveMutation]);
+  }, [enabled, status, isDataLoaded]);
+
 
   // Track changes to formData and items
   useEffect(() => {
