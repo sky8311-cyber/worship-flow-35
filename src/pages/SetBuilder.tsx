@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type MouseEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,17 +77,8 @@ const SetBuilder = () => {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  // Track if permission check has passed to prevent re-checks on re-renders
-  const permissionCheckedRef = useRef(false);
-  const lastCheckedIdRef = useRef<string | undefined>(undefined);
-
-  // Reset permission check when navigating to a different set
-  useEffect(() => {
-    if (id !== lastCheckedIdRef.current) {
-      permissionCheckedRef.current = false;
-      lastCheckedIdRef.current = id;
-    }
-  }, [id]);
+  // Prevent redirect glitches by only running permission checks once per set id
+  const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
 
   // Delete mutation
   const deleteSetMutation = useMutation({
@@ -151,7 +142,7 @@ const SetBuilder = () => {
     enabled: !!id,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
-    staleTime: 0,
+    staleTime: 30000,
   });
 
   // Separate lightweight query for delete permission to avoid cache overwrites
@@ -171,7 +162,7 @@ const SetBuilder = () => {
     enabled: !!id,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
-    staleTime: 0,
+    staleTime: 30000,
   });
 
   // Permission check for delete (only creator or admin) - ensure user is loaded
@@ -302,8 +293,8 @@ const SetBuilder = () => {
 
   // Phase 2: Permission check and redirect logic
   useEffect(() => {
-    // Skip if permission check already passed for this set
-    if (permissionCheckedRef.current) return;
+    // Skip if permission check already passed for this set id
+    if (permissionCheckedForIdRef.current === id) return;
     
     // Wait for existingSet query to complete loading first
     if (isExistingSetLoading) return;
@@ -351,8 +342,8 @@ const SetBuilder = () => {
       return;
     }
     
-    // Permission check passed - mark as checked to prevent re-runs
-    permissionCheckedRef.current = true;
+    // Permission check passed - mark as checked for this set id
+    permissionCheckedForIdRef.current = id;
   }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isExistingSetLoading, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
 
   // Load form data from existing set with merge strategy
@@ -1143,7 +1134,15 @@ const SetBuilder = () => {
                     {language === "ko" ? "예배 순서" : "Worship Order"}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Button onClick={() => setShowSongSelector(true)} size="sm">
+                    <Button
+                      type="button"
+                      onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowSongSelector(true);
+                      }}
+                      size="sm"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       곡 추가
                     </Button>
@@ -1170,7 +1169,14 @@ const SetBuilder = () => {
                         : "No items added yet"}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                      <Button onClick={() => setShowSongSelector(true)}>
+                      <Button
+                        type="button"
+                        onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowSongSelector(true);
+                        }}
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "첫 번째 곡 추가하기" : "Add First Song"}
                       </Button>
@@ -1224,10 +1230,15 @@ const SetBuilder = () => {
 
                     {/* Mobile add buttons */}
                     <div className="flex gap-2 mt-4 lg:hidden">
-                      <Button 
-                        onClick={() => setShowSongSelector(true)} 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        onClick={(e: MouseEvent<HTMLButtonElement>) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowSongSelector(true);
+                        }}
+                        size="sm"
+                        variant="outline"
                         className="flex-1"
                       >
                         <Plus className="w-4 h-4 mr-2" />
@@ -1283,13 +1294,11 @@ const SetBuilder = () => {
         </div>
       </div>
 
-      {showSongSelector && (
-        <SongSelector
-          open={showSongSelector}
-          onClose={() => setShowSongSelector(false)}
-          onSelect={handleAddSong}
-        />
-      )}
+      <SongSelector
+        open={showSongSelector}
+        onClose={() => setShowSongSelector(false)}
+        onSelect={handleAddSong}
+      />
 
       <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
         <AlertDialogContent>
