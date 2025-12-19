@@ -413,13 +413,9 @@ const SetBuilder = () => {
       const currentForm = formDataRef.current;
       const currentItems = itemsRef.current;
 
-      // Phase 2: Permission validation before save
-      if (existingSet) {
-        // Make sure existingSet.created_by is loaded before checking permissions
-        if (!existingSet.created_by) {
-          throw new Error("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요");
-        }
-        
+      // Permission validation - only check if existingSet AND created_by are both available
+      // If created_by is not loaded yet, we skip client-side check and rely on RLS
+      if (existingSet && existingSet.created_by) {
         const isCreator = existingSet.created_by === user.id;
         if (!isCreator && !isAdmin && !isCollaborator && !isCommunityLeaderForSet) {
           throw new Error("이 워십세트를 수정할 권한이 없습니다");
