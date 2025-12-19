@@ -205,7 +205,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const [showAddToSetDialog, setShowAddToSetDialog] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -1127,8 +1131,10 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               {language === "ko" ? "나중에" : "Later"}
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => {
-              setShowAddToSetPrompt(false);
               setShowAddToSetDialog(true);
+              setTimeout(() => {
+                setShowAddToSetPrompt(false);
+              }, 50);
             }}>
               {language === "ko" ? "워십세트에 추가" : "Add to Set"}
             </AlertDialogAction>
