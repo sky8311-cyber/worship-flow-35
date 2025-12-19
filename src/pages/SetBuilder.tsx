@@ -163,8 +163,8 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
-  // Permission check for delete (only creator or admin) - only evaluate after loading complete
-  const canDelete = !isExistingSetLoading && existingSet && existingSet.created_by && (existingSet.created_by === user?.id || isAdmin);
+  // Permission check for delete (only creator or admin)
+  const canDelete = existingSet?.created_by && (existingSet.created_by === user?.id || isAdmin);
 
   const { data: existingSetSongs } = useQuery({
     queryKey: ["set-songs", id],
@@ -734,13 +734,13 @@ const SetBuilder = () => {
   // Reusable Action Buttons Component
   const renderActionButtons = (className?: string) => (
     <div className={`flex items-center justify-center gap-2 flex-wrap ${className || 'mb-4'}`}>
-      {id && canDelete && (
+      {id && (
         <Button 
           variant="destructive" 
           size="sm" 
           className="h-8 gap-1.5" 
           onClick={() => setShowDeleteConfirm(true)}
-          disabled={deleteSetMutation.isPending}
+          disabled={isExistingSetLoading || !canDelete || deleteSetMutation.isPending}
         >
           <Trash2 className="w-4 h-4 shrink-0" />
           <span>{language === "ko" ? "삭제" : "Delete"}</span>
