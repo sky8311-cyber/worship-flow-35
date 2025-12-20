@@ -469,16 +469,18 @@ const SongLibrary = () => {
                 </div>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="text-xs text-muted-foreground shrink-0 h-8 px-2"
+                  size="icon"
+                  className="h-6 w-6 rounded-full border border-muted-foreground/30 text-muted-foreground shrink-0"
                   onClick={() => {
+                    const setId = editingSetContext.id;
                     sessionStorage.removeItem('currentEditingSetId');
                     sessionStorage.removeItem('currentEditingSetName');
                     setEditingSetContext(null);
+                    navigate(`/set-builder/${setId}`);
                   }}
+                  title="편집 종료"
                 >
-                  <X className="h-3 w-3 sm:mr-1" />
-                  <span className="hidden sm:inline">편집 종료</span>
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             </CardContent>
@@ -839,8 +841,8 @@ const SongLibrary = () => {
         placeholder={t("songLibrary.searchPlaceholder")}
       />
 
-      {/* Floating "Add to Set" button when editing a set and cart has items */}
-      {isWorshipLeader && cartCount > 0 && editingSetContext && (
+      {/* Floating "Add to Set" button - always visible when cart has items */}
+      {isWorshipLeader && cartCount > 0 && (
         <Button
           onClick={() => setIsCartDialogOpen(true)}
           className="fixed bottom-24 left-4 md:bottom-24 md:left-1/2 md:-translate-x-1/2 rounded-full shadow-lg z-50 gap-2 px-6"
