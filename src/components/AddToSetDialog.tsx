@@ -157,6 +157,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       
+      // Clear editing context from session storage
+      sessionStorage.removeItem('currentEditingSetId');
+      sessionStorage.removeItem('currentEditingSetName');
+      
       onSuccess?.();
       onOpenChange(false);
       navigate(`/set-builder/${setId}`);

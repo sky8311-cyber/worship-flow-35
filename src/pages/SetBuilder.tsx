@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
-import { SongSelector } from "@/components/SongSelector";
 import { SetCollaborators } from "@/components/SetCollaborators";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
@@ -66,7 +65,6 @@ const SetBuilder = () => {
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
   const prevIdRef = useRef<string | undefined>(undefined);
-  const [showSongSelector, setShowSongSelector] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
@@ -1139,7 +1137,12 @@ const SetBuilder = () => {
                       onClick={(e: MouseEvent<HTMLButtonElement>) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setShowSongSelector(true);
+                        // Save context and navigate to song library
+                        if (id) {
+                          sessionStorage.setItem('currentEditingSetId', id);
+                          sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
+                        }
+                        navigate('/songs');
                       }}
                       size="sm"
                     >
@@ -1174,7 +1177,11 @@ const SetBuilder = () => {
                         onClick={(e: MouseEvent<HTMLButtonElement>) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setShowSongSelector(true);
+                          if (id) {
+                            sessionStorage.setItem('currentEditingSetId', id);
+                            sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
+                          }
+                          navigate('/songs');
                         }}
                       >
                         <Plus className="w-4 h-4 mr-2" />
@@ -1235,7 +1242,11 @@ const SetBuilder = () => {
                         onClick={(e: MouseEvent<HTMLButtonElement>) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          setShowSongSelector(true);
+                          if (id) {
+                            sessionStorage.setItem('currentEditingSetId', id);
+                            sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
+                          }
+                          navigate('/songs');
                         }}
                         size="sm"
                         variant="outline"
@@ -1293,12 +1304,6 @@ const SetBuilder = () => {
           </div>
         </div>
       </div>
-
-      <SongSelector
-        open={showSongSelector}
-        onClose={() => setShowSongSelector(false)}
-        onSelect={handleAddSong}
-      />
 
       <AlertDialog open={showPublishConfirm} onOpenChange={setShowPublishConfirm}>
         <AlertDialogContent>
