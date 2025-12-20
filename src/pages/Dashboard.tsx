@@ -167,7 +167,9 @@ const Dashboard = () => {
     queryFn: async () => {
       if (!user || communityIds.length === 0) return [];
       
-      const today = new Date().toISOString().split('T')[0];
+      // Use local date to keep sets visible until end of day (not UTC which hides early)
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       
       let query = supabase
         .from("service_sets")
@@ -176,14 +178,14 @@ const Dashboard = () => {
       
       // Role-based filtering with future date filtering for published sets
       if (isAdmin) {
-        // Admin sees all drafts + published future sets
-        query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${today})`);
+        // Admin sees all drafts + published sets from today onwards
+        query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${localToday})`);
       } else if (isWorshipLeader || isCommunityLeaderInAnyCommunity) {
-        // Worship Leader & Community Leader: show own drafts + published future sets
-        query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${today})`);
+        // Worship Leader & Community Leader: show own drafts + published sets from today onwards
+        query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${localToday})`);
       } else {
-        // Team Member: show ONLY published future sets
-        query = query.eq("status", "published").gte("date", today);
+        // Team Member: show ONLY published sets from today onwards
+        query = query.eq("status", "published").gte("date", localToday);
       }
       
       const { data, error } = await query

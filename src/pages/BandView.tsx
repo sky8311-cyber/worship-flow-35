@@ -753,6 +753,7 @@ const BandView = () => {
           serviceSet={serviceSet}
           setSongs={setSongs || []}
           setComponents={setComponents || []}
+          allSongScores={allSongScores || []}
         />
 
         {/* Fullscreen Score Viewer */}
