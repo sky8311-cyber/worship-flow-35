@@ -930,9 +930,9 @@ const SetBuilder = () => {
           <div className="lg:col-span-1 space-y-4">
             <Card className="shadow-md">
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between gap-2">
+                <div className="space-y-2">
                   <CardTitle>예배 정보</CardTitle>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
