@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -14,7 +14,7 @@ import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SongCartPopover } from "@/components/SongCartPopover";
-import { ChatFullScreenOverlay } from "@/components/chat/ChatFullScreenOverlay";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -25,8 +25,6 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Home, Languages } from "lucide-react";
-import { navigationTabs, chatTab } from "@/lib/navigationConfig";
-import { cn } from "@/lib/utils";
 
 interface AppHeaderProps {
   showBackButton?: boolean;
@@ -44,8 +42,6 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [navSheetOpen, setNavSheetOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   
   // Auto-mark all notifications as read when panel opens
@@ -127,58 +123,6 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 <NotificationPanel />
               </PopoverContent>
             </Popover>
-            
-            {/* Navigation Hamburger Menu - Desktop only */}
-            <Sheet open={navSheetOpen} onOpenChange={setNavSheetOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden lg:flex">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-64 p-0">
-                <nav className="flex flex-col pt-12">
-                  {navigationTabs.map((tab) => {
-                    const isActive = tab.match(location.pathname);
-                    const Icon = tab.icon;
-                    return (
-                      <Link
-                        key={tab.to}
-                        to={tab.to}
-                        onClick={() => setNavSheetOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 px-6 py-4 transition-colors",
-                          isActive
-                            ? "bg-primary/10 text-primary border-r-2 border-primary"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        <Icon className="h-5 w-5" />
-                        <span className="font-medium">{t(tab.labelKey as any)}</span>
-                      </Link>
-                    );
-                  })}
-                  
-                  {/* Chat/Feed item */}
-                  <button
-                    onClick={() => {
-                      setNavSheetOpen(false);
-                      setChatOpen(true);
-                    }}
-                    className="flex items-center gap-3 px-6 py-4 transition-colors text-muted-foreground hover:bg-muted hover:text-foreground w-full text-left"
-                  >
-                    <div className="relative">
-                      <chatTab.icon className="h-5 w-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-medium">{t(chatTab.labelKey as any)}</span>
-                  </button>
-                </nav>
-              </SheetContent>
-            </Sheet>
             
             {/* Profile Dropdown */}
             <DropdownMenu>
@@ -296,7 +240,6 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
     </header>
 
     <MobileSidebarDrawer open={sidebarOpen} onOpenChange={setSidebarOpen} />
-    <ChatFullScreenOverlay isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </>
   );
 };

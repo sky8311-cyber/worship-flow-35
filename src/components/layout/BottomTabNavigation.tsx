@@ -41,7 +41,7 @@ export const BottomTabNavigation = () => {
   return (
     <>
       <nav 
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t shadow-lg"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
