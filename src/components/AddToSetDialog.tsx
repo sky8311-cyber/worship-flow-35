@@ -71,6 +71,25 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     enabled: open,
   });
   
+  // Fetch currently editing set separately (even if not created by user - for collaborators)
+  const { data: editingSet } = useQuery({
+    queryKey: ["editing-set-info", currentEditingSetId],
+    queryFn: async () => {
+      if (!currentEditingSetId) return null;
+      
+      const { data, error } = await supabase
+        .from("service_sets")
+        .select("id, date, service_name, worship_leader")
+        .eq("id", currentEditingSetId)
+        .eq("status", "draft")
+        .maybeSingle();
+      
+      if (error) return null;
+      return data;
+    },
+    enabled: !!currentEditingSetId && open,
+  });
+  
   const canAddToSet = capturedSongs.length > 0;
   
   const addToSetMutation = useMutation({
@@ -214,34 +233,28 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         
         <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
           {/* Show currently editing set at the top with highlight */}
-          {currentEditingSetId && sets?.find(s => s.id === currentEditingSetId) && (
+          {editingSet && (
             <div className="mb-4">
               <div className="flex items-center gap-2 text-sm text-primary mb-2">
                 <Check className="w-4 h-4" />
                 <span className="font-medium">현재 편집 중인 세트</span>
               </div>
-              {(() => {
-                const currentSet = sets.find(s => s.id === currentEditingSetId)!;
-                return (
-                  <div 
-                    key={currentSet.id} 
-                    className="flex items-center space-x-2 p-3 border-2 border-primary rounded-lg bg-primary/5 cursor-pointer"
-                  >
-                    <RadioGroupItem value={currentSet.id} id={`current-${currentSet.id}`} />
-                    <Label htmlFor={`current-${currentSet.id}`} className="flex-1 cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        <div className="flex-1">
-                          <p className="font-medium">{currentSet.service_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {format(new Date(currentSet.date), "yyyy-MM-dd")} | {currentSet.worship_leader || "인도자 미정"}
-                          </p>
-                        </div>
-                      </div>
-                    </Label>
+              <div 
+                className="flex items-center space-x-2 p-3 border-2 border-primary rounded-lg bg-primary/5 cursor-pointer"
+              >
+                <RadioGroupItem value={editingSet.id} id={`current-${editingSet.id}`} />
+                <Label htmlFor={`current-${editingSet.id}`} className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <div className="flex-1">
+                      <p className="font-medium">{editingSet.service_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(editingSet.date), "yyyy-MM-dd")} | {editingSet.worship_leader || "인도자 미정"}
+                      </p>
+                    </div>
                   </div>
-                );
-              })()}
+                </Label>
+              </div>
             </div>
           )}
 
@@ -255,10 +268,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
             </Label>
           </div>
           
-          {sets && sets.filter(s => s.id !== currentEditingSetId).length > 0 && (
+          {sets && sets.filter(s => s.id !== editingSet?.id).length > 0 && (
             <div className="mt-4">
               <p className="text-sm font-medium mb-2">다른 워십세트에 추가:</p>
-              {sets.filter(s => s.id !== currentEditingSetId).map((set) => (
+              {sets.filter(s => s.id !== editingSet?.id).map((set) => (
                 <div key={set.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer mb-2">
                   <RadioGroupItem value={set.id} id={set.id} />
                   <Label htmlFor={set.id} className="flex-1 cursor-pointer">
