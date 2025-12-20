@@ -15,12 +15,21 @@ import { Printer, FileText, Music2, LayoutList } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
+interface SongScore {
+  id: string;
+  song_id: string;
+  key: string;
+  file_url: string;
+  page_number?: number | null;
+}
+
 interface PrintOptionsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   serviceSet: any;
   setSongs: any[];
   setComponents: any[];
+  allSongScores?: SongScore[];
 }
 
 type PrintMode = "order" | "scores" | "full";
@@ -40,6 +49,7 @@ export function PrintOptionsDialog({
   serviceSet,
   setSongs,
   setComponents,
+  allSongScores = [],
 }: PrintOptionsDialogProps) {
   const { t, language } = useTranslation();
   const [printMode, setPrintMode] = useState<PrintMode>("order");
@@ -86,35 +96,50 @@ export function PrintOptionsDialog({
 
     if (printMode === "scores") {
       // Scores only mode - one score per page
-      const allScores: { title: string; key: string; url: string }[] = [];
+      // Use allSongScores prop for real-time score data
+      const printScores: { title: string; key: string; url: string }[] = [];
       setSongs.forEach((setSong) => {
         const song = setSong.songs;
-        const scoreFiles = song?.song_scores?.song_scores?.filter(
-          (score: any) => score.key === setSong.key
-        ) || [];
+        const selectedKey = setSong.key || song?.default_key || "";
+        
+        // Get scores for this song from allSongScores prop
+        const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
+        
+        // First try exact key match
+        let scoreFiles = songScores
+          .filter((score) => score.key === selectedKey)
+          .sort((a, b) => (a.page_number || 1) - (b.page_number || 1));
+        
+        // If no exact match, fallback to first available key
+        if (scoreFiles.length === 0 && songScores.length > 0) {
+          const fallbackKey = songScores[0].key;
+          scoreFiles = songScores
+            .filter((s) => s.key === fallbackKey)
+            .sort((a, b) => (a.page_number || 1) - (b.page_number || 1));
+        }
         
         if (scoreFiles.length > 0) {
-          scoreFiles.forEach((score: any) => {
-            allScores.push({
+          scoreFiles.forEach((score) => {
+            printScores.push({
               title: song?.title || "",
-              key: setSong.key || "",
+              key: selectedKey || "",
               url: score.file_url,
             });
           });
         } else if (setSong.override_score_file_url || song?.score_file_url) {
-          allScores.push({
+          printScores.push({
             title: song?.title || "",
-            key: setSong.key || "",
+            key: selectedKey || "",
             url: setSong.override_score_file_url || song?.score_file_url,
           });
         }
       });
 
-      content = allScores.map((score, idx) => `
+      content = printScores.map((score, idx) => `
         <div class="score-page">
           <img src="${score.url}" />
           <div class="score-overlay">
-            ${score.title} ${score.key ? `(${score.key})` : ""} · ${idx + 1}/${allScores.length}
+            ${score.title} ${score.key ? `(${score.key})` : ""} · ${idx + 1}/${printScores.length}
           </div>
         </div>
       `).join("");

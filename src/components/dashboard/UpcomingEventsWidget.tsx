@@ -208,13 +208,14 @@ export function UpcomingEventsWidget({
     queryFn: async () => {
       if (!user || communityIds.length === 0) return [];
 
-      // Get upcoming calendar events
-      const today = new Date().toISOString().split("T")[0];
+      // Use local date to keep events visible until end of day
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const { data: events } = await supabase
         .from("calendar_events")
         .select("*")
         .in("community_id", communityIds)
-        .gte("event_date", today)
+        .gte("event_date", localToday)
         .order("event_date", { ascending: true })
         .limit(20);
 
@@ -224,9 +225,10 @@ export function UpcomingEventsWidget({
   });
 
 
-  // Filter sets to show only future events (safeguard)
-  const today = new Date().toISOString().split("T")[0];
-  const futureSets = sets?.filter(set => set.date >= today) || [];
+  // Filter sets to show only today and future events (safeguard using local date)
+  const now = new Date();
+  const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const futureSets = sets?.filter(set => set.date >= localToday) || [];
 
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [

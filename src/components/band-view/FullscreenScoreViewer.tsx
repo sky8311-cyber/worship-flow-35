@@ -33,13 +33,20 @@ export function FullscreenScoreViewer({
   const hideUITimeout = useRef<NodeJS.Timeout | null>(null);
   const lastTapTime = useRef<number>(0);
 
-  // Request fullscreen on open
+  // Request fullscreen and lock orientation to portrait on open
   useEffect(() => {
     if (open && containerRef.current) {
       // Try to request fullscreen
       containerRef.current.requestFullscreen?.().catch(() => {
         // Fullscreen not supported, continue anyway
       });
+
+      // Lock orientation to portrait (for consistent iPad experience)
+      if ('orientation' in screen && (screen.orientation as any)?.lock) {
+        (screen.orientation as any).lock('portrait').catch(() => {
+          // Orientation lock not supported or denied (common on iOS Safari)
+        });
+      }
 
       // Request wake lock to keep screen on
       navigator.wakeLock?.request("screen").catch(() => {
@@ -50,6 +57,10 @@ export function FullscreenScoreViewer({
     return () => {
       if (document.fullscreenElement) {
         document.exitFullscreen?.();
+      }
+      // Unlock orientation when exiting
+      if ('orientation' in screen && (screen.orientation as any)?.unlock) {
+        (screen.orientation as any).unlock();
       }
     };
   }, [open]);
