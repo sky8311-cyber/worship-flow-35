@@ -29,6 +29,11 @@ import { Home } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
 
+interface EditingSetContext {
+  id: string;
+  name: string;
+}
+
 const SongLibrary = () => {
   const { t } = useTranslation();
   const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
@@ -38,6 +43,18 @@ const SongLibrary = () => {
   useScrollPosition("song-library");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  
+  // Editing set context from sessionStorage (when coming from SetBuilder)
+  const [editingSetContext, setEditingSetContext] = useState<EditingSetContext | null>(null);
+  
+  // Load editing context on mount
+  useEffect(() => {
+    const setId = sessionStorage.getItem('currentEditingSetId');
+    const setName = sessionStorage.getItem('currentEditingSetName');
+    if (setId) {
+      setEditingSetContext({ id: setId, name: setName || '워십세트' });
+    }
+  }, []);
 
   // Debounce search query - wait 300ms after user stops typing
   useEffect(() => {
@@ -430,6 +447,44 @@ const SongLibrary = () => {
   return (
     <AppLayout>
       <main className="container mx-auto px-4 py-6 pb-24 md:pb-8">
+        {/* Editing Set Context Banner */}
+        {editingSetContext && (
+          <Card className="shadow-md mb-4 border-primary/30 bg-primary/5">
+            <CardContent className="py-3">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(`/set-builder/${editingSetContext.id}`)}
+                    className="h-8 gap-1 sm:gap-2 shrink-0"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">돌아가기</span>
+                  </Button>
+                  <div className="h-5 w-px bg-border hidden sm:block" />
+                  <span className="text-xs sm:text-sm font-medium truncate">
+                    편집 중: <span className="text-primary">{editingSetContext.name}</span>
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground shrink-0 h-8 px-2"
+                  onClick={() => {
+                    sessionStorage.removeItem('currentEditingSetId');
+                    sessionStorage.removeItem('currentEditingSetName');
+                    setEditingSetContext(null);
+                  }}
+                >
+                  <X className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">편집 종료</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="shadow-md mb-6">
           <CardHeader className="relative">
             {/* View Mode Toggle - Top Right Corner */}
@@ -782,6 +837,30 @@ const SongLibrary = () => {
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder={t("songLibrary.searchPlaceholder")}
+      />
+
+      {/* Floating "Add to Set" button when editing a set and cart has items */}
+      {isWorshipLeader && cartCount > 0 && editingSetContext && (
+        <Button
+          onClick={() => setIsCartDialogOpen(true)}
+          className="fixed bottom-24 left-4 md:bottom-8 md:left-1/2 md:-translate-x-1/2 rounded-full shadow-lg z-40 gap-2 px-6"
+        >
+          <Plus className="w-4 h-4" />
+          세트에 {cartCount}곡 추가
+        </Button>
+      )}
+
+      {/* AddToSetDialog for cart items */}
+      <AddToSetDialog
+        open={isCartDialogOpen}
+        onOpenChange={setIsCartDialogOpen}
+        songs={cartItems.map(item => ({
+          id: item.id,
+          title: item.title,
+          artist: item.artist,
+          default_key: item.default_key
+        }))}
+        onSuccess={handleCartSuccess}
       />
     </AppLayout>
   );
