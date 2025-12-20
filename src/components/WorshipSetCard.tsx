@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, Check, Save, Share2 } from "lucide-react";
+import { Eye, Edit, Trash2, Upload, XCircle, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/countdownHelper";
@@ -95,7 +95,7 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
                   onClick={() => onTogglePublish(set.id, set.status)}
                   title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
                 >
-                  {set.status === "draft" ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                  {set.status === "draft" ? <Upload className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                 </Button>
                 <Button 
                   size="icon" 
