@@ -23,10 +23,14 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   const location = useLocation();
   const queryClient = useQueryClient();
   
-  // Detect currently editing set from URL (/set-builder/:id)
+  // Detect currently editing set from URL or sessionStorage
   const currentEditingSetId = useMemo(() => {
+    // 1. Check URL first (when on SetBuilder page)
     const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
-    return match ? match[1] : null;
+    if (match) return match[1];
+    
+    // 2. Check sessionStorage (when on SongLibrary or other pages)
+    return sessionStorage.getItem('currentEditingSetId');
   }, [location.pathname]);
   
   // Default to current editing set if available, otherwise "new"
