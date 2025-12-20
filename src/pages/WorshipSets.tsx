@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Upload, Music, Save, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList, Share2 } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Check, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList, Share2, XCircle } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -316,7 +316,7 @@ export default function WorshipSets() {
                               onClick={() => handleTogglePublish(set.id, set.status)}
                               title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
                             >
-                              {set.status === "draft" ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                              {set.status === "draft" ? <Check className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                             </Button>
                             <Button 
                               size="icon" 

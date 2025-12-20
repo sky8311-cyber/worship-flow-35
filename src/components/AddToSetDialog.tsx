@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -23,38 +23,33 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   const location = useLocation();
   const queryClient = useQueryClient();
   
-  // Detect currently editing set from URL or sessionStorage
-  const currentEditingSetId = useMemo(() => {
-    // 1. Check URL first (when on SetBuilder page)
-    const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
-    if (match) return match[1];
-    
-    // 2. Check sessionStorage (when on SongLibrary or other pages)
-    return sessionStorage.getItem('currentEditingSetId');
-  }, [location.pathname]);
+  // Track currently editing set - re-read when dialog opens
+  const [currentEditingSetId, setCurrentEditingSetId] = useState<string | null>(null);
   
   // Default to current editing set if available, otherwise "new"
-  const [selectedOption, setSelectedOption] = useState<"new" | string>(
-    currentEditingSetId || "new"
-  );
+  const [selectedOption, setSelectedOption] = useState<"new" | string>("new");
   
   // CRITICAL: Capture songs in state when dialog opens to prevent closure issues
   const [capturedSongs, setCapturedSongs] = useState<any[]>([]);
   
   useEffect(() => {
     if (open) {
+      // Re-read editing set ID when dialog opens (critical for sessionStorage changes)
+      const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
+      if (match) {
+        setCurrentEditingSetId(match[1]);
+        setSelectedOption(match[1]);
+      } else {
+        const storedId = sessionStorage.getItem('currentEditingSetId');
+        setCurrentEditingSetId(storedId);
+        setSelectedOption(storedId || "new");
+      }
+      
       // Capture songs when dialog opens - this prevents race conditions
       const songsToCapture = songs || (song ? [song] : []);
       setCapturedSongs([...songsToCapture]); // Create a copy
-      
-      // Reset selection to current editing set if available
-      if (currentEditingSetId) {
-        setSelectedOption(currentEditingSetId);
-      } else {
-        setSelectedOption("new");
-      }
     }
-  }, [open, songs, song, currentEditingSetId]);
+  }, [open, songs, song, location.pathname]);
   
   const { data: sets } = useQuery({
     queryKey: ["my-draft-sets"],
