@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -13,30 +13,58 @@ import type { TranslationPath } from "@/hooks/useTranslation";
 
 export const BottomTabNavigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const { chatUnreadCount } = useNotifications();
   const { user } = useAuth();
   const { cartCount } = useSongCart();
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Fetch user's draft count
-  const { data: draftCount = 0 } = useQuery({
-    queryKey: ["user-draft-count", user?.id],
+  // Fetch user's draft count and latest draft ID
+  const { data: draftData } = useQuery({
+    queryKey: ["user-drafts-nav", user?.id],
     queryFn: async () => {
-      if (!user?.id) return 0;
-      const { count, error } = await supabase
+      if (!user?.id) return { count: 0, latestId: null };
+      
+      // Get count
+      const { count, error: countError } = await supabase
         .from("service_sets")
         .select("*", { count: "exact", head: true })
         .eq("created_by", user.id)
         .eq("status", "draft");
       
-      if (error) return 0;
-      return count || 0;
+      // Get latest draft ID
+      const { data: latestDraft, error: latestError } = await supabase
+        .from("service_sets")
+        .select("id")
+        .eq("created_by", user.id)
+        .eq("status", "draft")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      return {
+        count: countError ? 0 : (count || 0),
+        latestId: latestError ? null : latestDraft?.id || null,
+      };
     },
     enabled: !!user?.id,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     refetchOnWindowFocus: true,
   });
+
+  const draftCount = draftData?.count || 0;
+  const latestDraftId = draftData?.latestId;
+
+  // Handle worship sets tab click - navigate to latest draft if available
+  const handleWorshipSetsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (latestDraftId) {
+      navigate(`/set-builder/${latestDraftId}`);
+    } else {
+      navigate("/worship-sets");
+    }
+  };
   
   return (
     <>
@@ -53,6 +81,32 @@ export const BottomTabNavigation = () => {
             const isDraftTab = tab.to.startsWith("/worship-sets");
             const isSongsTab = tab.to === "/songs";
             
+            // Use custom click handler for worship sets tab to navigate to latest draft
+            if (isDraftTab) {
+              return (
+                <button
+                  key={`${tab.to}-${index}`}
+                  onClick={handleWorshipSetsClick}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 transition-colors",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {draftCount > 0 && (
+                      <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                        {draftCount > 9 ? "9+" : draftCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium">{t(tab.labelKey as TranslationPath)}</span>
+                </button>
+              );
+            }
+            
             return (
               <Link
                 key={`${tab.to}-${index}`}
@@ -66,11 +120,6 @@ export const BottomTabNavigation = () => {
               >
                 <div className="relative">
                   <Icon className="h-5 w-5" />
-                  {isDraftTab && draftCount > 0 && (
-                    <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                      {draftCount > 9 ? "9+" : draftCount}
-                    </span>
-                  )}
                   {isSongsTab && cartCount > 0 && (
                     <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
                       {cartCount > 9 ? "9+" : cartCount}
