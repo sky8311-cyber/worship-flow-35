@@ -843,7 +843,7 @@ const SongLibrary = () => {
       {isWorshipLeader && cartCount > 0 && editingSetContext && (
         <Button
           onClick={() => setIsCartDialogOpen(true)}
-          className="fixed bottom-24 left-4 md:bottom-8 md:left-1/2 md:-translate-x-1/2 rounded-full shadow-lg z-40 gap-2 px-6"
+          className="fixed bottom-24 left-4 md:bottom-24 md:left-1/2 md:-translate-x-1/2 rounded-full shadow-lg z-50 gap-2 px-6"
         >
           <Plus className="w-4 h-4" />
           세트에 {cartCount}곡 추가
