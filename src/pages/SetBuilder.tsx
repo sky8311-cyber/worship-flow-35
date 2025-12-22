@@ -648,6 +648,35 @@ const SetBuilder = () => {
     },
   });
 
+  // Helper function to navigate to songs - requires community selection first
+  const handleNavigateToSongs = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Check if community is selected
+    if (!formData.community_id) {
+      toast.error(
+        language === "ko" 
+          ? "커뮤니티를 먼저 선택해주세요" 
+          : "Please select a community first",
+        { 
+          description: language === "ko" 
+            ? "워십세트를 저장하려면 커뮤니티가 필요합니다" 
+            : "A community is required to save the worship set"
+        }
+      );
+      return;
+    }
+    
+    // Use id or newSetId for session storage
+    const effectiveSetId = id || newSetId;
+    if (effectiveSetId) {
+      sessionStorage.setItem('currentEditingSetId', effectiveSetId);
+      sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
+    }
+    navigate('/songs');
+  };
+
   const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
     // Single song addition with optional key variation
     const newSetItem: SetItem = {
@@ -1134,16 +1163,7 @@ const SetBuilder = () => {
                   <div className="flex items-center gap-2">
                     <Button
                       type="button"
-                      onClick={(e: MouseEvent<HTMLButtonElement>) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        // Save context and navigate to song library
-                        if (id) {
-                          sessionStorage.setItem('currentEditingSetId', id);
-                          sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
-                        }
-                        navigate('/songs');
-                      }}
+                      onClick={handleNavigateToSongs}
                       size="sm"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -1174,15 +1194,7 @@ const SetBuilder = () => {
                     <div className="flex flex-col sm:flex-row gap-2 justify-center">
                       <Button
                         type="button"
-                        onClick={(e: MouseEvent<HTMLButtonElement>) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (id) {
-                            sessionStorage.setItem('currentEditingSetId', id);
-                            sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
-                          }
-                          navigate('/songs');
-                        }}
+                        onClick={handleNavigateToSongs}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "첫 번째 곡 추가하기" : "Add First Song"}
@@ -1239,15 +1251,7 @@ const SetBuilder = () => {
                     <div className="flex gap-2 mt-4 lg:hidden">
                       <Button
                         type="button"
-                        onClick={(e: MouseEvent<HTMLButtonElement>) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (id) {
-                            sessionStorage.setItem('currentEditingSetId', id);
-                            sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
-                          }
-                          navigate('/songs');
-                        }}
+                        onClick={handleNavigateToSongs}
                         size="sm"
                         variant="outline"
                         className="flex-1"
