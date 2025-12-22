@@ -22,9 +22,10 @@ interface WorshipSetCardProps {
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, currentStatus: string) => void;
   onShare?: (set: any) => void;
+  onEdit?: (set: any) => void;
 }
 
-export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onShare }: WorshipSetCardProps) {
+export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onShare, onEdit }: WorshipSetCardProps) {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
@@ -33,7 +34,20 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
   const formattedDate = format(parseLocalDate(set.date), language === "ko" ? "yyyy.MM.dd (EEE)" : "EEE, MMM d, yyyy", { locale: dateLocale });
   
   const handleCardClick = () => {
-    navigate(canManage ? `/set-builder/${set.id}` : `/band-view/${set.id}`);
+    // Published sets always go to band-view
+    if (set.status === "published") {
+      navigate(`/band-view/${set.id}`);
+    } else {
+      navigate(canManage ? `/set-builder/${set.id}` : `/band-view/${set.id}`);
+    }
+  };
+
+  const handleEditClick = () => {
+    if (onEdit) {
+      onEdit(set);
+    } else {
+      navigate(`/set-builder/${set.id}`);
+    }
   };
 
   return (
@@ -83,7 +97,7 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
                   size="icon" 
                   variant="ghost" 
                   className="h-8 w-8"
-                  onClick={() => navigate(`/set-builder/${set.id}`)}
+                  onClick={handleEditClick}
                   title={t("worshipSets.edit")}
                 >
                   <Edit className="w-4 h-4" />

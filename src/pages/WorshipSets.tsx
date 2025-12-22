@@ -17,6 +17,16 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipSetCard } from "@/components/WorshipSetCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getLastEditedDraftId, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -30,6 +40,11 @@ export default function WorshipSets() {
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   const [hasCheckedLastDraft, setHasCheckedLastDraft] = useState(false);
+  
+  // Unpublish confirmation states
+  const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
+  const [pendingSetId, setPendingSetId] = useState<string | null>(null);
   
   // Check if we should continue to last draft (only when ?continue=true)
   const shouldContinueDraft = searchParams.get("continue") === "true";
@@ -159,6 +174,56 @@ export default function WorshipSets() {
     setShareLinkDialogOpen(true);
   };
   
+  // Handle edit click with unpublish confirmation for published sets
+  const handleEditClick = (set: any) => {
+    if (set.status === "published") {
+      setPendingSetId(set.id);
+      setShowUnpublishWarning(true);
+    } else {
+      navigate(`/set-builder/${set.id}`);
+    }
+  };
+  
+  // Confirm unpublish and navigate to edit
+  const handleConfirmUnpublish = async () => {
+    if (!pendingSetId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("service_sets")
+        .update({ status: "draft" })
+        .eq("id", pendingSetId);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      
+      toast.info(
+        language === "ko" 
+          ? "워십세트가 게시 취소되었습니다. 수정 후 다시 게시해주세요." 
+          : "Worship set unpublished. Please republish after editing."
+      );
+      
+      navigate(`/set-builder/${pendingSetId}`);
+    } catch (error) {
+      toast.error(language === "ko" ? "게시 취소 중 오류가 발생했습니다." : "Error unpublishing worship set.");
+    } finally {
+      setShowUnpublishConfirm(false);
+      setPendingSetId(null);
+    }
+  };
+  
+  // Handle row click - published sets go to band-view
+  const handleRowClick = (set: any) => {
+    if (set.status === "published") {
+      navigate(`/band-view/${set.id}`);
+    } else {
+      navigate(canManage(set) ? `/set-builder/${set.id}` : `/band-view/${set.id}`);
+    }
+  };
+  
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
@@ -249,6 +314,7 @@ export default function WorshipSets() {
                   onDelete={handleDelete}
                   onTogglePublish={handleTogglePublish}
                   onShare={handleShare}
+                  onEdit={handleEditClick}
                 />
               ))}
             </div>
@@ -269,7 +335,7 @@ export default function WorshipSets() {
                   <TableRow 
                     key={set.id} 
                     className="cursor-pointer hover:bg-accent"
-                    onClick={() => navigate(canManage(set) ? `/set-builder/${set.id}` : `/band-view/${set.id}`)}
+                    onClick={() => handleRowClick(set)}
                   >
                     <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
@@ -305,7 +371,7 @@ export default function WorshipSets() {
                             <Button 
                               size="icon" 
                               variant="ghost" 
-                              onClick={() => navigate(`/set-builder/${set.id}`)}
+                              onClick={() => handleEditClick(set)}
                               title={t("worshipSets.edit")}
                             >
                               <Edit className="w-4 h-4" />
@@ -345,6 +411,57 @@ export default function WorshipSets() {
           publicShareEnabled={selectedSetForShare?.public_share_enabled || false}
           onUpdate={() => queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] })}
         />
+        
+        {/* First warning dialog */}
+        <AlertDialog open={showUnpublishWarning} onOpenChange={setShowUnpublishWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "ko" ? "수정 모드로 전환" : "Switch to Edit Mode"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === "ko" 
+                  ? "수정 모드로 전환하면 게시가 자동으로 취소됩니다. 수정 완료 후 다시 저장하고 게시해야 합니다." 
+                  : "Switching to edit mode will automatically unpublish the worship set. You will need to save and republish after editing."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingSetId(null)}>
+                {language === "ko" ? "취소" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                setShowUnpublishWarning(false);
+                setShowUnpublishConfirm(true);
+              }}>
+                {language === "ko" ? "확인" : "Continue"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Second confirmation dialog */}
+        <AlertDialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "ko" ? "게시 취소 확인" : "Confirm Unpublish"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === "ko" 
+                  ? "정말 게시를 취소하시겠습니까? 게시 취소 후 워십세트가 수정 가능 상태가 됩니다." 
+                  : "Are you sure you want to unpublish? The worship set will become editable after unpublishing."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPendingSetId(null)}>
+                {language === "ko" ? "취소" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmUnpublish}>
+                {language === "ko" ? "게시 취소" : "Unpublish"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
