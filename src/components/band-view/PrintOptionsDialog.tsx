@@ -135,12 +135,9 @@ export function PrintOptionsDialog({
         }
       });
 
-      content = printScores.map((score, idx) => `
+      content = printScores.map((score) => `
         <div class="score-page">
           <img src="${score.url}" />
-          <div class="score-overlay">
-            ${score.title} ${score.key ? `(${score.key})` : ""} · ${idx + 1}/${printScores.length}
-          </div>
         </div>
       `).join("");
     } else if (printMode === "order") {
@@ -243,17 +240,6 @@ export function PrintOptionsDialog({
               width: 100%;
               height: 100%;
               object-fit: contain;
-            }
-            .score-overlay {
-              position: absolute;
-              bottom: 16px;
-              left: 0;
-              right: 0;
-              text-align: center;
-              color: rgba(255,255,255,0.7);
-              font-size: 12px;
-              background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
-              padding: 24px 16px 16px;
             }
             @media print {
               @page { margin: 0; size: auto; }
