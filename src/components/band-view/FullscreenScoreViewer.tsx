@@ -32,6 +32,73 @@ export function FullscreenScoreViewer({
   const touchStartY = useRef<number | null>(null);
   const hideUITimeout = useRef<NodeJS.Timeout | null>(null);
   const lastTapTime = useRef<number>(0);
+  const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
+  const noSleepVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Wake Lock management
+  const requestWakeLock = useCallback(async () => {
+    // Try native Wake Lock API first
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockSentinel.current = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock acquired');
+        
+        wakeLockSentinel.current.addEventListener('release', () => {
+          console.log('Wake Lock was released');
+        });
+        return true;
+      } catch (err) {
+        console.log('Wake Lock error:', err);
+      }
+    }
+    return false;
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockSentinel.current) {
+      try {
+        await wakeLockSentinel.current.release();
+        wakeLockSentinel.current = null;
+        console.log('Wake Lock released manually');
+      } catch (err) {
+        console.log('Wake Lock release error:', err);
+      }
+    }
+  }, []);
+
+  // NoSleep fallback for iOS Safari (using video element)
+  const enableNoSleep = useCallback(() => {
+    if (noSleepVideoRef.current) return; // Already enabled
+    
+    // Create a tiny video element that plays in loop to prevent sleep
+    const video = document.createElement('video');
+    video.setAttribute('loop', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('muted', '');
+    video.style.position = 'absolute';
+    video.style.left = '-9999px';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    
+    // Minimal valid mp4 video (1 frame, transparent)
+    video.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA8htZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0MiByMjQ3OSBkZDc5YTYxIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNCAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTEyIGxvb2thaGVhZF90aHJlYWRzPTIgc2xpY2VkX3RocmVhZHM9MCBucj0wIGRlY2ltYXRlPTEgaW50ZXJsYWNlZD0wIGJsdXJheV9jb21wYXQ9MCBjb25zdHJhaW5lZF9pbnRyYT0wIGJmcmFtZXM9MyBiX3B5cmFtaWQ9MiBiX2FkYXB0PTEgYl9iaWFzPTAgZGlyZWN0PTEgd2VpZ2h0Yj0xIG9wZW5fZ29wPTAgd2VpZ2h0cD0yIGtleWludD0yNTAga2V5aW50X21pbj0xMCBzY2VuZWN1dD00MCBpbnRyYV9yZWZyZXNoPTAgcmNfbG9va2FoZWFkPTQwIHJjPWNyZiBtYnRyZWU9MSBjcmY9MjMuMCBxY29tcD0wLjYwIHFwbWluPTAgcXBtYXg9NjkgcXBzdGVwPTQgaXBfcmF0aW89MS40MCBhcT0xOjEuMDAAgAAAAA9liIQAM//+9uy+BTX9n9CXESzSfFlqfnrORPkpJAAADAAADAAADAAADAAADAMAYKDgkJqSxIQAAAQZBmiRsQ/8AAADAAAAAAAAAMAAADAAADAAMAUQAAAA5BnkJ4hH8AAADAAAADAAADAE0AAAAOQZpEeIR/AAADAAADAAADAE0AAAAJAZpiRBX/AAADAAAAAAAAAQAAAAAAAAMAAAADAAMAUQ==';
+    
+    document.body.appendChild(video);
+    video.play().catch(() => {
+      console.log('NoSleep video play failed');
+    });
+    noSleepVideoRef.current = video;
+    console.log('NoSleep fallback enabled');
+  }, []);
+
+  const disableNoSleep = useCallback(() => {
+    if (noSleepVideoRef.current) {
+      noSleepVideoRef.current.pause();
+      noSleepVideoRef.current.remove();
+      noSleepVideoRef.current = null;
+      console.log('NoSleep fallback disabled');
+    }
+  }, []);
 
   // Request fullscreen and lock orientation to portrait on open
   useEffect(() => {
@@ -48,33 +115,59 @@ export function FullscreenScoreViewer({
         });
       }
 
-      // Request wake lock to keep screen on
-      navigator.wakeLock?.request("screen").catch(() => {
-        // Wake lock not supported
-      });
+      // Request wake lock and set up visibility change handler
+      const initWakeLock = async () => {
+        const success = await requestWakeLock();
+        if (!success) {
+          // Fallback for iOS Safari
+          enableNoSleep();
+        }
+      };
+      
+      initWakeLock();
+      
+      // Re-request wake lock when tab becomes visible again
+      const handleVisibilityChange = async () => {
+        if (document.visibilityState === 'visible' && open) {
+          const success = await requestWakeLock();
+          if (!success) {
+            enableNoSleep();
+          }
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        }
+        // Unlock orientation when exiting
+        if ('orientation' in screen && (screen.orientation as any)?.unlock) {
+          (screen.orientation as any).unlock();
+        }
+        releaseWakeLock();
+        disableNoSleep();
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
     }
+  }, [open, requestWakeLock, releaseWakeLock, enableNoSleep, disableNoSleep]);
 
-    return () => {
-      if (document.fullscreenElement) {
-        document.exitFullscreen?.();
-      }
-      // Unlock orientation when exiting
-      if ('orientation' in screen && (screen.orientation as any)?.unlock) {
-        (screen.orientation as any).unlock();
-      }
-    };
-  }, [open]);
-
-  // Handle fullscreen change
+  // Handle fullscreen change - DON'T auto-close, just try to re-enter fullscreen
   useEffect(() => {
     const handleFullscreenChange = () => {
-      if (!document.fullscreenElement && open) {
-        onClose();
+      // If fullscreen exited but viewer is still open, try to re-enter fullscreen
+      // but don't close the viewer - user must explicitly close it
+      if (!document.fullscreenElement && open && containerRef.current) {
+        containerRef.current.requestFullscreen?.().catch(() => {
+          // Fullscreen re-request failed (iOS Safari), continue without fullscreen
+          console.log('Fullscreen re-request failed, continuing without fullscreen');
+        });
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, [open, onClose]);
+  }, [open]);
 
   // Keyboard navigation
   useEffect(() => {
