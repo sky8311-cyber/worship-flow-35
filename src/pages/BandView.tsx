@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2, Share2 } from "lucide-react";
@@ -15,6 +15,16 @@ import { toast } from "sonner";
 import { useEffect, useState, useMemo } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import DOMPurify from "dompurify";
 import { 
   Breadcrumb, 
@@ -76,6 +86,10 @@ const BandView = () => {
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  // Unpublish confirmation states
+  const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -214,6 +228,46 @@ const BandView = () => {
   });
 
   const canEdit = canEditData?.canEdit || false;
+
+  // Handle edit button click with unpublish confirmation for published sets
+  const handleEditClick = () => {
+    if (serviceSet?.status === "published") {
+      setShowUnpublishWarning(true);
+    } else {
+      navigate(`/set-builder/${id}`);
+    }
+  };
+  
+  // Confirm unpublish and navigate to edit
+  const handleConfirmUnpublish = async () => {
+    if (!id) return;
+    
+    try {
+      const { error } = await supabase
+        .from("service_sets")
+        .update({ status: "draft" })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ["band-view", id] });
+      queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      
+      toast.info(
+        language === "ko" 
+          ? "워십세트가 게시 취소되었습니다. 수정 후 다시 게시해주세요." 
+          : "Worship set unpublished. Please republish after editing."
+      );
+      
+      navigate(`/set-builder/${id}`);
+    } catch (error) {
+      toast.error(language === "ko" ? "게시 취소 중 오류가 발생했습니다." : "Error unpublishing worship set.");
+    } finally {
+      setShowUnpublishConfirm(false);
+    }
+  };
 
   // Check if this is a cross-community view
   const isCrossCommunity = serviceSet?.community_id && 
@@ -418,7 +472,7 @@ const BandView = () => {
                 </Button>
                 <Button
                   variant="default"
-                  onClick={() => navigate(`/set-builder/${id}`)}
+                  onClick={handleEditClick}
                   className="flex items-center gap-2"
                 >
                   <Edit className="w-4 h-4" />
@@ -771,6 +825,57 @@ const BandView = () => {
           publicShareEnabled={serviceSet?.public_share_enabled || false}
           onUpdate={() => queryClient.invalidateQueries({ queryKey: ["band-view", id] })}
         />
+        
+        {/* First warning dialog */}
+        <AlertDialog open={showUnpublishWarning} onOpenChange={setShowUnpublishWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "ko" ? "수정 모드로 전환" : "Switch to Edit Mode"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === "ko" 
+                  ? "수정 모드로 전환하면 게시가 자동으로 취소됩니다. 수정 완료 후 다시 저장하고 게시해야 합니다." 
+                  : "Switching to edit mode will automatically unpublish the worship set. You will need to save and republish after editing."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === "ko" ? "취소" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                setShowUnpublishWarning(false);
+                setShowUnpublishConfirm(true);
+              }}>
+                {language === "ko" ? "확인" : "Continue"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        
+        {/* Second confirmation dialog */}
+        <AlertDialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "ko" ? "게시 취소 확인" : "Confirm Unpublish"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {language === "ko" 
+                  ? "정말 게시를 취소하시겠습니까? 게시 취소 후 워십세트가 수정 가능 상태가 됩니다." 
+                  : "Are you sure you want to unpublish? The worship set will become editable after unpublishing."}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === "ko" ? "취소" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmUnpublish}>
+                {language === "ko" ? "게시 취소" : "Unpublish"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );
