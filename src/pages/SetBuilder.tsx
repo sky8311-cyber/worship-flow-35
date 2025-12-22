@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle, Edit, Eye } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -72,6 +72,11 @@ const SetBuilder = () => {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  // Read-only mode for published sets
+  const [isEditMode, setIsEditMode] = useState(true);
+  const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
+  const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -365,6 +370,10 @@ const SetBuilder = () => {
     if (!statusInitialized) {
       setStatus(existingSet.status || "draft");
       setStatusInitialized(true);
+      // Published sets start in read-only mode
+      if (existingSet.status === "published") {
+        setIsEditMode(false);
+      }
     }
 
     // Safety patch for legacy sets without created_by (only when DB value is explicitly null)
@@ -453,6 +462,21 @@ const SetBuilder = () => {
   const confirmPublish = () => {
     saveSetMutation.mutate("published");
     setShowPublishConfirm(false);
+    // Switch to read-only mode after publishing
+    setIsEditMode(false);
+  };
+
+  // Handle unpublish and switch to edit mode
+  const handleUnpublishAndEdit = async () => {
+    setStatus("draft");
+    await saveSetMutation.mutateAsync("draft");
+    setIsEditMode(true);
+    setShowUnpublishConfirm(false);
+    toast.info(
+      language === "ko" 
+        ? "워십세트가 게시 취소되었습니다. 수정 후 다시 게시해주세요." 
+        : "Worship set unpublished. Please republish after editing."
+    );
   };
 
   const saveSetMutation = useMutation({
@@ -913,6 +937,24 @@ const SetBuilder = () => {
           </Button>
           
           <div className="flex items-center gap-3">
+            {/* Read-only mode indicator for published sets */}
+            {status === "published" && !isEditMode && (
+              <>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <Eye className="w-3 h-3" />
+                  {language === "ko" ? "읽기 전용" : "Read Only"}
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUnpublishWarning(true)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {language === "ko" ? "수정" : "Edit"}
+                </Button>
+              </>
+            )}
+            
             {/* Auto-save status indicator */}
             {status === "draft" && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -992,6 +1034,7 @@ const SetBuilder = () => {
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
                       className="text-sm h-9"
+                      disabled={!isEditMode}
                     />
                   </div>
 
@@ -1003,6 +1046,7 @@ const SetBuilder = () => {
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
                       className="text-sm h-9"
+                      disabled={!isEditMode}
                     />
                   </div>
                 </div>
@@ -1015,6 +1059,7 @@ const SetBuilder = () => {
                     onChange={(e) => setFormData({ ...formData, service_name: e.target.value })}
                     placeholder="예: 주일 2부 예배"
                     required
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1031,6 +1076,7 @@ const SetBuilder = () => {
                         setFormData({ ...formData, community_id: value });
                       }
                     }}
+                    disabled={!isEditMode}
                   >
                     <SelectTrigger id="community_id">
                       <SelectValue placeholder={t("setBuilder.selectCommunity")} />
@@ -1062,7 +1108,11 @@ const SetBuilder = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="target_audience">{t("setBuilder.targetAudience")}</Label>
-                  <Select value={formData.target_audience} onValueChange={(value) => setFormData({ ...formData, target_audience: value })}>
+                  <Select 
+                    value={formData.target_audience} 
+                    onValueChange={(value) => setFormData({ ...formData, target_audience: value })}
+                    disabled={!isEditMode}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder={t("setBuilder.selectTargetAudience")} />
                     </SelectTrigger>
@@ -1083,6 +1133,7 @@ const SetBuilder = () => {
                     id="worship_leader"
                     value={formData.worship_leader}
                     onChange={(e) => setFormData({ ...formData, worship_leader: e.target.value })}
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1092,6 +1143,7 @@ const SetBuilder = () => {
                     id="band_name"
                     value={formData.band_name}
                     onChange={(e) => setFormData({ ...formData, band_name: e.target.value })}
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1102,6 +1154,7 @@ const SetBuilder = () => {
                     value={formData.scripture_reference}
                     onChange={(e) => setFormData({ ...formData, scripture_reference: e.target.value })}
                     placeholder="예: 시편 23편, 요한복음 3:16"
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1111,6 +1164,7 @@ const SetBuilder = () => {
                     id="theme"
                     value={formData.theme}
                     onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1122,6 +1176,7 @@ const SetBuilder = () => {
                     value={formData.worship_duration}
                     onChange={(e) => setFormData({ ...formData, worship_duration: e.target.value })}
                     placeholder="20"
+                    disabled={!isEditMode}
                   />
                 </div>
 
@@ -1132,6 +1187,7 @@ const SetBuilder = () => {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={3}
+                    disabled={!isEditMode}
                   />
                 </div>
               </CardContent>
@@ -1139,7 +1195,7 @@ const SetBuilder = () => {
 
             {/* Worship Components Palette - Desktop only */}
             <div className="hidden lg:block">
-              <WorshipComponentPalette onAddComponent={handleAddComponent} />
+              <WorshipComponentPalette onAddComponent={handleAddComponent} disabled={!isEditMode} />
             </div>
 
             {/* Team Positions Manager - only for church accounts */}
@@ -1165,6 +1221,7 @@ const SetBuilder = () => {
                       type="button"
                       onClick={handleNavigateToSongs}
                       size="sm"
+                      disabled={!isEditMode}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       곡 추가
@@ -1175,6 +1232,7 @@ const SetBuilder = () => {
                       size="sm" 
                       variant="outline"
                       className="lg:hidden"
+                      disabled={!isEditMode}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       순서 추가
@@ -1195,11 +1253,16 @@ const SetBuilder = () => {
                       <Button
                         type="button"
                         onClick={handleNavigateToSongs}
+                        disabled={!isEditMode}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "첫 번째 곡 추가하기" : "Add First Song"}
                       </Button>
-                      <Button variant="outline" onClick={() => handleAddComponent("welcome")}>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleAddComponent("welcome")}
+                        disabled={!isEditMode}
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
@@ -1229,6 +1292,7 @@ const SetBuilder = () => {
                                 onUpdate={handleUpdateItem}
                                 onMoveUp={handleMoveUp}
                                 onMoveDown={handleMoveDown}
+                                readOnly={!isEditMode}
                               />
                             ) : (
                               <SetComponentItem
@@ -1240,6 +1304,7 @@ const SetBuilder = () => {
                                 onUpdate={handleUpdateItem}
                                 onMoveUp={handleMoveUp}
                                 onMoveDown={handleMoveDown}
+                                readOnly={!isEditMode}
                               />
                             )
                           )}
@@ -1255,6 +1320,7 @@ const SetBuilder = () => {
                         size="sm"
                         variant="outline"
                         className="flex-1"
+                        disabled={!isEditMode}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
@@ -1264,6 +1330,7 @@ const SetBuilder = () => {
                         size="sm" 
                         variant="outline" 
                         className="flex-1"
+                        disabled={!isEditMode}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         순서 추가
@@ -1375,6 +1442,57 @@ const SetBuilder = () => {
           }}
         />
       )}
+
+      {/* First warning dialog - inform about unpublishing */}
+      <AlertDialog open={showUnpublishWarning} onOpenChange={setShowUnpublishWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ko" ? "수정 모드로 전환" : "Switch to Edit Mode"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ko" 
+                ? "수정 모드로 전환하면 게시가 자동으로 취소됩니다. 수정 완료 후 다시 저장하고 게시해야 합니다."
+                : "Switching to edit mode will automatically unpublish this set. You'll need to save and republish after editing."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "취소" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowUnpublishWarning(false);
+              setShowUnpublishConfirm(true);
+            }}>
+              {language === "ko" ? "확인" : "Continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Second confirmation dialog - confirm unpublishing */}
+      <AlertDialog open={showUnpublishConfirm} onOpenChange={setShowUnpublishConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ko" ? "게시 취소 확인" : "Confirm Unpublish"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ko" 
+                ? "정말 게시를 취소하시겠습니까? 게시 취소 후 워십세트가 수정 가능 상태가 됩니다."
+                : "Are you sure you want to unpublish? The worship set will become editable after unpublishing."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "취소" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnpublishAndEdit}>
+              {language === "ko" ? "게시 취소" : "Unpublish"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };

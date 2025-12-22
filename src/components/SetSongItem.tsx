@@ -26,9 +26,10 @@ interface SetSongItemProps {
   onUpdate: (index: number, updates: any) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  readOnly?: boolean;
 }
 
-export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetSongItemProps) => {
+export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown, readOnly = false }: SetSongItemProps) => {
   // Use the setSong's id if available, otherwise fallback to index-based id
   const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
