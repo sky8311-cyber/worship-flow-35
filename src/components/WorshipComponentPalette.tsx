@@ -34,10 +34,9 @@ const iconMap: Record<string, React.ComponentType<any>> = {
 
 interface WorshipComponentPaletteProps {
   onAddComponent: (type: WorshipComponentType, customLabel?: string) => void;
-  disabled?: boolean;
 }
 
-export const WorshipComponentPalette = ({ onAddComponent, disabled = false }: WorshipComponentPaletteProps) => {
+export const WorshipComponentPalette = ({ onAddComponent }: WorshipComponentPaletteProps) => {
   const [customLabel, setCustomLabel] = useState("");
   const { t, language } = useTranslation();
 
@@ -63,12 +62,8 @@ export const WorshipComponentPalette = ({ onAddComponent, disabled = false }: Wo
               <Badge
                 key={component.type}
                 variant="outline"
-                className={`py-1.5 px-2.5 text-xs transition-colors ${
-                  disabled 
-                    ? "opacity-50 cursor-not-allowed" 
-                    : "cursor-pointer hover:bg-accent"
-                }`}
-                onClick={() => !disabled && onAddComponent(component.type)}
+                className="cursor-pointer hover:bg-accent transition-colors py-1.5 px-2.5 text-xs"
+                onClick={() => onAddComponent(component.type)}
               >
                 <IconComponent className="w-3 h-3 mr-1.5" />
                 {language === "ko" ? component.labelKo : component.labelEn}
@@ -88,14 +83,13 @@ export const WorshipComponentPalette = ({ onAddComponent, disabled = false }: Wo
               onChange={(e) => setCustomLabel(e.target.value)}
               placeholder={language === "ko" ? "순서 이름 입력" : "Enter name"}
               className="text-sm h-8"
-              onKeyDown={(e) => e.key === "Enter" && !disabled && handleAddCustom()}
-              disabled={disabled}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCustom()}
             />
             <Button 
               size="sm" 
               variant="outline"
               onClick={handleAddCustom}
-              disabled={disabled || !customLabel.trim()}
+              disabled={!customLabel.trim()}
               className="h-8 px-2"
             >
               <Plus className="w-4 h-4" />
