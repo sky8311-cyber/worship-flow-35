@@ -657,12 +657,12 @@ const SetBuilder = () => {
     if (!formData.community_id) {
       toast.error(
         language === "ko" 
-          ? "커뮤니티를 먼저 선택해주세요" 
-          : "Please select a community first",
+          ? "예배공동체를 선택해주세요" 
+          : "Please select a worship community",
         { 
           description: language === "ko" 
-            ? "워십세트를 저장하려면 커뮤니티가 필요합니다" 
-            : "A community is required to save the worship set"
+            ? "곡을 추가하려면 워십세트를 저장해야 합니다. 워십세트를 저장하려면 예배공동체를 선택해야 합니다." 
+            : "To add songs, the worship set must be saved. To save the worship set, please select a worship community."
         }
       );
       return;
