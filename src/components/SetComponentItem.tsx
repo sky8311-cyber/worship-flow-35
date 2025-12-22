@@ -46,6 +46,7 @@ interface SetComponentItemProps {
   onUpdate: (index: number, updates: any) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  readOnly?: boolean;
 }
 
 const getIconForType = (type: WorshipComponentType): React.ComponentType<any> => {
@@ -71,7 +72,7 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
   return iconMap[iconNames[type]] || Circle;
 };
 
-export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetComponentItemProps) => {
+export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown, readOnly = false }: SetComponentItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
   const [notesOpen, setNotesOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(!!component.content);
