@@ -1,17 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Music, LayoutList, Plus, Upload } from "lucide-react";
+import { Music, LayoutList, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SongLibraryWidgetProps {
   onAddSong: () => void;
-  onImport: () => void;
 }
 
-export function SongLibraryWidget({ onAddSong, onImport }: SongLibraryWidgetProps) {
+export function SongLibraryWidget({ onAddSong }: SongLibraryWidgetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -91,15 +90,6 @@ export function SongLibraryWidget({ onAddSong, onImport }: SongLibraryWidgetProp
           >
             <Plus className="w-3 h-3 mr-2" />
             {t("songLibrary.addSong")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={onImport}
-          >
-            <Upload className="w-3 h-3 mr-2" />
-            {t("common.import")}
           </Button>
         </div>
       </CardContent>
