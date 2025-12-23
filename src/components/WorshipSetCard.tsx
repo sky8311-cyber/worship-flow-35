@@ -72,53 +72,55 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
           
           <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
             <Button 
-              size="icon" 
+              size="sm" 
               variant="ghost" 
-              className="h-8 w-8"
+              className="h-8 px-2 gap-1 text-xs justify-start"
               onClick={() => navigate(`/band-view/${set.id}`)}
-              title={t("worshipSets.view")}
             >
               <Eye className="w-4 h-4" />
+              {language === "ko" ? "보기" : "View"}
             </Button>
             {canManage && (
               <>
                 {onShare && (
                   <Button 
-                    size="icon" 
+                    size="sm" 
                     variant="ghost" 
-                    className="h-8 w-8"
+                    className="h-8 px-2 gap-1 text-xs justify-start"
                     onClick={() => onShare(set)}
-                    title={language === "ko" ? "공유" : "Share"}
                   >
                     <Share2 className="w-4 h-4" />
+                    {language === "ko" ? "공유" : "Share"}
                   </Button>
                 )}
                 <Button 
-                  size="icon" 
+                  size="sm" 
                   variant="ghost" 
-                  className="h-8 w-8"
+                  className="h-8 px-2 gap-1 text-xs justify-start"
                   onClick={handleEditClick}
-                  title={t("worshipSets.edit")}
                 >
                   <Edit className="w-4 h-4" />
+                  {language === "ko" ? "수정" : "Edit"}
                 </Button>
                 <Button 
-                  size="icon" 
+                  size="sm" 
                   variant="ghost"
-                  className="h-8 w-8"
+                  className="h-8 px-2 gap-1 text-xs justify-start"
                   onClick={() => onTogglePublish(set.id, set.status)}
-                  title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
                 >
                   {set.status === "draft" ? <Upload className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                  {set.status === "draft" 
+                    ? (language === "ko" ? "게시" : "Publish") 
+                    : (language === "ko" ? "취소" : "Unpublish")}
                 </Button>
                 <Button 
-                  size="icon" 
+                  size="sm" 
                   variant="ghost" 
-                  className="h-8 w-8"
+                  className="h-8 px-2 gap-1 text-xs justify-start text-destructive hover:text-destructive"
                   onClick={() => onDelete(set.id)}
-                  title={t("worshipSets.delete")}
                 >
                   <Trash2 className="w-4 h-4" />
+                  {language === "ko" ? "삭제" : "Delete"}
                 </Button>
               </>
             )}
