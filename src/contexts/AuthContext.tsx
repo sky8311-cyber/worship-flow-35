@@ -17,6 +17,7 @@ interface Profile {
   youtube_url: string | null;
   cover_image_url: string | null;
   needs_worship_leader_profile: boolean | null;
+  timezone: string | null;
 }
 
 interface AuthContextType {
@@ -52,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, showTimezoneToast: boolean = false) => {
     const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
@@ -80,6 +81,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("role", "owner")
       .limit(1);
 
+    // Auto-detect and save timezone if not set
+    if (profileData && !profileData.timezone) {
+      const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ timezone: systemTimezone })
+        .eq("id", userId);
+      
+      if (!error) {
+        profileData.timezone = systemTimezone;
+        if (showTimezoneToast) {
+          // Import dynamically to avoid circular dependency
+          import('sonner').then(({ toast }) => {
+            toast.info(`시간대가 자동으로 설정되었습니다: ${systemTimezone}`, {
+              duration: 5000,
+            });
+          });
+        }
+      }
+    }
+
     if (profileData) setProfile(profileData);
     if (rolesData) setRoles(rolesData.map((r: any) => r.role));
     setIsCommunityLeaderInAnyCommunity(!!communityLeaderData && communityLeaderData.length > 0);
@@ -98,11 +120,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        // Show timezone toast on SIGNED_IN event (login)
+        const showToast = event === 'SIGNED_IN';
+        fetchProfile(session.user.id, showToast);
       } else {
         setProfile(null);
         setRoles([]);

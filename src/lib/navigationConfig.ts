@@ -36,5 +36,5 @@ export const navigationTabs: NavigationTab[] = [
 
 export const chatTab = {
   icon: MessageCircle,
-  labelKey: "navigation.feed",
+  labelKey: "navigation.chat",
 };
