@@ -2059,6 +2059,10 @@ export type Database = {
         Args: { _community_id: string; _user_id: string }
         Returns: boolean
       }
+      is_community_owner: {
+        Args: { _community_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_set_collaborator: {
         Args: { _set_id: string; _user_id: string }
         Returns: boolean
