@@ -18,8 +18,11 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
     <div className="min-h-screen bg-gradient-soft">
       <AppHeader showBackButton={showBackButton} backPath={backPath} breadcrumb={breadcrumb} />
       
-      {/* Main content with bottom padding for mobile nav */}
-      <main className="pb-28 lg:pb-8">
+      {/* Main content with bottom padding for mobile nav + safe area */}
+      <main 
+        className="pb-36 lg:pb-8"
+        style={{ paddingBottom: 'max(9rem, calc(6rem + env(safe-area-inset-bottom, 0px)))' }}
+      >
         {children}
       </main>
       
