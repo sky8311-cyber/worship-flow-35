@@ -19,7 +19,7 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
       <AppHeader showBackButton={showBackButton} backPath={backPath} breadcrumb={breadcrumb} />
       
       {/* Main content with bottom padding for mobile nav */}
-      <main className="pb-20 lg:pb-8">
+      <main className="pb-28 lg:pb-8">
         {children}
       </main>
       
