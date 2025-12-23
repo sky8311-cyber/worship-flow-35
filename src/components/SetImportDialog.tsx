@@ -100,12 +100,11 @@ export const SetImportDialog = ({
   };
 
   const handleDownloadTemplate = () => {
-    const template = `Title,Date,Passage,Series,Songs
-주일 3부예배 찬양,"April 7, 2024",,,"우리 보좌앞에 모였네 / 내가 매일기쁘게 / 내 안에 가장 귀한 것"
-엎드림 금요기도회 찬양,"April 12, 2024",,다음세대,"나의 하나님 (D) / 주 이름 큰 능력 (D) / 마음속에 근심있는 사람 (G)"
-주일 3부예배 찬양,"May 5, 2024",,,내 평생 사는 동안 (D) / 보아라 즐거운 우리집 (G) / 주만바라볼찌라 (G→A)`;
+    const template = `Date,ServiceName,WorshipLeader,BandName,Theme,ScriptureReference,TargetAudience,ServiceTime,WorshipDuration,Notes,Songs,SongKeys,SongBPMs,SongNotes,WorshipOrder
+2024-12-25,성탄 연합예배,최광은,하기오스,성탄의 기쁨,누가복음 2:1-20,장년,12:00,18,,예배합니다 / 주 예수 내 맘에 들어와 / 시선 / 왕이신 나의 하나님,F / G / E / F,120 / 85 / 72 / 90,후렴만 / / / 1-2절만,카운트다운::10 | 환영:담당자:3 | 찬양::18 | 대표기도::5 | 설교:담임목사:45 | 축도::3
+2024-04-07,주일 3부예배 찬양,,,,,,,,,우리 보좌앞에 모였네 / 내가 매일기쁘게 / 주만바라볼찌라,D / G / G→A,,,`;
     
-    const blob = new Blob([template], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + template], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -158,9 +157,14 @@ export const SetImportDialog = ({
             service_name: setName,
             date: set.date,
             scripture_reference: set.passage,
-            theme: set.series,
+            theme: set.theme || set.series,
             community_id: selectedCommunityId,
-            worship_leader: defaultWorshipLeader || null,
+            worship_leader: set.worshipLeader || defaultWorshipLeader || null,
+            band_name: set.bandName || null,
+            target_audience: set.targetAudience || null,
+            service_time: set.serviceTime || null,
+            worship_duration: set.worshipDuration || null,
+            notes: set.notes || null,
             status: status,
             created_by: user.id,
           })
@@ -170,7 +174,7 @@ export const SetImportDialog = ({
         if (setError) throw setError;
 
         // Insert songs
-        let position = 1;
+        let songPosition = 1;
         for (const parsedSong of set.parsedSongs) {
           const matchResult = matchResults.get(parsedSong.originalText);
           if (!matchResult?.matchedSong) continue;
@@ -178,10 +182,25 @@ export const SetImportDialog = ({
           await supabase.from("set_songs").insert({
             service_set_id: insertedSet.id,
             song_id: matchResult.matchedSong.id,
-            position: position++,
+            position: songPosition++,
             key: parsedSong.key || null,
+            bpm: parsedSong.bpm || null,
             custom_notes: parsedSong.notes || 
               (parsedSong.keyTransition ? `Key transition: ${parsedSong.keyTransition}` : null),
+          });
+        }
+
+        // Insert worship order components
+        let componentPosition = 1;
+        for (const component of set.parsedComponents) {
+          await supabase.from("set_components").insert({
+            service_set_id: insertedSet.id,
+            component_type: component.type,
+            label: component.label,
+            assigned_to: component.assignedTo || null,
+            duration_minutes: component.durationMinutes || null,
+            content: component.content || null,
+            position: componentPosition++,
           });
         }
       }

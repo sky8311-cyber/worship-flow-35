@@ -251,13 +251,13 @@ export default function WorshipSets() {
     setShareLinkDialogOpen(true);
   };
   
-  // Download CSV template
+  // Download CSV template with all fields
   const handleDownloadTemplate = () => {
-    const template = `Title,Date,Passage,Series,Songs
-주일 3부예배 찬양,"April 7, 2024",,,"우리 보좌앞에 모였네 / 내가 매일기쁘게"
-엎드림 금요기도회 찬양,"April 12, 2024",,다음세대,"나의 하나님 (D) / 주 이름 큰 능력 (D)"`;
+    const template = `Date,ServiceName,WorshipLeader,BandName,Theme,ScriptureReference,TargetAudience,ServiceTime,WorshipDuration,Notes,Songs,SongKeys,SongBPMs,SongNotes,WorshipOrder
+2024-12-25,성탄 연합예배,최광은,하기오스,성탄의 기쁨,누가복음 2:1-20,장년,12:00,18,,예배합니다 / 주 예수 내 맘에 들어와 / 시선 / 왕이신 나의 하나님,F / G / E / F,120 / 85 / 72 / 90,후렴만 / / / 1-2절만,카운트다운::10 | 환영:담당자:3 | 찬양::18 | 대표기도::5 | 설교:담임목사:45 | 축도::3
+2024-04-07,주일 3부예배 찬양,,,,,,,,,우리 보좌앞에 모였네 / 내가 매일기쁘게 / 주만바라볼찌라,D / G / G→A,,,`;
     
-    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + template], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -268,37 +268,110 @@ export default function WorshipSets() {
     toast.success(language === "ko" ? "템플릿 다운로드 완료" : "Template downloaded");
   };
   
-  // Export filtered sets to CSV
-  const handleExportCSV = () => {
+  // Export filtered sets to CSV with full details
+  const handleExportCSV = async () => {
     if (!filteredSets || filteredSets.length === 0) {
       toast.error(language === "ko" ? "내보낼 데이터가 없습니다" : "No data to export");
       return;
     }
 
-    const csvData = filteredSets.map(set => ({
-      Date: set.date,
-      ServiceName: set.service_name,
-      WorshipLeader: set.worship_leader || '',
-      Status: set.status,
-      Theme: set.theme || '',
-      ScriptureReference: set.scripture_reference || '',
-      Notes: set.notes || '',
-    }));
+    const loadingToast = toast.loading(language === "ko" ? "데이터 내보내기 중..." : "Exporting data...");
 
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `worship_sets_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast.success(
-      language === "ko" 
-        ? `${filteredSets.length}개 워십세트 내보내기 완료` 
-        : `${filteredSets.length} worship sets exported`
-    );
+    try {
+      // Fetch songs and components for all sets
+      const setIds = filteredSets.map(s => s.id);
+      
+      const [songsResult, componentsResult] = await Promise.all([
+        supabase
+          .from("set_songs")
+          .select(`
+            service_set_id, position, key, key_change_to, custom_notes, bpm,
+            songs(title, artist, default_key)
+          `)
+          .in("service_set_id", setIds)
+          .order("position"),
+        supabase
+          .from("set_components")
+          .select("*")
+          .in("service_set_id", setIds)
+          .order("position")
+      ]);
+
+      const songsData = songsResult.data || [];
+      const componentsData = componentsResult.data || [];
+
+      // Group by set ID
+      const songsBySet = new Map<string, any[]>();
+      const componentsBySet = new Map<string, any[]>();
+
+      songsData.forEach(s => {
+        const list = songsBySet.get(s.service_set_id) || [];
+        list.push(s);
+        songsBySet.set(s.service_set_id, list);
+      });
+
+      componentsData.forEach(c => {
+        const list = componentsBySet.get(c.service_set_id) || [];
+        list.push(c);
+        componentsBySet.set(c.service_set_id, list);
+      });
+
+      const csvData = filteredSets.map(set => {
+        const setSongs = songsBySet.get(set.id) || [];
+        const setComponents = componentsBySet.get(set.id) || [];
+
+        // Build songs columns
+        const songTitles = setSongs.map(s => s.songs?.title || '').join(' / ');
+        const songKeys = setSongs.map(s => {
+          if (s.key_change_to) return `${s.key || s.songs?.default_key || ''}→${s.key_change_to}`;
+          return s.key || s.songs?.default_key || '';
+        }).join(' / ');
+        const songBPMs = setSongs.map(s => s.bpm || '').join(' / ');
+        const songNotes = setSongs.map(s => s.custom_notes || '').join(' / ');
+
+        // Build worship order: "label:assignedTo:duration | ..."
+        const worshipOrder = setComponents.map(c => 
+          `${c.label}:${c.assigned_to || ''}:${c.duration_minutes || ''}`
+        ).join(' | ');
+
+        return {
+          Date: set.date,
+          ServiceName: set.service_name,
+          WorshipLeader: set.worship_leader || '',
+          BandName: set.band_name || '',
+          Theme: set.theme || '',
+          ScriptureReference: set.scripture_reference || '',
+          TargetAudience: set.target_audience || '',
+          ServiceTime: set.service_time || '',
+          WorshipDuration: set.worship_duration || '',
+          Notes: set.notes || '',
+          Songs: songTitles,
+          SongKeys: songKeys,
+          SongBPMs: songBPMs,
+          SongNotes: songNotes,
+          WorshipOrder: worshipOrder,
+        };
+      });
+
+      const csv = Papa.unparse(csvData);
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `worship_sets_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.dismiss(loadingToast);
+      toast.success(
+        language === "ko" 
+          ? `${filteredSets.length}개 워십세트 내보내기 완료` 
+          : `${filteredSets.length} worship sets exported`
+      );
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error(language === "ko" ? "내보내기 중 오류가 발생했습니다" : "Error exporting data");
+    }
   };
   
   // Handle edit click with unpublish confirmation for published sets
