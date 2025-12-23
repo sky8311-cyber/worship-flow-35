@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Upload, Music, List, FileEdit, CircleCheck, Eye, LayoutGrid, LayoutList, Share2, XCircle, ArrowUpCircle } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Eye, LayoutGrid, LayoutList, Share2, XCircle, ArrowUpCircle } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -15,6 +15,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipSetCard } from "@/components/WorshipSetCard";
+import { WorshipSetFilters, MainFilterType } from "@/components/worship-set/WorshipSetFilters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getLastEditedDraftId, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
 import {
@@ -34,12 +35,18 @@ export default function WorshipSets() {
   const queryClient = useQueryClient();
   const { t, language } = useTranslation();
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
-  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+  const [mainFilter, setMainFilter] = useState<MainFilterType>("all");
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   const [hasCheckedLastDraft, setHasCheckedLastDraft] = useState(false);
+  
+  // Column filters
+  const [selectedYears, setSelectedYears] = useState<number[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
+  const [selectedLeaders, setSelectedLeaders] = useState<string[]>([]);
+  const [selectedServiceNames, setSelectedServiceNames] = useState<string[]>([]);
   
   // Unpublish confirmation states
   const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
@@ -108,25 +115,86 @@ export default function WorshipSets() {
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
   
   // History page shows ALL worship sets (no date filtering)
-  const { data: sets, isLoading } = useQuery({
-    queryKey: ["worship-sets-history", statusFilter],
+  const { data: allSets, isLoading } = useQuery({
+    queryKey: ["worship-sets-history"],
     queryFn: async () => {
-      let query = supabase
+      const { data, error } = await supabase
         .from("service_sets")
         .select("*")
         .order("date", { ascending: false });
       
-      if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
-      }
-      
-      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+  // Extract unique values for filters
+  const filterOptions = useMemo(() => {
+    if (!allSets) return { years: [], months: [], leaders: [], serviceNames: [] };
+    
+    const years = new Set<number>();
+    const months = new Set<number>();
+    const leaders = new Set<string>();
+    const serviceNames = new Set<string>();
+    
+    allSets.forEach(set => {
+      const date = parseLocalDate(set.date);
+      years.add(date.getFullYear());
+      months.add(date.getMonth() + 1);
+      if (set.worship_leader) leaders.add(set.worship_leader);
+      if (set.service_name) serviceNames.add(set.service_name);
+    });
+    
+    return {
+      years: Array.from(years).sort((a, b) => b - a),
+      months: Array.from(months).sort((a, b) => a - b),
+      leaders: Array.from(leaders).sort(),
+      serviceNames: Array.from(serviceNames).sort(),
+    };
+  }, [allSets]);
+
+  // Apply filters
+  const filteredSets = useMemo(() => {
+    if (!allSets) return [];
+    
+    let result = allSets;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Main filter
+    switch (mainFilter) {
+      case "mySets":
+        result = result.filter(set => set.created_by === user?.id);
+        break;
+      case "upcoming":
+        result = result.filter(set => parseLocalDate(set.date) >= today);
+        break;
+      case "draft":
+        result = result.filter(set => set.status === "draft");
+        break;
+      case "published":
+        result = result.filter(set => set.status === "published");
+        break;
+    }
+    
+    // Column filters
+    if (selectedYears.length > 0) {
+      result = result.filter(set => selectedYears.includes(parseLocalDate(set.date).getFullYear()));
+    }
+    if (selectedMonths.length > 0) {
+      result = result.filter(set => selectedMonths.includes(parseLocalDate(set.date).getMonth() + 1));
+    }
+    if (selectedLeaders.length > 0) {
+      result = result.filter(set => set.worship_leader && selectedLeaders.includes(set.worship_leader));
+    }
+    if (selectedServiceNames.length > 0) {
+      result = result.filter(set => selectedServiceNames.includes(set.service_name));
+    }
+    
+    return result;
+  }, [allSets, mainFilter, user?.id, selectedYears, selectedMonths, selectedLeaders, selectedServiceNames]);
   
   const deleteMutation = useMutation({
     mutationFn: async (setId: string) => {
@@ -275,38 +343,31 @@ export default function WorshipSets() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-2 sm:gap-3 mb-6 flex-wrap">
-              <Button 
-                variant={statusFilter === "all" ? "default" : "outline"}
-                onClick={() => setStatusFilter("all")}
-                size="sm"
-              >
-                <List className="w-4 h-4" />
-                {t("worshipSets.filterAll")}
-              </Button>
-              <Button 
-                variant={statusFilter === "draft" ? "default" : "outline"}
-                onClick={() => setStatusFilter("draft")}
-                size="sm"
-              >
-                <FileEdit className="w-4 h-4" />
-                {t("worshipSets.filterDraft")}
-              </Button>
-              <Button 
-                variant={statusFilter === "published" ? "default" : "outline"}
-                onClick={() => setStatusFilter("published")}
-                size="sm"
-              >
-                <CircleCheck className="w-4 h-4" />
-                {t("worshipSets.filterPublished")}
-              </Button>
+            {/* Filters */}
+            <div className="mb-6">
+              <WorshipSetFilters
+                mainFilter={mainFilter}
+                onMainFilterChange={setMainFilter}
+                availableYears={filterOptions.years}
+                availableMonths={filterOptions.months}
+                availableLeaders={filterOptions.leaders}
+                availableServiceNames={filterOptions.serviceNames}
+                selectedYears={selectedYears}
+                selectedMonths={selectedMonths}
+                selectedLeaders={selectedLeaders}
+                selectedServiceNames={selectedServiceNames}
+                onYearsChange={setSelectedYears}
+                onMonthsChange={setSelectedMonths}
+                onLeadersChange={setSelectedLeaders}
+                onServiceNamesChange={setSelectedServiceNames}
+              />
             </div>
           
           {isLoading ? (
             <p>{t("common.loading")}</p>
           ) : viewMode === "card" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sets?.map((set) => (
+              {filteredSets?.map((set) => (
                 <WorshipSetCard
                   key={set.id}
                   set={set}
@@ -317,6 +378,11 @@ export default function WorshipSets() {
                   onEdit={handleEditClick}
                 />
               ))}
+              {filteredSets?.length === 0 && (
+                <div className="col-span-full text-center text-muted-foreground py-8">
+                  {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
+                </div>
+              )}
             </div>
           ) : (
             <Table>
@@ -325,13 +391,12 @@ export default function WorshipSets() {
                   <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
-                  
                   <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sets?.map((set) => (
+                {filteredSets?.map((set) => (
                   <TableRow 
                     key={set.id} 
                     className="cursor-pointer hover:bg-accent"
@@ -340,7 +405,6 @@ export default function WorshipSets() {
                     <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
                     <TableCell className="font-medium">{set.service_name}</TableCell>
                     <TableCell>{set.worship_leader || "-"}</TableCell>
-                    
                     <TableCell>
                       <Badge variant={set.status === "published" ? "default" : "secondary"}>
                         {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
@@ -398,6 +462,13 @@ export default function WorshipSets() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {filteredSets?.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
@@ -444,20 +515,22 @@ export default function WorshipSets() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                {language === "ko" ? "게시 취소 확인" : "Confirm Unpublish"}
+                {language === "ko" ? "정말 수정하시겠습니까?" : "Are you sure you want to edit?"}
               </AlertDialogTitle>
               <AlertDialogDescription>
                 {language === "ko" 
-                  ? "정말 게시를 취소하시겠습니까? 게시 취소 후 워십세트가 수정 가능 상태가 됩니다." 
-                  : "Are you sure you want to unpublish? The worship set will become editable after unpublishing."}
+                  ? "게시된 콘티는 수정 시 밴드 멤버들에게 더 이상 보이지 않게 됩니다. 수정을 완료하고 다시 게시해 주세요." 
+                  : "The published setlist will no longer be visible to band members. Complete your edits and republish when ready."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setPendingSetId(null)}>
+              <AlertDialogCancel onClick={() => {
+                setPendingSetId(null);
+              }}>
                 {language === "ko" ? "취소" : "Cancel"}
               </AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmUnpublish}>
-                {language === "ko" ? "게시 취소" : "Unpublish"}
+                {language === "ko" ? "수정하기" : "Edit"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
