@@ -18,6 +18,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   List, FileEdit, CircleCheck, User, CalendarDays, Filter, X, SlidersHorizontal
 } from "lucide-react";
@@ -146,7 +152,7 @@ export const WorshipSetFilters = ({
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[70vh]">
+            <SheetContent side="bottom" className="h-auto max-h-[80vh]">
               <SheetHeader className="pb-4">
                 <SheetTitle className="flex items-center justify-between">
                   <span>{language === "ko" ? "상세 필터" : "Filters"}</span>
@@ -159,129 +165,171 @@ export const WorshipSetFilters = ({
                 </SheetTitle>
               </SheetHeader>
               
-              <ScrollArea className="h-[calc(70vh-120px)]">
-                <div className="space-y-6 pr-4">
-                  {/* Year Filter */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium">{language === "ko" ? "연도" : "Year"}</h4>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllYears}>
-                          {language === "ko" ? "전체선택" : "All"}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllYears}>
-                          {language === "ko" ? "전체해제" : "Clear"}
-                        </Button>
-                      </div>
+              <Accordion type="single" collapsible className="w-full">
+                {/* Year Filter */}
+                <AccordionItem value="year">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{language === "ko" ? "연도" : "Year"}</span>
+                      {selectedYears.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                          {selectedYears.length}
+                        </Badge>
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      {availableYears.map(year => (
-                        <label 
-                          key={year} 
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedYears.includes(year)}
-                            onCheckedChange={() => toggleArrayItem(selectedYears, year, onYearsChange)}
-                          />
-                          <span className="text-sm">{year}</span>
-                        </label>
-                      ))}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex gap-1 mb-2">
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllYears}>
+                        {language === "ko" ? "전체선택" : "All"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllYears}>
+                        {language === "ko" ? "전체해제" : "Clear"}
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* Month Filter - Now shows all 12 months */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-medium">{language === "ko" ? "월" : "Month"}</h4>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllMonths}>
-                          {language === "ko" ? "전체선택" : "All"}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllMonths}>
-                          {language === "ko" ? "전체해제" : "Clear"}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {allMonths.map(month => (
-                        <label 
-                          key={month} 
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedMonths.includes(month)}
-                            onCheckedChange={() => toggleArrayItem(selectedMonths, month, onMonthsChange)}
-                          />
-                          <span className="text-sm">{monthNames[month - 1]}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Leader Filter */}
-                  {availableLeaders.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium">{language === "ko" ? "예배인도자" : "Leader"}</h4>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllLeaders}>
-                            {language === "ko" ? "전체선택" : "All"}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllLeaders}>
-                            {language === "ko" ? "전체해제" : "Clear"}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {availableLeaders.map(leader => (
+                    <ScrollArea className="h-[180px]">
+                      <div className="space-y-1 pr-4">
+                        {availableYears.map(year => (
                           <label 
-                            key={leader} 
+                            key={year} 
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
                           >
                             <Checkbox
-                              checked={selectedLeaders.includes(leader)}
-                              onCheckedChange={() => toggleArrayItem(selectedLeaders, leader, onLeadersChange)}
+                              checked={selectedYears.includes(year)}
+                              onCheckedChange={() => toggleArrayItem(selectedYears, year, onYearsChange)}
                             />
-                            <span className="text-sm">{leader}</span>
+                            <span className="text-sm">{year}</span>
                           </label>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    </ScrollArea>
+                  </AccordionContent>
+                </AccordionItem>
 
-                  {/* Service Name Filter */}
-                  {availableServiceNames.length > 0 && (
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-medium">{language === "ko" ? "예배이름" : "Service"}</h4>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllServiceNames}>
-                            {language === "ko" ? "전체선택" : "All"}
-                          </Button>
-                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllServiceNames}>
-                            {language === "ko" ? "전체해제" : "Clear"}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {availableServiceNames.map(name => (
+                {/* Month Filter */}
+                <AccordionItem value="month">
+                  <AccordionTrigger className="hover:no-underline py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{language === "ko" ? "월" : "Month"}</span>
+                      {selectedMonths.length > 0 && (
+                        <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                          {selectedMonths.length}
+                        </Badge>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex gap-1 mb-2">
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllMonths}>
+                        {language === "ko" ? "전체선택" : "All"}
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllMonths}>
+                        {language === "ko" ? "전체해제" : "Clear"}
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-[200px]">
+                      <div className="space-y-1 pr-4">
+                        {allMonths.map(month => (
                           <label 
-                            key={name} 
+                            key={month} 
                             className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
                           >
                             <Checkbox
-                              checked={selectedServiceNames.includes(name)}
-                              onCheckedChange={() => toggleArrayItem(selectedServiceNames, name, onServiceNamesChange)}
+                              checked={selectedMonths.includes(month)}
+                              onCheckedChange={() => toggleArrayItem(selectedMonths, month, onMonthsChange)}
                             />
-                            <span className="text-sm">{name}</span>
+                            <span className="text-sm">{monthNames[month - 1]}</span>
                           </label>
                         ))}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+                    </ScrollArea>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Leader Filter */}
+                {availableLeaders.length > 0 && (
+                  <AccordionItem value="leader">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{language === "ko" ? "예배인도자" : "Leader"}</span>
+                        {selectedLeaders.length > 0 && (
+                          <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                            {selectedLeaders.length}
+                          </Badge>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex gap-1 mb-2">
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllLeaders}>
+                          {language === "ko" ? "전체선택" : "All"}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllLeaders}>
+                          {language === "ko" ? "전체해제" : "Clear"}
+                        </Button>
+                      </div>
+                      <ScrollArea className="h-[180px]">
+                        <div className="space-y-1 pr-4">
+                          {availableLeaders.map(leader => (
+                            <label 
+                              key={leader} 
+                              className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedLeaders.includes(leader)}
+                                onCheckedChange={() => toggleArrayItem(selectedLeaders, leader, onLeadersChange)}
+                              />
+                              <span className="text-sm">{leader}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+
+                {/* Service Name Filter */}
+                {availableServiceNames.length > 0 && (
+                  <AccordionItem value="serviceName">
+                    <AccordionTrigger className="hover:no-underline py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{language === "ko" ? "예배이름" : "Service"}</span>
+                        {selectedServiceNames.length > 0 && (
+                          <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                            {selectedServiceNames.length}
+                          </Badge>
+                        )}
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex gap-1 mb-2">
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllServiceNames}>
+                          {language === "ko" ? "전체선택" : "All"}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllServiceNames}>
+                          {language === "ko" ? "전체해제" : "Clear"}
+                        </Button>
+                      </div>
+                      <ScrollArea className="h-[180px]">
+                        <div className="space-y-1 pr-4">
+                          {availableServiceNames.map(name => (
+                            <label 
+                              key={name} 
+                              className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedServiceNames.includes(name)}
+                                onCheckedChange={() => toggleArrayItem(selectedServiceNames, name, onServiceNamesChange)}
+                              />
+                              <span className="text-sm">{name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
 
               <div className="pt-4 border-t mt-4">
                 <Button 
