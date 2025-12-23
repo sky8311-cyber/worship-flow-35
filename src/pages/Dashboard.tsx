@@ -376,10 +376,6 @@ const Dashboard = () => {
                           <Plus className="w-4 h-4 mr-1" />
                           {t("dashboard.createNewSet")}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => navigate("/worship-sets")}>
-                          <Upload className="w-4 h-4 mr-1" />
-                          {t("common.import")}
-                        </Button>
                       </div>}
                   </div>
                 </CardHeader>
@@ -522,7 +518,7 @@ const Dashboard = () => {
               </Card>
 
               {/* Song Library Widget - 1 column (Admin/Worship Leader only) */}
-              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => navigate("/worship-sets")} />}
+              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} />}
             </div>
 
             {/* Community Feed Tabs */}

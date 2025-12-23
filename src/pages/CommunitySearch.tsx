@@ -159,7 +159,7 @@ export default function CommunitySearch() {
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">{t("community.leader")}:</span>
+                      <span className="text-muted-foreground">{t("community.communityOwner")}:</span>
                       <span>{community.profiles?.full_name || t("community.unknownLeader")}</span>
                     </div>
                     <div className="flex items-center justify-between">
