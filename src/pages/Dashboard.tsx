@@ -18,7 +18,7 @@ import { useLanguageContext } from "@/contexts/LanguageContext";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { SetImportDialog } from "@/components/SetImportDialog";
+// SetImportDialog moved to WorshipSets page
 import { SongDialog } from "@/components/SongDialog";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
@@ -61,7 +61,7 @@ const Dashboard = () => {
   const { unreadCount } = useNotifications();
   const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
   const dateLocale = language === "ko" ? ko : enUS;
-  const [importSetOpen, setImportSetOpen] = useState(false);
+  // importSetOpen removed - import functionality moved to WorshipSets page
   const [addSongOpen, setAddSongOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
@@ -376,7 +376,7 @@ const Dashboard = () => {
                           <Plus className="w-4 h-4 mr-1" />
                           {t("dashboard.createNewSet")}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => setImportSetOpen(true)}>
+                        <Button size="sm" variant="outline" onClick={() => navigate("/worship-sets")}>
                           <Upload className="w-4 h-4 mr-1" />
                           {t("common.import")}
                         </Button>
@@ -522,7 +522,7 @@ const Dashboard = () => {
               </Card>
 
               {/* Song Library Widget - 1 column (Admin/Worship Leader only) */}
-              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => setImportSetOpen(true)} />}
+              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} onImport={() => navigate("/worship-sets")} />}
             </div>
 
             {/* Community Feed Tabs */}

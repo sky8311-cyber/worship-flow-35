@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, Plus, Upload, Music, Eye, LayoutGrid, LayoutList, Share2, XCircle, ArrowUpCircle } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Music, Eye, LayoutGrid, LayoutList, Share2, XCircle, ArrowUpCircle, Download, FileText, ChevronDown } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
+import { SetImportDialog } from "@/components/SetImportDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
 import { parseLocalDate } from "@/lib/countdownHelper";
@@ -28,6 +29,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Papa from "papaparse";
 
 export default function WorshipSets() {
   const navigate = useNavigate();
@@ -41,6 +49,7 @@ export default function WorshipSets() {
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   const [hasCheckedLastDraft, setHasCheckedLastDraft] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   
   // Column filters
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
@@ -242,6 +251,56 @@ export default function WorshipSets() {
     setShareLinkDialogOpen(true);
   };
   
+  // Download CSV template
+  const handleDownloadTemplate = () => {
+    const template = `Title,Date,Passage,Series,Songs
+주일 3부예배 찬양,"April 7, 2024",,,"우리 보좌앞에 모였네 / 내가 매일기쁘게"
+엎드림 금요기도회 찬양,"April 12, 2024",,다음세대,"나의 하나님 (D) / 주 이름 큰 능력 (D)"`;
+    
+    const blob = new Blob([template], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "worship_set_template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success(language === "ko" ? "템플릿 다운로드 완료" : "Template downloaded");
+  };
+  
+  // Export filtered sets to CSV
+  const handleExportCSV = () => {
+    if (!filteredSets || filteredSets.length === 0) {
+      toast.error(language === "ko" ? "내보낼 데이터가 없습니다" : "No data to export");
+      return;
+    }
+
+    const csvData = filteredSets.map(set => ({
+      Date: set.date,
+      ServiceName: set.service_name,
+      WorshipLeader: set.worship_leader || '',
+      Status: set.status,
+      Theme: set.theme || '',
+      ScriptureReference: set.scripture_reference || '',
+      Notes: set.notes || '',
+    }));
+
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `worship_sets_export_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success(
+      language === "ko" 
+        ? `${filteredSets.length}개 워십세트 내보내기 완료` 
+        : `${filteredSets.length} worship sets exported`
+    );
+  };
+  
   // Handle edit click with unpublish confirmation for published sets
   const handleEditClick = (set: any) => {
     if (set.status === "published") {
@@ -298,13 +357,33 @@ export default function WorshipSets() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           {canCreateSets && (
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => navigate("/set-import")}
-              >
-                <Upload className="w-4 h-4" />
-                {t("worshipSets.import")}
+              {/* Import Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <Upload className="w-4 h-4" />
+                    {t("worshipSets.import")}
+                    <ChevronDown className="w-3 h-3 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {language === "ko" ? "CSV에서 가져오기" : "Import from CSV"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDownloadTemplate}>
+                    <FileText className="w-4 h-4 mr-2" />
+                    {language === "ko" ? "템플릿 다운로드" : "Download Template"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Export Button */}
+              <Button variant="outline" onClick={handleExportCSV}>
+                <Download className="w-4 h-4" />
+                {language === "ko" ? "내보내기" : "Export"}
               </Button>
+              
               <Button onClick={() => navigate("/set-builder")}>
                 <Plus className="w-4 h-4" />
                 {t("worshipSets.createNew")}
@@ -481,6 +560,14 @@ export default function WorshipSets() {
           publicShareToken={selectedSetForShare?.public_share_token || null}
           publicShareEnabled={selectedSetForShare?.public_share_enabled || false}
           onUpdate={() => queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] })}
+        />
+        
+        <SetImportDialog
+          open={importDialogOpen}
+          onOpenChange={setImportDialogOpen}
+          onImportComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
+          }}
         />
         
         {/* First warning dialog */}
