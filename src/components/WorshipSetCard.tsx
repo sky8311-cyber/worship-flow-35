@@ -51,9 +51,6 @@ export function WorshipSetCard({ set, songs = [], canManage, onDelete, onToggleP
     }
   };
 
-  // Display song preview
-  const displaySongs = songs.slice(0, 2);
-  const extraCount = songs.length - 2;
 
   return (
     <Card 
@@ -79,12 +76,13 @@ export function WorshipSetCard({ set, songs = [], canManage, onDelete, onToggleP
               <div className="mt-3 pt-2 border-t">
                 <div className="flex items-start gap-1.5">
                   <Music className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {displaySongs.join(", ")}
-                    {extraCount > 0 && (
-                      <span className="text-primary ml-1">+{extraCount}{language === "ko" ? "곡" : " more"}</span>
-                    )}
-                  </p>
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    {songs.map((title, idx) => (
+                      <p key={idx} className="text-xs text-muted-foreground truncate">
+                        {title}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

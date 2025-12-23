@@ -587,8 +587,6 @@ export default function WorshipSets() {
               <TableBody>
                 {filteredSets?.map((set) => {
                   const songTitles = getSongTitles(set);
-                  const displaySongs = songTitles.slice(0, 3).join(", ");
-                  const extraCount = songTitles.length - 3;
                   
                   return (
                     <TableRow 
@@ -601,10 +599,13 @@ export default function WorshipSets() {
                       <TableCell>{set.worship_leader || "-"}</TableCell>
                       <TableCell className="max-w-[200px]">
                         {songTitles.length > 0 ? (
-                          <span className="text-sm text-muted-foreground truncate block">
-                            {displaySongs}
-                            {extraCount > 0 && <span className="text-primary ml-1">+{extraCount}</span>}
-                          </span>
+                          <div className="space-y-0.5">
+                            {songTitles.map((title, idx) => (
+                              <p key={idx} className="text-sm text-muted-foreground truncate">
+                                {title}
+                              </p>
+                            ))}
+                          </div>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}

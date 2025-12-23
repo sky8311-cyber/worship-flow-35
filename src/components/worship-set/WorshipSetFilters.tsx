@@ -174,16 +174,18 @@ export const WorshipSetFilters = ({
                         </Button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-1">
                       {availableYears.map(year => (
-                        <Button
-                          key={year}
-                          variant={selectedYears.includes(year) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleArrayItem(selectedYears, year, onYearsChange)}
+                        <label 
+                          key={year} 
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
                         >
-                          {year}
-                        </Button>
+                          <Checkbox
+                            checked={selectedYears.includes(year)}
+                            onCheckedChange={() => toggleArrayItem(selectedYears, year, onYearsChange)}
+                          />
+                          <span className="text-sm">{year}</span>
+                        </label>
                       ))}
                     </div>
                   </div>
@@ -201,16 +203,18 @@ export const WorshipSetFilters = ({
                         </Button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="space-y-1">
                       {allMonths.map(month => (
-                        <Button
-                          key={month}
-                          variant={selectedMonths.includes(month) ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => toggleArrayItem(selectedMonths, month, onMonthsChange)}
+                        <label 
+                          key={month} 
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
                         >
-                          {monthNames[month - 1]}
-                        </Button>
+                          <Checkbox
+                            checked={selectedMonths.includes(month)}
+                            onCheckedChange={() => toggleArrayItem(selectedMonths, month, onMonthsChange)}
+                          />
+                          <span className="text-sm">{monthNames[month - 1]}</span>
+                        </label>
                       ))}
                     </div>
                   </div>
