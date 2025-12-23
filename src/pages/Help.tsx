@@ -3,7 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mail, HelpCircle, ChevronRight, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye } from "lucide-react";
+import { Mail, HelpCircle, ChevronRight, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const Help = () => {
@@ -331,6 +331,76 @@ const Help = () => {
 • 청년부 예배 템플릿
 • 새벽기도회 템플릿
 • 특별집회 템플릿`
+    },
+    {
+      icon: RefreshCw,
+      question: "템플릿 자동 반복은 어떻게 설정하나요?",
+      answer: `템플릿 반복 일정을 설정하면 매주/격주/매월 자동으로 워십세트 초안이 생성됩니다.
+
+📋 설정 방법:
+1. 워십세트를 만들고 템플릿으로 저장합니다
+2. 프로필 메뉴 → '템플릿 관리'로 이동합니다
+3. 템플릿 카드에서 '반복 일정' 버튼을 클릭합니다
+4. 반복 패턴을 선택합니다:
+   • 매주 (요일 선택: 일요일, 수요일 등)
+   • 격주 (2주마다)
+   • 매월 특정일 (예: 매월 1일)
+   • 매월 특정 주차 (예: 매월 첫째 주일)
+
+⏰ 생성 시점 설정:
+1. 예배일 며칠 전에 생성할지 선택합니다 (예: 5일 전)
+2. 생성 시간을 선택합니다 (예: 오전 9시)
+3. 시스템이 해당 시간에 자동으로 초안을 생성합니다
+
+📌 예시:
+"매주 일요일 예배, 5일 전 오전 9시 생성"
+→ 매주 화요일 오전 9시에 다음 주일 콘티 초안이 생성됨
+
+✅ 생성된 초안 확인:
+• 워십세트 목록에서 '작성중' 상태로 저장됩니다
+• 곡을 추가하고 편집한 후 '게시'하면 됩니다
+
+💡 팁:
+• 반복 일정은 언제든 수정하거나 비활성화할 수 있습니다
+• 템플릿 관리 페이지에서 모든 반복 일정을 한눈에 확인할 수 있습니다
+• 생성된 콘티가 중복되지 않도록 자동으로 관리됩니다`
+    },
+    {
+      icon: Printer,
+      question: "콘티와 악보를 인쇄하려면?",
+      answer: `밴드뷰에서 콘티와 악보를 간편하게 인쇄할 수 있습니다.
+
+📱 인쇄 기능 접근:
+1. 게시된 콘티를 열어 밴드뷰로 이동합니다
+2. 상단의 '인쇄' 버튼(🖨️)을 클릭합니다
+3. 인쇄 옵션 다이얼로그가 열립니다
+
+🎛️ 인쇄 모드 3가지:
+
+✨ **악보만 인쇄 (One-Click Print)** - 가장 많이 사용!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• 악보 이미지만 한 페이지씩 크게 출력
+• 각 곡의 악보가 페이지 전체를 채우도록 확대
+• 리허설이나 예배 시 악보만 필요할 때 최적
+• 클릭 한 번으로 모든 악보를 한꺼번에 인쇄!
+• 밴드 멤버에게 악보를 나눠줄 때 완벽
+
+📋 순서표 인쇄:
+• 곡 목록과 순서를 깔끔하게 출력
+• 포함할 정보 선택 가능:
+  - 예배 정보 (날짜, 인도자, 주제)
+  - 곡 제목 및 아티스트
+  - 키/BPM 정보
+  - 연주 노트, 가사
+
+📄 전체 인쇄:
+• 화면에 보이는 그대로 인쇄
+• 브라우저 인쇄 기능 사용
+
+💡 활용 팁:
+• 밴드 멤버에게 악보 나눠줄 때 → 악보만 인쇄 ✨
+• 인도자용 진행표 필요할 때 → 순서표 인쇄
+• 리허설 전 빠른 악보 준비 → 원클릭 악보 인쇄!`
     }
   ] : [
     {
@@ -653,6 +723,76 @@ Method 2 - Share Link:
 • Youth service template
 • Early morning prayer template
 • Special event template`
+    },
+    {
+      icon: RefreshCw,
+      question: "How do I set up recurring templates?",
+      answer: `Set up recurring schedules to automatically generate worship set drafts weekly, bi-weekly, or monthly.
+
+📋 How to Set Up:
+1. Create a worship set and save it as a template
+2. Go to Profile Menu → 'Manage Templates'
+3. Click 'Recurring Schedule' on the template card
+4. Select a recurrence pattern:
+   • Weekly (choose day: Sunday, Wednesday, etc.)
+   • Bi-weekly (every 2 weeks)
+   • Monthly on a specific date (e.g., 1st of each month)
+   • Monthly on a specific week (e.g., first Sunday)
+
+⏰ Set Creation Timing:
+1. Choose how many days before the service to create (e.g., 5 days)
+2. Choose creation time (e.g., 9:00 AM)
+3. The system will automatically create a draft at that time
+
+📌 Example:
+"Weekly Sunday service, create 5 days before at 9 AM"
+→ Every Tuesday at 9 AM, a draft for next Sunday is created
+
+✅ Viewing Generated Drafts:
+• Drafts appear in your worship sets list with 'Draft' status
+• Add songs, edit, then 'Publish' when ready
+
+💡 Tips:
+• You can modify or disable recurring schedules anytime
+• View all schedules at once in Template Management
+• Automatic duplicate prevention ensures no duplicates`
+    },
+    {
+      icon: Printer,
+      question: "How do I print setlists and sheet music?",
+      answer: `Print your setlists and sheet music easily from Band View.
+
+📱 Accessing Print:
+1. Open a published setlist to enter Band View
+2. Click the 'Print' button (🖨️) at the top
+3. The print options dialog opens
+
+🎛️ Three Print Modes:
+
+✨ **Sheet Music Only (One-Click Print)** - Most Popular!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Prints only sheet music images, one per page
+• Each song's sheet music fills the entire page
+• Perfect when you just need sheet music for rehearsal or service
+• One click prints all sheet music at once!
+• Ideal for handing out to band members
+
+📋 Setlist Print:
+• Neatly prints song list and order
+• Choose what to include:
+  - Service info (date, leader, theme)
+  - Song titles and artists
+  - Key/BPM info
+  - Performance notes, lyrics
+
+📄 Full Page Print:
+• Prints exactly as shown on screen
+• Uses browser print function
+
+💡 Tips:
+• Handing out to band members → Sheet Music Only ✨
+• Need a run sheet for the leader → Setlist Print
+• Quick prep before rehearsal → One-Click Sheet Music Print!`
     }
   ];
 
