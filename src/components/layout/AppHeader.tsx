@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+import { RoleBadge } from "@/components/RoleBadge";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
@@ -33,7 +34,7 @@ interface AppHeaderProps {
 }
 
 export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderProps) => {
-  const { isAdmin, signOut, profile, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
+  const { isAdmin, signOut, profile, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity } = useAuth();
   const { unreadCount, markAllAsRead } = useNotifications();
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
@@ -152,25 +153,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     
                     {/* Role Badges */}
                     <div className="flex gap-1 flex-wrap">
-                      {isAdmin && (
-                        <Badge variant="destructive" className="text-xs">
-                          {t("roles.admin")}
-                        </Badge>
+                      {isAdmin && <RoleBadge role="admin" />}
+                      {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
+                      {isWorshipLeader && <RoleBadge role="worship_leader" />}
+                      {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
+                        <RoleBadge role="community_leader" />
                       )}
-                      {isWorshipLeader && (
-                        <Badge className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground">
-                          {t("roles.worshipLeader")}
-                        </Badge>
-                      )}
-                      {isCommunityLeaderInAnyCommunity && (
-                        <Badge className="text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
-                          {t("roles.communityLeader")}
-                        </Badge>
-                      )}
-                      {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && (
-                        <Badge variant="outline" className="text-xs">
-                          {t("roles.member")}
-                        </Badge>
+                      {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
+                        <RoleBadge role="member" />
                       )}
                     </div>
                   </div>

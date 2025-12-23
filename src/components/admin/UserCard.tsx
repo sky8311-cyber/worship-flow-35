@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
+import { RoleBadge } from "@/components/RoleBadge";
 import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2, CheckCircle, XCircle, Mail, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -55,17 +56,6 @@ export function UserCard({
   const userRoles = user.user_roles?.map(r => r.role) || [];
   const hasAdmin = userRoles.includes("admin");
   const hasWorshipLeader = userRoles.includes("worship_leader");
-  
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "destructive";
-      case "worship_leader":
-        return "default";
-      default:
-        return "secondary";
-    }
-  };
 
   return (
     <Card className="overflow-hidden">
@@ -113,11 +103,9 @@ export function UserCard({
               {t("admin.users.unverified")}
             </Badge>
           )}
-          {userRoles.map((role: string) => (
-            <Badge key={role} variant={getRoleBadgeVariant(role)}>
-              {role}
-            </Badge>
-          ))}
+          {hasAdmin && <RoleBadge role="admin" />}
+          {hasWorshipLeader && <RoleBadge role="worship_leader" />}
+          {!hasAdmin && !hasWorshipLeader && <RoleBadge role="member" />}
           {/* Seed Level Badge */}
           {seedData && (
             <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
