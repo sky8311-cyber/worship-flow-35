@@ -512,6 +512,7 @@ export default function WorshipSets() {
                 onMonthsChange={setSelectedMonths}
                 onLeadersChange={setSelectedLeaders}
                 onServiceNamesChange={setSelectedServiceNames}
+                isMobile={isMobile}
               />
             </div>
           

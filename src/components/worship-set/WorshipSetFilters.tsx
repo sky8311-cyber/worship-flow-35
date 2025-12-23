@@ -5,7 +5,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
-  List, FileEdit, CircleCheck, User, CalendarDays, Filter, X 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { 
+  List, FileEdit, CircleCheck, User, CalendarDays, Filter, X, SlidersHorizontal
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -27,6 +41,7 @@ interface WorshipSetFiltersProps {
   onMonthsChange: (months: number[]) => void;
   onLeadersChange: (leaders: string[]) => void;
   onServiceNamesChange: (names: string[]) => void;
+  isMobile?: boolean;
 }
 
 export const WorshipSetFilters = ({
@@ -44,15 +59,28 @@ export const WorshipSetFilters = ({
   onMonthsChange,
   onLeadersChange,
   onServiceNamesChange,
+  isMobile = false,
 }: WorshipSetFiltersProps) => {
   const { language } = useTranslation();
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const monthNames = language === "ko" 
     ? ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
     : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+  const mainFilterOptions: { value: MainFilterType; label: string; icon: React.ReactNode }[] = [
+    { value: "all", label: language === "ko" ? "전체보기" : "All", icon: <List className="w-4 h-4" /> },
+    { value: "mySets", label: language === "ko" ? "내 세트" : "My Sets", icon: <User className="w-4 h-4" /> },
+    { value: "upcoming", label: language === "ko" ? "다가오는 세트" : "Upcoming", icon: <CalendarDays className="w-4 h-4" /> },
+    { value: "draft", label: language === "ko" ? "작성중" : "Draft", icon: <FileEdit className="w-4 h-4" /> },
+    { value: "published", label: language === "ko" ? "게시됨" : "Published", icon: <CircleCheck className="w-4 h-4" /> },
+  ];
+
   const hasColumnFilters = selectedYears.length > 0 || selectedMonths.length > 0 || 
     selectedLeaders.length > 0 || selectedServiceNames.length > 0;
+
+  const totalColumnFilters = selectedYears.length + selectedMonths.length + 
+    selectedLeaders.length + selectedServiceNames.length;
 
   const clearAllColumnFilters = () => {
     onYearsChange([]);
@@ -69,6 +97,197 @@ export const WorshipSetFilters = ({
     }
   };
 
+  const currentMainFilter = mainFilterOptions.find(opt => opt.value === mainFilter);
+
+  // Mobile UI
+  if (isMobile) {
+    return (
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          {/* Main Filter Select */}
+          <Select value={mainFilter} onValueChange={(value) => onMainFilterChange(value as MainFilterType)}>
+            <SelectTrigger className="flex-1 h-10">
+              <div className="flex items-center gap-2">
+                {currentMainFilter?.icon}
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {mainFilterOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    {option.icon}
+                    {option.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Column Filters Sheet Trigger */}
+          <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="h-10 px-3 gap-2">
+                <SlidersHorizontal className="w-4 h-4" />
+                {language === "ko" ? "필터" : "Filter"}
+                {totalColumnFilters > 0 && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-xs">
+                    {totalColumnFilters}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[70vh]">
+              <SheetHeader className="pb-4">
+                <SheetTitle className="flex items-center justify-between">
+                  <span>{language === "ko" ? "상세 필터" : "Filters"}</span>
+                  {hasColumnFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearAllColumnFilters}>
+                      <X className="w-4 h-4 mr-1" />
+                      {language === "ko" ? "초기화" : "Clear"}
+                    </Button>
+                  )}
+                </SheetTitle>
+              </SheetHeader>
+              
+              <ScrollArea className="h-[calc(70vh-120px)]">
+                <div className="space-y-6 pr-4">
+                  {/* Year Filter */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">{language === "ko" ? "연도" : "Year"}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {availableYears.map(year => (
+                        <Button
+                          key={year}
+                          variant={selectedYears.includes(year) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleArrayItem(selectedYears, year, onYearsChange)}
+                        >
+                          {year}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Month Filter */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-3">{language === "ko" ? "월" : "Month"}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {availableMonths.map(month => (
+                        <Button
+                          key={month}
+                          variant={selectedMonths.includes(month) ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => toggleArrayItem(selectedMonths, month, onMonthsChange)}
+                        >
+                          {monthNames[month - 1]}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Leader Filter */}
+                  {availableLeaders.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">{language === "ko" ? "예배인도자" : "Leader"}</h4>
+                      <div className="space-y-2">
+                        {availableLeaders.map(leader => (
+                          <label 
+                            key={leader} 
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={selectedLeaders.includes(leader)}
+                              onCheckedChange={() => toggleArrayItem(selectedLeaders, leader, onLeadersChange)}
+                            />
+                            <span className="text-sm">{leader}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Service Name Filter */}
+                  {availableServiceNames.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">{language === "ko" ? "예배이름" : "Service"}</h4>
+                      <div className="space-y-2">
+                        {availableServiceNames.map(name => (
+                          <label 
+                            key={name} 
+                            className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={selectedServiceNames.includes(name)}
+                              onCheckedChange={() => toggleArrayItem(selectedServiceNames, name, onServiceNamesChange)}
+                            />
+                            <span className="text-sm">{name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              <div className="pt-4 border-t mt-4">
+                <Button 
+                  className="w-full" 
+                  onClick={() => setFilterSheetOpen(false)}
+                >
+                  {language === "ko" ? "적용" : "Apply"}
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Active Filter Badges (Mobile) */}
+        {hasColumnFilters && (
+          <div className="flex gap-1 flex-wrap">
+            {selectedYears.map(year => (
+              <Badge key={`y-${year}`} variant="secondary" className="gap-1">
+                {year}
+                <X 
+                  className="w-3 h-3 cursor-pointer" 
+                  onClick={() => onYearsChange(selectedYears.filter(y => y !== year))}
+                />
+              </Badge>
+            ))}
+            {selectedMonths.map(month => (
+              <Badge key={`m-${month}`} variant="secondary" className="gap-1">
+                {monthNames[month - 1]}
+                <X 
+                  className="w-3 h-3 cursor-pointer" 
+                  onClick={() => onMonthsChange(selectedMonths.filter(m => m !== month))}
+                />
+              </Badge>
+            ))}
+            {selectedLeaders.map(leader => (
+              <Badge key={`l-${leader}`} variant="secondary" className="gap-1 max-w-[120px]">
+                <span className="truncate">{leader}</span>
+                <X 
+                  className="w-3 h-3 cursor-pointer flex-shrink-0" 
+                  onClick={() => onLeadersChange(selectedLeaders.filter(l => l !== leader))}
+                />
+              </Badge>
+            ))}
+            {selectedServiceNames.map(name => (
+              <Badge key={`s-${name}`} variant="secondary" className="gap-1 max-w-[120px]">
+                <span className="truncate">{name}</span>
+                <X 
+                  className="w-3 h-3 cursor-pointer flex-shrink-0" 
+                  onClick={() => onServiceNamesChange(selectedServiceNames.filter(n => n !== name))}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop UI (unchanged)
   return (
     <div className="space-y-4">
       {/* Main Filter Buttons */}
