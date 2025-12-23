@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings } from "lucide-react";
+import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -217,6 +217,11 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" />
                   {language === "ko" ? "설정" : "Settings"}
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem onClick={() => navigate("/help")}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "도움말" : "Help"}
                 </DropdownMenuItem>
                 
                 <DropdownMenuSeparator />
