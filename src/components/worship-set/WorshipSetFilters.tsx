@@ -123,7 +123,7 @@ export const WorshipSetFilters = ({
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
-              {language === "ko" ? "년도" : "Year"}
+              {language === "ko" ? "연도" : "Year"}
               {selectedYears.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1">
                   {selectedYears.length}
