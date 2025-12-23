@@ -36,6 +36,7 @@ interface AuthContextType {
   isCommunityLeaderInAnyCommunity: boolean;
   hasRole: (role: string) => boolean;
   isCommunityLeader: (communityId: string) => Promise<boolean>;
+  isCommunityOwner: (communityId: string) => Promise<boolean>;
   getCommunityRole: (communityId: string) => Promise<string | null>;
 }
 
@@ -61,12 +62,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("role")
       .eq("user_id", userId);
 
-    // Check if user is a community leader in any community
+    // Check if user is a community leader or owner in any community
     const { data: communityLeaderData } = await supabase
       .from("community_members")
       .select("role")
       .eq("user_id", userId)
-      .eq("role", "community_leader")
+      .in("role", ["community_leader", "owner"])
       .limit(1);
 
     if (profileData) setProfile(profileData);
@@ -206,7 +207,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("community_id", communityId)
       .single();
 
-    return data?.role === "community_leader";
+    return data?.role === "community_leader" || data?.role === "owner";
+  };
+
+  const isCommunityOwner = async (communityId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    const { data } = await supabase
+      .from("community_members")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("community_id", communityId)
+      .single();
+
+    return data?.role === "owner";
   };
 
   const getCommunityRole = async (communityId: string): Promise<string | null> => {
@@ -247,6 +261,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isCommunityLeaderInAnyCommunity,
         hasRole,
         isCommunityLeader,
+        isCommunityOwner,
         getCommunityRole,
       }}
     >

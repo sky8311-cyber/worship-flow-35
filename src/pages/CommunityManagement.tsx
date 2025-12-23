@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, Star, User } from "lucide-react";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
@@ -38,7 +38,7 @@ import {
 
 export default function CommunityManagement() {
   const { id } = useParams();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isWorshipLeader } = useAuth();
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -293,6 +293,66 @@ export default function CommunityManagement() {
       console.error("Demote mutation error:", error);
       toast({
         title: t("community.demoteToMemberError"),
+        description: error?.message || "Unknown error",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Promote to owner mutation (only for worship leaders)
+  const promoteToOwnerMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      console.log("Promoting member to owner:", memberId);
+      const { error } = await supabase
+        .from("community_members")
+        .update({ role: "owner" })
+        .eq("id", memberId);
+      if (error) {
+        console.error("Promote to owner error details:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      toast({ title: t("community.promoteToOwnerSuccess") });
+    },
+    onError: (error: any) => {
+      console.error("Promote to owner mutation error:", error);
+      toast({
+        title: t("community.promoteToOwnerError"),
+        description: error?.message || "Unknown error",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Demote from owner mutation (only for worship leaders with owner role)
+  const demoteFromOwnerMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      // Check if this is the last owner
+      const owners = members?.filter(m => m.role === "owner");
+      if (owners && owners.length <= 1) {
+        throw new Error("Cannot remove the last owner");
+      }
+      
+      console.log("Demoting owner to member:", memberId);
+      const { error } = await supabase
+        .from("community_members")
+        .update({ role: "member" })
+        .eq("id", memberId);
+      if (error) {
+        console.error("Demote from owner error details:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-members"] });
+      toast({ title: t("community.demoteFromOwnerSuccess") });
+    },
+    onError: (error: any) => {
+      console.error("Demote from owner mutation error:", error);
+      toast({
+        title: t("community.demoteFromOwnerError"),
         description: error?.message || "Unknown error",
         variant: "destructive",
       });
@@ -574,14 +634,23 @@ export default function CommunityManagement() {
     },
   });
 
-  // Check if user can manage this community
+  // Check if user is an owner (can delete community, manage owners)
+  const isOwner = members?.some(m => m.user_id === user?.id && m.role === 'owner');
+  
+  // Check if user can manage this community (owner or community_leader)
   const canManage = 
     isAdmin || // Admins can manage all communities
-    community?.leader_id === user?.id || // Community owner (worship leader creator)
+    isOwner || // Owners
     members?.some(m => m.user_id === user?.id && m.role === 'community_leader'); // Community leaders
+
+  // Check if user can manage owners (must be owner AND worship leader)
+  const canManageOwners = isOwner && isWorshipLeader;
 
   // Check if user is at least a member
   const isMember = members?.some(m => m.user_id === user?.id);
+  
+  // Count owners for safety checks
+  const ownerCount = members?.filter(m => m.role === 'owner').length || 0;
 
   if (isLoading) {
     return <div className="container mx-auto py-8">{t("community.loading")}</div>;
@@ -594,8 +663,6 @@ export default function CommunityManagement() {
       </div>
     );
   }
-
-  const isOwner = community?.leader_id === user?.id;
 
   return (
     <AppLayout>
@@ -769,9 +836,10 @@ export default function CommunityManagement() {
                 <div className="space-y-3">
                   {/* Actual Members */}
                   {members?.map((member) => {
-                    const isWorshipLeader = member.globalRoles?.includes('worship_leader');
-                    const isCommunityLeader = member.role === 'community_leader';
-                    const isLeaderOfCommunity = member.user_id === community.leader_id;
+                    const memberIsWorshipLeader = member.globalRoles?.includes('worship_leader');
+                    const memberIsCommunityLeader = member.role === 'community_leader';
+                    const memberIsOwner = member.role === 'owner';
+                    const isLegacyLeader = member.user_id === community.leader_id; // Original creator
 
                     return (
                       <div
@@ -802,23 +870,26 @@ export default function CommunityManagement() {
                             
                             {/* Role Badges */}
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {isLeaderOfCommunity && (
-                                <Badge variant="default">
-                                  {t("community.communityOwner")}
+                              {memberIsOwner && (
+                                <Badge className="bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
+                                  <Crown className="w-3 h-3 mr-1" />
+                                  {t("community.owner")}
                                 </Badge>
                               )}
-                              {isWorshipLeader && (
+                              {memberIsWorshipLeader && (
                                 <Badge className="bg-primary/10 text-primary dark:bg-primary/20">
                                   {t("community.worshipLeader")}
                                 </Badge>
                               )}
-                              {isCommunityLeader && !isWorshipLeader && (
-                                <Badge className="bg-accent/10 text-accent dark:bg-accent/20">
+                              {memberIsCommunityLeader && !memberIsOwner && (
+                                <Badge className="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">
+                                  <Star className="w-3 h-3 mr-1" />
                                   {t("community.communityLeader")}
                                 </Badge>
                               )}
-                              {!isCommunityLeader && !isWorshipLeader && !isLeaderOfCommunity && (
+                              {!memberIsCommunityLeader && !memberIsOwner && (
                                 <Badge variant="outline">
+                                  <User className="w-3 h-3 mr-1" />
                                   {t("community.member")}
                                 </Badge>
                               )}
@@ -827,10 +898,100 @@ export default function CommunityManagement() {
                         </div>
 
                         <div className="flex flex-wrap gap-2 justify-end sm:justify-start">
-                          {/* Promote/Demote - Fixed: removed nested asChild pattern */}
-                          {canManage && !isLeaderOfCommunity && !isWorshipLeader ? (
+                          {/* Owner Management - Only owners who are worship leaders can manage other owners */}
+                          {canManageOwners && member.user_id !== user?.id && memberIsWorshipLeader && !memberIsOwner && (
+                            <AlertDialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="border-orange-500/50 text-orange-600 hover:bg-orange-500/10">
+                                      <Crown className="h-4 w-4 sm:mr-1" />
+                                      <span className="hidden sm:inline">{t("community.promoteToOwner")}</span>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent className="sm:hidden">
+                                  {t("community.promoteToOwner")}
+                                </TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {t("community.promoteToOwnerConfirmTitle")}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    <p>
+                                      {t("community.promoteToOwnerConfirmDescription", {
+                                        name: member.profiles?.full_name,
+                                      })}
+                                    </p>
+                                    <div className="mt-3 p-3 bg-muted rounded-md">
+                                      <p className="text-sm font-semibold mb-2">
+                                        {t("community.ownerPermissions")}:
+                                      </p>
+                                      <ul className="text-sm space-y-1 list-disc list-inside">
+                                        <li>{t("community.permissionDeleteCommunity")}</li>
+                                        <li>{t("community.permissionManageOwners")}</li>
+                                        <li>{t("community.permissionFullControl")}</li>
+                                      </ul>
+                                    </div>
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => promoteToOwnerMutation.mutate(member.id)}
+                                  >
+                                    {t("community.promoteToOwner")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+
+                          {/* Remove Owner Role - Only if there are multiple owners */}
+                          {canManageOwners && member.user_id !== user?.id && memberIsOwner && ownerCount > 1 && (
+                            <AlertDialog>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="border-orange-500/50 text-orange-600 hover:bg-orange-500/10">
+                                      <ArrowDown className="h-4 w-4 sm:mr-1" />
+                                      <span className="hidden sm:inline">{t("community.removeOwnerRole")}</span>
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent className="sm:hidden">
+                                  {t("community.removeOwnerRole")}
+                                </TooltipContent>
+                              </Tooltip>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {t("community.removeOwnerRoleConfirmTitle")}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("community.removeOwnerRoleConfirmDescription", {
+                                      name: member.profiles?.full_name,
+                                    })}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => demoteFromOwnerMutation.mutate(member.id)}
+                                  >
+                                    {t("community.removeOwnerRole")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+
+                          {/* Promote/Demote Community Leader - Not for owners or worship leaders */}
+                          {canManage && !memberIsOwner && !memberIsWorshipLeader ? (
                             <>
-                              {isCommunityLeader ? (
+                              {memberIsCommunityLeader ? (
                                 <AlertDialog>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -918,8 +1079,8 @@ export default function CommunityManagement() {
                             </>
                           ) : null}
 
-                          {/* Leave/Remove - Fixed: removed nested asChild pattern */}
-                          {member.user_id === user?.id && !isLeaderOfCommunity ? (
+                          {/* Leave/Remove */}
+                          {member.user_id === user?.id && !memberIsOwner ? (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="destructive" size="sm">
@@ -944,7 +1105,7 @@ export default function CommunityManagement() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          ) : canManage && member.user_id !== user?.id && !isLeaderOfCommunity ? (
+                          ) : canManage && member.user_id !== user?.id && !memberIsOwner ? (
                             <AlertDialog>
                               <Tooltip>
                                 <TooltipTrigger asChild>

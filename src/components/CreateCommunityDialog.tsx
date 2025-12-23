@@ -28,6 +28,7 @@ export const CreateCommunityDialog = ({ open, onOpenChange }: CreateCommunityDia
     mutationFn: async () => {
       if (!user) throw new Error("User not authenticated");
       
+      // Create community
       const { data, error } = await supabase
         .from("worship_communities")
         .insert({
@@ -39,6 +40,21 @@ export const CreateCommunityDialog = ({ open, onOpenChange }: CreateCommunityDia
         .single();
 
       if (error) throw error;
+
+      // Add creator as owner in community_members
+      const { error: memberError } = await supabase
+        .from("community_members")
+        .insert({
+          community_id: data.id,
+          user_id: user.id,
+          role: "owner",
+        });
+
+      if (memberError) {
+        console.error("Failed to add owner membership:", memberError);
+        // Don't throw - community was created successfully
+      }
+
       return data;
     },
     onSuccess: (data) => {
