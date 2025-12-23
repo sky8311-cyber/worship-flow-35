@@ -37,6 +37,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Papa from "papaparse";
 
+// Type for set with songs
+interface SetWithSongs {
+  id: string;
+  date: string;
+  service_name: string;
+  worship_leader: string | null;
+  status: "draft" | "published";
+  public_share_token?: string | null;
+  public_share_enabled?: boolean;
+  created_by: string | null;
+  set_songs?: {
+    position: number;
+    songs: {
+      title: string;
+    } | null;
+  }[];
+  [key: string]: any;
+}
+
 export default function WorshipSets() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -123,17 +142,23 @@ export default function WorshipSets() {
   // Check if user can create new sets
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
   
-  // History page shows ALL worship sets (no date filtering)
+  // History page shows ALL worship sets with songs (no date filtering)
   const { data: allSets, isLoading } = useQuery({
     queryKey: ["worship-sets-history"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("service_sets")
-        .select("*")
+        .select(`
+          *,
+          set_songs(
+            position,
+            songs(title)
+          )
+        `)
         .order("date", { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as SetWithSongs[];
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
@@ -204,6 +229,15 @@ export default function WorshipSets() {
     
     return result;
   }, [allSets, mainFilter, user?.id, selectedYears, selectedMonths, selectedLeaders, selectedServiceNames]);
+
+  // Helper to get song titles from a set
+  const getSongTitles = (set: SetWithSongs): string[] => {
+    if (!set.set_songs || set.set_songs.length === 0) return [];
+    return set.set_songs
+      .sort((a, b) => a.position - b.position)
+      .map(ss => ss.songs?.title)
+      .filter((title): title is string => !!title);
+  };
   
   const deleteMutation = useMutation({
     mutationFn: async (setId: string) => {
@@ -524,6 +558,7 @@ export default function WorshipSets() {
                 <WorshipSetCard
                   key={set.id}
                   set={set}
+                  songs={getSongTitles(set)}
                   canManage={canManage(set)}
                   onDelete={handleDelete}
                   onTogglePublish={handleTogglePublish}
@@ -544,80 +579,97 @@ export default function WorshipSets() {
                   <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
+                  <TableHead>{language === "ko" ? "선곡" : "Songs"}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
                   <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSets?.map((set) => (
-                  <TableRow 
-                    key={set.id} 
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => handleRowClick(set)}
-                  >
-                    <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
-                    <TableCell className="font-medium">{set.service_name}</TableCell>
-                    <TableCell>{set.worship_leader || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant={set.status === "published" ? "default" : "secondary"}>
-                        {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-1">
-                        {/* View button - always visible */}
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          onClick={() => navigate(`/band-view/${set.id}`)}
-                          title={t("worshipSets.view")}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        
-                        {canManage(set) && (
-                          <>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleShare(set)}
-                              title={language === "ko" ? "공유" : "Share"}
-                            >
-                              <Share2 className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleEditClick(set)}
-                              title={t("worshipSets.edit")}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost"
-                              onClick={() => handleTogglePublish(set.id, set.status)}
-                              title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
-                            >
-                              {set.status === "draft" ? <ArrowUpCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleDelete(set.id)}
-                              title={t("worshipSets.delete")}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </>
+                {filteredSets?.map((set) => {
+                  const songTitles = getSongTitles(set);
+                  const displaySongs = songTitles.slice(0, 3).join(", ");
+                  const extraCount = songTitles.length - 3;
+                  
+                  return (
+                    <TableRow 
+                      key={set.id} 
+                      className="cursor-pointer hover:bg-accent"
+                      onClick={() => handleRowClick(set)}
+                    >
+                      <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
+                      <TableCell className="font-medium">{set.service_name}</TableCell>
+                      <TableCell>{set.worship_leader || "-"}</TableCell>
+                      <TableCell className="max-w-[200px]">
+                        {songTitles.length > 0 ? (
+                          <span className="text-sm text-muted-foreground truncate block">
+                            {displaySongs}
+                            {extraCount > 0 && <span className="text-primary ml-1">+{extraCount}</span>}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={set.status === "published" ? "default" : "secondary"}>
+                          {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <div className="flex gap-1">
+                          {/* View button - always visible */}
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={() => navigate(`/band-view/${set.id}`)}
+                            title={t("worshipSets.view")}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          
+                          {canManage(set) && (
+                            <>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={() => handleShare(set)}
+                                title={language === "ko" ? "공유" : "Share"}
+                              >
+                                <Share2 className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={() => handleEditClick(set)}
+                                title={t("worshipSets.edit")}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost"
+                                onClick={() => handleTogglePublish(set.id, set.status)}
+                                title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
+                              >
+                                {set.status === "draft" ? <ArrowUpCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                              </Button>
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                onClick={() => handleDelete(set.id)}
+                                title={t("worshipSets.delete")}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {filteredSets?.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
                     </TableCell>
                   </TableRow>

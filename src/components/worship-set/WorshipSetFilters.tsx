@@ -48,7 +48,6 @@ export const WorshipSetFilters = ({
   mainFilter,
   onMainFilterChange,
   availableYears,
-  availableMonths,
   availableLeaders,
   availableServiceNames,
   selectedYears,
@@ -63,6 +62,9 @@ export const WorshipSetFilters = ({
 }: WorshipSetFiltersProps) => {
   const { language } = useTranslation();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+
+  // Always show all 12 months
+  const allMonths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
   const monthNames = language === "ko" 
     ? ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
@@ -97,6 +99,16 @@ export const WorshipSetFilters = ({
     }
   };
 
+  // Select all / Deselect all helpers
+  const selectAllYears = () => onYearsChange([...availableYears]);
+  const deselectAllYears = () => onYearsChange([]);
+  const selectAllMonths = () => onMonthsChange([...allMonths]);
+  const deselectAllMonths = () => onMonthsChange([]);
+  const selectAllLeaders = () => onLeadersChange([...availableLeaders]);
+  const deselectAllLeaders = () => onLeadersChange([]);
+  const selectAllServiceNames = () => onServiceNamesChange([...availableServiceNames]);
+  const deselectAllServiceNames = () => onServiceNamesChange([]);
+
   const currentMainFilter = mainFilterOptions.find(opt => opt.value === mainFilter);
 
   // Mobile UI
@@ -104,13 +116,10 @@ export const WorshipSetFilters = ({
     return (
       <div className="space-y-3">
         <div className="flex gap-2">
-          {/* Main Filter Select */}
+          {/* Main Filter Select - Fixed: removed duplicate icon */}
           <Select value={mainFilter} onValueChange={(value) => onMainFilterChange(value as MainFilterType)}>
             <SelectTrigger className="flex-1 h-10">
-              <div className="flex items-center gap-2">
-                {currentMainFilter?.icon}
-                <SelectValue />
-              </div>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {mainFilterOptions.map(option => (
@@ -154,7 +163,17 @@ export const WorshipSetFilters = ({
                 <div className="space-y-6 pr-4">
                   {/* Year Filter */}
                   <div>
-                    <h4 className="text-sm font-medium mb-3">{language === "ko" ? "연도" : "Year"}</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium">{language === "ko" ? "연도" : "Year"}</h4>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllYears}>
+                          {language === "ko" ? "전체선택" : "All"}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllYears}>
+                          {language === "ko" ? "전체해제" : "Clear"}
+                        </Button>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {availableYears.map(year => (
                         <Button
@@ -169,11 +188,21 @@ export const WorshipSetFilters = ({
                     </div>
                   </div>
 
-                  {/* Month Filter */}
+                  {/* Month Filter - Now shows all 12 months */}
                   <div>
-                    <h4 className="text-sm font-medium mb-3">{language === "ko" ? "월" : "Month"}</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="text-sm font-medium">{language === "ko" ? "월" : "Month"}</h4>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllMonths}>
+                          {language === "ko" ? "전체선택" : "All"}
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllMonths}>
+                          {language === "ko" ? "전체해제" : "Clear"}
+                        </Button>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {availableMonths.map(month => (
+                      {allMonths.map(month => (
                         <Button
                           key={month}
                           variant={selectedMonths.includes(month) ? "default" : "outline"}
@@ -189,7 +218,17 @@ export const WorshipSetFilters = ({
                   {/* Leader Filter */}
                   {availableLeaders.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-3">{language === "ko" ? "예배인도자" : "Leader"}</h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium">{language === "ko" ? "예배인도자" : "Leader"}</h4>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllLeaders}>
+                            {language === "ko" ? "전체선택" : "All"}
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllLeaders}>
+                            {language === "ko" ? "전체해제" : "Clear"}
+                          </Button>
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         {availableLeaders.map(leader => (
                           <label 
@@ -210,7 +249,17 @@ export const WorshipSetFilters = ({
                   {/* Service Name Filter */}
                   {availableServiceNames.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-3">{language === "ko" ? "예배이름" : "Service"}</h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium">{language === "ko" ? "예배이름" : "Service"}</h4>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={selectAllServiceNames}>
+                            {language === "ko" ? "전체선택" : "All"}
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={deselectAllServiceNames}>
+                            {language === "ko" ? "전체해제" : "Clear"}
+                          </Button>
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         {availableServiceNames.map(name => (
                           <label 
@@ -287,7 +336,7 @@ export const WorshipSetFilters = ({
     );
   }
 
-  // Desktop UI (unchanged)
+  // Desktop UI
   return (
     <div className="space-y-4">
       {/* Main Filter Buttons */}
@@ -350,7 +399,15 @@ export const WorshipSetFilters = ({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-40 p-2" align="start">
+          <PopoverContent className="w-48 p-2" align="start">
+            <div className="flex gap-1 mb-2 border-b pb-2">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={selectAllYears}>
+                {language === "ko" ? "전체선택" : "Select All"}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={deselectAllYears}>
+                {language === "ko" ? "전체해제" : "Clear"}
+              </Button>
+            </div>
             <ScrollArea className="h-48">
               <div className="space-y-1">
                 {availableYears.map(year => (
@@ -370,7 +427,7 @@ export const WorshipSetFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Month Filter */}
+        {/* Month Filter - Now shows all 12 months */}
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm" className="h-8">
@@ -382,10 +439,18 @@ export const WorshipSetFilters = ({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-40 p-2" align="start">
+          <PopoverContent className="w-48 p-2" align="start">
+            <div className="flex gap-1 mb-2 border-b pb-2">
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={selectAllMonths}>
+                {language === "ko" ? "전체선택" : "Select All"}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={deselectAllMonths}>
+                {language === "ko" ? "전체해제" : "Clear"}
+              </Button>
+            </div>
             <ScrollArea className="h-64">
               <div className="space-y-1">
-                {availableMonths.map(month => (
+                {allMonths.map(month => (
                   <label 
                     key={month} 
                     className="flex items-center gap-2 px-2 py-1.5 hover:bg-accent rounded cursor-pointer"
@@ -416,6 +481,14 @@ export const WorshipSetFilters = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-2" align="start">
+              <div className="flex gap-1 mb-2 border-b pb-2">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={selectAllLeaders}>
+                  {language === "ko" ? "전체선택" : "Select All"}
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={deselectAllLeaders}>
+                  {language === "ko" ? "전체해제" : "Clear"}
+                </Button>
+              </div>
               <ScrollArea className="h-48">
                 <div className="space-y-1">
                   {availableLeaders.map(leader => (
@@ -450,6 +523,14 @@ export const WorshipSetFilters = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-2" align="start">
+              <div className="flex gap-1 mb-2 border-b pb-2">
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={selectAllServiceNames}>
+                  {language === "ko" ? "전체선택" : "Select All"}
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1" onClick={deselectAllServiceNames}>
+                  {language === "ko" ? "전체해제" : "Clear"}
+                </Button>
+              </div>
               <ScrollArea className="h-48">
                 <div className="space-y-1">
                   {availableServiceNames.map(name => (

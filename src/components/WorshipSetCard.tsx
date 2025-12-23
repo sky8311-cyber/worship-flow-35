@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2, Upload, XCircle, Share2 } from "lucide-react";
+import { Eye, Edit, Trash2, Upload, XCircle, Share2, Music } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/countdownHelper";
@@ -18,6 +18,7 @@ interface WorshipSetCardProps {
     public_share_token?: string | null;
     public_share_enabled?: boolean;
   };
+  songs?: string[];
   canManage: boolean;
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, currentStatus: string) => void;
@@ -25,7 +26,7 @@ interface WorshipSetCardProps {
   onEdit?: (set: any) => void;
 }
 
-export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onShare, onEdit }: WorshipSetCardProps) {
+export function WorshipSetCard({ set, songs = [], canManage, onDelete, onTogglePublish, onShare, onEdit }: WorshipSetCardProps) {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
@@ -50,6 +51,10 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
     }
   };
 
+  // Display song preview
+  const displaySongs = songs.slice(0, 2);
+  const extraCount = songs.length - 2;
+
   return (
     <Card 
       className="hover:shadow-md transition-shadow cursor-pointer"
@@ -67,6 +72,21 @@ export function WorshipSetCard({ set, canManage, onDelete, onTogglePublish, onSh
             <h3 className="font-semibold truncate mt-1">{set.service_name}</h3>
             {set.worship_leader && (
               <p className="text-sm text-muted-foreground truncate">{set.worship_leader}</p>
+            )}
+            
+            {/* Song Preview */}
+            {songs.length > 0 && (
+              <div className="mt-3 pt-2 border-t">
+                <div className="flex items-start gap-1.5">
+                  <Music className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {displaySongs.join(", ")}
+                    {extraCount > 0 && (
+                      <span className="text-primary ml-1">+{extraCount}{language === "ko" ? "곡" : " more"}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
           
