@@ -805,6 +805,7 @@ export const translations = {
     roles: {
       admin: "Admin",
       worshipLeader: "Worship Leader",
+      communityOwner: "Community Owner",
       communityLeader: "Community Leader",
       member: "Member",
     },
@@ -2473,6 +2474,7 @@ export const translations = {
     roles: {
       admin: "관리자",
       worshipLeader: "예배인도자",
+      communityOwner: "커뮤니티 오너",
       communityLeader: "커뮤니티 리더",
       member: "팀멤버",
     },

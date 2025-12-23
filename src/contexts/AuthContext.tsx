@@ -34,6 +34,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isWorshipLeader: boolean;
   isCommunityLeaderInAnyCommunity: boolean;
+  isCommunityOwnerInAnyCommunity: boolean;
   hasRole: (role: string) => boolean;
   isCommunityLeader: (communityId: string) => Promise<boolean>;
   isCommunityOwner: (communityId: string) => Promise<boolean>;
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [isCommunityLeaderInAnyCommunity, setIsCommunityLeaderInAnyCommunity] = useState(false);
+  const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
@@ -62,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("role")
       .eq("user_id", userId);
 
-    // Check if user is a community leader or owner in any community
+    // Check if user is a community leader in any community
     const { data: communityLeaderData } = await supabase
       .from("community_members")
       .select("role")
@@ -70,9 +72,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .in("role", ["community_leader", "owner"])
       .limit(1);
 
+    // Check if user is a community owner in any community
+    const { data: communityOwnerData } = await supabase
+      .from("community_members")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "owner")
+      .limit(1);
+
     if (profileData) setProfile(profileData);
     if (rolesData) setRoles(rolesData.map((r: any) => r.role));
     setIsCommunityLeaderInAnyCommunity(!!communityLeaderData && communityLeaderData.length > 0);
+    setIsCommunityOwnerInAnyCommunity(!!communityOwnerData && communityOwnerData.length > 0);
   };
 
   useEffect(() => {
@@ -174,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     setRoles([]);
     setIsCommunityLeaderInAnyCommunity(false);
+    setIsCommunityOwnerInAnyCommunity(false);
     
     // Force clear localStorage to ensure no stale tokens remain
     localStorage.removeItem(`sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`);
@@ -259,6 +271,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin,
         isWorshipLeader,
         isCommunityLeaderInAnyCommunity,
+        isCommunityOwnerInAnyCommunity,
         hasRole,
         isCommunityLeader,
         isCommunityOwner,

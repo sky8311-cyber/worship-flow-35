@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, Star, User } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown } from "lucide-react";
+import { RoleBadge } from "@/components/RoleBadge";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
@@ -870,28 +871,13 @@ export default function CommunityManagement() {
                             
                             {/* Role Badges */}
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {memberIsOwner && (
-                                <Badge className="bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400">
-                                  <Crown className="w-3 h-3 mr-1" />
-                                  {t("community.owner")}
-                                </Badge>
-                              )}
-                              {memberIsWorshipLeader && (
-                                <Badge className="bg-primary/10 text-primary dark:bg-primary/20">
-                                  {t("community.worshipLeader")}
-                                </Badge>
-                              )}
+                              {memberIsOwner && <RoleBadge role="community_owner" />}
+                              {memberIsWorshipLeader && <RoleBadge role="worship_leader" />}
                               {memberIsCommunityLeader && !memberIsOwner && (
-                                <Badge className="bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">
-                                  <Star className="w-3 h-3 mr-1" />
-                                  {t("community.communityLeader")}
-                                </Badge>
+                                <RoleBadge role="community_leader" />
                               )}
                               {!memberIsCommunityLeader && !memberIsOwner && (
-                                <Badge variant="outline">
-                                  <User className="w-3 h-3 mr-1" />
-                                  {t("community.member")}
-                                </Badge>
+                                <RoleBadge role="member" />
                               )}
                             </div>
                           </div>

@@ -1,12 +1,12 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
+import { RoleBadge } from "@/components/RoleBadge";
 import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -108,16 +108,8 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
 
   const isLoading = profileLoading || rolesLoading || seedLoading;
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case "admin":
-        return "destructive";
-      case "worship_leader":
-        return "default";
-      default:
-        return "secondary";
-    }
-  };
+  const hasAdmin = userRoles?.includes("admin");
+  const hasWorshipLeader = userRoles?.includes("worship_leader");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -151,11 +143,9 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-2">
                   <h3 className="text-xl font-semibold">{profile.full_name || "No name"}</h3>
-                  {userRoles?.map((role) => (
-                    <Badge key={role} variant={getRoleBadgeVariant(role)}>
-                      {role}
-                    </Badge>
-                  ))}
+                  {hasAdmin && <RoleBadge role="admin" />}
+                  {hasWorshipLeader && <RoleBadge role="worship_leader" />}
+                  {!hasAdmin && !hasWorshipLeader && <RoleBadge role="member" />}
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="h-4 w-4" />

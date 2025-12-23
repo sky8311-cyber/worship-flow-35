@@ -13,13 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
+import { RoleBadge } from "@/components/RoleBadge";
 import { toast } from "sonner";
 import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle } from "lucide-react";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, updatePassword, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
 
   // Email change state
@@ -242,11 +243,14 @@ const Settings = () => {
           <CardContent className="space-y-4">
             {/* Current Roles */}
             <div className="flex flex-wrap gap-2">
-              {isAdmin && <Badge variant="destructive">{t("roles.admin")}</Badge>}
-              {isWorshipLeader && <Badge className="bg-primary">{t("roles.worshipLeader")}</Badge>}
-              {isCommunityLeaderInAnyCommunity && <Badge className="bg-accent text-accent-foreground">{t("roles.communityLeader")}</Badge>}
-              {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && (
-                <Badge variant="outline">{t("roles.member")}</Badge>
+              {isAdmin && <RoleBadge role="admin" />}
+              {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
+              {isWorshipLeader && <RoleBadge role="worship_leader" />}
+              {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
+                <RoleBadge role="community_leader" />
+              )}
+              {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
+                <RoleBadge role="member" />
               )}
             </div>
 
