@@ -679,6 +679,7 @@ export type Database = {
           needs_worship_leader_profile: boolean | null
           phone: string | null
           serving_position: string | null
+          timezone: string | null
           updated_at: string | null
           worship_leader_intro: string | null
           years_serving: number | null
@@ -703,6 +704,7 @@ export type Database = {
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
           serving_position?: string | null
+          timezone?: string | null
           updated_at?: string | null
           worship_leader_intro?: string | null
           years_serving?: number | null
@@ -727,6 +729,7 @@ export type Database = {
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
           serving_position?: string | null
+          timezone?: string | null
           updated_at?: string | null
           worship_leader_intro?: string | null
           years_serving?: number | null

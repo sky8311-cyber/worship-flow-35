@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { RoleBadge } from "@/components/RoleBadge";
+import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw } from "lucide-react";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -117,6 +118,34 @@ const Settings = () => {
     }
   };
 
+  // Timezone update mutation
+  const updateTimezoneMutation = useMutation({
+    mutationFn: async (newTimezone: string) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ timezone: newTimezone })
+        .eq("id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(language === "ko" ? "시간대가 업데이트되었습니다" : "Timezone updated");
+      refreshProfile();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const handleUseSystemTimezone = () => {
+    const systemTimezone = getSystemTimezone();
+    updateTimezoneMutation.mutate(systemTimezone);
+  };
+
+  const handleTimezoneChange = (timezone: string) => {
+    updateTimezoneMutation.mutate(timezone);
+  };
+
   // Cancel worship leader role mutation
   const cancelWorshipLeaderMutation = useMutation({
     mutationFn: async () => {
@@ -207,7 +236,62 @@ const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Profile Management */}
+        {/* Regional Settings - Timezone */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              {language === "ko" ? "지역 설정" : "Regional Settings"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" ? "정확한 이벤트 시간을 위해 시간대를 설정하세요" : "Set your timezone for accurate event times"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{language === "ko" ? "현재 시간대" : "Current Timezone"}</p>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.timezone 
+                    ? getTimezoneDisplayName(profile.timezone, language as 'ko' | 'en')
+                    : (language === "ko" ? "미설정" : "Not set")}
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleUseSystemTimezone}
+                disabled={updateTimezoneMutation.isPending}
+                className="shrink-0"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {language === "ko" ? "시스템 설정 사용" : "Use System Settings"}
+              </Button>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-2">
+              <Label>{language === "ko" ? "시간대 선택" : "Select Timezone"}</Label>
+              <Select 
+                value={profile?.timezone || ""} 
+                onValueChange={handleTimezoneChange}
+                disabled={updateTimezoneMutation.isPending}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === "ko" ? "시간대 선택" : "Select timezone"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMMON_TIMEZONES.map((tz) => (
+                    <SelectItem key={tz.value} value={tz.value}>
+                      {language === "ko" ? tz.label : tz.labelEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
