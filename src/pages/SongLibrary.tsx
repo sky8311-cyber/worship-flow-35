@@ -293,19 +293,25 @@ const SongLibrary = () => {
   const handleExportCSV = () => {
     if (!songs || songs.length === 0) return;
 
+    // Export all fields including id for bulk update support
     const csvData = songs.map(song => ({
+      id: song.id,  // Include ID for upsert support
       title: song.title,
+      subtitle: song.subtitle || "",
       artist: song.artist || "",
       language: song.language || "",
       default_key: song.default_key || "",
       category: song.category || "",
       tags: song.tags || "",
       youtube_url: song.youtube_url || "",
+      score_file_url: song.score_file_url || "",
       notes: song.notes || "",
+      interpretation: song.interpretation || "",
+      lyrics: song.lyrics || "",
     }));
 
     const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }); // BOM for Excel Korean support
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
