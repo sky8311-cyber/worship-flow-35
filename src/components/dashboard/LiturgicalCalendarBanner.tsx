@@ -95,11 +95,11 @@ export function LiturgicalCalendarBanner() {
     if (upcomingItems.length === 0) return null;
     
     return (
-      <div className="mb-4">
+      <div className="mb-2">
         <Popover>
           <PopoverTrigger asChild>
-            <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
-              <CalendarDays className="w-4 h-4" />
+            <button className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-muted transition-colors text-muted-foreground">
+              <CalendarDays className="w-3 h-3" />
               <span className="text-xs">
                 {language === "ko" ? "교회력 보기" : "View Church Calendar"}
               </span>
@@ -147,43 +147,42 @@ export function LiturgicalCalendarBanner() {
         : null;
 
   return (
-    <div className="mb-4 p-3 rounded-lg bg-accent/10 border border-accent/20">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+    <div className="mb-2 px-3 py-1.5 rounded-lg bg-accent/10 border border-accent/20">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors cursor-pointer">
-                <CalendarDays className="w-4 h-4 text-accent" />
+              <button className="flex-shrink-0 w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center hover:bg-accent/30 transition-colors cursor-pointer">
+                <CalendarDays className="w-3 h-3 text-accent" />
               </button>
             </PopoverTrigger>
             <PopoverContent align="start" className="p-0">
               <UpcomingItemsList />
             </PopoverContent>
           </Popover>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-foreground truncate">
-                {mainText}
-              </span>
-              {dDayText && (
-                <Badge
-                  variant={mode === "active" ? "default" : "secondary"}
-                  className={`text-xs flex-shrink-0 ${
-                    mode === "active" ? "bg-accent hover:bg-accent" : ""
-                  }`}
-                >
-                  {dDayText}
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">{dateDisplay}</p>
+          <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+            <span className="text-xs font-medium text-foreground truncate">
+              {mainText}
+            </span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground truncate">{dateDisplay}</span>
+            {dDayText && (
+              <Badge
+                variant={mode === "active" ? "default" : "secondary"}
+                className={`text-[10px] px-1.5 py-0 h-4 flex-shrink-0 ${
+                  mode === "active" ? "bg-accent hover:bg-accent" : ""
+                }`}
+              >
+                {dDayText}
+              </Badge>
+            )}
           </div>
         </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors">
-                <Info className="w-4 h-4 text-muted-foreground" />
+              <button className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors">
+                <Info className="w-3 h-3 text-muted-foreground" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="left" className="max-w-[200px]">
