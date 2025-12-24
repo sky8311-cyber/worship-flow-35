@@ -17,7 +17,7 @@ export function LiturgicalCalendarBanner() {
     return null;
   }
 
-  const { mode, item, daysUntil, daysLeft, upcomingItems } = data;
+  const { mode, item, daysUntil, daysLeft, upcomingItems = [] } = data;
 
   // Format dates
   const formatDateDisplay = (dateStr: string) => {
