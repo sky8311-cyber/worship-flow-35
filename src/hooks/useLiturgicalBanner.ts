@@ -12,11 +12,16 @@ export interface LiturgicalItem {
   type: string;
 }
 
+export interface UpcomingItem extends LiturgicalItem {
+  daysUntil: number;
+}
+
 export interface LiturgicalBannerResult {
   mode: "active" | "reminder" | "none";
   item: LiturgicalItem | null;
   daysUntil?: number;
   daysLeft?: number;
+  upcomingItems: UpcomingItem[];
 }
 
 // Helper: Get today's date in user timezone (YYYY-MM-DD)
@@ -64,6 +69,25 @@ export function useLiturgicalBanner() {
     queryKey: ["liturgical-banner", timezone, user?.id],
     queryFn: async (): Promise<LiturgicalBannerResult> => {
       const today = getTodayInTimezone(timezone);
+      const oneYearLater = addDays(today, 365);
+
+      // Fetch all upcoming items for the preview list (next 10 items within a year)
+      const { data: allUpcomingItems, error: allUpcomingError } = await supabase
+        .from("liturgical_calendar_items")
+        .select("*")
+        .gte("date_start", today)
+        .lte("date_start", oneYearLater)
+        .order("date_start", { ascending: true })
+        .limit(10);
+
+      if (allUpcomingError) {
+        console.error("Error fetching upcoming liturgical items:", allUpcomingError);
+      }
+
+      const upcomingItems: UpcomingItem[] = (allUpcomingItems || []).map((item) => ({
+        ...item,
+        daysUntil: diffDays(item.date_start, today),
+      }));
 
       // Step A: Find active items (date_start <= today <= date_end)
       const { data: activeItems, error: activeError } = await supabase
@@ -75,7 +99,7 @@ export function useLiturgicalBanner() {
 
       if (activeError) {
         console.error("Error fetching active liturgical items:", activeError);
-        return { mode: "none", item: null };
+        return { mode: "none", item: null, upcomingItems };
       }
 
       if (activeItems && activeItems.length > 0) {
@@ -95,38 +119,27 @@ export function useLiturgicalBanner() {
           mode: "active",
           item,
           daysLeft: daysLeft > 0 ? daysLeft : undefined,
+          upcomingItems,
         };
       }
 
-      // Step B: Find upcoming items within 30 days
+      // Step B: Find upcoming items within 30 days for reminder banner
       const thirtyDaysLater = addDays(today, 30);
+      const reminderItem = upcomingItems.find(
+        (item) => item.daysUntil <= 30 && diffDays(item.date_start, today) > 0
+      );
 
-      const { data: upcomingItems, error: upcomingError } = await supabase
-        .from("liturgical_calendar_items")
-        .select("*")
-        .gt("date_start", today)
-        .lte("date_start", thirtyDaysLater)
-        .order("date_start", { ascending: true })
-        .limit(1);
-
-      if (upcomingError) {
-        console.error("Error fetching upcoming liturgical items:", upcomingError);
-        return { mode: "none", item: null };
-      }
-
-      if (upcomingItems && upcomingItems.length > 0) {
-        const item = upcomingItems[0];
-        const daysUntil = diffDays(item.date_start, today);
-
+      if (reminderItem) {
         return {
           mode: "reminder",
-          item,
-          daysUntil,
+          item: reminderItem,
+          daysUntil: reminderItem.daysUntil,
+          upcomingItems,
         };
       }
 
       // Step C: No match
-      return { mode: "none", item: null };
+      return { mode: "none", item: null, upcomingItems };
     },
     enabled: !!user,
     staleTime: 6 * 60 * 60 * 1000, // 6 hours cache
