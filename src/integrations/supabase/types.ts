@@ -1365,6 +1365,39 @@ export type Database = {
         }
         Relationships: []
       }
+      songs_audit: {
+        Row: {
+          action: string
+          changed_fields: Json | null
+          created_at: string | null
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          song_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_fields?: Json | null
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          song_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_fields?: Json | null
+          created_at?: string | null
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          song_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       team_rotation_assignments: {
         Row: {
           assigned_date: string

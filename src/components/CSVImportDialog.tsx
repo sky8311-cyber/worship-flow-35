@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Upload, Download, AlertCircle, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
+import { Upload, Download, AlertCircle, CheckCircle2, XCircle, Image as ImageIcon, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ interface CSVImportDialogProps {
 }
 
 interface CSVRow {
+  id?: string;  // Optional ID for upsert support
   title: string;
   subtitle?: string;
   artist?: string;
@@ -27,6 +28,7 @@ interface CSVRow {
   score_file_url?: string;
   interpretation?: string;
   notes?: string;
+  lyrics?: string;
 }
 
 export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImportDialogProps) => {
@@ -47,12 +49,19 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   const matchImageFile = (scoreFilename: string, imageFiles: File[]): File | undefined => {
     if (!scoreFilename) return undefined;
     
+    // If it's already a URL (starts with http), no need to match
+    if (scoreFilename.startsWith('http')) return undefined;
+    
     const normalized = normalizeFilename(scoreFilename);
     
     return imageFiles.find(file => {
       const fileNormalized = normalizeFilename(file.name);
       return fileNormalized === normalized || fileNormalized.startsWith(normalized);
     });
+  };
+
+  const isExistingUrl = (value: string | undefined): boolean => {
+    return !!value && value.startsWith('http');
   };
 
   const validateRow = (row: CSVRow, index: number): string | null => {
@@ -158,18 +167,79 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
 
     setImporting(true);
     try {
-      const songsToInsert = await Promise.all(
-        csvData.map(async (row) => {
-          let uploadedScoreUrl = null;
+      const newSongs: CSVRow[] = [];
+      const updateSongs: CSVRow[] = [];
+      
+      // Separate new songs from updates
+      csvData.forEach(row => {
+        if (row.id && row.id.trim() !== "") {
+          updateSongs.push(row);
+        } else {
+          newSongs.push(row);
+        }
+      });
+
+      let insertedCount = 0;
+      let updatedCount = 0;
+      let matchedImages = 0;
+
+      // Process new songs (INSERT)
+      if (newSongs.length > 0) {
+        const songsToInsert = await Promise.all(
+          newSongs.map(async (row) => {
+            let uploadedScoreUrl = null;
+            
+            if (row.score_file_url && !isExistingUrl(row.score_file_url)) {
+              const matchedFile = matchImageFile(row.score_file_url, imageFiles);
+              if (matchedFile) {
+                uploadedScoreUrl = await uploadScoreImage(matchedFile);
+                matchedImages++;
+              }
+            }
+
+            return {
+              title: row.title.trim(),
+              subtitle: row.subtitle?.trim() || null,
+              artist: row.artist || null,
+              language: row.language || null,
+              default_key: row.default_key || null,
+              category: row.category || null,
+              tags: row.tags || null,
+              youtube_url: row.youtube_url?.trim() || null,
+              score_file_url: uploadedScoreUrl,
+              interpretation: row.interpretation || null,
+              notes: row.notes || null,
+              lyrics: row.lyrics || null,
+            };
+          })
+        );
+
+        const { error } = await supabase.from("songs").insert(songsToInsert);
+        if (error) throw error;
+        insertedCount = songsToInsert.length;
+      }
+
+      // Process updates (UPDATE)
+      if (updateSongs.length > 0) {
+        for (const row of updateSongs) {
+          let scoreUrl: string | null = null;
           
+          // Handle score file URL
           if (row.score_file_url) {
-            const matchedFile = matchImageFile(row.score_file_url, imageFiles);
-            if (matchedFile) {
-              uploadedScoreUrl = await uploadScoreImage(matchedFile);
+            if (isExistingUrl(row.score_file_url)) {
+              // Keep existing URL
+              scoreUrl = row.score_file_url;
+            } else {
+              // Try to match new file
+              const matchedFile = matchImageFile(row.score_file_url, imageFiles);
+              if (matchedFile) {
+                scoreUrl = await uploadScoreImage(matchedFile);
+                matchedImages++;
+              }
             }
           }
 
-          return {
+          const updateData: Record<string, any> = {
             title: row.title.trim(),
             subtitle: row.subtitle?.trim() || null,
             artist: row.artist || null,
@@ -178,25 +248,39 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             category: row.category || null,
             tags: row.tags || null,
             youtube_url: row.youtube_url?.trim() || null,
-            score_file_url: uploadedScoreUrl,
             interpretation: row.interpretation || null,
             notes: row.notes || null,
+            lyrics: row.lyrics || null,
           };
-        })
-      );
 
-      const { error } = await supabase.from("songs").insert(songsToInsert);
+          // Only update score_file_url if we have a new value
+          if (scoreUrl !== null) {
+            updateData.score_file_url = scoreUrl;
+          }
 
-      if (error) throw error;
+          const { error } = await supabase
+            .from("songs")
+            .update(updateData)
+            .eq("id", row.id);
 
-      const matchedCount = csvData.filter(row => 
-        matchImageFile(row.score_file_url || "", imageFiles)
-      ).length;
+          if (error) throw error;
+          updatedCount++;
+        }
+      }
 
-      toast.success(t("csvImport.successWithImages", { 
-        count: csvData.length, 
-        images: matchedCount 
-      }));
+      // Show success message
+      const messages: string[] = [];
+      if (insertedCount > 0) {
+        messages.push(`${insertedCount}개 신규 추가`);
+      }
+      if (updatedCount > 0) {
+        messages.push(`${updatedCount}개 업데이트`);
+      }
+      if (matchedImages > 0) {
+        messages.push(`${matchedImages}개 이미지 업로드`);
+      }
+
+      toast.success(`가져오기 완료: ${messages.join(", ")}`);
       
       setCSVData([]);
       setImageFiles([]);
@@ -212,12 +296,12 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   };
 
   const downloadTemplate = () => {
-    const template = `title,subtitle,artist,language,default_key,category,tags,youtube_url,score_file_url,interpretation,notes
-Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,amazing-grace.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn
-주 안에 있는 나에게,,김명식,KO,D,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,joo-ane-innun.pdf,주님 안에서의 평안을 노래하는 찬양,
-거룩하신 하나님,주님 찬양해,마커스워십,KO,C,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,georokhasin-hananim.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시
+    const template = `id,title,subtitle,artist,language,default_key,category,tags,youtube_url,score_file_url,interpretation,notes,lyrics
+,Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,amazing-grace.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn,
+,주 안에 있는 나에게,,김명식,KO,D,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,joo-ane-innun.pdf,주님 안에서의 평안을 노래하는 찬양,,
+,거룩하신 하나님,주님 찬양해,마커스워십,KO,C,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,georokhasin-hananim.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시,
 `;
-    const blob = new Blob([template], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + template], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -230,19 +314,25 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
     if (csvData.length === 0 || imageFiles.length === 0) return { matched: 0, total: 0 };
     
     const matched = csvData.filter(row => 
-      matchImageFile(row.score_file_url || "", imageFiles)
+      row.score_file_url && 
+      !isExistingUrl(row.score_file_url) &&
+      matchImageFile(row.score_file_url, imageFiles)
     ).length;
     
     return { matched, total: csvData.length };
   };
 
   const getDataCompleteness = () => {
+    const newSongs = csvData.filter(row => !row.id || row.id.trim() === "");
+    const updateSongs = csvData.filter(row => row.id && row.id.trim() !== "");
     const missingYouTube = csvData.filter(row => !row.youtube_url || row.youtube_url.trim() === "").length;
     const missingScoreFile = csvData.filter(row => !row.score_file_url || row.score_file_url.trim() === "").length;
     const imageMatchStatus = getImageMatchStatus();
     
     return {
       total: csvData.length,
+      newCount: newSongs.length,
+      updateCount: updateSongs.length,
       missingYouTube,
       missingScoreFile,
       matchedImages: imageMatchStatus.matched
@@ -255,6 +345,21 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
     setImageFiles([]);
     setErrors([]);
     setStep("upload");
+  };
+
+  const getRowType = (row: CSVRow): "new" | "update" => {
+    return row.id && row.id.trim() !== "" ? "update" : "new";
+  };
+
+  const getScoreStatus = (row: CSVRow) => {
+    if (!row.score_file_url || row.score_file_url.trim() === "") {
+      return "missing";
+    }
+    if (isExistingUrl(row.score_file_url)) {
+      return "existing";
+    }
+    const matchedFile = matchImageFile(row.score_file_url, imageFiles);
+    return matchedFile ? "matched" : "notMatched";
   };
 
   return (
@@ -272,7 +377,9 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                {t("csvImport.instructionsWithImages")}
+                CSV로 대량 가져오기 및 업데이트가 가능합니다.<br/>
+                • <strong>신규 추가:</strong> id 열을 비워두세요<br/>
+                • <strong>기존 업데이트:</strong> id 열에 기존 곡 ID를 입력하세요 (내보내기 CSV 사용)
               </AlertDescription>
             </Alert>
 
@@ -365,12 +472,25 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
 
         {step === "preview" && (
           <div className="space-y-4">
-            <Alert>
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription className="text-sm">
-                {t("csvImport.dataCompleteness", getDataCompleteness())}
-              </AlertDescription>
-            </Alert>
+            {/* Summary Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold">{getDataCompleteness().total}</div>
+                <div className="text-xs text-muted-foreground">전체</div>
+              </div>
+              <div className="bg-green-500/10 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-green-600">{getDataCompleteness().newCount}</div>
+                <div className="text-xs text-muted-foreground">신규 추가</div>
+              </div>
+              <div className="bg-blue-500/10 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-blue-600">{getDataCompleteness().updateCount}</div>
+                <div className="text-xs text-muted-foreground">업데이트</div>
+              </div>
+              <div className="bg-purple-500/10 rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-purple-600">{getDataCompleteness().matchedImages}</div>
+                <div className="text-xs text-muted-foreground">이미지 매칭</div>
+              </div>
+            </div>
 
             <div>
               <h3 className="font-semibold mb-3">
@@ -381,52 +501,52 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
                   <thead className="bg-muted sticky top-0">
                     <tr>
                       <th className="p-2 text-left w-8"></th>
+                      <th className="p-2 text-left w-20">타입</th>
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
                       <th className="p-2 text-left">{t("songDialog.category")}</th>
-                      <th className="p-2 text-left">{t("songDialog.key")}</th>
-                      <th className="p-2 text-left">{t("csvImport.youtubeStatus")}</th>
                       <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {csvData.map((row, index) => {
-                      const matchedFile = matchImageFile(row.score_file_url || "", imageFiles);
+                      const rowType = getRowType(row);
+                      const scoreStatus = getScoreStatus(row);
                       return (
                         <tr key={index} className="border-t">
                           <td className="p-2 text-center text-muted-foreground">{index + 1}</td>
-                          <td className="p-2 font-medium">{row.title}</td>
-                          <td className="p-2 text-sm">{row.artist || "-"}</td>
-                          <td className="p-2 text-sm">{row.category || "-"}</td>
-                          <td className="p-2 text-sm">
-                            {row.default_key || "-"}
-                          </td>
                           <td className="p-2">
-                            {row.youtube_url && row.youtube_url.trim() !== "" ? (
-                              <Badge variant="default" className="gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                {t("csvImport.youtubePresent")}
+                            {rowType === "new" ? (
+                              <Badge variant="default" className="gap-1 bg-green-500 hover:bg-green-600">
+                                <Plus className="w-3 h-3" />
+                                NEW
                               </Badge>
                             ) : (
-                              <Badge variant="secondary" className="gap-1">
-                                <AlertCircle className="w-3 h-3" />
-                                {t("csvImport.youtubeMissing")}
+                              <Badge variant="secondary" className="gap-1 bg-blue-500/20 text-blue-700 border-blue-300">
+                                <Pencil className="w-3 h-3" />
+                                UPDATE
                               </Badge>
                             )}
                           </td>
+                          <td className="p-2 font-medium">{row.title}</td>
+                          <td className="p-2 text-sm">{row.artist || "-"}</td>
+                          <td className="p-2 text-sm">{row.category || "-"}</td>
                           <td className="p-2">
-                            {row.score_file_url && row.score_file_url.trim() !== "" ? (
-                              matchedFile ? (
-                                <Badge variant="default" className="gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {t("csvImport.matched")}
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive" className="gap-1">
-                                  <XCircle className="w-3 h-3" />
-                                  {t("csvImport.notMatched")}
-                                </Badge>
-                              )
+                            {scoreStatus === "existing" ? (
+                              <Badge variant="outline" className="gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                기존유지
+                              </Badge>
+                            ) : scoreStatus === "matched" ? (
+                              <Badge variant="default" className="gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                {t("csvImport.matched")}
+                              </Badge>
+                            ) : scoreStatus === "notMatched" ? (
+                              <Badge variant="destructive" className="gap-1">
+                                <XCircle className="w-3 h-3" />
+                                {t("csvImport.notMatched")}
+                              </Badge>
                             ) : (
                               <Badge variant="secondary" className="gap-1">
                                 <AlertCircle className="w-3 h-3" />
@@ -454,7 +574,7 @@ Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://yo
                   onClick={handleImport}
                   disabled={importing}
                 >
-                  {importing ? t("csvImport.importing") : t("csvImport.importWithImages", getImageMatchStatus())}
+                  {importing ? t("csvImport.importing") : `가져오기 (${getDataCompleteness().newCount}개 추가, ${getDataCompleteness().updateCount}개 업데이트)`}
                 </Button>
               </div>
             </div>
