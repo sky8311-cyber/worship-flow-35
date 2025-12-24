@@ -550,6 +550,42 @@ export type Database = {
         }
         Relationships: []
       }
+      liturgical_calendar_items: {
+        Row: {
+          created_at: string
+          date_end: string
+          date_start: string
+          id: string
+          title_en: string | null
+          title_ko: string
+          type: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          date_end: string
+          date_start: string
+          id?: string
+          title_en?: string | null
+          title_ko: string
+          type?: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          date_end?: string
+          date_start?: string
+          id?: string
+          title_en?: string | null
+          title_ko?: string
+          type?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

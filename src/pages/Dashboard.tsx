@@ -41,6 +41,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
+import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalendarBanner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -366,6 +367,7 @@ const Dashboard = () => {
               {/* Upcoming Worship Sets - 2 columns */}
               <Card className="col-span-2">
                 <CardHeader className="pb-3">
+                  <LiturgicalCalendarBanner />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Music className="w-5 h-5" />
@@ -546,6 +548,7 @@ const Dashboard = () => {
             {/* Upcoming Sets */}
             <Card>
               <CardHeader>
+                <LiturgicalCalendarBanner />
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{t("dashboard.upcomingSets")}</CardTitle>
                   {canCreateSets && <Button size="sm" onClick={() => navigate("/set-builder")}>
