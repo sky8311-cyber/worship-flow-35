@@ -633,6 +633,30 @@ export type Database = {
           },
         ]
       }
+      platform_feature_flags: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           author_id: string | null
@@ -2017,6 +2041,7 @@ export type Database = {
         Args: { invitation_uuid: string }
         Returns: boolean
       }
+      get_feature_flag: { Args: { _key: string }; Returns: boolean }
       get_invitation_by_id: {
         Args: { invitation_uuid: string }
         Returns: {
