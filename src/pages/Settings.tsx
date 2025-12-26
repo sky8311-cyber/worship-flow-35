@@ -13,8 +13,10 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
+import { PremiumBillingCard } from "@/components/premium/PremiumBillingCard";
 import { RoleBadge } from "@/components/RoleBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { toast } from "sonner";
 import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw } from "lucide-react";
 
@@ -22,6 +24,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
+  const { isPremiumMenuVisible } = useAppSettings();
   const queryClient = useQueryClient();
 
   // Email change state
@@ -445,6 +448,11 @@ const Settings = () => {
               ))}
             </CardContent>
           </Card>
+        )}
+
+        {/* Premium Subscription - only show if feature flag enabled */}
+        {isPremiumMenuVisible && (
+          <PremiumBillingCard />
         )}
 
         {/* Dialog */}
