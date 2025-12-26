@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
-import { SetCollaborators } from "@/components/SetCollaborators";
+import { CollaboratorsHeader } from "@/components/CollaboratorsHeader";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
 import { SaveTemplateDialog } from "@/components/SaveTemplateDialog";
@@ -345,6 +345,10 @@ const SetBuilder = () => {
     // Permission check passed - mark as checked for this set id
     permissionCheckedForIdRef.current = id;
   }, [existingSet, user, isAdmin, isCollaborator, isCommunityLeaderForSet, isExistingSetLoading, isCollaboratorLoading, isCommunityLeaderLoading, navigate, id]);
+
+  // Collaborator management permission: creator, admin, or community leader can add collaborators
+  const isCreator = existingSet?.created_by === user?.id;
+  const hasCollaboratorManagePermission = isCreator || isAdmin || !!isCommunityLeaderForSet;
 
   // Load form data from existing set with merge strategy
   useEffect(() => {
@@ -1004,6 +1008,15 @@ const SetBuilder = () => {
           </Button>
           
           <div className="flex items-center gap-3">
+            {/* Collaborators Header */}
+            <CollaboratorsHeader
+              serviceSetId={id || newSetId || null}
+              canManage={hasCollaboratorManagePermission}
+            />
+
+            {/* Separator when there are collaborators */}
+            <div className="hidden sm:block h-5 w-px bg-border" />
+
             {/* Auto-save status indicator */}
             {status === "draft" && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1391,13 +1404,6 @@ const SetBuilder = () => {
             {/* Bottom Action Buttons */}
             {renderActionButtons("mt-6 pt-6 border-t mb-8")}
 
-            {id && user && existingSet && (
-              <SetCollaborators
-                serviceSetId={id}
-                createdBy={existingSet.created_by}
-                currentUserId={user.id}
-              />
-            )}
           </div>
         </div>
       </div>

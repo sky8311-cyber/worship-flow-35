@@ -24,9 +24,15 @@ interface SetCollaboratorsProps {
   serviceSetId: string;
   createdBy: string;
   currentUserId: string;
+  canManage?: boolean; // External permission override (creator, admin, community leader)
 }
 
-export const SetCollaborators = ({ serviceSetId, createdBy, currentUserId }: SetCollaboratorsProps) => {
+export const SetCollaborators = ({ 
+  serviceSetId, 
+  createdBy, 
+  currentUserId,
+  canManage: externalCanManage,
+}: SetCollaboratorsProps) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -79,13 +85,16 @@ export const SetCollaborators = ({ serviceSetId, createdBy, currentUserId }: Set
     },
   });
 
-  const isCreator = createdBy === currentUserId;
+  // Use external permission if provided, otherwise fall back to creator check
+  const hasManagePermission = externalCanManage !== undefined 
+    ? externalCanManage 
+    : createdBy === currentUserId;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle>{t("setBuilder.collaborators")}</CardTitle>
-        {isCreator && (
+        {hasManagePermission && (
           <Button
             size="sm"
             variant="outline"
@@ -119,7 +128,7 @@ export const SetCollaborators = ({ serviceSetId, createdBy, currentUserId }: Set
                     {t(`setBuilder.collaboratorRole.${collaborator.role}`)}
                   </Badge>
                 </div>
-                {isCreator && (
+                {hasManagePermission && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -152,7 +161,7 @@ export const SetCollaborators = ({ serviceSetId, createdBy, currentUserId }: Set
         )}
       </CardContent>
 
-      {isCreator && (
+      {hasManagePermission && (
         <AddCollaboratorDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
