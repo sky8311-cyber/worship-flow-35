@@ -125,6 +125,17 @@ const AdminUsers = () => {
 
       // If adding worship_leader role, check for existing application data and update profiles table
       if (role === "worship_leader") {
+        // Send notification to the user
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          type: "promoted_to_worship_leader",
+          title: "워십리더로 승급되었습니다! / You're now a Worship Leader!",
+          message: "이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다. / You can now create communities and lead worship teams.",
+          related_id: null,
+          related_type: "role",
+          metadata: { new_role: "worship_leader" }
+        });
+
         // Check if profile already has worship leader info
         const { data: existingProfile } = await supabase
           .from("profiles")
