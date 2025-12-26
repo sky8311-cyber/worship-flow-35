@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -29,7 +30,8 @@ import {
   RefreshCw,
   Clock,
   Users,
-  FileText
+  FileText,
+  Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { getComponentLabel, WorshipComponentType } from "@/lib/worshipComponents";
@@ -70,6 +72,7 @@ export const TemplateCard = ({
   onRefetch,
 }: TemplateCardProps) => {
   const { language } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showDeleteTemplate, setShowDeleteTemplate] = useState(false);
   const [showDeleteRecurring, setShowDeleteRecurring] = useState(false);
@@ -206,6 +209,19 @@ export const TemplateCard = ({
                   )}
                 </div>
               )}
+
+              {/* Create Set Button */}
+              <div className="mt-3 pt-3 border-t">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate(`/set-builder?templateId=${template.id}`)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {language === "ko" ? "이 템플릿으로 세트 생성" : "Create Set from Template"}
+                </Button>
+              </div>
             </div>
 
             {/* Actions Menu */}

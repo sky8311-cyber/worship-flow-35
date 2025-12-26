@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type MouseEvent } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,8 @@ type SetItem =
 
 const SetBuilder = () => {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const templateIdFromUrl = searchParams.get("templateId");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isAdmin, signOut } = useAuth();
@@ -72,7 +74,7 @@ const SetBuilder = () => {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-
+  const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Prevent redirect glitches by only running permission checks once per set id
@@ -429,6 +431,79 @@ const SetBuilder = () => {
     setHasInitializedItems(true); // Prevent future refetches from overwriting
   }, [existingSetSongs, existingSetComponents, isSaving, id, hasInitializedItems]);
 
+  // Load template from URL parameter (for "Create Set from Template" feature)
+  useEffect(() => {
+    const loadTemplateFromUrl = async () => {
+      if (!templateIdFromUrl || !user || templateApplied) return;
+      
+      // Only apply template for new sets (no id)
+      if (id) {
+        // Clear the templateId from URL if editing existing set
+        setSearchParams({});
+        return;
+      }
+      
+      try {
+        const { data: template, error } = await supabase
+          .from("worship_set_templates")
+          .select(`
+            *,
+            template_components(*)
+          `)
+          .eq("id", templateIdFromUrl)
+          .single();
+        
+        if (error) throw error;
+        
+        if (template) {
+          // Apply template data to form
+          setFormData(prev => ({
+            ...prev,
+            service_name: template.service_name || prev.service_name,
+            community_id: template.community_id || prev.community_id,
+            target_audience: template.target_audience || prev.target_audience,
+            worship_leader: template.worship_leader || prev.worship_leader,
+            band_name: template.band_name || prev.band_name,
+            scripture_reference: template.scripture_reference || prev.scripture_reference,
+            theme: template.theme || prev.theme,
+            worship_duration: template.worship_duration?.toString() || prev.worship_duration,
+            service_time: template.service_time || prev.service_time,
+            notes: template.notes || prev.notes,
+          }));
+          
+          // Apply template components
+          if (template.template_components && template.template_components.length > 0) {
+            const sortedComponents = [...template.template_components].sort((a: any, b: any) => a.position - b.position);
+            const newItems: SetItem[] = sortedComponents.map((comp: any) => ({
+              type: "component" as const,
+              id: `component-template-${Date.now()}-${comp.position}`,
+              data: {
+                component_type: comp.component_type,
+                label: comp.label,
+                notes: comp.notes || "",
+                duration_minutes: comp.duration_minutes || null,
+                assigned_to: comp.default_assigned_to || "",
+                content: comp.default_content || "",
+              },
+            }));
+            
+            setItems(newItems);
+          }
+          
+          toast.success(language === "ko" ? `템플릿 "${template.name}"이(가) 적용되었습니다` : `Template "${template.name}" applied`);
+          setTemplateApplied(true);
+          
+          // Clear the templateId from URL
+          setSearchParams({});
+        }
+      } catch (error) {
+        console.error("Failed to load template:", error);
+        toast.error(language === "ko" ? "템플릿을 불러오는데 실패했습니다" : "Failed to load template");
+      }
+    };
+    
+    loadTemplateFromUrl();
+  }, [templateIdFromUrl, user, id, templateApplied, language, setSearchParams]);
   const handlePublishToggle = () => {
     if (status === "draft") {
       // Validate before publishing
