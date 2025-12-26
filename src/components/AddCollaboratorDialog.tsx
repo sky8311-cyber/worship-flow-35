@@ -95,6 +95,7 @@ export const AddCollaboratorDialog = ({
 
   const addMutation = useMutation({
     mutationFn: async () => {
+      // 1. Add collaborator
       const { error } = await supabase.from("set_collaborators").insert({
         service_set_id: serviceSetId,
         user_id: selectedUserId,
@@ -102,6 +103,36 @@ export const AddCollaboratorDialog = ({
         invited_by: user?.id,
       });
       if (error) throw error;
+
+      // 2. Get set info for notification message
+      const { data: setInfo } = await supabase
+        .from("service_sets")
+        .select("service_name")
+        .eq("id", serviceSetId)
+        .single();
+
+      // 3. Get inviter profile
+      const { data: inviterProfile } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user?.id)
+        .single();
+
+      // 4. Create notification for invited user
+      await supabase.from("notifications").insert({
+        user_id: selectedUserId,
+        type: "collaborator_invited",
+        title: "협업자로 초대되었습니다 / You've been invited as a collaborator",
+        message: `${inviterProfile?.full_name || "Someone"}님이 "${setInfo?.service_name || "워십세트"}"의 협업자로 초대했습니다.`,
+        related_id: serviceSetId,
+        related_type: "service_set",
+        metadata: {
+          actor_name: inviterProfile?.full_name,
+          actor_avatar: inviterProfile?.avatar_url,
+          set_name: setInfo?.service_name,
+          role: role
+        }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["set-collaborators"] });
