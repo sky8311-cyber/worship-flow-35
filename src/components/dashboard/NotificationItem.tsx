@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar, Users, Sparkles } from "lucide-react";
+import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown } from "lucide-react";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useState, useEffect } from "react";
 import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
@@ -21,6 +21,8 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
 
   const isLevelUp = notification.type === "level_up";
   const isCollaboratorInvited = notification.type === "collaborator_invited";
+  const isRolePromotion = ["promoted_to_owner", "promoted_to_community_leader", "promoted_to_worship_leader"].includes(notification.type);
+  const isRoleDemotion = notification.type === "demoted_to_member";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -69,11 +71,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate(`/community/${notification.metadata.community_id}`);
     } else if (notification.related_type === "seeds") {
       navigate("/seeds");
+    } else if (notification.related_type === "role") {
+      // For worship leader promotion - navigate to dashboard
+      navigate("/dashboard");
     }
   };
 
   const actorAvatar = notification.metadata?.actor_avatar;
-  const actorName = notification.metadata?.actor_name || "User";
+  const actorName = notification.metadata?.actor_name || notification.metadata?.promoter_name || "User";
   const actorUserId = notification.metadata?.actor_id || notification.user_id;
   const timeAgo = formatDistanceToNow(parseLocalDate(notification.created_at), { addSuffix: true });
   const isBirthday = notification.type === "birthday";
@@ -118,6 +123,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       ) : isCollaboratorInvite ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
+        </div>
+      ) : isRolePromotion ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+          <Crown className="h-5 w-5 text-white" />
+        </div>
+      ) : isRoleDemotion ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+          <ArrowDown className="h-5 w-5 text-muted-foreground" />
         </div>
       ) : isLevelUp ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center">

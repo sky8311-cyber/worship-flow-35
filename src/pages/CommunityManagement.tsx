@@ -251,6 +251,8 @@ export default function CommunityManagement() {
   const promoteToCommunityLeaderMutation = useMutation({
     mutationFn: async (memberId: string) => {
       console.log("Promoting member:", memberId);
+      const member = members?.find(m => m.id === memberId);
+      
       const { error } = await supabase
         .from("community_members")
         .update({ role: "community_leader" })
@@ -258,6 +260,33 @@ export default function CommunityManagement() {
       if (error) {
         console.error("Promote error details:", error);
         throw error;
+      }
+
+      // Send notification to promoted user
+      if (member && user) {
+        const { data: promoterProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+
+        await supabase.from("notifications").insert({
+          user_id: member.user_id,
+          type: "promoted_to_community_leader",
+          title: language === "ko" 
+            ? "커뮤니티 리더로 승급되었습니다!" 
+            : "You've been promoted to Community Leader!",
+          message: language === "ko"
+            ? `${promoterProfile?.full_name || "관리자"}님이 ${community?.name} 커뮤니티의 리더로 승급시켰습니다.`
+            : `${promoterProfile?.full_name || "Admin"} promoted you to leader of ${community?.name}.`,
+          related_id: id,
+          related_type: "community",
+          metadata: {
+            promoter_name: promoterProfile?.full_name,
+            community_name: community?.name,
+            new_role: "community_leader"
+          }
+        });
       }
     },
     onSuccess: () => {
@@ -277,6 +306,9 @@ export default function CommunityManagement() {
   const demoteToMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
       console.log("Demoting member:", memberId);
+      const member = members?.find(m => m.id === memberId);
+      const previousRole = member?.role;
+      
       const { error } = await supabase
         .from("community_members")
         .update({ role: "member" })
@@ -284,6 +316,27 @@ export default function CommunityManagement() {
       if (error) {
         console.error("Demote error details:", error);
         throw error;
+      }
+
+      // Send notification to demoted user
+      if (member && user && member.user_id !== user.id) {
+        await supabase.from("notifications").insert({
+          user_id: member.user_id,
+          type: "demoted_to_member",
+          title: language === "ko" 
+            ? "역할이 변경되었습니다" 
+            : "Your role has been changed",
+          message: language === "ko"
+            ? `${community?.name} 커뮤니티에서 일반 멤버로 역할이 변경되었습니다.`
+            : `Your role in ${community?.name} has been changed to member.`,
+          related_id: id,
+          related_type: "community",
+          metadata: {
+            community_name: community?.name,
+            previous_role: previousRole,
+            new_role: "member"
+          }
+        });
       }
     },
     onSuccess: () => {
@@ -304,6 +357,8 @@ export default function CommunityManagement() {
   const promoteToOwnerMutation = useMutation({
     mutationFn: async (memberId: string) => {
       console.log("Promoting member to owner:", memberId);
+      const member = members?.find(m => m.id === memberId);
+      
       const { error } = await supabase
         .from("community_members")
         .update({ role: "owner" })
@@ -311,6 +366,33 @@ export default function CommunityManagement() {
       if (error) {
         console.error("Promote to owner error details:", error);
         throw error;
+      }
+
+      // Send notification to promoted user
+      if (member && user) {
+        const { data: promoterProfile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .single();
+
+        await supabase.from("notifications").insert({
+          user_id: member.user_id,
+          type: "promoted_to_owner",
+          title: language === "ko" 
+            ? "오너로 승급되었습니다!" 
+            : "You've been promoted to Owner!",
+          message: language === "ko"
+            ? `${promoterProfile?.full_name || "관리자"}님이 ${community?.name} 커뮤니티의 오너로 승급시켰습니다.`
+            : `${promoterProfile?.full_name || "Admin"} promoted you to owner of ${community?.name}.`,
+          related_id: id,
+          related_type: "community",
+          metadata: {
+            promoter_name: promoterProfile?.full_name,
+            community_name: community?.name,
+            new_role: "owner"
+          }
+        });
       }
     },
     onSuccess: () => {
