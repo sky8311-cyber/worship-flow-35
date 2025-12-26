@@ -3,97 +3,94 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-interface AppSettings {
-  leaderboard_enabled: boolean;
+interface FeatureFlags {
+  seed_leaderboard_enabled: boolean;
   church_subscription_enabled: boolean;
   church_menu_visible: boolean;
+  premium_enabled: boolean;
+  premium_menu_visible: boolean;
+  scheduler_enabled: boolean;
+  cross_community_enabled: boolean;
 }
+
+const DEFAULT_FLAGS: FeatureFlags = {
+  seed_leaderboard_enabled: false,
+  church_subscription_enabled: false,
+  church_menu_visible: false,
+  premium_enabled: false,
+  premium_menu_visible: false,
+  scheduler_enabled: false,
+  cross_community_enabled: false,
+};
 
 export function useAppSettings() {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: settings, isLoading } = useQuery({
-    queryKey: ["app-settings"],
+  const { data: flags, isLoading } = useQuery({
+    queryKey: ["platform-feature-flags"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("app_settings")
-        .select("key, value");
+        .from("platform_feature_flags")
+        .select("key, enabled");
 
       if (error) throw error;
 
-      const settingsMap: AppSettings = {
-        leaderboard_enabled: true,
-        church_subscription_enabled: true,
-        church_menu_visible: true,
-      };
+      const flagsMap: FeatureFlags = { ...DEFAULT_FLAGS };
 
-      data?.forEach((setting: any) => {
-        if (setting.key === "leaderboard_enabled") {
-          settingsMap.leaderboard_enabled = setting.value?.enabled ?? true;
-        } else if (setting.key === "church_subscription_enabled") {
-          settingsMap.church_subscription_enabled = setting.value?.enabled ?? true;
-        } else if (setting.key === "church_menu_visible") {
-          settingsMap.church_menu_visible = setting.value?.visible ?? true;
+      data?.forEach((flag) => {
+        const key = flag.key as keyof FeatureFlags;
+        if (key in flagsMap) {
+          flagsMap[key] = flag.enabled;
         }
       });
 
-      return settingsMap;
+      return flagsMap;
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
-  const updateSettingMutation = useMutation({
-    mutationFn: async ({ key, value }: { key: string; value: any }) => {
+  const updateFlagMutation = useMutation({
+    mutationFn: async ({ key, enabled }: { key: string; enabled: boolean }) => {
       const { error } = await supabase
-        .from("app_settings")
-        .update({ value })
+        .from("platform_feature_flags")
+        .update({ enabled })
         .eq("key", key);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["app-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-feature-flags"] });
       toast.success("설정이 저장되었습니다");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error("설정 저장 실패: " + error.message);
     },
   });
 
-  const toggleLeaderboard = () => {
+  const toggleFlag = (key: keyof FeatureFlags) => {
     if (!isAdmin) return;
-    updateSettingMutation.mutate({
-      key: "leaderboard_enabled",
-      value: { enabled: !settings?.leaderboard_enabled },
-    });
-  };
-
-  const toggleChurchSubscription = () => {
-    if (!isAdmin) return;
-    updateSettingMutation.mutate({
-      key: "church_subscription_enabled",
-      value: { enabled: !settings?.church_subscription_enabled },
-    });
-  };
-
-  const toggleChurchMenu = () => {
-    if (!isAdmin) return;
-    updateSettingMutation.mutate({
-      key: "church_menu_visible",
-      value: { visible: !settings?.church_menu_visible },
-    });
+    const currentValue = flags?.[key] ?? DEFAULT_FLAGS[key];
+    updateFlagMutation.mutate({ key, enabled: !currentValue });
   };
 
   return {
-    isLeaderboardEnabled: !isLoading && (settings?.leaderboard_enabled ?? false),
-    isChurchSubscriptionEnabled: !isLoading && (settings?.church_subscription_enabled ?? false),
-    isChurchMenuVisible: !isLoading && (settings?.church_menu_visible ?? false),
+    isLeaderboardEnabled: !isLoading && (flags?.seed_leaderboard_enabled ?? false),
+    isChurchSubscriptionEnabled: !isLoading && (flags?.church_subscription_enabled ?? false),
+    isChurchMenuVisible: !isLoading && (flags?.church_menu_visible ?? false),
+    isPremiumEnabled: !isLoading && (flags?.premium_enabled ?? false),
+    isPremiumMenuVisible: !isLoading && (flags?.premium_menu_visible ?? false),
+    isSchedulerEnabled: !isLoading && (flags?.scheduler_enabled ?? false),
+    isCrossCommunityEnabled: !isLoading && (flags?.cross_community_enabled ?? false),
     isLoading,
-    toggleLeaderboard,
-    toggleChurchSubscription,
-    toggleChurchMenu,
-    isUpdating: updateSettingMutation.isPending,
+    isUpdating: updateFlagMutation.isPending,
+    toggleLeaderboard: () => toggleFlag("seed_leaderboard_enabled"),
+    toggleChurchSubscription: () => toggleFlag("church_subscription_enabled"),
+    toggleChurchMenu: () => toggleFlag("church_menu_visible"),
+    togglePremium: () => toggleFlag("premium_enabled"),
+    togglePremiumMenu: () => toggleFlag("premium_menu_visible"),
+    toggleScheduler: () => toggleFlag("scheduler_enabled"),
+    toggleCrossCommunity: () => toggleFlag("cross_community_enabled"),
   };
 }

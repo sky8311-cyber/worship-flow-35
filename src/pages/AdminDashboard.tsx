@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -15,9 +15,17 @@ const AdminDashboard = () => {
     isLeaderboardEnabled,
     isChurchSubscriptionEnabled,
     isChurchMenuVisible,
+    isPremiumEnabled,
+    isPremiumMenuVisible,
+    isSchedulerEnabled,
+    isCrossCommunityEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
+    togglePremium,
+    togglePremiumMenu,
+    toggleScheduler,
+    toggleCrossCommunity,
     isUpdating,
   } = useAppSettings();
   
@@ -131,65 +139,156 @@ const AdminDashboard = () => {
             </div>
 
             {/* Platform Settings */}
-            <Card className="shadow-md">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-muted-foreground" />
-                  <CardTitle>{t("admin.settings.title")}</CardTitle>
-                </div>
-                <CardDescription>{t("admin.settings.subtitle")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Leaderboard Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">{t("admin.settings.leaderboard")}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {t("admin.settings.leaderboardDesc")}
-                    </p>
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* General Platform Settings */}
+              <Card className="shadow-md">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-muted-foreground" />
+                    <CardTitle>{t("admin.settings.title")}</CardTitle>
                   </div>
-                  <Switch
-                    checked={isLeaderboardEnabled}
-                    onCheckedChange={toggleLeaderboard}
-                    disabled={isUpdating}
-                  />
-                </div>
-
-                <Separator />
-
-                {/* Church Subscription Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">{t("admin.settings.churchSubscription")}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {t("admin.settings.churchSubscriptionDesc")}
-                    </p>
+                  <CardDescription>{t("admin.settings.subtitle")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Leaderboard Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.leaderboard")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.leaderboardDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isLeaderboardEnabled}
+                      onCheckedChange={toggleLeaderboard}
+                      disabled={isUpdating}
+                    />
                   </div>
-                  <Switch
-                    checked={isChurchSubscriptionEnabled}
-                    onCheckedChange={toggleChurchSubscription}
-                    disabled={isUpdating}
-                  />
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                {/* Church Menu Toggle */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">{t("admin.settings.churchMenu")}</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {t("admin.settings.churchMenuDesc")}
-                    </p>
+                  {/* Church Subscription Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.churchSubscription")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.churchSubscriptionDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isChurchSubscriptionEnabled}
+                      onCheckedChange={toggleChurchSubscription}
+                      disabled={isUpdating}
+                    />
                   </div>
-                  <Switch
-                    checked={isChurchMenuVisible}
-                    onCheckedChange={toggleChurchMenu}
-                    disabled={isUpdating}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+
+                  <Separator />
+
+                  {/* Church Menu Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.churchMenu")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.churchMenuDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isChurchMenuVisible}
+                      onCheckedChange={toggleChurchMenu}
+                      disabled={isUpdating}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Premium Account Settings */}
+              <Card className="shadow-md">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-5 h-5 text-amber-500" />
+                    <CardTitle>Premium Account 설정</CardTitle>
+                  </div>
+                  <CardDescription>프리미엄 개인 계정 Tier 기능을 관리합니다</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Premium Enabled Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Premium 구독 기능 활성화</Label>
+                      <p className="text-sm text-muted-foreground">
+                        프리미엄 계정 Tier 구독 기능을 활성화합니다
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isPremiumEnabled}
+                      onCheckedChange={togglePremium}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Premium Menu Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Premium 메뉴 표시</Label>
+                      <p className="text-sm text-muted-foreground">
+                        네비게이션에 Premium 메뉴를 표시합니다
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isPremiumMenuVisible}
+                      onCheckedChange={togglePremiumMenu}
+                      disabled={isUpdating}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Scheduler Settings */}
+              <Card className="shadow-md lg:col-span-2">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-blue-500" />
+                    <CardTitle>Scheduler 설정</CardTitle>
+                  </div>
+                  <CardDescription>반복 일정 및 Cross-Community 스케줄링 기능을 관리합니다</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Scheduler Enabled Toggle */}
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                      <div className="space-y-0.5">
+                        <Label className="text-base">Recurring Scheduler 활성화</Label>
+                        <p className="text-sm text-muted-foreground">
+                          반복 캘린더 스케줄러 기능을 활성화합니다
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isSchedulerEnabled}
+                        onCheckedChange={toggleScheduler}
+                        disabled={isUpdating}
+                      />
+                    </div>
+
+                    {/* Cross-Community Toggle */}
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                      <div className="space-y-0.5">
+                        <Label className="text-base">Cross-Community Scheduling</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Church Account의 커뮤니티 간 스케줄링 기능
+                        </p>
+                      </div>
+                      <Switch
+                        checked={isCrossCommunityEnabled}
+                        onCheckedChange={toggleCrossCommunity}
+                        disabled={isUpdating}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </>
         )}
       </main>
