@@ -511,6 +511,14 @@ const SetBuilder = () => {
         toast.error("예배공동체를 선택해주세요");
         return;
       }
+      if (!formData.service_time) {
+        toast.error("예배 시간을 입력해주세요");
+        return;
+      }
+      if (!formData.worship_leader?.trim()) {
+        toast.error("예배 인도자를 입력해주세요");
+        return;
+      }
       const songCount = items.filter(i => i.type === "song").length;
       if (songCount === 0) {
         toast.error("최소 1곡 이상 추가해주세요");
@@ -555,10 +563,18 @@ const SetBuilder = () => {
         throw new Error(t("setBuilder.errors.communityRequired"));
       }
       
-      // Validate songs exist for publishing
+      // Validate required fields for publishing
       const songCount = currentItems.filter(i => i.type === "song").length;
-      if (publishStatus === "published" && songCount === 0) {
-        throw new Error(t("setBuilder.errors.noSongsPublish"));
+      if (publishStatus === "published") {
+        if (!currentForm.service_time) {
+          throw new Error("예배 시간을 입력해주세요");
+        }
+        if (!currentForm.worship_leader?.trim()) {
+          throw new Error("예배 인도자를 입력해주세요");
+        }
+        if (songCount === 0) {
+          throw new Error(t("setBuilder.errors.noSongsPublish"));
+        }
       }
 
       const statusToSave = publishStatus || status;
@@ -1071,13 +1087,14 @@ const SetBuilder = () => {
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <Label htmlFor="service_time" className="text-sm">시간</Label>
+                    <Label htmlFor="service_time" className="text-sm">시간 *</Label>
                     <Input
                       id="service_time"
                       type="time"
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
                       className="text-sm h-9"
+                      required
                     />
                   </div>
                 </div>
@@ -1153,11 +1170,12 @@ const SetBuilder = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="worship_leader">예배 인도자</Label>
+                  <Label htmlFor="worship_leader">예배 인도자 *</Label>
                   <Input
                     id="worship_leader"
                     value={formData.worship_leader}
                     onChange={(e) => setFormData({ ...formData, worship_leader: e.target.value })}
+                    required
                   />
                 </div>
 
