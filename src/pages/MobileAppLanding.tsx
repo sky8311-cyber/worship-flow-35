@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Globe, Music, Calendar, Users, Heart } from "lucide-react";
+import { Globe, Music, Calendar, Users, Heart, Home, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer, staggerItem } from "@/lib/animations";
-import logo from "@/assets/kworship-logo.png";
+import logo from "@/assets/kworship-logo-mobile.png";
 
 const MobileAppLanding = () => {
   const { t } = useTranslation();
@@ -127,10 +127,7 @@ const MobileAppLanding = () => {
               <div className="p-3 space-y-2">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <Music className="w-3 h-3 text-white" />
-                  </div>
-                  <span className="font-bold text-xs text-foreground">K-Worship</span>
+                  <img src={logo} alt="K-Worship" className="h-5 w-auto" />
                 </div>
                 
                 {/* Worship Set Cards */}
@@ -176,19 +173,22 @@ const MobileAppLanding = () => {
                 </div>
               </div>
               
-              {/* Bottom Navigation Mock */}
-              <div className="absolute bottom-0 left-0 right-0 h-12 bg-card/80 backdrop-blur-sm border-t border-border/30 flex items-center justify-around px-4">
-                <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Music className="w-3 h-3 text-primary" />
+              {/* Bottom Navigation Mock - matches actual app */}
+              <div className="absolute bottom-0 left-0 right-0 h-10 bg-card/80 backdrop-blur-sm border-t border-border/30 flex items-center justify-around px-3">
+                <div className="flex flex-col items-center">
+                  <Home className="w-3 h-3 text-primary" />
                 </div>
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+                <div className="flex flex-col items-center">
                   <Calendar className="w-3 h-3 text-muted-foreground" />
                 </div>
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+                <div className="flex flex-col items-center">
+                  <Music className="w-3 h-3 text-muted-foreground" />
+                </div>
+                <div className="flex flex-col items-center">
                   <Users className="w-3 h-3 text-muted-foreground" />
                 </div>
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center">
-                  <Heart className="w-3 h-3 text-muted-foreground" />
+                <div className="flex flex-col items-center">
+                  <MessageCircle className="w-3 h-3 text-muted-foreground" />
                 </div>
               </div>
             </div>
