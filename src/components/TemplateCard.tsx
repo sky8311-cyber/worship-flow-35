@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +73,7 @@ export const TemplateCard = ({
   onRefetch,
 }: TemplateCardProps) => {
   const { language } = useTranslation();
+  const { isSchedulerEnabled } = useAppSettings();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showDeleteTemplate, setShowDeleteTemplate] = useState(false);
@@ -165,8 +167,8 @@ export const TemplateCard = ({
                 </div>
               )}
 
-              {/* Recurring Info */}
-              {recurringSchedule && recurringSchedule.is_active ? (
+              {/* Recurring Info - only show if scheduler is enabled */}
+              {isSchedulerEnabled && recurringSchedule && recurringSchedule.is_active ? (
                 <div className="flex items-center gap-1.5 text-sm text-primary mb-2">
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>
@@ -181,12 +183,12 @@ export const TemplateCard = ({
                     )}
                   </span>
                 </div>
-              ) : (
+              ) : isSchedulerEnabled ? (
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
                   <Clock className="w-3.5 h-3.5" />
                   <span>{language === "ko" ? "반복 설정 없음" : "No recurring schedule"}</span>
                 </div>
-              )}
+              ) : null}
 
               {/* Components */}
               {template.template_components.length > 0 && (
@@ -236,14 +238,16 @@ export const TemplateCard = ({
                   <Pencil className="w-4 h-4 mr-2" />
                   {language === "ko" ? "템플릿 수정" : "Edit Template"}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={onEditRecurring}>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {recurringSchedule 
-                    ? (language === "ko" ? "반복 일정 수정" : "Edit Recurring")
-                    : (language === "ko" ? "반복 일정 설정" : "Set Recurring")
-                  }
-                </DropdownMenuItem>
-                {recurringSchedule && (
+                {isSchedulerEnabled && (
+                  <DropdownMenuItem onClick={onEditRecurring}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {recurringSchedule 
+                      ? (language === "ko" ? "반복 일정 수정" : "Edit Recurring")
+                      : (language === "ko" ? "반복 일정 설정" : "Set Recurring")
+                    }
+                  </DropdownMenuItem>
+                )}
+                {isSchedulerEnabled && recurringSchedule && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 

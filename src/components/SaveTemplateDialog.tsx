@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Save, Calendar, Clock } from "lucide-react";
+import { Save, Calendar, Clock, Lock } from "lucide-react";
 
 interface SaveTemplateDialogProps {
   open: boolean;
@@ -40,6 +41,7 @@ interface SaveTemplateDialogProps {
 export const SaveTemplateDialog = ({ open, onOpenChange, formData, components }: SaveTemplateDialogProps) => {
   const { user } = useAuth();
   const { language } = useTranslation();
+  const { isSchedulerEnabled } = useAppSettings();
   const queryClient = useQueryClient();
   
   const [templateName, setTemplateName] = useState(formData.service_name || "");
@@ -194,18 +196,28 @@ export const SaveTemplateDialog = ({ open, onOpenChange, formData, components }:
             />
           </div>
 
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox 
-              id="is-recurring" 
-              checked={isRecurring}
-              onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-            />
-            <Label htmlFor="is-recurring" className="cursor-pointer">
-              {language === "ko" ? "반복 일정으로 설정" : "Set as recurring"}
-            </Label>
-          </div>
+          {/* Recurring option - only show if scheduler feature is enabled */}
+          {isSchedulerEnabled ? (
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="is-recurring" 
+                checked={isRecurring}
+                onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
+              />
+              <Label htmlFor="is-recurring" className="cursor-pointer">
+                {language === "ko" ? "반복 일정으로 설정" : "Set as recurring"}
+              </Label>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pt-2 p-3 bg-muted/50 rounded-lg text-muted-foreground text-sm">
+              <Lock className="w-4 h-4" />
+              {language === "ko" 
+                ? "반복 일정 기능은 관리자가 활성화해야 사용할 수 있습니다"
+                : "Recurring schedule feature must be enabled by admin"}
+            </div>
+          )}
 
-          {isRecurring && (
+          {isRecurring && isSchedulerEnabled && (
             <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Calendar className="w-4 h-4" />
