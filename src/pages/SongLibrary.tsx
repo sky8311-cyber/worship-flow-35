@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
@@ -19,10 +19,13 @@ import { FloatingSearchButton } from "@/components/FloatingSearchButton";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSongCart } from "@/contexts/SongCartContext";
+import { useCrossCommunityMode } from "@/hooks/useCrossCommunityMode";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { Home } from "lucide-react";
@@ -38,6 +41,7 @@ const SongLibrary = () => {
   const { t } = useTranslation();
   const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
+  const { isFeatureEnabled: isCrossCommunityFeatureEnabled, isInCrossCommunityMode, toggleMode: toggleCrossCommunityMode } = useCrossCommunityMode();
   
   // Remember scroll position
   useScrollPosition("song-library");
@@ -499,8 +503,32 @@ const SongLibrary = () => {
 
         <Card className="shadow-md mb-6">
           <CardHeader className="relative">
-            {/* View Mode Toggle - Top Right Corner */}
-            <div className="absolute top-4 right-4 z-10">
+            {/* View Mode Toggle & Cross-Community Toggle - Top Right Corner */}
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+              {/* Cross-Community Toggle */}
+              {isCrossCommunityFeatureEnabled && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center gap-2 border rounded-md px-2 py-1.5 bg-card">
+                        <Globe className={cn("h-4 w-4", isInCrossCommunityMode ? "text-primary" : "text-muted-foreground")} />
+                        <Switch
+                          checked={isInCrossCommunityMode}
+                          onCheckedChange={toggleCrossCommunityMode}
+                          className="h-5 w-9"
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>{isInCrossCommunityMode 
+                        ? t("songLibrary.crossCommunity.enabled") 
+                        : t("songLibrary.crossCommunity.disabled")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              
+              {/* View Mode Toggle */}
               <div className="flex gap-1 border rounded-md p-1 bg-card">
                 <Button
                   variant={viewMode === "card" ? "secondary" : "ghost"}
@@ -666,9 +694,16 @@ const SongLibrary = () => {
             )}
 
             {/* Active filters display */}
-            {(selectedCategory !== "all" || selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0) && (
+            {(selectedCategory !== "all" || selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0 || isInCrossCommunityMode) && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">{t("songLibrary.activeFilters")}:</span>
+                {isInCrossCommunityMode && (
+                  <Badge variant="default" className="flex items-center gap-1 bg-primary/90">
+                    <Globe className="h-3 w-3" />
+                    {t("songLibrary.crossCommunity.label")}
+                    <X className="h-3 w-3 cursor-pointer" onClick={toggleCrossCommunityMode} />
+                  </Badge>
+                )}
                 {selectedCategory !== "all" && (
                   <Badge variant="secondary" className="flex items-center gap-1">
                     {selectedCategory}

@@ -981,6 +981,12 @@ export const translations = {
       activeFilters: "Active Filters",
       clearAllFilters: "Clear All Filters",
       filterByTags: "Filter by Tags",
+      crossCommunity: {
+        label: "Cross-Community",
+        tooltip: "View songs from all communities",
+        enabled: "Viewing all community songs",
+        disabled: "Viewing my community songs only",
+      },
     },
     songDialog: {
       addSong: "Add Song",
@@ -2672,6 +2678,12 @@ export const translations = {
       activeFilters: "적용된 필터",
       clearAllFilters: "모든 필터 해제",
       filterByTags: "태그로 필터",
+      crossCommunity: {
+        label: "커뮤니티 공유",
+        tooltip: "모든 커뮤니티의 곡 보기",
+        enabled: "전체 커뮤니티 곡 보기",
+        disabled: "내 커뮤니티 곡만 보기",
+      },
     },
     songDialog: {
       addSong: "곡 추가",
