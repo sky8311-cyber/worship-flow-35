@@ -1681,6 +1681,17 @@ export const translations = {
       freeForever: "Free forever",
       betaFree: "Free during beta",
     },
+    mobileApp: {
+      title: "K-Worship",
+      tagline: "Integrated App for Worship Teams",
+      description: "From worship setlist management to team collaboration, solve everything with one app.",
+      downloadIos: "App Store",
+      downloadAndroid: "Google Play",
+      comingSoon: "Coming Soon",
+      comingSoonMessage: "Coming soon! Stay tuned.",
+      webVersion: "Start with Web Version",
+      orDivider: "or",
+    },
   },
   ko: {
     common: {
@@ -3344,6 +3355,17 @@ export const translations = {
       yourCurrentPlan: "현재 플랜",
       freeForever: "영구 무료",
       betaFree: "베타 기간 무료",
+    },
+    mobileApp: {
+      title: "K-Worship",
+      tagline: "예배팀을 위한 통합 앱",
+      description: "예배 콘티 관리부터 팀 협업까지 하나의 앱으로 해결하세요.",
+      downloadIos: "App Store",
+      downloadAndroid: "Google Play",
+      comingSoon: "출시 예정",
+      comingSoonMessage: "곧 출시됩니다! 조금만 기다려주세요.",
+      webVersion: "웹 버전으로 시작하기",
+      orDivider: "또는",
     },
   },
 };

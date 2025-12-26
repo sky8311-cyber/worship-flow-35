@@ -36,6 +36,7 @@ import ChurchAccount from "./pages/ChurchAccount";
 import SeedHistory from "./pages/SeedHistory";
 import PublicBandView from "./pages/PublicBandView";
 import Settings from "./pages/Settings";
+import MobileAppLanding from "./pages/MobileAppLanding";
 import Help from "./pages/Help";
 
 const queryClient = new QueryClient();
@@ -71,8 +72,9 @@ const App = () => {
             <BrowserRouter>
             <ScrollToTop />
             <Routes>
-              {/* Public Landing Page */}
+              {/* Public Landing Pages */}
               <Route path="/" element={<Landing />} />
+              <Route path="/app" element={<MobileAppLanding />} />
               
               {/* Auth Routes */}
               <Route path="/signup" element={<SignUp />} />
