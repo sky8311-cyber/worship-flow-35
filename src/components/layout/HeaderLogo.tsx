@@ -4,15 +4,10 @@ import logoDesktop from "@/assets/kworship-logo-desktop.png";
 export function HeaderLogo() {
   return (
     <>
-      {/* Mobile: Left aligned */}
-      <div className="flex items-center md:hidden">
-        <img src={logoMobile} alt="K-Worship" className="h-12 cursor-pointer" />
-      </div>
-
-      {/* Desktop: Center aligned */}
-      <div className="hidden md:flex justify-center">
-        <img src={logoDesktop} alt="K-Worship" className="h-16 cursor-pointer" />
-      </div>
+      {/* Mobile/Tablet logo */}
+      <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden cursor-pointer" />
+      {/* Desktop logo */}
+      <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-16 cursor-pointer" />
     </>
   );
 }
