@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Play, Pause, Volume2, VolumeX, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface MetronomeProps {
   bpm: number | null;
@@ -12,6 +13,7 @@ interface MetronomeProps {
 }
 
 export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: MetronomeProps) => {
+  const { t } = useTranslation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [currentBeat, setCurrentBeat] = useState(0);
@@ -271,7 +273,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
             hasChanges && "bg-primary text-primary-foreground"
           )}
           onClick={handleSave}
-          title="Save BPM"
+          title={t("metronome.saveBpm")}
           disabled={!hasChanges}
         >
           <Check className="w-3.5 h-3.5" />
