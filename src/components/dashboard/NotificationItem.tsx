@@ -20,6 +20,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const [showLevelUpDialog, setShowLevelUpDialog] = useState(false);
 
   const isLevelUp = notification.type === "level_up";
+  const isCollaboratorInvited = notification.type === "collaborator_invited";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -55,6 +56,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       navigate("/songs");
     } else if (notification.related_type === "worship_set" && notification.related_id) {
       navigate(`/band-view/${notification.related_id}`);
+    } else if (notification.related_type === "service_set" && notification.related_id) {
+      // For collaborator invitations - navigate to set builder
+      navigate(`/set-builder/${notification.related_id}`);
     } else if (notification.related_type === "calendar_event" && notification.related_id) {
       navigate("/dashboard");
     } else if (notification.related_type === "member" && notification.related_id) {
@@ -79,6 +83,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isJoinRequest = notification.type === "join_request";
   const isJoinApproved = notification.type === "join_approved";
   const isJoinRejected = notification.type === "join_rejected";
+  const isCollaboratorInvite = notification.type === "collaborator_invited";
 
   return (
     <div
@@ -107,6 +112,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
           <Music className="h-5 w-5 text-primary" />
         </div>
       ) : isJoinRequest || isJoinApproved || isJoinRejected ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+          <Users className="h-5 w-5 text-primary" />
+        </div>
+      ) : isCollaboratorInvite ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
           <Users className="h-5 w-5 text-primary" />
         </div>

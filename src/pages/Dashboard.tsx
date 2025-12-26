@@ -161,10 +161,25 @@ const Dashboard = () => {
   const { data: communitiesData } = useUserCommunities();
   const communityIds = communitiesData?.communityIds || [];
 
+  // Fetch collaborated set IDs
+  const { data: collaboratedSetIds = [] } = useQuery({
+    queryKey: ["collaborated-set-ids", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("set_collaborators")
+        .select("service_set_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return data?.map(c => c.service_set_id) || [];
+    },
+    enabled: !!user,
+  });
+
   // Fetch upcoming worship sets with role-based filtering
-  // Show max 4 sets: all drafts (any date) + published (future only)
+  // Show max 4 sets: all drafts (any date) + published (future only) + collaborated sets
   const { data: upcomingSets, isLoading } = useQuery({
-    queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, communityIds],
+    queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, communityIds, collaboratedSetIds],
     queryFn: async () => {
       if (!user || communityIds.length === 0) return [];
       
@@ -178,15 +193,28 @@ const Dashboard = () => {
         .in("community_id", communityIds);
       
       // Role-based filtering with future date filtering for published sets
+      // Also include sets where user is a collaborator
       if (isAdmin) {
         // Admin sees all drafts + published sets from today onwards
-        query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${localToday})`);
+        if (collaboratedSetIds.length > 0) {
+          query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${localToday}),id.in.(${collaboratedSetIds.join(",")})`);
+        } else {
+          query = query.or(`status.eq.draft,and(status.eq.published,date.gte.${localToday})`);
+        }
       } else if (isWorshipLeader || isCommunityLeaderInAnyCommunity) {
-        // Worship Leader & Community Leader: show own drafts + published sets from today onwards
-        query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${localToday})`);
+        // Worship Leader & Community Leader: show own drafts + published sets + collaborated sets
+        if (collaboratedSetIds.length > 0) {
+          query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${localToday}),id.in.(${collaboratedSetIds.join(",")})`);
+        } else {
+          query = query.or(`and(status.eq.draft,created_by.eq.${user.id}),and(status.eq.published,date.gte.${localToday})`);
+        }
       } else {
-        // Team Member: show ONLY published sets from today onwards
-        query = query.eq("status", "published").gte("date", localToday);
+        // Team Member: show published sets + collaborated sets
+        if (collaboratedSetIds.length > 0) {
+          query = query.or(`and(status.eq.published,date.gte.${localToday}),id.in.(${collaboratedSetIds.join(",")})`);
+        } else {
+          query = query.eq("status", "published").gte("date", localToday);
+        }
       }
       
       const { data, error } = await query

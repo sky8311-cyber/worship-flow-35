@@ -157,23 +157,17 @@ export const CollaboratorsHeader = ({
 
         {/* Add collaborator button */}
         {canManage && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 w-7 p-0 rounded-full"
-                  onClick={() => setShowAddDialog(true)}
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("setBuilder.addCollaborator")}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 px-2"
+            onClick={() => setShowAddDialog(true)}
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">
+              {t("setBuilder.addCollaborator")}
+            </span>
+          </Button>
         )}
 
         {/* Show sheet trigger when there are collaborators but user can't manage */}

@@ -17,7 +17,7 @@ export interface Notification {
 }
 
 // Chat-related notification types
-const CHAT_NOTIFICATION_TYPES = ['post_like', 'post_comment', 'new_member', 'invitation_accepted', 'birthday'];
+const CHAT_NOTIFICATION_TYPES = ['post_like', 'post_comment', 'new_member', 'invitation_accepted', 'birthday', 'collaborator_invited'];
 
 export function useNotifications() {
   const { user, isAdmin, isWorshipLeader } = useAuth();
