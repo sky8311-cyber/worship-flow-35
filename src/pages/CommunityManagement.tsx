@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, CalendarClock } from "lucide-react";
 import { RoleBadge } from "@/components/RoleBadge";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
+import { CommunityRecurringCalendarTab } from "@/components/community/CommunityRecurringCalendarTab";
 import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +100,9 @@ export default function CommunityManagement() {
   
   // Show rotation tab but gate the content
   const showRotationTab = !!community?.church_account_id;
+
+  // Check if scheduler feature is enabled
+  const { isSchedulerEnabled } = useAppSettings();
 
   // Real-time subscription for community members updates
   useEffect(() => {
@@ -774,6 +779,12 @@ export default function CommunityManagement() {
                     {!hasRotationFeature && <Lock className="w-3 h-3 ml-1" />}
                   </TabsTrigger>
                 )}
+                {isSchedulerEnabled && (
+                  <TabsTrigger value="calendar" className="gap-2">
+                    <CalendarClock className="w-4 h-4" />
+                    {t("recurringCalendar.tabLabel")}
+                  </TabsTrigger>
+                )}
                 {canManage && (
                   <TabsTrigger value="settings" className="gap-2">
                     <Settings className="w-4 h-4" />
@@ -1335,6 +1346,13 @@ export default function CommunityManagement() {
                       </CardContent>
                     </Card>
                   )}
+                </TabsContent>
+              )}
+
+              {/* Calendar Tab - Recurring schedules */}
+              {isSchedulerEnabled && id && (
+                <TabsContent value="calendar">
+                  <CommunityRecurringCalendarTab communityId={id} />
                 </TabsContent>
               )}
 
