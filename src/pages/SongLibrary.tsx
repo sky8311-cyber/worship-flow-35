@@ -291,6 +291,10 @@ const SongLibrary = () => {
   };
 
   const handleExportCSV = () => {
+    if (!isAdmin) {
+      toast.error("관리자만 데이터를 내보낼 수 있습니다");
+      return;
+    }
     if (!songs || songs.length === 0) return;
 
     // Export all fields including id for bulk update support
@@ -550,16 +554,18 @@ const SongLibrary = () => {
                     >
                       <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleExportCSV}
-                      disabled={!songs || songs.length === 0}
-                      className="h-8 w-8"
-                      title={t("songLibrary.exportCSV")}
-                    >
-                      <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={handleExportCSV}
+                        disabled={!songs || songs.length === 0}
+                        className="h-8 w-8"
+                        title={t("songLibrary.exportCSV")}
+                      >
+                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="icon"
