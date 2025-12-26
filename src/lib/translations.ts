@@ -236,6 +236,7 @@ export const translations = {
       alreadyRegistered: "This email is already registered. Redirecting to login...",
       alreadyRegisteredLoggedIn: "You already have an account. We've logged you in with that account.",
       accountCreated: "Account created successfully! Redirecting to dashboard...",
+      signupError: "Failed to get user after signup",
     loginPage: {
       headline: "For Worship Communities",
       subheadline: "Integrated Worship Leader Platform",
@@ -1164,6 +1165,15 @@ export const translations = {
         link: "Insert Link",
         image: "Insert Image",
       },
+      searchMembers: "Search members...",
+      noMembersAvailable: "No members available",
+      endEditing: "End Editing",
+      shareLink: "Share",
+    },
+    metronome: {
+      saveBpm: "Save BPM",
+      bpm: "BPM",
+      adjustBpm: "Adjust BPM",
     },
     songSelector: {
       title: "Select Song",
@@ -1929,6 +1939,7 @@ export const translations = {
       alreadyRegistered: "이미 가입된 이메일입니다. 로그인 페이지로 이동합니다...",
       alreadyRegisteredLoggedIn: "이미 가입된 계정입니다. 해당 계정으로 로그인되었습니다.",
       accountCreated: "계정이 생성되었습니다! 대시보드로 이동합니다...",
+      signupError: "회원가입 후 사용자 정보를 가져오지 못했습니다",
     loginPage: {
       headline: "예배 공동체를 위한",
       subheadline: "워십리더 통합 플랫폼",
@@ -2839,6 +2850,15 @@ export const translations = {
         link: "링크 삽입",
         image: "이미지 삽입",
       },
+      searchMembers: "멤버 검색...",
+      noMembersAvailable: "선택 가능한 멤버가 없습니다",
+      endEditing: "편집 종료",
+      shareLink: "링크공유",
+    },
+    metronome: {
+      saveBpm: "BPM 저장",
+      bpm: "BPM",
+      adjustBpm: "BPM 조정",
     },
     songSelector: {
       title: "곡 선택",

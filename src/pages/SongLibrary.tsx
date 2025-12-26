@@ -488,7 +488,7 @@ const SongLibrary = () => {
                     setEditingSetContext(null);
                     navigate(`/set-builder/${setId}`);
                   }}
-                  title="편집 종료"
+                  title={t("setBuilder.endEditing")}
                 >
                   <X className="h-3 w-3" />
                 </Button>

@@ -131,7 +131,7 @@ const InvitedSignUp = () => {
     if (!newUser) {
       toast({
         title: t("auth.error"),
-        description: "Failed to get user after signup",
+        description: t("auth.signupError"),
         variant: "destructive",
       });
       setLoading(false);

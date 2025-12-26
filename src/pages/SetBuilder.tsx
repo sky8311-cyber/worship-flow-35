@@ -922,7 +922,7 @@ const SetBuilder = () => {
               disabled={saveSetMutation.isPending}
             >
               <Save className="w-4 h-4 shrink-0" />
-              <span className="text-xs sm:text-sm">{saveSetMutation.isPending ? "저장 중..." : "저장"}</span>
+              <span className="text-xs sm:text-sm">{saveSetMutation.isPending ? t("common.saving") : t("common.save")}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
@@ -953,16 +953,16 @@ const SetBuilder = () => {
               onClick={handlePublishToggle}
               disabled={saveSetMutation.isPending}
             >
-              {status === "draft" ? (
-                <>
-                  <Upload className="w-4 h-4 shrink-0" />
-                  <span className="text-xs sm:text-sm">게시하기</span>
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  <span className="text-xs sm:text-sm">게시취소</span>
-                </>
+            {status === "draft" ? (
+              <>
+                <Upload className="w-4 h-4 shrink-0" />
+                <span className="text-xs sm:text-sm">{t("setBuilder.publish")}</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="w-4 h-4 shrink-0" />
+                <span className="text-xs sm:text-sm">{t("setBuilder.unpublish")}</span>
+              </>
               )}
             </Button>
           </TooltipTrigger>
@@ -978,7 +978,7 @@ const SetBuilder = () => {
       {id && (
         <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
           <Share2 className="w-4 h-4 shrink-0" />
-          <span className="text-xs sm:text-sm">{language === "ko" ? "링크공유" : "Share"}</span>
+          <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
         </Button>
       )}
     </div>

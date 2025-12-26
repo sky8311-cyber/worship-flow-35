@@ -169,7 +169,7 @@ export const AddCollaboratorDialog = ({
             <div className="relative mb-2">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search members..."
+                placeholder={t("setBuilder.searchMembers")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -197,7 +197,7 @@ export const AddCollaboratorDialog = ({
                   ))
                 ) : (
                   <div className="p-2 text-sm text-muted-foreground">
-                    No members available
+                    {t("setBuilder.noMembersAvailable")}
                   </div>
                 )}
               </SelectContent>
