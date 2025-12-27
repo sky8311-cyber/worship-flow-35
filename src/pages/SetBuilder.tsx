@@ -35,7 +35,7 @@ import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetP
 import { SetHistoryTab } from "@/components/worship-set/SetHistoryTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
-import { useAutoSaveDraft, clearLastEditedDraft, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
+import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 
 // Union type for items in the worship set (songs and components)
@@ -70,6 +70,7 @@ const SetBuilder = () => {
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
   const localChangeIdsRef = useRef<Set<string>>(new Set());
+  const suppressAutoSaveRef = useRef(false); // Suppress auto-save during revert
   const prevIdRef = useRef<string | undefined>(undefined);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
@@ -244,7 +245,7 @@ const SetBuilder = () => {
     formData,
     items,
     status,
-    enabled: status === "draft" && isExistingDataLoaded,
+    enabled: status === "draft" && isExistingDataLoaded && !suppressAutoSaveRef.current,
     isDataLoaded: isExistingDataLoaded,
     localChangeIdsRef,
     onDbIdsUpdated: handleDbIdsUpdated,
@@ -675,57 +676,18 @@ const SetBuilder = () => {
         if (error) throw error;
       }
 
-      // Delete existing set_songs and set_components
+      // Use UPSERT approach instead of DELETE + INSERT to preserve dbIds
       if (setId) {
-        await supabase.from("set_songs").delete().eq("service_set_id", setId);
-        await supabase.from("set_components").delete().eq("service_set_id", setId);
-      }
-
-      // Separate items into songs and components with positions
-      const songsData: any[] = [];
-      const componentsData: any[] = [];
-      
-      currentItems.forEach((item, index) => {
-        const position = index + 1;
-        if (item.type === "song") {
-          songsData.push({
-            service_set_id: setId,
-            song_id: item.data.song_id || item.data.song?.id,
-            position,
-            key: item.data.key || item.data.song?.default_key,
-            key_change_to: item.data.key_change_to || null,
-            custom_notes: item.data.custom_notes || "",
-            override_score_file_url: item.data.override_score_file_url || null,
-            override_youtube_url: item.data.override_youtube_url || null,
-            lyrics: item.data.lyrics || null,
-            bpm: item.data.bpm || null,
-            time_signature: item.data.time_signature || null,
-            energy_level: item.data.energy_level || null,
-          });
-        } else {
-          componentsData.push({
-            service_set_id: setId,
-            position,
-            component_type: item.data.component_type,
-            label: item.data.label,
-            notes: item.data.notes || null,
-            duration_minutes: item.data.duration_minutes || null,
-            assigned_to: item.data.assigned_to || null,
-            content: item.data.content || null,
-          });
+        const dbIdUpdates = await upsertSongsAndComponents(
+          setId, 
+          currentItems, 
+          localChangeIdsRef
+        );
+        
+        // Update items with new dbIds
+        if (dbIdUpdates.length > 0) {
+          handleDbIdsUpdated(dbIdUpdates);
         }
-      });
-
-      // Insert songs
-      if (songsData.length > 0) {
-        const { error } = await supabase.from("set_songs").insert(songsData);
-        if (error) throw error;
-      }
-
-      // Insert components
-      if (componentsData.length > 0) {
-        const { error } = await supabase.from("set_components").insert(componentsData);
-        if (error) throw error;
       }
 
       return setId;
@@ -916,6 +878,82 @@ const SetBuilder = () => {
     if (index >= items.length - 1) return;
     setItems(prev => arrayMove(prev, index, index + 1));
   };
+
+  // Handle revert complete - reconstruct items with new dbIds from DB
+  const handleRevertComplete = useCallback(async (restoredSongs: any[], restoredComponents: any[]) => {
+    // Suppress auto-save while we rebuild items state
+    suppressAutoSaveRef.current = true;
+    
+    try {
+      // Fetch full song data for restored songs
+      const songIds = restoredSongs.map(s => s.song_id);
+      let songsData: any[] = [];
+      
+      if (songIds.length > 0) {
+        const { data } = await supabase
+          .from("songs")
+          .select("*, song_scores(id, key, file_url, page_number, position)")
+          .in("id", songIds);
+        songsData = data || [];
+      }
+      
+      const songMap = new Map(songsData.map(s => [s.id, s]));
+      
+      // Build items array with proper dbIds
+      const restoredItems: SetItem[] = [];
+      
+      // Add songs
+      restoredSongs.forEach(ss => {
+        const song = songMap.get(ss.song_id);
+        restoredItems.push({
+          type: "song" as const,
+          id: `song-${ss.id}`,
+          dbId: ss.id,
+          data: {
+            ...ss,
+            song,
+            songs: song,
+          },
+        });
+      });
+      
+      // Add components
+      restoredComponents.forEach(comp => {
+        restoredItems.push({
+          type: "component" as const,
+          id: `component-${comp.id}`,
+          dbId: comp.id,
+          data: comp,
+        });
+      });
+      
+      // Sort by position
+      restoredItems.sort((a, b) => (a.data.position || 0) - (b.data.position || 0));
+      
+      // Mark all new IDs as local changes to prevent realtime handler from processing them
+      restoredSongs.forEach(s => localChangeIdsRef.current.add(s.id));
+      restoredComponents.forEach(c => localChangeIdsRef.current.add(c.id));
+      
+      // Reset initialization flag to allow proper state update
+      setHasInitializedItems(false);
+      
+      // Update items state
+      setItems(restoredItems);
+      
+      // Re-enable initialization after state update
+      setTimeout(() => {
+        setHasInitializedItems(true);
+        suppressAutoSaveRef.current = false;
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error rebuilding items after revert:', error);
+      suppressAutoSaveRef.current = false;
+      // Fallback: refetch queries
+      queryClient.invalidateQueries({ queryKey: ["set-songs", id] });
+      queryClient.invalidateQueries({ queryKey: ["set-components", id] });
+    }
+  }, [id, queryClient]);
 
   const handleLogout = async () => {
     await signOut();
@@ -1452,7 +1490,7 @@ const SetBuilder = () => {
                 
                 <TabsContent value="history" className="mt-0">
                   <CardContent className="pt-4">
-                    <SetHistoryTab setId={id} />
+                    <SetHistoryTab setId={id} onRevertComplete={handleRevertComplete} />
                   </CardContent>
                 </TabsContent>
               </Tabs>

@@ -244,7 +244,8 @@ export const useAutoSaveDraft = ({
 
 // UPSERT helper function - Updates existing, inserts new, deletes removed
 // Returns array of DbIdUpdate for newly inserted items
-async function upsertSongsAndComponents(
+// Exported for use in saveSetMutation as well
+export async function upsertSongsAndComponents(
   setId: string,
   items: SetItem[],
   localChangeIdsRef?: React.MutableRefObject<Set<string>>
