@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -32,9 +32,17 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   // CRITICAL: Capture songs in state when dialog opens to prevent closure issues
   const [capturedSongs, setCapturedSongs] = useState<any[]>([]);
   
+  // Track previous open state to detect open transitions
+  const wasOpenRef = useRef(false);
+  
   useEffect(() => {
-    if (open) {
-      // Re-read editing set ID when dialog opens (critical for sessionStorage changes)
+    // Only capture songs when dialog OPENS (false → true transition)
+    if (open && !wasOpenRef.current) {
+      console.log("=== AddToSetDialog Opening ===");
+      console.log("songs prop:", songs);
+      console.log("song prop:", song);
+      
+      // Re-read editing set ID when dialog opens
       const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
       if (match) {
         setCurrentEditingSetId(match[1]);
@@ -45,10 +53,14 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         setSelectedOption(storedId || "new");
       }
       
-      // Capture songs when dialog opens - this prevents race conditions
+      // Capture songs ONLY on open transition - prevents re-capture issues
       const songsToCapture = songs || (song ? [song] : []);
-      setCapturedSongs([...songsToCapture]); // Create a copy
+      console.log("Songs to capture:", songsToCapture);
+      setCapturedSongs([...songsToCapture]);
     }
+    
+    // Update ref AFTER processing
+    wasOpenRef.current = open;
   }, [open, songs, song, location.pathname]);
   
   const { data: sets } = useQuery({
@@ -171,7 +183,10 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         : `${count}곡이 워십세트에 추가되었습니다`;
       toast.success(message);
       
+      // Invalidate all relevant queries including set-songs and set-components
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
+      queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
+      queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       

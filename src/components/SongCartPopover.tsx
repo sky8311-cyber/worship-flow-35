@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Music, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,6 +14,17 @@ export const SongCartPopover = () => {
   const { t } = useTranslation();
   const [isAddToSetOpen, setIsAddToSetOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  
+  // Stabilize songs array to prevent unnecessary re-renders and useEffect triggers
+  const songsForDialog = useMemo(() => 
+    cartItems.map(item => ({
+      id: item.id,
+      title: item.title,
+      artist: item.artist,
+      default_key: item.default_key
+    })), 
+    [cartItems]
+  );
 
   if (cartCount === 0) return null;
 
@@ -92,12 +103,7 @@ export const SongCartPopover = () => {
       <AddToSetDialog
         open={isAddToSetOpen}
         onOpenChange={setIsAddToSetOpen}
-        songs={cartItems.map(item => ({
-          id: item.id,
-          title: item.title,
-          artist: item.artist,
-          default_key: item.default_key
-        }))}
+        songs={songsForDialog}
         onSuccess={handleAddToSetSuccess}
       />
     </>
