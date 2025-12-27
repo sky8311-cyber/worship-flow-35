@@ -21,6 +21,7 @@ interface SetItem {
   type: "song" | "component";
   data: any;
   id: string;
+  dbId?: string; // Database ID for tracking existing records
 }
 
 interface UseAutoSaveDraftOptions {
@@ -29,11 +30,12 @@ interface UseAutoSaveDraftOptions {
   items: SetItem[];
   status: "draft" | "published";
   enabled?: boolean;
-  isDataLoaded?: boolean; // For existing sets, indicates if songs/components are loaded
+  isDataLoaded?: boolean;
+  localChangeIdsRef?: React.MutableRefObject<Set<string>>; // For realtime sync
 }
 
 const LAST_EDITED_DRAFT_KEY = "lastEditedDraftId";
-const AUTO_SAVE_DELAY = 2000; // 2 seconds
+const AUTO_SAVE_DELAY = 2000;
 
 export const useAutoSaveDraft = ({
   id,
@@ -42,6 +44,7 @@ export const useAutoSaveDraft = ({
   status,
   enabled = true,
   isDataLoaded = true,
+  localChangeIdsRef,
 }: UseAutoSaveDraftOptions) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -49,13 +52,11 @@ export const useAutoSaveDraft = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   
-  // Refs to track changes
   const formDataRef = useRef(formData);
   const itemsRef = useRef(items);
   const initialLoadRef = useRef(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Keep refs in sync
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
@@ -64,10 +65,9 @@ export const useAutoSaveDraft = ({
     itemsRef.current = items;
   }, [items]);
 
-  // Auto-save mutation
+  // UPSERT-based auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async () => {
-      // Validate user is logged in with valid UUID
       if (!user?.id) {
         console.log('AutoSave: Skipping - no user id');
         return null;
@@ -76,16 +76,12 @@ export const useAutoSaveDraft = ({
       const currentForm = formDataRef.current;
       const currentItems = itemsRef.current;
 
-      // Only save drafts, not published sets
       if (status !== "draft") return null;
-      
-      // Must have community_id to save
       if (!currentForm.community_id) return null;
 
-      // CRITICAL: When editing existing set, prevent saving with empty items
-      // This prevents data loss when navigating to a set before data loads
+      // Prevent saving with empty items for existing sets
       if (id && currentItems.length === 0) {
-        console.log('AutoSave: Skipping - editing existing set with empty items (data not loaded yet)');
+        console.log('AutoSave: Skipping - editing existing set with empty items');
         return null;
       }
 
@@ -126,51 +122,9 @@ export const useAutoSaveDraft = ({
         if (error) throw error;
       }
 
-      // Save songs and components
+      // UPSERT songs and components instead of DELETE + INSERT
       if (setId) {
-        await supabase.from("set_songs").delete().eq("service_set_id", setId);
-        await supabase.from("set_components").delete().eq("service_set_id", setId);
-
-        const songsData: any[] = [];
-        const componentsData: any[] = [];
-
-        currentItems.forEach((item, index) => {
-          const position = index + 1;
-          if (item.type === "song") {
-            songsData.push({
-              service_set_id: setId,
-              song_id: item.data.song_id || item.data.song?.id,
-              position,
-              key: item.data.key || item.data.song?.default_key,
-              key_change_to: item.data.key_change_to || null,
-              custom_notes: item.data.custom_notes || "",
-              override_score_file_url: item.data.override_score_file_url || null,
-              override_youtube_url: item.data.override_youtube_url || null,
-              lyrics: item.data.lyrics || null,
-              bpm: item.data.bpm || null,
-              time_signature: item.data.time_signature || null,
-              energy_level: item.data.energy_level || null,
-            });
-          } else {
-            componentsData.push({
-              service_set_id: setId,
-              position,
-              component_type: item.data.component_type,
-              label: item.data.label,
-              notes: item.data.notes || null,
-              duration_minutes: item.data.duration_minutes || null,
-              assigned_to: item.data.assigned_to || null,
-              content: item.data.content || null,
-            });
-          }
-        });
-
-        if (songsData.length > 0) {
-          await supabase.from("set_songs").insert(songsData);
-        }
-        if (componentsData.length > 0) {
-          await supabase.from("set_components").insert(componentsData);
-        }
+        await upsertSongsAndComponents(setId, currentItems, localChangeIdsRef);
       }
 
       return setId;
@@ -182,11 +136,7 @@ export const useAutoSaveDraft = ({
       if (setId) {
         setHasUnsavedChanges(false);
         setLastSavedAt(new Date());
-        
-        // Store last edited draft ID
         localStorage.setItem(LAST_EDITED_DRAFT_KEY, setId);
-        
-        // Invalidate draft count query
         queryClient.invalidateQueries({ queryKey: ["user-draft-count"] });
       }
     },
@@ -195,22 +145,18 @@ export const useAutoSaveDraft = ({
     },
   });
 
-  // Debounced auto-save trigger
   const triggerAutoSave = useCallback(() => {
     if (!enabled || status !== "draft") return;
     
-    // Don't trigger auto-save if data hasn't loaded yet for existing sets
     if (!isDataLoaded) {
       console.log('AutoSave: Skipping trigger - data not loaded yet');
       return;
     }
     
-    // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
 
-    // Set new timeout
     saveTimeoutRef.current = setTimeout(() => {
       if (formDataRef.current.community_id) {
         autoSaveMutation.mutate();
@@ -218,29 +164,24 @@ export const useAutoSaveDraft = ({
     }, AUTO_SAVE_DELAY);
   }, [enabled, status, isDataLoaded, autoSaveMutation]);
 
-  // Track changes to formData and items
   useEffect(() => {
-    // Skip initial load
     if (initialLoadRef.current) {
       initialLoadRef.current = false;
       return;
     }
 
-    // Only track changes for draft sets
     if (status !== "draft" || !enabled) return;
 
     setHasUnsavedChanges(true);
     triggerAutoSave();
   }, [formData, items, status, enabled, triggerAutoSave]);
 
-  // Store last edited draft ID when editing existing set
   useEffect(() => {
     if (id && status === "draft") {
       localStorage.setItem(LAST_EDITED_DRAFT_KEY, id);
     }
   }, [id, status]);
 
-  // Cleanup on unmount - save any pending changes
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) {
@@ -249,7 +190,6 @@ export const useAutoSaveDraft = ({
     };
   }, []);
 
-  // Clear last edited draft when set is published
   useEffect(() => {
     if (status === "published" && id) {
       const lastEditedId = localStorage.getItem(LAST_EDITED_DRAFT_KEY);
@@ -259,7 +199,6 @@ export const useAutoSaveDraft = ({
     }
   }, [status, id]);
 
-  // Force save function for manual triggers (like page leave)
   const forceSave = useCallback(async () => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
@@ -279,12 +218,132 @@ export const useAutoSaveDraft = ({
   };
 };
 
-// Helper to get last edited draft ID
+// UPSERT helper function - Updates existing, inserts new, deletes removed
+async function upsertSongsAndComponents(
+  setId: string,
+  items: SetItem[],
+  localChangeIdsRef?: React.MutableRefObject<Set<string>>
+) {
+  // 1. Fetch current songs and components from DB
+  const [{ data: currentSongs }, { data: currentComponents }] = await Promise.all([
+    supabase.from("set_songs").select("id").eq("service_set_id", setId),
+    supabase.from("set_components").select("id").eq("service_set_id", setId),
+  ]);
+
+  const currentSongIds = new Set((currentSongs || []).map(s => s.id));
+  const currentComponentIds = new Set((currentComponents || []).map(c => c.id));
+
+  // 2. Categorize items
+  const songsToUpsert: any[] = [];
+  const componentsToUpsert: any[] = [];
+  const localSongDbIds = new Set<string>();
+  const localComponentDbIds = new Set<string>();
+
+  items.forEach((item, index) => {
+    const position = index + 1;
+
+    if (item.type === "song") {
+      const songData = {
+        service_set_id: setId,
+        song_id: item.data.song_id || item.data.song?.id,
+        position,
+        key: item.data.key || item.data.song?.default_key,
+        key_change_to: item.data.key_change_to || null,
+        custom_notes: item.data.custom_notes || "",
+        override_score_file_url: item.data.override_score_file_url || null,
+        override_youtube_url: item.data.override_youtube_url || null,
+        lyrics: item.data.lyrics || null,
+        bpm: item.data.bpm || null,
+        time_signature: item.data.time_signature || null,
+        energy_level: item.data.energy_level || null,
+      };
+
+      if (item.dbId) {
+        // Existing song - update
+        songsToUpsert.push({ id: item.dbId, ...songData });
+        localSongDbIds.add(item.dbId);
+        localChangeIdsRef?.current.add(item.dbId);
+      } else {
+        // New song - insert (will get ID assigned)
+        songsToUpsert.push(songData);
+      }
+    } else {
+      const componentData = {
+        service_set_id: setId,
+        position,
+        component_type: item.data.component_type,
+        label: item.data.label,
+        notes: item.data.notes || null,
+        duration_minutes: item.data.duration_minutes || null,
+        assigned_to: item.data.assigned_to || null,
+        content: item.data.content || null,
+      };
+
+      if (item.dbId) {
+        // Existing component - update
+        componentsToUpsert.push({ id: item.dbId, ...componentData });
+        localComponentDbIds.add(item.dbId);
+        localChangeIdsRef?.current.add(item.dbId);
+      } else {
+        // New component - insert
+        componentsToUpsert.push(componentData);
+      }
+    }
+  });
+
+  // 3. Delete songs/components that are no longer in the local list
+  const songIdsToDelete = [...currentSongIds].filter(id => !localSongDbIds.has(id));
+  const componentIdsToDelete = [...currentComponentIds].filter(id => !localComponentDbIds.has(id));
+
+  // Mark deleted items for realtime skip
+  songIdsToDelete.forEach(id => localChangeIdsRef?.current.add(id));
+  componentIdsToDelete.forEach(id => localChangeIdsRef?.current.add(id));
+
+  // 4. Execute deletions
+  if (songIdsToDelete.length > 0) {
+    await supabase.from("set_songs").delete().in("id", songIdsToDelete);
+  }
+  if (componentIdsToDelete.length > 0) {
+    await supabase.from("set_components").delete().in("id", componentIdsToDelete);
+  }
+
+  // 5. Upsert songs and components
+  const songsWithId = songsToUpsert.filter(s => s.id);
+  const songsWithoutId = songsToUpsert.filter(s => !s.id);
+
+  // Update existing songs
+  for (const song of songsWithId) {
+    const { id, ...updateData } = song;
+    await supabase.from("set_songs").update(updateData).eq("id", id);
+  }
+  
+  // Insert new songs
+  if (songsWithoutId.length > 0) {
+    const { data } = await supabase.from("set_songs").insert(songsWithoutId).select("id");
+    data?.forEach(row => localChangeIdsRef?.current.add(row.id));
+  }
+
+  // Components
+  const componentsWithId = componentsToUpsert.filter(c => c.id);
+  const componentsWithoutId = componentsToUpsert.filter(c => !c.id);
+
+  // Update existing components
+  for (const comp of componentsWithId) {
+    const { id, ...updateData } = comp;
+    await supabase.from("set_components").update(updateData).eq("id", id);
+  }
+  
+  // Insert new components
+  if (componentsWithoutId.length > 0) {
+    const { data } = await supabase.from("set_components").insert(componentsWithoutId).select("id");
+    data?.forEach(row => localChangeIdsRef?.current.add(row.id));
+  }
+}
+
 export const getLastEditedDraftId = () => {
   return localStorage.getItem(LAST_EDITED_DRAFT_KEY);
 };
 
-// Helper to clear last edited draft
 export const clearLastEditedDraft = () => {
   localStorage.removeItem(LAST_EDITED_DRAFT_KEY);
 };
