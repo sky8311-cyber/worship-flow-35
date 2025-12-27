@@ -37,8 +37,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
-import { useSetEditorPresence } from "@/hooks/useSetEditorPresence";
-import { AlertTriangle } from "lucide-react";
+import { useSetEditLock } from "@/hooks/useSetEditLock";
+import { AlertTriangle, Edit2, Eye } from "lucide-react";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -85,13 +85,27 @@ const SetBuilder = () => {
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Multi-tab/device editing detection
-  const { otherEditors, isBlocked, blockReason } = useSetEditorPresence(id);
+  // Smart edit lock - replaces old presence-based system
+  const { 
+    lockStatus, 
+    lockHolder, 
+    isEditMode, 
+    isAcquiring, 
+    acquireLock, 
+    releaseLock,
+    showWelcomeMessage,
+    dismissWelcomeMessage,
+    inactivityWarning,
+    sessionTimeRemaining
+  } = useSetEditLock(id);
   
-  // Debug logging for presence
+  // Derived state for backwards compatibility
+  const isBlocked = !isEditMode && lockStatus === "locked_by_other";
+  
+  // Debug logging for edit lock
   useEffect(() => {
-    console.log("[SetBuilder] Presence state - otherEditors:", otherEditors, "isBlocked:", isBlocked, "blockReason:", blockReason);
-  }, [otherEditors, isBlocked, blockReason]);
+    console.log("[SetBuilder] EditLock state - lockStatus:", lockStatus, "isEditMode:", isEditMode, "lockHolder:", lockHolder);
+  }, [lockStatus, isEditMode, lockHolder]);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
@@ -834,12 +848,9 @@ const SetBuilder = () => {
   };
 
   const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
-    // Block if another tab is editing
-    if (isBlocked) {
-      const message = blockReason === "local_tab"
-        ? "이 브라우저의 다른 탭에서 편집 중입니다. 다른 탭을 닫고 새로고침하세요."
-        : "다른 기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다.";
-      toast.error(language === "ko" ? message : "Another tab/device is editing this set. You cannot edit here.");
+    // Block if not in edit mode
+    if (!isEditMode) {
+      toast.error(language === "ko" ? "편집 모드가 아닙니다. 편집 버튼을 눌러주세요." : "Not in edit mode. Please click the Edit button.");
       return;
     }
 
@@ -862,12 +873,9 @@ const SetBuilder = () => {
   };
 
   const handleAddComponent = (type: WorshipComponentType, customLabel?: string) => {
-    // Block if another tab is editing
-    if (isBlocked) {
-      const message = blockReason === "local_tab"
-        ? "이 브라우저의 다른 탭에서 편집 중입니다. 다른 탭을 닫고 새로고침하세요."
-        : "다른 기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다.";
-      toast.error(language === "ko" ? message : "Another tab/device is editing this set. You cannot edit here.");
+    // Block if not in edit mode
+    if (!isEditMode) {
+      toast.error(language === "ko" ? "편집 모드가 아닙니다. 편집 버튼을 눌러주세요." : "Not in edit mode. Please click the Edit button.");
       return;
     }
 
@@ -1229,39 +1237,52 @@ const SetBuilder = () => {
         {/* Action Buttons Component */}
         {renderActionButtons()}
 
-        {/* Multi-tab editing warning - show when blocked OR when other editors detected */}
-        {(isBlocked || otherEditors.length > 0) && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {isBlocked && blockReason === "local_tab" ? (
-                language === "ko" 
-                  ? "⚠️ 이 브라우저의 다른 탭에서 편집 중입니다. 모든 편집이 차단됩니다. 다른 탭을 닫고 새로고침하세요."
-                  : "⚠️ Another tab in this browser is editing. All editing is blocked. Close other tabs and refresh."
-              ) : isBlocked && blockReason === "remote_presence" ? (
-                language === "ko" 
-                  ? `⚠️ 다른 기기에서 편집 중: ${otherEditors.map(e => e.userName).join(", ")} - 모든 편집이 차단됩니다.`
-                  : `⚠️ Other devices editing: ${otherEditors.map(e => e.userName).join(", ")} - All editing is blocked.`
-              ) : otherEditors.length > 0 ? (
-                language === "ko" 
-                  ? `다른 사용자 감지: ${otherEditors.map(e => e.userName).join(", ")}`
-                  : `Other users detected: ${otherEditors.map(e => e.userName).join(", ")}`
-              ) : null}
+        {/* Smart Edit Mode Banner */}
+        {showWelcomeMessage && isEditMode && (
+          <Alert className="mb-4 bg-primary/10 border-primary/20">
+            <Edit2 className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                {language === "ko" 
+                  ? "✨ 편집 모드입니다. 변경사항은 자동 저장됩니다. 다른 탭에서 이 세트를 열면 현재 세션이 자동으로 저장되고 종료됩니다."
+                  : "✨ You're in edit mode. Changes auto-save. Opening this set in another tab will save and close this session."}
+              </span>
+              <Button variant="ghost" size="sm" onClick={dismissWelcomeMessage}>
+                {language === "ko" ? "확인" : "Got it"}
+              </Button>
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Temporary diagnosis panel for debugging - REMOVE AFTER FIXING */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-3 bg-muted/50 border border-dashed rounded-lg text-xs font-mono space-y-1">
-            <div className="font-bold text-sm">🔧 Diagnosis Panel (dev only)</div>
-            <div>setId: {id || "(new)"} | userId: {user?.id?.slice(0, 8)}</div>
-            <div>isBlocked: <span className={isBlocked ? "text-destructive font-bold" : "text-green-600"}>{String(isBlocked)}</span> | blockReason: {blockReason || "none"}</div>
-            <div>otherEditors: {otherEditors.length} | localLock: {blockReason === "local_tab" ? "YES" : "no"}</div>
-            <div>Query: songs={existingSetSongs?.length ?? "?"} | components={existingSetComponents?.length ?? "?"}</div>
-            <div>Local: items={items.length} | hasInitialized={String(hasInitializedItems)}</div>
-            <div>AutoSave: enabled={String(!isBlocked && status === "draft")} | isSaving={String(autoSaveIsSaving)}</div>
-          </div>
+        {/* Inactivity Warning */}
+        {inactivityWarning && sessionTimeRemaining && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {language === "ko" 
+                ? `비활성 상태입니다. ${sessionTimeRemaining}초 후 세션이 종료됩니다. 계속하려면 아무 곳이나 클릭하세요.`
+                : `Inactive. Session ends in ${sessionTimeRemaining}s. Click anywhere to continue.`}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Read-only mode when blocked */}
+        {isBlocked && lockHolder && (
+          <Alert variant="destructive" className="mb-4">
+            <Eye className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>
+                {language === "ko" 
+                  ? `🔒 ${lockHolder.name}님이 편집 중입니다. 읽기 전용으로 보고 있습니다.`
+                  : `🔒 ${lockHolder.name} is editing. You're viewing in read-only mode.`}
+              </span>
+              <Button variant="outline" size="sm" onClick={acquireLock} disabled={isAcquiring}>
+                {isAcquiring 
+                  ? (language === "ko" ? "요청 중..." : "Requesting...") 
+                  : (language === "ko" ? "편집 요청" : "Request Edit")}
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
