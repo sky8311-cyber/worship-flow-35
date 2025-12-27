@@ -37,6 +37,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
+import { useSetEditorPresence } from "@/hooks/useSetEditorPresence";
+import { AlertTriangle } from "lucide-react";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -82,6 +84,9 @@ const SetBuilder = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Multi-tab/device editing detection
+  const { otherEditors, isBlocked } = useSetEditorPresence(id);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
@@ -1045,7 +1050,7 @@ const SetBuilder = () => {
               size="sm"
               className="h-8 gap-1 px-2 sm:px-3"
               onClick={() => saveSetMutation.mutate(undefined)}
-              disabled={saveSetMutation.isPending}
+              disabled={saveSetMutation.isPending || isBlocked}
             >
               <Save className="w-4 h-4 shrink-0" />
               <span className="text-xs sm:text-sm">{saveSetMutation.isPending ? t("common.saving") : t("common.save")}</span>
@@ -1063,7 +1068,7 @@ const SetBuilder = () => {
           size="sm" 
           className="h-8 gap-1 px-2 sm:px-3" 
           onClick={() => setShowDeleteConfirm(true)}
-          disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending}
+          disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending || isBlocked}
         >
           <Trash2 className="w-4 h-4 shrink-0" />
           <span className="text-xs sm:text-sm">{language === "ko" ? "삭제" : "Delete"}</span>
@@ -1077,7 +1082,7 @@ const SetBuilder = () => {
               size="sm" 
               className="h-8 gap-1 px-2 sm:px-3"
               onClick={handlePublishToggle}
-              disabled={saveSetMutation.isPending}
+              disabled={saveSetMutation.isPending || isBlocked}
             >
             {status === "draft" ? (
               <>
@@ -1182,6 +1187,19 @@ const SetBuilder = () => {
         {/* Action Buttons Component */}
         {renderActionButtons()}
 
+        {/* Multi-tab editing warning */}
+        {otherEditors.length > 0 && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {language === "ko" 
+                ? `다른 탭/기기에서 편집 중: ${otherEditors.map(e => e.userName).join(", ")}${isBlocked ? " - 충돌 방지를 위해 이 탭에서는 편집이 차단됩니다. 다른 탭을 닫고 새로고침하세요." : ""}`
+                : `Other editors active: ${otherEditors.map(e => e.userName).join(", ")}${isBlocked ? " - Editing is blocked in this tab to prevent conflicts. Close other tabs and refresh." : ""}`
+              }
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Worship Info */}
           <div className="lg:col-span-1 space-y-4">
@@ -1222,6 +1240,7 @@ const SetBuilder = () => {
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
                       className="text-sm h-9"
+                      disabled={isBlocked}
                     />
                   </div>
 
@@ -1234,6 +1253,7 @@ const SetBuilder = () => {
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
                       className="text-sm h-9"
                       required
+                      disabled={isBlocked}
                     />
                   </div>
                 </div>
@@ -1246,6 +1266,7 @@ const SetBuilder = () => {
                     onChange={(e) => setFormData({ ...formData, service_name: e.target.value })}
                     placeholder="예: 주일 2부 예배"
                     required
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1263,7 +1284,7 @@ const SetBuilder = () => {
                       }
                     }}
                   >
-                    <SelectTrigger id="community_id">
+                    <SelectTrigger id="community_id" disabled={isBlocked}>
                       <SelectValue placeholder={t("setBuilder.selectCommunity")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1294,7 +1315,7 @@ const SetBuilder = () => {
                 <div className="space-y-2">
                   <Label htmlFor="target_audience">{t("setBuilder.targetAudience")}</Label>
                   <Select value={formData.target_audience} onValueChange={(value) => setFormData({ ...formData, target_audience: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger disabled={isBlocked}>
                       <SelectValue placeholder={t("setBuilder.selectTargetAudience")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1315,6 +1336,7 @@ const SetBuilder = () => {
                     value={formData.worship_leader}
                     onChange={(e) => setFormData({ ...formData, worship_leader: e.target.value })}
                     required
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1324,6 +1346,7 @@ const SetBuilder = () => {
                     id="band_name"
                     value={formData.band_name}
                     onChange={(e) => setFormData({ ...formData, band_name: e.target.value })}
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1334,6 +1357,7 @@ const SetBuilder = () => {
                     value={formData.scripture_reference}
                     onChange={(e) => setFormData({ ...formData, scripture_reference: e.target.value })}
                     placeholder="예: 시편 23편, 요한복음 3:16"
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1343,6 +1367,7 @@ const SetBuilder = () => {
                     id="theme"
                     value={formData.theme}
                     onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1354,6 +1379,7 @@ const SetBuilder = () => {
                     value={formData.worship_duration}
                     onChange={(e) => setFormData({ ...formData, worship_duration: e.target.value })}
                     placeholder="20"
+                    disabled={isBlocked}
                   />
                 </div>
 
@@ -1364,6 +1390,7 @@ const SetBuilder = () => {
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     rows={3}
+                    disabled={isBlocked}
                   />
                 </div>
               </CardContent>
@@ -1371,7 +1398,7 @@ const SetBuilder = () => {
 
             {/* Worship Components Palette - Desktop only */}
             <div className="hidden lg:block">
-              <WorshipComponentPalette onAddComponent={handleAddComponent} />
+              <WorshipComponentPalette onAddComponent={handleAddComponent} disabled={isBlocked} />
             </div>
 
             {/* Team Positions Manager - only for church accounts */}
@@ -1405,6 +1432,7 @@ const SetBuilder = () => {
                         type="button"
                         onClick={handleNavigateToSongs}
                         size="sm"
+                        disabled={isBlocked}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
@@ -1415,6 +1443,7 @@ const SetBuilder = () => {
                         size="sm" 
                         variant="outline"
                         className="lg:hidden"
+                        disabled={isBlocked}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         순서 추가
@@ -1437,11 +1466,12 @@ const SetBuilder = () => {
                       <Button
                         type="button"
                         onClick={handleNavigateToSongs}
+                        disabled={isBlocked}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "첫 번째 곡 추가하기" : "Add First Song"}
                       </Button>
-                      <Button variant="outline" onClick={() => handleAddComponent("welcome")}>
+                      <Button variant="outline" onClick={() => handleAddComponent("welcome")} disabled={isBlocked}>
                         <Plus className="w-4 h-4 mr-2" />
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
@@ -1497,6 +1527,7 @@ const SetBuilder = () => {
                         size="sm"
                         variant="outline"
                         className="flex-1"
+                        disabled={isBlocked}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
@@ -1506,6 +1537,7 @@ const SetBuilder = () => {
                         size="sm" 
                         variant="outline" 
                         className="flex-1"
+                        disabled={isBlocked}
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         순서 추가
