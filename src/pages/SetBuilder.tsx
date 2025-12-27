@@ -86,12 +86,12 @@ const SetBuilder = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   // Multi-tab/device editing detection
-  const { otherEditors, isBlocked } = useSetEditorPresence(id);
+  const { otherEditors, isBlocked, blockReason } = useSetEditorPresence(id);
   
   // Debug logging for presence
   useEffect(() => {
-    console.log("[SetBuilder] Presence state - otherEditors:", otherEditors, "isBlocked:", isBlocked);
-  }, [otherEditors, isBlocked]);
+    console.log("[SetBuilder] Presence state - otherEditors:", otherEditors, "isBlocked:", isBlocked, "blockReason:", blockReason);
+  }, [otherEditors, isBlocked, blockReason]);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
@@ -248,6 +248,7 @@ const SetBuilder = () => {
   }, []);
 
   // Auto-save draft hook - placed after queries to ensure data loading check works
+  // CRITICAL: Disable auto-save when blocked to prevent data overwrites
   const { 
     hasUnsavedChanges: autoSaveHasChanges, 
     isSaving: autoSaveIsSaving, 
@@ -259,7 +260,7 @@ const SetBuilder = () => {
     formData,
     items,
     status,
-    enabled: status === "draft" && isExistingDataLoaded && !suppressAutoSaveRef.current,
+    enabled: status === "draft" && isExistingDataLoaded && !suppressAutoSaveRef.current && !isBlocked,
     isDataLoaded: isExistingDataLoaded,
     localChangeIdsRef,
     externalAddedIdsRef,
@@ -835,11 +836,10 @@ const SetBuilder = () => {
   const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
     // Block if another tab is editing
     if (isBlocked) {
-      toast.error(
-        language === "ko" 
-          ? "다른 탭/기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다." 
-          : "Another tab/device is editing this set. You cannot edit here."
-      );
+      const message = blockReason === "local_tab"
+        ? "이 브라우저의 다른 탭에서 편집 중입니다. 다른 탭을 닫고 새로고침하세요."
+        : "다른 기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다.";
+      toast.error(language === "ko" ? message : "Another tab/device is editing this set. You cannot edit here.");
       return;
     }
 
@@ -864,11 +864,10 @@ const SetBuilder = () => {
   const handleAddComponent = (type: WorshipComponentType, customLabel?: string) => {
     // Block if another tab is editing
     if (isBlocked) {
-      toast.error(
-        language === "ko" 
-          ? "다른 탭/기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다." 
-          : "Another tab/device is editing this set. You cannot edit here."
-      );
+      const message = blockReason === "local_tab"
+        ? "이 브라우저의 다른 탭에서 편집 중입니다. 다른 탭을 닫고 새로고침하세요."
+        : "다른 기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다.";
+      toast.error(language === "ko" ? message : "Another tab/device is editing this set. You cannot edit here.");
       return;
     }
 
@@ -938,10 +937,18 @@ const SetBuilder = () => {
   };
 
   const handleRemoveItem = (index: number) => {
+    if (isBlocked) {
+      toast.error(language === "ko" ? "편집이 차단되었습니다." : "Editing is blocked.");
+      return;
+    }
     setItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleUpdateItem = (index: number, updates: any) => {
+    if (isBlocked) {
+      toast.error(language === "ko" ? "편집이 차단되었습니다." : "Editing is blocked.");
+      return;
+    }
     setItems(prev => prev.map((item, i) => {
       if (i !== index) return item;
       return { ...item, data: { ...item.data, ...updates } };
@@ -950,16 +957,24 @@ const SetBuilder = () => {
 
   const handleMoveUp = (index: number) => {
     if (index <= 0) return;
+    if (isBlocked) return;
     setItems(prev => arrayMove(prev, index, index - 1));
   };
 
   const handleMoveDown = (index: number) => {
     if (index >= items.length - 1) return;
+    if (isBlocked) return;
     setItems(prev => arrayMove(prev, index, index + 1));
   };
 
   // Handle revert complete - reconstruct items with new dbIds from DB
   const handleRevertComplete = useCallback(async (restoredSongs: any[], restoredComponents: any[]) => {
+    // Block revert if another tab is editing
+    if (isBlocked) {
+      toast.error(language === "ko" ? "편집이 차단되었습니다. 히스토리 복원을 할 수 없습니다." : "Editing is blocked. Cannot restore history.");
+      return;
+    }
+    
     // Suppress auto-save while we rebuild items state
     suppressAutoSaveRef.current = true;
     
@@ -1032,7 +1047,7 @@ const SetBuilder = () => {
       queryClient.invalidateQueries({ queryKey: ["set-songs", id] });
       queryClient.invalidateQueries({ queryKey: ["set-components", id] });
     }
-  }, [id, queryClient]);
+  }, [id, queryClient, isBlocked, language]);
 
   const handleLogout = async () => {
     await signOut();
@@ -1041,6 +1056,8 @@ const SetBuilder = () => {
   };
 
   const handleDragEnd = (event: any) => {
+    if (isBlocked) return; // Block drag operations
+    
     const { active, over } = event;
 
     if (active.id !== over?.id) {
@@ -1212,17 +1229,39 @@ const SetBuilder = () => {
         {/* Action Buttons Component */}
         {renderActionButtons()}
 
-        {/* Multi-tab editing warning */}
-        {otherEditors.length > 0 && (
+        {/* Multi-tab editing warning - show when blocked OR when other editors detected */}
+        {(isBlocked || otherEditors.length > 0) && (
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              {language === "ko" 
-                ? `다른 탭/기기에서 편집 중: ${otherEditors.map(e => e.userName).join(", ")}${isBlocked ? " - 충돌 방지를 위해 이 탭에서는 편집이 차단됩니다. 다른 탭을 닫고 새로고침하세요." : ""}`
-                : `Other editors active: ${otherEditors.map(e => e.userName).join(", ")}${isBlocked ? " - Editing is blocked in this tab to prevent conflicts. Close other tabs and refresh." : ""}`
-              }
+              {isBlocked && blockReason === "local_tab" ? (
+                language === "ko" 
+                  ? "⚠️ 이 브라우저의 다른 탭에서 편집 중입니다. 모든 편집이 차단됩니다. 다른 탭을 닫고 새로고침하세요."
+                  : "⚠️ Another tab in this browser is editing. All editing is blocked. Close other tabs and refresh."
+              ) : isBlocked && blockReason === "remote_presence" ? (
+                language === "ko" 
+                  ? `⚠️ 다른 기기에서 편집 중: ${otherEditors.map(e => e.userName).join(", ")} - 모든 편집이 차단됩니다.`
+                  : `⚠️ Other devices editing: ${otherEditors.map(e => e.userName).join(", ")} - All editing is blocked.`
+              ) : otherEditors.length > 0 ? (
+                language === "ko" 
+                  ? `다른 사용자 감지: ${otherEditors.map(e => e.userName).join(", ")}`
+                  : `Other users detected: ${otherEditors.map(e => e.userName).join(", ")}`
+              ) : null}
             </AlertDescription>
           </Alert>
+        )}
+
+        {/* Temporary diagnosis panel for debugging - REMOVE AFTER FIXING */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-3 bg-muted/50 border border-dashed rounded-lg text-xs font-mono space-y-1">
+            <div className="font-bold text-sm">🔧 Diagnosis Panel (dev only)</div>
+            <div>setId: {id || "(new)"} | userId: {user?.id?.slice(0, 8)}</div>
+            <div>isBlocked: <span className={isBlocked ? "text-destructive font-bold" : "text-green-600"}>{String(isBlocked)}</span> | blockReason: {blockReason || "none"}</div>
+            <div>otherEditors: {otherEditors.length} | localLock: {blockReason === "local_tab" ? "YES" : "no"}</div>
+            <div>Query: songs={existingSetSongs?.length ?? "?"} | components={existingSetComponents?.length ?? "?"}</div>
+            <div>Local: items={items.length} | hasInitialized={String(hasInitializedItems)}</div>
+            <div>AutoSave: enabled={String(!isBlocked && status === "draft")} | isSaving={String(autoSaveIsSaving)}</div>
+          </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

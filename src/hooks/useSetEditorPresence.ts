@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocalTabLock } from "./useLocalTabLock";
 
 interface EditorInfo {
   sessionId: string;
@@ -13,6 +14,7 @@ interface UseSetEditorPresenceResult {
   otherEditors: EditorInfo[];
   isBlocked: boolean;
   sessionId: string;
+  blockReason: "local_tab" | "remote_presence" | null;
 }
 
 // Get or create a persistent session ID for this tab
@@ -28,32 +30,37 @@ const getSessionId = (setId: string): string => {
 
 /**
  * Hook to detect multiple tabs/devices editing the same worship set.
- * Uses Supabase Realtime Presence to track active editors.
+ * Uses both:
+ * 1. Local tab lock (BroadcastChannel) for same-browser detection (more reliable)
+ * 2. Supabase Realtime Presence for cross-device detection
+ * 
  * The later-joined session is blocked to prevent conflicts.
  */
 export function useSetEditorPresence(setId: string | undefined): UseSetEditorPresenceResult {
   const { user, profile } = useAuth();
   const [otherEditors, setOtherEditors] = useState<EditorInfo[]>([]);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [remoteBlocked, setRemoteBlocked] = useState(false);
   const sessionIdRef = useRef<string>("");
   const joinedAtRef = useRef<string>(new Date().toISOString());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  // Use local tab lock for same-browser detection
+  const { isLocked: localLocked, lockHolder } = useLocalTabLock(setId);
+
   useEffect(() => {
-    // Always log when useEffect triggers for debugging
     console.log("[Presence] useEffect triggered - setId:", setId, "user:", !!user, "userId:", user?.id);
 
     if (!setId) {
       console.log("[Presence] No setId, skipping presence setup");
       setOtherEditors([]);
-      setIsBlocked(false);
+      setRemoteBlocked(false);
       return;
     }
 
     if (!user) {
       console.log("[Presence] Waiting for user to load...");
       setOtherEditors([]);
-      setIsBlocked(false);
+      setRemoteBlocked(false);
       return;
     }
 
@@ -67,7 +74,15 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
     console.log("[Presence] My joinedAt:", joinedAtRef.current);
 
     const channelName = `set-editor-presence-${setId}`;
-    const channel = supabase.channel(channelName);
+    
+    // Create channel with presence config
+    const channel = supabase.channel(channelName, {
+      config: {
+        presence: {
+          key: sessionIdRef.current,
+        },
+      },
+    });
     channelRef.current = channel;
 
     const processPresenceState = () => {
@@ -109,10 +124,10 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
         return isEarlier;
       });
       
-      console.log("[Presence] Final state - otherEditors:", others.length, "isBlocked:", shouldBlock);
+      console.log("[Presence] Final state - otherEditors:", others.length, "isRemoteBlocked:", shouldBlock);
       
       setOtherEditors(others);
-      setIsBlocked(shouldBlock);
+      setRemoteBlocked(shouldBlock);
     };
 
     channel
@@ -152,11 +167,30 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [setId, user]); // Include full user object to re-run when user loads
+  }, [setId, user, profile]);
+
+  // Combine local and remote blocking - local takes priority as it's more reliable
+  const isBlocked = localLocked || remoteBlocked;
+  const blockReason: "local_tab" | "remote_presence" | null = 
+    localLocked ? "local_tab" : 
+    remoteBlocked ? "remote_presence" : 
+    null;
+
+  // Log combined state
+  useEffect(() => {
+    console.log("[Presence] Combined blocking state:", { 
+      localLocked, 
+      remoteBlocked, 
+      isBlocked, 
+      blockReason,
+      lockHolder 
+    });
+  }, [localLocked, remoteBlocked, isBlocked, blockReason, lockHolder]);
 
   return {
     otherEditors,
     isBlocked,
     sessionId: sessionIdRef.current,
+    blockReason,
   };
 }
