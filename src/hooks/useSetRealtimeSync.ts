@@ -102,7 +102,10 @@ export const useRealtimeHandlers = (
       const changeId = newData?.id || oldData?.id;
       if (changeId && localChangeIdsRef.current.has(changeId)) {
         console.log("[Realtime] Skipping local change:", changeId);
-        localChangeIdsRef.current.delete(changeId);
+        // Keep for a short TTL so INSERT/UPDATE bursts are reliably ignored
+        setTimeout(() => {
+          localChangeIdsRef.current.delete(changeId);
+        }, 5000);
         return;
       }
 
@@ -204,7 +207,10 @@ export const useRealtimeHandlers = (
       const changeId = newData?.id || oldData?.id;
       if (changeId && localChangeIdsRef.current.has(changeId)) {
         console.log("[Realtime] Skipping local component change:", changeId);
-        localChangeIdsRef.current.delete(changeId);
+        // Keep for a short TTL so INSERT/UPDATE bursts are reliably ignored
+        setTimeout(() => {
+          localChangeIdsRef.current.delete(changeId);
+        }, 5000);
         return;
       }
 
