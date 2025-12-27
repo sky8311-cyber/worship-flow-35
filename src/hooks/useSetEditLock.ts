@@ -10,9 +10,15 @@ interface LockHolder {
   acquiredAt: string;
 }
 
+interface TakeoverRequester {
+  userId: string;
+  name: string;
+  requestedAt: string;
+}
+
 type LockStatus = "unlocked" | "locked_by_me" | "locked_by_other";
 
-interface UseSetEditLockResult {
+export interface UseSetEditLockResult {
   lockStatus: LockStatus;
   lockHolder: LockHolder | null;
   isEditMode: boolean;
@@ -23,6 +29,15 @@ interface UseSetEditLockResult {
   dismissWelcomeMessage: () => void;
   inactivityWarning: boolean;
   sessionTimeRemaining: number | null;
+  // Takeover flow
+  requestTakeover: () => Promise<void>;
+  cancelTakeoverRequest: () => Promise<void>;
+  respondToTakeover: (accept: boolean) => Promise<void>;
+  isRequestingTakeover: boolean;
+  takeoverCountdown: number | null;
+  takeoverRequester: TakeoverRequester | null;
+  isTakeoverRequested: boolean;
+  takeoverResponseCountdown: number | null;
 }
 
 // Configuration
@@ -31,6 +46,8 @@ const HEARTBEAT_INTERVAL_MS = 30 * 1000; // 30 seconds
 const INACTIVITY_WARNING_MS = 5 * 60 * 1000; // 5 minutes before warning
 const INACTIVITY_TIMEOUT_MS = 6 * 60 * 1000; // 6 minutes before auto-release
 const BACKGROUND_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes when tab in background
+const TAKEOVER_REQUEST_TIMEOUT_MS = 30 * 1000; // 30 seconds for requester to wait
+const TAKEOVER_RESPONSE_TIMEOUT_MS = 10 * 1000; // 10 seconds for editor to respond
 
 // Generate unique session ID per tab
 const getSessionId = (): string => {
@@ -52,6 +69,13 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
   const [inactivityWarning, setInactivityWarning] = useState(false);
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null);
 
+  // Takeover states
+  const [isRequestingTakeover, setIsRequestingTakeover] = useState(false);
+  const [takeoverCountdown, setTakeoverCountdown] = useState<number | null>(null);
+  const [takeoverRequester, setTakeoverRequester] = useState<TakeoverRequester | null>(null);
+  const [isTakeoverRequested, setIsTakeoverRequested] = useState(false);
+  const [takeoverResponseCountdown, setTakeoverResponseCountdown] = useState<number | null>(null);
+
   const sessionIdRef = useRef<string>(getSessionId());
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
@@ -59,7 +83,10 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
   const warningTimerRef = useRef<NodeJS.Timeout | null>(null);
   const backgroundTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isReleasingRef = useRef(false);
-  const onSaveBeforeReleaseRef = useRef<(() => Promise<void>) | null>(null);
+  const takeoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const takeoverResponseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const takeoverCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const responseCountdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const userName = profile?.full_name || user?.email || "Unknown";
 
@@ -81,6 +108,8 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
     if (!lock) {
       setLockStatus("unlocked");
       setLockHolder(null);
+      setTakeoverRequester(null);
+      setIsTakeoverRequested(false);
       return;
     }
 
@@ -91,6 +120,8 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
       await supabase.from("set_edit_locks").delete().eq("id", lock.id);
       setLockStatus("unlocked");
       setLockHolder(null);
+      setTakeoverRequester(null);
+      setIsTakeoverRequested(false);
       return;
     }
 
@@ -103,6 +134,19 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
         sessionId: lock.holder_session_id,
         acquiredAt: lock.acquired_at,
       });
+      
+      // Check if someone requested takeover
+      if (lock.takeover_requested_by && lock.takeover_requested_by !== user?.id) {
+        setTakeoverRequester({
+          userId: lock.takeover_requested_by,
+          name: lock.takeover_requester_name || "Someone",
+          requestedAt: lock.takeover_requested_at || new Date().toISOString(),
+        });
+        setIsTakeoverRequested(true);
+      } else {
+        setTakeoverRequester(null);
+        setIsTakeoverRequested(false);
+      }
     } else {
       setLockStatus("locked_by_other");
       setLockHolder({
@@ -112,7 +156,7 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
         acquiredAt: lock.acquired_at,
       });
     }
-  }, [setId]);
+  }, [setId, user?.id]);
 
   // Acquire lock
   const acquireLock = useCallback(async (): Promise<boolean> => {
@@ -192,6 +236,10 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
       // Show welcome message for first-time entry
       setShowWelcomeMessage(true);
       
+      // Reset takeover states
+      setIsRequestingTakeover(false);
+      setTakeoverCountdown(null);
+      
       console.log("[EditLock] Lock acquired successfully");
       return true;
     } catch (error) {
@@ -209,11 +257,6 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
     isReleasingRef.current = true;
     
     try {
-      // Trigger save before release if callback is set
-      if (onSaveBeforeReleaseRef.current) {
-        await onSaveBeforeReleaseRef.current();
-      }
-
       await supabase
         .from("set_edit_locks")
         .delete()
@@ -222,6 +265,8 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
 
       setLockStatus("unlocked");
       setLockHolder(null);
+      setTakeoverRequester(null);
+      setIsTakeoverRequested(false);
       console.log("[EditLock] Lock released");
     } catch (error) {
       console.error("[EditLock] Error releasing lock:", error);
@@ -229,6 +274,152 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
       isReleasingRef.current = false;
     }
   }, [setId]);
+
+  // Request takeover from current editor
+  const requestTakeover = useCallback(async () => {
+    if (!setId || !user || lockStatus !== "locked_by_other") return;
+    
+    setIsRequestingTakeover(true);
+    setTakeoverCountdown(30);
+    
+    try {
+      // Update the lock with takeover request
+      const { error } = await supabase
+        .from("set_edit_locks")
+        .update({
+          takeover_requested_by: user.id,
+          takeover_requested_at: new Date().toISOString(),
+          takeover_requester_name: userName,
+        })
+        .eq("set_id", setId);
+
+      if (error) {
+        console.error("[EditLock] Failed to request takeover:", error);
+        setIsRequestingTakeover(false);
+        setTakeoverCountdown(null);
+        toast.error("편집 요청에 실패했습니다.");
+        return;
+      }
+
+      console.log("[EditLock] Takeover requested");
+      
+      // Start countdown for requester
+      takeoverCountdownIntervalRef.current = setInterval(() => {
+        setTakeoverCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Set timeout - if no response, cancel request
+      takeoverTimeoutRef.current = setTimeout(async () => {
+        // Check if lock is still held by others
+        const { data: lock } = await supabase
+          .from("set_edit_locks")
+          .select("holder_session_id, takeover_requested_by")
+          .eq("set_id", setId)
+          .maybeSingle();
+
+        if (lock && lock.holder_session_id !== sessionIdRef.current && lock.takeover_requested_by === user.id) {
+          // Still waiting, timeout - clear request
+          await supabase
+            .from("set_edit_locks")
+            .update({
+              takeover_requested_by: null,
+              takeover_requested_at: null,
+              takeover_requester_name: null,
+            })
+            .eq("set_id", setId);
+          
+          toast.error("편집자가 응답하지 않습니다. 나중에 다시 시도하세요.");
+        }
+        
+        setIsRequestingTakeover(false);
+        setTakeoverCountdown(null);
+        if (takeoverCountdownIntervalRef.current) {
+          clearInterval(takeoverCountdownIntervalRef.current);
+        }
+      }, TAKEOVER_REQUEST_TIMEOUT_MS);
+
+    } catch (error) {
+      console.error("[EditLock] Error requesting takeover:", error);
+      setIsRequestingTakeover(false);
+      setTakeoverCountdown(null);
+    }
+  }, [setId, user, userName, lockStatus]);
+
+  // Cancel takeover request
+  const cancelTakeoverRequest = useCallback(async () => {
+    if (!setId || !user) return;
+    
+    try {
+      await supabase
+        .from("set_edit_locks")
+        .update({
+          takeover_requested_by: null,
+          takeover_requested_at: null,
+          takeover_requester_name: null,
+        })
+        .eq("set_id", setId)
+        .eq("takeover_requested_by", user.id);
+
+      setIsRequestingTakeover(false);
+      setTakeoverCountdown(null);
+      
+      if (takeoverTimeoutRef.current) {
+        clearTimeout(takeoverTimeoutRef.current);
+      }
+      if (takeoverCountdownIntervalRef.current) {
+        clearInterval(takeoverCountdownIntervalRef.current);
+      }
+      
+      console.log("[EditLock] Takeover request cancelled");
+    } catch (error) {
+      console.error("[EditLock] Error cancelling takeover request:", error);
+    }
+  }, [setId, user]);
+
+  // Respond to takeover request (as current editor)
+  const respondToTakeover = useCallback(async (accept: boolean) => {
+    if (!setId || lockStatus !== "locked_by_me") return;
+    
+    // Clear response countdown
+    if (responseCountdownIntervalRef.current) {
+      clearInterval(responseCountdownIntervalRef.current);
+    }
+    if (takeoverResponseTimeoutRef.current) {
+      clearTimeout(takeoverResponseTimeoutRef.current);
+    }
+    setTakeoverResponseCountdown(null);
+    
+    if (accept) {
+      // Hand over - release lock
+      toast.info("편집 권한을 넘겨주고 있습니다...");
+      await releaseLock();
+      toast.success("편집 권한이 전달되었습니다.");
+    } else {
+      // Decline - clear takeover request
+      try {
+        await supabase
+          .from("set_edit_locks")
+          .update({
+            takeover_requested_by: null,
+            takeover_requested_at: null,
+            takeover_requester_name: null,
+          })
+          .eq("set_id", setId)
+          .eq("holder_session_id", sessionIdRef.current);
+        
+        setTakeoverRequester(null);
+        setIsTakeoverRequested(false);
+        toast.info("편집 요청을 거절했습니다.");
+      } catch (error) {
+        console.error("[EditLock] Error declining takeover:", error);
+      }
+    }
+  }, [setId, lockStatus, releaseLock]);
 
   // Send heartbeat
   const sendHeartbeat = useCallback(async () => {
@@ -368,6 +559,41 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
     };
   }, [lockStatus, sendHeartbeat]);
 
+  // Handle takeover request when I'm the editor
+  useEffect(() => {
+    if (!isTakeoverRequested || lockStatus !== "locked_by_me") return;
+    
+    console.log("[EditLock] Takeover request detected, starting response countdown");
+    setTakeoverResponseCountdown(10);
+    
+    // Start countdown
+    responseCountdownIntervalRef.current = setInterval(() => {
+      setTakeoverResponseCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // Auto-handover after timeout
+    takeoverResponseTimeoutRef.current = setTimeout(async () => {
+      if (isTakeoverRequested && lockStatus === "locked_by_me") {
+        toast.info("편집 요청에 응답하지 않아 자동으로 넘겨줍니다.");
+        await releaseLock();
+      }
+    }, TAKEOVER_RESPONSE_TIMEOUT_MS);
+    
+    return () => {
+      if (responseCountdownIntervalRef.current) {
+        clearInterval(responseCountdownIntervalRef.current);
+      }
+      if (takeoverResponseTimeoutRef.current) {
+        clearTimeout(takeoverResponseTimeoutRef.current);
+      }
+    };
+  }, [isTakeoverRequested, lockStatus, releaseLock]);
+
   // Realtime subscription for lock changes
   useEffect(() => {
     if (!setId) return;
@@ -383,19 +609,50 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
           filter: `set_id=eq.${setId}`,
         },
         async (payload) => {
-          console.log("[EditLock] Realtime event:", payload.eventType);
+          console.log("[EditLock] Realtime event:", payload.eventType, payload);
           
           if (payload.eventType === "DELETE") {
             // Lock was released
             if (lockStatus === "locked_by_other") {
               setLockStatus("unlocked");
               setLockHolder(null);
-              toast.info("편집 세션이 종료되었습니다. 이제 편집할 수 있습니다.");
+              
+              // If I was requesting takeover, try to acquire immediately
+              if (isRequestingTakeover) {
+                setIsRequestingTakeover(false);
+                setTakeoverCountdown(null);
+                if (takeoverTimeoutRef.current) clearTimeout(takeoverTimeoutRef.current);
+                if (takeoverCountdownIntervalRef.current) clearInterval(takeoverCountdownIntervalRef.current);
+                
+                const acquired = await acquireLock();
+                if (acquired) {
+                  toast.success("편집 권한을 받았습니다!");
+                }
+              } else {
+                toast.info("편집 세션이 종료되었습니다. 이제 편집할 수 있습니다.");
+              }
             }
           } else if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const newLock = payload.new as any;
-            if (newLock.holder_session_id !== sessionIdRef.current) {
-              // Someone else acquired or updated the lock
+            
+            // Check for takeover request changes
+            if (newLock.holder_session_id === sessionIdRef.current) {
+              // I'm the editor - check if someone requested takeover
+              if (newLock.takeover_requested_by && newLock.takeover_requested_by !== user?.id) {
+                setTakeoverRequester({
+                  userId: newLock.takeover_requested_by,
+                  name: newLock.takeover_requester_name || "Someone",
+                  requestedAt: newLock.takeover_requested_at || new Date().toISOString(),
+                });
+                setIsTakeoverRequested(true);
+              } else if (!newLock.takeover_requested_by) {
+                // Takeover request was cleared
+                setTakeoverRequester(null);
+                setIsTakeoverRequested(false);
+                setTakeoverResponseCountdown(null);
+              }
+            } else {
+              // Someone else has the lock
               if (lockStatus === "locked_by_me") {
                 // Our lock was taken over (shouldn't happen normally)
                 setLockStatus("locked_by_other");
@@ -416,7 +673,7 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [setId, lockStatus]);
+  }, [setId, lockStatus, user?.id, isRequestingTakeover, acquireLock]);
 
   // Smart entry: Auto-acquire lock on mount if unlocked
   useEffect(() => {
@@ -469,6 +726,12 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
           .eq("set_id", setId)
           .eq("holder_session_id", sessionIdRef.current);
       }
+      
+      // Clear all timers
+      if (takeoverTimeoutRef.current) clearTimeout(takeoverTimeoutRef.current);
+      if (takeoverCountdownIntervalRef.current) clearInterval(takeoverCountdownIntervalRef.current);
+      if (responseCountdownIntervalRef.current) clearInterval(responseCountdownIntervalRef.current);
+      if (takeoverResponseTimeoutRef.current) clearTimeout(takeoverResponseTimeoutRef.current);
     };
   }, [lockStatus, setId]);
 
@@ -503,5 +766,14 @@ export function useSetEditLock(setId: string | undefined): UseSetEditLockResult 
     dismissWelcomeMessage,
     inactivityWarning,
     sessionTimeRemaining,
+    // Takeover flow
+    requestTakeover,
+    cancelTakeoverRequest,
+    respondToTakeover,
+    isRequestingTakeover,
+    takeoverCountdown,
+    takeoverRequester,
+    isTakeoverRequested,
+    takeoverResponseCountdown,
   };
 }

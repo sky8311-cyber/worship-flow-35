@@ -96,7 +96,16 @@ const SetBuilder = () => {
     showWelcomeMessage,
     dismissWelcomeMessage,
     inactivityWarning,
-    sessionTimeRemaining
+    sessionTimeRemaining,
+    // Takeover flow
+    requestTakeover,
+    cancelTakeoverRequest,
+    respondToTakeover,
+    isRequestingTakeover,
+    takeoverCountdown,
+    takeoverRequester,
+    isTakeoverRequested,
+    takeoverResponseCountdown,
   } = useSetEditLock(id);
   
   // Derived state for backwards compatibility
@@ -1266,21 +1275,100 @@ const SetBuilder = () => {
           </Alert>
         )}
 
+        {/* Takeover Request Received - I'm the editor */}
+        {isTakeoverRequested && takeoverRequester && isEditMode && (
+          <Alert className="mb-4 bg-orange-500/10 border-orange-500/30">
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex-1">
+                <span className="font-medium">
+                  {language === "ko" 
+                    ? `⚠️ ${takeoverRequester.name}님이 편집을 요청했습니다`
+                    : `⚠️ ${takeoverRequester.name} wants to edit`}
+                </span>
+                {takeoverResponseCountdown && (
+                  <div className="mt-1">
+                    <span className="text-sm text-muted-foreground">
+                      {language === "ko" 
+                        ? `${takeoverResponseCountdown}초 후 자동으로 넘겨집니다...`
+                        : `Auto-handover in ${takeoverResponseCountdown}s...`}
+                    </span>
+                    <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
+                      <div 
+                        className="bg-orange-500 h-full transition-all duration-1000 ease-linear"
+                        style={{ width: `${(takeoverResponseCountdown / 10) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => respondToTakeover(false)}
+                >
+                  {language === "ko" ? "계속 편집" : "Keep Editing"}
+                </Button>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => respondToTakeover(true)}
+                >
+                  {language === "ko" ? "넘겨주기" : "Hand Over"}
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Read-only mode when blocked */}
         {isBlocked && lockHolder && (
           <Alert variant="destructive" className="mb-4">
             <Eye className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>
-                {language === "ko" 
-                  ? `🔒 ${lockHolder.name}님이 편집 중입니다. 읽기 전용으로 보고 있습니다.`
-                  : `🔒 ${lockHolder.name} is editing. You're viewing in read-only mode.`}
-              </span>
-              <Button variant="outline" size="sm" onClick={acquireLock} disabled={isAcquiring}>
-                {isAcquiring 
-                  ? (language === "ko" ? "요청 중..." : "Requesting...") 
-                  : (language === "ko" ? "편집 요청" : "Request Edit")}
-              </Button>
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex-1">
+                <span>
+                  {language === "ko" 
+                    ? `🔒 ${lockHolder.name}님이 편집 중입니다.`
+                    : `🔒 ${lockHolder.name} is editing.`}
+                </span>
+                {isRequestingTakeover && takeoverCountdown && (
+                  <div className="mt-1">
+                    <span className="text-sm">
+                      {language === "ko" 
+                        ? `편집 요청 중... ${takeoverCountdown}초`
+                        : `Requesting edit... ${takeoverCountdown}s`}
+                    </span>
+                    <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
+                      <div 
+                        className="bg-primary h-full transition-all duration-1000 ease-linear"
+                        style={{ width: `${(takeoverCountdown / 30) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {isRequestingTakeover ? (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={cancelTakeoverRequest}
+                >
+                  {language === "ko" ? "요청 취소" : "Cancel Request"}
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={requestTakeover} 
+                  disabled={isAcquiring}
+                >
+                  {isAcquiring 
+                    ? (language === "ko" ? "처리 중..." : "Processing...") 
+                    : (language === "ko" ? "편집 요청" : "Request Edit")}
+                </Button>
+              )}
             </AlertDescription>
           </Alert>
         )}
