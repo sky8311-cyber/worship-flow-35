@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSetAuditHistory } from "@/hooks/useSetAuditHistory";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   History, 
@@ -101,7 +101,7 @@ export const SetHistoryTab = ({ setId, onRevertComplete }: SetHistoryTabProps) =
 
   return (
     <>
-      <ScrollArea className="h-[500px] pr-4">
+      <div className="pr-4">
         <div className="relative">
           {/* Timeline line */}
           <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
@@ -222,7 +222,7 @@ export const SetHistoryTab = ({ setId, onRevertComplete }: SetHistoryTabProps) =
             })}
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       <SetRevertDialog
         open={revertDialogOpen}
