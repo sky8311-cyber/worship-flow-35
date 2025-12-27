@@ -259,7 +259,45 @@ export function useSetEditLock(
         if (expiresAt < Date.now()) {
           await supabase.from("set_edit_locks").delete().eq("id", existingLock.id);
         } else {
-          // Lock held by someone else and not expired
+          // Check if lock is stale (last activity > 30 seconds ago)
+          const lastActivity = new Date(existingLock.last_activity_at).getTime();
+          const now = Date.now();
+          const isStale = now - lastActivity > 30 * 1000;
+          
+          if (isStale) {
+            // Lock appears stale (tab closed, no heartbeat) - attempt auto-takeover
+            console.log("[EditLock] Stale lock detected, attempting auto-takeover...");
+            
+            const forceResult = await invokeLockAction({
+              action: 'force_takeover',
+              set_id: setId,
+              session_id: sessionIdRef.current,
+              user_id: user.id,
+              user_name: userName,
+              device: deviceRef.current,
+            });
+            
+            if (forceResult.success) {
+              console.log("[EditLock] Auto-takeover of stale lock successful");
+              setLockStatus("locked_by_me");
+              setLockHolder({
+                userId: user.id,
+                name: userName,
+                sessionId: sessionIdRef.current,
+                acquiredAt: new Date().toISOString(),
+                device: deviceRef.current,
+              });
+              setShowWelcomeMessage(true);
+              setIsRequestingTakeover(false);
+              setTakeoverCountdown(null);
+              toast.success("이전 세션이 종료되어 편집 모드로 전환됩니다.");
+              return true;
+            }
+            // If force takeover failed, fall through to normal failure
+            console.log("[EditLock] Auto-takeover failed, showing locked status");
+          }
+          
+          // Lock held by someone else and active
           setLockStatus("locked_by_other");
           setLockHolder({
             userId: existingLock.holder_user_id,
