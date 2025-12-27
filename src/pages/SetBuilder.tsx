@@ -1266,34 +1266,44 @@ const SetBuilder = () => {
           {/* Main Content - Items List */}
           <div className="lg:col-span-3">
             <Card className="shadow-md">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>
-                    {language === "ko" ? "예배 순서" : "Worship Order"}
-                  </CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      onClick={handleNavigateToSongs}
-                      size="sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      곡 추가
-                    </Button>
-                    {/* Mobile only - add component button */}
-                    <Button 
-                      onClick={() => handleAddComponent("welcome")} 
-                      size="sm" 
-                      variant="outline"
-                      className="lg:hidden"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      순서 추가
-                    </Button>
+              <Tabs defaultValue="order" className="w-full">
+                <CardHeader className="pb-0">
+                  <div className="flex items-center justify-between">
+                    <TabsList className="grid w-auto grid-cols-2">
+                      <TabsTrigger value="order" className="gap-2">
+                        <Music className="h-4 w-4" />
+                        {language === "ko" ? "예배 순서" : "Worship Order"}
+                      </TabsTrigger>
+                      <TabsTrigger value="history" className="gap-2">
+                        <History className="h-4 w-4" />
+                        {language === "ko" ? "히스토리" : "History"}
+                      </TabsTrigger>
+                    </TabsList>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleNavigateToSongs}
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        곡 추가
+                      </Button>
+                      {/* Mobile only - add component button */}
+                      <Button 
+                        onClick={() => handleAddComponent("welcome")} 
+                        size="sm" 
+                        variant="outline"
+                        className="lg:hidden"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        순서 추가
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
+                </CardHeader>
+                
+                <TabsContent value="order" className="mt-0">
+                  <CardContent className="pt-4">
                 {items.length === 0 ? (
                   <div className="text-center py-12">
                     <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -1403,7 +1413,15 @@ const SetBuilder = () => {
                     </div>
                   </>
                 )}
-              </CardContent>
+                  </CardContent>
+                </TabsContent>
+                
+                <TabsContent value="history" className="mt-0">
+                  <CardContent className="pt-4">
+                    <SetHistoryTab setId={id} />
+                  </CardContent>
+                </TabsContent>
+              </Tabs>
             </Card>
 
             {/* Bottom Action Buttons */}
