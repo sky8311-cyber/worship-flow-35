@@ -356,36 +356,23 @@ export const useAutoSaveDraft = ({
   };
 };
 
-// UPSERT helper function - Updates existing, inserts new, deletes removed
+// UPSERT helper function - Updates existing, inserts new
+// IMPORTANT: This function NEVER deletes items - deletion only happens via explicit user action
 // Returns array of DbIdUpdate for newly inserted items
 // Exported for use in saveSetMutation as well
 export async function upsertSongsAndComponents(
   setId: string,
   items: SetItem[],
   localChangeIdsRef?: React.MutableRefObject<Set<string>>,
-  externalAddedIdsRef?: React.MutableRefObject<Set<string>>
+  _externalAddedIdsRef?: React.MutableRefObject<Set<string>> // Kept for backwards compatibility
 ): Promise<DbIdUpdate[]> {
   const dbIdUpdates: DbIdUpdate[] = [];
 
-  // 1. Fetch current songs and components from DB with created_at for recency check
-  const [{ data: currentSongs }, { data: currentComponents }] = await Promise.all([
-    supabase.from("set_songs").select("id, created_at").eq("service_set_id", setId),
-    supabase.from("set_components").select("id, created_at").eq("service_set_id", setId),
-  ]);
-
-  const currentSongMap = new Map((currentSongs || []).map(s => [s.id, s.created_at]));
-  const currentComponentMap = new Map((currentComponents || []).map(c => [c.id, c.created_at]));
-
-  const currentSongIds = new Set(currentSongMap.keys());
-  const currentComponentIds = new Set(currentComponentMap.keys());
-
-  // 2. Categorize items - track local IDs for new items
+  // Categorize items - track local IDs for new items
   const songsToUpdate: any[] = [];
   const songsToInsert: { localId: string; data: any }[] = [];
   const componentsToUpdate: any[] = [];
   const componentsToInsert: { localId: string; data: any }[] = [];
-  const localSongDbIds = new Set<string>();
-  const localComponentDbIds = new Set<string>();
 
   items.forEach((item, index) => {
     const position = index + 1;
@@ -409,7 +396,6 @@ export async function upsertSongsAndComponents(
       if (item.dbId) {
         // Existing song - update
         songsToUpdate.push({ id: item.dbId, ...songData });
-        localSongDbIds.add(item.dbId);
         localChangeIdsRef?.current.add(item.dbId);
       } else {
         // New song - insert (track localId for callback)
@@ -430,7 +416,6 @@ export async function upsertSongsAndComponents(
       if (item.dbId) {
         // Existing component - update
         componentsToUpdate.push({ id: item.dbId, ...componentData });
-        localComponentDbIds.add(item.dbId);
         localChangeIdsRef?.current.add(item.dbId);
       } else {
         // New component - insert (track localId for callback)
@@ -439,70 +424,17 @@ export async function upsertSongsAndComponents(
     }
   });
 
-  // 3. Delete songs/components that are no longer in the local list
-  // BUT protect items that were:
-  // - Externally added (e.g., from song library) and not yet in local state
-  // - Very recently created (within last 30 seconds) to prevent race conditions
-  const RECENT_CREATION_THRESHOLD_MS = 30000; // 30 seconds
-  const now = Date.now();
-  
-  const songIdsToDelete = [...currentSongIds].filter(id => {
-    if (localSongDbIds.has(id)) return false; // Keep if in local state
-    if (externalAddedIdsRef?.current.has(id)) {
-      console.log("[AutoSave] Protecting externally added song from deletion:", id);
-      return false; // Protect externally added items
-    }
-    // Protect very recently created items
-    const createdAt = currentSongMap.get(id);
-    if (createdAt) {
-      const createdAtMs = new Date(createdAt).getTime();
-      if (now - createdAtMs < RECENT_CREATION_THRESHOLD_MS) {
-        console.log("[AutoSave] Protecting recently created song from deletion:", id, "created:", createdAt);
-        return false;
-      }
-    }
-    return true;
-  });
-  
-  const componentIdsToDelete = [...currentComponentIds].filter(id => {
-    if (localComponentDbIds.has(id)) return false;
-    if (externalAddedIdsRef?.current.has(id)) {
-      console.log("[AutoSave] Protecting externally added component from deletion:", id);
-      return false;
-    }
-    // Protect very recently created items
-    const createdAt = currentComponentMap.get(id);
-    if (createdAt) {
-      const createdAtMs = new Date(createdAt).getTime();
-      if (now - createdAtMs < RECENT_CREATION_THRESHOLD_MS) {
-        console.log("[AutoSave] Protecting recently created component from deletion:", id, "created:", createdAt);
-        return false;
-      }
-    }
-    return true;
-  });
+  // NOTE: We intentionally do NOT delete items here
+  // Deletion only happens via explicit user action (handleRemoveItem)
+  // This prevents race conditions, ghost adds, and history explosion
 
-  // Mark deleted items for realtime skip
-  songIdsToDelete.forEach(id => localChangeIdsRef?.current.add(id));
-  componentIdsToDelete.forEach(id => localChangeIdsRef?.current.add(id));
-
-  // 4. Execute deletions
-  if (songIdsToDelete.length > 0) {
-    console.log("[AutoSave] Deleting songs:", songIdsToDelete);
-    await supabase.from("set_songs").delete().in("id", songIdsToDelete);
-  }
-  if (componentIdsToDelete.length > 0) {
-    console.log("[AutoSave] Deleting components:", componentIdsToDelete);
-    await supabase.from("set_components").delete().in("id", componentIdsToDelete);
-  }
-
-  // 5. Update existing songs
+  // Update existing songs
   for (const song of songsToUpdate) {
     const { id, ...updateData } = song;
     await supabase.from("set_songs").update(updateData).eq("id", id);
   }
   
-  // 6. Insert new songs and collect dbIds
+  // Insert new songs and collect dbIds
   if (songsToInsert.length > 0) {
     const insertData = songsToInsert.map(s => s.data);
     const { data } = await supabase.from("set_songs").insert(insertData).select("id");
@@ -518,13 +450,13 @@ export async function upsertSongsAndComponents(
     }
   }
 
-  // 7. Update existing components
+  // Update existing components
   for (const comp of componentsToUpdate) {
     const { id, ...updateData } = comp;
     await supabase.from("set_components").update(updateData).eq("id", id);
   }
   
-  // 8. Insert new components and collect dbIds
+  // Insert new components and collect dbIds
   if (componentsToInsert.length > 0) {
     const insertData = componentsToInsert.map(c => c.data);
     const { data } = await supabase.from("set_components").insert(insertData).select("id");

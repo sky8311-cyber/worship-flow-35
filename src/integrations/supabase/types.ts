@@ -1300,6 +1300,57 @@ export type Database = {
         }
         Relationships: []
       }
+      set_edit_locks: {
+        Row: {
+          acquired_at: string
+          created_at: string
+          expires_at: string
+          holder_name: string
+          holder_session_id: string
+          holder_user_id: string
+          id: string
+          last_activity_at: string
+          set_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          created_at?: string
+          expires_at?: string
+          holder_name: string
+          holder_session_id: string
+          holder_user_id: string
+          id?: string
+          last_activity_at?: string
+          set_id: string
+        }
+        Update: {
+          acquired_at?: string
+          created_at?: string
+          expires_at?: string
+          holder_name?: string
+          holder_session_id?: string
+          holder_user_id?: string
+          id?: string
+          last_activity_at?: string
+          set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_edit_locks_holder_user_id_fkey"
+            columns: ["holder_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_edit_locks_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: true
+            referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       set_songs: {
         Row: {
           bpm: number | null
