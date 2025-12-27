@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type MouseEvent } from "react";
+import { useState, useEffect, useRef, useCallback, type MouseEvent } from "react";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle, History } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -31,14 +32,16 @@ import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetPositionsManager";
+import { SetHistoryTab } from "@/components/worship-set/SetHistoryTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useAutoSaveDraft, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
+import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
-  | { type: "song"; data: any; id: string }
-  | { type: "component"; data: any; id: string };
+  | { type: "song"; data: any; id: string; dbId?: string }
+  | { type: "component"; data: any; id: string; dbId?: string };
 
 const SetBuilder = () => {
   const { id } = useParams();
@@ -415,12 +418,14 @@ const SetBuilder = () => {
     const songs: SetItem[] = (existingSetSongs || []).map((ss: any) => ({
       type: "song" as const,
       id: `song-${ss.id}`,
+      dbId: ss.id,
       data: { ...ss, song: ss.songs },
     }));
     
     const components: SetItem[] = (existingSetComponents || []).map((comp: any) => ({
       type: "component" as const,
       id: `component-${comp.id}`,
+      dbId: comp.id,
       data: comp,
     }));
     
