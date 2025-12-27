@@ -63,6 +63,16 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     wasOpenRef.current = open;
   }, [open, songs, song, location.pathname]);
   
+  // Fallback: If dialog is open but capturedSongs is empty and song prop exists
+  // This handles cases where song prop arrives after dialog opens (e.g., newly created song)
+  useEffect(() => {
+    if (open && capturedSongs.length === 0 && song) {
+      console.log("=== AddToSetDialog Fallback Capture ===");
+      console.log("Capturing song from prop:", song);
+      setCapturedSongs([song]);
+    }
+  }, [open, capturedSongs.length, song]);
+  
   const { data: sets } = useQuery({
     queryKey: ["my-draft-sets"],
     queryFn: async () => {
