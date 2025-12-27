@@ -110,9 +110,12 @@ export const useRealtimeHandlers = (
       }
 
       if (eventType === "INSERT") {
-        // Check if already exists by dbId or matching local item without dbId
+        // CRITICAL: Multi-tab loop prevention
+        // Check by dbId AND song_id to prevent duplicates from different tabs
         let existsByDbId = false;
+        let existsBySongId = false;
         let matchingLocalItem: { id: string } | null = null;
+        let existingItemForSongId: { id: string; dbId?: string } | null = null;
 
         setItems((current) => {
           for (const item of current) {
@@ -124,13 +127,17 @@ export const useRealtimeHandlers = (
               break;
             }
 
-            // Local item without dbId that matches song_id - just need to patch dbId
-            if (
-              !item.dbId &&
-              (item.data.song_id === newData.song_id ||
-                item.data.song?.id === newData.song_id)
-            ) {
-              matchingLocalItem = { id: item.id };
+            // Check if song_id already exists (regardless of dbId)
+            const itemSongId = item.data.song_id || item.data.song?.id;
+            if (itemSongId && itemSongId === newData.song_id) {
+              if (!item.dbId) {
+                // Local item without dbId - need to patch
+                matchingLocalItem = { id: item.id };
+              } else {
+                // Already has different dbId but same song_id - just update dbId
+                existingItemForSongId = { id: item.id, dbId: item.dbId };
+                existsBySongId = true;
+              }
               break;
             }
           }
@@ -139,6 +146,23 @@ export const useRealtimeHandlers = (
 
         if (existsByDbId) {
           console.log("[Realtime] Song already exists by dbId, skipping:", newData.id);
+          return;
+        }
+
+        // If song_id already exists with a different dbId, just update the dbId
+        // This prevents duplicate songs when multi-tab sync occurs
+        if (existsBySongId && existingItemForSongId) {
+          console.log("[Realtime] Song already exists by song_id, updating dbId only:", existingItemForSongId.id, "->", newData.id);
+          localChangeIdsRef.current.add(newData.id);
+          setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
+
+          setItems((current) =>
+            current.map((item) =>
+              item.id === existingItemForSongId!.id
+                ? { ...item, dbId: newData.id, data: { ...item.data, position: newData.position } }
+                : item
+            )
+          );
           return;
         }
 
@@ -178,6 +202,25 @@ export const useRealtimeHandlers = (
           return;
         }
 
+        // FINAL CHECK: Verify song_id doesn't exist before adding
+        let shouldAdd = true;
+        setItems((current) => {
+          for (const item of current) {
+            if (item.type !== "song") continue;
+            const itemSongId = item.data.song_id || item.data.song?.id;
+            if (itemSongId === newData.song_id || item.dbId === newData.id) {
+              console.log("[Realtime] Song already exists after fetch, skipping add:", newData.id);
+              shouldAdd = false;
+              break;
+            }
+          }
+          return current;
+        });
+
+        if (!shouldAdd) {
+          return;
+        }
+
         console.log("[Realtime] Adding song from remote with full data:", newData.id);
         
         // Mark this as externally added to protect from auto-save deletion
@@ -200,7 +243,15 @@ export const useRealtimeHandlers = (
 
         setItems((current) => {
           // Double check it wasn't added while we were fetching
-          if (current.some((item) => item.type === "song" && item.dbId === newData.id)) {
+          const alreadyExists = current.some((item) => {
+            if (item.type !== "song") return false;
+            if (item.dbId === newData.id) return true;
+            const itemSongId = item.data.song_id || item.data.song?.id;
+            if (itemSongId === newData.song_id) return true;
+            return false;
+          });
+          if (alreadyExists) {
+            console.log("[Realtime] Song already exists in final check, skipping:", newData.id);
             return current;
           }
           return [...current, newItem].sort(
@@ -248,9 +299,12 @@ export const useRealtimeHandlers = (
       }
 
       if (eventType === "INSERT") {
-        // Check if already exists by dbId or matching local item without dbId
+        // CRITICAL: Multi-tab loop prevention
+        // Check by dbId AND component_type+label to prevent duplicates
         let existsByDbId = false;
+        let existsByTypeLabel = false;
         let matchingLocalItem: { id: string } | null = null;
+        let existingItemForTypeLabel: { id: string; dbId?: string } | null = null;
 
         setItems((current) => {
           for (const item of current) {
@@ -262,13 +316,19 @@ export const useRealtimeHandlers = (
               break;
             }
 
-            // Local item without dbId that matches component_type and label
+            // Check if component_type + label already exists
             if (
-              !item.dbId &&
               item.data.component_type === newData.component_type &&
               item.data.label === newData.label
             ) {
-              matchingLocalItem = { id: item.id };
+              if (!item.dbId) {
+                // Local item without dbId - need to patch
+                matchingLocalItem = { id: item.id };
+              } else {
+                // Already has different dbId but same type+label - just update dbId
+                existingItemForTypeLabel = { id: item.id, dbId: item.dbId };
+                existsByTypeLabel = true;
+              }
               break;
             }
           }
@@ -277,6 +337,22 @@ export const useRealtimeHandlers = (
 
         if (existsByDbId) {
           console.log("[Realtime] Component already exists by dbId, skipping:", newData.id);
+          return;
+        }
+
+        // If component_type+label already exists with a different dbId, just update
+        if (existsByTypeLabel && existingItemForTypeLabel) {
+          console.log("[Realtime] Component already exists by type+label, updating dbId only:", existingItemForTypeLabel.id, "->", newData.id);
+          localChangeIdsRef.current.add(newData.id);
+          setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
+
+          setItems((current) =>
+            current.map((item) =>
+              item.id === existingItemForTypeLabel!.id
+                ? { ...item, dbId: newData.id, data: { ...item.data, position: newData.position } }
+                : item
+            )
+          );
           return;
         }
 
@@ -314,7 +390,18 @@ export const useRealtimeHandlers = (
         };
 
         setItems((current) => {
-          if (current.some((item) => item.type === "component" && item.dbId === newData.id)) {
+          // Final check: prevent duplicates by dbId or type+label
+          const alreadyExists = current.some((item) => {
+            if (item.type !== "component") return false;
+            if (item.dbId === newData.id) return true;
+            if (
+              item.data.component_type === newData.component_type &&
+              item.data.label === newData.label
+            ) return true;
+            return false;
+          });
+          if (alreadyExists) {
+            console.log("[Realtime] Component already exists in final check, skipping:", newData.id);
             return current;
           }
           return [...current, newItem].sort(
