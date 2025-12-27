@@ -86,13 +86,14 @@ export const useSetRealtimeSync = (
   }, [setId]);
 };
 
-// Helper hook for creating stable realtime handlers
+// Helper hook for creating stable realtime handlers with full song data fetching
 export const useRealtimeHandlers = (
   setItems: React.Dispatch<React.SetStateAction<any[]>>,
-  localChangeIdsRef: React.MutableRefObject<Set<string>>
+  localChangeIdsRef: React.MutableRefObject<Set<string>>,
+  externalAddedIdsRef?: React.MutableRefObject<Set<string>>
 ) => {
   const handleSongRealtimeChange = useCallback(
-    (payload: RealtimePayload) => {
+    async (payload: RealtimePayload) => {
       const eventType = payload.eventType;
       const newData = payload.new as any;
       const oldData = payload.old as any;
@@ -105,36 +106,74 @@ export const useRealtimeHandlers = (
         return;
       }
 
-      setItems((current) => {
-        if (eventType === "INSERT") {
-          // Check if already exists (local add)
-          const exists = current.some(
+      if (eventType === "INSERT") {
+        // Check if already exists
+        let exists = false;
+        setItems((current) => {
+          exists = current.some(
             (item) => item.type === "song" && item.dbId === newData.id
           );
-          if (exists) return current;
+          return current;
+        });
+        
+        if (exists) {
+          console.log("[Realtime] Song already exists, skipping:", newData.id);
+          return;
+        }
 
-          console.log("[Realtime] Adding song from remote:", newData.id);
-          
-          // We need to fetch the song details since realtime only gives us set_songs data
-          // For now, add a placeholder that will be updated
-          const newItem = {
-            type: "song" as const,
-            id: `song-${newData.id}`,
-            dbId: newData.id,
-            data: {
-              ...newData,
-              song: null, // Will need to be fetched
-              _needsFetch: true,
-            },
-          };
+        console.log("[Realtime] Fetching full song data for:", newData.id);
+        
+        // Fetch complete song data including song details and scores
+        const { data: setSongData, error } = await supabase
+          .from("set_songs")
+          .select(`
+            *,
+            songs:song_id (
+              *,
+              song_scores (id, key, file_url, page_number, position)
+            )
+          `)
+          .eq("id", newData.id)
+          .single();
 
+        if (error || !setSongData) {
+          console.error("[Realtime] Failed to fetch song data:", error);
+          return;
+        }
+
+        console.log("[Realtime] Adding song from remote with full data:", newData.id);
+        
+        // Mark this as externally added to protect from auto-save deletion
+        if (externalAddedIdsRef) {
+          externalAddedIdsRef.current.add(newData.id);
+          // Clear after 5 seconds to allow normal operations
+          setTimeout(() => {
+            externalAddedIdsRef.current.delete(newData.id);
+          }, 5000);
+        }
+        
+        const newItem = {
+          type: "song" as const,
+          id: `song-${newData.id}`,
+          dbId: newData.id,
+          data: {
+            ...setSongData,
+            song: setSongData.songs,
+          },
+        };
+
+        setItems((current) => {
+          // Double check it wasn't added while we were fetching
+          if (current.some((item) => item.type === "song" && item.dbId === newData.id)) {
+            return current;
+          }
           return [...current, newItem].sort(
             (a, b) => (a.data.position || 0) - (b.data.position || 0)
           );
-        }
-
-        if (eventType === "UPDATE") {
-          return current.map((item) => {
+        });
+      } else if (eventType === "UPDATE") {
+        setItems((current) =>
+          current.map((item) => {
             if (item.type === "song" && item.dbId === newData.id) {
               return {
                 ...item,
@@ -142,23 +181,21 @@ export const useRealtimeHandlers = (
               };
             }
             return item;
-          });
-        }
-
-        if (eventType === "DELETE") {
-          return current.filter(
+          })
+        );
+      } else if (eventType === "DELETE") {
+        setItems((current) =>
+          current.filter(
             (item) => !(item.type === "song" && item.dbId === oldData.id)
-          );
-        }
-
-        return current;
-      });
+          )
+        );
+      }
     },
-    [setItems, localChangeIdsRef]
+    [setItems, localChangeIdsRef, externalAddedIdsRef]
   );
 
   const handleComponentRealtimeChange = useCallback(
-    (payload: RealtimePayload) => {
+    async (payload: RealtimePayload) => {
       const eventType = payload.eventType;
       const newData = payload.new as any;
       const oldData = payload.old as any;
@@ -171,29 +208,46 @@ export const useRealtimeHandlers = (
         return;
       }
 
-      setItems((current) => {
-        if (eventType === "INSERT") {
-          const exists = current.some(
+      if (eventType === "INSERT") {
+        // Check if already exists
+        let exists = false;
+        setItems((current) => {
+          exists = current.some(
             (item) => item.type === "component" && item.dbId === newData.id
           );
-          if (exists) return current;
+          return current;
+        });
+        
+        if (exists) return;
 
-          console.log("[Realtime] Adding component from remote:", newData.id);
-          
-          const newItem = {
-            type: "component" as const,
-            id: `component-${newData.id}`,
-            dbId: newData.id,
-            data: newData,
-          };
+        console.log("[Realtime] Adding component from remote:", newData.id);
+        
+        // Mark as externally added
+        if (externalAddedIdsRef) {
+          externalAddedIdsRef.current.add(newData.id);
+          setTimeout(() => {
+            externalAddedIdsRef.current.delete(newData.id);
+          }, 5000);
+        }
+        
+        const newItem = {
+          type: "component" as const,
+          id: `component-${newData.id}`,
+          dbId: newData.id,
+          data: newData,
+        };
 
+        setItems((current) => {
+          if (current.some((item) => item.type === "component" && item.dbId === newData.id)) {
+            return current;
+          }
           return [...current, newItem].sort(
             (a, b) => (a.data.position || 0) - (b.data.position || 0)
           );
-        }
-
-        if (eventType === "UPDATE") {
-          return current.map((item) => {
+        });
+      } else if (eventType === "UPDATE") {
+        setItems((current) =>
+          current.map((item) => {
             if (item.type === "component" && item.dbId === newData.id) {
               return {
                 ...item,
@@ -201,19 +255,17 @@ export const useRealtimeHandlers = (
               };
             }
             return item;
-          });
-        }
-
-        if (eventType === "DELETE") {
-          return current.filter(
+          })
+        );
+      } else if (eventType === "DELETE") {
+        setItems((current) =>
+          current.filter(
             (item) => !(item.type === "component" && item.dbId === oldData.id)
-          );
-        }
-
-        return current;
-      });
+          )
+        );
+      }
     },
-    [setItems, localChangeIdsRef]
+    [setItems, localChangeIdsRef, externalAddedIdsRef]
   );
 
   return {
