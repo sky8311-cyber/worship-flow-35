@@ -1603,7 +1603,8 @@ const SetBuilder = () => {
             <Card className="shadow-md">
               <Tabs defaultValue="order" className="w-full">
                 <CardHeader className="pb-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    {/* Row 1: Tabs - left aligned */}
                     <TabsList className="grid w-auto grid-cols-2">
                       <TabsTrigger value="order" className="gap-2">
                         <Music className="h-4 w-4" />
@@ -1614,7 +1615,8 @@ const SetBuilder = () => {
                         {language === "ko" ? "히스토리" : "History"}
                       </TabsTrigger>
                     </TabsList>
-                    <div className="flex items-center gap-2">
+                    {/* Row 2: Buttons - right aligned */}
+                    <div className="flex items-center gap-2 justify-end">
                       <Button
                         type="button"
                         onClick={handleNavigateToSongs}
