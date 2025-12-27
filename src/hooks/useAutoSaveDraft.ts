@@ -38,6 +38,7 @@ interface UseAutoSaveDraftOptions {
   enabled?: boolean;
   isDataLoaded?: boolean;
   localChangeIdsRef?: React.MutableRefObject<Set<string>>; // For realtime sync
+  externalAddedIdsRef?: React.MutableRefObject<Set<string>>; // IDs added externally (e.g., from song library)
   onDbIdsUpdated?: (updates: DbIdUpdate[]) => void; // Callback when new dbIds are assigned
 }
 
@@ -52,6 +53,7 @@ export const useAutoSaveDraft = ({
   enabled = true,
   isDataLoaded = true,
   localChangeIdsRef,
+  externalAddedIdsRef,
   onDbIdsUpdated,
 }: UseAutoSaveDraftOptions) => {
   const { user } = useAuth();
@@ -248,7 +250,8 @@ export const useAutoSaveDraft = ({
 export async function upsertSongsAndComponents(
   setId: string,
   items: SetItem[],
-  localChangeIdsRef?: React.MutableRefObject<Set<string>>
+  localChangeIdsRef?: React.MutableRefObject<Set<string>>,
+  externalAddedIdsRef?: React.MutableRefObject<Set<string>>
 ): Promise<DbIdUpdate[]> {
   const dbIdUpdates: DbIdUpdate[] = [];
 
@@ -322,8 +325,24 @@ export async function upsertSongsAndComponents(
   });
 
   // 3. Delete songs/components that are no longer in the local list
-  const songIdsToDelete = [...currentSongIds].filter(id => !localSongDbIds.has(id));
-  const componentIdsToDelete = [...currentComponentIds].filter(id => !localComponentDbIds.has(id));
+  // BUT protect items that were externally added (e.g., from song library) and not yet in local state
+  const songIdsToDelete = [...currentSongIds].filter(id => {
+    if (localSongDbIds.has(id)) return false; // Keep if in local state
+    if (externalAddedIdsRef?.current.has(id)) {
+      console.log("[AutoSave] Protecting externally added song from deletion:", id);
+      return false; // Protect externally added items
+    }
+    return true;
+  });
+  
+  const componentIdsToDelete = [...currentComponentIds].filter(id => {
+    if (localComponentDbIds.has(id)) return false;
+    if (externalAddedIdsRef?.current.has(id)) {
+      console.log("[AutoSave] Protecting externally added component from deletion:", id);
+      return false;
+    }
+    return true;
+  });
 
   // Mark deleted items for realtime skip
   songIdsToDelete.forEach(id => localChangeIdsRef?.current.add(id));
@@ -331,9 +350,11 @@ export async function upsertSongsAndComponents(
 
   // 4. Execute deletions
   if (songIdsToDelete.length > 0) {
+    console.log("[AutoSave] Deleting songs:", songIdsToDelete);
     await supabase.from("set_songs").delete().in("id", songIdsToDelete);
   }
   if (componentIdsToDelete.length > 0) {
+    console.log("[AutoSave] Deleting components:", componentIdsToDelete);
     await supabase.from("set_components").delete().in("id", componentIdsToDelete);
   }
 

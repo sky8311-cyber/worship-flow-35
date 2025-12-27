@@ -70,6 +70,7 @@ const SetBuilder = () => {
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
   const localChangeIdsRef = useRef<Set<string>>(new Set());
+  const externalAddedIdsRef = useRef<Set<string>>(new Set()); // Track externally added items
   const suppressAutoSaveRef = useRef(false); // Suppress auto-save during revert
   const prevIdRef = useRef<string | undefined>(undefined);
   const [status, setStatus] = useState<"draft" | "published">("draft");
@@ -248,13 +249,15 @@ const SetBuilder = () => {
     enabled: status === "draft" && isExistingDataLoaded && !suppressAutoSaveRef.current,
     isDataLoaded: isExistingDataLoaded,
     localChangeIdsRef,
+    externalAddedIdsRef,
     onDbIdsUpdated: handleDbIdsUpdated,
   });
 
   // Realtime sync - receive changes from other tabs/users
   const { handleSongRealtimeChange, handleComponentRealtimeChange } = useRealtimeHandlers(
     setItems,
-    localChangeIdsRef
+    localChangeIdsRef,
+    externalAddedIdsRef
   );
 
   useSetRealtimeSync(id, {
@@ -681,7 +684,8 @@ const SetBuilder = () => {
         const dbIdUpdates = await upsertSongsAndComponents(
           setId, 
           currentItems, 
-          localChangeIdsRef
+          localChangeIdsRef,
+          externalAddedIdsRef
         );
         
         // Update items with new dbIds
