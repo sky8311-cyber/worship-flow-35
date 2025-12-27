@@ -23,6 +23,7 @@ interface SetRevertDialogProps {
   onOpenChange: (open: boolean) => void;
   setId: string | undefined;
   snapshotTime: string | null;
+  onRevertComplete?: (restoredSongs: any[], restoredComponents: any[]) => void;
 }
 
 export const SetRevertDialog = ({
@@ -30,6 +31,7 @@ export const SetRevertDialog = ({
   onOpenChange,
   setId,
   snapshotTime,
+  onRevertComplete,
 }: SetRevertDialogProps) => {
   const queryClient = useQueryClient();
   const { data: snapshot, isLoading } = useSetSnapshot(setId, snapshotTime || undefined);
@@ -42,7 +44,10 @@ export const SetRevertDialog = ({
       await supabase.from("set_songs").delete().eq("service_set_id", setId);
       await supabase.from("set_components").delete().eq("service_set_id", setId);
 
-      // Restore songs from snapshot
+      let insertedSongs: any[] = [];
+      let insertedComponents: any[] = [];
+
+      // Restore songs from snapshot - get back the new IDs
       if (snapshot.songs.length > 0) {
         const songsToInsert = snapshot.songs.map((song) => ({
           service_set_id: setId,
@@ -59,11 +64,16 @@ export const SetRevertDialog = ({
           energy_level: song.energy_level,
         }));
         
-        const { error } = await supabase.from("set_songs").insert(songsToInsert);
+        const { data, error } = await supabase
+          .from("set_songs")
+          .insert(songsToInsert)
+          .select("id, song_id, position, key, key_change_to, custom_notes, override_score_file_url, override_youtube_url, lyrics, bpm, time_signature, energy_level");
+        
         if (error) throw error;
+        insertedSongs = data || [];
       }
 
-      // Restore components from snapshot
+      // Restore components from snapshot - get back the new IDs
       if (snapshot.components.length > 0) {
         const componentsToInsert = snapshot.components.map((comp) => ({
           service_set_id: setId,
@@ -76,8 +86,13 @@ export const SetRevertDialog = ({
           content: comp.content,
         }));
         
-        const { error } = await supabase.from("set_components").insert(componentsToInsert);
+        const { data, error } = await supabase
+          .from("set_components")
+          .insert(componentsToInsert)
+          .select("id, position, component_type, label, notes, duration_minutes, assigned_to, content");
+        
         if (error) throw error;
+        insertedComponents = data || [];
       }
 
       // Update set metadata if needed
@@ -99,17 +114,24 @@ export const SetRevertDialog = ({
           .eq("id", setId);
         if (error) throw error;
       }
+
+      return { insertedSongs, insertedComponents };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("이전 버전으로 되돌렸습니다");
+      
+      // Invalidate queries to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-audit-history", setId] });
+      
       onOpenChange(false);
       
-      // Force page reload to get fresh data
-      window.location.reload();
+      // Call the callback with restored data so parent can update items state with new dbIds
+      if (onRevertComplete && data) {
+        onRevertComplete(data.insertedSongs, data.insertedComponents);
+      }
     },
     onError: (error) => {
       console.error("Revert error:", error);

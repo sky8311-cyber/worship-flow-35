@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 interface SetHistoryTabProps {
   setId: string | undefined;
+  onRevertComplete?: (restoredSongs: any[], restoredComponents: any[]) => void;
 }
 
 const getActionIcon = (action: "INSERT" | "UPDATE" | "DELETE") => {
@@ -47,7 +48,7 @@ const getTypeIcon = (type: "set" | "song" | "component") => {
   }
 };
 
-export const SetHistoryTab = ({ setId }: SetHistoryTabProps) => {
+export const SetHistoryTab = ({ setId, onRevertComplete }: SetHistoryTabProps) => {
   const { data: history, isLoading } = useSetAuditHistory(setId);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [revertDialogOpen, setRevertDialogOpen] = useState(false);
@@ -228,6 +229,7 @@ export const SetHistoryTab = ({ setId }: SetHistoryTabProps) => {
         onOpenChange={setRevertDialogOpen}
         setId={setId}
         snapshotTime={selectedSnapshotTime}
+        onRevertComplete={onRevertComplete}
       />
     </>
   );
