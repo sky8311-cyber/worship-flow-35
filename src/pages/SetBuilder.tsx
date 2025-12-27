@@ -1326,49 +1326,63 @@ const SetBuilder = () => {
         {isBlocked && lockHolder && (
           <Alert variant="destructive" className="mb-4">
             <Eye className="h-4 w-4" />
-            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <div className="flex-1">
-                <span>
-                  {language === "ko" 
-                    ? `🔒 ${lockHolder.name}님이 편집 중입니다.`
-                    : `🔒 ${lockHolder.name} is editing.`}
-                </span>
-                {isRequestingTakeover && takeoverCountdown && (
-                  <div className="mt-1">
-                    <span className="text-sm">
-                      {language === "ko" 
-                        ? `편집 요청 중... ${takeoverCountdown}초`
-                        : `Requesting edit... ${takeoverCountdown}s`}
-                    </span>
-                    <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
-                      <div 
-                        className="bg-primary h-full transition-all duration-1000 ease-linear"
-                        style={{ width: `${(takeoverCountdown / 30) * 100}%` }}
-                      />
-                    </div>
+            <AlertDescription className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div className="flex-1 space-y-1">
+                  <div className="font-medium">
+                    {language === "ko" 
+                      ? `🔒 ${lockHolder.name}님이 편집 중입니다`
+                      : `🔒 ${lockHolder.name} is editing`}
                   </div>
+                  <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+                    {lockHolder.device && <span>📱 {lockHolder.device}</span>}
+                    {lockHolder.lastActivity && (
+                      <span>⏱️ {language === "ko" ? "활동:" : "Active:"} {format(new Date(lockHolder.lastActivity), "HH:mm:ss")}</span>
+                    )}
+                    {lockHolder.lastSaved && (
+                      <span>💾 {language === "ko" ? "저장:" : "Saved:"} {format(new Date(lockHolder.lastSaved), "HH:mm:ss")}</span>
+                    )}
+                    {lockHolder.expiresAt && (
+                      <span>⏰ {language === "ko" ? "만료:" : "Expires:"} {format(new Date(lockHolder.expiresAt), "HH:mm:ss")}</span>
+                    )}
+                  </div>
+                  {isRequestingTakeover && takeoverCountdown !== null && (
+                    <div className="mt-2">
+                      <span className="text-sm font-medium">
+                        {takeoverCountdown > 0 
+                          ? (language === "ko" ? `편집 요청 중... ${takeoverCountdown}초 후 강제 가져오기` : `Requesting... force takeover in ${takeoverCountdown}s`)
+                          : (language === "ko" ? "권한 가져오는 중..." : "Taking over...")}
+                      </span>
+                      <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
+                        <div 
+                          className="bg-primary h-full transition-all duration-1000 ease-linear"
+                          style={{ width: `${(takeoverCountdown / 10) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {isRequestingTakeover ? (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={cancelTakeoverRequest}
+                  >
+                    {language === "ko" ? "요청 취소" : "Cancel"}
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={requestTakeover} 
+                    disabled={isAcquiring}
+                  >
+                    {isAcquiring 
+                      ? (language === "ko" ? "처리 중..." : "Processing...") 
+                      : (language === "ko" ? "편집 요청" : "Request Edit")}
+                  </Button>
                 )}
               </div>
-              {isRequestingTakeover ? (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={cancelTakeoverRequest}
-                >
-                  {language === "ko" ? "요청 취소" : "Cancel Request"}
-                </Button>
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={requestTakeover} 
-                  disabled={isAcquiring}
-                >
-                  {isAcquiring 
-                    ? (language === "ko" ? "처리 중..." : "Processing...") 
-                    : (language === "ko" ? "편집 요청" : "Request Edit")}
-                </Button>
-              )}
             </AlertDescription>
           </Alert>
         )}

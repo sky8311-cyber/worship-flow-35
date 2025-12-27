@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.premium-customer-portal]
 verify_jwt = true
+
+[functions.set-edit-lock-action]
+verify_jwt = false

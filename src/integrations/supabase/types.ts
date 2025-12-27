@@ -1305,11 +1305,13 @@ export type Database = {
           acquired_at: string
           created_at: string
           expires_at: string
+          holder_device: string | null
           holder_name: string
           holder_session_id: string
           holder_user_id: string
           id: string
           last_activity_at: string
+          last_saved_at: string | null
           set_id: string
           takeover_requested_at: string | null
           takeover_requested_by: string | null
@@ -1319,11 +1321,13 @@ export type Database = {
           acquired_at?: string
           created_at?: string
           expires_at?: string
+          holder_device?: string | null
           holder_name: string
           holder_session_id: string
           holder_user_id: string
           id?: string
           last_activity_at?: string
+          last_saved_at?: string | null
           set_id: string
           takeover_requested_at?: string | null
           takeover_requested_by?: string | null
@@ -1333,11 +1337,13 @@ export type Database = {
           acquired_at?: string
           created_at?: string
           expires_at?: string
+          holder_device?: string | null
           holder_name?: string
           holder_session_id?: string
           holder_user_id?: string
           id?: string
           last_activity_at?: string
+          last_saved_at?: string | null
           set_id?: string
           takeover_requested_at?: string | null
           takeover_requested_by?: string | null
