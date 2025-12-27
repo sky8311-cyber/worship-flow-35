@@ -1311,6 +1311,9 @@ export type Database = {
           id: string
           last_activity_at: string
           set_id: string
+          takeover_requested_at: string | null
+          takeover_requested_by: string | null
+          takeover_requester_name: string | null
         }
         Insert: {
           acquired_at?: string
@@ -1322,6 +1325,9 @@ export type Database = {
           id?: string
           last_activity_at?: string
           set_id: string
+          takeover_requested_at?: string | null
+          takeover_requested_by?: string | null
+          takeover_requester_name?: string | null
         }
         Update: {
           acquired_at?: string
@@ -1333,6 +1339,9 @@ export type Database = {
           id?: string
           last_activity_at?: string
           set_id?: string
+          takeover_requested_at?: string | null
+          takeover_requested_by?: string | null
+          takeover_requester_name?: string | null
         }
         Relationships: [
           {
@@ -1347,6 +1356,13 @@ export type Database = {
             columns: ["set_id"]
             isOneToOne: true
             referencedRelation: "service_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_edit_locks_takeover_requested_by_fkey"
+            columns: ["takeover_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
