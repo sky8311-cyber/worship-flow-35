@@ -45,6 +45,60 @@ interface UseAutoSaveDraftOptions {
 const LAST_EDITED_DRAFT_KEY = "lastEditedDraftId";
 const AUTO_SAVE_DELAY = 2000;
 
+const getFormSignature = (form: FormData) =>
+  JSON.stringify({
+    date: form.date,
+    service_time: form.service_time,
+    service_name: form.service_name,
+    community_id: form.community_id,
+    target_audience: form.target_audience,
+    worship_leader: form.worship_leader,
+    band_name: form.band_name,
+    scripture_reference: form.scripture_reference,
+    theme: form.theme,
+    worship_duration: form.worship_duration,
+    notes: form.notes,
+  });
+
+// IMPORTANT: Excludes dbId so "INSERT 후 dbId 할당"은 자동저장을 재트리거하지 않음
+const getItemsSignature = (items: SetItem[]) =>
+  JSON.stringify(
+    items.map((item, index) => {
+      const position = index + 1;
+
+      if (item.type === "song") {
+        const songId = item.data.song_id ?? item.data.song?.id ?? null;
+        return {
+          type: "song" as const,
+          localId: item.id,
+          position,
+          song_id: songId,
+          key: item.data.key ?? item.data.song?.default_key ?? null,
+          key_change_to: item.data.key_change_to ?? null,
+          custom_notes: item.data.custom_notes ?? "",
+          override_score_file_url: item.data.override_score_file_url ?? null,
+          override_youtube_url: item.data.override_youtube_url ?? null,
+          lyrics: item.data.lyrics ?? null,
+          bpm: item.data.bpm ?? null,
+          time_signature: item.data.time_signature ?? null,
+          energy_level: item.data.energy_level ?? null,
+        };
+      }
+
+      return {
+        type: "component" as const,
+        localId: item.id,
+        position,
+        component_type: item.data.component_type ?? null,
+        label: item.data.label ?? null,
+        notes: item.data.notes ?? null,
+        duration_minutes: item.data.duration_minutes ?? null,
+        assigned_to: item.data.assigned_to ?? null,
+        content: item.data.content ?? null,
+      };
+    })
+  );
+
 export const useAutoSaveDraft = ({
   id,
   formData,
@@ -66,6 +120,8 @@ export const useAutoSaveDraft = ({
   const itemsRef = useRef(items);
   const initialLoadRef = useRef(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevFormSignatureRef = useRef<string>("");
+  const prevItemsSignatureRef = useRef<string>("");
 
   useEffect(() => {
     formDataRef.current = formData;
@@ -146,7 +202,12 @@ export const useAutoSaveDraft = ({
 
       // UPSERT songs and components instead of DELETE + INSERT
       if (setId) {
-        const dbIdUpdates = await upsertSongsAndComponents(setId, currentItems, localChangeIdsRef);
+        const dbIdUpdates = await upsertSongsAndComponents(
+          setId,
+          currentItems,
+          localChangeIdsRef,
+          externalAddedIdsRef
+        );
         // Call the callback with newly assigned dbIds
         if (dbIdUpdates.length > 0 && onDbIdsUpdated) {
           onDbIdsUpdated(dbIdUpdates);
@@ -191,12 +252,26 @@ export const useAutoSaveDraft = ({
   }, [enabled, status, isDataLoaded, autoSaveMutation]);
 
   useEffect(() => {
+    const nextFormSig = getFormSignature(formData);
+    const nextItemsSig = getItemsSignature(items);
+
     if (initialLoadRef.current) {
       initialLoadRef.current = false;
+      prevFormSignatureRef.current = nextFormSig;
+      prevItemsSignatureRef.current = nextItemsSig;
       return;
     }
 
+    const isMeaningfulChange =
+      nextFormSig !== prevFormSignatureRef.current ||
+      nextItemsSig !== prevItemsSignatureRef.current;
+
+    // Always update refs so comparisons stay correct
+    prevFormSignatureRef.current = nextFormSig;
+    prevItemsSignatureRef.current = nextItemsSig;
+
     if (status !== "draft" || !enabled) return;
+    if (!isMeaningfulChange) return;
 
     setHasUnsavedChanges(true);
     triggerAutoSave();
