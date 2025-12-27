@@ -35,7 +35,7 @@ import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetP
 import { SetHistoryTab } from "@/components/worship-set/SetHistoryTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
-import { useAutoSaveDraft, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
+import { useAutoSaveDraft, clearLastEditedDraft, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 
 // Union type for items in the worship set (songs and components)
@@ -215,6 +215,22 @@ const SetBuilder = () => {
   // For new sets, always consider loaded. For existing sets, wait until items are initialized.
   const isExistingDataLoaded = !id || hasInitializedItems;
 
+  // Callback to update items with newly assigned dbIds after INSERT
+  const handleDbIdsUpdated = useCallback((updates: DbIdUpdate[]) => {
+    if (updates.length === 0) return;
+    
+    setItems(currentItems => {
+      const updateMap = new Map(updates.map(u => [u.localId, u.dbId]));
+      return currentItems.map(item => {
+        const newDbId = updateMap.get(item.id);
+        if (newDbId && !item.dbId) {
+          return { ...item, dbId: newDbId };
+        }
+        return item;
+      });
+    });
+  }, []);
+
   // Auto-save draft hook - placed after queries to ensure data loading check works
   const { 
     hasUnsavedChanges: autoSaveHasChanges, 
@@ -229,6 +245,7 @@ const SetBuilder = () => {
     status,
     enabled: status === "draft" && isExistingDataLoaded,
     isDataLoaded: isExistingDataLoaded,
+    onDbIdsUpdated: handleDbIdsUpdated,
   });
 
   // Navigate to new set URL if created via auto-save
