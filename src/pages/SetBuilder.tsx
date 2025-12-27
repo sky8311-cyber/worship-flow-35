@@ -87,6 +87,11 @@ const SetBuilder = () => {
 
   // Multi-tab/device editing detection
   const { otherEditors, isBlocked } = useSetEditorPresence(id);
+  
+  // Debug logging for presence
+  useEffect(() => {
+    console.log("[SetBuilder] Presence state - otherEditors:", otherEditors, "isBlocked:", isBlocked);
+  }, [otherEditors, isBlocked]);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
