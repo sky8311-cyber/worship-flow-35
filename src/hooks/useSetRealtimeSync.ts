@@ -110,17 +110,51 @@ export const useRealtimeHandlers = (
       }
 
       if (eventType === "INSERT") {
-        // Check if already exists
-        let exists = false;
+        // Check if already exists by dbId or matching local item without dbId
+        let existsByDbId = false;
+        let matchingLocalItem: { id: string } | null = null;
+
         setItems((current) => {
-          exists = current.some(
-            (item) => item.type === "song" && item.dbId === newData.id
-          );
+          for (const item of current) {
+            if (item.type !== "song") continue;
+
+            // Already has this dbId - skip entirely
+            if (item.dbId === newData.id) {
+              existsByDbId = true;
+              break;
+            }
+
+            // Local item without dbId that matches song_id - just need to patch dbId
+            if (
+              !item.dbId &&
+              (item.data.song_id === newData.song_id ||
+                item.data.song?.id === newData.song_id)
+            ) {
+              matchingLocalItem = { id: item.id };
+              break;
+            }
+          }
           return current;
         });
-        
-        if (exists) {
-          console.log("[Realtime] Song already exists, skipping:", newData.id);
+
+        if (existsByDbId) {
+          console.log("[Realtime] Song already exists by dbId, skipping:", newData.id);
+          return;
+        }
+
+        // If we found a matching local item without dbId, just patch the dbId
+        if (matchingLocalItem) {
+          console.log("[Realtime] Patching dbId to existing local song:", matchingLocalItem.id, "->", newData.id);
+          localChangeIdsRef.current.add(newData.id);
+          setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
+
+          setItems((current) =>
+            current.map((item) =>
+              item.id === matchingLocalItem!.id
+                ? { ...item, dbId: newData.id }
+                : item
+            )
+          );
           return;
         }
 
@@ -149,11 +183,10 @@ export const useRealtimeHandlers = (
         // Mark this as externally added to protect from auto-save deletion
         if (externalAddedIdsRef) {
           externalAddedIdsRef.current.add(newData.id);
-          // Clear after 5 seconds to allow normal operations
-          setTimeout(() => {
-            externalAddedIdsRef.current.delete(newData.id);
-          }, 5000);
+          setTimeout(() => externalAddedIdsRef.current.delete(newData.id), 5000);
         }
+        localChangeIdsRef.current.add(newData.id);
+        setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
         
         const newItem = {
           type: "song" as const,
@@ -215,26 +248,63 @@ export const useRealtimeHandlers = (
       }
 
       if (eventType === "INSERT") {
-        // Check if already exists
-        let exists = false;
+        // Check if already exists by dbId or matching local item without dbId
+        let existsByDbId = false;
+        let matchingLocalItem: { id: string } | null = null;
+
         setItems((current) => {
-          exists = current.some(
-            (item) => item.type === "component" && item.dbId === newData.id
-          );
+          for (const item of current) {
+            if (item.type !== "component") continue;
+
+            // Already has this dbId - skip entirely
+            if (item.dbId === newData.id) {
+              existsByDbId = true;
+              break;
+            }
+
+            // Local item without dbId that matches component_type and label
+            if (
+              !item.dbId &&
+              item.data.component_type === newData.component_type &&
+              item.data.label === newData.label
+            ) {
+              matchingLocalItem = { id: item.id };
+              break;
+            }
+          }
           return current;
         });
-        
-        if (exists) return;
+
+        if (existsByDbId) {
+          console.log("[Realtime] Component already exists by dbId, skipping:", newData.id);
+          return;
+        }
+
+        // If we found a matching local item without dbId, just patch the dbId
+        if (matchingLocalItem) {
+          console.log("[Realtime] Patching dbId to existing local component:", matchingLocalItem.id, "->", newData.id);
+          localChangeIdsRef.current.add(newData.id);
+          setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
+
+          setItems((current) =>
+            current.map((item) =>
+              item.id === matchingLocalItem!.id
+                ? { ...item, dbId: newData.id }
+                : item
+            )
+          );
+          return;
+        }
 
         console.log("[Realtime] Adding component from remote:", newData.id);
         
         // Mark as externally added
         if (externalAddedIdsRef) {
           externalAddedIdsRef.current.add(newData.id);
-          setTimeout(() => {
-            externalAddedIdsRef.current.delete(newData.id);
-          }, 5000);
+          setTimeout(() => externalAddedIdsRef.current.delete(newData.id), 5000);
         }
+        localChangeIdsRef.current.add(newData.id);
+        setTimeout(() => localChangeIdsRef.current.delete(newData.id), 5000);
         
         const newItem = {
           type: "component" as const,
