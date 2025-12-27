@@ -40,8 +40,18 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
-    if (!setId || !user) {
-      console.log("[Presence] No setId or user, skipping presence setup");
+    // Always log when useEffect triggers for debugging
+    console.log("[Presence] useEffect triggered - setId:", setId, "user:", !!user, "userId:", user?.id);
+
+    if (!setId) {
+      console.log("[Presence] No setId, skipping presence setup");
+      setOtherEditors([]);
+      setIsBlocked(false);
+      return;
+    }
+
+    if (!user) {
+      console.log("[Presence] Waiting for user to load...");
       setOtherEditors([]);
       setIsBlocked(false);
       return;
@@ -49,9 +59,12 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
 
     // Initialize session ID for this set
     sessionIdRef.current = getSessionId(setId);
+    joinedAtRef.current = new Date().toISOString();
     const userName = profile?.full_name || user.email || "Unknown";
 
-    console.log("[Presence] Setting up presence for set:", setId, "sessionId:", sessionIdRef.current);
+    console.log("[Presence] Setting up presence channel for set:", setId);
+    console.log("[Presence] My sessionId:", sessionIdRef.current);
+    console.log("[Presence] My joinedAt:", joinedAtRef.current);
 
     const channelName = `set-editor-presence-${setId}`;
     const channel = supabase.channel(channelName);
@@ -59,7 +72,7 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
 
     const processPresenceState = () => {
       const state = channel.presenceState();
-      console.log("[Presence] Raw state:", JSON.stringify(state, null, 2));
+      console.log("[Presence] Raw presence state:", JSON.stringify(state, null, 2));
       
       const allEditors: EditorInfo[] = [];
 
@@ -79,38 +92,44 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
         }
       });
 
-      console.log("[Presence] All editors:", allEditors);
-      console.log("[Presence] My sessionId:", sessionIdRef.current);
+      console.log("[Presence] All editors found:", allEditors.length, allEditors);
 
       // Filter out self
       const others = allEditors.filter(
         (e) => e.sessionId !== sessionIdRef.current
       );
-      setOtherEditors(others);
+      
+      console.log("[Presence] Other editors (excluding self):", others.length, others);
 
       // Check if this session should be blocked (joined later than any other)
       const myJoinedAt = joinedAtRef.current;
-      const shouldBlock = others.some((e) => e.joinedAt < myJoinedAt);
+      const shouldBlock = others.some((e) => {
+        const isEarlier = e.joinedAt < myJoinedAt;
+        console.log("[Presence] Comparing joinedAt - other:", e.joinedAt, "mine:", myJoinedAt, "blocked:", isEarlier);
+        return isEarlier;
+      });
       
-      console.log("[Presence] Other editors:", others.length, "isBlocked:", shouldBlock);
+      console.log("[Presence] Final state - otherEditors:", others.length, "isBlocked:", shouldBlock);
+      
+      setOtherEditors(others);
       setIsBlocked(shouldBlock);
     };
 
     channel
       .on("presence", { event: "sync" }, () => {
-        console.log("[Presence] Sync event received");
+        console.log("[Presence] ===== SYNC EVENT =====");
         processPresenceState();
       })
       .on("presence", { event: "join" }, ({ key, newPresences }) => {
-        console.log("[Presence] Join event:", key, newPresences);
+        console.log("[Presence] ===== JOIN EVENT =====", key, newPresences);
         processPresenceState();
       })
       .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-        console.log("[Presence] Leave event:", key, leftPresences);
+        console.log("[Presence] ===== LEAVE EVENT =====", key, leftPresences);
         processPresenceState();
       })
       .subscribe(async (status) => {
-        console.log("[Presence] Subscription status:", status);
+        console.log("[Presence] Channel subscription status:", status);
         if (status === "SUBSCRIBED") {
           const trackData = {
             sessionId: sessionIdRef.current,
@@ -118,9 +137,13 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
             userName: userName,
             joinedAt: joinedAtRef.current,
           };
-          console.log("[Presence] Tracking:", trackData);
+          console.log("[Presence] Tracking presence with data:", trackData);
           const result = await channel.track(trackData);
           console.log("[Presence] Track result:", result);
+        } else if (status === "CHANNEL_ERROR") {
+          console.error("[Presence] Channel error occurred");
+        } else if (status === "TIMED_OUT") {
+          console.error("[Presence] Channel subscription timed out");
         }
       });
 
@@ -129,7 +152,7 @@ export function useSetEditorPresence(setId: string | undefined): UseSetEditorPre
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [setId, user?.id]); // Removed profile from dependencies to prevent re-subscription
+  }, [setId, user]); // Include full user object to re-run when user loads
 
   return {
     otherEditors,

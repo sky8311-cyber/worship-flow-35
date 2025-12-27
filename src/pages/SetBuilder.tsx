@@ -833,6 +833,16 @@ const SetBuilder = () => {
   };
 
   const handleAddSong = (song: any, selectedKey?: string, selectedScoreUrl?: string) => {
+    // Block if another tab is editing
+    if (isBlocked) {
+      toast.error(
+        language === "ko" 
+          ? "다른 탭/기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다." 
+          : "Another tab/device is editing this set. You cannot edit here."
+      );
+      return;
+    }
+
     // Single song addition with optional key variation
     const newSetItem: SetItem = {
       type: "song",
@@ -852,6 +862,16 @@ const SetBuilder = () => {
   };
 
   const handleAddComponent = (type: WorshipComponentType, customLabel?: string) => {
+    // Block if another tab is editing
+    if (isBlocked) {
+      toast.error(
+        language === "ko" 
+          ? "다른 탭/기기에서 편집 중입니다. 이 탭에서는 편집할 수 없습니다." 
+          : "Another tab/device is editing this set. You cannot edit here."
+      );
+      return;
+    }
+
     const label = customLabel || getComponentLabel(type, language as "en" | "ko");
     const newComponent: SetItem = {
       type: "component",
