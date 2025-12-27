@@ -69,6 +69,7 @@ const SetBuilder = () => {
   });
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
+  const localChangeIdsRef = useRef<Set<string>>(new Set());
   const prevIdRef = useRef<string | undefined>(undefined);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [statusInitialized, setStatusInitialized] = useState(false);
@@ -245,7 +246,23 @@ const SetBuilder = () => {
     status,
     enabled: status === "draft" && isExistingDataLoaded,
     isDataLoaded: isExistingDataLoaded,
+    localChangeIdsRef,
     onDbIdsUpdated: handleDbIdsUpdated,
+  });
+
+  // Realtime sync - receive changes from other tabs/users
+  const { handleSongRealtimeChange, handleComponentRealtimeChange } = useRealtimeHandlers(
+    setItems,
+    localChangeIdsRef
+  );
+
+  useSetRealtimeSync(id, {
+    onSongChange: handleSongRealtimeChange,
+    onComponentChange: handleComponentRealtimeChange,
+    onSetChange: (payload) => {
+      // Refetch set data when the set itself is updated
+      queryClient.invalidateQueries({ queryKey: ["service-set", id] });
+    },
   });
 
   // Navigate to new set URL if created via auto-save

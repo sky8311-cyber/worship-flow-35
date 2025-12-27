@@ -87,8 +87,20 @@ export const useAutoSaveDraft = ({
       if (status !== "draft") return null;
       if (!currentForm.community_id) return null;
 
-      // Prevent saving with empty items for existing sets
+      // Safety check: If editing existing set with empty items, check DB first
       if (id && currentItems.length === 0) {
+        // Check if DB actually has songs/components before skipping
+        const [{ data: dbSongs }, { data: dbComponents }] = await Promise.all([
+          supabase.from("set_songs").select("id").eq("service_set_id", id).limit(1),
+          supabase.from("set_components").select("id").eq("service_set_id", id).limit(1),
+        ]);
+        
+        const dbHasItems = (dbSongs && dbSongs.length > 0) || (dbComponents && dbComponents.length > 0);
+        
+        if (dbHasItems) {
+          console.log('AutoSave: Skipping - DB has items but local is empty, preventing data loss');
+          return null;
+        }
         console.log('AutoSave: Skipping - editing existing set with empty items');
         return null;
       }
