@@ -1131,10 +1131,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               {language === "ko" ? "나중에" : "Later"}
             </AlertDialogCancel>
             <AlertDialogAction onClick={() => {
-              setShowAddToSetDialog(true);
-              setTimeout(() => {
-                setShowAddToSetPrompt(false);
-              }, 50);
+              // Close AlertDialog first, then open AddToSetDialog in next frame
+              setShowAddToSetPrompt(false);
+              requestAnimationFrame(() => {
+                setShowAddToSetDialog(true);
+              });
             }}>
               {language === "ko" ? "워십세트에 추가" : "Add to Set"}
             </AlertDialogAction>
@@ -1148,12 +1149,15 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         onOpenChange={(open) => {
           setShowAddToSetDialog(open);
           if (!open) {
+            // User cancelled - clean up and close SongDialog
             setNewlyCreatedSong(null);
             onClose();
           }
         }}
         song={newlyCreatedSong}
         onSuccess={() => {
+          // Success - close dialog first, then clean up
+          setShowAddToSetDialog(false);
           setNewlyCreatedSong(null);
           onClose();
         }}
