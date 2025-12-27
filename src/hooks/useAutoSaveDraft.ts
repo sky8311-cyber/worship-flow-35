@@ -255,14 +255,17 @@ export async function upsertSongsAndComponents(
 ): Promise<DbIdUpdate[]> {
   const dbIdUpdates: DbIdUpdate[] = [];
 
-  // 1. Fetch current songs and components from DB
+  // 1. Fetch current songs and components from DB with created_at for recency check
   const [{ data: currentSongs }, { data: currentComponents }] = await Promise.all([
-    supabase.from("set_songs").select("id").eq("service_set_id", setId),
-    supabase.from("set_components").select("id").eq("service_set_id", setId),
+    supabase.from("set_songs").select("id, created_at").eq("service_set_id", setId),
+    supabase.from("set_components").select("id, created_at").eq("service_set_id", setId),
   ]);
 
-  const currentSongIds = new Set((currentSongs || []).map(s => s.id));
-  const currentComponentIds = new Set((currentComponents || []).map(c => c.id));
+  const currentSongMap = new Map((currentSongs || []).map(s => [s.id, s.created_at]));
+  const currentComponentMap = new Map((currentComponents || []).map(c => [c.id, c.created_at]));
+
+  const currentSongIds = new Set(currentSongMap.keys());
+  const currentComponentIds = new Set(currentComponentMap.keys());
 
   // 2. Categorize items - track local IDs for new items
   const songsToUpdate: any[] = [];
@@ -325,12 +328,26 @@ export async function upsertSongsAndComponents(
   });
 
   // 3. Delete songs/components that are no longer in the local list
-  // BUT protect items that were externally added (e.g., from song library) and not yet in local state
+  // BUT protect items that were:
+  // - Externally added (e.g., from song library) and not yet in local state
+  // - Very recently created (within last 30 seconds) to prevent race conditions
+  const RECENT_CREATION_THRESHOLD_MS = 30000; // 30 seconds
+  const now = Date.now();
+  
   const songIdsToDelete = [...currentSongIds].filter(id => {
     if (localSongDbIds.has(id)) return false; // Keep if in local state
     if (externalAddedIdsRef?.current.has(id)) {
       console.log("[AutoSave] Protecting externally added song from deletion:", id);
       return false; // Protect externally added items
+    }
+    // Protect very recently created items
+    const createdAt = currentSongMap.get(id);
+    if (createdAt) {
+      const createdAtMs = new Date(createdAt).getTime();
+      if (now - createdAtMs < RECENT_CREATION_THRESHOLD_MS) {
+        console.log("[AutoSave] Protecting recently created song from deletion:", id, "created:", createdAt);
+        return false;
+      }
     }
     return true;
   });
@@ -340,6 +357,15 @@ export async function upsertSongsAndComponents(
     if (externalAddedIdsRef?.current.has(id)) {
       console.log("[AutoSave] Protecting externally added component from deletion:", id);
       return false;
+    }
+    // Protect very recently created items
+    const createdAt = currentComponentMap.get(id);
+    if (createdAt) {
+      const createdAtMs = new Date(createdAt).getTime();
+      if (now - createdAtMs < RECENT_CREATION_THRESHOLD_MS) {
+        console.log("[AutoSave] Protecting recently created component from deletion:", id, "created:", createdAt);
+        return false;
+      }
     }
     return true;
   });

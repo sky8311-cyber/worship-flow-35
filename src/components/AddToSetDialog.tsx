@@ -175,13 +175,26 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         key: s.default_key,
       }));
       
-      const { error: songError } = await supabase
+      // Insert and get the inserted row IDs for protection
+      const { data: insertedRows, error: songError } = await supabase
         .from("set_songs")
-        .insert(songInserts);
+        .insert(songInserts)
+        .select("id");
       
       if (songError) {
         console.error("Insert set_songs error:", songError);
         throw songError;
+      }
+      
+      // Store inserted IDs in sessionStorage for SetBuilder to protect from auto-save deletion
+      const insertedIds = insertedRows?.map(r => r.id) || [];
+      if (insertedIds.length > 0) {
+        const storageKey = `recentlyAddedSetSongIds:${targetSetId}`;
+        sessionStorage.setItem(storageKey, JSON.stringify({
+          ids: insertedIds,
+          timestamp: Date.now(),
+        }));
+        console.log("[AddToSetDialog] Stored recently added song IDs:", insertedIds);
       }
       
       return { setId: targetSetId, count: validSongs.length };
@@ -199,6 +212,9 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      // Also invalidate dashboard queries for immediate reflection
+      queryClient.invalidateQueries({ queryKey: ["dashboard-set-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["set-songs-preview"] });
       
       // Clear editing context from session storage
       sessionStorage.removeItem('currentEditingSetId');

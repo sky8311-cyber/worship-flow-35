@@ -175,7 +175,7 @@ const SetBuilder = () => {
   const canDelete =
     !!user && !!setOwner?.created_by && (setOwner.created_by === user.id || isAdmin);
 
-  const { data: existingSetSongs } = useQuery({
+  const { data: existingSetSongs, isFetching: isFetchingSongs, dataUpdatedAt: songsUpdatedAt } = useQuery({
     queryKey: ["set-songs", id],
     enabled: !!id,
     queryFn: async () => {
@@ -196,7 +196,7 @@ const SetBuilder = () => {
     staleTime: 0,
   });
 
-  const { data: existingSetComponents } = useQuery({
+  const { data: existingSetComponents, isFetching: isFetchingComponents, dataUpdatedAt: componentsUpdatedAt } = useQuery({
     queryKey: ["set-components", id],
     enabled: !!id,
     queryFn: async () => {
@@ -213,6 +213,9 @@ const SetBuilder = () => {
     refetchOnMount: "always",
     staleTime: 0,
   });
+
+  // Track last initialized timestamp to detect fresh data
+  const lastInitializedAtRef = useRef<number>(0);
 
   // Determine if existing data is fully loaded for auto-save safety
   // For new sets, always consider loaded. For existing sets, wait until items are initialized.
@@ -443,14 +446,54 @@ const SetBuilder = () => {
     prevIdRef.current = id;
   }, [id]);
 
-  // Merge and load songs + components by position - ONLY on initial load
+  // Load externally added song IDs from sessionStorage on mount
   useEffect(() => {
-    // Skip if already initialized or currently saving
-    if (hasInitializedItems || isSaving) return;
+    if (!id) return;
+    const storedKey = `recentlyAddedSetSongIds:${id}`;
+    const stored = sessionStorage.getItem(storedKey);
+    if (stored) {
+      try {
+        const { ids, timestamp } = JSON.parse(stored);
+        // Only use if less than 15 seconds old
+        if (Date.now() - timestamp < 15000 && Array.isArray(ids)) {
+          ids.forEach((songId: string) => {
+            externalAddedIdsRef.current.add(songId);
+            console.log("[SetBuilder] Loaded externally added song ID from sessionStorage:", songId);
+          });
+          // Clear after loading
+          sessionStorage.removeItem(storedKey);
+          // Auto-clear protection after 10 seconds
+          setTimeout(() => {
+            ids.forEach((songId: string) => externalAddedIdsRef.current.delete(songId));
+          }, 10000);
+        } else {
+          sessionStorage.removeItem(storedKey);
+        }
+      } catch (e) {
+        sessionStorage.removeItem(storedKey);
+      }
+    }
+  }, [id]);
+
+  // Merge and load songs + components by position - ONLY on initial load or after fresh fetch
+  useEffect(() => {
+    // Skip if currently saving
+    if (isSaving) return;
     
-    // For existing sets, wait until queries have completed
+    // For existing sets, wait until queries have FINISHED fetching (not just have cached data)
     if (id) {
+      // Must have data
       if (existingSetSongs === undefined || existingSetComponents === undefined) return;
+      // Must NOT be currently fetching (prevents using stale cache during refetch)
+      if (isFetchingSongs || isFetchingComponents) return;
+    }
+    
+    // Check if this is truly fresh data by comparing timestamps
+    const latestUpdateAt = Math.max(songsUpdatedAt || 0, componentsUpdatedAt || 0);
+    
+    // Skip if we've already initialized with this exact data
+    if (hasInitializedItems && lastInitializedAtRef.current >= latestUpdateAt) {
+      return;
     }
     
     const songs: SetItem[] = (existingSetSongs || []).map((ss: any) => ({
@@ -474,9 +517,11 @@ const SetBuilder = () => {
       return posA - posB;
     });
     
+    console.log("[SetBuilder] Initializing items from query data, count:", merged.length, "hasInitialized:", hasInitializedItems);
     setItems(merged);
-    setHasInitializedItems(true); // Prevent future refetches from overwriting
-  }, [existingSetSongs, existingSetComponents, isSaving, id, hasInitializedItems]);
+    setHasInitializedItems(true);
+    lastInitializedAtRef.current = latestUpdateAt;
+  }, [existingSetSongs, existingSetComponents, isSaving, id, hasInitializedItems, isFetchingSongs, isFetchingComponents, songsUpdatedAt, componentsUpdatedAt]);
 
   // Load template from URL parameter (for "Create Set from Template" feature)
   useEffect(() => {
