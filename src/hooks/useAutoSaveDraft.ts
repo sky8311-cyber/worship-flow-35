@@ -24,6 +24,12 @@ interface SetItem {
   dbId?: string; // Database ID for tracking existing records
 }
 
+// Callback type for updating dbIds after INSERT
+export interface DbIdUpdate {
+  localId: string; // The local item.id (e.g., "song-uuid" or "component-uuid")
+  dbId: string;    // The database ID after INSERT
+}
+
 interface UseAutoSaveDraftOptions {
   id: string | undefined;
   formData: FormData;
@@ -32,6 +38,7 @@ interface UseAutoSaveDraftOptions {
   enabled?: boolean;
   isDataLoaded?: boolean;
   localChangeIdsRef?: React.MutableRefObject<Set<string>>; // For realtime sync
+  onDbIdsUpdated?: (updates: DbIdUpdate[]) => void; // Callback when new dbIds are assigned
 }
 
 const LAST_EDITED_DRAFT_KEY = "lastEditedDraftId";
@@ -45,6 +52,7 @@ export const useAutoSaveDraft = ({
   enabled = true,
   isDataLoaded = true,
   localChangeIdsRef,
+  onDbIdsUpdated,
 }: UseAutoSaveDraftOptions) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -124,7 +132,11 @@ export const useAutoSaveDraft = ({
 
       // UPSERT songs and components instead of DELETE + INSERT
       if (setId) {
-        await upsertSongsAndComponents(setId, currentItems, localChangeIdsRef);
+        const dbIdUpdates = await upsertSongsAndComponents(setId, currentItems, localChangeIdsRef);
+        // Call the callback with newly assigned dbIds
+        if (dbIdUpdates.length > 0 && onDbIdsUpdated) {
+          onDbIdsUpdated(dbIdUpdates);
+        }
       }
 
       return setId;
@@ -219,11 +231,14 @@ export const useAutoSaveDraft = ({
 };
 
 // UPSERT helper function - Updates existing, inserts new, deletes removed
+// Returns array of DbIdUpdate for newly inserted items
 async function upsertSongsAndComponents(
   setId: string,
   items: SetItem[],
   localChangeIdsRef?: React.MutableRefObject<Set<string>>
-) {
+): Promise<DbIdUpdate[]> {
+  const dbIdUpdates: DbIdUpdate[] = [];
+
   // 1. Fetch current songs and components from DB
   const [{ data: currentSongs }, { data: currentComponents }] = await Promise.all([
     supabase.from("set_songs").select("id").eq("service_set_id", setId),
@@ -233,9 +248,11 @@ async function upsertSongsAndComponents(
   const currentSongIds = new Set((currentSongs || []).map(s => s.id));
   const currentComponentIds = new Set((currentComponents || []).map(c => c.id));
 
-  // 2. Categorize items
-  const songsToUpsert: any[] = [];
-  const componentsToUpsert: any[] = [];
+  // 2. Categorize items - track local IDs for new items
+  const songsToUpdate: any[] = [];
+  const songsToInsert: { localId: string; data: any }[] = [];
+  const componentsToUpdate: any[] = [];
+  const componentsToInsert: { localId: string; data: any }[] = [];
   const localSongDbIds = new Set<string>();
   const localComponentDbIds = new Set<string>();
 
@@ -260,12 +277,12 @@ async function upsertSongsAndComponents(
 
       if (item.dbId) {
         // Existing song - update
-        songsToUpsert.push({ id: item.dbId, ...songData });
+        songsToUpdate.push({ id: item.dbId, ...songData });
         localSongDbIds.add(item.dbId);
         localChangeIdsRef?.current.add(item.dbId);
       } else {
-        // New song - insert (will get ID assigned)
-        songsToUpsert.push(songData);
+        // New song - insert (track localId for callback)
+        songsToInsert.push({ localId: item.id, data: songData });
       }
     } else {
       const componentData = {
@@ -281,12 +298,12 @@ async function upsertSongsAndComponents(
 
       if (item.dbId) {
         // Existing component - update
-        componentsToUpsert.push({ id: item.dbId, ...componentData });
+        componentsToUpdate.push({ id: item.dbId, ...componentData });
         localComponentDbIds.add(item.dbId);
         localChangeIdsRef?.current.add(item.dbId);
       } else {
-        // New component - insert
-        componentsToUpsert.push(componentData);
+        // New component - insert (track localId for callback)
+        componentsToInsert.push({ localId: item.id, data: componentData });
       }
     }
   });
@@ -307,37 +324,51 @@ async function upsertSongsAndComponents(
     await supabase.from("set_components").delete().in("id", componentIdsToDelete);
   }
 
-  // 5. Upsert songs and components
-  const songsWithId = songsToUpsert.filter(s => s.id);
-  const songsWithoutId = songsToUpsert.filter(s => !s.id);
-
-  // Update existing songs
-  for (const song of songsWithId) {
+  // 5. Update existing songs
+  for (const song of songsToUpdate) {
     const { id, ...updateData } = song;
     await supabase.from("set_songs").update(updateData).eq("id", id);
   }
   
-  // Insert new songs
-  if (songsWithoutId.length > 0) {
-    const { data } = await supabase.from("set_songs").insert(songsWithoutId).select("id");
-    data?.forEach(row => localChangeIdsRef?.current.add(row.id));
+  // 6. Insert new songs and collect dbIds
+  if (songsToInsert.length > 0) {
+    const insertData = songsToInsert.map(s => s.data);
+    const { data } = await supabase.from("set_songs").insert(insertData).select("id");
+    if (data) {
+      data.forEach((row, idx) => {
+        localChangeIdsRef?.current.add(row.id);
+        // Map localId to new dbId
+        dbIdUpdates.push({
+          localId: songsToInsert[idx].localId,
+          dbId: row.id,
+        });
+      });
+    }
   }
 
-  // Components
-  const componentsWithId = componentsToUpsert.filter(c => c.id);
-  const componentsWithoutId = componentsToUpsert.filter(c => !c.id);
-
-  // Update existing components
-  for (const comp of componentsWithId) {
+  // 7. Update existing components
+  for (const comp of componentsToUpdate) {
     const { id, ...updateData } = comp;
     await supabase.from("set_components").update(updateData).eq("id", id);
   }
   
-  // Insert new components
-  if (componentsWithoutId.length > 0) {
-    const { data } = await supabase.from("set_components").insert(componentsWithoutId).select("id");
-    data?.forEach(row => localChangeIdsRef?.current.add(row.id));
+  // 8. Insert new components and collect dbIds
+  if (componentsToInsert.length > 0) {
+    const insertData = componentsToInsert.map(c => c.data);
+    const { data } = await supabase.from("set_components").insert(insertData).select("id");
+    if (data) {
+      data.forEach((row, idx) => {
+        localChangeIdsRef?.current.add(row.id);
+        // Map localId to new dbId
+        dbIdUpdates.push({
+          localId: componentsToInsert[idx].localId,
+          dbId: row.id,
+        });
+      });
+    }
   }
+
+  return dbIdUpdates;
 }
 
 export const getLastEditedDraftId = () => {
