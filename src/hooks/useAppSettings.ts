@@ -11,6 +11,7 @@ interface FeatureFlags {
   premium_menu_visible: boolean;
   scheduler_enabled: boolean;
   cross_community_enabled: boolean;
+  worship_leader_auto_approve: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -21,6 +22,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   premium_menu_visible: false,
   scheduler_enabled: false,
   cross_community_enabled: false,
+  worship_leader_auto_approve: false,
 };
 
 export function useAppSettings() {
@@ -83,6 +85,7 @@ export function useAppSettings() {
     isPremiumMenuVisible: !isLoading && (flags?.premium_menu_visible ?? false),
     isSchedulerEnabled: !isLoading && (flags?.scheduler_enabled ?? false),
     isCrossCommunityEnabled: !isLoading && (flags?.cross_community_enabled ?? false),
+    isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     toggleLeaderboard: () => toggleFlag("seed_leaderboard_enabled"),
@@ -92,5 +95,6 @@ export function useAppSettings() {
     togglePremiumMenu: () => toggleFlag("premium_menu_visible"),
     toggleScheduler: () => toggleFlag("scheduler_enabled"),
     toggleCrossCommunity: () => toggleFlag("cross_community_enabled"),
+    toggleWorshipLeaderAutoApprove: () => toggleFlag("worship_leader_auto_approve"),
   };
 }

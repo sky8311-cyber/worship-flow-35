@@ -25,6 +25,7 @@ const AdminDashboard = () => {
     isPremiumMenuVisible,
     isSchedulerEnabled,
     isCrossCommunityEnabled,
+    isWorshipLeaderAutoApproveEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
     togglePremiumMenu,
     toggleScheduler,
     toggleCrossCommunity,
+    toggleWorshipLeaderAutoApprove,
     isUpdating,
   } = useAppSettings();
   
@@ -355,6 +357,23 @@ const AdminDashboard = () => {
                     <Switch
                       checked={isChurchMenuVisible}
                       onCheckedChange={toggleChurchMenu}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Worship Leader Auto Approve Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">예배인도자 자동 승인</Label>
+                      <p className="text-sm text-muted-foreground">
+                        베타 기간 동안 예배인도자 승급신청을 자동으로 승인합니다
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isWorshipLeaderAutoApproveEnabled}
+                      onCheckedChange={toggleWorshipLeaderAutoApprove}
                       disabled={isUpdating}
                     />
                   </div>

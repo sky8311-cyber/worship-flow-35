@@ -54,25 +54,83 @@ const RequestWorshipLeader = () => {
       }
 
       // Create application (denomination is now optional/null)
-      const { error } = await supabase
+      const { data: application, error } = await supabase
         .from("worship_leader_applications")
         .insert({
           user_id: user.id,
           church_name: formData.communityName,
-          church_website: formData.website,
+          church_website: formData.website || "",
           denomination: null,
           country: formData.country,
           position: formData.servingPosition,
           years_serving: parseInt(formData.yearsServing),
           introduction: formData.introduction,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: t("worshipLeaderRequest.success"),
-        description: t("worshipLeaderRequest.successDesc"),
-      });
+      // Check if auto-approve is enabled
+      const { data: autoApproveFlag } = await supabase
+        .from("platform_feature_flags")
+        .select("enabled")
+        .eq("key", "worship_leader_auto_approve")
+        .single();
+
+      if (autoApproveFlag?.enabled && application) {
+        // Add worship_leader role
+        const { data: existingRole } = await supabase
+          .from("user_roles")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("role", "worship_leader")
+          .maybeSingle();
+
+        if (!existingRole) {
+          await supabase.from("user_roles").insert({
+            user_id: user.id,
+            role: "worship_leader",
+          });
+        }
+
+        // Update application status to approved
+        await supabase
+          .from("worship_leader_applications")
+          .update({ status: "approved", reviewed_at: new Date().toISOString() })
+          .eq("id", application.id);
+
+        // Update profile with application data (only fill empty fields)
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("church_name, church_website, country, years_serving, ministry_role, worship_leader_intro")
+          .eq("id", user.id)
+          .single();
+
+        const profileUpdates: Record<string, unknown> = {};
+        if (!profile?.church_name && formData.communityName) profileUpdates.church_name = formData.communityName;
+        if (!profile?.church_website && formData.website) profileUpdates.church_website = formData.website;
+        if (!profile?.country && formData.country) profileUpdates.country = formData.country;
+        if (!profile?.years_serving && formData.yearsServing) profileUpdates.years_serving = parseInt(formData.yearsServing);
+        if (!profile?.ministry_role && formData.servingPosition) profileUpdates.ministry_role = formData.servingPosition;
+        if (!profile?.worship_leader_intro && formData.introduction) profileUpdates.worship_leader_intro = formData.introduction;
+
+        if (Object.keys(profileUpdates).length > 0) {
+          await supabase.from("profiles").update(profileUpdates).eq("id", user.id);
+        }
+
+        toast({
+          title: "🎉 예배인도자 승급 승인!",
+          description: "자동으로 예배인도자로 승급되었습니다.",
+        });
+
+        await refreshProfile();
+      } else {
+        toast({
+          title: t("worshipLeaderRequest.success"),
+          description: t("worshipLeaderRequest.successDesc"),
+        });
+      }
 
       navigate("/dashboard");
     } catch (error: any) {
@@ -115,7 +173,9 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="communityName">{t("worshipLeaderRequest.communityName")}</Label>
+                <Label htmlFor="communityName">
+                  {t("worshipLeaderRequest.communityName")} <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="communityName"
                   type="text"
@@ -130,8 +190,7 @@ const RequestWorshipLeader = () => {
                 <Label htmlFor="website">{t("worshipLeaderRequest.website")}</Label>
                 <Input
                   id="website"
-                  type="url"
-                  required
+                  type="text"
                   placeholder={t("worshipLeaderRequest.websitePlaceholder")}
                   value={formData.website}
                   onChange={(e) => setFormData({ ...formData, website: e.target.value })}
@@ -139,7 +198,9 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="country">{t("worshipLeaderRequest.country")}</Label>
+                <Label htmlFor="country">
+                  {t("worshipLeaderRequest.country")} <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="country"
                   type="text"
@@ -151,7 +212,9 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="servingPosition">{t("worshipLeaderRequest.servingPosition")}</Label>
+                <Label htmlFor="servingPosition">
+                  {t("worshipLeaderRequest.servingPosition")} <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="servingPosition"
                   type="text"
@@ -163,7 +226,9 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="yearsServing">{t("worshipLeaderRequest.yearsServing")}</Label>
+                <Label htmlFor="yearsServing">
+                  {t("worshipLeaderRequest.yearsServing")} <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="yearsServing"
                   type="number"
@@ -175,7 +240,9 @@ const RequestWorshipLeader = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="introduction">{t("worshipLeaderRequest.introduction")}</Label>
+                <Label htmlFor="introduction">
+                  {t("worshipLeaderRequest.introduction")} <span className="text-red-500">*</span>
+                </Label>
                 <Textarea
                   id="introduction"
                   required
