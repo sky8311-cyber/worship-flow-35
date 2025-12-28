@@ -555,10 +555,11 @@ const Dashboard = () => {
             <Card>
               <CardContent className="p-0">
                 <DashboardFeedTabs 
-                  isWorshipLeader={isWorshipLeader}
-                  isAdmin={isAdmin}
-                  isCommunityLeader={isCommunityLeaderInAnyCommunity}
+                  isWorshipLeader={isWorshipLeader || false}
+                  isAdmin={isAdmin || false}
+                  isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
                   hasCommunities={communityIds.length > 0}
+                  userName={profile?.full_name || undefined}
                   userStats={userStats}
                 />
               </CardContent>
@@ -722,10 +723,11 @@ const Dashboard = () => {
           <Card>
             <CardContent className="p-0">
               <DashboardFeedTabs 
-                isWorshipLeader={isWorshipLeader}
-                isAdmin={isAdmin}
-                isCommunityLeader={isCommunityLeaderInAnyCommunity}
+                isWorshipLeader={isWorshipLeader || false}
+                isAdmin={isAdmin || false}
+                isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
                 hasCommunities={communityIds.length > 0}
+                userName={profile?.full_name || undefined}
                 userStats={userStats}
               />
             </CardContent>
