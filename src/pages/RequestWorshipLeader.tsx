@@ -12,6 +12,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
+const language = localStorage.getItem("language") || "ko";
+
 const RequestWorshipLeader = () => {
   const navigate = useNavigate();
   const { user, refreshProfile } = useAuth();
@@ -35,18 +37,24 @@ const RequestWorshipLeader = () => {
     setLoading(true);
 
     try {
-      // Check if already applied
+      // Check if already applied (pending or approved blocks new application, rejected allows reapply)
       const { data: existing } = await supabase
         .from("worship_leader_applications")
-        .select("id")
+        .select("id, status")
         .eq("user_id", user.id)
-        .eq("status", "pending")
-        .single();
+        .in("status", ["pending", "approved"])
+        .limit(1)
+        .maybeSingle();
 
       if (existing) {
+        const message = existing.status === "pending" 
+          ? t("worshipLeaderRequest.alreadyApplied")
+          : (language === "ko" ? "이미 승급된 상태입니다" : "Already approved as worship leader");
         toast({
-          title: t("worshipLeaderRequest.alreadyApplied"),
-          description: t("worshipLeaderRequest.alreadyAppliedDesc"),
+          title: message,
+          description: existing.status === "pending" 
+            ? t("worshipLeaderRequest.alreadyAppliedDesc")
+            : (language === "ko" ? "대시보드에서 예배인도자 기능을 사용하세요" : "Use worship leader features from the dashboard"),
           variant: "destructive",
         });
         setLoading(false);

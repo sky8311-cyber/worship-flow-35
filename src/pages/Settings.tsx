@@ -170,6 +170,26 @@ const Settings = () => {
     },
   });
 
+  // Cancel pending application mutation
+  const cancelApplicationMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await supabase
+        .from("worship_leader_applications")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success(language === "ko" ? "신청이 취소되었습니다" : "Application cancelled");
+      queryClient.invalidateQueries({ queryKey: ["worship-leader-application"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
   return (
     <AppLayout>
       <div className="container max-w-2xl mx-auto py-6 px-4 space-y-6">
@@ -347,16 +367,48 @@ const Settings = () => {
             {!isWorshipLeader && (
               <div className="space-y-3">
                 {applicationStatus?.status === "pending" ? (
-                  <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                    <Clock className="h-5 w-5 text-yellow-600" />
-                    <div>
-                      <p className="font-medium text-yellow-700 dark:text-yellow-400">
-                        {language === "ko" ? "신청 검토 중" : "Application Pending"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {language === "ko" ? "관리자가 신청을 검토하고 있습니다" : "Admin is reviewing your application"}
-                      </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <div className="flex-1">
+                        <p className="font-medium text-yellow-700 dark:text-yellow-400">
+                          {language === "ko" ? "신청 검토 중" : "Application Pending"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {language === "ko" ? "관리자가 신청을 검토하고 있습니다" : "Admin is reviewing your application"}
+                        </p>
+                      </div>
                     </div>
+                    {/* Cancel Application Button */}
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <XCircle className="mr-2 h-4 w-4" />
+                          {language === "ko" ? "신청 취소" : "Cancel Application"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {language === "ko" ? "신청을 취소하시겠습니까?" : "Cancel Application?"}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {language === "ko" 
+                              ? "예배인도자 승급 신청이 취소됩니다. 나중에 다시 신청할 수 있습니다."
+                              : "Your worship leader application will be cancelled. You can apply again later."}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => cancelApplicationMutation.mutate()}
+                            disabled={cancelApplicationMutation.isPending}
+                          >
+                            {language === "ko" ? "신청 취소" : "Cancel Application"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 ) : applicationStatus?.status === "rejected" ? (
                   <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
@@ -379,7 +431,9 @@ const Settings = () => {
                   disabled={applicationStatus?.status === "pending"}
                 >
                   <UserCog className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "예배인도자 승급 신청" : "Apply for Worship Leader"}
+                  {applicationStatus?.status === "rejected" 
+                    ? (language === "ko" ? "예배인도자 재신청" : "Reapply for Worship Leader")
+                    : (language === "ko" ? "예배인도자 승급 신청" : "Apply for Worship Leader")}
                 </Button>
               </div>
             )}

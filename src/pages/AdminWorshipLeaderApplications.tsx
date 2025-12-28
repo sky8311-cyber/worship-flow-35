@@ -11,14 +11,18 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, LayoutGrid, List } from "lucide-react";
-import { useState, useEffect } from "react";
+import { CheckCircle, XCircle, LayoutGrid, List, Zap, Filter, Users } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+type FilterType = "all" | "pending" | "auto_approved" | "manual_approved" | "rejected";
 
 const AdminWorshipLeaderApplications = () => {
   const { t, language } = useTranslation();
   const dateLocale = language === "ko" ? ko : enUS;
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [filterType, setFilterType] = useState<FilterType>("all");
   
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -170,12 +174,22 @@ const AdminWorshipLeaderApplications = () => {
     },
   });
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isAutoApproved?: boolean) => {
     switch (status) {
       case "pending":
         return <Badge variant="outline">{t("admin.applications.pending")}</Badge>;
       case "approved":
-        return <Badge className="bg-green-500">{t("admin.applications.approved")}</Badge>;
+        return (
+          <div className="flex items-center gap-1">
+            <Badge className="bg-green-500">{t("admin.applications.approved")}</Badge>
+            {isAutoApproved && (
+              <Badge variant="secondary" className="text-xs">
+                <Zap className="h-3 w-3 mr-1" />
+                {language === "ko" ? "자동" : "Auto"}
+              </Badge>
+            )}
+          </div>
+        );
       case "rejected":
         return <Badge variant="destructive">{t("admin.applications.rejected")}</Badge>;
       default:
@@ -183,51 +197,115 @@ const AdminWorshipLeaderApplications = () => {
     }
   };
 
+  // Filter applications based on selected filter
+  const filteredApplications = useMemo(() => {
+    if (!applications) return [];
+    
+    return applications.filter((app: any) => {
+      const isAutoApproved = app.status === "approved" && !app.reviewed_by;
+      const isManualApproved = app.status === "approved" && app.reviewed_by;
+      
+      switch (filterType) {
+        case "pending":
+          return app.status === "pending";
+        case "auto_approved":
+          return isAutoApproved;
+        case "manual_approved":
+          return isManualApproved;
+        case "rejected":
+          return app.status === "rejected";
+        default:
+          return true;
+      }
+    });
+  }, [applications, filterType]);
+
+  // Count for each filter
+  const counts = useMemo(() => {
+    if (!applications) return { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 };
+    
+    return applications.reduce((acc: Record<string, number>, app: any) => {
+      acc.all++;
+      if (app.status === "pending") acc.pending++;
+      else if (app.status === "approved" && !app.reviewed_by) acc.auto_approved++;
+      else if (app.status === "approved" && app.reviewed_by) acc.manual_approved++;
+      else if (app.status === "rejected") acc.rejected++;
+      return acc;
+    }, { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 });
+  }, [applications]);
+
   return (
     <div className="min-h-screen bg-gradient-soft">
       <AdminNav />
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <CardTitle>{t("admin.applications.title")}</CardTitle>
-              <div className="flex gap-1">
-                <Button
-                  variant={viewMode === "card" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("card")}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "table" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("table")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardTitle>{t("admin.applications.title")}</CardTitle>
+                <div className="flex gap-1">
+                  <Button
+                    variant={viewMode === "card" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("card")}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setViewMode("table")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+              
+              {/* Filter Tabs */}
+              <Tabs value={filterType} onValueChange={(v) => setFilterType(v as FilterType)} className="w-full">
+                <TabsList className="grid w-full grid-cols-5 h-auto">
+                  <TabsTrigger value="all" className="text-xs px-2 py-1.5">
+                    {language === "ko" ? "전체" : "All"} ({counts.all})
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="text-xs px-2 py-1.5">
+                    {language === "ko" ? "대기" : "Pending"} ({counts.pending})
+                  </TabsTrigger>
+                  <TabsTrigger value="auto_approved" className="text-xs px-2 py-1.5">
+                    <Zap className="h-3 w-3 mr-1" />
+                    {language === "ko" ? "자동" : "Auto"} ({counts.auto_approved})
+                  </TabsTrigger>
+                  <TabsTrigger value="manual_approved" className="text-xs px-2 py-1.5">
+                    {language === "ko" ? "수동" : "Manual"} ({counts.manual_approved})
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" className="text-xs px-2 py-1.5">
+                    {language === "ko" ? "거절" : "Rejected"} ({counts.rejected})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
-            ) : !applications || applications.length === 0 ? (
+            ) : !filteredApplications || filteredApplications.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {t("admin.applications.noApplications")}
               </div>
             ) : viewMode === "card" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {applications.map((app: any) => (
-                  <ApplicationCard
-                    key={app.id}
-                    application={app}
-                    hasWorshipLeaderRole={app.hasWorshipLeaderRole}
-                    onApprove={(id) => approveMutation.mutate(id)}
-                    onReject={(id) => rejectMutation.mutate(id)}
-                    isLoading={approveMutation.isPending || rejectMutation.isPending}
-                  />
-                ))}
+                {filteredApplications.map((app: any) => {
+                  const isAutoApproved = app.status === "approved" && !app.reviewed_by;
+                  return (
+                    <ApplicationCard
+                      key={app.id}
+                      application={{...app, isAutoApproved}}
+                      hasWorshipLeaderRole={app.hasWorshipLeaderRole}
+                      onApprove={(id) => approveMutation.mutate(id)}
+                      onReject={(id) => rejectMutation.mutate(id)}
+                      isLoading={approveMutation.isPending || rejectMutation.isPending}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <Table>
@@ -245,82 +323,85 @@ const AdminWorshipLeaderApplications = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {applications.map((app: any) => (
-                    <TableRow key={app.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={app.profiles?.avatar_url} />
-                            <AvatarFallback>
-                              {app.profiles?.full_name?.charAt(0) || "U"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{app.profiles?.full_name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {app.profiles?.email}
+                  {filteredApplications.map((app: any) => {
+                    const isAutoApproved = app.status === "approved" && !app.reviewed_by;
+                    return (
+                      <TableRow key={app.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={app.profiles?.avatar_url} />
+                              <AvatarFallback>
+                                {app.profiles?.full_name?.charAt(0) || "U"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{app.profiles?.full_name}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {app.profiles?.email}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{app.church_name}</TableCell>
-                      <TableCell>
-                        {app.church_website ? (
-                          <a 
-                            href={app.church_website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {app.church_website}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>{app.country || "-"}</TableCell>
-                      <TableCell>{app.position}</TableCell>
-                      <TableCell>{app.years_serving}년</TableCell>
-                      <TableCell>
-                        {format(new Date(app.created_at), "PPP", { locale: dateLocale })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(app.status)}
-                          {app.hasWorshipLeaderRole && app.status === "pending" && (
-                            <Badge className="bg-blue-500 text-white text-xs">
-                              {t("admin.applications.alreadyWorshipLeader")}
-                            </Badge>
+                        </TableCell>
+                        <TableCell>{app.church_name}</TableCell>
+                        <TableCell>
+                          {app.church_website ? (
+                            <a 
+                              href={app.church_website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline"
+                            >
+                              {app.church_website}
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {app.status === "pending" && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => approveMutation.mutate(app.id)}
-                              disabled={approveMutation.isPending}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              {app.hasWorshipLeaderRole 
-                                ? t("admin.applications.confirmStatus") 
-                                : t("admin.applications.approve")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => rejectMutation.mutate(app.id)}
-                              disabled={rejectMutation.isPending}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              {t("admin.applications.reject")}
-                            </Button>
+                        </TableCell>
+                        <TableCell>{app.country || "-"}</TableCell>
+                        <TableCell>{app.position}</TableCell>
+                        <TableCell>{app.years_serving}년</TableCell>
+                        <TableCell>
+                          {format(new Date(app.created_at), "PPP", { locale: dateLocale })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(app.status, isAutoApproved)}
+                            {app.hasWorshipLeaderRole && app.status === "pending" && (
+                              <Badge className="bg-blue-500 text-white text-xs">
+                                {t("admin.applications.alreadyWorshipLeader")}
+                              </Badge>
+                            )}
                           </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {app.status === "pending" && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => approveMutation.mutate(app.id)}
+                                disabled={approveMutation.isPending}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                {app.hasWorshipLeaderRole 
+                                  ? t("admin.applications.confirmStatus") 
+                                  : t("admin.applications.approve")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => rejectMutation.mutate(app.id)}
+                                disabled={rejectMutation.isPending}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                {t("admin.applications.reject")}
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
