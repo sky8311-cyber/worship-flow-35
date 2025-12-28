@@ -1,16 +1,22 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const AdminDashboard = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const queryClient = useQueryClient();
   const {
     isLeaderboardEnabled,
     isChurchSubscriptionEnabled,
@@ -52,6 +58,95 @@ const AdminDashboard = () => {
         trialAccounts: trialCount,
         activeAccounts: activeCount,
       };
+    },
+  });
+
+  // Fetch pending worship leader applications
+  const { data: pendingApplications } = useQuery({
+    queryKey: ["pending-applications"],
+    queryFn: async () => {
+      const { data: apps } = await supabase
+        .from("worship_leader_applications")
+        .select("*, profiles:user_id(full_name, email, avatar_url)")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return apps || [];
+    },
+  });
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: async (applicationId: string) => {
+      const app = pendingApplications?.find(a => a.id === applicationId);
+      if (!app) throw new Error("Application not found");
+
+      // Add worship_leader role if not exists
+      const { data: existingRole } = await supabase
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", app.user_id)
+        .eq("role", "worship_leader")
+        .maybeSingle();
+
+      if (!existingRole) {
+        await supabase.from("user_roles").insert({
+          user_id: app.user_id,
+          role: "worship_leader",
+        });
+      }
+
+      // Update profile with application data (only fill empty fields)
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("church_name, church_website, country, years_serving, ministry_role, worship_leader_intro")
+        .eq("id", app.user_id)
+        .single();
+
+      const profileUpdates: Record<string, unknown> = {};
+      if (!profile?.church_name && app.church_name) profileUpdates.church_name = app.church_name;
+      if (!profile?.church_website && app.church_website) profileUpdates.church_website = app.church_website;
+      if (!profile?.country && app.country) profileUpdates.country = app.country;
+      if (!profile?.years_serving && app.years_serving) profileUpdates.years_serving = app.years_serving;
+      if (!profile?.ministry_role && app.position) profileUpdates.ministry_role = app.position;
+      if (!profile?.worship_leader_intro && app.introduction) profileUpdates.worship_leader_intro = app.introduction;
+
+      if (Object.keys(profileUpdates).length > 0) {
+        await supabase.from("profiles").update(profileUpdates).eq("id", app.user_id);
+      }
+
+      // Update application status
+      const { error } = await supabase
+        .from("worship_leader_applications")
+        .update({ status: "approved", reviewed_at: new Date().toISOString() })
+        .eq("id", applicationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-applications"] });
+      toast.success(language === "ko" ? "승인되었습니다" : "Application approved");
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
+    },
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: async (applicationId: string) => {
+      const { error } = await supabase
+        .from("worship_leader_applications")
+        .update({ status: "rejected", reviewed_at: new Date().toISOString() })
+        .eq("id", applicationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["pending-applications"] });
+      toast.success(language === "ko" ? "거절되었습니다" : "Application rejected");
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
     },
   });
   
@@ -106,6 +201,71 @@ const AdminDashboard = () => {
             {t("admin.dashboard.subtitle")}
           </p>
         </div>
+
+        {/* Pending Applications Card */}
+        {pendingApplications && pendingApplications.length > 0 && (
+          <Card className="mb-8 border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-5 w-5 text-amber-500" />
+                  <CardTitle className="text-lg">
+                    {language === "ko" ? "대기 중인 승급 신청" : "Pending Applications"}
+                  </CardTitle>
+                  <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+                    {pendingApplications.length}{language === "ko" ? "건" : ""}
+                  </Badge>
+                </div>
+                <Link to="/admin/applications">
+                  <Button variant="outline" size="sm">
+                    {language === "ko" ? "전체보기" : "View All"}
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pendingApplications.map((app) => (
+                  <div key={app.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={(app.profiles as { avatar_url?: string })?.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {((app.profiles as { full_name?: string })?.full_name?.[0] || "?").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {(app.profiles as { full_name?: string })?.full_name || "Unknown"}
+                        </div>
+                        <div className="text-sm text-muted-foreground">{app.church_name}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        onClick={() => approveMutation.mutate(app.id)}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        {language === "ko" ? "승인" : "Approve"}
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => rejectMutation.mutate(app.id)}
+                        disabled={approveMutation.isPending || rejectMutation.isPending}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        {language === "ko" ? "거절" : "Reject"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {isLoading ? (
           <div className="text-center py-12">
