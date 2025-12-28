@@ -167,7 +167,7 @@ const PublicBandView = () => {
   // Fetch YouTube links for public songs
   const songIds = setSongs?.map(s => s.song_id) || [];
   const { data: allYoutubeLinks } = useQuery({
-    queryKey: ["public-youtube-links", songIds],
+    queryKey: ["public-youtube-links", token, songIds.join(",")],
     queryFn: async () => {
       if (songIds.length === 0) return [];
       const { data, error } = await supabase
@@ -178,7 +178,7 @@ const PublicBandView = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: songIds.length > 0,
+    enabled: !!setSongs && songIds.length > 0,
   });
 
   // Helper to get YouTube links for a specific song

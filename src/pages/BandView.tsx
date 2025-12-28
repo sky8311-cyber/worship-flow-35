@@ -172,8 +172,8 @@ const BandView = () => {
 
   // Fetch YouTube links for all songs
   const { data: allYoutubeLinks } = useQuery({
-    queryKey: ["band-view-youtube-links", songIds],
-    enabled: songIds.length > 0,
+    queryKey: ["band-view-youtube-links", id, songIds.join(",")],
+    enabled: !!setSongs && songIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("song_youtube_links")
