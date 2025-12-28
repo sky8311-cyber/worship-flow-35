@@ -23,6 +23,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isCollaboratorInvited = notification.type === "collaborator_invited";
   const isRolePromotion = ["promoted_to_owner", "promoted_to_community_leader", "promoted_to_worship_leader"].includes(notification.type);
   const isRoleDemotion = notification.type === "demoted_to_member";
+  const isNewWorshipLeaderApplication = notification.type === "new_worship_leader_application";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -74,6 +75,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
     } else if (notification.related_type === "role") {
       // For worship leader promotion - navigate to dashboard
       navigate("/dashboard");
+    } else if (notification.related_type === "worship_leader_application") {
+      // Navigate to admin applications page
+      navigate("/admin/applications");
     }
   };
 
@@ -126,6 +130,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         </div>
       ) : isRolePromotion ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+          <Crown className="h-5 w-5 text-white" />
+        </div>
+      ) : isNewWorshipLeaderApplication ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
           <Crown className="h-5 w-5 text-white" />
         </div>
       ) : isRoleDemotion ? (
