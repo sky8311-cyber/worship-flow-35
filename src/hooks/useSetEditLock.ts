@@ -52,8 +52,8 @@ const HEARTBEAT_INTERVAL_MS = 30 * 1000; // 30 seconds
 const INACTIVITY_WARNING_MS = 5 * 60 * 1000; // 5 minutes before warning
 const INACTIVITY_TIMEOUT_MS = 6 * 60 * 1000; // 6 minutes before auto-release
 const BACKGROUND_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes when tab in background
-const FORCE_TAKEOVER_DELAY_MS = 10 * 1000; // 10 seconds before force takeover
-const TAKEOVER_RESPONSE_TIMEOUT_MS = 10 * 1000; // 10 seconds for editor to respond
+const FORCE_TAKEOVER_DELAY_MS = 5 * 1000; // 5 seconds before force takeover
+const TAKEOVER_RESPONSE_TIMEOUT_MS = 5 * 1000; // 5 seconds for editor to respond
 
 // Get device info
 const getDeviceInfo = (): string => {
