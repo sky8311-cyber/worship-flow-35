@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useMemo } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -168,6 +169,30 @@ const BandView = () => {
     refetchOnMount: "always",
     staleTime: 0,
   });
+
+  // Fetch YouTube links for all songs
+  const { data: allYoutubeLinks } = useQuery({
+    queryKey: ["band-view-youtube-links", songIds],
+    enabled: songIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("song_youtube_links")
+        .select("*")
+        .in("song_id", songIds)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+
+  // Helper to get YouTube links for a specific song
+  const getYoutubeLinksForSong = (songId: string) => {
+    return (allYoutubeLinks || [])
+      .filter(link => link.song_id === songId)
+      .sort((a, b) => (a.position || 0) - (b.position || 0));
+  };
 
   const { data: setComponents } = useQuery({
     queryKey: ["band-view-components", id],
@@ -631,8 +656,12 @@ const BandView = () => {
             // Song item
             const setSong = item.data;
             const song = setSong.songs;
-            const youtubeUrl = setSong.override_youtube_url || song?.youtube_url;
-            const videoId = getYouTubeVideoId(youtubeUrl);
+            
+            // Get multiple YouTube links for this song
+            const youtubeLinks = getYoutubeLinksForSong(setSong.song_id);
+            // Fallback to legacy single URL if no links in new table
+            const fallbackYoutubeUrl = setSong.override_youtube_url || song?.youtube_url;
+            const fallbackVideoId = getYouTubeVideoId(fallbackYoutubeUrl);
             
             // Get score files for the selected key with fallback
             const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, setSong.key);
@@ -728,13 +757,70 @@ const BandView = () => {
                     </div>
                   )}
 
-                  {/* Embedded YouTube Player */}
-                  {videoId && (
+                  {/* Embedded YouTube Player(s) */}
+                  {youtubeLinks.length > 0 ? (
+                    <div className="mb-4 print:hidden">
+                      {youtubeLinks.length === 1 ? (
+                        // Single link: show directly
+                        (() => {
+                          const videoId = getYouTubeVideoId(youtubeLinks[0].url);
+                          return videoId ? (
+                            <div>
+                              {youtubeLinks[0].label && (
+                                <p className="text-sm font-semibold text-foreground mb-2">{youtubeLinks[0].label}</p>
+                              )}
+                              <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                                <iframe
+                                  className="absolute top-0 left-0 w-full h-full rounded-lg"
+                                  src={`https://www.youtube.com/embed/${videoId}`}
+                                  title={youtubeLinks[0].label || song?.title || "YouTube video"}
+                                  frameBorder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                              </div>
+                            </div>
+                          ) : null;
+                        })()
+                      ) : (
+                        // Multiple links: show as tabs
+                        <Tabs defaultValue="0" className="w-full">
+                          <TabsList className="mb-2 flex-wrap h-auto">
+                            {youtubeLinks.map((link, idx) => (
+                              <TabsTrigger key={link.id} value={String(idx)} className="text-xs">
+                                {link.label || `${language === "ko" ? "영상" : "Video"} ${idx + 1}`}
+                              </TabsTrigger>
+                            ))}
+                          </TabsList>
+                          {youtubeLinks.map((link, idx) => {
+                            const videoId = getYouTubeVideoId(link.url);
+                            return (
+                              <TabsContent key={link.id} value={String(idx)}>
+                                {videoId && (
+                                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                                    <iframe
+                                      className="absolute top-0 left-0 w-full h-full rounded-lg"
+                                      src={`https://www.youtube.com/embed/${videoId}`}
+                                      title={link.label || song?.title || "YouTube video"}
+                                      frameBorder="0"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                    />
+                                  </div>
+                                )}
+                              </TabsContent>
+                            );
+                          })}
+                        </Tabs>
+                      )}
+                    </div>
+                  ) : fallbackVideoId ? (
+                    // Fallback to legacy single youtube_url field
                     <div className="mb-4 print:hidden">
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                         <iframe
                           className="absolute top-0 left-0 w-full h-full rounded-lg"
-                          src={`https://www.youtube.com/embed/${videoId}`}
+                          src={`https://www.youtube.com/embed/${fallbackVideoId}`}
                           title={song?.title || "YouTube video"}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -742,7 +828,7 @@ const BandView = () => {
                         />
                       </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Embedded Score Images */}
                   {scoreFiles.length > 0 ? (
