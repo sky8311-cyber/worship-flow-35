@@ -69,6 +69,23 @@ export function DashboardFeedTabs({
   })();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
+  // Sync activeTab when role data loads asynchronously
+  useEffect(() => {
+    const correctTab = (() => {
+      if (isWorshipLeader || isAdmin || isCommunityLeader) return "feedback";
+      if (hasCommunities) return "community";
+      return "welcome";
+    })();
+    
+    // Update tab if leader should see feedback but isn't on it
+    if ((isWorshipLeader || isAdmin || isCommunityLeader) && activeTab !== "feedback") {
+      setActiveTab("feedback");
+    } else if (!showFeedbackTab && activeTab === "feedback") {
+      // No feedback access but on feedback tab - redirect
+      setActiveTab(hasCommunities ? "community" : "welcome");
+    }
+  }, [isWorshipLeader, isAdmin, isCommunityLeader, hasCommunities, showFeedbackTab]);
+
   // Mark feedback as viewed when tab is active on mount
   useEffect(() => {
     if (activeTab === "feedback" && showFeedbackTab) {
