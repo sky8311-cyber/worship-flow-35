@@ -132,7 +132,7 @@ const RequestWorshipLeader = () => {
         });
       }
 
-      navigate("/dashboard");
+      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         title: t("auth.error"),
