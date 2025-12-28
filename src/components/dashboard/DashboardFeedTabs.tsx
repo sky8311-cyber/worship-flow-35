@@ -61,8 +61,12 @@ export function DashboardFeedTabs({
   const showCommunityTab = true; // Always show, but content depends on hasCommunities
   const showWelcomeTab = (!isWorshipLeader && !hasCommunities) || isAdmin; // Hide for worship leaders, show for new users without communities OR admins
 
-  // Default tab: feedback for leaders, welcome for new users
-  const defaultTab = (isWorshipLeader || isAdmin || isCommunityLeader) ? "feedback" : "welcome";
+  // Default tab: feedback for leaders, community for regular users with communities, welcome for new users
+  const defaultTab = (() => {
+    if (isWorshipLeader || isAdmin || isCommunityLeader) return "feedback";
+    if (hasCommunities) return "community";
+    return "welcome";
+  })();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   // Mark feedback as viewed when tab is active on mount
