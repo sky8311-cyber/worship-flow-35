@@ -142,6 +142,16 @@ const AdminWorshipLeaderApplications = () => {
         .eq("id", applicationId);
 
       if (statusError) throw statusError;
+
+      // Step 6: Send approval notification to applicant
+      await supabase.from("notifications").insert({
+        user_id: application.user_id,
+        type: "promoted_to_worship_leader",
+        title: "예배인도자로 승급되었습니다! / You're now a Worship Leader!",
+        message: "축하합니다! 이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다. / Congratulations! You can now create communities and lead worship teams.",
+        related_type: "worship_leader_application",
+        related_id: applicationId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });
@@ -154,6 +164,9 @@ const AdminWorshipLeaderApplications = () => {
 
   const rejectMutation = useMutation({
     mutationFn: async (applicationId: string) => {
+      const application = applications?.find(app => app.id === applicationId);
+      if (!application) throw new Error("Application not found");
+
       const { error } = await supabase
         .from("worship_leader_applications")
         .update({
@@ -164,6 +177,16 @@ const AdminWorshipLeaderApplications = () => {
         .eq("id", applicationId);
 
       if (error) throw error;
+
+      // Send rejection notification to applicant
+      await supabase.from("notifications").insert({
+        user_id: application.user_id,
+        type: "worship_leader_rejected",
+        title: "예배인도자 신청 결과 / Application Result",
+        message: "신청이 승인되지 않았습니다. 다시 신청하실 수 있습니다. / Your application was not approved. You may reapply.",
+        related_type: "worship_leader_application",
+        related_id: applicationId,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });

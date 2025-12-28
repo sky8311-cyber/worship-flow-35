@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown } from "lucide-react";
+import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown, XCircle } from "lucide-react";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useState, useEffect } from "react";
 import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
@@ -24,6 +24,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isRolePromotion = ["promoted_to_owner", "promoted_to_community_leader", "promoted_to_worship_leader"].includes(notification.type);
   const isRoleDemotion = notification.type === "demoted_to_member";
   const isNewWorshipLeaderApplication = notification.type === "new_worship_leader_application";
+  const isWorshipLeaderRejected = notification.type === "worship_leader_rejected";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -139,6 +140,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       ) : isRoleDemotion ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
           <ArrowDown className="h-5 w-5 text-muted-foreground" />
+        </div>
+      ) : isWorshipLeaderRejected ? (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-destructive/10 flex items-center justify-center">
+          <XCircle className="h-5 w-5 text-destructive" />
         </div>
       ) : isLevelUp ? (
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center">
