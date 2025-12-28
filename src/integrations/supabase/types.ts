@@ -1960,6 +1960,47 @@ export type Database = {
         }
         Relationships: []
       }
+      welcome_posts: {
+        Row: {
+          author_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          image_urls: string[] | null
+          is_pinned: boolean | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          is_pinned?: boolean | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          image_urls?: string[] | null
+          is_pinned?: boolean | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "welcome_posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worship_communities: {
         Row: {
           avatar_url: string | null
