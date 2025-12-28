@@ -87,8 +87,8 @@ export function DashboardFeedTabs({
     }
   };
 
-  // If only community tab (team member), don't show tab UI at all
-  if (!showFeedbackTab) {
+  // If only community tab (team member without welcome tab), don't show tab UI at all
+  if (!showFeedbackTab && !showWelcomeTab) {
     return (
       <div className="h-full">
         <CommunityNewsfeed userStats={userStats} canPost={false} />
