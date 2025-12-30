@@ -12,11 +12,11 @@ import { AdminNav } from "@/components/admin/AdminNav";
 import { UserCard } from "@/components/admin/UserCard";
 import { AdminUserProfileDialog } from "@/components/admin/AdminUserProfileDialog";
 import { useTranslation } from "@/hooks/useTranslation";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal, Users } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -59,7 +59,7 @@ const AdminUsers = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch all data in parallel
-      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult] = await Promise.all([
+      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, email, full_name, created_at")
@@ -80,7 +80,13 @@ const AdminUsers = () => {
           .select("level, emoji, badge_color, name_ko, name_en"),
         supabase
           .from("songs")
-          .select("created_by")
+          .select("created_by"),
+        supabase
+          .from("community_members")
+          .select("user_id, community_id"),
+        supabase
+          .from("worship_communities")
+          .select("id, name, leader_id")
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
@@ -92,16 +98,47 @@ const AdminUsers = () => {
       const seeds = seedsResult.data || [];
       const levels = levelsResult.data || [];
       const songs = songsResult.data || [];
+      const communityMembers = communityMembersResult.data || [];
+      const communities = communitiesResult.data || [];
       
       // Create lookup maps for O(1) access
       const seedsMap = new Map(seeds.map(s => [s.user_id, s]));
       const levelsMap = new Map(levels.map(l => [l.level, l]));
+      const communitiesMap = new Map(communities.map(c => [c.id, c]));
       
       // Count songs per user
       const songCountMap = new Map<string, number>();
       songs.forEach(s => {
         if (s.created_by) {
           songCountMap.set(s.created_by, (songCountMap.get(s.created_by) || 0) + 1);
+        }
+      });
+      
+      // Build communities per user (including owned)
+      const userCommunitiesMap = new Map<string, Array<{ id: string; name: string }>>();
+      
+      // Add communities where user is a member
+      communityMembers.forEach(cm => {
+        if (cm.user_id && cm.community_id) {
+          const community = communitiesMap.get(cm.community_id);
+          if (community) {
+            const existing = userCommunitiesMap.get(cm.user_id) || [];
+            if (!existing.find(c => c.id === community.id)) {
+              existing.push({ id: community.id, name: community.name });
+            }
+            userCommunitiesMap.set(cm.user_id, existing);
+          }
+        }
+      });
+      
+      // Add communities where user is leader
+      communities.forEach(c => {
+        if (c.leader_id) {
+          const existing = userCommunitiesMap.get(c.leader_id) || [];
+          if (!existing.find(comm => comm.id === c.id)) {
+            existing.push({ id: c.id, name: c.name });
+          }
+          userCommunitiesMap.set(c.leader_id, existing);
         }
       });
       
@@ -117,6 +154,7 @@ const AdminUsers = () => {
           email_confirmed_at: authUser?.email_confirmed_at || null,
           last_sign_in_at: authUser?.last_sign_in_at || null,
           songCount: songCountMap.get(profile.id) || 0,
+          communities: userCommunitiesMap.get(profile.id) || [],
           seedData: seedData ? {
             totalSeeds: seedData.total_seeds,
             level: seedData.current_level,
@@ -586,7 +624,9 @@ const AdminUsers = () => {
                     <TableHead>{t("admin.users.verification")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
                     <TableHead className="text-center">{language === "ko" ? "레벨/씨앗" : "Level/Seeds"}</TableHead>
-                    <TableHead className="text-center">{language === "ko" ? "곡 기여" : "Songs"}</TableHead>
+                    <TableHead className="text-center">{language === "ko" ? "곡" : "Songs"}</TableHead>
+                    <TableHead>{language === "ko" ? "커뮤니티" : "Community"}</TableHead>
+                    <TableHead>{language === "ko" ? "마지막 로그인" : "Last Login"}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -656,6 +696,26 @@ const AdminUsers = () => {
                             </div>
                           ) : (
                             <span className="text-muted-foreground text-xs">0</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.communities.length > 0 ? (
+                            <div className="flex items-center gap-1">
+                              <Users className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-xs">{user.communities.length}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {user.last_sign_in_at ? (
+                            formatDistanceToNow(new Date(user.last_sign_in_at), { 
+                              addSuffix: true, 
+                              locale: dateLocale 
+                            })
+                          ) : (
+                            <span className="text-muted-foreground">{language === "ko" ? "없음" : "Never"}</span>
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
@@ -825,23 +885,23 @@ const AdminUsers = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("admin.users.resetPasswordConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName, email: resetDialog.email })}
+              {t("admin.users.resetPasswordConfirmDescription", { name: resetDialog.userName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => resetPasswordMutation.mutate(resetDialog.email)}>
-              {t("admin.users.sendResetEmail")}
+              {t("admin.users.resetPassword")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Profile Dialog */}
+      {/* User Profile Dialog */}
       <AdminUserProfileDialog
-        userId={profileDialog.userId}
         open={profileDialog.open}
         onOpenChange={(open) => setProfileDialog({ open, userId: open ? profileDialog.userId : null })}
+        userId={profileDialog.userId}
       />
     </div>
   );

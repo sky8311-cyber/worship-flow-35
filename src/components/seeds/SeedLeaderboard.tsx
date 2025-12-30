@@ -6,11 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Medal, Award, UserPlus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
+import { formatDistanceToNow } from "date-fns";
+import { ko, enUS } from "date-fns/locale";
 
-type TimeRange = 'weekly' | 'monthly' | 'allTime';
+type TimeRange = 'monthly' | 'allTime' | 'newMembers';
+
+// Exclude admin users from leaderboard
+const EXCLUDED_USER_IDS = ['3d927691-b9a8-4fe0-a1ba-7919ed00a0ec'];
 
 interface SelectedProfile {
   id: string;
@@ -27,7 +32,8 @@ interface SelectedProfile {
 
 export const SeedLeaderboard = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const dateLocale = language === "ko" ? ko : enUS;
   const [selectedProfile, setSelectedProfile] = useState<SelectedProfile | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
@@ -66,13 +72,9 @@ export const SeedLeaderboard = () => {
     }
   };
 
-  const getLeaderboardData = async (timeRange: TimeRange) => {
+  const getLeaderboardData = async (timeRange: 'monthly' | 'allTime') => {
     let dateFilter = '';
-    if (timeRange === 'weekly') {
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      dateFilter = weekAgo.toISOString();
-    } else if (timeRange === 'monthly') {
+    if (timeRange === 'monthly') {
       const monthAgo = new Date();
       monthAgo.setMonth(monthAgo.getMonth() - 1);
       dateFilter = monthAgo.toISOString();
@@ -109,6 +111,7 @@ export const SeedLeaderboard = () => {
       .in('user_id', userIds);
 
     const leaderboard = userIds
+      .filter((userId) => !EXCLUDED_USER_IDS.includes(userId)) // Exclude admins
       .map((userId) => {
         const profile = profiles?.find((p) => p.id === userId);
         const seedData = userSeeds?.find((s) => s.user_id === userId);
@@ -121,15 +124,41 @@ export const SeedLeaderboard = () => {
         };
       })
       .sort((a, b) => b.seeds - a.seeds)
-      .slice(0, 3);
+      .slice(0, 5); // Top 5
 
     return leaderboard;
   };
 
-  const { data: weeklyData } = useQuery({
-    queryKey: ['leaderboard-weekly'],
-    queryFn: () => getLeaderboardData('weekly')
-  });
+  const getNewMembersData = async () => {
+    // Fetch newest members, excluding admins
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10); // Fetch a bit more to account for exclusions
+
+    if (!profiles) return [];
+
+    const filteredProfiles = profiles.filter(p => !EXCLUDED_USER_IDS.includes(p.id)).slice(0, 5);
+    const userIds = filteredProfiles.map(p => p.id);
+
+    // Get seed info for these users
+    const { data: userSeeds } = await supabase
+      .from('user_seeds')
+      .select('user_id, current_level')
+      .in('user_id', userIds);
+
+    return filteredProfiles.map((profile) => {
+      const seedData = userSeeds?.find((s) => s.user_id === profile.id);
+      return {
+        userId: profile.id,
+        name: profile.full_name || 'Unknown',
+        avatarUrl: profile.avatar_url,
+        createdAt: profile.created_at,
+        level: seedData?.current_level || 1
+      };
+    });
+  };
 
   const { data: monthlyData } = useQuery({
     queryKey: ['leaderboard-monthly'],
@@ -139,6 +168,11 @@ export const SeedLeaderboard = () => {
   const { data: allTimeData } = useQuery({
     queryKey: ['leaderboard-alltime'],
     queryFn: () => getLeaderboardData('allTime')
+  });
+
+  const { data: newMembersData } = useQuery({
+    queryKey: ['leaderboard-newmembers'],
+    queryFn: getNewMembersData
   });
 
   const getRankIcon = (rank: number) => {
@@ -154,7 +188,7 @@ export const SeedLeaderboard = () => {
     }
   };
 
-  const renderLeaderboard = (data: typeof weeklyData) => {
+  const renderLeaderboard = (data: typeof monthlyData) => {
     if (!data || data.length === 0) {
       return (
         <p className="text-center text-muted-foreground py-6 text-sm">
@@ -212,6 +246,66 @@ export const SeedLeaderboard = () => {
     );
   };
 
+  const renderNewMembers = (data: typeof newMembersData) => {
+    if (!data || data.length === 0) {
+      return (
+        <p className="text-center text-muted-foreground py-6 text-sm">
+          {t('seeds.noData')}
+        </p>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {data.map((entry, index) => {
+          const isCurrentUser = entry.userId === user?.id;
+
+          return (
+            <div
+              key={entry.userId}
+              className={`flex items-center gap-3 p-2 rounded-lg ${
+                isCurrentUser ? 'bg-primary/10 border border-primary/20' : 'bg-muted/30'
+              }`}
+            >
+              <div className="w-6 flex justify-center shrink-0">
+                <UserPlus className="w-4 h-4 text-green-500" />
+              </div>
+
+              <Avatar 
+                className="w-8 h-8 shrink-0 cursor-pointer hover:ring-2 hover:ring-primary/40 transition-all"
+                onClick={() => handleAvatarClick(entry.userId)}
+              >
+                <AvatarImage src={entry.avatarUrl || undefined} />
+                <AvatarFallback className="text-xs">
+                  {entry.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium truncate">{entry.name}</p>
+                  {isCurrentUser && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                      {t('seeds.me')}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Lv.{entry.level}</p>
+              </div>
+
+              <span className="text-xs text-muted-foreground shrink-0">
+                {formatDistanceToNow(new Date(entry.createdAt), { 
+                  addSuffix: false, 
+                  locale: dateLocale 
+                })}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -221,16 +315,12 @@ export const SeedLeaderboard = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="weekly" className="w-full">
+        <Tabs defaultValue="monthly" className="w-full">
           <TabsList className="grid w-full grid-cols-3 h-8 mb-3">
-            <TabsTrigger value="weekly" className="text-xs">{t('seeds.weekly')}</TabsTrigger>
             <TabsTrigger value="monthly" className="text-xs">{t('seeds.monthly')}</TabsTrigger>
             <TabsTrigger value="allTime" className="text-xs">{t('seeds.allTime')}</TabsTrigger>
+            <TabsTrigger value="newMembers" className="text-xs">{t('seeds.newMembers')}</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="weekly" className="mt-0">
-            {renderLeaderboard(weeklyData)}
-          </TabsContent>
 
           <TabsContent value="monthly" className="mt-0">
             {renderLeaderboard(monthlyData)}
@@ -238,6 +328,10 @@ export const SeedLeaderboard = () => {
 
           <TabsContent value="allTime" className="mt-0">
             {renderLeaderboard(allTimeData)}
+          </TabsContent>
+
+          <TabsContent value="newMembers" className="mt-0">
+            {renderNewMembers(newMembersData)}
           </TabsContent>
         </Tabs>
       </CardContent>
