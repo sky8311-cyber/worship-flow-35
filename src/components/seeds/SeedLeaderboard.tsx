@@ -31,11 +31,11 @@ export const SeedLeaderboard = () => {
   const [selectedProfile, setSelectedProfile] = useState<SelectedProfile | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
-  const [profileStats, setProfileStats] = useState<{ sets: number; communities: number; collaborations: number } | undefined>();
+  const [profileStats, setProfileStats] = useState<{ sets: number; communities: number; songs: number } | undefined>();
 
   const handleAvatarClick = async (userId: string) => {
     // Fetch profile and stats in parallel
-    const [profileRes, setsRes, communitiesRes] = await Promise.all([
+    const [profileRes, setsRes, communitiesRes, songsRes] = await Promise.all([
       supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, bio, ministry_role, instagram_url, youtube_url, location, instrument')
@@ -48,7 +48,11 @@ export const SeedLeaderboard = () => {
       supabase
         .from('community_members')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId)
+        .eq('user_id', userId),
+      supabase
+        .from('songs')
+        .select('id', { count: 'exact', head: true })
+        .eq('created_by', userId)
     ]);
     
     if (profileRes.data) {
@@ -56,7 +60,7 @@ export const SeedLeaderboard = () => {
       setProfileStats({
         sets: setsRes.count || 0,
         communities: communitiesRes.count || 0,
-        collaborations: 0
+        songs: songsRes.count || 0
       });
       setProfileDialogOpen(true);
     }

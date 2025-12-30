@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Instagram, Youtube, Calendar, Users, UserCheck, Plus } from "lucide-react";
+import { Settings, Instagram, Youtube, Calendar, Users, Music, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,7 @@ import { SeedWidget } from "@/components/seeds/SeedWidget";
 interface ProfileStats {
   sets: number;
   communities: number;
-  collaborations: number;
+  songs: number;
 }
 
 interface Profile {
@@ -180,9 +180,9 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
                 label={t("profile.communities")}
               />
               <StatItem
-                icon={<UserCheck className="w-4 h-4" />}
-                count={stats.collaborations || 0}
-                label={t("profile.collabs")}
+                icon={<Music className="w-4 h-4" />}
+                count={stats.songs || 0}
+                label={t("profile.songs")}
               />
             </div>
           )}

@@ -324,7 +324,7 @@ const Dashboard = () => {
       if (!user) return {
         sets: 0,
         communities: 0,
-        collaborations: 0
+        songs: 0
       };
 
       // Count created sets - use select with data instead of head
@@ -345,23 +345,23 @@ const Dashboard = () => {
         .select("id")
         .eq("user_id", user.id);
 
-      // Count collaborations
+      // Count songs contributed to library
       const {
-        data: collaborationsData,
-        error: collaborationsError
+        data: songsData,
+        error: songsError
       } = await supabase
-        .from("set_collaborators")
+        .from("songs")
         .select("id")
-        .eq("user_id", user.id);
+        .eq("created_by", user.id);
 
       if (setsError) console.error("Sets count error:", setsError);
       if (communitiesError) console.error("Communities count error:", communitiesError);
-      if (collaborationsError) console.error("Collaborations count error:", collaborationsError);
+      if (songsError) console.error("Songs count error:", songsError);
 
       return {
         sets: setsData?.length || 0,
         communities: communitiesData?.length || 0,
-        collaborations: collaborationsData?.length || 0
+        songs: songsData?.length || 0
       };
     },
     enabled: !!user

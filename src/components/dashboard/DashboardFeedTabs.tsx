@@ -18,7 +18,7 @@ interface DashboardFeedTabsProps {
   userStats?: {
     sets: number;
     communities: number;
-    collaborations: number;
+    songs: number;
   };
 }
 

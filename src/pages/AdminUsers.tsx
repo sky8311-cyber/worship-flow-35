@@ -7,15 +7,16 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { UserCard } from "@/components/admin/UserCard";
 import { AdminUserProfileDialog } from "@/components/admin/AdminUserProfileDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Sprout } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -58,7 +59,7 @@ const AdminUsers = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch all data in parallel
-      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult] = await Promise.all([
+      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, email, full_name, created_at")
@@ -76,7 +77,10 @@ const AdminUsers = () => {
           .select("user_id, total_seeds, current_level"),
         supabase
           .from("seed_levels")
-          .select("level, emoji, badge_color, name_ko, name_en")
+          .select("level, emoji, badge_color, name_ko, name_en"),
+        supabase
+          .from("songs")
+          .select("created_by")
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
@@ -87,10 +91,19 @@ const AdminUsers = () => {
       const authUsers = authResult.data?.users || [];
       const seeds = seedsResult.data || [];
       const levels = levelsResult.data || [];
+      const songs = songsResult.data || [];
       
       // Create lookup maps for O(1) access
       const seedsMap = new Map(seeds.map(s => [s.user_id, s]));
       const levelsMap = new Map(levels.map(l => [l.level, l]));
+      
+      // Count songs per user
+      const songCountMap = new Map<string, number>();
+      songs.forEach(s => {
+        if (s.created_by) {
+          songCountMap.set(s.created_by, (songCountMap.get(s.created_by) || 0) + 1);
+        }
+      });
       
       // Combine the data
       return profiles.map(profile => {
@@ -103,6 +116,7 @@ const AdminUsers = () => {
           user_roles: roles?.filter(r => r.user_id === profile.id) || [],
           email_confirmed_at: authUser?.email_confirmed_at || null,
           last_sign_in_at: authUser?.last_sign_in_at || null,
+          songCount: songCountMap.get(profile.id) || 0,
           seedData: seedData ? {
             totalSeeds: seedData.total_seeds,
             level: seedData.current_level,
@@ -560,7 +574,7 @@ const AdminUsers = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">
+                    <TableHead className="w-10">
                       <input
                         type="checkbox"
                         checked={selectedUsers.size === filteredUsers?.length && filteredUsers.length > 0}
@@ -568,16 +582,13 @@ const AdminUsers = () => {
                         className="cursor-pointer"
                       />
                     </TableHead>
-                    <TableHead>{t("admin.users.email")}</TableHead>
                     <TableHead>{t("admin.users.name")}</TableHead>
                     <TableHead>{t("admin.users.verification")}</TableHead>
                     <TableHead>{t("admin.users.roles")}</TableHead>
-                    <TableHead>{t("admin.users.level")}</TableHead>
-                    <TableHead>{t("admin.users.seeds")}</TableHead>
+                    <TableHead className="text-center">{language === "ko" ? "레벨/씨앗" : "Level/Seeds"}</TableHead>
+                    <TableHead className="text-center">{language === "ko" ? "곡 기여" : "Songs"}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
-                    <TableHead>{t("admin.users.lastLogin")}</TableHead>
-                    <TableHead>{t("admin.users.roleManagement")}</TableHead>
-                    <TableHead>{t("admin.users.userActions")}</TableHead>
+                    <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -592,9 +603,7 @@ const AdminUsers = () => {
                         onClick={() => setProfileDialog({ open: true, userId: user.id })}
                         className="cursor-pointer"
                       >
-                        <TableCell
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
@@ -602,170 +611,113 @@ const AdminUsers = () => {
                             className="cursor-pointer"
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{user.email}</TableCell>
-                        <TableCell>{user.full_name || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{user.full_name || "-"}</span>
+                            <span className="text-xs text-muted-foreground">{user.email}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {user.email_confirmed_at ? (
-                            <Badge variant="default" className="gap-1">
+                            <Badge variant="default" className="gap-1 text-xs">
                               <CheckCircle className="w-3 h-3" />
                               {t("admin.users.verified")}
                             </Badge>
                           ) : (
-                            <Badge variant="secondary" className="gap-1">
+                            <Badge variant="secondary" className="gap-1 text-xs">
                               <XCircle className="w-3 h-3" />
                               {t("admin.users.unverified")}
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2 flex-wrap">
+                          <div className="flex gap-1 flex-wrap">
                             {userRoles.map((role: string) => (
-                              <Badge key={role} variant={getRoleBadgeVariant(role)}>
-                                {role}
+                              <Badge key={role} variant={getRoleBadgeVariant(role)} className="text-xs">
+                                {role === "admin" ? "A" : role === "worship_leader" ? "WL" : "M"}
                               </Badge>
                             ))}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                           {user.seedData ? (
-                            <Badge variant="outline" className="gap-1">
-                              {user.seedData.emoji} Lv.{user.seedData.level}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {user.seedData ? (
-                            <span className="text-sm font-medium">
-                              {user.seedData.totalSeeds} 🌱
+                            <span className="text-xs">
+                              {user.seedData.emoji}Lv{user.seedData.level} ({user.seedData.totalSeeds}🌱)
                             </span>
                           ) : (
-                            <span className="text-muted-foreground text-sm">0</span>
+                            <span className="text-muted-foreground text-xs">-</span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          {format(new Date(user.created_at), "PPP", { locale: dateLocale })}
-                        </TableCell>
-                        <TableCell>
-                          {user.last_sign_in_at ? (
-                            format(new Date(user.last_sign_in_at), "PP p", { locale: dateLocale })
+                        <TableCell className="text-center">
+                          {user.songCount > 0 ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <Music className="w-3 h-3 text-muted-foreground" />
+                              <span className="text-sm font-medium">{user.songCount}</span>
+                            </div>
                           ) : (
-                            <span className="text-muted-foreground text-sm">{language === "ko" ? "없음" : "Never"}</span>
+                            <span className="text-muted-foreground text-xs">0</span>
                           )}
                         </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-2 flex-wrap">
-                            {!hasAdmin && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addRoleMutation.mutate({ userId: user.id, role: "admin" });
-                                }}
-                              >
-                                <UserPlus className="w-4 h-4 mr-1" />
-                                Admin
-                              </Button>
-                            )}
-                            {hasAdmin && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeRoleMutation.mutate({ userId: user.id, role: "admin" });
-                                }}
-                              >
-                                <UserMinus className="w-4 h-4 mr-1" />
-                                Admin
-                              </Button>
-                            )}
-                            {!hasWorshipLeader && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  addRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
-                                }}
-                              >
-                                <UserPlus className="w-4 h-4 mr-1" />
-                                Leader
-                              </Button>
-                            )}
-                            {hasWorshipLeader && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeRoleMutation.mutate({ userId: user.id, role: "worship_leader" });
-                                }}
-                              >
-                                <UserMinus className="w-4 h-4 mr-1" />
-                                Leader
-                              </Button>
-                            )}
-                          </div>
+                        <TableCell className="text-xs">
+                          {format(new Date(user.created_at), "yy.MM.dd", { locale: dateLocale })}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex gap-2 flex-wrap">
-                            {!user.email_confirmed_at && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    confirmUserMutation.mutate(user.id);
-                                  }}
-                                  disabled={confirmUserMutation.isPending}
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-1" />
-                                  {t("admin.users.confirmUser")}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    resendVerificationMutation.mutate({ 
-                                      email: user.email, 
-                                      name: user.full_name || "" 
-                                    });
-                                  }}
-                                  disabled={resendVerificationMutation.isPending}
-                                >
-                                  <Mail className="w-4 h-4 mr-1" />
-                                  {t("admin.users.resendVerification")}
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email });
-                              }}
-                            >
-                              <KeyRound className="w-4 h-4 mr-1" />
-                              {t("admin.users.resetPassword")}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email });
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              {t("admin.users.delete")}
-                            </Button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {!hasAdmin ? (
+                                <DropdownMenuItem onClick={() => addRoleMutation.mutate({ userId: user.id, role: "admin" })}>
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  {language === "ko" ? "Admin 추가" : "Add Admin"}
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => removeRoleMutation.mutate({ userId: user.id, role: "admin" })}>
+                                  <UserMinus className="w-4 h-4 mr-2" />
+                                  {language === "ko" ? "Admin 제거" : "Remove Admin"}
+                                </DropdownMenuItem>
+                              )}
+                              {!hasWorshipLeader ? (
+                                <DropdownMenuItem onClick={() => addRoleMutation.mutate({ userId: user.id, role: "worship_leader" })}>
+                                  <UserPlus className="w-4 h-4 mr-2" />
+                                  {language === "ko" ? "Leader 추가" : "Add Leader"}
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => removeRoleMutation.mutate({ userId: user.id, role: "worship_leader" })}>
+                                  <UserMinus className="w-4 h-4 mr-2" />
+                                  {language === "ko" ? "Leader 제거" : "Remove Leader"}
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              {!user.email_confirmed_at && (
+                                <>
+                                  <DropdownMenuItem onClick={() => confirmUserMutation.mutate(user.id)}>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    {t("admin.users.confirmUser")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => resendVerificationMutation.mutate({ email: user.email, name: user.full_name || "" })}>
+                                    <Mail className="w-4 h-4 mr-2" />
+                                    {t("admin.users.resendVerification")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              <DropdownMenuItem onClick={() => setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email })}>
+                                <KeyRound className="w-4 h-4 mr-2" />
+                                {t("admin.users.resetPassword")}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setDeleteDialog({ open: true, userId: user.id, userName: user.full_name || user.email })}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                {t("admin.users.delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
