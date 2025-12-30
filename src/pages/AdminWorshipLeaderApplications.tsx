@@ -66,7 +66,9 @@ const AdminWorshipLeaderApplications = () => {
       // Build lookup maps
       const profileMap = new Map((profilesResult.data || []).map(p => [p.id, p]));
       const worshipLeaderUserIds = new Set((rolesResult.data || []).map(r => r.user_id));
-      const authMap = new Map(authUsers.map((u: any) => [u.id, u]));
+      const authMap = new Map<string, { id: string; last_sign_in_at: string | null }>(
+        authUsers.map((u: any) => [u.id, u])
+      );
       
       // Count sets and songs per user
       const setsCountMap = new Map<string, number>();
