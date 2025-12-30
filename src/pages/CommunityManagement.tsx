@@ -373,6 +373,14 @@ export default function CommunityManagement() {
         throw error;
       }
 
+      // Sync leader_id in worship_communities for consistency
+      if (member) {
+        await supabase
+          .from("worship_communities")
+          .update({ leader_id: member.user_id })
+          .eq("id", id);
+      }
+
       // Send notification to promoted user
       if (member && user) {
         const { data: promoterProfile } = await supabase
