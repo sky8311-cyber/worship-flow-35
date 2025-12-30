@@ -20,7 +20,7 @@ interface ProfileDialogProps {
   stats?: {
     sets: number;
     communities: number;
-    collaborations: number;
+    songs: number;
   };
   profileOverride?: Profile;
   title?: string;

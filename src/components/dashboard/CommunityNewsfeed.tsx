@@ -35,7 +35,7 @@ interface CommunityNewsfeedProps {
   userStats?: {
     sets: number;
     communities: number;
-    collaborations: number;
+    songs: number;
   };
   canPost?: boolean;
 }

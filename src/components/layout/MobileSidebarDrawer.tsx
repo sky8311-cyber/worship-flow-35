@@ -32,18 +32,18 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
   const { data: userStats } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async () => {
-      if (!user) return { sets: 0, communities: 0, collaborations: 0 };
+      if (!user) return { sets: 0, communities: 0, songs: 0 };
 
-      const [setsResult, communitiesResult, collaborationsResult] = await Promise.all([
+      const [setsResult, communitiesResult, songsResult] = await Promise.all([
         supabase.from("service_sets").select("id", { count: "exact", head: true }).eq("created_by", user.id),
         supabase.from("community_members").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("set_collaborators").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("songs").select("id", { count: "exact", head: true }).eq("created_by", user.id),
       ]);
 
       return {
         sets: setsResult.count || 0,
         communities: communitiesResult.count || 0,
-        collaborations: collaborationsResult.count || 0,
+        songs: songsResult.count || 0,
       };
     },
     enabled: !!user,

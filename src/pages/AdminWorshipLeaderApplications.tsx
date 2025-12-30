@@ -336,13 +336,10 @@ const AdminWorshipLeaderApplications = () => {
                   <TableRow>
                     <TableHead>{t("admin.applications.applicant")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.communityName")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.website")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.country")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.servingPosition")}</TableHead>
-                    <TableHead>{t("worshipLeaderRequest.yearsServing")}</TableHead>
+                    <TableHead>{language === "ko" ? "직분/경력" : "Position/Exp"}</TableHead>
                     <TableHead>{t("admin.applications.appliedDate")}</TableHead>
                     <TableHead>{t("admin.applications.status")}</TableHead>
-                    <TableHead>{t("admin.applications.actions")}</TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -351,73 +348,60 @@ const AdminWorshipLeaderApplications = () => {
                     return (
                       <TableRow key={app.id}>
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
                               <AvatarImage src={app.profiles?.avatar_url} />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-xs">
                                 {app.profiles?.full_name?.charAt(0) || "U"}
                               </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <div className="font-medium">{app.profiles?.full_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {app.profiles?.email}
+                            <div className="min-w-0">
+                              <div className="font-medium text-sm truncate">{app.profiles?.full_name}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {app.church_website ? (
+                                  <a href={app.church_website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                                    {app.profiles?.email}
+                                  </a>
+                                ) : app.profiles?.email}
                               </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{app.church_name}</TableCell>
-                        <TableCell>
-                          {app.church_website ? (
-                            <a 
-                              href={app.church_website} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline"
-                            >
-                              {app.church_website}
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
+                        <TableCell className="text-sm">{app.church_name}</TableCell>
+                        <TableCell className="text-sm">
+                          {app.position} ({app.years_serving}{language === "ko" ? "년" : "yr"})
                         </TableCell>
-                        <TableCell>{app.country || "-"}</TableCell>
-                        <TableCell>{app.position}</TableCell>
-                        <TableCell>{app.years_serving}년</TableCell>
-                        <TableCell>
-                          {format(new Date(app.created_at), "PPP", { locale: dateLocale })}
+                        <TableCell className="text-xs">
+                          {format(new Date(app.created_at), "yy.MM.dd", { locale: dateLocale })}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             {getStatusBadge(app.status, isAutoApproved)}
                             {app.hasWorshipLeaderRole && app.status === "pending" && (
-                              <Badge className="bg-blue-500 text-white text-xs">
-                                {t("admin.applications.alreadyWorshipLeader")}
-                              </Badge>
+                              <Badge className="bg-blue-500 text-white text-xs">WL</Badge>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
                           {app.status === "pending" && (
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                               <Button
-                                size="sm"
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
                                 onClick={() => approveMutation.mutate(app.id)}
                                 disabled={approveMutation.isPending}
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                {app.hasWorshipLeaderRole 
-                                  ? t("admin.applications.confirmStatus") 
-                                  : t("admin.applications.approve")}
+                                <CheckCircle className="h-4 w-4 text-green-600" />
                               </Button>
                               <Button
-                                size="sm"
-                                variant="destructive"
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
                                 onClick={() => rejectMutation.mutate(app.id)}
                                 disabled={rejectMutation.isPending}
                               >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                {t("admin.applications.reject")}
+                                <XCircle className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
                           )}
