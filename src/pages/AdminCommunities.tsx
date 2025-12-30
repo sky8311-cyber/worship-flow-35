@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AdminNav } from "@/components/admin/AdminNav";
 import { CommunityCard } from "@/components/admin/CommunityCard";
 import { useTranslation } from "@/hooks/useTranslation";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { Users, LayoutGrid, List } from "lucide-react";
@@ -63,11 +63,41 @@ const AdminCommunities = () => {
             .select("*", { count: "exact", head: true })
             .eq("community_id", community.id);
           
+          // Get latest activity from service_sets
+          const { data: latestSet } = await supabase
+            .from("service_sets")
+            .select("updated_at")
+            .eq("community_id", community.id)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          // Get latest member join
+          const { data: latestMember } = await supabase
+            .from("community_members")
+            .select("joined_at")
+            .eq("community_id", community.id)
+            .order("joined_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          // Calculate last activity (most recent of all dates)
+          const activityDates = [
+            latestSet?.updated_at,
+            latestMember?.joined_at,
+            community.updated_at
+          ].filter(Boolean) as string[];
+          
+          const lastActivity = activityDates.length > 0
+            ? activityDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+            : community.created_at;
+          
           return {
             ...community,
             profiles: leaderMap.get(community.leader_id),
             community_members: memberCount || 0,
-            service_sets: setCount || 0
+            service_sets: setCount || 0,
+            last_activity: lastActivity
           };
         })
       );
@@ -145,6 +175,7 @@ const AdminCommunities = () => {
                     <TableHead>{t("admin.communities.leader")}</TableHead>
                     <TableHead>{t("admin.communities.members")}</TableHead>
                     <TableHead>{t("admin.communities.sets")}</TableHead>
+                    <TableHead>{language === "ko" ? "마지막 활동" : "Last Activity"}</TableHead>
                     <TableHead>{t("admin.communities.created")}</TableHead>
                     <TableHead>{t("admin.communities.status")}</TableHead>
                     <TableHead>{t("admin.communities.actions")}</TableHead>
@@ -181,6 +212,14 @@ const AdminCommunities = () => {
                           </div>
                         </TableCell>
                         <TableCell>{setCount}</TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDistanceToNow(new Date(community.last_activity), { 
+                              addSuffix: true, 
+                              locale: dateLocale 
+                            })}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           {format(new Date(community.created_at), "PPP", { locale: dateLocale })}
                         </TableCell>

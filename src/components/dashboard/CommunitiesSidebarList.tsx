@@ -13,6 +13,7 @@ interface Community {
   memberCount?: number;
   userRole?: string;
   leader_id?: string;
+  is_active?: boolean | null;
 }
 
 interface CommunitiesSidebarListProps {
@@ -42,14 +43,21 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
       <CardContent>
         <div className="space-y-2">
           {visibleCommunities.map((community) => {
+            const isInactive = community.is_active === false;
+            
             const cardContent = (
               <>
-                <Avatar className="w-10 h-10 shrink-0">
+                <Avatar className={`w-10 h-10 shrink-0 ${isInactive ? 'opacity-50 grayscale' : ''}`}>
                   <AvatarImage src={community.avatar_url || undefined} />
                   <AvatarFallback>{community.name[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{community.name}</p>
+                  <p className={`text-sm font-medium truncate ${isInactive ? 'text-muted-foreground' : ''}`}>
+                    {community.name}
+                    {isInactive && (
+                      <span className="ml-2 text-xs text-destructive">(비활성)</span>
+                    )}
+                  </p>
                   {community.memberCount !== undefined && (
                     <p className="text-xs text-muted-foreground">
                       {community.memberCount} {t("community.members")}
@@ -64,7 +72,7 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
               <Link
                 key={community.id}
                 to={`/community/${community.id}`}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors group"
+                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors group ${isInactive ? 'opacity-70' : ''}`}
               >
                 {cardContent}
               </Link>

@@ -7,6 +7,7 @@ interface Community {
   name: string;
   avatar_url: string | null;
   leader_id: string;
+  is_active: boolean | null;
 }
 
 interface CommunityMembership {
@@ -30,7 +31,7 @@ export function useUserCommunities() {
 
       const { data, error } = await supabase
         .from("community_members")
-        .select("community_id, role, worship_communities(id, name, avatar_url, leader_id)")
+        .select("community_id, role, worship_communities(id, name, avatar_url, leader_id, is_active)")
         .eq("user_id", user.id);
 
       if (error) throw error;

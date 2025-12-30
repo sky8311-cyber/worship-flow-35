@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -19,6 +19,7 @@ interface CommunityCardProps {
     };
     community_members?: number;
     service_sets?: number;
+    last_activity?: string;
   };
   onToggleActive: (id: string, isActive: boolean) => void;
 }
@@ -57,6 +58,18 @@ export function CommunityCard({ community, onToggleActive }: CommunityCardProps)
               <p className="font-medium">{format(new Date(community.created_at), "PP", { locale: dateLocale })}</p>
             </div>
           </div>
+
+          {community.last_activity && (
+            <div className="pt-3 border-t">
+              <p className="text-muted-foreground text-xs">{language === "ko" ? "마지막 활동" : "Last Activity"}</p>
+              <p className="text-sm">
+                {formatDistanceToNow(new Date(community.last_activity), { 
+                  addSuffix: true, 
+                  locale: dateLocale 
+                })}
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center justify-between pt-3 border-t">
             <div className="flex gap-4">
