@@ -117,7 +117,7 @@ export const SeedLeaderboard = () => {
         };
       })
       .sort((a, b) => b.seeds - a.seeds)
-      .slice(0, 10);
+      .slice(0, 3);
 
     return leaderboard;
   };
