@@ -748,6 +748,14 @@ const Dashboard = () => {
           }}
         />
       )}
+
+      {/* Song Dialog for adding songs from dashboard */}
+      <SongDialog
+        open={addSongOpen}
+        onOpenChange={setAddSongOpen}
+        song={null}
+        onClose={() => setAddSongOpen(false)}
+      />
     </AppLayout>;
 };
 export default Dashboard;

@@ -571,6 +571,18 @@ const SongLibrary = () => {
                     {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
                   </Button>
                 )}
+                {(isWorshipLeader || isAdmin) && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleAddSong}
+                    className="gap-1 px-3"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t("songLibrary.addSong")}</span>
+                    <span className="sm:hidden">추가</span>
+                  </Button>
+                )}
                 {isWorshipLeader && (
                   <div className="flex items-center gap-1">
                     <Button
