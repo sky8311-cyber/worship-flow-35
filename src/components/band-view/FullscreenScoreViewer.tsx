@@ -346,7 +346,7 @@ export function FullscreenScoreViewer({
           <img
             src={currentScore?.imageUrl}
             alt={`${currentScore?.songTitle} - Page ${currentScore?.pageNumber}`}
-            className="w-full h-full object-contain transition-transform duration-200"
+            className="max-w-full max-h-full object-contain transition-transform duration-200 bg-white"
             style={{ transform: `scale(${zoom})` }}
             draggable={false}
           />
