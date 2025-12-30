@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { CommunityCard } from "@/components/admin/CommunityCard";
@@ -177,8 +176,7 @@ const AdminCommunities = () => {
                     <TableHead>{t("admin.communities.sets")}</TableHead>
                     <TableHead>{language === "ko" ? "마지막 활동" : "Last Activity"}</TableHead>
                     <TableHead>{t("admin.communities.created")}</TableHead>
-                    <TableHead>{t("admin.communities.status")}</TableHead>
-                    <TableHead>{t("admin.communities.actions")}</TableHead>
+                    <TableHead>{language === "ko" ? "활성화" : "Active"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -224,19 +222,12 @@ const AdminCommunities = () => {
                           {format(new Date(community.created_at), "PPP", { locale: dateLocale })}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={community.is_active ? "default" : "secondary"}>
-                            {community.is_active ? t("admin.communities.active") : t("admin.communities.inactive")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={community.is_active}
-                              onCheckedChange={(checked) =>
-                                toggleActiveMutation.mutate({ id: community.id, isActive: checked })
-                              }
-                            />
-                          </div>
+                          <Switch
+                            checked={community.is_active}
+                            onCheckedChange={(checked) =>
+                              toggleActiveMutation.mutate({ id: community.id, isActive: checked })
+                            }
+                          />
                         </TableCell>
                       </TableRow>
                     );

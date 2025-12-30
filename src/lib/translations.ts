@@ -393,6 +393,7 @@ export const translations = {
       weekly: "Weekly",
       monthly: "Monthly",
       allTime: "All Time",
+      newMembers: "New Members",
       rank: "Rank",
       yourRank: "Your Rank"
     },
@@ -513,8 +514,8 @@ export const translations = {
         statusUpdateError: "Failed to update status",
       },
       applications: {
-        title: "Worship Leader Applications",
-        applicant: "Applicant",
+        title: "Worship Leader Management",
+        applicant: "Name",
         appliedDate: "Applied Date",
         status: "Status",
         actions: "Actions",
@@ -530,6 +531,12 @@ export const translations = {
         rejectError: "Failed to reject application",
         alreadyWorshipLeader: "Already Worship Leader",
         confirmStatus: "Confirm Status",
+        lastLogin: "Last Login",
+        worshipSets: "Sets",
+        songContributions: "Songs",
+        bulkApprove: "Approve ({count})",
+        bulkReject: "Reject ({count})",
+        neverLoggedIn: "Never",
       },
       churchAccounts: {
         title: "Church Account Management",
@@ -2116,6 +2123,7 @@ export const translations = {
       weekly: "주간",
       monthly: "월간",
       allTime: "전체",
+      newMembers: "신규회원",
       rank: "순위",
       yourRank: "내 순위"
     },
@@ -2236,8 +2244,8 @@ export const translations = {
         statusUpdateError: "상태 업데이트에 실패했습니다",
       },
       applications: {
-        title: "예배인도자 신청 관리",
-        applicant: "신청자",
+        title: "예배인도자 관리",
+        applicant: "이름",
         appliedDate: "신청일",
         status: "상태",
         actions: "작업",
@@ -2253,6 +2261,12 @@ export const translations = {
         rejectError: "신청 거절에 실패했습니다",
         alreadyWorshipLeader: "이미 워십리더",
         confirmStatus: "승인으로 변경",
+        lastLogin: "마지막 로그인",
+        worshipSets: "세트",
+        songContributions: "곡",
+        bulkApprove: "{count}명 승인",
+        bulkReject: "{count}명 거절",
+        neverLoggedIn: "없음",
       },
       churchAccounts: {
         title: "교회계정 관리",

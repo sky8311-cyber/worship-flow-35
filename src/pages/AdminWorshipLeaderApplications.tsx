@@ -5,13 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { ApplicationCard } from "@/components/admin/ApplicationCard";
 import { useTranslation } from "@/hooks/useTranslation";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, LayoutGrid, List, Zap, Filter, Users } from "lucide-react";
+import { CheckCircle, XCircle, LayoutGrid, List, Zap, Music } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -23,6 +24,7 @@ const AdminWorshipLeaderApplications = () => {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [filterType, setFilterType] = useState<FilterType>("all");
+  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   
   useEffect(() => {
     if (window.innerWidth < 768) {
@@ -33,40 +35,56 @@ const AdminWorshipLeaderApplications = () => {
   const { data: applications, isLoading } = useQuery({
     queryKey: ["worship-leader-applications"],
     queryFn: async () => {
-      // Step 1: Fetch all applications (simple select)
-      const { data: apps, error } = await supabase
-        .from("worship_leader_applications")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Fetch all data in parallel
+      const [appsResult, authResult, setsResult, songsResult] = await Promise.all([
+        supabase
+          .from("worship_leader_applications")
+          .select("*")
+          .order("created_at", { ascending: false }),
+        supabase.functions.invoke("admin-list-users", {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        }),
+        supabase.from("service_sets").select("created_by"),
+        supabase.from("songs").select("created_by")
+      ]);
 
-      if (error) throw error;
-      if (!apps || apps.length === 0) return [];
+      if (appsResult.error) throw appsResult.error;
+      if (!appsResult.data || appsResult.data.length === 0) return [];
 
-      // Step 2: Collect unique user IDs
+      const apps = appsResult.data;
+      const authUsers = authResult.data?.users || [];
       const userIds = [...new Set(apps.map(app => app.user_id))];
 
-      // Step 3: Batch fetch profiles
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, avatar_url")
-        .in("id", userIds);
+      // Batch fetch profiles and roles
+      const [profilesResult, rolesResult] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, email, avatar_url").in("id", userIds),
+        supabase.from("user_roles").select("user_id, role").in("user_id", userIds).eq("role", "worship_leader")
+      ]);
 
-      // Step 4: Batch fetch user_roles to check existing worship_leader roles
-      const { data: userRoles } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("user_id", userIds)
-        .eq("role", "worship_leader");
+      // Build lookup maps
+      const profileMap = new Map((profilesResult.data || []).map(p => [p.id, p]));
+      const worshipLeaderUserIds = new Set((rolesResult.data || []).map(r => r.user_id));
+      const authMap = new Map(authUsers.map((u: any) => [u.id, u]));
+      
+      // Count sets and songs per user
+      const setsCountMap = new Map<string, number>();
+      const songsCountMap = new Map<string, number>();
+      (setsResult.data || []).forEach(s => {
+        if (s.created_by) setsCountMap.set(s.created_by, (setsCountMap.get(s.created_by) || 0) + 1);
+      });
+      (songsResult.data || []).forEach(s => {
+        if (s.created_by) songsCountMap.set(s.created_by, (songsCountMap.get(s.created_by) || 0) + 1);
+      });
 
-      // Step 5: Build lookup maps
-      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
-      const worshipLeaderUserIds = new Set((userRoles || []).map(r => r.user_id));
-
-      // Step 6: Reconstruct data with hasWorshipLeaderRole flag
       return apps.map(app => ({
         ...app,
         profiles: profileMap.get(app.user_id),
-        hasWorshipLeaderRole: worshipLeaderUserIds.has(app.user_id)
+        hasWorshipLeaderRole: worshipLeaderUserIds.has(app.user_id),
+        last_sign_in_at: authMap.get(app.user_id)?.last_sign_in_at || null,
+        setsCount: setsCountMap.get(app.user_id) || 0,
+        songsCount: songsCountMap.get(app.user_id) || 0
       }));
     },
   });
@@ -76,90 +94,43 @@ const AdminWorshipLeaderApplications = () => {
       const application = applications?.find(app => app.id === applicationId);
       if (!application) throw new Error("Application not found");
 
-      // Step 1: Check if worship_leader role already exists
       const { data: existingRole } = await supabase
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", application.user_id)
-        .eq("role", "worship_leader")
-        .maybeSingle();
+        .from("user_roles").select("id").eq("user_id", application.user_id).eq("role", "worship_leader").maybeSingle();
 
-      // Step 2: Add role only if not already exists
       if (!existingRole) {
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: application.user_id, role: "worship_leader" });
-
+        const { error: roleError } = await supabase.from("user_roles").insert({ user_id: application.user_id, role: "worship_leader" });
         if (roleError) throw roleError;
       }
 
-      // Step 3: Fetch existing profile to merge (only update empty fields)
       const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("church_name, church_website, country, serving_position, years_serving, worship_leader_intro")
-        .eq("id", application.user_id)
-        .single();
+        .from("profiles").select("church_name, church_website, country, serving_position, years_serving, worship_leader_intro")
+        .eq("id", application.user_id).single();
 
-      // Step 4: Build profile update object - only fill empty fields
-      const profileUpdate: Record<string, any> = {
-        needs_worship_leader_profile: false
-      };
+      const profileUpdate: Record<string, any> = { needs_worship_leader_profile: false };
+      if (!existingProfile?.church_name && application.church_name) profileUpdate.church_name = application.church_name;
+      if (!existingProfile?.church_website && application.church_website) profileUpdate.church_website = application.church_website;
+      if (!existingProfile?.country && application.country) profileUpdate.country = application.country;
+      if (!existingProfile?.serving_position && application.position) profileUpdate.serving_position = application.position;
+      if (!existingProfile?.years_serving && application.years_serving) profileUpdate.years_serving = application.years_serving;
+      if (!existingProfile?.worship_leader_intro && application.introduction) profileUpdate.worship_leader_intro = application.introduction;
 
-      if (!existingProfile?.church_name && application.church_name) {
-        profileUpdate.church_name = application.church_name;
-      }
-      if (!existingProfile?.church_website && application.church_website) {
-        profileUpdate.church_website = application.church_website;
-      }
-      if (!existingProfile?.country && application.country) {
-        profileUpdate.country = application.country;
-      }
-      if (!existingProfile?.serving_position && application.position) {
-        profileUpdate.serving_position = application.position;
-      }
-      if (!existingProfile?.years_serving && application.years_serving) {
-        profileUpdate.years_serving = application.years_serving;
-      }
-      if (!existingProfile?.worship_leader_intro && application.introduction) {
-        profileUpdate.worship_leader_intro = application.introduction;
-      }
+      await supabase.from("profiles").update(profileUpdate).eq("id", application.user_id);
+      await supabase.from("worship_leader_applications").update({
+        status: "approved", reviewed_by: (await supabase.auth.getUser()).data.user?.id, reviewed_at: new Date().toISOString(),
+      }).eq("id", applicationId);
 
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("id", application.user_id);
-
-      if (profileError) throw profileError;
-
-      // Step 5: Update application status to approved
-      const { error: statusError } = await supabase
-        .from("worship_leader_applications")
-        .update({
-          status: "approved",
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", applicationId);
-
-      if (statusError) throw statusError;
-
-      // Step 6: Send approval notification to applicant
       await supabase.from("notifications").insert({
-        user_id: application.user_id,
-        type: "promoted_to_worship_leader",
+        user_id: application.user_id, type: "promoted_to_worship_leader",
         title: "예배인도자로 승급되었습니다! / You're now a Worship Leader!",
-        message: "축하합니다! 이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다. / Congratulations! You can now create communities and lead worship teams.",
-        related_type: "worship_leader_application",
-        related_id: applicationId,
+        message: "축하합니다! 이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다.",
+        related_type: "worship_leader_application", related_id: applicationId,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });
       toast.success(t("admin.applications.approvedSuccess"));
     },
-    onError: (error: any) => {
-      toast.error(error.message || t("admin.applications.approveError"));
-    },
+    onError: (error: any) => toast.error(error.message || t("admin.applications.approveError")),
   });
 
   const rejectMutation = useMutation({
@@ -167,86 +138,69 @@ const AdminWorshipLeaderApplications = () => {
       const application = applications?.find(app => app.id === applicationId);
       if (!application) throw new Error("Application not found");
 
-      const { error } = await supabase
-        .from("worship_leader_applications")
-        .update({
-          status: "rejected",
-          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", applicationId);
+      await supabase.from("worship_leader_applications").update({
+        status: "rejected", reviewed_by: (await supabase.auth.getUser()).data.user?.id, reviewed_at: new Date().toISOString(),
+      }).eq("id", applicationId);
 
-      if (error) throw error;
-
-      // Send rejection notification to applicant
       await supabase.from("notifications").insert({
-        user_id: application.user_id,
-        type: "worship_leader_rejected",
+        user_id: application.user_id, type: "worship_leader_rejected",
         title: "예배인도자 신청 결과 / Application Result",
-        message: "신청이 승인되지 않았습니다. 다시 신청하실 수 있습니다. / Your application was not approved. You may reapply.",
-        related_type: "worship_leader_application",
-        related_id: applicationId,
+        message: "신청이 승인되지 않았습니다. 다시 신청하실 수 있습니다.",
+        related_type: "worship_leader_application", related_id: applicationId,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });
       toast.success(t("admin.applications.rejectedSuccess"));
     },
-    onError: (error: any) => {
-      toast.error(error.message || t("admin.applications.rejectError"));
+    onError: (error: any) => toast.error(error.message || t("admin.applications.rejectError")),
+  });
+
+  const bulkApproveMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) await approveMutation.mutateAsync(id);
     },
+    onSuccess: () => setSelectedApps(new Set()),
+  });
+
+  const bulkRejectMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      for (const id of ids) await rejectMutation.mutateAsync(id);
+    },
+    onSuccess: () => setSelectedApps(new Set()),
   });
 
   const getStatusBadge = (status: string, isAutoApproved?: boolean) => {
     switch (status) {
-      case "pending":
-        return <Badge variant="outline">{t("admin.applications.pending")}</Badge>;
-      case "approved":
-        return (
-          <div className="flex items-center gap-1">
-            <Badge className="bg-green-500">{t("admin.applications.approved")}</Badge>
-            {isAutoApproved && (
-              <Badge variant="secondary" className="text-xs">
-                <Zap className="h-3 w-3 mr-1" />
-                {language === "ko" ? "자동" : "Auto"}
-              </Badge>
-            )}
-          </div>
-        );
-      case "rejected":
-        return <Badge variant="destructive">{t("admin.applications.rejected")}</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+      case "pending": return <Badge variant="outline">{t("admin.applications.pending")}</Badge>;
+      case "approved": return (
+        <div className="flex items-center gap-1">
+          <Badge className="bg-green-500">{t("admin.applications.approved")}</Badge>
+          {isAutoApproved && <Badge variant="secondary" className="text-xs"><Zap className="h-3 w-3 mr-1" />{language === "ko" ? "자동" : "Auto"}</Badge>}
+        </div>
+      );
+      case "rejected": return <Badge variant="destructive">{t("admin.applications.rejected")}</Badge>;
+      default: return <Badge>{status}</Badge>;
     }
   };
 
-  // Filter applications based on selected filter
   const filteredApplications = useMemo(() => {
     if (!applications) return [];
-    
     return applications.filter((app: any) => {
       const isAutoApproved = app.status === "approved" && !app.reviewed_by;
       const isManualApproved = app.status === "approved" && app.reviewed_by;
-      
       switch (filterType) {
-        case "pending":
-          return app.status === "pending";
-        case "auto_approved":
-          return isAutoApproved;
-        case "manual_approved":
-          return isManualApproved;
-        case "rejected":
-          return app.status === "rejected";
-        default:
-          return true;
+        case "pending": return app.status === "pending";
+        case "auto_approved": return isAutoApproved;
+        case "manual_approved": return isManualApproved;
+        case "rejected": return app.status === "rejected";
+        default: return true;
       }
     });
   }, [applications, filterType]);
 
-  // Count for each filter
   const counts = useMemo(() => {
     if (!applications) return { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 };
-    
     return applications.reduce((acc: Record<string, number>, app: any) => {
       acc.all++;
       if (app.status === "pending") acc.pending++;
@@ -256,6 +210,10 @@ const AdminWorshipLeaderApplications = () => {
       return acc;
     }, { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 });
   }, [applications]);
+
+  const pendingSelected = Array.from(selectedApps).filter(id => 
+    filteredApplications.find((a: any) => a.id === id && a.status === "pending")
+  );
 
   return (
     <div className="min-h-screen bg-gradient-soft">
@@ -267,148 +225,103 @@ const AdminWorshipLeaderApplications = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <CardTitle>{t("admin.applications.title")}</CardTitle>
                 <div className="flex gap-1">
-                  <Button
-                    variant={viewMode === "card" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("card")}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "table" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("table")}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
+                  <Button variant={viewMode === "card" ? "default" : "outline"} size="sm" onClick={() => setViewMode("card")}><LayoutGrid className="h-4 w-4" /></Button>
+                  <Button variant={viewMode === "table" ? "default" : "outline"} size="sm" onClick={() => setViewMode("table")}><List className="h-4 w-4" /></Button>
                 </div>
               </div>
-              
-              {/* Filter Tabs */}
               <Tabs value={filterType} onValueChange={(v) => setFilterType(v as FilterType)} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 h-auto">
-                  <TabsTrigger value="all" className="text-xs px-2 py-1.5">
-                    {language === "ko" ? "전체" : "All"} ({counts.all})
-                  </TabsTrigger>
-                  <TabsTrigger value="pending" className="text-xs px-2 py-1.5">
-                    {language === "ko" ? "대기" : "Pending"} ({counts.pending})
-                  </TabsTrigger>
-                  <TabsTrigger value="auto_approved" className="text-xs px-2 py-1.5">
-                    <Zap className="h-3 w-3 mr-1" />
-                    {language === "ko" ? "자동" : "Auto"} ({counts.auto_approved})
-                  </TabsTrigger>
-                  <TabsTrigger value="manual_approved" className="text-xs px-2 py-1.5">
-                    {language === "ko" ? "수동" : "Manual"} ({counts.manual_approved})
-                  </TabsTrigger>
-                  <TabsTrigger value="rejected" className="text-xs px-2 py-1.5">
-                    {language === "ko" ? "거절" : "Rejected"} ({counts.rejected})
-                  </TabsTrigger>
+                  <TabsTrigger value="all" className="text-xs px-2 py-1.5">{language === "ko" ? "전체" : "All"} ({counts.all})</TabsTrigger>
+                  <TabsTrigger value="pending" className="text-xs px-2 py-1.5">{language === "ko" ? "대기" : "Pending"} ({counts.pending})</TabsTrigger>
+                  <TabsTrigger value="auto_approved" className="text-xs px-2 py-1.5"><Zap className="h-3 w-3 mr-1" />{language === "ko" ? "자동" : "Auto"} ({counts.auto_approved})</TabsTrigger>
+                  <TabsTrigger value="manual_approved" className="text-xs px-2 py-1.5">{language === "ko" ? "수동" : "Manual"} ({counts.manual_approved})</TabsTrigger>
+                  <TabsTrigger value="rejected" className="text-xs px-2 py-1.5">{language === "ko" ? "거절" : "Rejected"} ({counts.rejected})</TabsTrigger>
                 </TabsList>
               </Tabs>
+              {pendingSelected.length > 0 && (
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => bulkApproveMutation.mutate(pendingSelected)} disabled={bulkApproveMutation.isPending}>
+                    <CheckCircle className="h-4 w-4 mr-1" />{pendingSelected.length}{language === "ko" ? "명 승인" : " Approve"}
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => bulkRejectMutation.mutate(pendingSelected)} disabled={bulkRejectMutation.isPending}>
+                    <XCircle className="h-4 w-4 mr-1" />{pendingSelected.length}{language === "ko" ? "명 거절" : " Reject"}
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="text-center py-8">Loading...</div>
             ) : !filteredApplications || filteredApplications.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {t("admin.applications.noApplications")}
-              </div>
+              <div className="text-center py-8 text-muted-foreground">{t("admin.applications.noApplications")}</div>
             ) : viewMode === "card" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredApplications.map((app: any) => {
-                  const isAutoApproved = app.status === "approved" && !app.reviewed_by;
-                  return (
-                    <ApplicationCard
-                      key={app.id}
-                      application={{...app, isAutoApproved}}
-                      hasWorshipLeaderRole={app.hasWorshipLeaderRole}
-                      onApprove={(id) => approveMutation.mutate(id)}
-                      onReject={(id) => rejectMutation.mutate(id)}
-                      isLoading={approveMutation.isPending || rejectMutation.isPending}
-                    />
-                  );
-                })}
+                {filteredApplications.map((app: any) => (
+                  <ApplicationCard key={app.id} application={{...app, isAutoApproved: app.status === "approved" && !app.reviewed_by}} hasWorshipLeaderRole={app.hasWorshipLeaderRole}
+                    onApprove={(id) => approveMutation.mutate(id)} onReject={(id) => rejectMutation.mutate(id)} isLoading={approveMutation.isPending || rejectMutation.isPending} />
+                ))}
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox checked={selectedApps.size === filteredApplications.length && filteredApplications.length > 0}
+                        onCheckedChange={(checked) => setSelectedApps(checked ? new Set(filteredApplications.map((a: any) => a.id)) : new Set())} />
+                    </TableHead>
                     <TableHead>{t("admin.applications.applicant")}</TableHead>
                     <TableHead>{t("worshipLeaderRequest.communityName")}</TableHead>
                     <TableHead>{language === "ko" ? "직분/경력" : "Position/Exp"}</TableHead>
                     <TableHead>{t("admin.applications.appliedDate")}</TableHead>
+                    <TableHead>{t("admin.applications.lastLogin")}</TableHead>
+                    <TableHead className="text-center">{t("admin.applications.worshipSets")}</TableHead>
+                    <TableHead className="text-center">{t("admin.applications.songContributions")}</TableHead>
                     <TableHead>{t("admin.applications.status")}</TableHead>
                     <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredApplications.map((app: any) => {
-                    const isAutoApproved = app.status === "approved" && !app.reviewed_by;
-                    return (
-                      <TableRow key={app.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={app.profiles?.avatar_url} />
-                              <AvatarFallback className="text-xs">
-                                {app.profiles?.full_name?.charAt(0) || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <div className="font-medium text-sm truncate">{app.profiles?.full_name}</div>
-                              <div className="text-xs text-muted-foreground truncate">
-                                {app.church_website ? (
-                                  <a href={app.church_website} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                                    {app.profiles?.email}
-                                  </a>
-                                ) : app.profiles?.email}
-                              </div>
-                            </div>
+                  {filteredApplications.map((app: any) => (
+                    <TableRow key={app.id}>
+                      <TableCell><Checkbox checked={selectedApps.has(app.id)} onCheckedChange={(checked) => {
+                        const newSet = new Set(selectedApps);
+                        checked ? newSet.add(app.id) : newSet.delete(app.id);
+                        setSelectedApps(newSet);
+                      }} /></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8"><AvatarImage src={app.profiles?.avatar_url} /><AvatarFallback className="text-xs">{app.profiles?.full_name?.charAt(0) || "U"}</AvatarFallback></Avatar>
+                          <div className="min-w-0">
+                            <div className="font-medium text-sm truncate">{app.profiles?.full_name}</div>
+                            <div className="text-xs text-muted-foreground truncate">{app.profiles?.email}</div>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{app.church_name}</TableCell>
-                        <TableCell className="text-sm">
-                          {app.position} ({app.years_serving}{language === "ko" ? "년" : "yr"})
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {format(new Date(app.created_at), "yy.MM.dd", { locale: dateLocale })}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            {getStatusBadge(app.status, isAutoApproved)}
-                            {app.hasWorshipLeaderRole && app.status === "pending" && (
-                              <Badge className="bg-blue-500 text-white text-xs">WL</Badge>
-                            )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{app.church_name}</TableCell>
+                      <TableCell className="text-sm">{app.position} ({app.years_serving}{language === "ko" ? "년" : "yr"})</TableCell>
+                      <TableCell className="text-xs">{format(new Date(app.created_at), "yy.MM.dd", { locale: dateLocale })}</TableCell>
+                      <TableCell className="text-xs">
+                        {app.last_sign_in_at ? formatDistanceToNow(new Date(app.last_sign_in_at), { addSuffix: true, locale: dateLocale }) : <span className="text-muted-foreground">{t("admin.applications.neverLoggedIn")}</span>}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">{app.setsCount}</TableCell>
+                      <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Music className="w-3 h-3 text-muted-foreground" /><span className="text-sm">{app.songsCount}</span></div></TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {getStatusBadge(app.status, app.status === "approved" && !app.reviewed_by)}
+                          {app.hasWorshipLeaderRole && app.status === "pending" && <Badge className="bg-blue-500 text-white text-xs">WL</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {app.status === "pending" && (
+                          <div className="flex gap-1">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => approveMutation.mutate(app.id)} disabled={approveMutation.isPending}><CheckCircle className="h-4 w-4 text-green-600" /></Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => rejectMutation.mutate(app.id)} disabled={rejectMutation.isPending}><XCircle className="h-4 w-4 text-destructive" /></Button>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {app.status === "pending" && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7"
-                                onClick={() => approveMutation.mutate(app.id)}
-                                disabled={approveMutation.isPending}
-                              >
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7"
-                                onClick={() => rejectMutation.mutate(app.id)}
-                                disabled={rejectMutation.isPending}
-                              >
-                                <XCircle className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}
