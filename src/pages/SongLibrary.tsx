@@ -503,74 +503,58 @@ const SongLibrary = () => {
 
         <Card className="shadow-md mb-6">
           <CardHeader className="relative">
-            {/* View Mode Toggle & Cross-Community Toggle - Top Right Corner */}
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-              {/* Cross-Community Toggle */}
-              {isCrossCommunityFeatureEnabled && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center gap-2 border rounded-md px-2 py-1.5 bg-card">
-                        <Globe className={cn("h-4 w-4", isInCrossCommunityMode ? "text-primary" : "text-muted-foreground")} />
-                        <Switch
-                          checked={isInCrossCommunityMode}
-                          onCheckedChange={toggleCrossCommunityMode}
-                          className="h-5 w-9"
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>{isInCrossCommunityMode 
-                        ? t("songLibrary.crossCommunity.enabled") 
-                        : t("songLibrary.crossCommunity.disabled")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              
-              {/* View Mode Toggle */}
-              <div className="flex gap-1 border rounded-md p-1 bg-card">
-                <Button
-                  variant={viewMode === "card" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("card")}
-                  className="h-8 w-8"
-                  title={t("songLibrary.viewMode.card")}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "table" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("table")}
-                  className="h-8 w-8"
-                  title={t("songLibrary.viewMode.table")}
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 pr-24">
-              <CardTitle className="text-base md:text-lg flex items-center gap-2">
-                <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
-                {t("songLibrary.searchAndFilter")}
-              </CardTitle>
-              <div className="flex items-center justify-between gap-2">
-                {isWorshipLeader && (
-                  <Button
-                    variant={selectionMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectionMode(!selectionMode);
-                      setSelectedSongIds(new Set());
-                    }}
-                    className="gap-1 px-2 text-[11px] sm:text-sm"
-                  >
-                    <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
-                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
-                  </Button>
+            {/* View Mode Toggle, Cross-Community Toggle & Action Buttons - Top Right Corner */}
+            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+              {/* First row: Cross-Community + View Mode Toggle */}
+              <div className="flex items-center gap-2">
+                {/* Cross-Community Toggle */}
+                {isCrossCommunityFeatureEnabled && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-2 border rounded-md px-2 py-1.5 bg-card">
+                          <Globe className={cn("h-4 w-4", isInCrossCommunityMode ? "text-primary" : "text-muted-foreground")} />
+                          <Switch
+                            checked={isInCrossCommunityMode}
+                            onCheckedChange={toggleCrossCommunityMode}
+                            className="h-5 w-9"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>{isInCrossCommunityMode 
+                          ? t("songLibrary.crossCommunity.enabled") 
+                          : t("songLibrary.crossCommunity.disabled")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
+                
+                {/* View Mode Toggle */}
+                <div className="flex gap-1 border rounded-md p-1 bg-card">
+                  <Button
+                    variant={viewMode === "card" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("card")}
+                    className="h-8 w-8"
+                    title={t("songLibrary.viewMode.card")}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "table" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("table")}
+                    className="h-8 w-8"
+                    title={t("songLibrary.viewMode.table")}
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Second row: Action Buttons (Desktop/Tablet only) */}
+              <div className="hidden sm:flex items-center gap-1">
                 {(isWorshipLeader || isAdmin) && (
                   <Button
                     variant="default"
@@ -579,46 +563,131 @@ const SongLibrary = () => {
                     className="gap-1 px-3"
                   >
                     <Plus className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t("songLibrary.addSong")}</span>
-                    <span className="sm:hidden">추가</span>
+                    {t("songLibrary.addSong")}
                   </Button>
                 )}
                 {isWorshipLeader && (
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setIsCSVDialogOpen(true)}
-                      className="h-8 w-8"
-                      title={t("songLibrary.importCSV")}
-                    >
-                      <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
-                    {isAdmin && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={handleExportCSV}
-                        disabled={!songs || songs.length === 0}
-                        className="h-8 w-8"
-                        title={t("songLibrary.exportCSV")}
-                      >
-                        <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setIsDuplicateDialogOpen(true)}
-                      disabled={!songs || songs.length < 2}
-                      className="h-8 w-8"
-                      title={t("songLibrary.findDuplicates")}
-                    >
-                      <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsCSVDialogOpen(true)}
+                    className="h-8 w-8"
+                    title={t("songLibrary.importCSV")}
+                  >
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleExportCSV}
+                    disabled={!songs || songs.length === 0}
+                    className="h-8 w-8"
+                    title={t("songLibrary.exportCSV")}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                )}
+                {isWorshipLeader && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsDuplicateDialogOpen(true)}
+                    disabled={!songs || songs.length < 2}
+                    className="h-8 w-8"
+                    title={t("songLibrary.findDuplicates")}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pr-24">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
+                {t("songLibrary.searchAndFilter")}
+              </CardTitle>
+              
+              {/* Mobile only: Action Buttons */}
+              <div className="flex sm:hidden items-center gap-2">
+                {isWorshipLeader && (
+                  <Button
+                    variant={selectionMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectionMode(!selectionMode);
+                      setSelectedSongIds(new Set());
+                    }}
+                    className="gap-1 px-2 text-[11px]"
+                  >
+                    <CheckSquare className="w-3 h-3" />
+                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
+                  </Button>
+                )}
+                {(isWorshipLeader || isAdmin) && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleAddSong}
+                    className="gap-1 px-2"
+                  >
+                    <Plus className="w-3 h-3" />
+                    추가
+                  </Button>
+                )}
+                {isWorshipLeader && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsCSVDialogOpen(true)}
+                    className="h-7 w-7"
+                  >
+                    <Upload className="w-3 h-3" />
+                  </Button>
+                )}
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleExportCSV}
+                    disabled={!songs || songs.length === 0}
+                    className="h-7 w-7"
+                  >
+                    <Download className="w-3 h-3" />
+                  </Button>
+                )}
+                {isWorshipLeader && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsDuplicateDialogOpen(true)}
+                    disabled={!songs || songs.length < 2}
+                    className="h-7 w-7"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Desktop/Tablet: Selection Mode Button */}
+              {isWorshipLeader && (
+                <div className="hidden sm:block">
+                  <Button
+                    variant={selectionMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectionMode(!selectionMode);
+                      setSelectedSongIds(new Set());
+                    }}
+                    className="gap-1 px-2 text-sm"
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
+                  </Button>
+                </div>
+              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
