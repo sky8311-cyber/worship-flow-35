@@ -38,7 +38,7 @@ import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 import { useSetEditLock } from "@/hooks/useSetEditLock";
-import { AlertTriangle, Edit2, Eye } from "lucide-react";
+import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -85,6 +85,33 @@ const SetBuilder = () => {
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Query to get set creator for auto-acquire decision (lightweight)
+  const { data: setCreatorInfo } = useQuery({
+    queryKey: ["set-creator", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("service_sets")
+        .select("created_by")
+        .eq("id", id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+    staleTime: 60000,
+  });
+
+  // State for explicit edit mode request
+  const [wantsToEdit, setWantsToEdit] = useState(false);
+  const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
+
+  // Determine if we should auto-acquire lock
+  // Only auto-acquire for new sets OR if user is the creator
+  const isNewSet = !id;
+  const isOwnerForLock = !!setCreatorInfo && setCreatorInfo.created_by === user?.id;
+  const shouldAutoAcquire = isNewSet || isOwnerForLock;
+
   // Smart edit lock - replaces old presence-based system
   const { 
     lockStatus, 
@@ -106,15 +133,41 @@ const SetBuilder = () => {
     takeoverRequester,
     isTakeoverRequested,
     takeoverResponseCountdown,
-  } = useSetEditLock(id);
+  } = useSetEditLock(id, {
+    autoAcquire: shouldAutoAcquire,
+  });
   
-  // Derived state for backwards compatibility
+  // Derived states
   const isBlocked = !isEditMode && lockStatus === "locked_by_other";
+  const isReadOnlyMode = !isEditMode && !isNewSet && !isOwnerForLock;
+  
+  // Handle explicit edit request from read-only mode
+  const handleRequestEdit = async () => {
+    if (lockStatus === "locked_by_other") {
+      // Someone is editing - show dialog to confirm request
+      setShowEditRequestDialog(true);
+    } else {
+      // No one is editing - acquire lock directly
+      const acquired = await acquireLock();
+      if (acquired) {
+        setWantsToEdit(true);
+        toast.success(language === "ko" ? "편집 모드로 전환되었습니다" : "Switched to edit mode");
+      } else {
+        toast.error(language === "ko" ? "편집 모드로 전환할 수 없습니다" : "Could not switch to edit mode");
+      }
+    }
+  };
+
+  // Confirm edit request when someone else is editing
+  const handleConfirmEditRequest = async () => {
+    setShowEditRequestDialog(false);
+    await requestTakeover();
+  };
   
   // Debug logging for edit lock
   useEffect(() => {
-    console.log("[SetBuilder] EditLock state - lockStatus:", lockStatus, "isEditMode:", isEditMode, "lockHolder:", lockHolder);
-  }, [lockStatus, isEditMode, lockHolder]);
+    console.log("[SetBuilder] EditLock state - lockStatus:", lockStatus, "isEditMode:", isEditMode, "lockHolder:", lockHolder, "isReadOnlyMode:", isReadOnlyMode);
+  }, [lockStatus, isEditMode, lockHolder, isReadOnlyMode]);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
@@ -1322,29 +1375,60 @@ const SetBuilder = () => {
           </Alert>
         )}
 
-        {/* Read-only mode when blocked */}
+        {/* Read-only mode banner for non-owners (friendly version) */}
+        {isReadOnlyMode && !isEditMode && !isBlocked && (
+          <Alert className="mb-4 border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30">
+            <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <div className="flex-1 space-y-1">
+                <div className="font-medium text-blue-800 dark:text-blue-200">
+                  {language === "ko" ? "👀 읽기 모드" : "👀 Read-Only Mode"}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {language === "ko" 
+                    ? "수정하려면 편집 버튼을 눌러주세요"
+                    : "Click Edit to make changes"}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate(`/band-view/${id}`)}
+                >
+                  {language === "ko" ? "Band View" : "Band View"}
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleRequestEdit}
+                  disabled={isAcquiring}
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  {isAcquiring 
+                    ? (language === "ko" ? "처리 중..." : "Processing...")
+                    : (language === "ko" ? "편집하기" : "Edit")}
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Read-only mode when someone else is editing (blocked) - friendlier version */}
         {isBlocked && lockHolder && (
-          <Alert variant="destructive" className="mb-4">
-            <Eye className="h-4 w-4" />
+          <Alert className="mb-4 border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/30">
+            <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertDescription className="flex flex-col gap-2">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div className="flex-1 space-y-1">
-                  <div className="font-medium">
+                  <div className="font-medium text-blue-800 dark:text-blue-200">
                     {language === "ko" 
-                      ? `🔒 ${lockHolder.name}님이 편집 중입니다`
-                      : `🔒 ${lockHolder.name} is editing`}
+                      ? `👀 읽기 모드로 열람 중`
+                      : `👀 Viewing in Read-Only Mode`}
                   </div>
-                  <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
-                    {lockHolder.device && <span>📱 {lockHolder.device}</span>}
-                    {lockHolder.lastActivity && (
-                      <span>⏱️ {language === "ko" ? "활동:" : "Active:"} {format(new Date(lockHolder.lastActivity), "HH:mm:ss")}</span>
-                    )}
-                    {lockHolder.lastSaved && (
-                      <span>💾 {language === "ko" ? "저장:" : "Saved:"} {format(new Date(lockHolder.lastSaved), "HH:mm:ss")}</span>
-                    )}
-                    {lockHolder.expiresAt && (
-                      <span>⏰ {language === "ko" ? "만료:" : "Expires:"} {format(new Date(lockHolder.expiresAt), "HH:mm:ss")}</span>
-                    )}
+                  <div className="text-sm text-muted-foreground">
+                    {language === "ko" 
+                      ? `현재 ${lockHolder.name}님이 이 세트를 편집하고 있어요.`
+                      : `${lockHolder.name} is currently editing this set.`}
                   </div>
                   {isRequestingTakeover && takeoverCountdown !== null && (
                     <div className="mt-2">
@@ -1362,30 +1446,68 @@ const SetBuilder = () => {
                     </div>
                   )}
                 </div>
-                {isRequestingTakeover ? (
+                <div className="flex gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={cancelTakeoverRequest}
+                    onClick={() => navigate(`/band-view/${id}`)}
                   >
-                    {language === "ko" ? "요청 취소" : "Cancel"}
+                    {language === "ko" ? "Band View" : "Band View"}
                   </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={requestTakeover} 
-                    disabled={isAcquiring}
-                  >
-                    {isAcquiring 
-                      ? (language === "ko" ? "처리 중..." : "Processing...") 
-                      : (language === "ko" ? "편집 요청" : "Request Edit")}
-                  </Button>
-                )}
+                  {isRequestingTakeover ? (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={cancelTakeoverRequest}
+                    >
+                      {language === "ko" ? "요청 취소" : "Cancel"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={handleRequestEdit}
+                      disabled={isAcquiring}
+                    >
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      {isAcquiring 
+                        ? (language === "ko" ? "처리 중..." : "Processing...") 
+                        : (language === "ko" ? "편집 요청" : "Request Edit")}
+                    </Button>
+                  )}
+                </div>
               </div>
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Edit Request Confirmation Dialog */}
+        <AlertDialog open={showEditRequestDialog} onOpenChange={setShowEditRequestDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {language === "ko" ? "편집 요청" : "Request Edit"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {lockHolder 
+                  ? (language === "ko" 
+                      ? `현재 ${lockHolder.name}님이 이 세트를 편집하고 있습니다. 편집을 요청하시겠습니까? 상대방이 응답하지 않으면 10초 후 자동으로 편집 권한을 가져옵니다.`
+                      : `${lockHolder.name} is currently editing this set. Would you like to request edit access? If they don't respond, you'll automatically take over in 10 seconds.`)
+                  : (language === "ko"
+                      ? "편집 권한을 요청하시겠습니까?"
+                      : "Would you like to request edit access?")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {language === "ko" ? "취소" : "Cancel"}
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmEditRequest}>
+                {language === "ko" ? "편집 요청" : "Request Edit"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Worship Info */}
