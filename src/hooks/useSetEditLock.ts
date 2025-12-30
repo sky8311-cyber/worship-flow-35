@@ -116,8 +116,12 @@ async function invokeLockAction(params: LockActionParams): Promise<{ success: bo
 
 export function useSetEditLock(
   setId: string | undefined,
-  options?: { onBeforeRelease?: () => Promise<void> }
+  options?: { 
+    onBeforeRelease?: () => Promise<void>;
+    autoAcquire?: boolean;  // If true, auto-acquire lock on mount. Default: false (read-only first)
+  }
 ): UseSetEditLockResult {
+  const autoAcquire = options?.autoAcquire ?? false;
   const { user, profile } = useAuth();
   const [lockStatus, setLockStatus] = useState<LockStatus>("unlocked");
   const [lockHolder, setLockHolder] = useState<LockHolder | null>(null);
@@ -812,7 +816,7 @@ export function useSetEditLock(
     };
   }, [setId, lockStatus, user?.id, isRequestingTakeover, acquireLock]);
 
-  // Smart entry: Auto-acquire lock on mount if unlocked
+  // Smart entry: Check lock status on mount, optionally auto-acquire
   useEffect(() => {
     if (!setId || !user) return;
 
@@ -828,10 +832,18 @@ export function useSetEditLock(
           .maybeSingle();
 
         if (!lock || new Date(lock.expires_at).getTime() < Date.now()) {
-          // No lock or expired, auto-acquire
-          const acquired = await acquireLock();
-          if (acquired) {
-            console.log("[EditLock] Auto-acquired lock on entry");
+          // No lock or expired
+          if (autoAcquire) {
+            // Auto-acquire if option enabled (e.g., owner/creator)
+            const acquired = await acquireLock();
+            if (acquired) {
+              console.log("[EditLock] Auto-acquired lock on entry");
+            }
+          } else {
+            // Read-only mode first - just set unlocked status
+            setLockStatus("unlocked");
+            setLockHolder(null);
+            console.log("[EditLock] Read-only mode, no auto-acquire");
           }
         } else if (lock.holder_session_id === sessionIdRef.current) {
           // Our own lock from another component/render
@@ -854,7 +866,7 @@ export function useSetEditLock(
     };
 
     initializeLock();
-  }, [setId, user, checkLockStatus, acquireLock]);
+  }, [setId, user, checkLockStatus, acquireLock, autoAcquire]);
 
   // Cleanup on unmount
   useEffect(() => {
