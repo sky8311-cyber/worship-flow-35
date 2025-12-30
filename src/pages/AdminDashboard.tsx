@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -40,12 +40,22 @@ const AdminDashboard = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [users, communities, sets, songs, churchAccounts] = await Promise.all([
+      // Calculate date ranges
+      const now = new Date();
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const [users, communities, sets, songs, churchAccounts, worshipLeaders, weeklySignups, monthlySets, premiumSubs] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }),
         supabase.from("worship_communities").select("*", { count: "exact", head: true }),
         supabase.from("service_sets").select("*", { count: "exact", head: true }),
         supabase.from("songs").select("*", { count: "exact", head: true }),
         supabase.from("church_accounts").select("subscription_status", { count: "exact" }),
+        supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "worship_leader"),
+        supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo.toISOString()),
+        supabase.from("service_sets").select("*", { count: "exact", head: true }).gte("created_at", monthStart.toISOString()),
+        supabase.from("premium_subscriptions").select("*", { count: "exact", head: true }).eq("subscription_status", "active"),
       ]);
       
       const trialCount = churchAccounts.data?.filter(a => a.subscription_status === "trial").length || 0;
@@ -59,6 +69,10 @@ const AdminDashboard = () => {
         churchAccounts: churchAccounts.count || 0,
         trialAccounts: trialCount,
         activeAccounts: activeCount,
+        worshipLeaders: worshipLeaders.count || 0,
+        weeklySignups: weeklySignups.count || 0,
+        monthlySets: monthlySets.count || 0,
+        premiumSubscribers: premiumSubs.count || 0,
       };
     },
   });
@@ -161,6 +175,13 @@ const AdminDashboard = () => {
       color: "text-blue-500",
     },
     {
+      title: language === "ko" ? "예배인도자" : "Worship Leaders",
+      value: stats?.worshipLeaders || 0,
+      icon: Music,
+      description: language === "ko" ? "승인된 예배인도자 수" : "Approved worship leaders",
+      color: "text-indigo-500",
+    },
+    {
       title: t("admin.stats.communities"),
       value: stats?.communities || 0,
       icon: Building2,
@@ -187,6 +208,30 @@ const AdminDashboard = () => {
       icon: Church,
       description: t("admin.stats.totalChurchAccounts"),
       color: "text-orange-500",
+    },
+  ];
+
+  const activityCards = [
+    {
+      title: language === "ko" ? "이번 주 신규 가입" : "Weekly Sign-ups",
+      value: stats?.weeklySignups || 0,
+      icon: UserPlus,
+      description: language === "ko" ? "최근 7일간 가입자" : "New users in last 7 days",
+      color: "text-cyan-500",
+    },
+    {
+      title: language === "ko" ? "이번 달 예배세트" : "Monthly Sets",
+      value: stats?.monthlySets || 0,
+      icon: CalendarDays,
+      description: language === "ko" ? "이번 달 생성된 세트" : "Sets created this month",
+      color: "text-emerald-500",
+    },
+    {
+      title: language === "ko" ? "프리미엄 구독자" : "Premium Subscribers",
+      value: stats?.premiumSubscribers || 0,
+      icon: Crown,
+      description: language === "ko" ? "활성 프리미엄 계정" : "Active premium accounts",
+      color: "text-amber-500",
     },
   ];
   
@@ -276,7 +321,8 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            {/* Main Stats */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
               {statCards.map((card) => {
                 const Icon = card.icon;
                 return (
@@ -298,6 +344,33 @@ const AdminDashboard = () => {
                   </Card>
                 );
               })}
+            </div>
+
+            {/* Activity Stats */}
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4 text-muted-foreground">
+                {language === "ko" ? "📊 활동 지표" : "📊 Activity Metrics"}
+              </h2>
+              <div className="grid gap-4 md:grid-cols-3">
+                {activityCards.map((card) => {
+                  const Icon = card.icon;
+                  return (
+                    <Card key={card.title} className="shadow-sm border-dashed">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg bg-muted`}>
+                            <Icon className={`w-5 h-5 ${card.color}`} />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold">{card.value}</div>
+                            <p className="text-xs text-muted-foreground">{card.title}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Platform Settings */}
