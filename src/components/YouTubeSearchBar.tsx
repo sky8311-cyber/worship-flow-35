@@ -109,25 +109,25 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
             {results.map((video) => (
               <div
                 key={video.id}
-                className="flex gap-3 p-3 rounded-lg border bg-card"
+                className="flex flex-col sm:flex-row gap-3 p-3 rounded-lg border bg-card"
               >
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="w-32 h-20 object-cover rounded flex-shrink-0"
+                  className="w-full sm:w-32 h-40 sm:h-20 object-cover rounded flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
                     <p className="font-medium text-sm line-clamp-2">{video.title}</p>
                     <p className="text-xs text-muted-foreground mt-1">{video.channelTitle}</p>
                   </div>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mt-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handlePreview(video.id)}
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       {t("songDialog.previewVideo")}
@@ -137,7 +137,7 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
                       variant="default"
                       size="sm"
                       onClick={() => handleSelect(video.id)}
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                     >
                       <Check className="w-3 h-3 mr-1" />
                       {t("songDialog.selectVideo")}
