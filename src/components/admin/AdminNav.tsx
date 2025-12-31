@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -41,9 +41,15 @@ export const AdminNav = () => {
     icon: UserPlus,
   };
 
+  const crmLink = {
+    to: "/admin/crm",
+    label: "CRM",
+    icon: LayoutList,
+  };
+
   const links = (!isLoading && isChurchMenuVisible) 
-    ? [...baseLinks, churchAccountLink, applicationsLink]
-    : [...baseLinks, applicationsLink];
+    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink]
+    : [...baseLinks, applicationsLink, crmLink];
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
