@@ -1,11 +1,9 @@
-import { Fragment } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Crown, Users, Building2, ExternalLink, Star } from "lucide-react";
-import { format, formatDistanceToNow } from "date-fns";
+import { Crown, Users, Building2, ExternalLink, Star } from "lucide-react";
+import { format } from "date-fns";
 import type { CRMTab } from "@/pages/AdminCRM";
 
 interface WorshipLeaderRowProps {
@@ -19,206 +17,121 @@ interface WorshipLeaderRowProps {
 
 export const WorshipLeaderRow = ({
   leader,
-  isExpanded,
-  onToggleExpand,
   onSelect,
   onCrossReference,
-  language,
 }: WorshipLeaderRowProps) => {
   return (
-    <Fragment>
-      <TableRow 
-        className="cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={onSelect}
-      >
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand();
-            }}
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={leader.profile?.avatar_url} />
-                <AvatarFallback>
-                  {leader.profile?.full_name?.[0] || "W"}
-                </AvatarFallback>
-              </Avatar>
-              <Crown className="absolute -top-1 -right-1 h-4 w-4 text-purple-500" />
-            </div>
-            <div>
-              <div className="font-medium flex items-center gap-2">
-                {leader.profile?.full_name || "Unknown"}
-                {leader.isPremium && (
-                  <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                )}
-              </div>
-              {leader.profile?.church_name && (
-                <div className="text-xs text-muted-foreground">
-                  {leader.profile.church_name}
-                </div>
+    <TableRow 
+      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      onClick={onSelect}
+    >
+      {/* Icon column */}
+      <TableCell className="w-10">
+        <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded">
+          <Crown className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+        </div>
+      </TableCell>
+
+      {/* Name */}
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={leader.profile?.avatar_url} />
+            <AvatarFallback className="bg-purple-100 text-purple-600 text-xs">
+              {leader.profile?.full_name?.substring(0, 2).toUpperCase() || "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium flex items-center gap-1.5">
+              {leader.profile?.full_name || "Unknown"}
+              {leader.isPremium && (
+                <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
               )}
             </div>
-          </div>
-        </TableCell>
-        <TableCell className="text-sm text-muted-foreground">
-          {leader.profile?.email}
-        </TableCell>
-        <TableCell>
-          {leader.churchAccount ? (
-            <Badge className="bg-blue-500">Church Account</Badge>
-          ) : leader.isPremium ? (
-            <Badge className="bg-yellow-500">Premium</Badge>
-          ) : (
-            <Badge variant="secondary">Free</Badge>
-          )}
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="link"
-            size="sm"
-            className="p-0 h-auto text-green-600 hover:text-green-700"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCrossReference("communities", leader.id, "worship_leader");
-            }}
-          >
-            {leader.communityCount} communities
-          </Button>
-        </TableCell>
-        <TableCell>
-          {leader.churchAccount ? (
-            <Button
-              variant="link"
-              size="sm"
-              className="p-0 h-auto text-blue-600 hover:text-blue-700"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCrossReference("church_accounts", leader.churchAccount.id, "church_account");
-              }}
-            >
-              <Building2 className="h-3 w-3 mr-1" />
-              {leader.churchAccount.name}
-            </Button>
-          ) : (
-            <span className="text-sm text-muted-foreground">-</span>
-          )}
-        </TableCell>
-        <TableCell className="text-sm text-muted-foreground">
-          {leader.createdAt ? format(new Date(leader.createdAt), "MMM d, yyyy") : "-"}
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect();
-            }}
-          >
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        </TableCell>
-      </TableRow>
-      
-      {/* Expanded Content */}
-      <TableRow className={isExpanded ? "" : "hidden"}>
-        <TableCell colSpan={8} className="p-0 border-0">
-          <Collapsible open={isExpanded}>
-            <CollapsibleContent>
-              <div className="bg-purple-50/50 dark:bg-purple-900/10 p-4 space-y-4">
-                {/* Communities */}
-                {leader.communities?.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 text-purple-700 dark:text-purple-300">
-                      Managed Communities ({leader.communities.length})
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {leader.communities.map((community: any) => (
-                        <Badge
-                          key={community.id}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30"
-                          onClick={() => onCrossReference("communities", community.id, "community")}
-                        >
-                          <Users className="h-3 w-3 mr-1" />
-                          {community.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Profile Info */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  {leader.profile?.serving_position && (
-                    <div>
-                      <span className="text-muted-foreground">Position: </span>
-                      <span className="font-medium">{leader.profile.serving_position}</span>
-                    </div>
-                  )}
-                  {leader.profile?.years_serving && (
-                    <div>
-                      <span className="text-muted-foreground">Years Serving: </span>
-                      <span className="font-medium">{leader.profile.years_serving}</span>
-                    </div>
-                  )}
-                  {leader.profile?.country && (
-                    <div>
-                      <span className="text-muted-foreground">Country: </span>
-                      <span className="font-medium">{leader.profile.country}</span>
-                    </div>
-                  )}
-                  {leader.authUser?.last_sign_in_at && (
-                    <div>
-                      <span className="text-muted-foreground">Last Sign In: </span>
-                      <span className="font-medium">
-                        {formatDistanceToNow(new Date(leader.authUser.last_sign_in_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Subscription Details */}
-                {leader.subscription && (
-                  <div className="flex flex-wrap gap-4 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Subscription: </span>
-                      <Badge 
-                        variant={leader.subscription.subscription_status === "active" ? "default" : "secondary"}
-                      >
-                        {leader.subscription.subscription_status}
-                      </Badge>
-                    </div>
-                    {leader.subscription.current_period_end && (
-                      <div>
-                        <span className="text-muted-foreground">Period Ends: </span>
-                        <span className="font-medium">
-                          {format(new Date(leader.subscription.current_period_end), "MMM d, yyyy")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
+            {leader.profile?.church_name && (
+              <div className="text-xs text-muted-foreground">
+                {leader.profile.church_name}
               </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </TableCell>
-      </TableRow>
-    </Fragment>
+            )}
+          </div>
+        </div>
+      </TableCell>
+
+      {/* Email */}
+      <TableCell className="text-sm text-muted-foreground">
+        {leader.profile?.email}
+      </TableCell>
+
+      {/* Type */}
+      <TableCell>
+        {leader.churchAccount ? (
+          <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            Church
+          </Badge>
+        ) : leader.isPremium ? (
+          <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+            Premium
+          </Badge>
+        ) : (
+          <Badge variant="secondary">Free</Badge>
+        )}
+      </TableCell>
+
+      {/* Communities */}
+      <TableCell>
+        <Badge 
+          variant="outline" 
+          className="cursor-pointer hover:bg-green-50 dark:hover:bg-green-900/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (leader.communityCount > 0) {
+              onCrossReference("communities", leader.id, "worship_leader");
+            }
+          }}
+        >
+          <Users className="w-3 h-3 mr-1" />
+          {leader.communityCount}
+        </Badge>
+      </TableCell>
+
+      {/* Church Account */}
+      <TableCell>
+        {leader.churchAccount ? (
+          <Badge 
+            variant="outline" 
+            className="cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onCrossReference("church_accounts", leader.churchAccount.id, "");
+            }}
+          >
+            <Building2 className="w-3 h-3" />
+            {leader.churchAccount.name?.substring(0, 15)}
+          </Badge>
+        ) : (
+          <span className="text-sm text-muted-foreground">—</span>
+        )}
+      </TableCell>
+
+      {/* Created */}
+      <TableCell className="text-sm text-muted-foreground">
+        {leader.createdAt ? format(new Date(leader.createdAt), "MMM d, yyyy") : "—"}
+      </TableCell>
+
+      {/* Actions */}
+      <TableCell className="w-10">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect();
+          }}
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
   );
 };

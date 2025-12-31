@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { X, Building2, Crown, Users, User, ExternalLink, Mail, Globe, Calendar, Star } from "lucide-react";
+import { X, Building2, Crown, Users, User, ExternalLink, Mail, Globe, Calendar, Star, Pencil, Trash2, UserCog, Send } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { CRMEntity, CRMTab } from "@/pages/AdminCRM";
 
@@ -42,6 +42,18 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
         </div>
 
         <Separator />
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <UserCog className="h-3.5 w-3.5" />
+            Manage
+          </Button>
+        </div>
 
         {/* Owner */}
         <div>
@@ -99,7 +111,7 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Navigation Actions */}
         <div className="space-y-2">
           <Button 
             variant="outline" 
@@ -108,6 +120,14 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
           >
             <Users className="h-4 w-4 mr-2" />
             View All Communities
+          </Button>
+          <Button 
+            variant="outline" 
+            className="w-full justify-start"
+            onClick={() => onCrossReference("worship_leaders", account.id, "church_account")}
+          >
+            <Crown className="h-4 w-4 mr-2" />
+            View All Leaders
           </Button>
         </div>
       </div>
@@ -145,6 +165,26 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         <Separator />
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Profile
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Send className="h-3.5 w-3.5" />
+            Message
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <UserCog className="h-3.5 w-3.5" />
+            Change Role
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+            <Trash2 className="h-3.5 w-3.5" />
+            Remove
+          </Button>
+        </div>
+
         {/* Profile Info */}
         <div className="space-y-3 text-sm">
           {leader.profile?.church_name && (
@@ -180,7 +220,7 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             <div className="text-xs text-muted-foreground">Communities</div>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold">
+            <div className="text-sm font-bold">
               {leader.authUser?.last_sign_in_at 
                 ? formatDistanceToNow(new Date(leader.authUser.last_sign_in_at), { addSuffix: true })
                 : "Never"
@@ -197,7 +237,7 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={() => onCrossReference("church_accounts", leader.churchAccount.id, "church_account")}
+              onClick={() => onCrossReference("church_accounts", leader.churchAccount.id, "")}
             >
               <Building2 className="h-4 w-4 mr-2" />
               {leader.churchAccount.name}
@@ -210,17 +250,22 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
           <div>
             <h3 className="text-sm font-semibold mb-2">Managed Communities</h3>
             <div className="space-y-2">
-              {leader.communities.map((community: any) => (
+              {leader.communities.slice(0, 5).map((community: any) => (
                 <Button
                   key={community.id}
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => onCrossReference("communities", community.id, "community")}
+                  onClick={() => onCrossReference("communities", community.id, "")}
                 >
                   <Users className="h-4 w-4 mr-2" />
                   {community.name}
                 </Button>
               ))}
+              {leader.communities.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  +{leader.communities.length - 5} more communities
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -257,13 +302,33 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         <Separator />
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Send className="h-3.5 w-3.5" />
+            Announce
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <ExternalLink className="h-3.5 w-3.5" />
+            View Page
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
+          </Button>
+        </div>
+
         {/* Leader */}
         <div>
           <h3 className="text-sm font-semibold mb-2">Leader</h3>
           <Button
             variant="outline"
             className="w-full justify-start"
-            onClick={() => onCrossReference("worship_leaders", community.leader_id, "worship_leader")}
+            onClick={() => onCrossReference("worship_leaders", community.leader_id, "")}
           >
             <Avatar className="h-6 w-6 mr-2">
               <AvatarImage src={community.leader?.avatar_url} />
@@ -281,7 +346,7 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             <div className="text-xs text-muted-foreground">Members</div>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <div className="text-2xl font-bold">
+            <div className="text-sm font-bold">
               {formatDistanceToNow(new Date(community.created_at), { addSuffix: true })}
             </div>
             <div className="text-xs text-muted-foreground">Created</div>
@@ -295,7 +360,7 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             <Button
               variant="outline"
               className="w-full justify-start"
-              onClick={() => onCrossReference("church_accounts", community.churchAccount.id, "church_account")}
+              onClick={() => onCrossReference("church_accounts", community.churchAccount.id, "")}
             >
               <Building2 className="h-4 w-4 mr-2" />
               {community.churchAccount.name}
@@ -303,15 +368,15 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="space-y-2">
+        {/* Navigation Actions */}
+        <div>
           <Button 
             variant="outline" 
             className="w-full justify-start"
             onClick={() => onCrossReference("members", community.id, "community")}
           >
             <User className="h-4 w-4 mr-2" />
-            View All Members
+            View All Members ({community.memberCount})
           </Button>
         </div>
       </div>
@@ -335,11 +400,34 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
               {member.roles?.map((role: any) => (
                 <Badge key={role.id} variant="secondary">{role.role}</Badge>
               ))}
+              {(!member.roles || member.roles.length === 0) && (
+                <Badge variant="secondary">Member</Badge>
+              )}
             </div>
           </div>
         </div>
 
         <Separator />
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Profile
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Send className="h-3.5 w-3.5" />
+            Message
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <UserCog className="h-3.5 w-3.5" />
+            Change Role
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+            <Trash2 className="h-3.5 w-3.5" />
+            Remove
+          </Button>
+        </div>
 
         {/* Profile Info */}
         <div className="space-y-3 text-sm">
@@ -391,12 +479,12 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
           <div>
             <h3 className="text-sm font-semibold mb-2">Member of Communities</h3>
             <div className="space-y-2">
-              {member.communities.map((cm: any) => (
+              {member.communities.slice(0, 5).map((cm: any) => (
                 <Button
                   key={cm.community_id}
                   variant="outline"
                   className="w-full justify-between"
-                  onClick={() => onCrossReference("communities", cm.community_id, "community")}
+                  onClick={() => onCrossReference("communities", cm.community_id, "")}
                 >
                   <span className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
@@ -405,6 +493,11 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
                   <Badge variant="secondary" className="text-xs">{cm.role}</Badge>
                 </Button>
               ))}
+              {member.communities.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center">
+                  +{member.communities.length - 5} more communities
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -435,10 +528,10 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
   const getTitle = () => {
     switch (entity.type) {
-      case "church_accounts": return "Church Account Details";
-      case "worship_leaders": return "Worship Leader Details";
-      case "communities": return "Community Details";
-      case "members": return "Member Details";
+      case "church_accounts": return "Church Account";
+      case "worship_leaders": return "Worship Leader";
+      case "communities": return "Community";
+      case "members": return "Member";
       default: return "Details";
     }
   };
