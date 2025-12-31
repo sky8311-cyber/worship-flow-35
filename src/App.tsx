@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,39 +9,63 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SongCartProvider } from "@/contexts/SongCartContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import SongLibrary from "./pages/SongLibrary";
-import SetBuilder from "./pages/SetBuilder";
-import BandView from "./pages/BandView";
-import NotFound from "./pages/NotFound";
-import SignUp from "./pages/auth/SignUp";
-import Login from "./pages/auth/Login";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUsers from "./pages/AdminUsers";
-import AdminCommunities from "./pages/AdminCommunities";
-import AdminChurchAccounts from "./pages/AdminChurchAccounts";
-import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplications";
-import AdminCRM from "./pages/AdminCRM";
-import CommunitySearch from "./pages/CommunitySearch";
-import CommunityManagement from "./pages/CommunityManagement";
-import AcceptInvitation from "./pages/AcceptInvitation";
-import InvitedSignUp from "./pages/InvitedSignUp";
-import JoinCommunity from "./pages/JoinCommunity";
-import FavoritesList from "./pages/FavoritesList";
-import WorshipSets from "./pages/WorshipSets";
-import RequestWorshipLeader from "./pages/RequestWorshipLeader";
-import TemplateManager from "./pages/TemplateManager";
-import ChurchAccount from "./pages/ChurchAccount";
-import SeedHistory from "./pages/SeedHistory";
-import PublicBandView from "./pages/PublicBandView";
-import Settings from "./pages/Settings";
-import MobileAppLanding from "./pages/MobileAppLanding";
-import Help from "./pages/Help";
 
-const queryClient = new QueryClient();
+// Critical path - keep synchronous for fast initial load
+import Landing from "./pages/Landing";
+import Login from "./pages/auth/Login";
+import SignUp from "./pages/auth/SignUp";
+import NotFound from "./pages/NotFound";
+
+// Lazy load all other pages for code splitting
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SongLibrary = lazy(() => import("./pages/SongLibrary"));
+const SetBuilder = lazy(() => import("./pages/SetBuilder"));
+const BandView = lazy(() => import("./pages/BandView"));
+const WorshipSets = lazy(() => import("./pages/WorshipSets"));
+const CommunityManagement = lazy(() => import("./pages/CommunityManagement"));
+const CommunitySearch = lazy(() => import("./pages/CommunitySearch"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Help = lazy(() => import("./pages/Help"));
+const ChurchAccount = lazy(() => import("./pages/ChurchAccount"));
+const TemplateManager = lazy(() => import("./pages/TemplateManager"));
+const FavoritesList = lazy(() => import("./pages/FavoritesList"));
+const SeedHistory = lazy(() => import("./pages/SeedHistory"));
+const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+
+// Admin pages - lazy loaded (only admins use these)
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const AdminCommunities = lazy(() => import("./pages/AdminCommunities"));
+const AdminChurchAccounts = lazy(() => import("./pages/AdminChurchAccounts"));
+const AdminWorshipLeaderApplications = lazy(() => import("./pages/AdminWorshipLeaderApplications"));
+const AdminCRM = lazy(() => import("./pages/AdminCRM"));
+
+// Public/invitation pages
+const PublicBandView = lazy(() => import("./pages/PublicBandView"));
+const MobileAppLanding = lazy(() => import("./pages/MobileAppLanding"));
+const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
+const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
+const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
+
+// Page loader component for Suspense fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 1000, // 10 seconds default (conservative)
+      gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+      refetchOnWindowFocus: true, // Keep true for collaboration features
+      retry: 1, // Reduce from default 3
+    },
+  },
+});
 
 // ProtectedRoute component - must be used inside AuthProvider
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -72,6 +97,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
             <ScrollToTop />
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Landing Pages */}
               <Route path="/" element={<Landing />} />
@@ -115,6 +141,7 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </SongCartProvider>
