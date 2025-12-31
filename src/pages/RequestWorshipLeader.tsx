@@ -11,11 +11,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle, Home } from "lucide-react";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { WLWelcomeDialog } from "@/components/dashboard/WLWelcomeDialog";
+import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 
 const RequestWorshipLeader = () => {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ const RequestWorshipLeader = () => {
   const [loading, setLoading] = useState(false);
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [approvedChurchName, setApprovedChurchName] = useState("");
+  const [showCreateCommunityDialog, setShowCreateCommunityDialog] = useState(false);
   const [formData, setFormData] = useState({
     communityName: "",
     website: "",
@@ -213,17 +215,26 @@ const RequestWorshipLeader = () => {
                     : "You can create communities and worship sets."}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 w-full max-w-sm pt-2">
-                  <Button onClick={() => navigate("/community/manage")} className="flex-1">
+                  <Button onClick={() => setShowCreateCommunityDialog(true)} className="flex-1">
                     {language === "ko" ? "예배공동체 만들기" : "Create Community"}
                   </Button>
                   <Button variant="outline" onClick={() => navigate("/set-builder")} className="flex-1">
                     {language === "ko" ? "워십세트 만들기" : "Create Worship Set"}
                   </Button>
                 </div>
+                <Button variant="ghost" onClick={() => navigate("/dashboard")} className="mt-2">
+                  <Home className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "대시보드로 돌아가기" : "Return to Dashboard"}
+                </Button>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        <CreateCommunityDialog 
+          open={showCreateCommunityDialog} 
+          onOpenChange={setShowCreateCommunityDialog} 
+        />
       </div>
     );
   }
