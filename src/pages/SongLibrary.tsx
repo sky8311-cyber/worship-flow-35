@@ -116,6 +116,7 @@ const SongLibrary = () => {
       
     return new Set(data?.map(f => f.song_id) || []);
     },
+    staleTime: 60 * 1000, // 1 minute - favorites don't change often
   });
 
   // Batch fetch favorite counts for all songs in ONE query
@@ -133,6 +134,7 @@ const SongLibrary = () => {
       });
       return counts;
     },
+    staleTime: 60 * 1000, // 1 minute
   });
 
   // Batch fetch usage counts for all songs in ONE query
@@ -150,6 +152,7 @@ const SongLibrary = () => {
       });
       return counts;
     },
+    staleTime: 60 * 1000, // 1 minute
   });
 
   // Fetch unique tags from all songs
@@ -168,6 +171,7 @@ const SongLibrary = () => {
       });
       return Array.from(tagSet).sort();
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes - tags rarely change
   });
 
   const { data: songs, isLoading, refetch } = useQuery({
@@ -216,6 +220,7 @@ const SongLibrary = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 30 * 1000, // 30 seconds - songs list can be cached briefly
   });
 
   // Apply client-side column filters + key filter + tag filter

@@ -162,17 +162,20 @@ export const SeedLeaderboard = () => {
 
   const { data: monthlyData } = useQuery({
     queryKey: ['leaderboard-monthly'],
-    queryFn: () => getLeaderboardData('monthly')
+    queryFn: () => getLeaderboardData('monthly'),
+    staleTime: 5 * 60 * 1000, // 5 minutes - leaderboard doesn't need real-time updates
   });
 
   const { data: allTimeData } = useQuery({
     queryKey: ['leaderboard-alltime'],
-    queryFn: () => getLeaderboardData('allTime')
+    queryFn: () => getLeaderboardData('allTime'),
+    staleTime: 10 * 60 * 1000, // 10 minutes - all-time data changes slowly
   });
 
   const { data: newMembersData } = useQuery({
     queryKey: ['leaderboard-newmembers'],
-    queryFn: getNewMembersData
+    queryFn: getNewMembersData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const getRankIcon = (rank: number) => {

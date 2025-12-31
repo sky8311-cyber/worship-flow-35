@@ -54,32 +54,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string, showTimezoneToast: boolean = false) => {
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
+    // Execute all queries in parallel for faster login
+    const [profileResult, rolesResult, communityRolesResult] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single(),
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId),
+      supabase
+        .from("community_members")
+        .select("role")
+        .eq("user_id", userId)
+        .in("role", ["community_leader", "owner"])
+    ]);
 
-    const { data: rolesData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-
-    // Check if user is a community leader in any community
-    const { data: communityLeaderData } = await supabase
-      .from("community_members")
-      .select("role")
-      .eq("user_id", userId)
-      .in("role", ["community_leader", "owner"])
-      .limit(1);
-
-    // Check if user is a community owner in any community
-    const { data: communityOwnerData } = await supabase
-      .from("community_members")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "owner")
-      .limit(1);
+    const profileData = profileResult.data;
+    const rolesData = rolesResult.data;
+    const communityRolesData = communityRolesResult.data;
 
     // Auto-detect and save timezone if not set
     if (profileData && !profileData.timezone) {
@@ -104,8 +99,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (profileData) setProfile(profileData);
     if (rolesData) setRoles(rolesData.map((r: any) => r.role));
-    setIsCommunityLeaderInAnyCommunity(!!communityLeaderData && communityLeaderData.length > 0);
-    setIsCommunityOwnerInAnyCommunity(!!communityOwnerData && communityOwnerData.length > 0);
+    
+    // Check leader/owner roles from single query result
+    const hasLeaderRole = communityRolesData?.some(
+      (r: any) => r.role === "community_leader" || r.role === "owner"
+    ) ?? false;
+    const hasOwnerRole = communityRolesData?.some((r: any) => r.role === "owner") ?? false;
+    
+    setIsCommunityLeaderInAnyCommunity(hasLeaderRole);
+    setIsCommunityOwnerInAnyCommunity(hasOwnerRole);
   };
 
   useEffect(() => {
