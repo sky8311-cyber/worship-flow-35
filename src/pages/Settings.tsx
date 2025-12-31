@@ -394,7 +394,7 @@ const Settings = () => {
                           </AlertDialogTitle>
                           <AlertDialogDescription>
                             {language === "ko" 
-                              ? "예배인도자 승급 신청이 취소됩니다. 나중에 다시 신청할 수 있습니다."
+                              ? "예배인도자 승인 신청이 취소됩니다. 나중에 다시 신청할 수 있습니다."
                               : "Your worship leader application will be cancelled. You can apply again later."}
                           </AlertDialogDescription>
                         </AlertDialogHeader>

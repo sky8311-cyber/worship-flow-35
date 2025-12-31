@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -40,6 +40,7 @@ interface AuthContextType {
   isCommunityLeader: (communityId: string) => Promise<boolean>;
   isCommunityOwner: (communityId: string) => Promise<boolean>;
   getCommunityRole: (communityId: string) => Promise<string | null>;
+  syncWorshipLeaderRole: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isCommunityLeaderInAnyCommunity, setIsCommunityLeaderInAnyCommunity] = useState(false);
   const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
+  const syncInProgress = useRef(false);
 
   const fetchProfile = async (userId: string, showTimezoneToast: boolean = false) => {
     // Execute all queries in parallel for faster login
@@ -110,25 +112,82 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsCommunityOwnerInAnyCommunity(hasOwnerRole);
   };
 
+  // Sync worship leader role from approved application
+  const syncWorshipLeaderRole = async (): Promise<boolean> => {
+    if (syncInProgress.current) return false;
+    syncInProgress.current = true;
+    
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        syncInProgress.current = false;
+        return false;
+      }
+
+      const response = await supabase.functions.invoke('sync-worship-leader-role', {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        console.log('Role sync error:', response.error);
+        syncInProgress.current = false;
+        return false;
+      }
+
+      const data = response.data;
+      if (data?.synced) {
+        console.log('Worship leader role synced successfully');
+        // Refresh profile to pick up the new role
+        await fetchProfile(currentSession.user.id);
+        syncInProgress.current = false;
+        return true;
+      }
+
+      syncInProgress.current = false;
+      return false;
+    } catch (err) {
+      console.log('Role sync exception:', err);
+      syncInProgress.current = false;
+      return false;
+    }
+  };
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       }
+      
       setLoading(false);
-    });
+    };
+
+    initAuth();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         // Show timezone toast on SIGNED_IN event (login)
         const showToast = event === 'SIGNED_IN';
-        fetchProfile(session.user.id, showToast);
+        // Use setTimeout to avoid potential deadlock
+        setTimeout(() => {
+          fetchProfile(session.user.id, showToast);
+        }, 0);
       } else {
         setProfile(null);
         setRoles([]);
@@ -141,9 +200,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (document.visibilityState === 'visible') {
         try {
           const { data: { session: currentSession } } = await supabase.auth.getSession();
-          if (currentSession) {
+          if (currentSession && mounted) {
             setSession(currentSession);
             setUser(currentSession.user);
+            // Re-fetch profile to catch any role changes made while away
+            await fetchProfile(currentSession.user.id);
+            // Also try to sync worship leader role (in case it was approved while away)
+            await syncWorshipLeaderRole();
           }
         } catch (err) {
           console.log('Session refresh error:', err);
@@ -154,6 +217,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -302,6 +366,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isCommunityLeader,
         isCommunityOwner,
         getCommunityRole,
+        syncWorshipLeaderRole,
       }}
     >
       {children}

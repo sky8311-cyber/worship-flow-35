@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.set-edit-lock-action]
 verify_jwt = false
+
+[functions.sync-worship-leader-role]
+verify_jwt = true

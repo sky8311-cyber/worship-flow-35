@@ -53,24 +53,24 @@ export function WelcomeFeed({ userName }: WelcomeFeedProps) {
               : "Welcome to KWorship! A place for those who love worship."}
           </p>
 
-          {/* Worship Leader Upgrade CTA */}
+          {/* Worship Leader Approval CTA */}
           <div className="flex items-start gap-3 p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
             <Crown className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-semibold text-foreground">
                 {language === "ko"
-                  ? "예배인도자로 승급하세요!"
-                  : "Become a Worship Leader!"}
+                  ? "예배인도자로 승인 신청하세요!"
+                  : "Apply for Worship Leader!"}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 {language === "ko"
-                  ? "예배인도자 승급신청 시 공동체 및 워십세트 생성이 가능해집니다."
-                  : "Upon approval, you can create communities and worship sets."}
+                  ? "승인되면 공동체 및 워십세트 생성이 가능해집니다. 대부분 즉시 승인됩니다."
+                  : "Upon approval, you can create communities and worship sets. Usually approved instantly."}
               </p>
               <Button size="sm" className="mt-3" asChild>
                 <Link to="/request-worship-leader">
                   <Crown className="w-4 h-4 mr-1" />
-                  {language === "ko" ? "승급 신청하기" : "Request Upgrade"}
+                  {language === "ko" ? "승인 신청하기" : "Apply Now"}
                 </Link>
               </Button>
             </div>

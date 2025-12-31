@@ -34,7 +34,7 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
                 onClick={() => navigate("/request-worship-leader")}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                {language === "ko" ? "예배인도자로 업그레이드" : "Upgrade to Worship Leader"}
+                {language === "ko" ? "예배인도자 승인 신청" : "Apply for Worship Leader"}
               </Button>
             )}
 

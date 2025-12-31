@@ -44,7 +44,7 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDia
             </DialogTitle>
             <DialogDescription className="text-base pt-2">
               {language === "ko" 
-                ? "예배인도자로 승급되셨습니다. 이제 예배세트를 만들고 팀과 함께 예배를 준비할 수 있습니다."
+                ? "예배인도자로 승인되었습니다. 이제 예배세트를 만들고 팀과 함께 예배를 준비할 수 있습니다."
                 : "You've been approved as a worship leader. You can now create worship sets and prepare worship with your team."}
             </DialogDescription>
           </DialogHeader>

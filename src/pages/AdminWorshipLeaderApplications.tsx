@@ -122,8 +122,8 @@ const AdminWorshipLeaderApplications = () => {
       }).eq("id", applicationId);
 
       await supabase.from("notifications").insert({
-        user_id: application.user_id, type: "promoted_to_worship_leader",
-        title: "예배인도자로 승급되었습니다! / You're now a Worship Leader!",
+        user_id: application.user_id, type: "join_approved",
+        title: "예배인도자 승인 완료! / You're now a Worship Leader!",
         message: "축하합니다! 이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다.",
         related_type: "worship_leader_application", related_id: applicationId,
       });
