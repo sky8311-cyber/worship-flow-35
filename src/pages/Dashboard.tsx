@@ -549,8 +549,8 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              {/* Song Library Widget - 1 column (Admin/Worship Leader only) */}
-              {(isAdmin || isWorshipLeader) && <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} />}
+              {/* Song Library Widget - 1 column (visible to all, add button for admin/WL only) */}
+              <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} canAddSong={isAdmin || isWorshipLeader} />
             </div>
 
             {/* Community Feed Tabs */}
@@ -721,6 +721,9 @@ const Dashboard = () => {
                   </div>
               </CardContent>
             </Card>
+
+          {/* Song Library Widget for mobile */}
+          <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} canAddSong={isAdmin || isWorshipLeader} />
 
           {/* Community Feed Tabs */}
           <Card>

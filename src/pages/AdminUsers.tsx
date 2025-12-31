@@ -177,6 +177,14 @@ const AdminUsers = () => {
 
       // If adding worship_leader role, check for existing application data and update profiles table
       if (role === "worship_leader") {
+        // Get admin profile for actor info
+        const { data: { user: adminUser } } = await supabase.auth.getUser();
+        const { data: adminProfile } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", adminUser?.id)
+          .single();
+
         // Send notification to the user
         await supabase.from("notifications").insert({
           user_id: userId,
@@ -185,7 +193,12 @@ const AdminUsers = () => {
           message: "이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다. / You can now create communities and lead worship teams.",
           related_id: null,
           related_type: "role",
-          metadata: { new_role: "worship_leader" }
+          metadata: { 
+            new_role: "worship_leader",
+            actor_id: adminUser?.id,
+            actor_name: adminProfile?.full_name,
+            actor_avatar: adminProfile?.avatar_url
+          }
         });
 
         // Check if profile already has worship leader info

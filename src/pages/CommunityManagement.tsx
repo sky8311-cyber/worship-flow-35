@@ -325,6 +325,12 @@ export default function CommunityManagement() {
 
       // Send notification to demoted user
       if (member && user && member.user_id !== user.id) {
+        const { data: demoterProfile } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
         await supabase.from("notifications").insert({
           user_id: member.user_id,
           type: "demoted_to_member",
@@ -339,7 +345,10 @@ export default function CommunityManagement() {
           metadata: {
             community_name: community?.name,
             previous_role: previousRole,
-            new_role: "member"
+            new_role: "member",
+            actor_id: user.id,
+            actor_name: demoterProfile?.full_name,
+            actor_avatar: demoterProfile?.avatar_url
           }
         });
       }
