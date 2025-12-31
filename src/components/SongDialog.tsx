@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, Search, X, ListMusic } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -54,7 +54,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   }>>([]);
   const [uploadingVariationIndex, setUploadingVariationIndex] = useState<number | null>(null);
   const [youtubeLinks, setYoutubeLinks] = useState<Array<{ id?: string; label: string; url: string }>>([]);
-  const [searchingYoutubeIndex, setSearchingYoutubeIndex] = useState<number | null>(null);
+  
   const [scoreUrlInput, setScoreUrlInput] = useState("");
   const [downloadingScore, setDownloadingScore] = useState(false);
   const [formData, setFormData] = useState({
@@ -1007,17 +1007,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                       onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
                       className="flex-1"
                     />
-                    <Button 
-                      type="button" 
-                      variant={searchingYoutubeIndex === index ? "default" : "outline"}
-                      size="icon"
-                      onClick={() => setSearchingYoutubeIndex(
-                        searchingYoutubeIndex === index ? null : index
-                      )}
-                      title={t("songDialog.searchYouTube")}
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
                     {youtubeLinks.length > 1 && (
                       <Button type="button" variant="ghost" size="icon" onClick={() => removeYoutubeLink(index)}>
                         <Trash2 className="h-4 w-4" />
@@ -1025,17 +1014,14 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                     )}
                   </div>
                   
-                  {searchingYoutubeIndex === index && (
-                    <div className="pl-4 border-l-2 border-primary">
-                      <YouTubeSearchBar
-                        defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
-                        onSelectVideo={(url) => {
-                          updateYoutubeLink(index, 'url', url);
-                          setSearchingYoutubeIndex(null);
-                        }}
-                      />
-                    </div>
-                  )}
+                  <div className="pl-4 border-l-2 border-primary">
+                    <YouTubeSearchBar
+                      defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
+                      onSelectVideo={(url) => {
+                        updateYoutubeLink(index, 'url', url);
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
