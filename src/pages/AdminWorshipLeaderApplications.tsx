@@ -12,11 +12,11 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, LayoutGrid, List, Zap, Music } from "lucide-react";
+import { CheckCircle, XCircle, LayoutGrid, List, Zap, Music, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type FilterType = "all" | "pending" | "auto_approved" | "manual_approved" | "rejected";
+type FilterType = "all" | "pending" | "auto_approved" | "manual_approved" | "rejected" | "no_application";
 
 const AdminWorshipLeaderApplications = () => {
   const { t, language } = useTranslation();
@@ -38,7 +38,7 @@ const AdminWorshipLeaderApplications = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch all data in parallel
-      const [appsResult, authResult, setsResult, songsResult] = await Promise.all([
+      const [appsResult, authResult, setsResult, songsResult, worshipLeaderRolesResult] = await Promise.all([
         supabase
           .from("worship_leader_applications")
           .select("*")
@@ -47,20 +47,31 @@ const AdminWorshipLeaderApplications = () => {
           headers: { Authorization: `Bearer ${session?.access_token}` },
         }),
         supabase.from("service_sets").select("created_by"),
-        supabase.from("songs").select("created_by")
+        supabase.from("songs").select("created_by"),
+        // Fetch all worship_leader roles
+        supabase.from("user_roles").select("user_id, created_at").eq("role", "worship_leader")
       ]);
 
       if (appsResult.error) throw appsResult.error;
-      if (!appsResult.data || appsResult.data.length === 0) return [];
-
-      const apps = appsResult.data;
+      
+      const apps = appsResult.data || [];
       const authUsers = authResult.data?.users || [];
-      const userIds = [...new Set(apps.map(app => app.user_id))];
+      const worshipLeaderRoles = worshipLeaderRolesResult.data || [];
+      
+      // Get all user IDs (from apps + from roles without apps)
+      const appUserIds = new Set(apps.map(app => app.user_id));
+      const roleOnlyUserIds = worshipLeaderRoles
+        .filter(r => !appUserIds.has(r.user_id))
+        .map(r => r.user_id);
+      
+      const allUserIds = [...new Set([...apps.map(app => app.user_id), ...roleOnlyUserIds])];
+      
+      if (allUserIds.length === 0) return [];
 
       // Batch fetch profiles and roles
       const [profilesResult, rolesResult] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, email, avatar_url").in("id", userIds),
-        supabase.from("user_roles").select("user_id, role").in("user_id", userIds).eq("role", "worship_leader")
+        supabase.from("profiles").select("id, full_name, email, avatar_url, church_name").in("id", allUserIds),
+        supabase.from("user_roles").select("user_id, role").in("user_id", allUserIds).eq("role", "worship_leader")
       ]);
 
       // Build lookup maps
@@ -69,6 +80,7 @@ const AdminWorshipLeaderApplications = () => {
       const authMap = new Map<string, { id: string; last_sign_in_at: string | null }>(
         authUsers.map((u: any) => [u.id, u])
       );
+      const roleCreatedAtMap = new Map(worshipLeaderRoles.map(r => [r.user_id, r.created_at]));
       
       // Count sets and songs per user
       const setsCountMap = new Map<string, number>();
@@ -80,14 +92,44 @@ const AdminWorshipLeaderApplications = () => {
         if (s.created_by) songsCountMap.set(s.created_by, (songsCountMap.get(s.created_by) || 0) + 1);
       });
 
-      return apps.map(app => ({
+      // Build results from actual applications
+      const appResults = apps.map(app => ({
         ...app,
         profiles: profileMap.get(app.user_id),
         hasWorshipLeaderRole: worshipLeaderUserIds.has(app.user_id),
         last_sign_in_at: authMap.get(app.user_id)?.last_sign_in_at || null,
         setsCount: setsCountMap.get(app.user_id) || 0,
-        songsCount: songsCountMap.get(app.user_id) || 0
+        songsCount: songsCountMap.get(app.user_id) || 0,
+        isVirtual: false
       }));
+
+      // Build virtual entries for WL users without applications
+      const virtualResults = roleOnlyUserIds.map(userId => {
+        const profile = profileMap.get(userId);
+        const roleCreatedAt = roleCreatedAtMap.get(userId);
+        return {
+          id: `virtual-${userId}`,
+          user_id: userId,
+          status: "approved",
+          created_at: roleCreatedAt || new Date().toISOString(),
+          church_name: profile?.church_name || null,
+          church_website: null,
+          country: null,
+          position: null,
+          years_serving: null,
+          introduction: null,
+          reviewed_by: null,
+          reviewed_at: roleCreatedAt,
+          profiles: profile,
+          hasWorshipLeaderRole: true,
+          last_sign_in_at: authMap.get(userId)?.last_sign_in_at || null,
+          setsCount: setsCountMap.get(userId) || 0,
+          songsCount: songsCountMap.get(userId) || 0,
+          isVirtual: true
+        };
+      });
+
+      return [...appResults, ...virtualResults];
     },
   });
 
@@ -189,28 +231,30 @@ const AdminWorshipLeaderApplications = () => {
   const filteredApplications = useMemo(() => {
     if (!applications) return [];
     return applications.filter((app: any) => {
-      const isAutoApproved = app.status === "approved" && !app.reviewed_by;
-      const isManualApproved = app.status === "approved" && app.reviewed_by;
+      const isAutoApproved = app.status === "approved" && !app.reviewed_by && !app.isVirtual;
+      const isManualApproved = app.status === "approved" && app.reviewed_by && !app.isVirtual;
       switch (filterType) {
         case "pending": return app.status === "pending";
         case "auto_approved": return isAutoApproved;
         case "manual_approved": return isManualApproved;
         case "rejected": return app.status === "rejected";
+        case "no_application": return app.isVirtual;
         default: return true;
       }
     });
   }, [applications, filterType]);
 
   const counts = useMemo(() => {
-    if (!applications) return { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 };
+    if (!applications) return { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0, no_application: 0 };
     return applications.reduce((acc: Record<string, number>, app: any) => {
       acc.all++;
-      if (app.status === "pending") acc.pending++;
+      if (app.isVirtual) acc.no_application++;
+      else if (app.status === "pending") acc.pending++;
       else if (app.status === "approved" && !app.reviewed_by) acc.auto_approved++;
       else if (app.status === "approved" && app.reviewed_by) acc.manual_approved++;
       else if (app.status === "rejected") acc.rejected++;
       return acc;
-    }, { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0 });
+    }, { all: 0, pending: 0, auto_approved: 0, manual_approved: 0, rejected: 0, no_application: 0 });
   }, [applications]);
 
   const pendingSelected = Array.from(selectedApps).filter(id => 
@@ -232,12 +276,13 @@ const AdminWorshipLeaderApplications = () => {
                 </div>
               </div>
               <Tabs value={filterType} onValueChange={(v) => setFilterType(v as FilterType)} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 h-auto">
+                <TabsList className="grid w-full grid-cols-6 h-auto">
                   <TabsTrigger value="all" className="text-xs px-2 py-1.5">{language === "ko" ? "전체" : "All"} ({counts.all})</TabsTrigger>
                   <TabsTrigger value="pending" className="text-xs px-2 py-1.5">{language === "ko" ? "대기" : "Pending"} ({counts.pending})</TabsTrigger>
                   <TabsTrigger value="auto_approved" className="text-xs px-2 py-1.5"><Zap className="h-3 w-3 mr-1" />{language === "ko" ? "자동" : "Auto"} ({counts.auto_approved})</TabsTrigger>
                   <TabsTrigger value="manual_approved" className="text-xs px-2 py-1.5">{language === "ko" ? "수동" : "Manual"} ({counts.manual_approved})</TabsTrigger>
                   <TabsTrigger value="rejected" className="text-xs px-2 py-1.5">{language === "ko" ? "거절" : "Rejected"} ({counts.rejected})</TabsTrigger>
+                  <TabsTrigger value="no_application" className="text-xs px-2 py-1.5"><AlertTriangle className="h-3 w-3 mr-1" />{language === "ko" ? "신청없음" : "No App"} ({counts.no_application})</TabsTrigger>
                 </TabsList>
               </Tabs>
               {pendingSelected.length > 0 && (
@@ -300,8 +345,10 @@ const AdminWorshipLeaderApplications = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">{app.church_name}</TableCell>
-                      <TableCell className="text-sm">{app.position} ({app.years_serving}{language === "ko" ? "년" : "yr"})</TableCell>
+                      <TableCell className="text-sm">{app.church_name || <span className="text-muted-foreground">-</span>}</TableCell>
+                      <TableCell className="text-sm">
+                        {app.position ? `${app.position} (${app.years_serving}${language === "ko" ? "년" : "yr"})` : <span className="text-muted-foreground">-</span>}
+                      </TableCell>
                       <TableCell className="text-xs">{format(new Date(app.created_at), "yy.MM.dd", { locale: dateLocale })}</TableCell>
                       <TableCell className="text-xs">
                         {app.last_sign_in_at ? formatDistanceToNow(new Date(app.last_sign_in_at), { addSuffix: true, locale: dateLocale }) : <span className="text-muted-foreground">{t("admin.applications.neverLoggedIn")}</span>}
@@ -309,8 +356,15 @@ const AdminWorshipLeaderApplications = () => {
                       <TableCell className="text-center text-sm">{app.setsCount}</TableCell>
                       <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Music className="w-3 h-3 text-muted-foreground" /><span className="text-sm">{app.songsCount}</span></div></TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          {getStatusBadge(app.status, app.status === "approved" && !app.reviewed_by)}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {app.isVirtual ? (
+                            <Badge variant="outline" className="text-orange-500 border-orange-500">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {language === "ko" ? "신청서없음" : "No App"}
+                            </Badge>
+                          ) : (
+                            getStatusBadge(app.status, app.status === "approved" && !app.reviewed_by)
+                          )}
                           {app.hasWorshipLeaderRole && app.status === "pending" && <Badge className="bg-blue-500 text-white text-xs">WL</Badge>}
                         </div>
                       </TableCell>
