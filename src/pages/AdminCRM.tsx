@@ -1,19 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { CRMTable } from "@/components/admin/crm/CRMTable";
+import { UnifiedHierarchyTable } from "@/components/admin/crm/UnifiedHierarchyTable";
+import { HierarchyNode, EntityType } from "@/components/admin/crm/HierarchyRow";
 import { DetailPanel } from "@/components/admin/crm/DetailPanel";
-import { FilterBanner } from "@/components/admin/crm/FilterBanner";
-import { CRMBreadcrumb } from "@/components/admin/crm/Breadcrumb";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { Search, Building2, Crown, Users, UserCheck } from "lucide-react";
+import { Search, Building2, Crown, Users, UserCheck, ChevronDown, ChevronRight } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+
 export type CRMTab = "church_accounts" | "worship_leaders" | "communities" | "members";
 
 export interface CRMEntity {
@@ -27,25 +29,10 @@ const AdminCRM = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   
-  const activeTab = (searchParams.get("tab") as CRMTab) || "church_accounts";
-  const filterId = searchParams.get("filter");
-  const filterType = searchParams.get("filterType");
-  
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
-  const setActiveTab = (tab: CRMTab) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", tab);
-    // Clear filters when switching tabs unless navigating with cross-reference
-    if (!filterId) {
-      params.delete("filter");
-      params.delete("filterType");
-    }
-    setSearchParams(params);
-    setExpandedRows(new Set());
-  };
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [typeFilter, setTypeFilter] = useState<EntityType | "all">("all");
 
   // Fetch all CRM data in parallel
   const { data: crmData, isLoading } = useQuery({
@@ -187,56 +174,109 @@ const AdminCRM = () => {
         worshipLeaders,
         communities: enrichedCommunities,
         members: regularMembers,
+        // Keep raw data for hierarchy building
+        raw: {
+          communities: enrichedCommunities,
+          communityMembers,
+          worshipLeaders,
+          churchMembers,
+        }
       };
     },
   });
 
-  // Filter data based on search and cross-reference filters
-  const filteredData = useMemo(() => {
-    if (!crmData) return null;
+  // Build hierarchical tree structure
+  const hierarchyData = useMemo((): HierarchyNode[] => {
+    if (!crmData) return [];
     
     const query = searchQuery.toLowerCase();
-    
-    let result = { ...crmData };
-    
-    // Apply search filter
-    if (query) {
-      result.churchAccounts = result.churchAccounts.filter(a => 
-        a.name.toLowerCase().includes(query) ||
-        a.owner?.email?.toLowerCase().includes(query) ||
-        a.owner?.full_name?.toLowerCase().includes(query)
-      );
-      result.worshipLeaders = result.worshipLeaders.filter(w =>
-        w.profile?.email?.toLowerCase().includes(query) ||
-        w.profile?.full_name?.toLowerCase().includes(query)
-      );
-      result.communities = result.communities.filter(c =>
-        c.name.toLowerCase().includes(query) ||
-        c.leader?.full_name?.toLowerCase().includes(query)
-      );
-      result.members = result.members.filter(m =>
-        m.profile?.email?.toLowerCase().includes(query) ||
-        m.profile?.full_name?.toLowerCase().includes(query)
-      );
-    }
-    
-    // Apply cross-reference filter
-    if (filterId && filterType) {
-      if (filterType === "church_account") {
-        result.communities = result.communities.filter(c => c.church_account_id === filterId);
-        result.worshipLeaders = result.worshipLeaders.filter(w => w.churchAccount?.id === filterId);
-      } else if (filterType === "community") {
-        result.members = result.members.filter(m => 
-          m.communities.some((c: any) => c.community_id === filterId)
-        );
-      }
-    }
-    
-    return result;
-  }, [crmData, searchQuery, filterId, filterType]);
+    const nodes: HierarchyNode[] = [];
 
-  const toggleRowExpansion = (id: string) => {
-    setExpandedRows(prev => {
+    // Helper to check if entity matches search
+    const matchesSearch = (text: string | undefined | null) => 
+      !query || (text?.toLowerCase().includes(query) ?? false);
+
+    // Build member nodes for a community
+    const buildMemberNodes = (communityId: string): HierarchyNode[] => {
+      return crmData.raw.communityMembers
+        .filter(m => m.community_id === communityId)
+        .map(m => {
+          const profile = crmData.members.find(mem => mem.id === m.user_id)?.profile 
+            || crmData.worshipLeaders.find(wl => wl.id === m.user_id)?.profile;
+          return {
+            id: `member-${communityId}-${m.user_id}`,
+            type: "member" as EntityType,
+            data: { ...m, profile, role: m.role },
+            children: [],
+          };
+        })
+        .filter(node => matchesSearch(node.data.profile?.full_name) || matchesSearch(node.data.profile?.email));
+    };
+
+    // Build community nodes for a worship leader
+    const buildCommunityNodes = (leaderId: string): HierarchyNode[] => {
+      return crmData.raw.communities
+        .filter(c => c.leader_id === leaderId)
+        .map(community => ({
+          id: community.id,
+          type: "community" as EntityType,
+          data: community,
+          children: buildMemberNodes(community.id),
+        }))
+        .filter(node => matchesSearch(node.data.name) || node.children.length > 0);
+    };
+
+    // Build worship leader nodes for a church account
+    const buildWorshipLeaderNodes = (churchAccountId: string): HierarchyNode[] => {
+      return crmData.worshipLeaders
+        .filter(wl => wl.churchAccount?.id === churchAccountId)
+        .map(leader => ({
+          id: leader.id,
+          type: "worship_leader" as EntityType,
+          data: leader,
+          children: buildCommunityNodes(leader.id),
+        }))
+        .filter(node => 
+          matchesSearch(node.data.profile?.full_name) || 
+          matchesSearch(node.data.profile?.email) || 
+          node.children.length > 0
+        );
+    };
+
+    // 1. Add Church Accounts as root nodes
+    crmData.churchAccounts.forEach(account => {
+      const churchNode: HierarchyNode = {
+        id: account.id,
+        type: "church_account",
+        data: account,
+        children: buildWorshipLeaderNodes(account.id),
+      };
+      
+      if (matchesSearch(account.name) || matchesSearch(account.owner?.email) || churchNode.children.length > 0) {
+        nodes.push(churchNode);
+      }
+    });
+
+    // 2. Add Independent Worship Leaders (not under any church account) as root nodes
+    const independentLeaders = crmData.worshipLeaders.filter(wl => !wl.churchAccount);
+    independentLeaders.forEach(leader => {
+      const leaderNode: HierarchyNode = {
+        id: leader.id,
+        type: "worship_leader",
+        data: leader,
+        children: buildCommunityNodes(leader.id),
+      };
+      
+      if (matchesSearch(leader.profile?.full_name) || matchesSearch(leader.profile?.email) || leaderNode.children.length > 0) {
+        nodes.push(leaderNode);
+      }
+    });
+
+    return nodes;
+  }, [crmData, searchQuery]);
+
+  const toggleNodeExpand = useCallback((id: string) => {
+    setExpandedNodes(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -245,65 +285,59 @@ const AdminCRM = () => {
       }
       return next;
     });
-  };
+  }, []);
 
-  const handleEntitySelect = (entity: CRMEntity) => {
-    setSelectedEntity(entity);
-  };
+  const handleSelectEntity = useCallback((node: HierarchyNode) => {
+    // Map entity type for DetailPanel compatibility
+    const typeMap: Record<EntityType, CRMTab> = {
+      church_account: "church_accounts",
+      worship_leader: "worship_leaders",
+      community: "communities",
+      member: "members",
+    };
+    setSelectedEntity({
+      id: node.id,
+      type: typeMap[node.type],
+      data: node.data,
+    });
+  }, []);
 
   const handleCrossReference = (type: CRMTab, id: string, filterType?: string) => {
-    const params = new URLSearchParams();
-    params.set("tab", type);
-    if (filterType) {
-      params.set("filter", id);
-      params.set("filterType", filterType);
-    }
-    setSearchParams(params);
-    setExpandedRows(new Set());
+    // When cross-referencing, expand to that entity and select it
+    const typeMap: Record<CRMTab, EntityType> = {
+      church_accounts: "church_account",
+      worship_leaders: "worship_leader",
+      communities: "community",
+      members: "member",
+    };
+    setTypeFilter(typeMap[type]);
   };
 
-  const clearFilter = () => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("filter");
-    params.delete("filterType");
-    setSearchParams(params);
-  };
+  // Collect all expandable node IDs
+  const collectAllIds = useCallback((nodes: HierarchyNode[]): string[] => {
+    const ids: string[] = [];
+    const collect = (nodeList: HierarchyNode[]) => {
+      nodeList.forEach(node => {
+        if (node.children.length > 0) {
+          ids.push(node.id);
+          collect(node.children);
+        }
+      });
+    };
+    collect(nodes);
+    return ids;
+  }, []);
 
-  const goBackToFilterSource = () => {
-    if (filterType) {
-      const backTab = filterType === "church_account" ? "church_accounts" 
-        : filterType === "community" ? "communities" 
-        : filterType === "worship_leader" ? "worship_leaders" 
-        : "church_accounts";
-      const params = new URLSearchParams();
-      params.set("tab", backTab);
-      setSearchParams(params);
-    }
-  };
+  const expandAll = useCallback(() => {
+    const allIds = collectAllIds(hierarchyData);
+    setExpandedNodes(new Set(allIds));
+  }, [hierarchyData, collectAllIds]);
 
-  const getFilterName = () => {
-    if (!filterId || !filterType || !crmData) return undefined;
-    if (filterType === "church_account") {
-      return crmData.churchAccounts.find(a => a.id === filterId)?.name;
-    }
-    if (filterType === "community") {
-      return crmData.communities.find(c => c.id === filterId)?.name;
-    }
-    return undefined;
-  };
+  const collapseAll = useCallback(() => {
+    setExpandedNodes(new Set());
+  }, []);
 
-  const getCurrentData = () => {
-    if (!filteredData) return [];
-    switch (activeTab) {
-      case "church_accounts": return filteredData.churchAccounts;
-      case "worship_leaders": return filteredData.worshipLeaders;
-      case "communities": return filteredData.communities;
-      case "members": return filteredData.members;
-      default: return [];
-    }
-  };
-
-  const getTabStats = () => {
+  const getStats = () => {
     if (!crmData) return { church: 0, leaders: 0, communities: 0, members: 0 };
     return {
       church: crmData.churchAccounts.length,
@@ -313,7 +347,7 @@ const AdminCRM = () => {
     };
   };
 
-  const stats = getTabStats();
+  const stats = getStats();
 
   const detailPanelContent = selectedEntity && (
     <DetailPanel
@@ -335,15 +369,15 @@ const AdminCRM = () => {
             User Management CRM
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Unified view of all accounts, leaders, communities, and members
+            Unified hierarchical view of all accounts, leaders, communities, and members
           </p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           <Card 
-            className={`cursor-pointer transition-all ${activeTab === "church_accounts" ? "ring-2 ring-blue-500" : "hover:shadow-md"}`}
-            onClick={() => setActiveTab("church_accounts")}
+            className={`cursor-pointer transition-all ${typeFilter === "church_account" ? "ring-2 ring-blue-500" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "church_account" ? "all" : "church_account")}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -356,8 +390,8 @@ const AdminCRM = () => {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-all ${activeTab === "worship_leaders" ? "ring-2 ring-purple-500" : "hover:shadow-md"}`}
-            onClick={() => setActiveTab("worship_leaders")}
+            className={`cursor-pointer transition-all ${typeFilter === "worship_leader" ? "ring-2 ring-purple-500" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "worship_leader" ? "all" : "worship_leader")}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
@@ -370,8 +404,8 @@ const AdminCRM = () => {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-all ${activeTab === "communities" ? "ring-2 ring-green-500" : "hover:shadow-md"}`}
-            onClick={() => setActiveTab("communities")}
+            className={`cursor-pointer transition-all ${typeFilter === "community" ? "ring-2 ring-green-500" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "community" ? "all" : "community")}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -384,8 +418,8 @@ const AdminCRM = () => {
             </CardContent>
           </Card>
           <Card 
-            className={`cursor-pointer transition-all ${activeTab === "members" ? "ring-2 ring-orange-500" : "hover:shadow-md"}`}
-            onClick={() => setActiveTab("members")}
+            className={`cursor-pointer transition-all ${typeFilter === "member" ? "ring-2 ring-orange-500" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "member" ? "all" : "member")}
           >
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
@@ -399,29 +433,10 @@ const AdminCRM = () => {
           </Card>
         </div>
 
-        {/* Breadcrumb */}
-        <CRMBreadcrumb 
-          currentTab={activeTab}
-          filterId={filterId}
-          filterType={filterType}
-          filterName={getFilterName()}
-        />
-
-        {/* Filter Banner */}
-        {filterId && filterType && (
-          <FilterBanner
-            filterId={filterId}
-            filterType={filterType}
-            filterName={getFilterName()}
-            currentTab={activeTab}
-            onClearFilter={clearFilter}
-            onGoBack={goBackToFilterSource}
-          />
-        )}
-
-        {/* Search */}
-        <div className="mb-4">
-          <div className="relative max-w-md">
+        {/* Toolbar: Search + View Controls */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search across all entities..."
@@ -430,7 +445,44 @@ const AdminCRM = () => {
               className="pl-10"
             />
           </div>
+
+          {/* View Controls */}
+          <div className="flex gap-2">
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as EntityType | "all")}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="church_account">Church Accounts</SelectItem>
+                <SelectItem value="worship_leader">Worship Leaders</SelectItem>
+                <SelectItem value="community">Communities</SelectItem>
+                <SelectItem value="member">Members</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" size="sm" onClick={expandAll} className="gap-1.5">
+              <ChevronDown className="h-4 w-4" />
+              Expand All
+            </Button>
+            <Button variant="outline" size="sm" onClick={collapseAll} className="gap-1.5">
+              <ChevronRight className="h-4 w-4" />
+              Collapse
+            </Button>
+          </div>
         </div>
+
+        {/* Filter indicator */}
+        {typeFilter !== "all" && (
+          <div className="mb-4 px-4 py-2 bg-muted rounded-lg flex items-center justify-between">
+            <span className="text-sm">
+              Showing only <strong className="capitalize">{typeFilter.replace("_", " ")}s</strong>
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setTypeFilter("all")}>
+              Clear filter
+            </Button>
+          </div>
+        )}
 
         {/* Main Content */}
         {isLoading ? (
@@ -443,17 +495,17 @@ const AdminCRM = () => {
         ) : isMobile ? (
           // Mobile: Use full-width table with sheet for details
           <>
-            <CRMTable
-              activeTab={activeTab}
-              data={getCurrentData()}
-              expandedRows={expandedRows}
-              onToggleExpand={toggleRowExpansion}
-              onSelectEntity={handleEntitySelect}
-              onCrossReference={handleCrossReference}
-              language={language}
-            />
+            <Card className="overflow-hidden">
+              <UnifiedHierarchyTable
+                nodes={hierarchyData}
+                expandedNodes={expandedNodes}
+                onToggleExpand={toggleNodeExpand}
+                onSelectEntity={handleSelectEntity}
+                typeFilter={typeFilter}
+              />
+            </Card>
             <Sheet open={!!selectedEntity} onOpenChange={() => setSelectedEntity(null)}>
-              <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+              <SheetContent side="bottom" className="h-[60vh] overflow-y-auto">
                 {detailPanelContent}
               </SheetContent>
             </Sheet>
@@ -463,14 +515,12 @@ const AdminCRM = () => {
           <PanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
             <Panel defaultSize={selectedEntity ? 65 : 100} minSize={50}>
               <div className="h-full overflow-auto bg-card">
-                <CRMTable
-                  activeTab={activeTab}
-                  data={getCurrentData()}
-                  expandedRows={expandedRows}
-                  onToggleExpand={toggleRowExpansion}
-                  onSelectEntity={handleEntitySelect}
-                  onCrossReference={handleCrossReference}
-                  language={language}
+                <UnifiedHierarchyTable
+                  nodes={hierarchyData}
+                  expandedNodes={expandedNodes}
+                  onToggleExpand={toggleNodeExpand}
+                  onSelectEntity={handleSelectEntity}
+                  typeFilter={typeFilter}
                 />
               </div>
             </Panel>
