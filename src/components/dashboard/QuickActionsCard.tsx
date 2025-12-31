@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Calendar, UserPlus } from "lucide-react";
+import { Search, Plus, Calendar, UserPlus, Sparkles } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
@@ -14,7 +14,7 @@ interface QuickActionsCardProps {
 
 export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCardProps) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
@@ -26,6 +26,18 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
       <Card>
         <CardContent className="p-3">
           <div className="space-y-2">
+            {/* Worship Leader Application - Prominent placement for non-WLs */}
+            {!isWorshipLeader && (
+              <Button
+                variant="default"
+                className="w-full justify-start bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                onClick={() => navigate("/request-worship-leader")}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {language === "ko" ? "예배인도자로 업그레이드" : "Upgrade to Worship Leader"}
+              </Button>
+            )}
+
             <Button
               variant="outline"
               className="w-full justify-start"
@@ -54,17 +66,6 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 {t("dashboard.createEvent")}
-              </Button>
-            )}
-
-            {!isWorshipLeader && (
-              <Button
-                variant="default"
-                className="w-full justify-start"
-                onClick={() => navigate("/request-worship-leader")}
-              >
-                <UserPlus className="w-4 h-4 mr-2" />
-                {t("worshipLeaderRequest.title")}
               </Button>
             )}
           </div>
