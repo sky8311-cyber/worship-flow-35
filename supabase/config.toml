@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.sync-worship-leader-role]
 verify_jwt = true
+
+[functions.cancel-worship-leader-role]
+verify_jwt = true

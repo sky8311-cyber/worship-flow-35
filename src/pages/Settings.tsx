@@ -149,19 +149,17 @@ const Settings = () => {
     updateTimezoneMutation.mutate(timezone);
   };
 
-  // Cancel worship leader role mutation
+  // Cancel worship leader role mutation (uses edge function to bypass RLS)
   const cancelWorshipLeaderMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("role", "worship_leader");
+      const { data, error } = await supabase.functions.invoke("cancel-worship-leader-role");
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
     },
     onSuccess: () => {
-      toast.success(language === "ko" ? "예배인도자 역할이 취소되었습니다" : "Worship leader role cancelled");
+      toast.success(language === "ko" ? "예배인도자 승인이 취소되었습니다" : "Worship leader approval cancelled");
       refreshProfile();
       queryClient.invalidateQueries({ queryKey: ["worship-leader-application"] });
     },
@@ -433,7 +431,7 @@ const Settings = () => {
                   <UserCog className="mr-2 h-4 w-4" />
                   {applicationStatus?.status === "rejected" 
                     ? (language === "ko" ? "예배인도자 재신청" : "Reapply for Worship Leader")
-                    : (language === "ko" ? "예배인도자 승급 신청" : "Apply for Worship Leader")}
+                    : (language === "ko" ? "예배인도자 승인 신청" : "Apply for Worship Leader Approval")}
                 </Button>
               </div>
             )}
@@ -444,13 +442,13 @@ const Settings = () => {
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" className="w-full justify-start">
                     <AlertTriangle className="mr-2 h-4 w-4" />
-                    {language === "ko" ? "예배인도자 승급 취소" : "Cancel Worship Leader Status"}
+                    {language === "ko" ? "예배인도자 승인 취소" : "Cancel Worship Leader Approval"}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {language === "ko" ? "예배인도자 역할을 취소하시겠습니까?" : "Cancel Worship Leader Status?"}
+                      {language === "ko" ? "예배인도자 승인을 취소하시겠습니까?" : "Cancel Worship Leader Approval?"}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       {language === "ko" 
@@ -464,7 +462,7 @@ const Settings = () => {
                       onClick={() => cancelWorshipLeaderMutation.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {language === "ko" ? "역할 취소" : "Cancel Role"}
+                      {language === "ko" ? "승인 취소" : "Cancel Approval"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
