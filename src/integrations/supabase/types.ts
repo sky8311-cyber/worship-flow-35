@@ -2307,6 +2307,16 @@ export type Database = {
         Args: { invitation_uuid: string }
         Returns: boolean
       }
+      deduct_seeds: {
+        Args: {
+          _activity_type: Database["public"]["Enums"]["seed_activity_type"]
+          _description?: string
+          _related_id?: string
+          _seeds: number
+          _user_id: string
+        }
+        Returns: number
+      }
       get_feature_flag: { Args: { _key: string }; Returns: boolean }
       get_invitation_by_id: {
         Args: { invitation_uuid: string }
