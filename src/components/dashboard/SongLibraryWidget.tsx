@@ -8,9 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SongLibraryWidgetProps {
   onAddSong: () => void;
+  canAddSong?: boolean;
 }
 
-export function SongLibraryWidget({ onAddSong }: SongLibraryWidgetProps) {
+export function SongLibraryWidget({ onAddSong, canAddSong = true }: SongLibraryWidgetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -82,15 +83,17 @@ export function SongLibraryWidget({ onAddSong }: SongLibraryWidgetProps) {
             <LayoutList className="w-3 h-3 mr-2" />
             {t("songLibrary.viewAllLibrary")}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={onAddSong}
-          >
-            <Plus className="w-3 h-3 mr-2" />
-            {t("songLibrary.addSong")}
-          </Button>
+          {canAddSong && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={onAddSong}
+            >
+              <Plus className="w-3 h-3 mr-2" />
+              {t("songLibrary.addSong")}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

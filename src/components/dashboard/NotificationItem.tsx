@@ -83,9 +83,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   };
 
   const actorAvatar = notification.metadata?.actor_avatar;
-  const actorName = notification.metadata?.actor_name || notification.metadata?.promoter_name || "User";
-  const actorUserId = notification.metadata?.actor_id || notification.user_id;
+  const actorName = notification.metadata?.actor_name || notification.metadata?.promoter_name || null;
+  const actorUserId = notification.metadata?.actor_id;
   const timeAgo = formatDistanceToNow(parseLocalDate(notification.created_at), { addSuffix: true });
+  const displayName = actorName || (language === "ko" ? "시스템" : "System");
   const isBirthday = notification.type === "birthday";
   const isWorshipSet = notification.type === "new_worship_set";
   const isCalendarEvent = notification.type === "new_calendar_event";
@@ -153,14 +154,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         <AvatarWithLevel
           userId={actorUserId}
           avatarUrl={actorAvatar}
-          fallback={actorName.charAt(0)}
+          fallback={displayName.charAt(0)}
           size="md"
           className="h-10 w-10 flex-shrink-0"
         />
       ) : (
         <Avatar className="h-10 w-10 flex-shrink-0">
-          <AvatarImage src={actorAvatar} alt={actorName} />
-          <AvatarFallback>{actorName.charAt(0)}</AvatarFallback>
+          <AvatarImage src={actorAvatar} alt={displayName} />
+          <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
         </Avatar>
       )}
       
@@ -176,9 +177,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
       <div className="flex-1 min-w-0">
         {isBirthday ? (
           <p className="text-sm">
-            <span className="font-semibold">{actorName}</span>{" "}
+            <span className="font-semibold">{displayName}</span>{" "}
             <span className="text-muted-foreground">
-              {notification.message.replace(actorName, "").trim()}
+              {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
             </span>
             {notification.metadata?.birth_date && (
               <span className="text-muted-foreground"> ({formatBirthDate(notification.metadata.birth_date as string)})</span>
@@ -186,7 +187,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
           </p>
         ) : isNewSong ? (
           <p className="text-sm">
-            {actorName && actorName !== "User" && actorName !== "A user" ? (
+            {actorName ? (
               <>
                 <span className="font-semibold">{actorName}</span>
                 <span className="text-muted-foreground"> added a new song</span>
@@ -211,9 +212,9 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
           </p>
         ) : (
           <p className="text-sm">
-            <span className="font-semibold">{actorName}</span>{" "}
+            {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
             <span className="text-muted-foreground">
-              {notification.message.replace(actorName, "").trim()}
+              {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
             </span>
           </p>
         )}

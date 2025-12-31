@@ -192,8 +192,15 @@ const AdminWorshipLeaderApplications = () => {
       if (!existingProfile?.worship_leader_intro && application.introduction) profileUpdate.worship_leader_intro = application.introduction;
 
       await supabase.from("profiles").update(profileUpdate).eq("id", application.user_id);
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      const { data: adminProfile } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", adminUser?.id)
+        .single();
+
       await supabase.from("worship_leader_applications").update({
-        status: "approved", reviewed_by: (await supabase.auth.getUser()).data.user?.id, reviewed_at: new Date().toISOString(),
+        status: "approved", reviewed_by: adminUser?.id, reviewed_at: new Date().toISOString(),
       }).eq("id", applicationId);
 
       await supabase.from("notifications").insert({
@@ -201,6 +208,11 @@ const AdminWorshipLeaderApplications = () => {
         title: "예배인도자 승인 완료! / You're now a Worship Leader!",
         message: "축하합니다! 이제 커뮤니티를 생성하고 예배팀을 이끌 수 있습니다.",
         related_type: "worship_leader_application", related_id: applicationId,
+        metadata: {
+          actor_id: adminUser?.id,
+          actor_name: adminProfile?.full_name,
+          actor_avatar: adminProfile?.avatar_url
+        }
       });
     },
     onSuccess: () => {
@@ -215,8 +227,15 @@ const AdminWorshipLeaderApplications = () => {
       const application = applications?.find(app => app.id === applicationId);
       if (!application) throw new Error("Application not found");
 
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      const { data: adminProfile } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", adminUser?.id)
+        .single();
+
       await supabase.from("worship_leader_applications").update({
-        status: "rejected", reviewed_by: (await supabase.auth.getUser()).data.user?.id, reviewed_at: new Date().toISOString(),
+        status: "rejected", reviewed_by: adminUser?.id, reviewed_at: new Date().toISOString(),
       }).eq("id", applicationId);
 
       await supabase.from("notifications").insert({
@@ -224,6 +243,11 @@ const AdminWorshipLeaderApplications = () => {
         title: "예배인도자 신청 결과 / Application Result",
         message: "신청이 승인되지 않았습니다. 다시 신청하실 수 있습니다.",
         related_type: "worship_leader_application", related_id: applicationId,
+        metadata: {
+          actor_id: adminUser?.id,
+          actor_name: adminProfile?.full_name,
+          actor_avatar: adminProfile?.avatar_url
+        }
       });
     },
     onSuccess: () => {
