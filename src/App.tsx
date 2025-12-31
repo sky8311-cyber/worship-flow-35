@@ -23,6 +23,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminCommunities from "./pages/AdminCommunities";
 import AdminChurchAccounts from "./pages/AdminChurchAccounts";
 import AdminWorshipLeaderApplications from "./pages/AdminWorshipLeaderApplications";
+import AdminCRM from "./pages/AdminCRM";
 import CommunitySearch from "./pages/CommunitySearch";
 import CommunityManagement from "./pages/CommunityManagement";
 import AcceptInvitation from "./pages/AcceptInvitation";
@@ -109,6 +110,7 @@ const App = () => {
               <Route path="/admin/communities" element={<AdminRoute><AdminCommunities /></AdminRoute>} />
               <Route path="/admin/church-accounts" element={<AdminRoute><AdminChurchAccounts /></AdminRoute>} />
               <Route path="/admin/applications" element={<AdminRoute><AdminWorshipLeaderApplications /></AdminRoute>} />
+              <Route path="/admin/crm" element={<AdminRoute><AdminCRM /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

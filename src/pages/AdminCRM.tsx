@@ -309,10 +309,10 @@ const AdminCRM = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-            {t("admin.crm.title") || "User Management CRM"}
+            User Management CRM
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            {t("admin.crm.description") || "Unified view of all accounts, leaders, communities, and members"}
+            Unified view of all accounts, leaders, communities, and members
           </p>
         </div>
 
@@ -381,7 +381,7 @@ const AdminCRM = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder={t("admin.crm.searchPlaceholder") || "Search across all entities..."}
+              placeholder="Search across all entities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -424,8 +424,8 @@ const AdminCRM = () => {
           </>
         ) : (
           // Desktop: Resizable panels
-          <ResizablePanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
-            <ResizablePanel defaultSize={selectedEntity ? 65 : 100} minSize={50}>
+          <PanelGroup direction="horizontal" className="min-h-[600px] rounded-lg border">
+            <Panel defaultSize={selectedEntity ? 65 : 100} minSize={50}>
               <div className="h-full overflow-auto bg-card">
                 <CRMTable
                   activeTab={activeTab}
@@ -437,18 +437,18 @@ const AdminCRM = () => {
                   language={language}
                 />
               </div>
-            </ResizablePanel>
+            </Panel>
             {selectedEntity && (
               <>
-                <ResizableHandle withHandle />
-                <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
+                <PanelResizeHandle className="w-2 bg-border hover:bg-primary/20 transition-colors" />
+                <Panel defaultSize={35} minSize={25} maxSize={50}>
                   <div className="h-full overflow-auto bg-muted/30 p-4">
                     {detailPanelContent}
                   </div>
-                </ResizablePanel>
+                </Panel>
               </>
             )}
-          </ResizablePanelGroup>
+          </PanelGroup>
         )}
       </main>
     </div>
