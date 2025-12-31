@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { CRMTabs } from "@/components/admin/crm/CRMTabs";
 import { CRMTable } from "@/components/admin/crm/CRMTable";
 import { DetailPanel } from "@/components/admin/crm/DetailPanel";
+import { FilterBanner } from "@/components/admin/crm/FilterBanner";
+import { CRMBreadcrumb } from "@/components/admin/crm/Breadcrumb";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,6 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { Search, Building2, Crown, Users, UserCheck } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 export type CRMTab = "church_accounts" | "worship_leaders" | "communities" | "members";
 
 export interface CRMEntity {
@@ -269,6 +269,29 @@ const AdminCRM = () => {
     setSearchParams(params);
   };
 
+  const goBackToFilterSource = () => {
+    if (filterType) {
+      const backTab = filterType === "church_account" ? "church_accounts" 
+        : filterType === "community" ? "communities" 
+        : filterType === "worship_leader" ? "worship_leaders" 
+        : "church_accounts";
+      const params = new URLSearchParams();
+      params.set("tab", backTab);
+      setSearchParams(params);
+    }
+  };
+
+  const getFilterName = () => {
+    if (!filterId || !filterType || !crmData) return undefined;
+    if (filterType === "church_account") {
+      return crmData.churchAccounts.find(a => a.id === filterId)?.name;
+    }
+    if (filterType === "community") {
+      return crmData.communities.find(c => c.id === filterId)?.name;
+    }
+    return undefined;
+  };
+
   const getCurrentData = () => {
     if (!filteredData) return [];
     switch (activeTab) {
@@ -376,9 +399,29 @@ const AdminCRM = () => {
           </Card>
         </div>
 
-        {/* Search and Tabs */}
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="relative flex-1">
+        {/* Breadcrumb */}
+        <CRMBreadcrumb 
+          currentTab={activeTab}
+          filterId={filterId}
+          filterType={filterType}
+          filterName={getFilterName()}
+        />
+
+        {/* Filter Banner */}
+        {filterId && filterType && (
+          <FilterBanner
+            filterId={filterId}
+            filterType={filterType}
+            filterName={getFilterName()}
+            currentTab={activeTab}
+            onClearFilter={clearFilter}
+            onGoBack={goBackToFilterSource}
+          />
+        )}
+
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Search across all entities..."
@@ -387,13 +430,6 @@ const AdminCRM = () => {
               className="pl-10"
             />
           </div>
-          <CRMTabs 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-            filterId={filterId}
-            filterType={filterType}
-            onClearFilter={clearFilter}
-          />
         </div>
 
         {/* Main Content */}
