@@ -86,7 +86,7 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("songDialog.youtubeSearchPlaceholder")}
+          placeholder="유튜브 검색어 입력하여 검색"
           onKeyDown={(e) => e.key === "Enter" && searchYouTube()}
         />
         <Button
