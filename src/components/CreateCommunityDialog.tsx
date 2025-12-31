@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,24 @@ import { useTranslation } from "@/hooks/useTranslation";
 interface CreateCommunityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultName?: string;
 }
 
-export const CreateCommunityDialog = ({ open, onOpenChange }: CreateCommunityDialogProps) => {
+export const CreateCommunityDialog = ({ open, onOpenChange, defaultName }: CreateCommunityDialogProps) => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    name: "",
+    name: defaultName || "",
     description: "",
   });
+
+  // Update form when defaultName changes
+  useEffect(() => {
+    if (defaultName && open) {
+      setFormData(prev => ({ ...prev, name: defaultName }));
+    }
+  }, [defaultName, open]);
 
   const createMutation = useMutation({
     mutationFn: async () => {

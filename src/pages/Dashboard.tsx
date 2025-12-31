@@ -42,6 +42,7 @@ import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
 import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalendarBanner";
+import { WLOnboardingChecklist } from "@/components/dashboard/WLOnboardingChecklist";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -376,6 +377,7 @@ const Dashboard = () => {
           {/* Column C: Sidebar (Profile, Communities, Quick Actions, Upcoming Services, Leaderboard) */}
           <div className="space-y-4 sticky top-24 self-start">
             <ProfileSidebarCard stats={userStats} />
+            <WLOnboardingChecklist />
             <CommunitiesSidebarList communities={joinedCommunities || []} maxVisible={5} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
             <UpcomingEventsWidget 
@@ -574,7 +576,8 @@ const Dashboard = () => {
       {/* Mobile Layout */}
       <div className="lg:hidden container mx-auto px-4 py-4">
         <div className="space-y-4">
-            {/* Upcoming Sets */}
+            {/* Onboarding Checklist for new WLs */}
+            <WLOnboardingChecklist />
             <Card>
               <CardHeader>
                 <LiturgicalCalendarBanner />

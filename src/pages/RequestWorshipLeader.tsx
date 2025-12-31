@@ -15,6 +15,7 @@ import { ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-re
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { WLWelcomeDialog } from "@/components/dashboard/WLWelcomeDialog";
 
 const RequestWorshipLeader = () => {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ const RequestWorshipLeader = () => {
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [approvedChurchName, setApprovedChurchName] = useState("");
   const [formData, setFormData] = useState({
     communityName: "",
     website: "",
@@ -156,14 +159,17 @@ const RequestWorshipLeader = () => {
         });
 
         await refreshProfile();
+        
+        // Show welcome dialog with next steps instead of immediate redirect
+        setApprovedChurchName(formData.communityName);
+        setShowWelcomeDialog(true);
       } else {
         toast({
           title: t("worshipLeaderRequest.success"),
           description: t("worshipLeaderRequest.successDesc"),
         });
+        window.location.href = "/dashboard";
       }
-
-      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         title: t("auth.error"),
@@ -483,6 +489,19 @@ const RequestWorshipLeader = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Welcome Dialog after auto-approval */}
+      <WLWelcomeDialog
+        open={showWelcomeDialog}
+        onOpenChange={(open) => {
+          setShowWelcomeDialog(open);
+          if (!open) {
+            // Redirect to dashboard when dialog closes
+            window.location.href = "/dashboard";
+          }
+        }}
+        churchName={approvedChurchName}
+      />
     </div>
   );
 };
