@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Loader2, ExternalLink, Check } from "lucide-react";
+import { Youtube, Loader2, ExternalLink, Check } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 
@@ -91,14 +91,14 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
         />
         <Button
           type="button"
-          variant="outline"
           onClick={searchYouTube}
           disabled={loading}
+          className="bg-red-600 hover:bg-red-700 text-white border-red-600"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Search className="w-4 h-4" />
+            <Youtube className="w-4 h-4" />
           )}
         </Button>
       </div>
