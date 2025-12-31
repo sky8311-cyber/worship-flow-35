@@ -154,8 +154,8 @@ const RequestWorshipLeader = () => {
         }
 
         toast({
-          title: "🎉 예배인도자 승급 승인!",
-          description: "자동으로 예배인도자로 승급되었습니다.",
+          title: "🎉 예배인도자 승인 완료!",
+          description: "예배인도자로 승인되었습니다.",
         });
 
         await refreshProfile();
@@ -190,7 +190,7 @@ const RequestWorshipLeader = () => {
     );
   }
 
-  // Already a worship leader
+  // Already a worship leader - show next steps instead of just message
   if (isWorshipLeader) {
     return (
       <div className="min-h-screen bg-gradient-soft p-4">
@@ -205,16 +205,21 @@ const RequestWorshipLeader = () => {
               <div className="flex flex-col items-center text-center space-y-4">
                 <CheckCircle className="h-16 w-16 text-green-500" />
                 <h2 className="text-xl font-bold">
-                  {language === "ko" ? "이미 예배인도자입니다!" : "You are already a worship leader!"}
+                  {language === "ko" ? "예배인도자 승인 완료!" : "You're a Worship Leader!"}
                 </h2>
                 <p className="text-muted-foreground">
                   {language === "ko" 
-                    ? "대시보드에서 예배인도자 기능을 사용하세요." 
-                    : "Use worship leader features from the dashboard."}
+                    ? "예배공동체를 만들고 워십세트를 생성할 수 있습니다." 
+                    : "You can create communities and worship sets."}
                 </p>
-                <Button onClick={() => navigate("/dashboard")}>
-                  {language === "ko" ? "대시보드로 이동" : "Go to Dashboard"}
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full max-w-sm pt-2">
+                  <Button onClick={() => navigate("/community/manage")} className="flex-1">
+                    {language === "ko" ? "예배공동체 만들기" : "Create Community"}
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/set-builder")} className="flex-1">
+                    {language === "ko" ? "워십세트 만들기" : "Create Worship Set"}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -237,11 +242,11 @@ const RequestWorshipLeader = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-yellow-500" />
-                {language === "ko" ? "승급 신청 대기 중" : "Application Pending"}
+                {language === "ko" ? "승인 신청 대기 중" : "Application Pending"}
               </CardTitle>
               <CardDescription>
                 {language === "ko" 
-                  ? "예배인도자 승급 신청이 접수되었습니다. 관리자의 승인을 기다리고 있습니다." 
+                  ? "예배인도자 승인 신청이 접수되었습니다. 관리자의 승인을 기다리고 있습니다." 
                   : "Your worship leader application has been submitted and is awaiting admin approval."}
               </CardDescription>
             </CardHeader>
@@ -294,7 +299,7 @@ const RequestWorshipLeader = () => {
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       {language === "ko" 
-                        ? "예배인도자 승급 신청이 취소됩니다. 나중에 다시 신청할 수 있습니다."
+                        ? "예배인도자 승인 신청이 취소됩니다. 나중에 다시 신청할 수 있습니다."
                         : "Your worship leader application will be cancelled. You can apply again later."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -331,7 +336,7 @@ const RequestWorshipLeader = () => {
               <div className="flex flex-col items-center text-center space-y-4">
                 <CheckCircle className="h-16 w-16 text-green-500" />
                 <h2 className="text-xl font-bold">
-                  {language === "ko" ? "승급 신청이 승인되었습니다!" : "Your application was approved!"}
+                  {language === "ko" ? "승인 신청이 승인되었습니다!" : "Your application was approved!"}
                 </h2>
                 <p className="text-muted-foreground">
                   {language === "ko" 
