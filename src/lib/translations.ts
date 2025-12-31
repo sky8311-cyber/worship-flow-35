@@ -1729,6 +1729,22 @@ export const translations = {
       toggleSuccess: "Schedule updated",
       toggleError: "Failed to update schedule",
     },
+    onboarding: {
+      title: "Getting Started",
+      subtitle: "Complete these steps to get the most out of K-Worship",
+      progress: "completed",
+      allComplete: "You're all set!",
+      dismiss: "Dismiss",
+      start: "Start",
+      steps: {
+        worshipLeader: "Become Worship Leader",
+        worshipLeaderDesc: "You're now a worship leader!",
+        createCommunity: "Create Community",
+        createCommunityDesc: "Build your worship team",
+        createFirstSet: "Create First Worship Set",
+        createFirstSetDesc: "Plan your first service",
+      },
+    },
   },
   ko: {
     common: {
@@ -3440,6 +3456,22 @@ export const translations = {
       daysBefore: "일 전",
       toggleSuccess: "일정이 업데이트되었습니다",
       toggleError: "일정 업데이트 실패",
+    },
+    onboarding: {
+      title: "시작하기",
+      subtitle: "K-Worship을 최대한 활용하려면 다음 단계를 완료하세요",
+      progress: "완료",
+      allComplete: "모든 준비가 완료되었습니다!",
+      dismiss: "닫기",
+      start: "시작",
+      steps: {
+        worshipLeader: "예배인도자 승급",
+        worshipLeaderDesc: "예배인도자가 되었습니다!",
+        createCommunity: "예배공동체 만들기",
+        createCommunityDesc: "예배팀을 구성하세요",
+        createFirstSet: "첫 번째 워십세트 만들기",
+        createFirstSetDesc: "첫 예배를 계획하세요",
+      },
     },
   },
 };

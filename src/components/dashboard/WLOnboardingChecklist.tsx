@@ -4,16 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Circle, Users, Music, UserPlus, X, Sparkles } from "lucide-react";
+import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight } from "lucide-react";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
+import { cn } from "@/lib/utils";
 
 export function WLOnboardingChecklist() {
   const navigate = useNavigate();
   const { user, isWorshipLeader } = useAuth();
-  const { language } = useTranslation();
+  const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
 
@@ -59,20 +60,23 @@ export function WLOnboardingChecklist() {
   const steps = [
     { 
       id: "wl", 
-      label: language === "ko" ? "예배인도자 승급" : "Become Worship Leader", 
-      completed: true, // Always true if showing this component
+      label: t("onboarding.steps.worshipLeader"),
+      description: t("onboarding.steps.worshipLeaderDesc"),
+      completed: true,
       icon: Sparkles,
     },
     { 
       id: "community", 
-      label: language === "ko" ? "예배공동체 만들기" : "Create Community", 
+      label: t("onboarding.steps.createCommunity"),
+      description: t("onboarding.steps.createCommunityDesc"),
       completed: !!hasCommunity,
       icon: Users,
       action: () => setShowCreateCommunity(true),
     },
     { 
       id: "set", 
-      label: language === "ko" ? "첫 번째 워십세트 만들기" : "Create First Worship Set", 
+      label: t("onboarding.steps.createFirstSet"),
+      description: t("onboarding.steps.createFirstSetDesc"),
       completed: !!hasSet,
       icon: Music,
       action: () => navigate("/set-builder"),
@@ -81,56 +85,110 @@ export function WLOnboardingChecklist() {
 
   const completedCount = steps.filter(s => s.completed).length;
   const progress = (completedCount / steps.length) * 100;
+  
+  // Find the first incomplete step (current step to work on)
+  const currentStepIndex = steps.findIndex(s => !s.completed);
 
   return (
     <>
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader className="pb-2">
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/10 overflow-hidden">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              {language === "ko" ? "시작하기" : "Getting Started"}
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base">{t("onboarding.title")}</h3>
+                <p className="text-xs text-muted-foreground">{t("onboarding.subtitle")}</p>
+              </div>
+            </div>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               onClick={() => setDismissed(true)}
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <div className="flex items-center gap-2 mt-2">
-            <Progress value={progress} className="h-2" />
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {completedCount}/{steps.length}
+          <div className="flex items-center gap-3 mt-3">
+            <Progress value={progress} className="h-2 flex-1" />
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+              {completedCount}/{steps.length} {t("onboarding.progress")}
             </span>
           </div>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {steps.map((step) => (
-            <button
-              key={step.id}
-              onClick={step.action}
-              disabled={step.completed || !step.action}
-              className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-colors ${
-                step.completed 
-                  ? "text-muted-foreground" 
-                  : step.action 
-                    ? "hover:bg-background cursor-pointer" 
-                    : ""
-              }`}
-            >
-              {step.completed ? (
-                <CheckCircle className="w-5 h-5 text-green-500 shrink-0" />
-              ) : (
-                <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
-              )}
-              <span className={`text-sm ${step.completed ? "line-through" : "font-medium"}`}>
-                {step.label}
-              </span>
-            </button>
-          ))}
+        <CardContent className="space-y-2 pt-0">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isCurrent = index === currentStepIndex;
+            const isPending = !step.completed && !isCurrent;
+            
+            return (
+              <div
+                key={step.id}
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
+                  step.completed && "bg-green-500/10 border border-green-500/20",
+                  isCurrent && "bg-primary/10 border border-primary/30 shadow-sm",
+                  isPending && "bg-muted/30 opacity-60"
+                )}
+              >
+                {/* Status Icon */}
+                <div className={cn(
+                  "shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                  step.completed && "bg-green-500/20",
+                  isCurrent && "bg-primary/20",
+                  isPending && "bg-muted"
+                )}>
+                  {step.completed ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Icon className={cn(
+                      "w-4 h-4",
+                      isCurrent ? "text-primary" : "text-muted-foreground"
+                    )} />
+                  )}
+                </div>
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "text-sm font-medium",
+                    step.completed && "text-green-700 dark:text-green-400 line-through",
+                    isCurrent && "text-foreground",
+                    isPending && "text-muted-foreground"
+                  )}>
+                    {step.label}
+                  </p>
+                  <p className={cn(
+                    "text-xs",
+                    step.completed ? "text-green-600/70 dark:text-green-500/70" : "text-muted-foreground"
+                  )}>
+                    {step.description}
+                  </p>
+                </div>
+                
+                {/* Action Button */}
+                {isCurrent && step.action && (
+                  <Button
+                    size="sm"
+                    onClick={step.action}
+                    className="shrink-0 gap-1"
+                  >
+                    {t("onboarding.start")}
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                )}
+                
+                {/* Pending indicator */}
+                {isPending && (
+                  <Circle className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+                )}
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
