@@ -32,6 +32,39 @@ const AdminWorshipLeaderApplications = () => {
     }
   }, []);
 
+  // Realtime subscription for live updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('worship-leader-applications-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'worship_leader_applications'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["worship-leader-applications"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: applications, isLoading } = useQuery({
     queryKey: ["worship-leader-applications"],
     queryFn: async () => {
