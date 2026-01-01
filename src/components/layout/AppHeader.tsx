@@ -131,7 +131,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   <NotificationBadge count={unreadCount} />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 w-auto">
+              <PopoverContent align="center" sideOffset={8} className="p-0 w-auto">
                 <NotificationPanel />
               </PopoverContent>
             </Popover>
