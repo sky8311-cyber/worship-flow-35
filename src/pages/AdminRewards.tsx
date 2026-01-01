@@ -48,7 +48,10 @@ import {
   Snowflake,
   Sun,
   Plus,
-  Minus
+  Minus,
+  ShoppingBag,
+  Trash2,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -65,6 +68,20 @@ const AdminRewards = () => {
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
   const [editingRule, setEditingRule] = useState<any>(null);
+  
+  // Store management state
+  const [editingStoreItem, setEditingStoreItem] = useState<any>(null);
+  const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
+  const [newItem, setNewItem] = useState({
+    code: "",
+    name: "",
+    name_ko: "",
+    description: "",
+    description_ko: "",
+    cost: 100,
+    stock: null as number | null,
+    enabled: true
+  });
 
   // Fetch settings
   const { data: settings, isLoading: settingsLoading } = useQuery({
@@ -87,6 +104,31 @@ const AdminRewards = () => {
         .from('rewards_rules')
         .select('*')
         .order('amount', { ascending: false });
+      return data || [];
+    }
+  });
+
+  // Fetch store items
+  const { data: storeItems, isLoading: storeLoading } = useQuery({
+    queryKey: ['admin-rewards-store-items'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('rewards_store_items')
+        .select('*')
+        .order('cost', { ascending: true });
+      return data || [];
+    }
+  });
+
+  // Fetch redemptions
+  const { data: redemptions, isLoading: redemptionsLoading } = useQuery({
+    queryKey: ['admin-rewards-redemptions'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('rewards_redemptions')
+        .select('*, profiles:user_id(email, full_name)')
+        .order('created_at', { ascending: false })
+        .limit(50);
       return data || [];
     }
   });
@@ -156,6 +198,88 @@ const AdminRewards = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-rewards-rules'] });
       setEditingRule(null);
       toast.success('Rule updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
+  // Update store item mutation
+  const updateStoreItemMutation = useMutation({
+    mutationFn: async (item: any) => {
+      const { error } = await supabase
+        .from('rewards_store_items')
+        .update({
+          name: item.name,
+          name_ko: item.name_ko,
+          description: item.description,
+          description_ko: item.description_ko,
+          cost: item.cost,
+          stock: item.stock,
+          enabled: item.enabled
+        })
+        .eq('code', item.code);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rewards-store-items'] });
+      setEditingStoreItem(null);
+      toast.success('Store item updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
+  // Add store item mutation
+  const addStoreItemMutation = useMutation({
+    mutationFn: async (item: any) => {
+      const { error } = await supabase
+        .from('rewards_store_items')
+        .insert({
+          code: item.code,
+          name: item.name,
+          name_ko: item.name_ko,
+          description: item.description,
+          description_ko: item.description_ko,
+          cost: item.cost,
+          stock: item.stock,
+          enabled: item.enabled
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rewards-store-items'] });
+      setAddItemDialogOpen(false);
+      setNewItem({
+        code: "",
+        name: "",
+        name_ko: "",
+        description: "",
+        description_ko: "",
+        cost: 100,
+        stock: null,
+        enabled: true
+      });
+      toast.success('Store item added');
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    }
+  });
+
+  // Delete store item mutation
+  const deleteStoreItemMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const { error } = await supabase
+        .from('rewards_store_items')
+        .delete()
+        .eq('code', code);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rewards-store-items'] });
+      toast.success('Store item deleted');
     },
     onError: (error: any) => {
       toast.error(error.message);
@@ -264,7 +388,7 @@ const AdminRewards = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="settings">
               <Settings className="w-4 h-4 mr-2" />
               Settings
@@ -272,6 +396,10 @@ const AdminRewards = () => {
             <TabsTrigger value="rules">
               <Edit className="w-4 h-4 mr-2" />
               Rules
+            </TabsTrigger>
+            <TabsTrigger value="store">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              Store
             </TabsTrigger>
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
@@ -306,6 +434,17 @@ const AdminRewards = () => {
                       <Switch
                         checked={settings.rewards_enabled}
                         onCheckedChange={(checked) => updateSettingsMutation.mutate({ rewards_enabled: checked })}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="text-base">Store Enabled</Label>
+                        <p className="text-sm text-muted-foreground">Enable or disable the K-Seed store</p>
+                      </div>
+                      <Switch
+                        checked={settings.store_enabled ?? true}
+                        onCheckedChange={(checked) => updateSettingsMutation.mutate({ store_enabled: checked })}
                       />
                     </div>
 
@@ -456,6 +595,193 @@ const AdminRewards = () => {
                       ))}
                     </TableBody>
                   </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Store Tab */}
+          <TabsContent value="store" className="mt-4 space-y-4">
+            {/* Store Items Management */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Store Items</CardTitle>
+                    <CardDescription>Manage items available in the K-Seed store</CardDescription>
+                  </div>
+                  <Button onClick={() => setAddItemDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {storeLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Cost</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Enabled</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {storeItems?.map((item: any) => (
+                        <TableRow key={item.code}>
+                          <TableCell className="font-mono text-xs">{item.code}</TableCell>
+                          <TableCell>
+                            {editingStoreItem?.code === item.code ? (
+                              <div className="space-y-1">
+                                <Input
+                                  value={editingStoreItem.name}
+                                  onChange={(e) => setEditingStoreItem({ ...editingStoreItem, name: e.target.value })}
+                                  placeholder="English name"
+                                  className="w-40"
+                                />
+                                <Input
+                                  value={editingStoreItem.name_ko || ''}
+                                  onChange={(e) => setEditingStoreItem({ ...editingStoreItem, name_ko: e.target.value })}
+                                  placeholder="Korean name"
+                                  className="w-40"
+                                />
+                              </div>
+                            ) : (
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                {item.name_ko && <p className="text-xs text-muted-foreground">{item.name_ko}</p>}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingStoreItem?.code === item.code ? (
+                              <Input
+                                type="number"
+                                value={editingStoreItem.cost}
+                                onChange={(e) => setEditingStoreItem({ ...editingStoreItem, cost: parseInt(e.target.value) })}
+                                className="w-20"
+                              />
+                            ) : (
+                              <Badge variant="secondary">🌱 {item.cost}</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingStoreItem?.code === item.code ? (
+                              <Input
+                                type="number"
+                                value={editingStoreItem.stock ?? ''}
+                                onChange={(e) => setEditingStoreItem({ ...editingStoreItem, stock: e.target.value ? parseInt(e.target.value) : null })}
+                                placeholder="∞"
+                                className="w-20"
+                              />
+                            ) : (
+                              item.stock !== null ? item.stock : '∞'
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {editingStoreItem?.code === item.code ? (
+                              <Switch
+                                checked={editingStoreItem.enabled}
+                                onCheckedChange={(checked) => setEditingStoreItem({ ...editingStoreItem, enabled: checked })}
+                              />
+                            ) : (
+                              <Badge variant={item.enabled ? "default" : "outline"}>
+                                {item.enabled ? 'On' : 'Off'}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              {editingStoreItem?.code === item.code ? (
+                                <>
+                                  <Button size="sm" onClick={() => updateStoreItemMutation.mutate(editingStoreItem)}>
+                                    <Save className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingStoreItem(null)}>
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingStoreItem({ ...item })}>
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      if (confirm('Delete this item?')) {
+                                        deleteStoreItemMutation.mutate(item.code);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Redemption History */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Redemptions</CardTitle>
+                <CardDescription>View recent K-Seed store redemptions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {redemptionsLoading ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : redemptions && redemptions.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Cost</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {redemptions.map((r: any) => (
+                        <TableRow key={r.id}>
+                          <TableCell className="text-sm">
+                            {format(new Date(r.created_at), 'yyyy-MM-dd HH:mm')}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm font-medium">{r.profiles?.full_name || 'Unknown'}</p>
+                              <p className="text-xs text-muted-foreground">{r.profiles?.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{r.item_code}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">🌱 {r.cost}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={r.status === 'completed' ? 'default' : 'outline'}>
+                              {r.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-center py-8 text-muted-foreground">No redemptions yet</p>
                 )}
               </CardContent>
             </Card>
@@ -680,6 +1006,100 @@ const AdminRewards = () => {
               >
                 {adjustMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Store Item Dialog */}
+        <Dialog open={addItemDialogOpen} onOpenChange={setAddItemDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Store Item</DialogTitle>
+              <DialogDescription>Create a new item for the K-Seed store</DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div>
+                <Label>Code (unique identifier)</Label>
+                <Input
+                  value={newItem.code}
+                  onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+                  placeholder="perk_example_item"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Name (English)</Label>
+                  <Input
+                    value={newItem.name}
+                    onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                    placeholder="Example Item"
+                  />
+                </div>
+                <div>
+                  <Label>Name (Korean)</Label>
+                  <Input
+                    value={newItem.name_ko}
+                    onChange={(e) => setNewItem({ ...newItem, name_ko: e.target.value })}
+                    placeholder="예시 아이템"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Description (English)</Label>
+                <Textarea
+                  value={newItem.description}
+                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                  placeholder="Describe what this item does..."
+                />
+              </div>
+              <div>
+                <Label>Description (Korean)</Label>
+                <Textarea
+                  value={newItem.description_ko}
+                  onChange={(e) => setNewItem({ ...newItem, description_ko: e.target.value })}
+                  placeholder="아이템 설명..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Cost (K-Seeds)</Label>
+                  <Input
+                    type="number"
+                    value={newItem.cost}
+                    onChange={(e) => setNewItem({ ...newItem, cost: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <Label>Stock (leave empty for unlimited)</Label>
+                  <Input
+                    type="number"
+                    value={newItem.stock ?? ''}
+                    onChange={(e) => setNewItem({ ...newItem, stock: e.target.value ? parseInt(e.target.value) : null })}
+                    placeholder="∞"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={newItem.enabled}
+                  onCheckedChange={(checked) => setNewItem({ ...newItem, enabled: checked })}
+                />
+                <Label>Enabled</Label>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAddItemDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => addStoreItemMutation.mutate(newItem)}
+                disabled={!newItem.code || !newItem.name || addStoreItemMutation.isPending}
+              >
+                {addStoreItemMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Add Item
               </Button>
             </DialogFooter>
           </DialogContent>

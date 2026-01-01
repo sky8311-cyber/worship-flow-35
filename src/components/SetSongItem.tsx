@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GripVertical, X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
-import { MusicScoreIcon } from "./icons/MusicScoreIcon";
+import { FileMusic } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Metronome } from "./Metronome";
 import { toast } from "sonner";
@@ -204,7 +204,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                             <div className="flex items-center gap-2">
                               <span>{variation.key}</span>
                               {variation.scoreUrl && (
-                                <MusicScoreIcon className="w-3 h-3" />
+                                <FileMusic className="w-3 h-3 text-blue-500" />
                               )}
                             </div>
                           </SelectItem>
@@ -377,7 +377,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     size="sm"
                     onClick={() => setShowScorePreview(true)}
                   >
-                    <MusicScoreIcon className="w-4 h-4 mr-1" />
+                    <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
                     악보
                   </Button>
                 )}

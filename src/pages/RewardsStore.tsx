@@ -62,6 +62,19 @@ const RewardsStore = () => {
     enabled: !!user?.id
   });
 
+  // Fetch store settings
+  const { data: storeSettings } = useQuery({
+    queryKey: ['rewards-store-settings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('rewards_settings')
+        .select('store_enabled')
+        .eq('id', 1)
+        .single();
+      return data;
+    }
+  });
+
   // Fetch store items
   const { data: storeItems, isLoading } = useQuery({
     queryKey: ['rewards-store-items'],
@@ -186,8 +199,17 @@ const RewardsStore = () => {
           </div>
         </div>
 
-        {/* Store Items Grid */}
-        {isLoading ? (
+        {/* Store Disabled Message */}
+        {storeSettings?.store_enabled === false ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <ShoppingBag className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">
+                {language === 'ko' ? '스토어가 일시 중지되었습니다' : 'Store is temporarily closed'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : isLoading ? (
           <div className="text-center py-12">
             <Loader2 className="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
           </div>

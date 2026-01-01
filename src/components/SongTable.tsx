@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check } from "lucide-react";
-import { MusicScoreIcon } from "./icons/MusicScoreIcon";
+import { FileMusic } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -456,7 +456,7 @@ export const SongTable = ({
                              className="h-8 w-8"
                              title={t("songCard.viewScore")}
                            >
-                             <MusicScoreIcon className="h-4 w-4" />
+                             <FileMusic className="h-4 w-4 text-blue-500" />
                            </Button>
                          )}
                          {onEdit && (
