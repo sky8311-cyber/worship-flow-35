@@ -33,7 +33,7 @@ export const LevelUpDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md text-center">
-        {open && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={200} />}
+        {open && <Confetti width={windowSize.width} height={windowSize.height} recycle={false} numberOfPieces={200} style={{ pointerEvents: 'none' }} />}
         
         <div className="space-y-6 py-6">
           <div className="text-7xl animate-bounce">{emoji}</div>
