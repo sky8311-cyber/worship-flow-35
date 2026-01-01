@@ -722,9 +722,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-          {/* Song Library Widget for mobile */}
-          <SongLibraryWidget onAddSong={() => setAddSongOpen(true)} canAddSong={isAdmin || isWorshipLeader} />
-
           {/* Community Feed Tabs */}
           <Card>
             <CardContent className="p-0">
