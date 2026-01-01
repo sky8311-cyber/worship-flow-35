@@ -148,7 +148,7 @@ export const SongCard = memo(function SongCard({
             <img 
               src={song.score_file_url} 
               alt={`${song.title} score preview`}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
               <Eye className="w-8 h-8 text-white" />
