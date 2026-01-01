@@ -903,21 +903,41 @@ const SetBuilder = () => {
     },
   });
 
-  // Helper function to navigate to songs - requires community selection first
+  // Helper function to check required fields for adding songs/components
+  const getMissingRequiredFields = () => {
+    const missing: string[] = [];
+    if (!formData.community_id) {
+      missing.push(language === "ko" ? "예배공동체" : "Worship Community");
+    }
+    if (!formData.service_time) {
+      missing.push(language === "ko" ? "예배 시간" : "Service Time");
+    }
+    if (!formData.worship_leader?.trim()) {
+      missing.push(language === "ko" ? "예배 인도자" : "Worship Leader");
+    }
+    return missing;
+  };
+
+  const hasRequiredFields = () => {
+    return formData.community_id && formData.service_time && formData.worship_leader?.trim();
+  };
+
+  // Helper function to navigate to songs - requires required fields
   const handleNavigateToSongs = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Check if community is selected
-    if (!formData.community_id) {
+    // Check if required fields are filled
+    const missingFields = getMissingRequiredFields();
+    if (missingFields.length > 0) {
       toast.error(
         language === "ko" 
-          ? "예배공동체를 선택해주세요" 
-          : "Please select a worship community",
+          ? "필수 정보를 입력해주세요" 
+          : "Please fill in required information",
         { 
           description: language === "ko" 
-            ? "곡을 추가하려면 워십세트를 저장해야 합니다. 워십세트를 저장하려면 예배공동체를 선택해야 합니다." 
-            : "To add songs, the worship set must be saved. To save the worship set, please select a worship community."
+            ? `다음 항목을 선택해주세요: ${missingFields.join(", ")}` 
+            : `Please select: ${missingFields.join(", ")}`
         }
       );
       return;
@@ -953,6 +973,22 @@ const SetBuilder = () => {
       return;
     }
 
+    // Check if required fields are filled
+    const missingFields = getMissingRequiredFields();
+    if (missingFields.length > 0) {
+      toast.error(
+        language === "ko" 
+          ? "필수 정보를 입력해주세요" 
+          : "Please fill in required information",
+        { 
+          description: language === "ko" 
+            ? `곡을 추가하려면 다음 항목을 선택해주세요: ${missingFields.join(", ")}` 
+            : `To add songs, please select: ${missingFields.join(", ")}`
+        }
+      );
+      return;
+    }
+
     // Single song addition with optional key variation
     const newSetItem: SetItem = {
       type: "song",
@@ -975,6 +1011,22 @@ const SetBuilder = () => {
     // Block if not in edit mode
     if (!isEditMode) {
       toast.error(language === "ko" ? "편집 모드가 아닙니다. 편집 버튼을 눌러주세요." : "Not in edit mode. Please click the Edit button.");
+      return;
+    }
+
+    // Check if required fields are filled
+    const missingFields = getMissingRequiredFields();
+    if (missingFields.length > 0) {
+      toast.error(
+        language === "ko" 
+          ? "필수 정보를 입력해주세요" 
+          : "Please fill in required information",
+        { 
+          description: language === "ko" 
+            ? `순서를 추가하려면 다음 항목을 선택해주세요: ${missingFields.join(", ")}` 
+            : `To add components, please select: ${missingFields.join(", ")}`
+        }
+      );
       return;
     }
 
@@ -1656,14 +1708,14 @@ const SetBuilder = () => {
                       </AlertDescription>
                     </Alert>
                   )}
-                  {/* Warning when community not selected - auto-save disabled */}
-                  {userCommunities && userCommunities.length > 0 && !formData.community_id && (
+                  {/* Warning when required fields not filled - auto-save disabled */}
+                  {userCommunities && userCommunities.length > 0 && (!formData.community_id || !formData.service_time || !formData.worship_leader?.trim()) && (
                     <Alert className="mt-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
                         {language === "ko" 
-                          ? "예배공동체를 선택하면 워십세트가 자동 저장됩니다." 
-                          : "Select a worship community to enable auto-save."}
+                          ? "예배공동체, 예배 시간, 예배 인도자를 입력하면 자동 저장되고 곡/순서를 추가할 수 있습니다." 
+                          : "Fill in community, service time, and worship leader to enable auto-save and add songs/components."}
                       </AlertDescription>
                     </Alert>
                   )}

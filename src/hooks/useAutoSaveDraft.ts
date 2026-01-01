@@ -180,7 +180,7 @@ export const useAutoSaveDraft = ({
       prevItemsCountRef.current = currentItems.length;
 
       if (status !== "draft") return null;
-      if (!currentForm.community_id) return null;
+      if (!currentForm.community_id || !currentForm.service_time || !currentForm.worship_leader?.trim()) return null;
 
       // Safety check: If editing existing set with empty items, check DB first
       if (id && currentItems.length === 0) {
