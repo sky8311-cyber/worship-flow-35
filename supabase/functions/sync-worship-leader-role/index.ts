@@ -22,16 +22,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Supabase client with the user's token
+    // Extract token from Bearer header
+    const token = authHeader.replace("Bearer ", "");
+
+    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    // Get the current user using the token directly
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) {
       console.log("Failed to get user:", userError);
       return new Response(
