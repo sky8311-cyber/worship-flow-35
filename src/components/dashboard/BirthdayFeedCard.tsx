@@ -2,8 +2,8 @@ import { Cake } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface BirthdayFeedCardProps {
   profile: {
@@ -59,7 +59,7 @@ export const BirthdayFeedCard = ({ profile, community, onProfileClick }: Birthda
           
           <div className="flex items-center gap-2 mt-2">
             <Badge variant="outline" className="text-xs">
-              {new Date(profile.birth_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US", { 
+              {parseLocalDate(profile.birth_date).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US", { 
                 month: "long", 
                 day: "numeric" 
               })}
