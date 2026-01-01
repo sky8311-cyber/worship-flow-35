@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 export default function CommunityManagement() {
   const { id } = useParams();
@@ -973,7 +974,7 @@ export default function CommunityManagement() {
                             </p>
                             {member.profiles?.birth_date && (
                               <p className="text-xs text-muted-foreground">
-                                🎂 {new Date(member.profiles.birth_date).toLocaleDateString(
+                                🎂 {parseLocalDate(member.profiles.birth_date).toLocaleDateString(
                                   language === "ko" ? "ko-KR" : "en-US",
                                   { month: "long", day: "numeric" }
                                 )}

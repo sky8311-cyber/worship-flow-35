@@ -8,6 +8,7 @@ import { PostComposer } from "./PostComposer";
 import { SocialFeedPost } from "./SocialFeedPost";
 import { ProfileDialog } from "./ProfileDialog";
 import { BirthdayFeedCard } from "./BirthdayFeedCard";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface Author {
   id: string;
@@ -125,9 +126,7 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
       // Filter birthdays to this week only (check month/day ignoring year)
       const birthdaysThisWeek = (birthdayData.data || []).filter((profile) => {
         if (!profile.birth_date) return false;
-        const birthDate = new Date(profile.birth_date);
-        const currentMonth = today.getMonth();
-        const currentDay = today.getDate();
+        const birthDate = parseLocalDate(profile.birth_date);
         const birthMonth = birthDate.getMonth();
         const birthDay = birthDate.getDate();
         

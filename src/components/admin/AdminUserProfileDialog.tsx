@@ -10,6 +10,7 @@ import { RoleBadge } from "@/components/RoleBadge";
 import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface AdminUserProfileDialogProps {
   userId: string | null;
@@ -216,7 +217,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                 {profile.birth_date && (
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{format(new Date(profile.birth_date), "PPP", { locale: dateLocale })}</span>
+                    <span>{format(parseLocalDate(profile.birth_date), "PPP", { locale: dateLocale })}</span>
                   </div>
                 )}
                 {profile.location && (

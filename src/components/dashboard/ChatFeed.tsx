@@ -11,6 +11,7 @@ import { ProfileDialog } from "./ProfileDialog";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface Author {
   id: string;
@@ -120,7 +121,7 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
       // Filter birthdays to this week only
       const birthdaysThisWeek = (birthdayData.data || []).filter((profile) => {
         if (!profile.birth_date) return false;
-        const birthDate = new Date(profile.birth_date);
+        const birthDate = parseLocalDate(profile.birth_date);
         const birthMonth = birthDate.getMonth();
         const birthDay = birthDate.getDate();
         
