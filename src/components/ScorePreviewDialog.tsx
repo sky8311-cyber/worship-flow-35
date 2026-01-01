@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { MusicScoreIcon } from "./icons/MusicScoreIcon";
+import { FileMusic } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -131,7 +131,7 @@ export const ScorePreviewDialog = ({
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <MusicScoreIcon className="w-16 h-16 mb-4 opacity-50" />
+                <FileMusic className="w-16 h-16 mb-4 opacity-50" />
                 <p>{t("songLibrary.noScoreAvailable")}</p>
               </div>
             )}
@@ -194,7 +194,7 @@ export const ScorePreviewDialog = ({
                 />
               ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <MusicScoreIcon className="w-16 h-16 mb-4 opacity-50" />
+                  <FileMusic className="w-16 h-16 mb-4 opacity-50" />
                   <p>{t("songLibrary.noScoreAvailable")}</p>
                 </div>
               )}
@@ -202,7 +202,7 @@ export const ScorePreviewDialog = ({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <MusicScoreIcon className="w-16 h-16 mb-4 opacity-50" />
+            <FileMusic className="w-16 h-16 mb-4 opacity-50" />
             <p>{t("songLibrary.noScoreAvailable")}</p>
           </div>
         )}

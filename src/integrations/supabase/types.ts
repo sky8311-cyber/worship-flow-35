@@ -1086,6 +1086,7 @@ export type Database = {
           max_daily_earn_per_user: number
           max_single_tx_amount: number
           rewards_enabled: boolean
+          store_enabled: boolean | null
           updated_at: string
         }
         Insert: {
@@ -1093,6 +1094,7 @@ export type Database = {
           max_daily_earn_per_user?: number
           max_single_tx_amount?: number
           rewards_enabled?: boolean
+          store_enabled?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -1100,6 +1102,7 @@ export type Database = {
           max_daily_earn_per_user?: number
           max_single_tx_amount?: number
           rewards_enabled?: boolean
+          store_enabled?: boolean | null
           updated_at?: string
         }
         Relationships: []

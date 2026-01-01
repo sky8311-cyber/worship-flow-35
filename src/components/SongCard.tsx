@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "./FavoriteButton";
 import { Edit, Trash2, Youtube, Eye, Plus, BarChart3, Check } from "lucide-react";
-import { MusicScoreIcon } from "./icons/MusicScoreIcon";
+import { FileMusic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -209,7 +209,7 @@ export const SongCard = memo(function SongCard({
                 onClick={() => setScorePreviewOpen(true)}
                 className="flex-1 w-full"
               >
-                <MusicScoreIcon className="w-4 h-4 mr-1" />
+                <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
                 <span className="truncate">{t("songCard.viewScore")}</span>
               </Button>
             )}
