@@ -1438,7 +1438,7 @@ const SetBuilder = () => {
                     <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
                       <div 
                         className="bg-orange-500 h-full transition-all duration-1000 ease-linear"
-                        style={{ width: `${(takeoverResponseCountdown / 10) * 100}%` }}
+                        style={{ width: `${(takeoverResponseCountdown / 5) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -1527,10 +1527,10 @@ const SetBuilder = () => {
                           : (language === "ko" ? "권한 가져오는 중..." : "Taking over...")}
                       </span>
                       <div className="w-full bg-muted h-1.5 rounded-full mt-1 overflow-hidden">
-                        <div 
-                          className="bg-primary h-full transition-all duration-1000 ease-linear"
-                          style={{ width: `${(takeoverCountdown / 10) * 100}%` }}
-                        />
+                      <div 
+                        className="bg-primary h-full transition-all duration-1000 ease-linear"
+                        style={{ width: `${(takeoverCountdown / 5) * 100}%` }}
+                      />
                       </div>
                     </div>
                   )}
