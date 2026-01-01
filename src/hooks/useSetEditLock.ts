@@ -405,7 +405,7 @@ export function useSetEditLock(
     if (!setId || !user || lockStatus !== "locked_by_other") return;
     
     setIsRequestingTakeover(true);
-    setTakeoverCountdown(10); // 10 second countdown before force takeover
+    setTakeoverCountdown(FORCE_TAKEOVER_DELAY_MS / 1000); // countdown before force takeover
     
     console.log("[EditLock] Requesting takeover via edge function");
     
@@ -686,7 +686,7 @@ export function useSetEditLock(
     if (!isTakeoverRequested || lockStatus !== "locked_by_me") return;
     
     console.log("[EditLock] Takeover request detected, starting response countdown");
-    setTakeoverResponseCountdown(10);
+    setTakeoverResponseCountdown(TAKEOVER_RESPONSE_TIMEOUT_MS / 1000);
     
     // Start countdown
     responseCountdownIntervalRef.current = setInterval(() => {
