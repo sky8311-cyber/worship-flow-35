@@ -221,8 +221,11 @@ export default function SeedHistory() {
                           })}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="ml-3 text-xs">
-                        +{tx.seeds_earned} 🌱
+                      <Badge 
+                        variant="secondary" 
+                        className={`ml-3 text-xs ${tx.seeds_earned < 0 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : ''}`}
+                      >
+                        {tx.seeds_earned >= 0 ? '+' : ''}{tx.seeds_earned} 🌱
                       </Badge>
                     </div>
                   ))

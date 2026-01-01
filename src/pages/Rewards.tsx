@@ -107,10 +107,14 @@ const Rewards = () => {
     }
   });
 
-  const getReasonLabel = (code: string) => {
+  const getReasonLabel = (code: string, entry?: any) => {
     const rule = rules?.find(r => r.code === code);
     if (rule) {
       return language === 'ko' ? rule.description_ko : rule.description;
+    }
+    // Fallback: use meta description if available
+    if (entry?.meta?.description) {
+      return entry.meta.description;
     }
     return code.replace(/_/g, ' ');
   };
@@ -267,7 +271,7 @@ const Rewards = () => {
                           </div>
                           <div>
                             <p className="font-medium text-sm">
-                              {getReasonLabel(entry.reason_code)}
+                              {getReasonLabel(entry.reason_code, entry)}
                             </p>
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Clock className="w-3 h-3" />
