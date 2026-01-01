@@ -97,74 +97,123 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isCollaboratorInvite = notification.type === "collaborator_invited";
 
   return (
-    <div
-      onClick={handleClick}
-      className={`flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer transition-colors ${
-        !notification.is_read ? "bg-primary/5" : ""
-      }`}
-    >
-      {!notification.is_read && (
-        <div className="flex-shrink-0 w-2 h-2 bg-primary rounded-full mt-2" />
-      )}
-      {isBirthday ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Cake className="h-5 w-5 text-primary" />
+    <>
+      <div
+        onClick={handleClick}
+        className={`flex items-start gap-3 p-3 hover:bg-accent/50 cursor-pointer transition-colors ${
+          !notification.is_read ? "bg-primary/5" : ""
+        }`}
+      >
+        {!notification.is_read && (
+          <div className="flex-shrink-0 w-2 h-2 bg-primary rounded-full mt-2" />
+        )}
+        {isBirthday ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Cake className="h-5 w-5 text-primary" />
+          </div>
+        ) : isWorshipSet ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Music className="h-5 w-5 text-primary" />
+          </div>
+        ) : isCalendarEvent ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Calendar className="h-5 w-5 text-primary" />
+          </div>
+        ) : isNewSong ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Music className="h-5 w-5 text-primary" />
+          </div>
+        ) : isJoinRequest || isJoinApproved || isJoinRejected ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+        ) : isCollaboratorInvite ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+        ) : isRolePromotion ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+            <Crown className="h-5 w-5 text-white" />
+          </div>
+        ) : isNewWorshipLeaderApplication ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+            <Crown className="h-5 w-5 text-white" />
+          </div>
+        ) : isRoleDemotion ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
+            <ArrowDown className="h-5 w-5 text-muted-foreground" />
+          </div>
+        ) : isWorshipLeaderRejected ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-destructive/10 flex items-center justify-center">
+            <XCircle className="h-5 w-5 text-destructive" />
+          </div>
+        ) : isLevelUp ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+        ) : actorUserId ? (
+          <AvatarWithLevel
+            userId={actorUserId}
+            avatarUrl={actorAvatar}
+            fallback={displayName.charAt(0)}
+            size="md"
+            className="h-10 w-10 flex-shrink-0"
+          />
+        ) : (
+          <Avatar className="h-10 w-10 flex-shrink-0">
+            <AvatarImage src={actorAvatar} alt={displayName} />
+            <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
+          </Avatar>
+        )}
+        
+        <div className="flex-1 min-w-0">
+          {isBirthday ? (
+            <p className="text-sm">
+              <span className="font-semibold">{displayName}</span>{" "}
+              <span className="text-muted-foreground">
+                {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
+              </span>
+              {notification.metadata?.birth_date && (
+                <span className="text-muted-foreground"> ({formatBirthDate(notification.metadata.birth_date as string)})</span>
+              )}
+            </p>
+          ) : isNewSong ? (
+            <p className="text-sm">
+              {actorName ? (
+                <>
+                  <span className="font-semibold">{actorName}</span>
+                  <span className="text-muted-foreground"> added a new song</span>
+                  {notification.metadata?.song_title && (
+                    <span className="font-medium"> "{notification.metadata.song_title}"</span>
+                  )}
+                  {notification.metadata?.song_artist && (
+                    <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <span className="text-muted-foreground">New song added</span>
+                  {notification.metadata?.song_title && (
+                    <span className="font-medium"> "{notification.metadata.song_title}"</span>
+                  )}
+                  {notification.metadata?.song_artist && (
+                    <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
+                  )}
+                </>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm">
+              {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
+              <span className="text-muted-foreground">
+                {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
+              </span>
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
         </div>
-      ) : isWorshipSet ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Music className="h-5 w-5 text-primary" />
-        </div>
-      ) : isCalendarEvent ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Calendar className="h-5 w-5 text-primary" />
-        </div>
-      ) : isNewSong ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Music className="h-5 w-5 text-primary" />
-        </div>
-      ) : isJoinRequest || isJoinApproved || isJoinRejected ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Users className="h-5 w-5 text-primary" />
-        </div>
-      ) : isCollaboratorInvite ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-          <Users className="h-5 w-5 text-primary" />
-        </div>
-      ) : isRolePromotion ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
-          <Crown className="h-5 w-5 text-white" />
-        </div>
-      ) : isNewWorshipLeaderApplication ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-          <Crown className="h-5 w-5 text-white" />
-        </div>
-      ) : isRoleDemotion ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-muted flex items-center justify-center">
-          <ArrowDown className="h-5 w-5 text-muted-foreground" />
-        </div>
-      ) : isWorshipLeaderRejected ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-destructive/10 flex items-center justify-center">
-          <XCircle className="h-5 w-5 text-destructive" />
-        </div>
-      ) : isLevelUp ? (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center">
-          <Sparkles className="h-5 w-5 text-white" />
-        </div>
-      ) : actorUserId ? (
-        <AvatarWithLevel
-          userId={actorUserId}
-          avatarUrl={actorAvatar}
-          fallback={displayName.charAt(0)}
-          size="md"
-          className="h-10 w-10 flex-shrink-0"
-        />
-      ) : (
-        <Avatar className="h-10 w-10 flex-shrink-0">
-          <AvatarImage src={actorAvatar} alt={displayName} />
-          <AvatarFallback>{displayName.charAt(0)}</AvatarFallback>
-        </Avatar>
-      )}
-      
+      </div>
+
       {isLevelUp && notification.metadata && (
         <LevelUpDialog
           open={showLevelUpDialog}
@@ -174,52 +223,6 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
           emoji={notification.metadata.emoji as string}
         />
       )}
-      <div className="flex-1 min-w-0">
-        {isBirthday ? (
-          <p className="text-sm">
-            <span className="font-semibold">{displayName}</span>{" "}
-            <span className="text-muted-foreground">
-              {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
-            </span>
-            {notification.metadata?.birth_date && (
-              <span className="text-muted-foreground"> ({formatBirthDate(notification.metadata.birth_date as string)})</span>
-            )}
-          </p>
-        ) : isNewSong ? (
-          <p className="text-sm">
-            {actorName ? (
-              <>
-                <span className="font-semibold">{actorName}</span>
-                <span className="text-muted-foreground"> added a new song</span>
-                {notification.metadata?.song_title && (
-                  <span className="font-medium"> "{notification.metadata.song_title}"</span>
-                )}
-                {notification.metadata?.song_artist && (
-                  <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
-                )}
-              </>
-            ) : (
-              <>
-                <span className="text-muted-foreground">New song added</span>
-                {notification.metadata?.song_title && (
-                  <span className="font-medium"> "{notification.metadata.song_title}"</span>
-                )}
-                {notification.metadata?.song_artist && (
-                  <span className="text-muted-foreground"> by {notification.metadata.song_artist}</span>
-                )}
-              </>
-            )}
-          </p>
-        ) : (
-          <p className="text-sm">
-            {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
-            <span className="text-muted-foreground">
-              {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
-            </span>
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
-      </div>
-    </div>
+    </>
   );
 }
