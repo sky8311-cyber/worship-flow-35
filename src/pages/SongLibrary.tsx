@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe, UserRoundPen } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe, UserRoundPen, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
@@ -44,6 +44,7 @@ const SongLibrary = () => {
   const [searchParams] = useSearchParams();
   const filterMode = searchParams.get("filter");
   const showMySongsOnly = filterMode === "my-songs";
+  const showFavoritesOnly = filterMode === "favorites";
   const { isFeatureEnabled: isCrossCommunityFeatureEnabled, isInCrossCommunityMode, toggleMode: toggleCrossCommunityMode } = useCrossCommunityMode();
   
   // Remember scroll position
@@ -226,8 +227,15 @@ const SongLibrary = () => {
     staleTime: 30 * 1000, // 30 seconds - songs list can be cached briefly
   });
 
-  // Apply client-side column filters + key filter + tag filter + my songs filter
+  // Apply client-side column filters + key filter + tag filter + my songs filter + favorites filter
   const filteredSongs = (songs || []).filter(song => {
+    // Favorites filter - show only favorited songs
+    if (showFavoritesOnly && userFavorites) {
+      if (!userFavorites.has(song.id)) {
+        return false;
+      }
+    }
+    
     // My Songs filter - show only songs created by current user
     if (showMySongsOnly && user?.id) {
       if (song.created_by !== user.id) {
@@ -625,6 +633,22 @@ const SongLibrary = () => {
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                   {t("songLibrary.searchAndFilter")}
                 </CardTitle>
+                
+                {/* Favorites Filter Badge */}
+                {showFavoritesOnly && (
+                  <Badge variant="secondary" className="gap-1 pl-2">
+                    <Heart className="h-3 w-3" />
+                    {t("navigation.favorites")}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                      onClick={() => navigate("/songs")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
                 
                 {/* My Songs Filter Badge */}
                 {showMySongsOnly && (

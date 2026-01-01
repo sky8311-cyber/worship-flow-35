@@ -111,7 +111,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             </div>
             
             {/* Heart Icon - Always visible */}
-            <Button variant="ghost" size="icon" onClick={() => navigate("/favorites")}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=favorites")}>
               <Heart className="h-5 w-5" />
             </Button>
             
