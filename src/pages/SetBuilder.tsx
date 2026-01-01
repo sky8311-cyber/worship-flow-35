@@ -906,11 +906,17 @@ const SetBuilder = () => {
   // Helper function to check required fields for adding songs/components
   const getMissingRequiredFields = () => {
     const missing: string[] = [];
-    if (!formData.community_id) {
-      missing.push(language === "ko" ? "예배공동체" : "Worship Community");
+    if (!formData.date) {
+      missing.push(language === "ko" ? "날짜" : "Date");
     }
     if (!formData.service_time) {
-      missing.push(language === "ko" ? "예배 시간" : "Service Time");
+      missing.push(language === "ko" ? "시간" : "Service Time");
+    }
+    if (!formData.service_name?.trim()) {
+      missing.push(language === "ko" ? "예배 이름" : "Service Name");
+    }
+    if (!formData.community_id) {
+      missing.push(language === "ko" ? "예배공동체" : "Worship Community");
     }
     if (!formData.worship_leader?.trim()) {
       missing.push(language === "ko" ? "예배 인도자" : "Worship Leader");
@@ -919,7 +925,7 @@ const SetBuilder = () => {
   };
 
   const hasRequiredFields = () => {
-    return formData.community_id && formData.service_time && formData.worship_leader?.trim();
+    return formData.date && formData.service_time && formData.service_name?.trim() && formData.community_id && formData.worship_leader?.trim();
   };
 
   // Helper function to navigate to songs - requires required fields
@@ -1630,7 +1636,7 @@ const SetBuilder = () => {
               <CardContent className="space-y-3 sm:space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5 min-w-0">
-                    <Label htmlFor="date" className="text-sm">날짜 *</Label>
+                    <Label htmlFor="date" className="text-sm text-destructive">날짜 *</Label>
                     <Input
                       id="date"
                       type="date"
@@ -1643,7 +1649,7 @@ const SetBuilder = () => {
                   </div>
 
                   <div className="space-y-1.5 min-w-0">
-                    <Label htmlFor="service_time" className="text-sm">시간 *</Label>
+                    <Label htmlFor="service_time" className="text-sm text-destructive">시간 *</Label>
                     <Input
                       id="service_time"
                       type="time"
@@ -1657,7 +1663,7 @@ const SetBuilder = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="service_name">예배 이름 *</Label>
+                  <Label htmlFor="service_name" className="text-destructive">예배 이름 *</Label>
                   <Input
                     id="service_name"
                     value={formData.service_name}
@@ -1709,13 +1715,13 @@ const SetBuilder = () => {
                     </Alert>
                   )}
                   {/* Warning when required fields not filled - auto-save disabled */}
-                  {userCommunities && userCommunities.length > 0 && (!formData.community_id || !formData.service_time || !formData.worship_leader?.trim()) && (
+                  {userCommunities && userCommunities.length > 0 && (!formData.date || !formData.service_time || !formData.service_name?.trim() || !formData.community_id || !formData.worship_leader?.trim()) && (
                     <Alert className="mt-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
                       <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
                         {language === "ko" 
-                          ? "예배공동체, 예배 시간, 예배 인도자를 입력하면 자동 저장되고 곡/순서를 추가할 수 있습니다." 
-                          : "Fill in community, service time, and worship leader to enable auto-save and add songs/components."}
+                          ? "날짜, 시간, 예배 이름, 예배공동체, 예배 인도자를 모두 입력하면 자동 저장되고 곡/순서를 추가할 수 있습니다." 
+                          : "Fill in date, time, service name, community, and worship leader to enable auto-save and add songs/components."}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -1739,7 +1745,7 @@ const SetBuilder = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="worship_leader">예배 인도자 *</Label>
+                  <Label htmlFor="worship_leader" className="text-destructive">예배 인도자 *</Label>
                   <Input
                     id="worship_leader"
                     value={formData.worship_leader}
