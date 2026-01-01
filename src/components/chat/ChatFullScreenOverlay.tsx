@@ -29,7 +29,7 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[95vh] max-h-[95vh]">
+      <DrawerContent className="h-[85vh] max-h-[85vh]">
         <DrawerHeader className="border-b flex flex-row items-center justify-between py-3 px-4">
           <DrawerTitle className="text-lg font-semibold">
             {t("chat.communityFeed")}
