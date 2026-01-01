@@ -912,6 +912,270 @@ export type Database = {
           },
         ]
       }
+      rewards_abuse_flags: {
+        Row: {
+          created_at: string
+          description: string | null
+          flag_type: string
+          id: string
+          meta: Json | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          flag_type: string
+          id?: string
+          meta?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          flag_type?: string
+          id?: string
+          meta?: Json | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards_daily_user_totals: {
+        Row: {
+          date: string
+          total_earned: number
+          total_spent: number
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          total_earned?: number
+          total_spent?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          total_earned?: number
+          total_spent?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          direction: string
+          id: string
+          idempotency_key: string
+          meta: Json | null
+          reason_code: string
+          ref_id: string | null
+          ref_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          direction: string
+          id?: string
+          idempotency_key: string
+          meta?: Json | null
+          reason_code: string
+          ref_id?: string | null
+          ref_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          direction?: string
+          id?: string
+          idempotency_key?: string
+          meta?: Json | null
+          reason_code?: string
+          ref_id?: string | null
+          ref_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards_redemptions: {
+        Row: {
+          cost: number
+          created_at: string
+          id: string
+          item_code: string
+          meta: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          id?: string
+          item_code: string
+          meta?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          id?: string
+          item_code?: string
+          meta?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rewards_rules: {
+        Row: {
+          amount: number
+          code: string
+          cooldown_seconds: number
+          created_at: string
+          daily_cap_amount: number
+          description: string | null
+          description_ko: string | null
+          enabled: boolean
+          meta: Json | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          code: string
+          cooldown_seconds?: number
+          created_at?: string
+          daily_cap_amount?: number
+          description?: string | null
+          description_ko?: string | null
+          enabled?: boolean
+          meta?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          code?: string
+          cooldown_seconds?: number
+          created_at?: string
+          daily_cap_amount?: number
+          description?: string | null
+          description_ko?: string | null
+          enabled?: boolean
+          meta?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards_settings: {
+        Row: {
+          id: number
+          max_daily_earn_per_user: number
+          max_single_tx_amount: number
+          rewards_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          max_daily_earn_per_user?: number
+          max_single_tx_amount?: number
+          rewards_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          max_daily_earn_per_user?: number
+          max_single_tx_amount?: number
+          rewards_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards_store_items: {
+        Row: {
+          code: string
+          cost: number
+          created_at: string
+          description: string | null
+          description_ko: string | null
+          enabled: boolean
+          meta: Json | null
+          name: string
+          name_ko: string | null
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          cost: number
+          created_at?: string
+          description?: string | null
+          description_ko?: string | null
+          enabled?: boolean
+          meta?: Json | null
+          name: string
+          name_ko?: string | null
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          cost?: number
+          created_at?: string
+          description?: string | null
+          description_ko?: string | null
+          enabled?: boolean
+          meta?: Json | null
+          name?: string
+          name_ko?: string | null
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rewards_wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          lifetime_earned: number
+          lifetime_spent: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          lifetime_earned?: number
+          lifetime_spent?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          lifetime_earned?: number
+          lifetime_spent?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       seed_achievements: {
         Row: {
           achievement_type: Database["public"]["Enums"]["seed_activity_type"]
@@ -2330,6 +2594,24 @@ export type Database = {
           role: string
           status: string
         }[]
+      }
+      get_or_create_rewards_wallet: {
+        Args: { p_user_id: string }
+        Returns: {
+          balance: number
+          created_at: string
+          lifetime_earned: number
+          lifetime_spent: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rewards_wallets"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_public_set_components: {
         Args: { share_token: string }
