@@ -832,6 +832,7 @@ export const translations = {
     songLibrary: {
       title: "Song Library",
       subtitle: "Manage your worship songs",
+      mySongs: "My Songs",
       addSong: "Add Song",
       viewAllLibrary: "View All Library",
       recentlyAdded: "Recently Added",
@@ -2578,6 +2579,7 @@ export const translations = {
     songLibrary: {
       title: "곡 라이브러리",
       subtitle: "찬양곡 관리",
+      mySongs: "내가 추가한 곡",
       addSong: "곡 추가",
       viewAllLibrary: "전체 라이브러리 보기",
       recentlyAdded: "최근 추가",

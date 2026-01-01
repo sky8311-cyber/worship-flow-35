@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe, UserRoundPen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
@@ -39,8 +39,11 @@ interface EditingSetContext {
 
 const SongLibrary = () => {
   const { t } = useTranslation();
-  const { signOut, profile, isAdmin, isWorshipLeader } = useAuth();
+  const { signOut, profile, isAdmin, isWorshipLeader, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterMode = searchParams.get("filter");
+  const showMySongsOnly = filterMode === "my-songs";
   const { isFeatureEnabled: isCrossCommunityFeatureEnabled, isInCrossCommunityMode, toggleMode: toggleCrossCommunityMode } = useCrossCommunityMode();
   
   // Remember scroll position
@@ -223,8 +226,15 @@ const SongLibrary = () => {
     staleTime: 30 * 1000, // 30 seconds - songs list can be cached briefly
   });
 
-  // Apply client-side column filters + key filter + tag filter
+  // Apply client-side column filters + key filter + tag filter + my songs filter
   const filteredSongs = (songs || []).filter(song => {
+    // My Songs filter - show only songs created by current user
+    if (showMySongsOnly && user?.id) {
+      if (song.created_by !== user.id) {
+        return false;
+      }
+    }
+    
     // Key filter
     if (selectedKey !== "all" && song.default_key !== selectedKey) {
       return false;
@@ -610,10 +620,28 @@ const SongLibrary = () => {
             </div>
 
             <div className="flex flex-col gap-3 pr-24">
-              <CardTitle className="text-base md:text-lg flex items-center gap-2">
-                <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
-                {t("songLibrary.searchAndFilter")}
-              </CardTitle>
+              <div className="flex items-center gap-2 flex-wrap">
+                <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                  <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
+                  {t("songLibrary.searchAndFilter")}
+                </CardTitle>
+                
+                {/* My Songs Filter Badge */}
+                {showMySongsOnly && (
+                  <Badge variant="secondary" className="gap-1 pl-2">
+                    <UserRoundPen className="h-3 w-3" />
+                    {t("songLibrary.mySongs")}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                      onClick={() => navigate("/songs")}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                )}
+              </div>
               
               {/* Mobile only: Action Buttons */}
               <div className="flex sm:hidden items-center gap-2">
