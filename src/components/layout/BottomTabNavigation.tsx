@@ -69,12 +69,12 @@ export const BottomTabNavigation = () => {
   return (
     <>
       <nav 
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div className="grid grid-cols-5 h-16">
+        <div className="grid grid-cols-5 h-14">
           {navigationTabs.map((tab, index) => {
             const isActive = tab.match(location.pathname);
             const Icon = tab.icon;
@@ -87,22 +87,24 @@ export const BottomTabNavigation = () => {
                 <button
                   key={`${tab.to}-${index}`}
                   onClick={handleWorshipSetsClick}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  className="flex items-center justify-center py-1"
                 >
-                  <div className="relative">
-                    <Icon className="h-5 w-5" />
-                    {draftCount > 0 && (
-                      <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                        {draftCount > 9 ? "9+" : draftCount}
-                      </span>
-                    )}
+                  <div className={cn(
+                    "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}>
+                    <div className="relative">
+                      <Icon className="h-5 w-5" />
+                      {draftCount > 0 && (
+                        <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                          {draftCount > 9 ? "9+" : draftCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] font-medium">{t(tab.labelKey as TranslationPath)}</span>
                   </div>
-                  <span className="text-xs font-medium">{t(tab.labelKey as TranslationPath)}</span>
                 </button>
               );
             }
@@ -111,22 +113,24 @@ export const BottomTabNavigation = () => {
               <Link
                 key={`${tab.to}-${index}`}
                 to={tab.to}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-1 transition-colors",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                className="flex items-center justify-center py-1"
               >
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  {isSongsTab && cartCount > 0 && (
-                    <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                      {cartCount > 9 ? "9+" : cartCount}
-                    </span>
-                  )}
+                <div className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}>
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {isSongsTab && cartCount > 0 && (
+                      <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                        {cartCount > 9 ? "9+" : cartCount}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium">{t(tab.labelKey as TranslationPath)}</span>
                 </div>
-                <span className="text-xs font-medium">{t(tab.labelKey as TranslationPath)}</span>
               </Link>
             );
           })}
@@ -134,17 +138,19 @@ export const BottomTabNavigation = () => {
           {/* Chat tab (5th position) */}
           <button
             onClick={() => setChatOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 transition-colors text-muted-foreground hover:text-foreground relative"
+            className="flex items-center justify-center py-1"
           >
-            <div className="relative">
-              <chatTab.icon className="h-5 w-5" />
-              {chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
-                </span>
-              )}
+            <div className="flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all text-muted-foreground hover:text-foreground">
+              <div className="relative">
+                <chatTab.icon className="h-5 w-5" />
+                {chatUnreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                    {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-medium">{t(chatTab.labelKey as TranslationPath)}</span>
             </div>
-            <span className="text-xs font-medium">{t(chatTab.labelKey as TranslationPath)}</span>
           </button>
         </div>
       </nav>

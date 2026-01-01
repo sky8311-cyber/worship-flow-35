@@ -73,8 +73,8 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
 
   return (
     <>
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-border/50 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-3">
             {/* Left: Menu button + Logo (Mobile/Tablet) | Home Icon (Desktop) */}
             <div className="justify-self-start flex items-center gap-2">
