@@ -44,3 +44,12 @@ verify_jwt = true
 
 [functions.cancel-worship-leader-role]
 verify_jwt = true
+
+[functions.rewards-credit]
+verify_jwt = false
+
+[functions.rewards-debit]
+verify_jwt = true
+
+[functions.admin-rewards-adjust]
+verify_jwt = true
