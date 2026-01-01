@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, UserRoundPen } from "lucide-react";
+import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, CirclePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -117,7 +117,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             
             {/* My Songs Icon - Always visible */}
             <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
-              <UserRoundPen className="h-5 w-5" />
+              <CirclePlus className="h-5 w-5" />
             </Button>
             
             {/* Song Cart - Shows only when items in cart */}
