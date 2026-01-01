@@ -122,16 +122,15 @@ const Rewards = () => {
   return (
     <AppLayout>
       <div className="container mx-auto px-4 py-6 max-w-4xl">
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sprout className="w-6 h-6 text-primary" />
-            Seeds Rewards
+            K-Seed Rewards
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {language === 'ko' 
-              ? 'K-Worship 활동으로 씨앗을 모으고 보상을 받으세요'
-              : 'Earn seeds through your K-Worship activities and redeem rewards'}
+              ? 'K-Worship 활동으로 K-Seed를 모으고 보상을 받으세요'
+              : 'Earn K-Seeds through your K-Worship activities and redeem rewards'}
           </p>
         </div>
 
@@ -149,7 +148,7 @@ const Rewards = () => {
                   <span className="text-4xl font-bold text-primary">
                     {walletLoading ? '...' : (wallet?.balance || 0).toLocaleString()}
                   </span>
-                  <span className="text-lg text-muted-foreground">Seeds</span>
+                  <span className="text-lg text-muted-foreground">K-Seeds</span>
                 </div>
                 {wallet?.status === 'frozen' && (
                   <Badge variant="destructive" className="mt-2">
@@ -213,8 +212,8 @@ const Rewards = () => {
           <CardContent className="py-3 px-4">
             <p className="text-xs text-muted-foreground text-center">
               {language === 'ko' 
-                ? '💡 씨앗은 K-Worship 내부 로열티 포인트입니다. 현금 가치가 없으며 양도할 수 없습니다.'
-                : '💡 Seeds are K-Worship internal loyalty points. They have no cash value and are non-transferable.'}
+                ? '💡 K-Seed는 K-Worship 내부 로열티 포인트입니다. 현금 가치가 없으며 양도할 수 없습니다.'
+                : '💡 K-Seeds are K-Worship internal loyalty points. They have no cash value and are non-transferable.'}
             </p>
           </CardContent>
         </Card>
@@ -292,8 +291,8 @@ const Rewards = () => {
                     <p>{language === 'ko' ? '아직 거래 내역이 없습니다' : 'No transactions yet'}</p>
                     <p className="text-sm mt-1">
                       {language === 'ko' 
-                        ? 'K-Worship을 사용하여 씨앗을 모아보세요!'
-                        : 'Start using K-Worship to earn seeds!'}
+                        ? 'K-Worship을 사용하여 K-Seed를 모아보세요!'
+                        : 'Start using K-Worship to earn K-Seeds!'}
                     </p>
                   </div>
                 )}
@@ -306,7 +305,7 @@ const Rewards = () => {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg">
-                  {language === 'ko' ? '씨앗 획득 방법' : 'Ways to Earn Seeds'}
+                  {language === 'ko' ? 'K-Seed 획득 방법' : 'Ways to Earn K-Seeds'}
                 </CardTitle>
               </CardHeader>
               <CardContent>

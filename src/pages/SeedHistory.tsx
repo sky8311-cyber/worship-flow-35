@@ -157,7 +157,7 @@ export default function SeedHistory() {
                     {language === 'ko' ? seedData.levelInfo?.name_ko : seedData.levelInfo?.name_en}
                   </CardTitle>
                   <CardDescription>
-                    {t('seeds.totalSeeds')}: {seedData.totalSeeds}
+                    {t('seeds.totalSeeds')}: {seedData.totalSeeds} K-Seeds
                   </CardDescription>
                 </div>
               </div>

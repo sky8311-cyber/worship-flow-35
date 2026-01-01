@@ -85,7 +85,7 @@ export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
               {t('seeds.currentLevel')}: {displayData.currentLevel.name_ko}
             </p>
             <p className="text-xs text-muted-foreground">
-              {displayData.totalSeeds} {t('seeds.title')}
+              {displayData.totalSeeds} K-Seeds
             </p>
           </div>
         </div>

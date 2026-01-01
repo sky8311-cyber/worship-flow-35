@@ -259,7 +259,7 @@ const AdminRewards = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sprout className="w-6 h-6 text-primary" />
-            Seeds Rewards Admin
+            K-Seed Rewards Admin
           </h1>
         </div>
 
