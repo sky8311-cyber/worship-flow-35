@@ -107,10 +107,12 @@ const SetBuilder = () => {
   const [showEditRequestDialog, setShowEditRequestDialog] = useState(false);
 
   // Determine if we should auto-acquire lock
-  // Only auto-acquire for new sets OR if user is the creator
+  // Only auto-acquire for new sets OR if user is the creator OR if user was recently editing this set
   const isNewSet = !id;
   const isOwnerForLock = !!setCreatorInfo && setCreatorInfo.created_by === user?.id;
-  const shouldAutoAcquire = isNewSet || isOwnerForLock;
+  const currentEditingSetId = typeof window !== 'undefined' ? sessionStorage.getItem('currentEditingSetId') : null;
+  const wasRecentlyEditing = !!id && currentEditingSetId === id;
+  const shouldAutoAcquire = isNewSet || isOwnerForLock || wasRecentlyEditing;
 
   // Smart edit lock - replaces old presence-based system
   const { 
@@ -168,6 +170,27 @@ const SetBuilder = () => {
   useEffect(() => {
     console.log("[SetBuilder] EditLock state - lockStatus:", lockStatus, "isEditMode:", isEditMode, "lockHolder:", lockHolder, "isReadOnlyMode:", isReadOnlyMode);
   }, [lockStatus, isEditMode, lockHolder, isReadOnlyMode]);
+
+  // Auto-restore edit mode when returning from song library
+  useEffect(() => {
+    if (id && !isEditMode && lockStatus !== 'locked_by_other' && !isAcquiring) {
+      const wasEditing = sessionStorage.getItem(`wasEditing:${id}`);
+      if (wasEditing === 'true') {
+        console.log("[SetBuilder] Auto-restoring edit mode for set:", id);
+        acquireLock().then((acquired) => {
+          if (acquired) {
+            sessionStorage.removeItem(`wasEditing:${id}`);
+            // Also clear the currentEditingSetId as we've successfully restored
+            const currentId = sessionStorage.getItem('currentEditingSetId');
+            if (currentId === id) {
+              sessionStorage.removeItem('currentEditingSetId');
+              sessionStorage.removeItem('currentEditingSetName');
+            }
+          }
+        });
+      }
+    }
+  }, [id, isEditMode, lockStatus, isAcquiring, acquireLock]);
 
   // Prevent redirect glitches by only running permission checks once per set id
   const permissionCheckedForIdRef = useRef<string | undefined>(undefined);
@@ -881,7 +904,7 @@ const SetBuilder = () => {
   });
 
   // Helper function to navigate to songs - requires community selection first
-  const handleNavigateToSongs = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleNavigateToSongs = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -900,11 +923,25 @@ const SetBuilder = () => {
       return;
     }
     
+    // Force save if there are unsaved changes before navigating
+    if (autoSaveHasChanges) {
+      try {
+        await forceSave();
+      } catch (err) {
+        console.error("Failed to save before navigating:", err);
+        // Still proceed with navigation even if save fails
+      }
+    }
+    
     // Use id or newSetId for session storage
     const effectiveSetId = id || newSetId;
     if (effectiveSetId) {
       sessionStorage.setItem('currentEditingSetId', effectiveSetId);
       sessionStorage.setItem('currentEditingSetName', formData.service_name || '워십세트');
+      // Mark that user was in edit mode for this set
+      if (isEditMode) {
+        sessionStorage.setItem(`wasEditing:${effectiveSetId}`, 'true');
+      }
     }
     navigate('/songs');
   };
@@ -1616,6 +1653,17 @@ const SetBuilder = () => {
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription className="text-sm">
                         {t("setBuilder.noCommunityWarning")}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {/* Warning when community not selected - auto-save disabled */}
+                  {userCommunities && userCommunities.length > 0 && !formData.community_id && (
+                    <Alert className="mt-2 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+                        {language === "ko" 
+                          ? "예배공동체를 선택하면 워십세트가 자동 저장됩니다." 
+                          : "Select a worship community to enable auto-save."}
                       </AlertDescription>
                     </Alert>
                   )}
