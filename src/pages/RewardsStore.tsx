@@ -165,12 +165,12 @@ const RewardsStore = () => {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <ShoppingBag className="w-6 h-6 text-primary" />
-                {language === 'ko' ? '보상 스토어' : 'Rewards Store'}
+                {language === 'ko' ? 'K-Seed 스토어' : 'K-Seed Store'}
               </h1>
               <p className="text-muted-foreground text-sm mt-1">
                 {language === 'ko' 
-                  ? '씨앗으로 특별한 보상을 교환하세요'
-                  : 'Redeem your seeds for special rewards'}
+                  ? 'K-Seed로 특별한 보상을 교환하세요'
+                  : 'Redeem your K-Seeds for special rewards'}
               </p>
             </div>
             
@@ -288,8 +288,8 @@ const RewardsStore = () => {
               </DialogTitle>
               <DialogDescription>
                 {language === 'ko' 
-                  ? `${selectedItem?.name_ko || selectedItem?.name}을(를) ${selectedItem?.cost} 씨앗으로 교환하시겠습니까?`
-                  : `Redeem ${selectedItem?.name} for ${selectedItem?.cost} seeds?`}
+                  ? `${selectedItem?.name_ko || selectedItem?.name}을(를) ${selectedItem?.cost} K-Seed로 교환하시겠습니까?`
+                  : `Redeem ${selectedItem?.name} for ${selectedItem?.cost} K-Seeds?`}
               </DialogDescription>
             </DialogHeader>
             

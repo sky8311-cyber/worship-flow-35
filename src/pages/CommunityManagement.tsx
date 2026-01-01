@@ -50,6 +50,7 @@ export default function CommunityManagement() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<{
@@ -76,6 +77,7 @@ export default function CommunityManagement() {
       if (error) throw error;
       setName(data.name);
       setDescription(data.description || "");
+      setAvatarUrl(data.avatar_url || null);
       return data;
     },
   });
@@ -1387,9 +1389,12 @@ export default function CommunityManagement() {
                       <CommunityAvatarUpload
                         communityId={id!}
                         communityName={community?.name || ""}
-                        currentUrl={community?.avatar_url}
+                        currentUrl={avatarUrl}
                         onUploadSuccess={(url) => {
+                          setAvatarUrl(url);
                           queryClient.invalidateQueries({ queryKey: ["community", id] });
+                          queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+                          queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
                         }}
                       />
                     </CardContent>
