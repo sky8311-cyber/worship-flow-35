@@ -16,6 +16,7 @@ import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Loc
 import { RoleBadge } from "@/components/RoleBadge";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { CommunityRecurringCalendarTab } from "@/components/community/CommunityRecurringCalendarTab";
+import { CommunityAvatarUpload } from "@/components/community/CommunityAvatarUpload";
 import { UpgradePlanDialog } from "@/components/church/UpgradePlanDialog";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { ProfileDialog } from "@/components/dashboard/ProfileDialog";
@@ -1376,6 +1377,23 @@ export default function CommunityManagement() {
               {/* Settings Tab - Only for managers */}
               {canManage && (
                 <TabsContent value="settings" className="space-y-6">
+                  {/* Community Avatar */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{language === "ko" ? "커뮤니티 프로필 사진" : "Community Profile Photo"}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CommunityAvatarUpload
+                        communityId={id!}
+                        communityName={community?.name || ""}
+                        currentUrl={community?.avatar_url}
+                        onUploadSuccess={(url) => {
+                          queryClient.invalidateQueries({ queryKey: ["community", id] });
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+
                   <Card>
                     <CardHeader>
                       <CardTitle>{t("community.editCommunity")}</CardTitle>

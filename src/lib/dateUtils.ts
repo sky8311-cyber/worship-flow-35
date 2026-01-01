@@ -1,5 +1,14 @@
 // Timezone utilities for user-specific date/time formatting
 
+/**
+ * Parse a date string (YYYY-MM-DD) as a local date without UTC conversion.
+ * This prevents timezone offset issues where dates appear as the previous day.
+ */
+export function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export const COMMON_TIMEZONES = [
   { value: 'Asia/Seoul', label: '서울 (UTC+9)', labelEn: 'Seoul (UTC+9)' },
   { value: 'Asia/Tokyo', label: '도쿄 (UTC+9)', labelEn: 'Tokyo (UTC+9)' },

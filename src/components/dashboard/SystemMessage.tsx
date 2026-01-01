@@ -1,8 +1,7 @@
 import { Calendar, Music, Cake } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from "@/components/ui/badge";
+import { parseLocalDate } from "@/lib/dateUtils";
 
 interface SystemMessageProps {
   type: "worship_set" | "calendar_event" | "birthday";
@@ -13,12 +12,6 @@ interface SystemMessageProps {
 
 export function SystemMessage({ type, data, community, createdAt }: SystemMessageProps) {
   const { t, language } = useTranslation();
-
-  // Parse date string as local date to avoid timezone issues
-  const parseLocalDate = (dateString: string) => {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
 
   if (type === "worship_set") {
     const dateText = parseLocalDate(data.date).toLocaleDateString(
