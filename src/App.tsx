@@ -30,6 +30,8 @@ const ChurchAccount = lazy(() => import("./pages/ChurchAccount"));
 const TemplateManager = lazy(() => import("./pages/TemplateManager"));
 // FavoritesList removed - now uses /songs?filter=favorites
 const SeedHistory = lazy(() => import("./pages/SeedHistory"));
+const Rewards = lazy(() => import("./pages/Rewards"));
+const RewardsStore = lazy(() => import("./pages/RewardsStore"));
 const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
@@ -41,6 +43,7 @@ const AdminCommunities = lazy(() => import("./pages/AdminCommunities"));
 const AdminChurchAccounts = lazy(() => import("./pages/AdminChurchAccounts"));
 const AdminWorshipLeaderApplications = lazy(() => import("./pages/AdminWorshipLeaderApplications"));
 const AdminCRM = lazy(() => import("./pages/AdminCRM"));
+const AdminRewards = lazy(() => import("./pages/AdminRewards"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -119,6 +122,8 @@ const App = () => {
               <Route path="/request-worship-leader" element={<ProtectedRoute><RequestWorshipLeader /></ProtectedRoute>} />
               <Route path="/templates" element={<ProtectedRoute><TemplateManager /></ProtectedRoute>} />
               <Route path="/seeds" element={<ProtectedRoute><SeedHistory /></ProtectedRoute>} />
+              <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+              <Route path="/rewards/store" element={<ProtectedRoute><RewardsStore /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />
@@ -137,6 +142,7 @@ const App = () => {
               <Route path="/admin/church-accounts" element={<AdminRoute><AdminChurchAccounts /></AdminRoute>} />
               <Route path="/admin/applications" element={<AdminRoute><AdminWorshipLeaderApplications /></AdminRoute>} />
               <Route path="/admin/crm" element={<AdminRoute><AdminCRM /></AdminRoute>} />
+              <Route path="/admin/rewards" element={<AdminRoute><AdminRewards /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

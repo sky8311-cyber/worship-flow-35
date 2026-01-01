@@ -70,7 +70,7 @@ export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
     if (onNavigate) {
       onNavigate();
     }
-    navigate('/seeds');
+    navigate('/rewards');
   };
 
   if (!user?.id) return null;
