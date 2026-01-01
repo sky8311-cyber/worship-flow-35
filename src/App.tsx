@@ -28,7 +28,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Help = lazy(() => import("./pages/Help"));
 const ChurchAccount = lazy(() => import("./pages/ChurchAccount"));
 const TemplateManager = lazy(() => import("./pages/TemplateManager"));
-const FavoritesList = lazy(() => import("./pages/FavoritesList"));
+// FavoritesList removed - now uses /songs?filter=favorites
 const SeedHistory = lazy(() => import("./pages/SeedHistory"));
 const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -112,7 +112,7 @@ const App = () => {
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/songs" element={<ProtectedRoute><SongLibrary /></ProtectedRoute>} />
-              <Route path="/favorites" element={<ProtectedRoute><FavoritesList /></ProtectedRoute>} />
+              <Route path="/favorites" element={<Navigate to="/songs?filter=favorites" replace />} />
               <Route path="/worship-sets" element={<ProtectedRoute><WorshipSets /></ProtectedRoute>} />
               <Route path="/set-builder" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
               <Route path="/set-builder/:id" element={<ProtectedRoute><SetBuilder /></ProtectedRoute>} />
