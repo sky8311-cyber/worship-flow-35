@@ -884,11 +884,24 @@ const SetBuilder = () => {
       
       // Delay invalidation to ensure DB transaction completes
       setTimeout(() => {
+        // SetBuilder 관련 캐시
         queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
         queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
         queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
         queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
         queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+        
+        // BandView 관련 캐시
+        queryClient.invalidateQueries({ queryKey: ["band-view", setId] });
+        queryClient.invalidateQueries({ queryKey: ["band-view-songs", setId] });
+        queryClient.invalidateQueries({ queryKey: ["band-view-components", setId] });
+        queryClient.invalidateQueries({ queryKey: ["band-view-song-scores", setId] });
+        queryClient.invalidateQueries({ queryKey: ["band-view-youtube-links", setId] });
+        
+        // 대시보드 위젯 캐시
+        queryClient.invalidateQueries({ queryKey: ["dashboard-set-songs"] });
+        queryClient.invalidateQueries({ queryKey: ["set-songs-preview"] });
+        queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       }, 100);
       
       if (!id) {
