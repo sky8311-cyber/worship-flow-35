@@ -158,9 +158,11 @@ const Dashboard = () => {
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
   };
-  // Use shared community data
-  const { data: communitiesData } = useUserCommunities();
+  // Use shared community data with loading state tracking
+  const { data: communitiesData, isLoading: communitiesLoading, isFetched: communitiesFetched } = useUserCommunities();
   const communityIds = communitiesData?.communityIds || [];
+  // Only consider communities "ready" when data has been fetched (not just loading)
+  const communitiesReady = communitiesFetched && !communitiesLoading;
 
   // Fetch collaborated set IDs
   const { data: collaboratedSetIds = [] } = useQuery({
@@ -560,7 +562,8 @@ const Dashboard = () => {
                   isWorshipLeader={isWorshipLeader || false}
                   isAdmin={isAdmin || false}
                   isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
-                  hasCommunities={communityIds.length > 0}
+                  hasCommunities={communitiesReady ? communityIds.length > 0 : null}
+                  communitiesLoading={communitiesLoading}
                   userName={profile?.full_name || undefined}
                   userStats={userStats}
                 />
@@ -729,7 +732,8 @@ const Dashboard = () => {
                 isWorshipLeader={isWorshipLeader || false}
                 isAdmin={isAdmin || false}
                 isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
-                hasCommunities={communityIds.length > 0}
+                hasCommunities={communitiesReady ? communityIds.length > 0 : null}
+                communitiesLoading={communitiesLoading}
                 userName={profile?.full_name || undefined}
                 userStats={userStats}
               />
