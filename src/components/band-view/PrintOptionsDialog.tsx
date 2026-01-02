@@ -66,62 +66,101 @@ export function PrintOptionsDialog({
     setFields((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handlePrint = () => {
-    const html = generatePrintHtml();
-    if (!html) return; // full mode returns empty and triggers window.print()
+  const waitForImages = (doc: Document, callback: () => void) => {
+    const images = doc.querySelectorAll("img");
+    let loadedCount = 0;
+    const totalImages = images.length;
 
-    // Use iframe for mobile compatibility (avoids popup blocking)
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "absolute";
-    iframe.style.top = "-10000px";
-    iframe.style.left = "-10000px";
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(html);
-      doc.close();
-
-      // Wait for images to load before printing
-      const images = doc.querySelectorAll("img");
-      let loadedCount = 0;
-      const totalImages = images.length;
-
-      const triggerPrint = () => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-        setTimeout(() => {
-          if (document.body.contains(iframe)) {
-            document.body.removeChild(iframe);
-          }
-        }, 1000);
-      };
-
-      if (totalImages === 0) {
-        triggerPrint();
-      } else {
-        images.forEach((img) => {
-          if (img.complete) {
-            loadedCount++;
-            if (loadedCount === totalImages) triggerPrint();
-          } else {
-            img.onload = () => {
-              loadedCount++;
-              if (loadedCount === totalImages) triggerPrint();
-            };
-            img.onerror = () => {
-              loadedCount++;
-              if (loadedCount === totalImages) triggerPrint();
-            };
-          }
-        });
-      }
+    if (totalImages === 0) {
+      callback();
+      return;
     }
 
+    const checkComplete = () => {
+      loadedCount++;
+      if (loadedCount === totalImages) callback();
+    };
+
+    images.forEach((img) => {
+      if (img.complete) {
+        checkComplete();
+      } else {
+        img.onload = checkComplete;
+        img.onerror = checkComplete;
+      }
+    });
+
+    // 5 second timeout fallback
+    setTimeout(() => {
+      if (loadedCount < totalImages) callback();
+    }, 5000);
+  };
+
+  const handlePrint = () => {
+    const html = generatePrintHtml();
+    if (!html) return;
+
+    // Close dialog first
     onOpenChange(false);
+
+    // Detect iOS/Safari/Mobile
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Delay to allow dialog to fully close
+    setTimeout(() => {
+      if (isIOS || (isMobile && isSafari)) {
+        // iOS/Safari: Use Blob URL in new tab
+        const blob = new Blob([html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const printWindow = window.open(url, "_blank");
+
+        if (printWindow) {
+          printWindow.onload = () => {
+            setTimeout(() => {
+              printWindow.focus();
+              printWindow.print();
+              URL.revokeObjectURL(url);
+            }, 500);
+          };
+        } else {
+          // Popup blocked: fallback to replace page content
+          const originalContent = document.body.innerHTML;
+          document.body.innerHTML = html;
+          window.print();
+          document.body.innerHTML = originalContent;
+          window.location.reload();
+        }
+      } else {
+        // Desktop/Android: Use iframe method
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "none";
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc) {
+          doc.open();
+          doc.write(html);
+          doc.close();
+
+          waitForImages(doc, () => {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+            setTimeout(() => {
+              if (document.body.contains(iframe)) {
+                document.body.removeChild(iframe);
+              }
+            }, 1000);
+          });
+        }
+      }
+    }, 300);
   };
 
   const generatePrintHtml = () => {
