@@ -328,6 +328,26 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         isNewSong = true;
         toast.success(t("songDialog.songAdded"));
         
+        // Credit K-Seed reward for adding a new song (fire-and-forget)
+        if (user?.id) {
+          import("@/lib/rewardsHelper").then(({ creditSongAddedReward, creditSongMetadataCompleteReward, isSongMetadataComplete }) => {
+            creditSongAddedReward(user.id, newSong.id, newSong.title);
+            
+            // Check if metadata is complete for bonus reward
+            if (isSongMetadataComplete({
+              title: newSong.title,
+              default_key: newSong.default_key,
+              lyrics: newSong.lyrics,
+              youtube_url: youtubeLinks[0]?.url || newSong.youtube_url,
+              category: newSong.category,
+              language: newSong.language,
+              score_file_url: scoreVariations[0]?.files[0]?.url || newSong.score_file_url,
+            })) {
+              creditSongMetadataCompleteReward(user.id, newSong.id, newSong.title);
+            }
+          });
+        }
+        
         // Store the newly created song for the "Add to Set" prompt
         setNewlyCreatedSong({
           id: newSong.id,

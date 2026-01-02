@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
+import { creditFirstCommunityPostReward, creditCommunityPosts10MilestoneReward } from "@/lib/rewardsHelper";
 
 export function PostComposer() {
   const { user, profile } = useAuth();
@@ -26,19 +27,41 @@ export function PostComposer() {
 
   const postMutation = useMutation({
     mutationFn: async () => {
+      const communityId = selectedCommunity || communities?.[0]?.id;
       const { error } = await supabase.from("community_posts").insert({
-        community_id: selectedCommunity || communities?.[0]?.id,
+        community_id: communityId,
         author_id: user!.id,
         content: content.trim(),
         image_urls: uploadedImages.length > 0 ? uploadedImages : null
       });
       if (error) throw error;
+      return communityId;
     },
-    onSuccess: () => {
+    onSuccess: async (communityId) => {
       toast.success(t("socialFeed.postSuccess"));
       setContent("");
       setUploadedImages([]);
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      
+      // Credit K-Seed rewards (fire-and-forget)
+      if (user?.id && communityId) {
+        // Check post count for this community to determine milestone
+        const { count } = await supabase
+          .from("community_posts")
+          .select("id", { count: "exact", head: true })
+          .eq("community_id", communityId)
+          .eq("author_id", user.id);
+        
+        const postCount = count || 0;
+        
+        if (postCount === 1) {
+          // First post in this community
+          creditFirstCommunityPostReward(user.id, communityId);
+        } else if (postCount === 10) {
+          // 10th post milestone
+          creditCommunityPosts10MilestoneReward(user.id, communityId);
+        }
+      }
     },
     onError: () => {
       toast.error(t("common.error"));

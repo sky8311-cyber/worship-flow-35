@@ -254,19 +254,27 @@ export default function WorshipSets() {
   });
   
   const togglePublishMutation = useMutation({
-    mutationFn: async ({ id, currentStatus }: { id: string; currentStatus: string }) => {
+    mutationFn: async ({ id, currentStatus, serviceName }: { id: string; currentStatus: string; serviceName?: string }) => {
       const newStatus = currentStatus === "draft" ? "published" : "draft";
       const { error } = await supabase
         .from("service_sets")
         .update({ status: newStatus })
         .eq("id", id);
       if (error) throw error;
+      return { id, newStatus, serviceName };
     },
-    onSuccess: () => {
+    onSuccess: ({ id: setId, newStatus, serviceName }) => {
       queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
       toast.success(t("worshipSets.statusChanged"));
+      
+      // Credit K-Seed reward when publishing (fire-and-forget)
+      if (newStatus === "published" && user?.id) {
+        import("@/lib/rewardsHelper").then(({ creditSetPublishedReward }) => {
+          creditSetPublishedReward(user.id, setId, serviceName);
+        });
+      }
     },
   });
   
@@ -276,8 +284,8 @@ export default function WorshipSets() {
     }
   };
   
-  const handleTogglePublish = (id: string, currentStatus: string) => {
-    togglePublishMutation.mutate({ id, currentStatus });
+  const handleTogglePublish = (id: string, currentStatus: string, serviceName?: string) => {
+    togglePublishMutation.mutate({ id, currentStatus, serviceName });
   };
   
   const handleShare = (set: any) => {
