@@ -847,6 +847,90 @@ const SetBuilder = () => {
         if (dbIdUpdates.length > 0) {
           handleDbIdsUpdated(dbIdUpdates);
         }
+
+        // === DB Cleanup: Sync DB with current UI state ===
+        // 1. Collect IDs that should remain in DB
+        const keepSongDbIds = currentItems
+          .filter(item => item.type === "song" && item.dbId)
+          .map(item => item.dbId as string);
+        
+        // Include newly inserted song dbIds
+        dbIdUpdates
+          .filter(u => u.localId.startsWith("song-"))
+          .forEach(u => keepSongDbIds.push(u.dbId));
+        
+        const keepComponentDbIds = currentItems
+          .filter(item => item.type === "component" && item.dbId)
+          .map(item => item.dbId as string);
+        
+        // Include newly inserted component dbIds
+        dbIdUpdates
+          .filter(u => u.localId.startsWith("component-"))
+          .forEach(u => keepComponentDbIds.push(u.dbId));
+
+        // 2. Delete orphaned rows (items removed from UI but still in DB)
+        if (keepSongDbIds.length > 0) {
+          const { error: deleteSongsError } = await supabase
+            .from("set_songs")
+            .delete()
+            .eq("service_set_id", setId)
+            .not("id", "in", `(${keepSongDbIds.join(",")})`);
+          
+          if (deleteSongsError) {
+            console.error("[SetBuilder] Failed to cleanup orphaned songs:", deleteSongsError);
+          }
+        } else {
+          // If no songs to keep, delete all songs for this set
+          const { error: deleteAllSongsError } = await supabase
+            .from("set_songs")
+            .delete()
+            .eq("service_set_id", setId);
+          
+          if (deleteAllSongsError) {
+            console.error("[SetBuilder] Failed to delete all songs:", deleteAllSongsError);
+          }
+        }
+
+        if (keepComponentDbIds.length > 0) {
+          const { error: deleteComponentsError } = await supabase
+            .from("set_components")
+            .delete()
+            .eq("service_set_id", setId)
+            .not("id", "in", `(${keepComponentDbIds.join(",")})`);
+          
+          if (deleteComponentsError) {
+            console.error("[SetBuilder] Failed to cleanup orphaned components:", deleteComponentsError);
+          }
+        } else {
+          // If no components to keep, delete all components for this set
+          const { error: deleteAllComponentsError } = await supabase
+            .from("set_components")
+            .delete()
+            .eq("service_set_id", setId);
+          
+          if (deleteAllComponentsError) {
+            console.error("[SetBuilder] Failed to delete all components:", deleteAllComponentsError);
+          }
+        }
+
+        // 3. Re-confirm positions to eliminate duplicates/gaps
+        const allSongDbIds = [...keepSongDbIds];
+        const allComponentDbIds = [...keepComponentDbIds];
+        
+        // Update positions based on current UI order
+        for (let i = 0; i < currentItems.length; i++) {
+          const item = currentItems[i];
+          const position = i + 1;
+          const dbId = item.dbId || dbIdUpdates.find(u => u.localId === item.id)?.dbId;
+          
+          if (!dbId) continue;
+          
+          if (item.type === "song" && allSongDbIds.includes(dbId)) {
+            await supabase.from("set_songs").update({ position }).eq("id", dbId);
+          } else if (item.type === "component" && allComponentDbIds.includes(dbId)) {
+            await supabase.from("set_components").update({ position }).eq("id", dbId);
+          }
+        }
       }
 
       return setId;
@@ -890,6 +974,9 @@ const SetBuilder = () => {
         queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
         queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
         queryClient.invalidateQueries({ queryKey: ["worship-sets"] });
+        
+        // 워십세트 목록 캐시 (WorshipSets.tsx에서 사용)
+        queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
         
         // BandView 관련 캐시
         queryClient.invalidateQueries({ queryKey: ["band-view", setId] });

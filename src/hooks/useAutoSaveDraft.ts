@@ -428,16 +428,24 @@ export async function upsertSongsAndComponents(
   // Deletion only happens via explicit user action (handleRemoveItem)
   // This prevents race conditions, ghost adds, and history explosion
 
-  // Update existing songs
+  // Update existing songs with error checking
   for (const song of songsToUpdate) {
     const { id, ...updateData } = song;
-    await supabase.from("set_songs").update(updateData).eq("id", id);
+    const { error } = await supabase.from("set_songs").update(updateData).eq("id", id);
+    if (error) {
+      console.error("[upsertSongsAndComponents] Failed to update song:", id, error);
+      throw new Error(`Failed to update song: ${error.message}`);
+    }
   }
   
-  // Insert new songs and collect dbIds
+  // Insert new songs and collect dbIds with error checking
   if (songsToInsert.length > 0) {
     const insertData = songsToInsert.map(s => s.data);
-    const { data } = await supabase.from("set_songs").insert(insertData).select("id");
+    const { data, error } = await supabase.from("set_songs").insert(insertData).select("id");
+    if (error) {
+      console.error("[upsertSongsAndComponents] Failed to insert songs:", error);
+      throw new Error(`Failed to insert songs: ${error.message}`);
+    }
     if (data) {
       data.forEach((row, idx) => {
         localChangeIdsRef?.current.add(row.id);
@@ -450,16 +458,24 @@ export async function upsertSongsAndComponents(
     }
   }
 
-  // Update existing components
+  // Update existing components with error checking
   for (const comp of componentsToUpdate) {
     const { id, ...updateData } = comp;
-    await supabase.from("set_components").update(updateData).eq("id", id);
+    const { error } = await supabase.from("set_components").update(updateData).eq("id", id);
+    if (error) {
+      console.error("[upsertSongsAndComponents] Failed to update component:", id, error);
+      throw new Error(`Failed to update component: ${error.message}`);
+    }
   }
   
-  // Insert new components and collect dbIds
+  // Insert new components and collect dbIds with error checking
   if (componentsToInsert.length > 0) {
     const insertData = componentsToInsert.map(c => c.data);
-    const { data } = await supabase.from("set_components").insert(insertData).select("id");
+    const { data, error } = await supabase.from("set_components").insert(insertData).select("id");
+    if (error) {
+      console.error("[upsertSongsAndComponents] Failed to insert components:", error);
+      throw new Error(`Failed to insert components: ${error.message}`);
+    }
     if (data) {
       data.forEach((row, idx) => {
         localChangeIdsRef?.current.add(row.id);
