@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SongCartProvider } from "@/contexts/SongCartContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 
 // Critical path - keep synchronous for fast initial load
 import Landing from "./pages/Landing";
@@ -53,11 +54,7 @@ const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
 const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
 
 // Page loader component for Suspense fallback
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
-);
+const PageLoader = () => <FullScreenLoader />;
 
 const queryClient = new QueryClient({
   defaultOptions: {

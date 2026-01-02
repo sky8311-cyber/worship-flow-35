@@ -183,22 +183,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
-      
+
       const newUserId = session?.user?.id ?? null;
       const prevUserId = prevUserIdRef.current;
-      
-      // Clear React Query cache when user changes (prevents showing previous user's data)
-      if (prevUserId && newUserId && prevUserId !== newUserId) {
-        queryClient.clear();
+
+      // When switching accounts (or signing out), immediately gate the UI to avoid any flash
+      if (prevUserId !== newUserId) {
+        setLoading(true);
+        setProfileLoaded(false);
+        setProfile(null);
+        setRoles([]);
+        setIsCommunityLeaderInAnyCommunity(false);
+        setIsCommunityOwnerInAnyCommunity(false);
+
+        // Clear React Query cache when user changes or signs out (prevents showing previous user's data)
+        if (prevUserId) {
+          queryClient.clear();
+        }
       }
+
       prevUserIdRef.current = newUserId;
-      
+
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
         // Show timezone toast on SIGNED_IN event (login)
-        const showToast = event === 'SIGNED_IN';
+        const showToast = event === "SIGNED_IN";
         // Use setTimeout to avoid potential deadlock
         setTimeout(() => {
           fetchProfile(session.user.id, showToast);
@@ -210,6 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsCommunityOwnerInAnyCommunity(false);
         setProfileLoaded(false);
       }
+
       setLoading(false);
     });
 
@@ -271,10 +283,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Immediately gate UI + clear local user data to prevent any flash of previous user's dashboard
+    setLoading(true);
+    setProfileLoaded(false);
+    setProfile(null);
+    setRoles([]);
+    setIsCommunityLeaderInAnyCommunity(false);
+    setIsCommunityOwnerInAnyCommunity(false);
+
     // Clear React Query cache before sign in to prevent stale data from previous user
     queryClient.clear();
-    setProfileLoaded(false);
-    
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
