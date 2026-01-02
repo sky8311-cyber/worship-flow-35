@@ -112,7 +112,7 @@ const SetBuilder = () => {
   const isOwnerForLock = !!setCreatorInfo && setCreatorInfo.created_by === user?.id;
   const currentEditingSetId = typeof window !== 'undefined' ? sessionStorage.getItem('currentEditingSetId') : null;
   const wasRecentlyEditing = !!id && currentEditingSetId === id;
-  const shouldAutoAcquire = isNewSet || isOwnerForLock || wasRecentlyEditing;
+  const shouldAutoAcquire = isNewSet || isOwnerForLock || wasRecentlyEditing || isAdmin;
 
   // Smart edit lock - replaces old presence-based system
   const { 
