@@ -67,15 +67,60 @@ export function PrintOptionsDialog({
   };
 
   const handlePrint = () => {
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
     const html = generatePrintHtml();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+    if (!html) return; // full mode returns empty and triggers window.print()
+
+    // Use iframe for mobile compatibility (avoids popup blocking)
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.top = "-10000px";
+    iframe.style.left = "-10000px";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // Wait for images to load before printing
+      const images = doc.querySelectorAll("img");
+      let loadedCount = 0;
+      const totalImages = images.length;
+
+      const triggerPrint = () => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      };
+
+      if (totalImages === 0) {
+        triggerPrint();
+      } else {
+        images.forEach((img) => {
+          if (img.complete) {
+            loadedCount++;
+            if (loadedCount === totalImages) triggerPrint();
+          } else {
+            img.onload = () => {
+              loadedCount++;
+              if (loadedCount === totalImages) triggerPrint();
+            };
+            img.onerror = () => {
+              loadedCount++;
+              if (loadedCount === totalImages) triggerPrint();
+            };
+          }
+        });
+      }
+    }
+
     onOpenChange(false);
   };
 
@@ -204,10 +249,62 @@ export function PrintOptionsDialog({
           }).join("")}
         </div>
       `;
-    } else {
-      // Full mode - use browser print
-      window.print();
-      return "";
+    } else if (printMode === "full") {
+      // Full mode - one page per song with all info + score
+      content = setSongs.map((setSong, index) => {
+        const song = setSong.songs;
+        const selectedKey = setSong.key || song?.default_key || "";
+        
+        // Get score URL
+        const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
+        let scoreUrl = "";
+        
+        const keyScores = songScores
+          .filter((score) => score.key === selectedKey)
+          .sort((a, b) => (a.page_number || 1) - (b.page_number || 1));
+        
+        if (keyScores.length > 0) {
+          scoreUrl = keyScores[0].file_url;
+        } else if (songScores.length > 0) {
+          scoreUrl = songScores[0].file_url;
+        } else {
+          scoreUrl = setSong.override_score_file_url || song?.score_file_url || "";
+        }
+
+        return `
+          <div class="full-page">
+            <div class="song-header">
+              <div class="position-badge">${index + 1}</div>
+              <div class="song-info">
+                <h2>${song?.title || ""}</h2>
+                ${song?.artist ? `<p class="artist">${song.artist}</p>` : ""}
+                <div class="meta">
+                  ${setSong.key ? `<span class="key">${language === "ko" ? "키" : "Key"}: ${setSong.key}</span>` : ""}
+                  ${setSong.bpm ? `<span class="bpm">BPM: ${setSong.bpm}</span>` : ""}
+                  ${setSong.time_signature ? `<span class="time">${setSong.time_signature}</span>` : ""}
+                </div>
+              </div>
+            </div>
+            
+            ${setSong.custom_notes ? `
+              <div class="notes-section">
+                <strong>${language === "ko" ? "곡 진행 / 부가 설명" : "Performance Notes"}:</strong>
+                <p>${setSong.custom_notes}</p>
+              </div>
+            ` : ""}
+            
+            ${scoreUrl ? `
+              <div class="score-section">
+                <img src="${scoreUrl}" alt="${song?.title || "Score"}" />
+              </div>
+            ` : `
+              <div class="no-score">
+                <p>${language === "ko" ? "악보 없음" : "No score available"}</p>
+              </div>
+            `}
+          </div>
+        `;
+      }).join("");
     }
 
     return `
@@ -241,19 +338,128 @@ export function PrintOptionsDialog({
               height: 100%;
               object-fit: contain;
             }
+            
+            /* Full page mode styles */
+            .full-page {
+              page-break-after: always;
+              height: 100vh;
+              width: 100%;
+              padding: 24px;
+              display: flex;
+              flex-direction: column;
+              box-sizing: border-box;
+            }
+            .full-page:last-child {
+              page-break-after: avoid;
+            }
+            .song-header {
+              display: flex;
+              align-items: flex-start;
+              gap: 16px;
+              margin-bottom: 16px;
+              flex-shrink: 0;
+            }
+            .position-badge {
+              width: 48px;
+              height: 48px;
+              background: linear-gradient(135deg, #2b4b8a, #d16265);
+              border-radius: 12px;
+              color: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 24px;
+              font-weight: bold;
+              flex-shrink: 0;
+            }
+            .song-info h2 {
+              margin: 0 0 4px 0;
+              font-size: 22px;
+              font-weight: 600;
+            }
+            .song-info .artist {
+              margin: 0;
+              color: #666;
+              font-size: 14px;
+            }
+            .song-info .meta {
+              margin-top: 8px;
+              display: flex;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .song-info .meta span {
+              padding: 2px 10px;
+              border-radius: 4px;
+              font-size: 12px;
+            }
+            .song-info .key {
+              background: #2b4b8a;
+              color: white;
+            }
+            .song-info .bpm, .song-info .time {
+              background: #e5e7eb;
+              color: #374151;
+            }
+            .notes-section {
+              background: #fef3c7;
+              padding: 12px 16px;
+              border-radius: 8px;
+              margin-bottom: 16px;
+              flex-shrink: 0;
+              border-left: 4px solid #f59e0b;
+            }
+            .notes-section strong {
+              display: block;
+              margin-bottom: 4px;
+              font-size: 13px;
+              color: #92400e;
+            }
+            .notes-section p {
+              margin: 0;
+              font-size: 14px;
+              white-space: pre-wrap;
+            }
+            .score-section {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              min-height: 0;
+            }
+            .score-section img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+            .no-score {
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #9ca3af;
+              font-size: 16px;
+            }
+            
             @media print {
               @page { margin: 0; size: auto; }
-              body { margin: 0; padding: 0; background: black; }
+              body { margin: 0; padding: 0; }
               .score-page { 
                 page-break-inside: avoid;
                 height: 100vh !important;
                 width: 100vw !important;
+                background: black;
               }
               .score-page:last-child { page-break-after: avoid; }
               .score-page img {
                 width: 100% !important;
                 height: 100% !important;
                 object-fit: contain !important;
+              }
+              .full-page {
+                page-break-inside: avoid;
+                height: 100vh !important;
               }
             }
           </style>
