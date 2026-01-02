@@ -3,12 +3,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown, XCircle } from "lucide-react";
+import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown, XCircle, MessageCircle, FileText } from "lucide-react";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useState, useEffect } from "react";
 import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
 import { useTranslation } from "@/hooks/useTranslation";
-
 interface NotificationItemProps {
   notification: Notification;
   onRead: (id: string) => void;
@@ -25,6 +24,8 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isRoleDemotion = notification.type === "demoted_to_member";
   const isNewWorshipLeaderApplication = notification.type === "new_worship_leader_application";
   const isWorshipLeaderRejected = notification.type === "worship_leader_rejected";
+  const isPostComment = notification.type === "post_comment";
+  const isNewFeedbackPost = notification.type === "new_feedback_post";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -53,6 +54,12 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
 
     // Navigate to related content
     if (notification.related_type === "post" && notification.related_id) {
+      navigate("/dashboard");
+    } else if (notification.related_type === "community_post" && notification.related_id) {
+      // For post comments on community posts
+      navigate("/dashboard");
+    } else if (notification.related_type === "feedback_post" && notification.related_id) {
+      // For post comments on feedback posts OR new feedback posts
       navigate("/dashboard");
     } else if (notification.related_type === "community" && notification.related_id) {
       navigate(`/community/${notification.related_id}`);
@@ -122,6 +129,14 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         ) : isNewSong ? (
           <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
             <Music className="h-5 w-5 text-primary" />
+          </div>
+        ) : isPostComment ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-500/10 flex items-center justify-center">
+            <MessageCircle className="h-5 w-5 text-blue-500" />
+          </div>
+        ) : isNewFeedbackPost ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-amber-500" />
           </div>
         ) : isJoinRequest || isJoinApproved || isJoinRejected ? (
           <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">

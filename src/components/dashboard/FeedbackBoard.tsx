@@ -19,6 +19,7 @@ import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { LikeButton } from "./LikeButton";
 import { CommentsSection } from "./CommentsSection";
 import { ImageGrid } from "./ImageGrid";
+import { CommentButton } from "./CommentButton";
 
 const POST_TYPES = [
   { value: "general", labelEn: "General", labelKo: "일반", icon: MessageSquare, color: "bg-muted text-muted-foreground" },
@@ -445,13 +446,12 @@ export function FeedbackBoard() {
               <CardFooter className="flex-col items-stretch">
                 <div className="flex items-center gap-4 pb-3 border-b">
                   <LikeButton postId={post.id} postType="feedback_post" />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleComments(post.id)}
-                  >
-                    {t("socialFeed.comment")}
-                  </Button>
+                  <CommentButton
+                    postId={post.id}
+                    postType="feedback_post"
+                    isExpanded={expandedComments.has(post.id)}
+                    onToggle={() => toggleComments(post.id)}
+                  />
                 </div>
 
                 {expandedComments.has(post.id) && (
