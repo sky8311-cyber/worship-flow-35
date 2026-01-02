@@ -13,7 +13,8 @@ interface DashboardFeedTabsProps {
   isWorshipLeader: boolean;
   isAdmin: boolean;
   isCommunityLeader: boolean;
-  hasCommunities: boolean;
+  hasCommunities: boolean | null; // null = still loading
+  communitiesLoading?: boolean;
   userName?: string;
   userStats?: {
     sets: number;
@@ -27,6 +28,7 @@ export function DashboardFeedTabs({
   isAdmin,
   isCommunityLeader,
   hasCommunities,
+  communitiesLoading,
   userName,
   userStats,
 }: DashboardFeedTabsProps) {
@@ -59,23 +61,22 @@ export function DashboardFeedTabs({
   // Determine which tabs to show
   const showFeedbackTab = isWorshipLeader || isAdmin || isCommunityLeader;
   const showCommunityTab = true; // Always show, but content depends on hasCommunities
-  const showWelcomeTab = (!isWorshipLeader && !hasCommunities) || isAdmin; // Hide for worship leaders, show for new users without communities OR admins
+  // Only show Welcome tab if communities are confirmed to be empty (not during loading)
+  const showWelcomeTab = (!isWorshipLeader && hasCommunities === false) || isAdmin;
 
-  // Default tab: feedback for leaders, community for regular users with communities, welcome for new users
+  // Default tab: feedback for leaders, community for regular users (with or loading), welcome only when confirmed no communities
   const defaultTab = (() => {
     if (isWorshipLeader || isAdmin || isCommunityLeader) return "feedback";
-    if (hasCommunities) return "community";
+    // During loading (hasCommunities === null), default to community (will show loading UI)
+    if (hasCommunities !== false) return "community";
     return "welcome";
   })();
   const [activeTab, setActiveTab] = useState(defaultTab);
 
-  // Sync activeTab when role data loads asynchronously
+  // Sync activeTab when role/community data loads asynchronously
   useEffect(() => {
-    const correctTab = (() => {
-      if (isWorshipLeader || isAdmin || isCommunityLeader) return "feedback";
-      if (hasCommunities) return "community";
-      return "welcome";
-    })();
+    // Don't switch tabs while communities are still loading
+    if (hasCommunities === null) return;
     
     // Update tab if leader should see feedback but isn't on it
     if ((isWorshipLeader || isAdmin || isCommunityLeader) && activeTab !== "feedback") {
