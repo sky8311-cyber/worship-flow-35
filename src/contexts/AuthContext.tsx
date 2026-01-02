@@ -91,6 +91,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // GUARD: If epoch changed or userId no longer matches, discard this stale result
     if (authEpochRef.current !== startEpoch || prevUserIdRef.current !== userId) {
       console.log("[AuthContext] Discarding stale fetchProfile result for", userId);
+      // If no current user (signed out), ensure loading is set to false
+      if (!prevUserIdRef.current) {
+        setLoading(false);
+        setProfileLoaded(false);
+      }
       return;
     }
 
@@ -122,6 +127,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Re-check epoch after timezone update (another async operation)
     if (authEpochRef.current !== startEpoch || prevUserIdRef.current !== userId) {
       console.log("[AuthContext] Discarding stale fetchProfile result (post-timezone) for", userId);
+      // If no current user (signed out), ensure loading is set to false
+      if (!prevUserIdRef.current) {
+        setLoading(false);
+        setProfileLoaded(false);
+      }
       return;
     }
 
@@ -188,7 +198,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       const startEpoch = authEpochRef.current;
       const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted || authEpochRef.current !== startEpoch) return;
+      if (!mounted || authEpochRef.current !== startEpoch) {
+        // Even on early return, ensure loading is set to false to prevent infinite loading
+        if (mounted) setLoading(false);
+        return;
+      }
 
       prevUserIdRef.current = session?.user?.id ?? null;
       setSession(session);
