@@ -69,10 +69,20 @@ export default function AcceptInvitation() {
       const { error: inviteError } = await supabase
         .rpc("accept_invitation", { invitation_uuid: invitationId });
       if (inviteError) throw inviteError;
+      
+      return invitation.invited_by; // Return inviter ID for reward
     },
-    onSuccess: () => {
+    onSuccess: (inviterId) => {
       setAccepted(true);
       toast({ title: t("community.joinSuccess") });
+      
+      // Credit K-Seed reward to the inviter (fire-and-forget)
+      if (inviterId) {
+        import("@/lib/rewardsHelper").then(({ creditInviterReward }) => {
+          creditInviterReward(inviterId, user?.email || undefined);
+        });
+      }
+      
       setTimeout(() => navigate("/dashboard"), 2000);
     },
     onError: () => {

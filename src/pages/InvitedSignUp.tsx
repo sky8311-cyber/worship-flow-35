@@ -172,6 +172,13 @@ const InvitedSignUp = () => {
       console.log('Welcome email failed, but signup succeeded:', emailError);
     }
     
+    // Credit K-Seed reward to the inviter (fire-and-forget)
+    if (invitation?.invited_by) {
+      import("@/lib/rewardsHelper").then(({ creditInviterReward }) => {
+        creditInviterReward(invitation.invited_by, formData.fullName);
+      });
+    }
+    
     toast({
       title: t("invitedSignUp.success"),
       description: t("invitedSignUp.welcomeToCommunity", { communityName: invitation?.community?.name }),

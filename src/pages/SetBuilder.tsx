@@ -940,8 +940,24 @@ const SetBuilder = () => {
     },
     onSuccess: (setId, publishStatus) => {
       const currentForm = formDataRef.current;
+      const isNewSet = !id;
 
       toast.success(t("setBuilder.successSave"));
+      
+      // Credit K-Seed rewards (fire-and-forget)
+      if (user?.id) {
+        import("@/lib/rewardsHelper").then(({ creditSetCreatedReward, creditSetPublishedReward }) => {
+          // Credit set_created reward for new sets
+          if (isNewSet && setId) {
+            creditSetCreatedReward(user.id, setId, currentForm.service_name);
+          }
+          
+          // Credit set_published reward when publishing
+          if (publishStatus === "published" && setId) {
+            creditSetPublishedReward(user.id, setId, currentForm.service_name);
+          }
+        });
+      }
       
       // Optimistically update React Query cache with current form values
       queryClient.setQueryData(["service-set", setId], (prev: any) => ({
@@ -991,7 +1007,7 @@ const SetBuilder = () => {
         queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       }, 100);
       
-      if (!id) {
+      if (isNewSet) {
         navigate(`/set-builder/${setId}`);
       }
     },
