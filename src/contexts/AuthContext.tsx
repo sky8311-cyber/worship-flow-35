@@ -27,6 +27,7 @@ interface AuthContextType {
   profile: Profile | null;
   roles: string[];
   loading: boolean;
+  isFullyLoaded: boolean;
   signUp: (email: string, password: string, fullName: string, phone?: string, birthDate?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isCommunityLeaderInAnyCommunity, setIsCommunityLeaderInAnyCommunity] = useState(false);
   const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const syncInProgress = useRef(false);
   const prevUserIdRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
@@ -113,6 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     setIsCommunityLeaderInAnyCommunity(hasLeaderRole);
     setIsCommunityOwnerInAnyCommunity(hasOwnerRole);
+    setProfileLoaded(true);
   };
 
   // Sync worship leader role from approved application
@@ -205,6 +208,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRoles([]);
         setIsCommunityLeaderInAnyCommunity(false);
         setIsCommunityOwnerInAnyCommunity(false);
+        setProfileLoaded(false);
       }
       setLoading(false);
     });
@@ -267,6 +271,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Clear React Query cache before sign in to prevent stale data from previous user
+    queryClient.clear();
+    setProfileLoaded(false);
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -293,6 +301,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRoles([]);
     setIsCommunityLeaderInAnyCommunity(false);
     setIsCommunityOwnerInAnyCommunity(false);
+    setProfileLoaded(false);
     prevUserIdRef.current = null;
     
     // Force clear localStorage to ensure no stale tokens remain
@@ -316,6 +325,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const hasRole = (role: string) => roles.includes(role);
   const isAdmin = hasRole("admin");
   const isWorshipLeader = hasRole("worship_leader");
+  const isFullyLoaded = !loading && !!user && profileLoaded;
 
   const isCommunityLeader = async (communityId: string): Promise<boolean> => {
     if (!user) return false;
@@ -370,6 +380,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         profile,
         roles,
         loading,
+        isFullyLoaded,
         signUp,
         signIn,
         signOut,

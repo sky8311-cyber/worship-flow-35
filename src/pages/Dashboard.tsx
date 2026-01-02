@@ -182,7 +182,7 @@ const Dashboard = () => {
   const { data: upcomingSets, isLoading } = useQuery({
     queryKey: ["upcoming-sets", user?.id, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, communityIds, collaboratedSetIds],
     queryFn: async () => {
-      if (!user || communityIds.length === 0) return [];
+      if (!user || !profile || communityIds.length === 0) return [];
       
       // Use local date to keep sets visible until end of day (not UTC which hides early)
       const now = new Date();
@@ -225,7 +225,7 @@ const Dashboard = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && communityIds.length > 0,
+    enabled: !!user && !!profile && communityIds.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -322,7 +322,7 @@ const Dashboard = () => {
   } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async () => {
-      if (!user) return {
+      if (!user || !profile) return {
         sets: 0,
         communities: 0,
         songs: 0
@@ -365,7 +365,7 @@ const Dashboard = () => {
         songs: songsData?.length || 0
       };
     },
-    enabled: !!user
+    enabled: !!user && !!profile
   });
   return <AppLayout>
       {/* Worship Leader Profile Completion Dialog */}
