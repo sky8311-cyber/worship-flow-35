@@ -43,8 +43,8 @@ const Login = () => {
       toast.success(t("auth.loginSuccess"));
       // Clear stored redirect URL
       sessionStorage.removeItem("redirectAfterLogin");
-      // Navigate to redirect URL if present, otherwise dashboard
-      navigate(redirectUrl || "/");
+      // Navigate directly to dashboard (or redirect URL) to avoid extra route churn through Landing
+      navigate(redirectUrl || "/dashboard");
     }
     setLoading(false);
   };

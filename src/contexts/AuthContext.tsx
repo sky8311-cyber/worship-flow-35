@@ -58,9 +58,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const syncInProgress = useRef(false);
   const prevUserIdRef = useRef<string | null>(null);
+  // Auth epoch: increments on every user switch / signIn / signOut to invalidate stale async results
+  const authEpochRef = useRef(0);
   const queryClient = useQueryClient();
 
+  /**
+   * Fetches profile/roles for a given userId.
+   * Only applies the result if the epoch hasn't changed since the call started.
+   * This prevents stale async responses from overwriting a newer session's state.
+   */
   const fetchProfile = async (userId: string, showTimezoneToast: boolean = false) => {
+    const startEpoch = authEpochRef.current;
+
     // Execute all queries in parallel for faster login
     const [profileResult, rolesResult, communityRolesResult] = await Promise.all([
       supabase
@@ -78,6 +87,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .eq("user_id", userId)
         .in("role", ["community_leader", "owner"])
     ]);
+
+    // GUARD: If epoch changed or userId no longer matches, discard this stale result
+    if (authEpochRef.current !== startEpoch || prevUserIdRef.current !== userId) {
+      console.log("[AuthContext] Discarding stale fetchProfile result for", userId);
+      return;
+    }
 
     const profileData = profileResult.data;
     const rolesData = rolesResult.data;
@@ -104,6 +119,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
+    // Re-check epoch after timezone update (another async operation)
+    if (authEpochRef.current !== startEpoch || prevUserIdRef.current !== userId) {
+      console.log("[AuthContext] Discarding stale fetchProfile result (post-timezone) for", userId);
+      return;
+    }
+
     if (profileData) setProfile(profileData);
     if (rolesData) setRoles(rolesData.map((r: any) => r.role));
     
@@ -116,6 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsCommunityLeaderInAnyCommunity(hasLeaderRole);
     setIsCommunityOwnerInAnyCommunity(hasOwnerRole);
     setProfileLoaded(true);
+    setLoading(false);
   };
 
   // Sync worship leader role from approved application
@@ -164,17 +186,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let mounted = true;
 
     const initAuth = async () => {
+      const startEpoch = authEpochRef.current;
       const { data: { session } } = await supabase.auth.getSession();
-      if (!mounted) return;
-      
+      if (!mounted || authEpochRef.current !== startEpoch) return;
+
+      prevUserIdRef.current = session?.user?.id ?? null;
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
         await fetchProfile(session.user.id);
+      } else {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     initAuth();
@@ -187,8 +211,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newUserId = session?.user?.id ?? null;
       const prevUserId = prevUserIdRef.current;
 
-      // When switching accounts (or signing out), immediately gate the UI to avoid any flash
+      // When switching accounts (or signing out), immediately gate the UI and bump epoch
       if (prevUserId !== newUserId) {
+        authEpochRef.current += 1;
         setLoading(true);
         setProfileLoaded(false);
         setProfile(null);
@@ -196,46 +221,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsCommunityLeaderInAnyCommunity(false);
         setIsCommunityOwnerInAnyCommunity(false);
 
-        // Clear React Query cache when user changes or signs out (prevents showing previous user's data)
+        // Clear React Query cache when user changes or signs out
         if (prevUserId) {
           queryClient.clear();
         }
       }
 
       prevUserIdRef.current = newUserId;
-
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
         // Show timezone toast on SIGNED_IN event (login)
         const showToast = event === "SIGNED_IN";
-        // Use setTimeout to avoid potential deadlock
+        // Use setTimeout to avoid potential deadlock; fetchProfile will set loading=false
         setTimeout(() => {
           fetchProfile(session.user.id, showToast);
         }, 0);
       } else {
+        // Signed out
         setProfile(null);
         setRoles([]);
         setIsCommunityLeaderInAnyCommunity(false);
         setIsCommunityOwnerInAnyCommunity(false);
         setProfileLoaded(false);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     // Keep session alive when tab becomes visible again
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
+        const startEpoch = authEpochRef.current;
         try {
           const { data: { session: currentSession } } = await supabase.auth.getSession();
-          if (currentSession && mounted) {
+          // Only proceed if epoch hasn't changed and user is same
+          if (currentSession && mounted && authEpochRef.current === startEpoch && prevUserIdRef.current === currentSession.user.id) {
             setSession(currentSession);
             setUser(currentSession.user);
-            // Re-fetch profile to catch any role changes made while away
             await fetchProfile(currentSession.user.id);
-            // Also try to sync worship leader role (in case it was approved while away)
             await syncWorshipLeaderRole();
           }
         } catch (err) {
@@ -283,6 +307,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Bump epoch to invalidate any in-flight async work from previous session
+    authEpochRef.current += 1;
     // Immediately gate UI + clear local user data to prevent any flash of previous user's dashboard
     setLoading(true);
     setProfileLoaded(false);
@@ -302,18 +328,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      // Even if server signOut fails (e.g., session already expired),
-      // we still want to clear local state
-      console.warn("Server signOut failed, clearing local state:", error);
-    }
-    
-    // Clear React Query cache to prevent showing previous user's data on next login
-    queryClient.clear();
-    
-    // Always clear ALL local auth state regardless of server response
+    // Bump epoch FIRST to invalidate any in-flight async profile/role fetches
+    authEpochRef.current += 1;
+    // Immediately gate the UI
+    setLoading(true);
+    // Clear ALL local auth state synchronously BEFORE the network call
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -322,9 +341,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsCommunityOwnerInAnyCommunity(false);
     setProfileLoaded(false);
     prevUserIdRef.current = null;
+
+    // Clear React Query cache to prevent showing previous user's data on next login
+    queryClient.clear();
+
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Even if server signOut fails (e.g., session already expired), local state is already cleared
+      console.warn("Server signOut failed, local state already cleared:", error);
+    }
     
     // Force clear localStorage to ensure no stale tokens remain
     localStorage.removeItem(`sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`);
+    setLoading(false);
   };
 
   const resetPassword = async (email: string) => {
