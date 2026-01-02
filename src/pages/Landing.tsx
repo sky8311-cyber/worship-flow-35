@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingIntro } from "@/components/landing/LandingIntro";
@@ -22,11 +23,7 @@ const Landing = () => {
   }, [user, loading, navigate]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">Loading...</div>
-      </div>
-    );
+    return <FullScreenLoader label="Loading…" />;
   }
 
   return (
