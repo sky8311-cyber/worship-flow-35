@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export function WLOnboardingChecklist() {
   const navigate = useNavigate();
-  const { user, isWorshipLeader } = useAuth();
+  const { user, isWorshipLeader, profile } = useAuth();
   const { t } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
@@ -31,7 +31,7 @@ export function WLOnboardingChecklist() {
       if (error) throw error;
       return (data?.length || 0) > 0;
     },
-    enabled: !!user && isWorshipLeader,
+    enabled: !!user && !!profile && isWorshipLeader,
     staleTime: 60 * 1000,
   });
 
@@ -48,12 +48,12 @@ export function WLOnboardingChecklist() {
       if (error) throw error;
       return (data?.length || 0) > 0;
     },
-    enabled: !!user && isWorshipLeader,
+    enabled: !!user && !!profile && isWorshipLeader,
     staleTime: 60 * 1000,
   });
 
-  // Don't show if not worship leader, dismissed, or already completed all steps
-  if (!isWorshipLeader || dismissed || (hasCommunity && hasSet)) {
+  // Don't show if profile not loaded, not worship leader, dismissed, or already completed all steps
+  if (!profile || !isWorshipLeader || dismissed || (hasCommunity && hasSet)) {
     return null;
   }
 

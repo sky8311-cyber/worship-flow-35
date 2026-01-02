@@ -72,18 +72,22 @@ const queryClient = new QueryClient({
 
 // ProtectedRoute component - must be used inside AuthProvider
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isFullyLoaded } = useAuth();
   
+  // Wait for initial auth check
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">Loading...</div>
-      </div>
-    );
+    return <PageLoader />;
   }
   
+  // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Wait for profile and roles to be fully loaded before showing protected content
+  // This prevents showing stale data from previous user
+  if (!isFullyLoaded) {
+    return <PageLoader />;
   }
   
   return <>{children}</>;
