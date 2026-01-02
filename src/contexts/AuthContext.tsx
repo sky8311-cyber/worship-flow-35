@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Profile {
   id: string;
@@ -54,6 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
   const syncInProgress = useRef(false);
+  const prevUserIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
   const fetchProfile = async (userId: string, showTimezoneToast: boolean = false) => {
     // Execute all queries in parallel for faster login
@@ -178,6 +181,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return;
       
+      const newUserId = session?.user?.id ?? null;
+      const prevUserId = prevUserIdRef.current;
+      
+      // Clear React Query cache when user changes (prevents showing previous user's data)
+      if (prevUserId && newUserId && prevUserId !== newUserId) {
+        queryClient.clear();
+      }
+      prevUserIdRef.current = newUserId;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -191,6 +203,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null);
         setRoles([]);
+        setIsCommunityLeaderInAnyCommunity(false);
+        setIsCommunityOwnerInAnyCommunity(false);
       }
       setLoading(false);
     });
@@ -269,6 +283,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn("Server signOut failed, clearing local state:", error);
     }
     
+    // Clear React Query cache to prevent showing previous user's data on next login
+    queryClient.clear();
+    
     // Always clear ALL local auth state regardless of server response
     setUser(null);
     setSession(null);
@@ -276,6 +293,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRoles([]);
     setIsCommunityLeaderInAnyCommunity(false);
     setIsCommunityOwnerInAnyCommunity(false);
+    prevUserIdRef.current = null;
     
     // Force clear localStorage to ensure no stale tokens remain
     localStorage.removeItem(`sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`);
