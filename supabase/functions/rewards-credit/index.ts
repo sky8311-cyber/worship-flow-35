@@ -23,6 +23,13 @@ interface CreditResponse {
   skip_reason?: string;
 }
 
+// Milestone-based reward codes that should only be awarded once per ref_id
+const MILESTONE_REWARD_CODES = [
+  'first_community_post',
+  'community_posts_10_milestone',
+  'song_metadata_complete'
+];
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -46,6 +53,8 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`Processing credit request: user=${user_id}, reason=${reason_code}, ref_id=${ref_id}`);
 
     // 1. Check if rewards system is enabled
     const { data: settings, error: settingsError } = await supabase
@@ -120,7 +129,30 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 4. Check cooldown (if applicable)
+    // 4. Check milestone-based rewards (one-time per ref_id)
+    if (MILESTONE_REWARD_CODES.includes(reason_code) && ref_id) {
+      const { data: existingMilestone } = await supabase
+        .from('rewards_milestones')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('milestone_code', reason_code)
+        .eq('ref_id', ref_id)
+        .single();
+
+      if (existingMilestone) {
+        console.log(`Milestone already achieved: user=${user_id}, code=${reason_code}, ref=${ref_id}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            skipped: true, 
+            skip_reason: `Milestone already achieved for this ${ref_type}` 
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // 5. Check cooldown (if applicable)
     if (rule.cooldown_seconds > 0 && ref_id) {
       const cooldownDate = new Date(Date.now() - rule.cooldown_seconds * 1000).toISOString();
       
@@ -146,7 +178,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5. Check daily caps
+    // 6. Check daily caps
     const today = new Date().toISOString().split('T')[0];
     
     // Get today's totals
@@ -195,7 +227,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 6. Check idempotency - if already exists, return the existing entry
+    // 7. Check idempotency - if already exists, return the existing entry
     const { data: existingEntry } = await supabase
       .from('rewards_ledger')
       .select('id')
@@ -216,7 +248,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 7. Execute the credit transaction
+    // 8. Record milestone if applicable
+    if (MILESTONE_REWARD_CODES.includes(reason_code) && ref_id) {
+      const { error: milestoneError } = await supabase
+        .from('rewards_milestones')
+        .insert({
+          user_id,
+          milestone_code: reason_code,
+          ref_id
+        });
+
+      if (milestoneError) {
+        console.error('Failed to record milestone:', milestoneError);
+        // If it's a unique violation, the milestone was already recorded
+        if (milestoneError.code === '23505') {
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              skipped: true, 
+              skip_reason: `Milestone already achieved (concurrent request)` 
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        // For other errors, continue but log
+      } else {
+        console.log(`Milestone recorded: user=${user_id}, code=${reason_code}, ref=${ref_id}`);
+      }
+    }
+
+    // 9. Execute the credit transaction
     // Insert ledger entry
     const { data: ledgerEntry, error: ledgerError } = await supabase
       .from('rewards_ledger')
@@ -280,7 +341,7 @@ Deno.serve(async (req) => {
       // Non-critical, continue
     }
 
-    // 8. Velocity detection - check for abuse
+    // 10. Velocity detection - check for abuse
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     const { data: recentCredits } = await supabase
       .from('rewards_ledger')
@@ -291,15 +352,15 @@ Deno.serve(async (req) => {
 
     const recentTotal = recentCredits?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
-    if (recentTotal > 200) {
-      // Flag for potential abuse
+    if (recentTotal > 500) {
+      // Flag for potential abuse (increased threshold due to higher rewards)
       await supabase
         .from('rewards_abuse_flags')
         .insert({
           user_id,
           flag_type: 'velocity_exceeded',
           description: `Earned ${recentTotal} seeds in 10 minutes`,
-          meta: { threshold: 200, actual: recentTotal, last_reason_code: reason_code }
+          meta: { threshold: 500, actual: recentTotal, last_reason_code: reason_code }
         });
 
       console.warn(`Velocity flag created for user ${user_id}: ${recentTotal} seeds in 10 min`);
