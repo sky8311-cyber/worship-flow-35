@@ -17,7 +17,7 @@ export interface Notification {
 }
 
 // Chat-related notification types
-const CHAT_NOTIFICATION_TYPES = ['post_like', 'post_comment', 'new_member', 'invitation_accepted', 'birthday', 'collaborator_invited', 'promoted_to_owner', 'promoted_to_community_leader', 'promoted_to_worship_leader', 'demoted_to_member'];
+const CHAT_NOTIFICATION_TYPES = ['post_like', 'post_comment', 'new_member', 'invitation_accepted', 'birthday', 'collaborator_invited', 'promoted_to_owner', 'promoted_to_community_leader', 'promoted_to_worship_leader', 'demoted_to_member', 'new_feedback_post', 'new_community_post'];
 
 export function useNotifications() {
   const { user, isAdmin, isWorshipLeader } = useAuth();

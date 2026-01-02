@@ -657,6 +657,33 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comment_reads: {
+        Row: {
+          created_at: string
+          id: string
+          last_read_at: string
+          post_id: string
+          post_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          post_id: string
+          post_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_read_at?: string
+          post_id?: string
+          post_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           author_id: string | null

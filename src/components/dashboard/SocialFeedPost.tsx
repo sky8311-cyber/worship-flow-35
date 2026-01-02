@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { MoreHorizontal, Calendar, Music } from "lucide-react";
+import { MoreHorizontal, Calendar, Music, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -18,7 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-
+import { usePostCommentStatus } from "@/hooks/usePostCommentStatus";
 interface Author {
   id: string | null;
   full_name: string | null;
@@ -55,6 +55,16 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState(item.content || "");
   const queryClient = useQueryClient();
+  
+  // Comment status tracking
+  const { totalCount, unreadCount, markAsRead } = usePostCommentStatus(item.id, item.type);
+
+  // Mark as read when comments are opened
+  useEffect(() => {
+    if (showComments && unreadCount > 0) {
+      markAsRead();
+    }
+  }, [showComments, unreadCount, markAsRead]);
 
   // Parse date string as local date to avoid timezone issues
   const parseLocalDate = (dateString: string) => {
@@ -330,8 +340,19 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
               variant="ghost"
               size="sm"
               onClick={() => setShowComments(!showComments)}
+              className="relative"
             >
+              <MessageCircle className="w-4 h-4 mr-1" />
               {t("socialFeed.comment")}
+              {unreadCount > 0 ? (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-destructive rounded-full">
+                  {unreadCount}
+                </span>
+              ) : totalCount > 0 ? (
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  ({totalCount})
+                </span>
+              ) : null}
             </Button>
           </div>
 
