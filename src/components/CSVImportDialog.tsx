@@ -6,9 +6,9 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import XLSX from "xlsx-js-style";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -76,55 +76,64 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const csvFiles = Array.from(files).filter(file => 
-      file.name.endsWith('.csv') || file.type === 'text/csv'
+    const validFiles = Array.from(files).filter(file => 
+      file.name.endsWith('.csv') || 
+      file.name.endsWith('.xlsx') || 
+      file.name.endsWith('.xls') ||
+      file.type === 'text/csv'
     );
 
-    if (csvFiles.length === 0) {
-      toast.error("Please upload CSV files");
+    if (validFiles.length === 0) {
+      toast.error("CSV 또는 Excel 파일을 업로드해주세요");
       return;
     }
 
-    setCSVFileCount(csvFiles.length);
+    setCSVFileCount(validFiles.length);
     const allData: CSVRow[] = [];
     const validationErrors: string[] = [];
-    let processedFiles = 0;
 
-    for (const file of csvFiles) {
-      await new Promise<void>((resolve) => {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            const data = results.data as CSVRow[];
-            
-            data.forEach((row, index) => {
-              const error = validateRow(row, allData.length + index);
-              if (error) validationErrors.push(`[${file.name}] ${error}`);
+    for (const file of validFiles) {
+      try {
+        let data: CSVRow[];
+
+        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+          // Parse Excel file
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer);
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          data = XLSX.utils.sheet_to_json(sheet) as CSVRow[];
+        } else {
+          // Parse CSV file
+          data = await new Promise<CSVRow[]>((resolve, reject) => {
+            Papa.parse(file, {
+              header: true,
+              skipEmptyLines: true,
+              complete: (results) => resolve(results.data as CSVRow[]),
+              error: (error) => reject(error),
             });
+          });
+        }
 
-            allData.push(...data);
-            processedFiles++;
-            
-            if (processedFiles === csvFiles.length) {
-              if (validationErrors.length > 0) {
-                setErrors(validationErrors);
-                setCSVData([]);
-                setStep("upload");
-              } else {
-                setErrors([]);
-                setCSVData(allData);
-                setStep("preview");
-              }
-            }
-            resolve();
-          },
-          error: (error) => {
-            toast.error(`${file.name}: ${error.message}`);
-            resolve();
-          },
+        data.forEach((row, index) => {
+          const error = validateRow(row, allData.length + index);
+          if (error) validationErrors.push(`[${file.name}] ${error}`);
         });
-      });
+
+        allData.push(...data);
+      } catch (error: any) {
+        toast.error(`${file.name}: ${error.message}`);
+      }
+    }
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      setCSVData([]);
+      setStep("upload");
+    } else {
+      setErrors([]);
+      setCSVData(allData);
+      setStep("preview");
     }
   };
 
@@ -296,18 +305,44 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   };
 
   const downloadTemplate = () => {
-    const template = `id,title,subtitle,artist,language,default_key,category,tags,youtube_url,score_file_url,interpretation,notes,lyrics
-,Amazing Grace,,Traditional,EN,G,모던워십 (서양),"grace,worship",https://youtube.com/watch?v=...,amazing-grace.pdf,Classic hymn of grace and redemption,Beautiful traditional hymn,
-,주 안에 있는 나에게,,김명식,KO,D,모던워십 (한국),"은혜,감사",https://youtube.com/watch?v=...,joo-ane-innun.pdf,주님 안에서의 평안을 노래하는 찬양,,
-,거룩하신 하나님,주님 찬양해,마커스워십,KO,C,모던워십 (한국),"경배,찬양",https://youtube.com/watch?v=...,georokhasin-hananim.pdf,하나님의 거룩하심을 선포하는 곡,부제가 있는 예시,
-`;
-    const blob = new Blob(["\uFEFF" + template], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "song-import-template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "4F46E5" } },
+      alignment: { horizontal: "center" as const }
+    };
+
+    const headers = [
+      { v: "id", s: headerStyle },
+      { v: "title", s: headerStyle },
+      { v: "subtitle", s: headerStyle },
+      { v: "artist", s: headerStyle },
+      { v: "language", s: headerStyle },
+      { v: "default_key", s: headerStyle },
+      { v: "category", s: headerStyle },
+      { v: "tags", s: headerStyle },
+      { v: "youtube_url", s: headerStyle },
+      { v: "score_file_url", s: headerStyle },
+      { v: "interpretation", s: headerStyle },
+      { v: "notes", s: headerStyle },
+      { v: "lyrics", s: headerStyle },
+    ];
+
+    const exampleRows = [
+      ["", "Amazing Grace", "", "Traditional", "EN", "G", "모던워십 (서양)", "grace,worship", "https://youtube.com/watch?v=...", "amazing-grace.pdf", "Classic hymn of grace and redemption", "Beautiful traditional hymn", ""],
+      ["", "주 안에 있는 나에게", "", "김명식", "KO", "D", "모던워십 (한국)", "은혜,감사", "https://youtube.com/watch?v=...", "joo-ane-innun.pdf", "주님 안에서의 평안을 노래하는 찬양", "", ""],
+      ["", "거룩하신 하나님", "주님 찬양해", "마커스워십", "KO", "C", "모던워십 (한국)", "경배,찬양", "https://youtube.com/watch?v=...", "georokhasin-hananim.pdf", "하나님의 거룩하심을 선포하는 곡", "부제가 있는 예시", ""],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
+    ws['!cols'] = [
+      { wch: 36 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
+      { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 35 }, { wch: 25 },
+      { wch: 30 }, { wch: 20 }, { wch: 40 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "song-import-template.xlsx");
   };
 
   const getImageMatchStatus = () => {
@@ -409,7 +444,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.xlsx,.xls"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"

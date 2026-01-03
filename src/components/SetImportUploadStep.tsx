@@ -57,7 +57,7 @@ export const SetImportUploadStep = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             onChange={handleFileChange}
             className="hidden"
           />

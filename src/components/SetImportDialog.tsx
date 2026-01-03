@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
+import XLSX from "xlsx-js-style";
 import { parseWorshipSetCSV, ParsedWorshipSet } from "@/lib/csvSetParser";
 import { matchAllSongs, MatchResult, Song } from "@/lib/songMatcher";
 import { SetImportUploadStep } from "./SetImportUploadStep";
@@ -72,45 +73,89 @@ export const SetImportDialog = ({
   const handleFileSelect = async (file: File) => {
     setCsvFile(file);
     
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        const parsed = parseWorshipSetCSV(results.data);
-        setParsedSets(parsed);
+    try {
+      let jsonData: any[];
 
-        // Auto-match songs
-        const allParsedSongs = parsed.flatMap((set) => set.parsedSongs);
-        const matches = await matchAllSongs(allParsedSongs, songLibrary);
-        setMatchResults(matches);
-        
-        toast({
-          title: t("setImport.csvParsed"),
-          description: `${parsed.length} ${t("setImport.setsFound")}`,
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        // Parse Excel file
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        jsonData = XLSX.utils.sheet_to_json(sheet);
+      } else {
+        // Parse CSV file
+        jsonData = await new Promise<any[]>((resolve, reject) => {
+          Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => resolve(results.data),
+            error: (error) => reject(error),
+          });
         });
-      },
-      error: (error) => {
-        toast({
-          title: t("setImport.parseError"),
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-    });
+      }
+
+      const parsed = parseWorshipSetCSV(jsonData);
+      setParsedSets(parsed);
+
+      // Auto-match songs
+      const allParsedSongs = parsed.flatMap((set) => set.parsedSongs);
+      const matches = await matchAllSongs(allParsedSongs, songLibrary);
+      setMatchResults(matches);
+      
+      toast({
+        title: t("setImport.csvParsed"),
+        description: `${parsed.length} ${t("setImport.setsFound")}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: t("setImport.parseError"),
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownloadTemplate = () => {
-    const template = `Date,ServiceName,WorshipLeader,BandName,Theme,ScriptureReference,TargetAudience,ServiceTime,WorshipDuration,Notes,Songs,SongKeys,SongBPMs,SongNotes,WorshipOrder
-2024-12-25,성탄 연합예배,최광은,하기오스,성탄의 기쁨,누가복음 2:1-20,장년,12:00,18,,예배합니다 / 주 예수 내 맘에 들어와 / 시선 / 왕이신 나의 하나님,F / G / E / F,120 / 85 / 72 / 90,후렴만 / / / 1-2절만,카운트다운::10 | 환영:담당자:3 | 찬양::18 | 대표기도::5 | 설교:담임목사:45 | 축도::3
-2024-04-07,주일 3부예배 찬양,,,,,,,,,우리 보좌앞에 모였네 / 내가 매일기쁘게 / 주만바라볼찌라,D / G / G→A,,,`;
-    
-    const blob = new Blob(["\uFEFF" + template], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "worship_set_template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "4F46E5" } },
+      alignment: { horizontal: "center" as const }
+    };
+
+    const headers = [
+      { v: "Date", s: headerStyle },
+      { v: "ServiceName", s: headerStyle },
+      { v: "WorshipLeader", s: headerStyle },
+      { v: "BandName", s: headerStyle },
+      { v: "Theme", s: headerStyle },
+      { v: "ScriptureReference", s: headerStyle },
+      { v: "TargetAudience", s: headerStyle },
+      { v: "ServiceTime", s: headerStyle },
+      { v: "WorshipDuration", s: headerStyle },
+      { v: "Notes", s: headerStyle },
+      { v: "Songs", s: headerStyle },
+      { v: "SongKeys", s: headerStyle },
+      { v: "SongBPMs", s: headerStyle },
+      { v: "SongNotes", s: headerStyle },
+      { v: "WorshipOrder", s: headerStyle },
+    ];
+
+    const exampleRows = [
+      ["2024-12-25", "성탄 연합예배", "최광은", "하기오스", "성탄의 기쁨", "누가복음 2:1-20", "장년", "12:00", "18", "", "예배합니다 / 주 예수 내 맘에 들어와 / 시선 / 왕이신 나의 하나님", "F / G / E / F", "120 / 85 / 72 / 90", "후렴만 / / / 1-2절만", "카운트다운::10 | 환영:담당자:3 | 찬양::18 | 대표기도::5 | 설교:담임목사:45 | 축도::3"],
+      ["2024-04-07", "주일 3부예배 찬양", "", "", "", "", "", "", "", "", "우리 보좌앞에 모였네 / 내가 매일기쁘게 / 주만바라볼찌라", "D / G / G→A", "", "", ""],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 15 },
+      { wch: 18 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 },
+      { wch: 50 }, { wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 60 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "worship_set_template.xlsx");
   };
 
   const handleImport = async () => {
