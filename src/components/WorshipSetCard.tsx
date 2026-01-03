@@ -7,6 +7,7 @@ import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/countdownHelper";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
+import { cn } from "@/lib/utils";
 
 interface WorshipSetCardProps {
   set: {
@@ -20,13 +21,14 @@ interface WorshipSetCardProps {
   };
   songs?: string[];
   canManage: boolean;
+  isPast?: boolean;
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, currentStatus: string) => void;
   onShare?: (set: any) => void;
   onEdit?: (set: any) => void;
 }
 
-export function WorshipSetCard({ set, songs = [], canManage, onDelete, onTogglePublish, onShare, onEdit }: WorshipSetCardProps) {
+export function WorshipSetCard({ set, songs = [], canManage, isPast = false, onDelete, onTogglePublish, onShare, onEdit }: WorshipSetCardProps) {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
@@ -54,16 +56,33 @@ export function WorshipSetCard({ set, songs = [], canManage, onDelete, onToggleP
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className={cn(
+        "hover:shadow-md transition-shadow cursor-pointer",
+        isPast && set.status === "published" && "opacity-70"
+      )}
       onClick={handleCardClick}
     >
       <CardContent className="p-4">
         <div className="flex justify-between items-start gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge variant={set.status === "published" ? "default" : "secondary"}>
                 {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
               </Badge>
+              {set.status === "published" && (
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    isPast 
+                      ? "text-muted-foreground border-muted-foreground/50" 
+                      : "text-green-600 border-green-600"
+                  )}
+                >
+                  {isPast 
+                    ? (language === "ko" ? "지난 예배" : "Past") 
+                    : (language === "ko" ? "예정" : "Upcoming")}
+                </Badge>
+              )}
             </div>
             <p className="text-sm text-muted-foreground">{formattedDate}</p>
             <h3 className="font-semibold truncate mt-1">{set.service_name}</h3>
