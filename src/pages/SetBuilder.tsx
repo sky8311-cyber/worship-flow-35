@@ -302,6 +302,7 @@ const SetBuilder = () => {
       return data || [];
     },
     refetchOnMount: "always",
+    refetchOnWindowFocus: false, // Prevent refetch on app switch to preserve local changes
     staleTime: 0,
   });
 
@@ -320,6 +321,7 @@ const SetBuilder = () => {
       return data || [];
     },
     refetchOnMount: "always",
+    refetchOnWindowFocus: false, // Prevent refetch on app switch to preserve local changes
     staleTime: 0,
   });
 
