@@ -43,6 +43,7 @@ import {
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard";
 import { parseLocalDate } from "@/lib/countdownHelper";
+import { creditBandViewOpenedReward } from "@/lib/rewardsHelper";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -300,16 +301,27 @@ const BandView = () => {
     !userCommunities.includes(serviceSet.community_id);
 
   // Increment view count for cross-community published sets (once per session)
+  // Also credit K-Seed reward for viewing band view
   useEffect(() => {
-    if (id && serviceSet && isCrossCommunity && serviceSet.status === 'published') {
-      const viewKey = `viewed_set_${id}`;
-      if (!sessionStorage.getItem(viewKey)) {
-        supabase.rpc('increment_set_view_count', { set_id: id }).then(() => {
-          sessionStorage.setItem(viewKey, 'true');
-        });
+    if (id && serviceSet && user) {
+      // Credit K-Seed for Band View opened (fire-and-forget, per-set cooldown handled server-side)
+      const rewardKey = `bandview_reward_${id}`;
+      if (!sessionStorage.getItem(rewardKey)) {
+        creditBandViewOpenedReward(user.id, id);
+        sessionStorage.setItem(rewardKey, 'true');
+      }
+      
+      // Increment view count for cross-community published sets
+      if (isCrossCommunity && serviceSet.status === 'published') {
+        const viewKey = `viewed_set_${id}`;
+        if (!sessionStorage.getItem(viewKey)) {
+          supabase.rpc('increment_set_view_count', { set_id: id }).then(() => {
+            sessionStorage.setItem(viewKey, 'true');
+          });
+        }
       }
     }
-  }, [id, serviceSet, isCrossCommunity]);
+  }, [id, serviceSet, isCrossCommunity, user]);
 
   // Extract YouTube video ID from URL
   const getYouTubeVideoId = (url: string) => {

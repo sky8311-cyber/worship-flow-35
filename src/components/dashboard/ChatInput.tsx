@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
+import { creditChatMessageReward } from "@/lib/rewardsHelper";
 
 interface ChatInputProps {
   selectedCommunityId?: string;
@@ -45,6 +46,11 @@ export function ChatInput({ selectedCommunityId }: ChatInputProps) {
       setContent("");
       setUploadedImages([]);
       queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      
+      // Credit K-Seed reward for chat message (fire-and-forget)
+      if (user && targetCommunityId) {
+        creditChatMessageReward(user.id, targetCommunityId);
+      }
     },
     onError: () => {
       toast.error(t("common.error"));

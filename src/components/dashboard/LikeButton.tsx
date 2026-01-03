@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { LikersDialog } from "./LikersDialog";
+import { creditPostLikedReward } from "@/lib/rewardsHelper";
 
 interface LikeButtonProps {
   postId: string;
@@ -67,6 +68,9 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
           user_id: user.id,
         });
         if (error) throw error;
+        
+        // Credit K-Seed reward for liking a post (fire-and-forget)
+        creditPostLikedReward(user.id, postId);
       }
     },
     onSuccess: () => {

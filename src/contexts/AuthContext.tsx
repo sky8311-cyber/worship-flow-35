@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useRef } fro
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
+import { creditDailyLoginReward } from "@/lib/rewardsHelper";
 
 interface Profile {
   id: string;
@@ -251,6 +252,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Use setTimeout to avoid potential deadlock; fetchProfile will set loading=false
         setTimeout(() => {
           fetchProfile(session.user.id, showToast);
+          
+          // Credit daily login reward on SIGNED_IN event (fire-and-forget)
+          if (event === "SIGNED_IN") {
+            creditDailyLoginReward(session.user.id);
+          }
         }, 0);
       } else {
         // Signed out

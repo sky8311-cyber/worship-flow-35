@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { creditFirstCommunityJoinReward } from "@/lib/rewardsHelper";
 
 const JoinCommunity = () => {
   const { token } = useParams<{ token: string }>();
@@ -75,6 +76,9 @@ const JoinCommunity = () => {
           });
 
         if (insertError) throw insertError;
+
+        // Credit K-Seed reward for first community join (fire-and-forget)
+        creditFirstCommunityJoinReward(user.id, communityData.id);
 
         toast({
           title: t("community.joinSuccess"),

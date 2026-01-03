@@ -11,6 +11,7 @@ import {
   Church, Music, Volume2, Mic, Guitar, Monitor,
   BookOpen, Heart, Star, Sparkles, Camera, Laptop
 } from "lucide-react";
+import { creditPositionSignupReward } from "@/lib/rewardsHelper";
 
 const ICON_MAP: Record<string, any> = {
   user: User,
@@ -76,6 +77,11 @@ export function PositionSignupCard({ serviceSetId }: PositionSignupCardProps) {
     onSuccess: () => {
       toast.success(language === "ko" ? "신청되었습니다!" : "Signed up!");
       queryClient.invalidateQueries({ queryKey: ["worship-set-positions", serviceSetId] });
+      
+      // Credit K-Seed reward for position signup (fire-and-forget)
+      if (user) {
+        creditPositionSignupReward(user.id, serviceSetId);
+      }
     },
     onError: (error: any) => {
       if (error.code === "23505") {

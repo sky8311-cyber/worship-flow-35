@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Loader2, X } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { creditCoverPhotoReward } from "@/lib/rewardsHelper";
 
 interface CoverImageUploadProps {
   currentUrl?: string | null;
@@ -57,6 +58,9 @@ export const CoverImageUpload = ({ currentUrl, onUploadSuccess }: CoverImageUplo
 
       onUploadSuccess(data.publicUrl);
       toast({ title: t("profile.coverUpdated") });
+      
+      // Credit K-Seed reward for cover photo (fire-and-forget)
+      creditCoverPhotoReward(user.id);
     } catch (error) {
       console.error('Upload error:', error);
       toast({
