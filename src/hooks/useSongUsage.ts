@@ -123,15 +123,13 @@ export const useSongUsage = (songId: string) => {
             can_edit: canEdit,
           });
         }
-
-        totalCount++;
       }
 
       // Get most recent usage
       const mostRecent = history[0];
 
       return {
-        usage_count: totalCount,
+        usage_count: history.length,
         last_used_at: mostRecent?.date || null,
         last_used_service_name: mostRecent?.service_name || null,
         usage_history: history,
