@@ -257,7 +257,7 @@ const SetBuilder = () => {
     enabled: !!id,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
-    staleTime: 30000,
+    staleTime: 0, // Always get fresh data to reflect status changes from WorshipSets
   });
 
   // Separate lightweight query for delete permission to avoid cache overwrites
@@ -552,6 +552,7 @@ const SetBuilder = () => {
     if (prevIdRef.current !== undefined && prevIdRef.current !== id) {
       setHasInitializedItems(false);
       setItems([]);
+      setStatusInitialized(false); // Reset status so it syncs from DB on next load
     }
     prevIdRef.current = id;
   }, [id]);
