@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -75,6 +76,10 @@ export default function WorshipSets() {
   const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
   const [selectedLeaders, setSelectedLeaders] = useState<string[]>([]);
   const [selectedServiceNames, setSelectedServiceNames] = useState<string[]>([]);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
   
   // Unpublish confirmation states
   const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
@@ -205,6 +210,9 @@ export default function WorshipSets() {
       case "upcoming":
         result = result.filter(set => parseLocalDate(set.date) >= today);
         break;
+      case "past":
+        result = result.filter(set => parseLocalDate(set.date) < today);
+        break;
       case "draft":
         result = result.filter(set => set.status === "draft");
         break;
@@ -229,6 +237,25 @@ export default function WorshipSets() {
     
     return result;
   }, [allSets, mainFilter, user?.id, selectedYears, selectedMonths, selectedLeaders, selectedServiceNames]);
+
+  // Pagination calculation
+  const totalPages = Math.ceil((filteredSets?.length || 0) / itemsPerPage);
+  const paginatedSets = filteredSets?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [mainFilter, selectedYears, selectedMonths, selectedLeaders, selectedServiceNames]);
+
+  // Helper to check if a set is in the past
+  const isPast = (set: SetWithSongs): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return parseLocalDate(set.date) < today;
+  };
 
   // Helper to get song titles from a set
   const getSongTitles = (set: SetWithSongs): string[] => {
@@ -565,130 +592,203 @@ export default function WorshipSets() {
           {isLoading ? (
             <p>{t("common.loading")}</p>
           ) : viewMode === "card" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSets?.map((set) => (
-                <WorshipSetCard
-                  key={set.id}
-                  set={set}
-                  songs={getSongTitles(set)}
-                  canManage={canManage(set)}
-                  onDelete={handleDelete}
-                  onTogglePublish={handleTogglePublish}
-                  onShare={handleShare}
-                  onEdit={handleEditClick}
-                />
-              ))}
-              {filteredSets?.length === 0 && (
-                <div className="col-span-full text-center text-muted-foreground py-8">
-                  {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedSets?.map((set) => (
+                  <WorshipSetCard
+                    key={set.id}
+                    set={set}
+                    songs={getSongTitles(set)}
+                    canManage={canManage(set)}
+                    isPast={isPast(set)}
+                    onDelete={handleDelete}
+                    onTogglePublish={handleTogglePublish}
+                    onShare={handleShare}
+                    onEdit={handleEditClick}
+                  />
+                ))}
+                {filteredSets?.length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground py-8">
+                    {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
+                  </div>
+                )}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    {language === "ko" ? "이전" : "Previous"}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    {language === "ko" ? "다음" : "Next"}
+                  </Button>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
-                  <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
-                  <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
-                  <TableHead>{language === "ko" ? "선곡" : "Songs"}</TableHead>
-                  <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
-                  <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSets?.map((set) => {
-                  const songTitles = getSongTitles(set);
-                  
-                  return (
-                    <TableRow 
-                      key={set.id} 
-                      className="cursor-pointer hover:bg-accent"
-                      onClick={() => handleRowClick(set)}
-                    >
-                      <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
-                      <TableCell className="font-medium">{set.service_name}</TableCell>
-                      <TableCell>{set.worship_leader || "-"}</TableCell>
-                      <TableCell className="max-w-[200px]">
-                        {songTitles.length > 0 ? (
-                          <div className="space-y-0.5">
-                            {songTitles.map((title, idx) => (
-                              <p key={idx} className="text-sm text-muted-foreground truncate">
-                                {title}
-                              </p>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("worshipSets.tableHeaders.date")}</TableHead>
+                    <TableHead>{t("worshipSets.tableHeaders.serviceName")}</TableHead>
+                    <TableHead>{t("worshipSets.tableHeaders.worshipLeader")}</TableHead>
+                    <TableHead>{language === "ko" ? "선곡" : "Songs"}</TableHead>
+                    <TableHead>{t("worshipSets.tableHeaders.status")}</TableHead>
+                    <TableHead>{t("worshipSets.tableHeaders.actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedSets?.map((set) => {
+                    const songTitles = getSongTitles(set);
+                    const setIsPast = isPast(set);
+                    
+                    return (
+                      <TableRow 
+                        key={set.id} 
+                        className={cn(
+                          "cursor-pointer hover:bg-accent",
+                          setIsPast && set.status === "published" && "opacity-70"
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={set.status === "published" ? "default" : "secondary"}>
-                          {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex gap-1">
-                          {/* View button - always visible */}
-                          <Button 
-                            size="icon" 
-                            variant="ghost" 
-                            onClick={() => navigate(`/band-view/${set.id}`)}
-                            title={t("worshipSets.view")}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          
-                          {canManage(set) && (
-                            <>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={() => handleShare(set)}
-                                title={language === "ko" ? "공유" : "Share"}
-                              >
-                                <Share2 className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={() => handleEditClick(set)}
-                                title={t("worshipSets.edit")}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost"
-                                onClick={() => handleTogglePublish(set.id, set.status)}
-                                title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
-                              >
-                                {set.status === "draft" ? <ArrowUpCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={() => handleDelete(set.id)}
-                                title={t("worshipSets.delete")}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
+                        onClick={() => handleRowClick(set)}
+                      >
+                        <TableCell>{format(parseLocalDate(set.date), "yyyy-MM-dd")}</TableCell>
+                        <TableCell className="font-medium">{set.service_name}</TableCell>
+                        <TableCell>{set.worship_leader || "-"}</TableCell>
+                        <TableCell className="max-w-[200px]">
+                          {songTitles.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {songTitles.map((title, idx) => (
+                                <p key={idx} className="text-sm text-muted-foreground truncate">
+                                  {title}
+                                </p>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
                           )}
-                        </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant={set.status === "published" ? "default" : "secondary"}>
+                              {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
+                            </Badge>
+                            {set.status === "published" && (
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  setIsPast 
+                                    ? "text-muted-foreground border-muted-foreground/50" 
+                                    : "text-green-600 border-green-600"
+                                )}
+                              >
+                                {setIsPast 
+                                  ? (language === "ko" ? "지난" : "Past") 
+                                  : (language === "ko" ? "예정" : "Upcoming")}
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex gap-1">
+                            {/* View button - always visible */}
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => navigate(`/band-view/${set.id}`)}
+                              title={t("worshipSets.view")}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            
+                            {canManage(set) && (
+                              <>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  onClick={() => handleShare(set)}
+                                  title={language === "ko" ? "공유" : "Share"}
+                                >
+                                  <Share2 className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  onClick={() => handleEditClick(set)}
+                                  title={t("worshipSets.edit")}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost"
+                                  onClick={() => handleTogglePublish(set.id, set.status)}
+                                  title={set.status === "draft" ? t("worshipSets.publish") : t("worshipSets.unpublish")}
+                                >
+                                  {set.status === "draft" ? <ArrowUpCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost" 
+                                  onClick={() => handleDelete(set.id)}
+                                  title={t("worshipSets.delete")}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredSets?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                        {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {filteredSets?.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                      {language === "ko" ? "조건에 맞는 워십세트가 없습니다." : "No worship sets match the filters."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6 pt-4 border-t">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    {language === "ko" ? "이전" : "Previous"}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    {language === "ko" ? "다음" : "Next"}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
           </CardContent>
         </Card>

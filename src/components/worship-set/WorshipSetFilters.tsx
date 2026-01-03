@@ -25,11 +25,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { 
-  List, FileEdit, CircleCheck, User, CalendarDays, Filter, X, SlidersHorizontal
+  List, FileEdit, CircleCheck, User, CalendarDays, Filter, X, SlidersHorizontal, History
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
-export type MainFilterType = "all" | "mySets" | "upcoming" | "draft" | "published";
+export type MainFilterType = "all" | "mySets" | "upcoming" | "past" | "draft" | "published";
 
 interface WorshipSetFiltersProps {
   mainFilter: MainFilterType;
@@ -80,6 +80,7 @@ export const WorshipSetFilters = ({
     { value: "all", label: language === "ko" ? "전체보기" : "All", icon: <List className="w-4 h-4" /> },
     { value: "mySets", label: language === "ko" ? "내 세트" : "My Sets", icon: <User className="w-4 h-4" /> },
     { value: "upcoming", label: language === "ko" ? "다가오는 세트" : "Upcoming", icon: <CalendarDays className="w-4 h-4" /> },
+    { value: "past", label: language === "ko" ? "지난 예배" : "Past", icon: <History className="w-4 h-4" /> },
     { value: "draft", label: language === "ko" ? "작성중" : "Draft", icon: <FileEdit className="w-4 h-4" /> },
     { value: "published", label: language === "ko" ? "게시됨" : "Published", icon: <CircleCheck className="w-4 h-4" /> },
   ];
@@ -424,6 +425,14 @@ export const WorshipSetFilters = ({
         >
           <FileEdit className="w-4 h-4" />
           {language === "ko" ? "작성중" : "Draft"}
+        </Button>
+        <Button 
+          variant={mainFilter === "past" ? "default" : "outline"}
+          onClick={() => onMainFilterChange("past")}
+          size="sm"
+        >
+          <History className="w-4 h-4" />
+          {language === "ko" ? "지난 예배" : "Past"}
         </Button>
         <Button 
           variant={mainFilter === "published" ? "default" : "outline"}
