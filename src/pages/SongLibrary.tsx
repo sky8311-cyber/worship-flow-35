@@ -28,6 +28,7 @@ import { useSongCart } from "@/contexts/SongCartContext";
 import { useCrossCommunityMode } from "@/hooks/useCrossCommunityMode";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import XLSX from 'xlsx-js-style';
 import { Home } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
@@ -317,38 +318,80 @@ const SongLibrary = () => {
     navigate("/login");
   };
 
-  const handleExportCSV = () => {
+  const handleExportXLSX = () => {
     if (!isAdmin) {
       toast.error("관리자만 데이터를 내보낼 수 있습니다");
       return;
     }
     if (!songs || songs.length === 0) return;
 
-    // Export all fields including id for bulk update support
-    const csvData = songs.map(song => ({
-      id: song.id,  // Include ID for upsert support
-      title: song.title,
-      subtitle: song.subtitle || "",
-      artist: song.artist || "",
-      language: song.language || "",
-      default_key: song.default_key || "",
-      category: song.category || "",
-      tags: song.tags || "",
-      youtube_url: song.youtube_url || "",
-      score_file_url: song.score_file_url || "",
-      notes: song.notes || "",
-      interpretation: song.interpretation || "",
-      lyrics: song.lyrics || "",
-    }));
+    // Header style
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" } },
+      fill: { fgColor: { rgb: "4F46E5" } },
+      alignment: { horizontal: "center" as const }
+    };
 
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }); // BOM for Excel Korean support
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `songs-export-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // Headers
+    const headers = [
+      { v: "id", s: headerStyle },
+      { v: "title", s: headerStyle },
+      { v: "subtitle", s: headerStyle },
+      { v: "artist", s: headerStyle },
+      { v: "language", s: headerStyle },
+      { v: "default_key", s: headerStyle },
+      { v: "category", s: headerStyle },
+      { v: "tags", s: headerStyle },
+      { v: "youtube_url", s: headerStyle },
+      { v: "score_file_url", s: headerStyle },
+      { v: "notes", s: headerStyle },
+      { v: "interpretation", s: headerStyle },
+      { v: "lyrics", s: headerStyle },
+    ];
+
+    // Data rows
+    const dataRows = songs.map(song => [
+      song.id,
+      song.title,
+      song.subtitle || "",
+      song.artist || "",
+      song.language || "",
+      song.default_key || "",
+      song.category || "",
+      song.tags || "",
+      song.youtube_url || "",
+      song.score_file_url || "",
+      song.notes || "",
+      song.interpretation || "",
+      song.lyrics || "",
+    ]);
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+    
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 36 },  // id
+      { wch: 30 },  // title
+      { wch: 20 },  // subtitle
+      { wch: 20 },  // artist
+      { wch: 8 },   // language
+      { wch: 8 },   // default_key
+      { wch: 12 },  // category
+      { wch: 20 },  // tags
+      { wch: 40 },  // youtube_url
+      { wch: 40 },  // score_file_url
+      { wch: 30 },  // notes
+      { wch: 30 },  // interpretation
+      { wch: 50 },  // lyrics
+    ];
+
+    // Create workbook and download
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Songs");
+    XLSX.writeFile(wb, `songs-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    toast.success("Excel 파일이 다운로드되었습니다");
   };
 
   const handleToggleSelection = (songId: string) => {
@@ -604,10 +647,10 @@ const SongLibrary = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handleExportCSV}
+                    onClick={handleExportXLSX}
                     disabled={!songs || songs.length === 0}
                     className="h-8 w-8"
-                    title={t("songLibrary.exportCSV")}
+                    title="Excel 내보내기"
                   >
                     <Download className="w-4 h-4" />
                   </Button>
@@ -708,7 +751,7 @@ const SongLibrary = () => {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={handleExportCSV}
+                    onClick={handleExportXLSX}
                     disabled={!songs || songs.length === 0}
                     className="h-7 w-7"
                   >
