@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { fadeInUp } from "@/lib/animations";
+import { revealText, revealCard, revealStaggerContainer, revealViewportOptions } from "@/lib/animations";
 import { smoothScrollTo } from "@/lib/smoothScroll";
 import { Music2, Youtube, FileText, ChevronRight } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -57,8 +57,14 @@ export const LandingHero = () => {
       <div className="container mx-auto px-4 py-32 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left content */}
-          <motion.div initial="hidden" animate="visible" variants={fadeInUp} className="text-center lg:text-left">
-            <h1 
+          <motion.div 
+            initial="hidden" 
+            animate="visible" 
+            variants={revealStaggerContainer}
+            className="text-center lg:text-left"
+          >
+            <motion.h1 
+              variants={revealText}
               className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight" 
               style={{ wordBreak: "keep-all" }}
             >
@@ -67,23 +73,25 @@ export const LandingHero = () => {
               </span>
               <br />
               <span className="text-foreground">{t("landing.hero.title2")}</span>
-            </h1>
+            </motion.h1>
             
-            <p 
+            <motion.p 
+              variants={revealText}
               className="text-lg md:text-xl lg:text-2xl text-muted-foreground mb-6 leading-relaxed" 
               style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
             >
               {t("landing.hero.subtitle")}
-            </p>
+            </motion.p>
 
-            <p 
+            <motion.p 
+              variants={revealText}
               className="text-sm md:text-base lg:text-lg text-muted-foreground/80 mb-10 leading-relaxed" 
               style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}
             >
               {t("landing.hero.description")}
-            </p>
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <motion.div variants={revealText} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button 
                 size="lg" 
                 onClick={() => smoothScrollTo("beta-cta")} 
@@ -99,14 +107,15 @@ export const LandingHero = () => {
               >
                 {t("landing.hero.learnMore")}
               </Button>
-            </div>
+            </motion.div>
           </motion.div>
 
           {/* Right content - Real worship set preview */}
           <motion.div 
-            initial={{ opacity: 0, x: 50 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ duration: 0.8, delay: 0.2 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewportOptions}
+            variants={revealCard}
             className="relative"
           >
             <div className="bg-card border border-border rounded-lg shadow-lg p-4 md:p-5">

@@ -1,6 +1,6 @@
 import { Users, Database, ListMusic, Download } from "lucide-react";
 import { motion } from "framer-motion";
-import { staggerContainer, staggerItem, viewportOptions } from "@/lib/animations";
+import { revealCard, revealStaggerContainer, revealViewportOptions, revealText } from "@/lib/animations";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingHowItWorks = () => {
@@ -39,20 +39,8 @@ export const LandingHowItWorks = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={{
-            hidden: {
-              opacity: 0,
-              y: 30
-            },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: {
-                duration: 0.6
-              }
-            }
-          }}
+          viewport={revealViewportOptions}
+          variants={revealText}
           className="text-center max-w-3xl mx-auto mb-20"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold">
@@ -65,14 +53,14 @@ export const LandingHowItWorks = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={staggerContainer}
+          viewport={revealViewportOptions}
+          variants={revealStaggerContainer}
           className="relative max-w-5xl mx-auto"
         >
           {/* Mobile/Tablet: Vertical Timeline */}
           <div className="lg:hidden space-y-8">
             {steps.map((step, index) => (
-              <motion.div key={index} variants={staggerItem} className="relative pl-12">
+              <motion.div key={index} variants={revealCard} className="relative pl-12">
                 {/* Connection line */}
                 {index < steps.length - 1 && (
                   <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-border -translate-x-1/2" />
@@ -104,7 +92,7 @@ export const LandingHowItWorks = () => {
 
             <div className="grid grid-cols-4 gap-6">
               {steps.map((step, index) => (
-                <motion.div key={index} variants={staggerItem} className="relative">
+                <motion.div key={index} variants={revealCard} className="relative">
                   <div className="bg-card border border-border rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                     {/* Step number badge */}
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl shadow-lg z-10">
