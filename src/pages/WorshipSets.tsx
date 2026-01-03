@@ -438,9 +438,13 @@ export default function WorshipSets() {
       
       if (error) throw error;
       
-      queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] });
-      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      queryClient.invalidateQueries({ queryKey: ["community-feed"] });
+      // Invalidate all relevant caches including the specific set
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["service-set", pendingSetId] }),
+        queryClient.invalidateQueries({ queryKey: ["worship-sets-history"] }),
+        queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] }),
+        queryClient.invalidateQueries({ queryKey: ["community-feed"] }),
+      ]);
       
       toast.info(
         language === "ko" 
@@ -452,7 +456,7 @@ export default function WorshipSets() {
     } catch (error) {
       toast.error(language === "ko" ? "게시 취소 중 오류가 발생했습니다." : "Error unpublishing worship set.");
     } finally {
-      setShowUnpublishConfirm(false);
+      setShowUnpublishWarning(false);
       setPendingSetId(null);
     }
   };
