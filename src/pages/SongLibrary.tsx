@@ -957,7 +957,10 @@ const SongLibrary = () => {
       {isWorshipLeader && (
         <Button
           onClick={handleAddSong}
-          className="fixed bottom-24 right-4 md:hidden rounded-full w-14 h-14 shadow-lg z-40"
+          className={cn(
+            "fixed right-4 md:hidden rounded-full w-14 h-14 shadow-lg z-40",
+            cartCount > 0 ? "bottom-40" : "bottom-24"
+          )}
           size="icon"
         >
           <Plus className="w-6 h-6" />
@@ -1030,7 +1033,7 @@ const SongLibrary = () => {
       {isWorshipLeader && cartCount > 0 && (
         <Button
           onClick={() => setIsCartDialogOpen(true)}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 rounded-full shadow-lg z-50 gap-2 px-6"
+          className="fixed bottom-40 left-1/2 -translate-x-1/2 rounded-full shadow-lg z-50 gap-2 px-6"
         >
           <Plus className="w-4 h-4" />
           세트에 {cartCount}곡 추가
