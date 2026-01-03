@@ -29,13 +29,19 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       <LandingNav />
-      <LandingHero />
-      <LandingIntro />
-      <LandingFeatures />
-      <LandingHowItWorks />
-      <LandingCommunity />
-      <LandingBetaCTA />
-      <LandingFAQ />
+      
+      {/* Main content - stacks above the footer */}
+      <div className="relative z-10 bg-background">
+        <LandingHero />
+        <LandingIntro />
+        <LandingFeatures />
+        <LandingHowItWorks />
+        <LandingCommunity />
+        <LandingBetaCTA />
+        <LandingFAQ />
+      </div>
+      
+      {/* Footer - sticky at bottom, revealed as content scrolls up */}
       <LandingFooter />
     </div>
   );
