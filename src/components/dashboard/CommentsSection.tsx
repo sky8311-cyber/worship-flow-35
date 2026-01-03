@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Loader2 } from "lucide-react";
+import { creditPostCommentReward } from "@/lib/rewardsHelper";
 
 interface CommentsSectionProps {
   postId: string;
@@ -52,6 +53,11 @@ export function CommentsSection({ postId, postType }: CommentsSectionProps) {
     onSuccess: () => {
       setNewComment("");
       queryClient.invalidateQueries({ queryKey: ["post-comments", postId] });
+      
+      // Credit K-Seed reward for commenting (fire-and-forget)
+      if (user) {
+        creditPostCommentReward(user.id, postId);
+      }
     },
   });
 

@@ -162,3 +162,188 @@ export function isSongMetadataComplete(song: {
     song.score_file_url
   );
 }
+
+// ============================================
+// Profile & Onboarding Rewards
+// ============================================
+
+/**
+ * Credit reward for adding profile photo (one-time)
+ */
+export async function creditProfilePhotoReward(userId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'profile_photo_added',
+    ref_type: 'profile',
+    ref_id: userId
+  });
+}
+
+/**
+ * Credit reward for adding bio (one-time)
+ */
+export async function creditProfileBioReward(userId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'profile_bio_added',
+    ref_type: 'profile',
+    ref_id: userId
+  });
+}
+
+/**
+ * Credit reward for completing all profile fields (one-time)
+ */
+export async function creditProfileCompleteReward(userId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'profile_complete',
+    ref_type: 'profile',
+    ref_id: userId
+  });
+}
+
+/**
+ * Credit reward for adding cover photo (one-time)
+ */
+export async function creditCoverPhotoReward(userId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'cover_photo_added',
+    ref_type: 'profile',
+    ref_id: userId
+  });
+}
+
+/**
+ * Credit reward for joining first community (one-time)
+ */
+export async function creditFirstCommunityJoinReward(userId: string, communityId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'first_community_join',
+    ref_type: 'community',
+    ref_id: communityId
+  });
+}
+
+// ============================================
+// Team Member Activity Rewards
+// ============================================
+
+/**
+ * Credit reward for viewing a worship set (with cooldown per set)
+ */
+export async function creditSetViewedReward(userId: string, setId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'set_viewed',
+    ref_type: 'worship_set',
+    ref_id: setId
+  });
+}
+
+/**
+ * Credit reward for opening Band View (with cooldown per set)
+ */
+export async function creditBandViewOpenedReward(userId: string, setId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'bandview_opened',
+    ref_type: 'worship_set',
+    ref_id: setId
+  });
+}
+
+/**
+ * Credit reward for downloading sheet music (with cooldown per song)
+ */
+export async function creditScoreDownloadedReward(userId: string, songId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'score_downloaded',
+    ref_type: 'song',
+    ref_id: songId
+  });
+}
+
+/**
+ * Credit reward for signing up for a team position (one-time per set)
+ */
+export async function creditPositionSignupReward(userId: string, setId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'position_signup',
+    ref_type: 'worship_set',
+    ref_id: setId
+  });
+}
+
+// ============================================
+// Community Engagement Rewards
+// ============================================
+
+/**
+ * Credit reward for sending a chat message (with cooldown)
+ */
+export async function creditChatMessageReward(userId: string, communityId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'chat_message_sent',
+    ref_type: 'community',
+    ref_id: communityId
+  });
+}
+
+/**
+ * Credit reward for liking a post
+ */
+export async function creditPostLikedReward(userId: string, postId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'post_liked',
+    ref_type: 'post',
+    ref_id: postId
+  });
+}
+
+/**
+ * Credit reward for commenting on a post (with cooldown)
+ */
+export async function creditPostCommentReward(userId: string, postId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'post_comment',
+    ref_type: 'post',
+    ref_id: postId
+  });
+}
+
+/**
+ * Credit reward for creating a welcome post (one-time per welcomed user)
+ */
+export async function creditWelcomePostReward(userId: string, welcomedUserId: string): Promise<CreditRewardResult> {
+  return creditReward({
+    user_id: userId,
+    reason_code: 'welcome_post_created',
+    ref_type: 'user',
+    ref_id: welcomedUserId
+  });
+}
+
+// ============================================
+// Daily Engagement Rewards
+// ============================================
+
+/**
+ * Credit reward for daily login (once per day)
+ */
+export async function creditDailyLoginReward(userId: string): Promise<CreditRewardResult> {
+  const today = new Date().toISOString().split('T')[0];
+  return creditReward({
+    user_id: userId,
+    reason_code: 'daily_login',
+    ref_type: 'login',
+    ref_id: today
+  });
+}

@@ -29,35 +29,53 @@ import { format } from "date-fns";
 
 // Reward categories for grouping
 const REWARD_CATEGORIES = {
+  profile: {
+    icon: Users,
+    label_ko: '👤 프로필 & 온보딩',
+    label_en: '👤 Profile & Onboarding',
+    codes: ['profile_photo_added', 'profile_bio_added', 'profile_complete', 'cover_photo_added', 'first_community_join']
+  },
+  teamActivity: {
+    icon: Music,
+    label_ko: '🎸 팀 활동',
+    label_en: '🎸 Team Activities',
+    codes: ['set_viewed', 'bandview_opened', 'score_downloaded', 'position_signup']
+  },
+  engagement: {
+    icon: MessageSquare,
+    label_ko: '💬 일일 참여',
+    label_en: '💬 Daily Engagement',
+    codes: ['chat_message_sent', 'post_liked', 'post_comment', 'welcome_post_created', 'daily_login']
+  },
   referral: {
     icon: Users,
-    label_ko: '🤝 Referral & Growth',
+    label_ko: '🤝 초대 & 성장',
     label_en: '🤝 Referral & Growth',
     codes: ['invited_user_signed_up']
   },
   community: {
     icon: MessageSquare,
-    label_ko: '💬 Community Activity',
-    label_en: '💬 Community Activity',
+    label_ko: '🏠 커뮤니티 활동',
+    label_en: '🏠 Community Activity',
     codes: ['first_community_post', 'community_posts_10_milestone', 'community_chat_active_bonus']
   },
   songs: {
     icon: Music,
-    label_ko: '🎵 Song Library',
+    label_ko: '🎵 곡 라이브러리',
     label_en: '🎵 Song Library',
     codes: ['song_added_to_library', 'song_metadata_complete']
   },
   sets: {
     icon: Church,
-    label_ko: '⛪ Worship Sets',
+    label_ko: '⛪ 워십 세트',
     label_en: '⛪ Worship Sets',
     codes: ['set_created', 'set_published']
   },
   consistency: {
     icon: Calendar,
-    label_ko: '📅 Consistency',
+    label_ko: '📅 꾸준함',
     label_en: '📅 Consistency',
-    codes: ['weekly_streak_bonus', 'daily_login']
+    codes: ['weekly_streak_bonus']
   }
 };
 

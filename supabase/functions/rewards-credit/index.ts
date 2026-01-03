@@ -27,7 +27,17 @@ interface CreditResponse {
 const MILESTONE_REWARD_CODES = [
   'first_community_post',
   'community_posts_10_milestone',
-  'song_metadata_complete'
+  'song_metadata_complete',
+  // Profile & onboarding milestones
+  'profile_photo_added',
+  'profile_bio_added',
+  'profile_complete',
+  'cover_photo_added',
+  'first_community_join',
+  // Team activity milestones
+  'position_signup',
+  // Community engagement milestones
+  'welcome_post_created'
 ];
 
 Deno.serve(async (req) => {

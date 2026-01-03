@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { Upload, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { creditProfilePhotoReward } from "@/lib/rewardsHelper";
 
 interface AvatarUploadProps {
   currentUrl?: string | null;
@@ -60,6 +61,9 @@ export const AvatarUpload = ({ currentUrl, onUploadSuccess }: AvatarUploadProps)
 
       onUploadSuccess(data.publicUrl);
       toast({ title: t("profile.avatarUpdated") });
+      
+      // Credit K-Seed reward for profile photo (fire-and-forget)
+      creditProfilePhotoReward(user.id);
     } catch (error) {
       console.error('Upload error:', error);
       toast({
