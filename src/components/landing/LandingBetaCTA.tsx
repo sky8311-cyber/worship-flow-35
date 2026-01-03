@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { fadeInUp, viewportOptions } from "@/lib/animations";
+import { revealOnScroll, revealViewportOptions } from "@/lib/animations";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,8 +14,8 @@ export const LandingBetaCTA = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={fadeInUp}
+          viewport={revealViewportOptions}
+          variants={revealOnScroll}
           className="max-w-4xl mx-auto text-center"
         >
           {/* Beta badge */}

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { fadeInUp, viewportOptions } from "@/lib/animations";
+import { revealText, revealCard, revealViewportOptions } from "@/lib/animations";
 import { Music2, Calendar, MapPin } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -33,8 +33,8 @@ export const LandingCommunity = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={fadeInUp}
+          viewport={revealViewportOptions}
+          variants={revealText}
           className="text-center max-w-3xl mx-auto mb-20"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
@@ -47,10 +47,10 @@ export const LandingCommunity = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
           {/* Left - Text */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={viewportOptions}
-            transition={{ duration: 0.8 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewportOptions}
+            variants={revealText}
             className="space-y-6"
           >
             <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed">
@@ -63,10 +63,10 @@ export const LandingCommunity = () => {
 
           {/* Right - UI Mockup */}
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={viewportOptions}
-            transition={{ duration: 0.8 }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewportOptions}
+            variants={revealCard}
             className="relative"
           >
             <div className="grid grid-cols-1 gap-4">

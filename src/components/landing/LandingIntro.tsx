@@ -1,6 +1,6 @@
 import { Users, Database, Network } from "lucide-react";
 import { motion } from "framer-motion";
-import { staggerContainer, staggerItem, viewportOptions } from "@/lib/animations";
+import { revealCard, revealStaggerContainer, revealViewportOptions, revealText } from "@/lib/animations";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingIntro = () => {
@@ -30,20 +30,8 @@ export const LandingIntro = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={{
-            hidden: {
-              opacity: 0,
-              y: 30
-            },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: {
-                duration: 0.6
-              }
-            }
-          }}
+          viewport={revealViewportOptions}
+          variants={revealText}
           className="text-center max-w-4xl mx-auto mb-20"
         >
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-tight">
@@ -68,14 +56,14 @@ export const LandingIntro = () => {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={viewportOptions}
-          variants={staggerContainer}
+          viewport={revealViewportOptions}
+          variants={revealStaggerContainer}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
         >
           {pillars.map((pillar, index) => (
             <motion.div
               key={index}
-              variants={staggerItem}
+              variants={revealCard}
               className="group p-8 bg-card border border-border rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
             >
               <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
