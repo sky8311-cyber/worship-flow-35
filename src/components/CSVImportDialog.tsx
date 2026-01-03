@@ -9,6 +9,7 @@ import Papa from "papaparse";
 import XLSX from "xlsx-js-style";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,7 +30,33 @@ interface CSVRow {
   interpretation?: string;
   notes?: string;
   lyrics?: string;
+  youtube_links?: string;  // "레이블|URL;;레이블|URL" 형식
+  scores?: string;         // "키|URL;;키|URL" 형식
 }
+
+interface ImportProgress {
+  phase: string;
+  current: number;
+  total: number;
+}
+
+// 다중 YouTube 링크 파싱: "레이블|URL;;레이블|URL"
+const parseYoutubeLinks = (value: string | undefined): { label: string; url: string }[] => {
+  if (!value || value.trim() === "") return [];
+  return value.split(";;").map(item => {
+    const [label, url] = item.split("|");
+    return { label: label?.trim() || "YouTube", url: url?.trim() || "" };
+  }).filter(item => item.url);
+};
+
+// 다중 악보 파싱: "키|URL;;키|URL"
+const parseScores = (value: string | undefined): { key: string; url: string }[] => {
+  if (!value || value.trim() === "") return [];
+  return value.split(";;").map(item => {
+    const [key, url] = item.split("|");
+    return { key: key?.trim() || "C", url: url?.trim() || "" };
+  }).filter(item => item.url);
+};
 
 export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImportDialogProps) => {
   const { t } = useTranslation();
@@ -39,6 +66,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
   const [importing, setImporting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [step, setStep] = useState<"upload" | "preview">("upload");
+  const [progress, setProgress] = useState<ImportProgress>({ phase: "", current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -175,6 +203,8 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
     if (csvData.length === 0) return;
 
     setImporting(true);
+    setProgress({ phase: "준비 중...", current: 0, total: 0 });
+    
     try {
       const newSongs: CSVRow[] = [];
       const updateSongs: CSVRow[] = [];
@@ -192,54 +222,104 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       let updatedCount = 0;
       let matchedImages = 0;
 
-      // Process new songs (INSERT)
-      if (newSongs.length > 0) {
-        const songsToInsert = await Promise.all(
-          newSongs.map(async (row) => {
-            let uploadedScoreUrl = null;
-            
-            if (row.score_file_url && !isExistingUrl(row.score_file_url)) {
-              const matchedFile = matchImageFile(row.score_file_url, imageFiles);
-              if (matchedFile) {
-                uploadedScoreUrl = await uploadScoreImage(matchedFile);
-                matchedImages++;
-              }
-            }
-
-            return {
-              title: row.title.trim(),
-              subtitle: row.subtitle?.trim() || null,
-              artist: row.artist || null,
-              language: row.language || null,
-              default_key: row.default_key || null,
-              category: row.category || null,
-              tags: row.tags || null,
-              youtube_url: row.youtube_url?.trim() || null,
-              score_file_url: uploadedScoreUrl,
-              interpretation: row.interpretation || null,
-              notes: row.notes || null,
-              lyrics: row.lyrics || null,
-            };
-          })
-        );
-
-        const { error } = await supabase.from("songs").insert(songsToInsert);
-        if (error) throw error;
-        insertedCount = songsToInsert.length;
+      // Phase 1: Upload images for new songs
+      const songsNeedingImageUpload = newSongs.filter(row => 
+        row.score_file_url && !isExistingUrl(row.score_file_url) && matchImageFile(row.score_file_url, imageFiles)
+      );
+      
+      if (songsNeedingImageUpload.length > 0) {
+        setProgress({ phase: "이미지 업로드 중", current: 0, total: songsNeedingImageUpload.length });
       }
 
-      // Process updates (UPDATE)
+      const uploadedScoreUrls = new Map<string, string>();
+      for (let i = 0; i < songsNeedingImageUpload.length; i++) {
+        const row = songsNeedingImageUpload[i];
+        const matchedFile = matchImageFile(row.score_file_url!, imageFiles);
+        if (matchedFile) {
+          const url = await uploadScoreImage(matchedFile);
+          if (url) {
+            uploadedScoreUrls.set(row.score_file_url!, url);
+            matchedImages++;
+          }
+        }
+        setProgress(prev => ({ ...prev, current: i + 1 }));
+      }
+
+      // Phase 2: Insert new songs
+      if (newSongs.length > 0) {
+        setProgress({ phase: "신규 곡 추가 중", current: 0, total: newSongs.length });
+        
+        for (let i = 0; i < newSongs.length; i++) {
+          const row = newSongs[i];
+          const uploadedScoreUrl = row.score_file_url ? uploadedScoreUrls.get(row.score_file_url) || null : null;
+
+          const songData = {
+            title: row.title.trim(),
+            subtitle: row.subtitle?.trim() || null,
+            artist: row.artist || null,
+            language: row.language || null,
+            default_key: row.default_key || null,
+            category: row.category || null,
+            tags: row.tags || null,
+            youtube_url: row.youtube_url?.trim() || null,
+            score_file_url: uploadedScoreUrl,
+            interpretation: row.interpretation || null,
+            notes: row.notes || null,
+            lyrics: row.lyrics || null,
+          };
+
+          const { data: insertedSong, error } = await supabase
+            .from("songs")
+            .insert(songData)
+            .select("id")
+            .single();
+          
+          if (error) throw error;
+
+          // Insert multiple YouTube links
+          const youtubeLinks = parseYoutubeLinks(row.youtube_links);
+          if (youtubeLinks.length > 0 && insertedSong) {
+            await supabase.from("song_youtube_links").insert(
+              youtubeLinks.map((link, idx) => ({
+                song_id: insertedSong.id,
+                label: link.label,
+                url: link.url,
+                position: idx + 1
+              }))
+            );
+          }
+
+          // Insert multiple scores
+          const scores = parseScores(row.scores);
+          if (scores.length > 0 && insertedSong) {
+            await supabase.from("song_scores").insert(
+              scores.map((score, idx) => ({
+                song_id: insertedSong.id,
+                key: score.key,
+                file_url: score.url,
+                position: idx + 1
+              }))
+            );
+          }
+
+          insertedCount++;
+          setProgress(prev => ({ ...prev, current: i + 1 }));
+        }
+      }
+
+      // Phase 3: Update existing songs
       if (updateSongs.length > 0) {
-        for (const row of updateSongs) {
+        setProgress({ phase: "기존 곡 업데이트 중", current: 0, total: updateSongs.length });
+        
+        for (let i = 0; i < updateSongs.length; i++) {
+          const row = updateSongs[i];
           let scoreUrl: string | null = null;
           
           // Handle score file URL
           if (row.score_file_url) {
             if (isExistingUrl(row.score_file_url)) {
-              // Keep existing URL
               scoreUrl = row.score_file_url;
             } else {
-              // Try to match new file
               const matchedFile = matchImageFile(row.score_file_url, imageFiles);
               if (matchedFile) {
                 scoreUrl = await uploadScoreImage(matchedFile);
@@ -262,7 +342,6 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             lyrics: row.lyrics || null,
           };
 
-          // Only update score_file_url if we have a new value
           if (scoreUrl !== null) {
             updateData.score_file_url = scoreUrl;
           }
@@ -273,7 +352,41 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             .eq("id", row.id);
 
           if (error) throw error;
+
+          // Handle multiple YouTube links for updates (replace existing)
+          const youtubeLinks = parseYoutubeLinks(row.youtube_links);
+          if (youtubeLinks.length > 0) {
+            // Delete existing links
+            await supabase.from("song_youtube_links").delete().eq("song_id", row.id);
+            // Insert new links
+            await supabase.from("song_youtube_links").insert(
+              youtubeLinks.map((link, idx) => ({
+                song_id: row.id,
+                label: link.label,
+                url: link.url,
+                position: idx + 1
+              }))
+            );
+          }
+
+          // Handle multiple scores for updates (replace existing)
+          const scores = parseScores(row.scores);
+          if (scores.length > 0) {
+            // Delete existing scores
+            await supabase.from("song_scores").delete().eq("song_id", row.id);
+            // Insert new scores
+            await supabase.from("song_scores").insert(
+              scores.map((score, idx) => ({
+                song_id: row.id,
+                key: score.key,
+                file_url: score.url,
+                position: idx + 1
+              }))
+            );
+          }
+
           updatedCount++;
+          setProgress(prev => ({ ...prev, current: i + 1 }));
         }
       }
 
@@ -295,12 +408,14 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       setImageFiles([]);
       setErrors([]);
       setStep("upload");
+      setProgress({ phase: "", current: 0, total: 0 });
       onImportComplete();
       onOpenChange(false);
     } catch (error: any) {
       toast.error(t("csvImport.error") + ": " + error.message);
     } finally {
       setImporting(false);
+      setProgress({ phase: "", current: 0, total: 0 });
     }
   };
 
@@ -325,19 +440,21 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       { v: "interpretation", s: headerStyle },
       { v: "notes", s: headerStyle },
       { v: "lyrics", s: headerStyle },
+      { v: "youtube_links", s: headerStyle },
+      { v: "scores", s: headerStyle },
     ];
 
     const exampleRows = [
-      ["", "Amazing Grace", "", "Traditional", "EN", "G", "모던워십 (서양)", "grace,worship", "https://youtube.com/watch?v=...", "amazing-grace.pdf", "Classic hymn of grace and redemption", "Beautiful traditional hymn", ""],
-      ["", "주 안에 있는 나에게", "", "김명식", "KO", "D", "모던워십 (한국)", "은혜,감사", "https://youtube.com/watch?v=...", "joo-ane-innun.pdf", "주님 안에서의 평안을 노래하는 찬양", "", ""],
-      ["", "거룩하신 하나님", "주님 찬양해", "마커스워십", "KO", "C", "모던워십 (한국)", "경배,찬양", "https://youtube.com/watch?v=...", "georokhasin-hananim.pdf", "하나님의 거룩하심을 선포하는 곡", "부제가 있는 예시", ""],
+      ["", "Amazing Grace", "", "Traditional", "EN", "G", "모던워십 (서양)", "grace,worship", "https://youtube.com/watch?v=main", "amazing-grace.pdf", "Classic hymn", "Notes", "", "베이스|https://youtube.com/bass;;피아노|https://youtube.com/piano", "C|https://storage.../score-c.jpg;;G|https://storage.../score-g.jpg"],
+      ["", "주 안에 있는 나에게", "", "김명식", "KO", "D", "모던워십 (한국)", "은혜,감사", "https://youtube.com/watch?v=main", "", "주님 안에서의 평안", "", "", "드럼|https://youtube.com/drum", "D|https://storage.../score-d.jpg"],
+      ["", "거룩하신 하나님", "주님 찬양해", "마커스워십", "KO", "C", "모던워십 (한국)", "경배,찬양", "", "", "", "", "", "", ""],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
     ws['!cols'] = [
       { wch: 36 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
       { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 35 }, { wch: 25 },
-      { wch: 30 }, { wch: 20 }, { wch: 40 },
+      { wch: 30 }, { wch: 20 }, { wch: 40 }, { wch: 50 }, { wch: 50 },
     ];
 
     const wb = XLSX.utils.book_new();
@@ -597,12 +714,23 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
               </div>
             </div>
 
+            {/* Progress indicator */}
+            {importing && progress.total > 0 && (
+              <div className="space-y-2 p-4 bg-muted rounded-lg">
+                <div className="flex justify-between text-sm font-medium">
+                  <span>{progress.phase}</span>
+                  <span>{progress.current} / {progress.total}</span>
+                </div>
+                <Progress value={(progress.current / progress.total) * 100} />
+              </div>
+            )}
+
             <div className="flex justify-between gap-2">
-              <Button variant="outline" onClick={() => setStep("upload")}>
+              <Button variant="outline" onClick={() => setStep("upload")} disabled={importing}>
                 {t("csvImport.back")}
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={importing}>
                   {t("common.cancel")}
                 </Button>
                 <Button

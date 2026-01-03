@@ -318,12 +318,47 @@ const SongLibrary = () => {
     navigate("/login");
   };
 
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
     if (!isAdmin) {
       toast.error("관리자만 데이터를 내보낼 수 있습니다");
       return;
     }
     if (!songs || songs.length === 0) return;
+
+    toast.info("내보내기 준비 중...");
+
+    // Fetch multiple youtube links and scores for all songs
+    const songIds = songs.map(s => s.id);
+    
+    const [youtubeLinksResult, scoresResult] = await Promise.all([
+      supabase.from("song_youtube_links").select("*").in("song_id", songIds),
+      supabase.from("song_scores").select("*").in("song_id", songIds)
+    ]);
+
+    const youtubeLinksMap = new Map<string, { label: string; url: string }[]>();
+    youtubeLinksResult.data?.forEach(link => {
+      const existing = youtubeLinksMap.get(link.song_id) || [];
+      existing.push({ label: link.label, url: link.url });
+      youtubeLinksMap.set(link.song_id, existing);
+    });
+
+    const scoresMap = new Map<string, { key: string; url: string }[]>();
+    scoresResult.data?.forEach(score => {
+      const existing = scoresMap.get(score.song_id) || [];
+      existing.push({ key: score.key, url: score.file_url });
+      scoresMap.set(score.song_id, existing);
+    });
+
+    // Format multiple links to delimited string
+    const formatYoutubeLinks = (songId: string) => {
+      const links = youtubeLinksMap.get(songId) || [];
+      return links.map(l => `${l.label}|${l.url}`).join(";;");
+    };
+
+    const formatScores = (songId: string) => {
+      const scoresList = scoresMap.get(songId) || [];
+      return scoresList.map(s => `${s.key}|${s.url}`).join(";;");
+    };
 
     // Header style
     const headerStyle = {
@@ -347,6 +382,8 @@ const SongLibrary = () => {
       { v: "notes", s: headerStyle },
       { v: "interpretation", s: headerStyle },
       { v: "lyrics", s: headerStyle },
+      { v: "youtube_links", s: headerStyle },
+      { v: "scores", s: headerStyle },
     ];
 
     // Data rows
@@ -364,6 +401,8 @@ const SongLibrary = () => {
       song.notes || "",
       song.interpretation || "",
       song.lyrics || "",
+      formatYoutubeLinks(song.id),
+      formatScores(song.id),
     ]);
 
     // Create worksheet
@@ -384,6 +423,8 @@ const SongLibrary = () => {
       { wch: 30 },  // notes
       { wch: 30 },  // interpretation
       { wch: 50 },  // lyrics
+      { wch: 60 },  // youtube_links
+      { wch: 60 },  // scores
     ];
 
     // Create workbook and download
