@@ -136,11 +136,49 @@ export default function WorshipSets() {
     checkLastEditedDraft();
   }, [user?.id, hasCheckedLastDraft, navigate, language, shouldContinueDraft]);
 
+  // Fetch user's collaborator set IDs
+  const { data: userCollaboratorSetIds } = useQuery({
+    queryKey: ["user-collaborator-sets", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data, error } = await supabase
+        .from("set_collaborators")
+        .select("service_set_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return new Set(data?.map(c => c.service_set_id) || []);
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+  });
+
+  // Fetch user's community leader community IDs
+  const { data: userLeaderCommunityIds } = useQuery({
+    queryKey: ["user-leader-communities", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data, error } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .eq("user_id", user.id)
+        .in("role", ["community_leader", "owner"]);
+      if (error) throw error;
+      return new Set(data?.map(c => c.community_id) || []);
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+  });
+
   // Check if user can manage a specific set
+  // Includes: admin, creator, collaborator, or community leader for that set's community
   const canManage = (set: any) => {
     if (isAdmin) return true;
-    if (isWorshipLeader && set.created_by === user?.id) return true;
-    if (isCommunityLeaderInAnyCommunity && set.created_by === user?.id) return true;
+    // Original creator always has access
+    if (set.created_by === user?.id) return true;
+    // Collaborator on this specific set
+    if (userCollaboratorSetIds?.has(set.id)) return true;
+    // Community leader for the set's community
+    if (set.community_id && userLeaderCommunityIds?.has(set.community_id)) return true;
     return false;
   };
   
