@@ -145,10 +145,11 @@ serve(async (req) => {
           'Authorization': `Bearer ${supabaseServiceKey}`,
         },
         body: JSON.stringify({
-          userId: referrer.id,
-          reasonCode: 'invited_user_signed_up',
-          referenceType: 'referral',
-          referenceId: referralRecord.id,
+          user_id: referrer.id,
+          reason_code: 'invited_user_signed_up',
+          ref_type: 'referral',
+          ref_id: referralRecord.id,
+          idempotency_key: `referral_signup_${referralRecord.id}`,
           meta: {
             referred_user_id: referredUserId,
             source: inviteId ? 'email' : source
