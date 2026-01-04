@@ -482,7 +482,7 @@ const Dashboard = () => {
                                     <p className="font-medium mb-1">곡 목록:</p>
                                     {songs.map((song, idx) => (
                                       <p key={idx} className="pl-6">
-                                        {song.position}. {song.title} {song.key && `(${song.key})`}
+                                        {song.title} {song.key && `(${song.key})`}
                                       </p>
                                     ))}
                                   </div>
@@ -661,7 +661,7 @@ const Dashboard = () => {
                                     <p className="font-medium">곡 목록:</p>
                                     {songs.map((song, idx) => (
                                       <p key={idx} className="pl-6">
-                                        {song.position}. {song.title} {song.key && `(${song.key})`}
+                                        {song.title} {song.key && `(${song.key})`}
                                       </p>
                                     ))}
                                   </div>
