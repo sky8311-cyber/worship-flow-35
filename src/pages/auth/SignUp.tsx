@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { getReferralCode, clearReferralCode } from "@/pages/ReferralRedirect";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -28,6 +29,45 @@ const SignUp = () => {
 
   // Get redirect URL from query params or sessionStorage
   const redirectUrl = searchParams.get("redirect") || sessionStorage.getItem("redirectAfterLogin");
+  
+  // Get stored referral code
+  const [storedReferralCode, setStoredReferralCode] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const code = getReferralCode();
+    if (code) {
+      setStoredReferralCode(code);
+      console.log("Found referral code:", code);
+    }
+  }, []);
+
+  // Process referral after successful signup
+  const processReferral = async (userId: string) => {
+    if (!storedReferralCode) return;
+    
+    try {
+      console.log("Processing referral for user:", userId, "with code:", storedReferralCode);
+      
+      const response = await supabase.functions.invoke("process-referral", {
+        body: {
+          referralCode: storedReferralCode,
+          referredUserId: userId,
+          source: "link"
+        }
+      });
+      
+      if (response.data?.success) {
+        console.log("Referral processed successfully");
+      } else {
+        console.log("Referral processing result:", response.data);
+      }
+    } catch (error) {
+      console.error("Error processing referral:", error);
+    } finally {
+      // Always clear the referral code after attempting to process
+      clearReferralCode();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +114,14 @@ const SignUp = () => {
       title: t("auth.success"),
       description: t("auth.accountCreated"),
     });
+    
+    // Get the user ID for referral processing
+    const { data: { user: newUser } } = await supabase.auth.getUser();
+    
+    // Process referral if exists
+    if (newUser?.id && storedReferralCode) {
+      await processReferral(newUser.id);
+    }
     
     // Send welcome email
     try {

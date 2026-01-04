@@ -32,6 +32,8 @@ const TemplateManager = lazy(() => import("./pages/TemplateManager"));
 // FavoritesList removed - now uses /songs?filter=favorites
 const SeedHistory = lazy(() => import("./pages/SeedHistory"));
 const Rewards = lazy(() => import("./pages/Rewards"));
+const Referral = lazy(() => import("./pages/Referral"));
+const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
 const RewardsStore = lazy(() => import("./pages/RewardsStore"));
 const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
@@ -112,6 +114,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/r/:referralCode" element={<ReferralRedirect />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -125,6 +128,7 @@ const App = () => {
               <Route path="/seeds" element={<ProtectedRoute><SeedHistory /></ProtectedRoute>} />
               <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
               <Route path="/rewards/store" element={<ProtectedRoute><RewardsStore /></ProtectedRoute>} />
+              <Route path="/referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />

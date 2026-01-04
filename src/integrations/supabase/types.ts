@@ -809,6 +809,7 @@ export type Database = {
           ministry_role: string | null
           needs_worship_leader_profile: boolean | null
           phone: string | null
+          referral_code: string | null
           serving_position: string | null
           timezone: string | null
           updated_at: string | null
@@ -834,6 +835,7 @@ export type Database = {
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
+          referral_code?: string | null
           serving_position?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -859,6 +861,7 @@ export type Database = {
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
           phone?: string | null
+          referral_code?: string | null
           serving_position?: string | null
           timezone?: string | null
           updated_at?: string | null
@@ -935,6 +938,102 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "worship_set_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referral_invites: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          inviter_id: string
+          joined_at: string | null
+          referred_id: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          inviter_id: string
+          joined_at?: string | null
+          referred_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          inviter_id?: string
+          joined_at?: string | null
+          referred_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_invites_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_invites_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          invite_id: string | null
+          referred_id: string
+          referrer_id: string
+          reward_amount: number | null
+          reward_issued: boolean | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invite_id?: string | null
+          referred_id: string
+          referrer_id: string
+          reward_amount?: number | null
+          reward_issued?: boolean | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invite_id?: string | null
+          referred_id?: string
+          referrer_id?: string
+          reward_amount?: number | null
+          reward_issued?: boolean | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_id_fkey"
+            columns: ["referred_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2635,6 +2734,7 @@ export type Database = {
         }
         Returns: number
       }
+      generate_referral_code: { Args: never; Returns: string }
       get_feature_flag: { Args: { _key: string }; Returns: boolean }
       get_invitation_by_id: {
         Args: { invitation_uuid: string }

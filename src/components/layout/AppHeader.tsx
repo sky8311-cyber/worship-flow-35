@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2 } from "lucide-react";
+import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2, Share2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SongCartPopover } from "@/components/SongCartPopover";
+import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -44,6 +45,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
   // Auto-mark all notifications as read when panel opens
   useEffect(() => {
@@ -118,6 +120,11 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             {/* My Songs Icon - Always visible */}
             <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
               <Music2 className="h-5 w-5" />
+            </Button>
+            
+            {/* Share/Referral Icon */}
+            <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
+              <Share2 className="h-5 w-5" />
             </Button>
             
             {/* Song Cart - Shows only when items in cart */}
@@ -221,6 +228,11 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   {language === "ko" ? "도움말" : "Help"}
                 </DropdownMenuItem>
                 
+                <DropdownMenuItem onClick={() => navigate("/referral")}>
+                  <Gift className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "친구 초대" : "Referral"}
+                </DropdownMenuItem>
+                
                 <DropdownMenuSeparator />
                 
                 <DropdownMenuItem onClick={handleLogout}>
@@ -242,6 +254,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
     </header>
 
     <MobileSidebarDrawer open={sidebarOpen} onOpenChange={setSidebarOpen} />
+    <ShareReferralDialog open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
     </>
   );
 };
