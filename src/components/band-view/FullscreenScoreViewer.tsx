@@ -28,12 +28,26 @@ export function FullscreenScoreViewer({
   const [showUI, setShowUI] = useState(true);
   const [zoom, setZoom] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const hideUITimeout = useRef<NodeJS.Timeout | null>(null);
   const lastTapTime = useRef<number>(0);
   const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
   const noSleepVideoRef = useRef<HTMLVideoElement | null>(null);
+  
+  // Pinch-to-zoom refs
+  const initialPinchDistance = useRef<number | null>(null);
+  const initialZoom = useRef<number>(1);
+  const isPinching = useRef<boolean>(false);
+
+  // Get distance between two touch points
+  const getTouchDistance = (touches: React.TouchList): number => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   // Wake Lock management
   const requestWakeLock = useCallback(async () => {
@@ -225,14 +239,41 @@ export function FullscreenScoreViewer({
     resetHideUITimer();
   };
 
-  // Touch handlers for swipe
+  // Touch handlers for swipe and pinch-to-zoom
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (zoom > 1) return; // Disable swipe when zoomed
+    // Two finger touch = pinch start
+    if (e.touches.length === 2) {
+      isPinching.current = true;
+      initialPinchDistance.current = getTouchDistance(e.touches);
+      initialZoom.current = zoom;
+      return;
+    }
+    
+    // Single touch for swipe (only when not zoomed)
+    if (zoom > 1) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Handle pinch-to-zoom
+    if (e.touches.length === 2 && isPinching.current && initialPinchDistance.current) {
+      const currentDistance = getTouchDistance(e.touches);
+      const scale = currentDistance / initialPinchDistance.current;
+      const newZoom = Math.min(3, Math.max(0.5, initialZoom.current * scale));
+      setZoom(newZoom);
+      resetHideUITimer();
+    }
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
+    // End pinch
+    if (isPinching.current) {
+      isPinching.current = false;
+      initialPinchDistance.current = null;
+      return;
+    }
+    
     if (touchStartX.current === null || touchStartY.current === null) return;
     if (zoom > 1) return;
 
@@ -277,6 +318,7 @@ export function FullscreenScoreViewer({
       ref={containerRef}
       className="fixed inset-0 z-50 bg-black flex flex-col"
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={handleTap}
     >
@@ -340,16 +382,32 @@ export function FullscreenScoreViewer({
         </div>
       </div>
 
-      {/* Score Image - iPad Photos style fill-to-screen */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden bg-black">
+      {/* Score Image - Fit to width with scroll support when zoomed */}
+      <div 
+        ref={imageContainerRef}
+        className={cn(
+          "flex-1 bg-black",
+          zoom > 1 ? "overflow-auto" : "overflow-hidden flex items-center justify-center"
+        )}
+      >
         {scores.length > 0 ? (
-          <img
-            src={currentScore?.imageUrl}
-            alt={`${currentScore?.songTitle} - Page ${currentScore?.pageNumber}`}
-            className="max-w-full max-h-full object-contain transition-transform duration-200 bg-white"
-            style={{ transform: `scale(${zoom})` }}
-            draggable={false}
-          />
+          <div 
+            className={cn(
+              "flex items-center justify-center",
+              zoom > 1 ? "min-w-full min-h-full w-fit h-fit" : "w-full h-full"
+            )}
+          >
+            <img
+              src={currentScore?.imageUrl}
+              alt={`${currentScore?.songTitle} - Page ${currentScore?.pageNumber}`}
+              className="w-full h-auto object-contain transition-transform duration-200 bg-white"
+              style={{ 
+                transform: `scale(${zoom})`,
+                transformOrigin: zoom > 1 ? 'top left' : 'center center'
+              }}
+              draggable={false}
+            />
+          </div>
         ) : (
           <p className="text-white/70 text-center">
             {t("bandView.fullscreenViewer.noScores")}
