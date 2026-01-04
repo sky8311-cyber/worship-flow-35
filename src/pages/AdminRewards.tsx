@@ -51,8 +51,10 @@ import {
   Minus,
   ShoppingBag,
   Trash2,
-  X
+  X,
+  UserPlus
 } from "lucide-react";
+import AdminReferralStats from "@/components/admin/AdminReferralStats";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -388,7 +390,7 @@ const AdminRewards = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="settings">
               <Settings className="w-4 h-4 mr-2" />
               Settings
@@ -404,6 +406,10 @@ const AdminRewards = () => {
             <TabsTrigger value="users">
               <Users className="w-4 h-4 mr-2" />
               Users
+            </TabsTrigger>
+            <TabsTrigger value="referrals">
+              <UserPlus className="w-4 h-4 mr-2" />
+              Referrals
             </TabsTrigger>
             <TabsTrigger value="abuse">
               <AlertTriangle className="w-4 h-4 mr-2" />
@@ -918,6 +924,11 @@ const AdminRewards = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Referrals Tab */}
+          <TabsContent value="referrals" className="mt-4">
+            <AdminReferralStats />
           </TabsContent>
 
           {/* Abuse Tab */}
