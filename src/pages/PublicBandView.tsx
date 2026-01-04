@@ -507,10 +507,11 @@ const PublicBandView = () => {
                               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                 <iframe
                                   className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                  src={`https://www.youtube.com/embed/${videoId}`}
+                                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
                                   title={youtubeLinks[0].label || song.song_title || "YouTube video"}
                                   frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                  referrerPolicy="strict-origin-when-cross-origin"
                                   allowFullScreen
                                 />
                               </div>
@@ -535,10 +536,11 @@ const PublicBandView = () => {
                                   <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                     <iframe
                                       className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                      src={`https://www.youtube.com/embed/${videoId}`}
+                                      src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
                                       title={link.label || song.song_title || "YouTube video"}
                                       frameBorder="0"
-                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                      referrerPolicy="strict-origin-when-cross-origin"
                                       allowFullScreen
                                     />
                                   </div>
@@ -555,10 +557,11 @@ const PublicBandView = () => {
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                         <iframe
                           className="absolute top-0 left-0 w-full h-full rounded-lg"
-                          src={`https://www.youtube.com/embed/${fallbackVideoId}`}
+                          src={`https://www.youtube.com/embed/${fallbackVideoId}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
                           title={song.song_title || "YouTube video"}
                           frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          referrerPolicy="strict-origin-when-cross-origin"
                           allowFullScreen
                         />
                       </div>
