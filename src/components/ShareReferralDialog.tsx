@@ -74,8 +74,6 @@ export const ShareReferralDialog = ({ open, onOpenChange }: ShareReferralDialogP
     
     setSending(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke("send-referral-invite", {
         body: {
           email: inviteEmail,
