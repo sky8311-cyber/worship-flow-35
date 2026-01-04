@@ -506,9 +506,19 @@ const SetBuilder = () => {
   const isCreator = existingSet?.created_by === user?.id;
   const hasCollaboratorManagePermission = isCreator || isAdmin || !!isCommunityLeaderForSet;
 
+  // Track if form data has been initialized for this set
+  const [formDataInitialized, setFormDataInitialized] = useState(false);
+
   // Load form data from existing set with merge strategy
+  // CRITICAL: Once initialized and in edit mode, do NOT overwrite user changes with refetched data
   useEffect(() => {
     if (!existingSet || isExistingSetLoading || isSaving) return;
+    
+    // If already initialized and user is in edit mode, preserve their changes
+    if (formDataInitialized && isEditMode) {
+      console.log("[SetBuilder] Skipping formData overwrite - user is editing");
+      return;
+    }
 
     setFormData(current => ({
       date: existingSet.date ?? current.date,
@@ -524,28 +534,13 @@ const SetBuilder = () => {
       notes: existingSet.notes ?? current.notes,
     }));
     
+    setFormDataInitialized(true);
+    
     if (!statusInitialized) {
       setStatus(existingSet.status || "draft");
       setStatusInitialized(true);
     }
-
-    // Safety patch for legacy sets without created_by (only when DB value is explicitly null)
-    if (existingSet.id && existingSet.created_by === null && user?.id) {
-      supabase
-        .from("service_sets")
-        .update({ created_by: user.id })
-        .eq("id", existingSet.id)
-        .then(({ error }) => {
-          if (!error) {
-            setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ["service-set", existingSet.id] });
-              queryClient.invalidateQueries({ queryKey: ["service-set-owner", existingSet.id] });
-              queryClient.invalidateQueries({ queryKey: ["set-songs", existingSet.id] });
-            }, 100);
-          }
-        });
-    }
-  }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, user]);
+  }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, formDataInitialized, isEditMode]);
 
   // Reset initialization flag when navigating to a DIFFERENT set (not on mount/remount)
   useEffect(() => {
@@ -555,6 +550,7 @@ const SetBuilder = () => {
       setHasInitializedItems(false);
       setItems([]);
       setStatusInitialized(false); // Reset status so it syncs from DB on next load
+      setFormDataInitialized(false); // Reset formData initialization for new set
     }
     prevIdRef.current = id;
   }, [id]);
@@ -823,11 +819,10 @@ const SetBuilder = () => {
         if (error) throw error;
         setId = data.id;
       } else {
+        // IMPORTANT: Never include created_by in update payload
+        // The DB trigger prevents changes, but we shouldn't even try
         const updateData: any = { ...dataToSave };
-        // Ensure legacy sets without created_by get correctly assigned
-        if (!existingSet?.created_by && user?.id) {
-          updateData.created_by = user.id;
-        }
+        // DO NOT modify created_by - it's immutable and protected by DB trigger
 
         const { error } = await supabase
           .from("service_sets")
@@ -1010,7 +1005,13 @@ const SetBuilder = () => {
         queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       }, 100);
       
-      if (isNewSet) {
+      // Navigate based on action type
+      if (publishStatus === "published" && setId && !isNewSet) {
+        // After publishing an existing set, release lock and go to read-only view
+        releaseLock();
+        toast.success(language === "ko" ? "게시 완료! 읽기 모드로 이동합니다." : "Published! Navigating to read-only view.");
+        navigate(`/band-view/${setId}`);
+      } else if (isNewSet) {
         navigate(`/set-builder/${setId}`);
       }
     },
