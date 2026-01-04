@@ -108,7 +108,7 @@ serve(async (req) => {
     const { data: rewardRule } = await supabase
       .from('rewards_rules')
       .select('amount')
-      .eq('reason_code', 'invited_user_signed_up')
+      .eq('code', 'invited_user_signed_up')
       .eq('enabled', true)
       .single();
 
