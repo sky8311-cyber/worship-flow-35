@@ -59,3 +59,6 @@ verify_jwt = false
 
 [functions.send-referral-invite]
 verify_jwt = true
+
+[functions.send-admin-email]
+verify_jwt = true

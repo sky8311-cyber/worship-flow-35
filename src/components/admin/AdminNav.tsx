@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -53,9 +53,15 @@ export const AdminNav = () => {
     icon: Sprout,
   };
 
+  const emailLink = {
+    to: "/admin/email",
+    label: "Email",
+    icon: Mail,
+  };
+
   const links = (!isLoading && isChurchMenuVisible) 
-    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink]
-    : [...baseLinks, applicationsLink, crmLink, rewardsLink];
+    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink]
+    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink];
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">

@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_email_logs: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          html_content: string
+          id: string
+          recipient_count: number
+          recipient_filter: Json
+          sent_at: string | null
+          sent_by: string
+          status: string
+          subject: string
+          template_id: string | null
+          template_name: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          html_content: string
+          id?: string
+          recipient_count?: number
+          recipient_filter: Json
+          sent_at?: string | null
+          sent_by: string
+          status?: string
+          subject: string
+          template_id?: string | null
+          template_name?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          html_content?: string
+          id?: string
+          recipient_count?: number
+          recipient_filter?: Json
+          sent_at?: string | null
+          sent_by?: string
+          status?: string
+          subject?: string
+          template_id?: string | null
+          template_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_email_logs_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_email_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string | null
@@ -516,6 +576,107 @@ export type Database = {
             columns: ["community_id"]
             isOneToOne: false
             referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_recipients: {
+        Row: {
+          email: string
+          email_log_id: string | null
+          error_message: string | null
+          id: string
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          email: string
+          email_log_id?: string | null
+          error_message?: string | null
+          id?: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          email?: string
+          email_log_id?: string | null
+          error_message?: string | null
+          id?: string
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_recipients_email_log_id_fkey"
+            columns: ["email_log_id"]
+            isOneToOne: false
+            referencedRelation: "admin_email_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_recipients_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          html_content: string
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          name: string
+          slug: string
+          subject: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          html_content: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name: string
+          slug: string
+          subject: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          html_content?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name?: string
+          slug?: string
+          subject?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
