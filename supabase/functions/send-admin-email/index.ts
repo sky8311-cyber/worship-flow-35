@@ -1,0 +1,320 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface RecipientFilter {
+  type: "all" | "role" | "community";
+  roleValue?: string;
+  communityId?: string;
+}
+
+interface SendAdminEmailRequest {
+  templateId?: string;
+  subject: string;
+  htmlContent: string;
+  recipientFilter: RecipientFilter;
+  testMode?: boolean;
+}
+
+interface Recipient {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+const BATCH_SIZE = 50;
+const DELAY_BETWEEN_BATCHES = 1000;
+
+function replaceVariables(template: string, variables: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] || `{{${key}}}`);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "KWorship <noreply@kworship.app>",
+        to: [to],
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { success: false, error: JSON.stringify(errorData) };
+    }
+
+    const data = await response.json();
+    return { success: true, id: data.id };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  console.log("send-admin-email function called");
+
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verify admin authorization
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check if user is admin
+    const { data: adminRole } = await supabaseClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .single();
+
+    if (!adminRole) {
+      console.error("User is not admin:", user.id);
+      return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { templateId, subject, htmlContent, recipientFilter, testMode }: SendAdminEmailRequest = await req.json();
+    console.log("Request params:", { templateId, subject, recipientFilter, testMode });
+
+    // Get recipients based on filter
+    let recipients: Recipient[] = [];
+
+    if (testMode) {
+      // In test mode, only send to the admin's email
+      const { data: adminProfile } = await supabaseClient
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("id", user.id)
+        .single();
+      
+      if (adminProfile) {
+        recipients = [adminProfile];
+      }
+    } else {
+      // Get recipients based on filter type
+      if (recipientFilter.type === "all") {
+        const { data } = await supabaseClient
+          .from("profiles")
+          .select("id, email, full_name")
+          .not("email", "is", null);
+        recipients = data || [];
+      } else if (recipientFilter.type === "role" && recipientFilter.roleValue) {
+        const { data } = await supabaseClient
+          .from("profiles")
+          .select("id, email, full_name, user_roles!inner(role)")
+          .eq("user_roles.role", recipientFilter.roleValue)
+          .not("email", "is", null);
+        recipients = data || [];
+      } else if (recipientFilter.type === "community" && recipientFilter.communityId) {
+        const { data } = await supabaseClient
+          .from("profiles")
+          .select("id, email, full_name, community_members!inner(community_id)")
+          .eq("community_members.community_id", recipientFilter.communityId)
+          .not("email", "is", null);
+        recipients = data || [];
+      }
+    }
+
+    console.log(`Found ${recipients.length} recipients`);
+
+    if (recipients.length === 0) {
+      return new Response(JSON.stringify({ error: "No recipients found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Get template info if templateId provided
+    let templateName = "Custom Email";
+    if (templateId) {
+      const { data: template } = await supabaseClient
+        .from("email_templates")
+        .select("name")
+        .eq("id", templateId)
+        .single();
+      if (template) {
+        templateName = template.name;
+      }
+    }
+
+    // Create email log
+    const { data: emailLog, error: logError } = await supabaseClient
+      .from("admin_email_logs")
+      .insert({
+        template_id: templateId || null,
+        template_name: templateName,
+        subject,
+        html_content: htmlContent,
+        sent_by: user.id,
+        recipient_filter: recipientFilter,
+        recipient_count: recipients.length,
+        status: "sending",
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error("Error creating email log:", logError);
+      return new Response(JSON.stringify({ error: "Failed to create email log" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log("Created email log:", emailLog.id);
+
+    // Insert all recipients with pending status
+    const recipientRecords = recipients.map((r) => ({
+      email_log_id: emailLog.id,
+      user_id: r.id,
+      email: r.email,
+      status: "pending",
+    }));
+
+    await supabaseClient.from("email_recipients").insert(recipientRecords);
+
+    // Send emails in batches
+    let successCount = 0;
+    let failureCount = 0;
+    const appUrl = "https://kworship.app";
+
+    for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
+      const batch = recipients.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(recipients.length / BATCH_SIZE)}`);
+
+      const sendPromises = batch.map(async (recipient) => {
+        try {
+          // Replace variables in content
+          const personalizedContent = replaceVariables(htmlContent, {
+            user_name: recipient.full_name || "User",
+            app_url: appUrl,
+          });
+
+          const personalizedSubject = replaceVariables(subject, {
+            user_name: recipient.full_name || "User",
+          });
+
+          const result = await sendEmail(recipient.email, personalizedSubject, personalizedContent);
+
+          // Update recipient status
+          await supabaseClient
+            .from("email_recipients")
+            .update({
+              status: result.success ? "sent" : "failed",
+              resend_id: result.id || null,
+              sent_at: result.success ? new Date().toISOString() : null,
+              error_message: result.error || null,
+            })
+            .eq("email_log_id", emailLog.id)
+            .eq("email", recipient.email);
+
+          if (result.success) {
+            successCount++;
+          } else {
+            failureCount++;
+          }
+          return result;
+        } catch (error: any) {
+          console.error(`Failed to send to ${recipient.email}:`, error);
+
+          await supabaseClient
+            .from("email_recipients")
+            .update({
+              status: "failed",
+              error_message: error.message || "Unknown error",
+            })
+            .eq("email_log_id", emailLog.id)
+            .eq("email", recipient.email);
+
+          failureCount++;
+          return { success: false, email: recipient.email, error: error.message };
+        }
+      });
+
+      await Promise.all(sendPromises);
+
+      // Delay between batches (except for the last batch)
+      if (i + BATCH_SIZE < recipients.length) {
+        await sleep(DELAY_BETWEEN_BATCHES);
+      }
+    }
+
+    // Update email log with final status
+    const finalStatus = failureCount === 0 ? "completed" : failureCount === recipients.length ? "failed" : "completed";
+    await supabaseClient
+      .from("admin_email_logs")
+      .update({
+        status: finalStatus,
+        completed_at: new Date().toISOString(),
+        error_message: failureCount > 0 ? `${failureCount} of ${recipients.length} emails failed` : null,
+      })
+      .eq("id", emailLog.id);
+
+    console.log(`Email sending completed. Success: ${successCount}, Failed: ${failureCount}`);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        emailLogId: emailLog.id,
+        totalRecipients: recipients.length,
+        successCount,
+        failureCount,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  } catch (error: any) {
+    console.error("Error in send-admin-email:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+};
+
+serve(handler);
