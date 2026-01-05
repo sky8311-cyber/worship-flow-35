@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "sonner";
 import { Send, Eye, Users, Building2, Shield, Loader2, AlertTriangle } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ interface Community {
 type RecipientType = "all" | "role" | "community";
 
 export const EmailComposer = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [subject, setSubject] = useState("");
@@ -155,9 +157,9 @@ export const EmailComposer = () => {
     },
     onSuccess: (data, testMode) => {
       if (testMode) {
-        toast.success("Test email sent to your address");
+        toast.success(t("adminEmail.composer.testEmailSent"));
       } else {
-        toast.success(`Emails sent successfully! ${data.successCount} delivered, ${data.failureCount} failed`);
+        toast.success(t("adminEmail.composer.emailsSentSuccess", { success: data.successCount, failed: data.failureCount }));
         queryClient.invalidateQueries({ queryKey: ["email-logs"] });
       }
       setShowConfirmDialog(false);
@@ -169,19 +171,19 @@ export const EmailComposer = () => {
 
   const handleSendClick = () => {
     if (!subject.trim()) {
-      toast.error("Please enter a subject");
+      toast.error(t("adminEmail.composer.pleaseEnterSubject"));
       return;
     }
     if (!htmlContent.trim()) {
-      toast.error("Please enter email content");
+      toast.error(t("adminEmail.composer.pleaseEnterContent"));
       return;
     }
     if (recipientType === "role" && !selectedRole) {
-      toast.error("Please select a role");
+      toast.error(t("adminEmail.composer.pleaseSelectRole"));
       return;
     }
     if (recipientType === "community" && !selectedCommunityId) {
-      toast.error("Please select a community");
+      toast.error(t("adminEmail.composer.pleaseSelectCommunity"));
       return;
     }
     setShowConfirmDialog(true);
@@ -213,18 +215,18 @@ export const EmailComposer = () => {
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Compose Email</CardTitle>
+            <CardTitle>{t("adminEmail.composer.title")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Template Selection */}
             <div className="space-y-2">
-              <Label>Template (Optional)</Label>
+              <Label>{t("adminEmail.composer.templateOptional")}</Label>
               <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a template or start from scratch" />
+                  <SelectValue placeholder={t("adminEmail.composer.selectTemplate")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="scratch">Start from scratch</SelectItem>
+                  <SelectItem value="scratch">{t("adminEmail.composer.startFromScratch")}</SelectItem>
                   {templates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
@@ -236,28 +238,28 @@ export const EmailComposer = () => {
 
             {/* Subject */}
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">{t("adminEmail.composer.subject")}</Label>
               <Input
                 id="subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Enter email subject"
+                placeholder={t("adminEmail.composer.subjectPlaceholder")}
               />
             </div>
 
             {/* Content Editor */}
             <div className="space-y-2">
-              <Label>Content</Label>
+              <Label>{t("adminEmail.composer.content")}</Label>
               <RichTextEditor
                 content={htmlContent}
                 onChange={setHtmlContent}
-                placeholder="Compose your email content..."
+                placeholder={t("adminEmail.composer.contentPlaceholder")}
               />
             </div>
 
             {/* Variable Help */}
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-2">Available Variables:</p>
+              <p className="text-sm font-medium mb-2">{t("adminEmail.composer.availableVariables")}</p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <code className="px-2 py-1 bg-background rounded">{"{{user_name}}"}</code>
                 <code className="px-2 py-1 bg-background rounded">{"{{app_url}}"}</code>
@@ -273,7 +275,7 @@ export const EmailComposer = () => {
         {/* Recipients */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Recipients</CardTitle>
+            <CardTitle className="text-base">{t("adminEmail.composer.recipients")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <RadioGroup value={recipientType} onValueChange={(v) => setRecipientType(v as RecipientType)}>
@@ -281,21 +283,21 @@ export const EmailComposer = () => {
                 <RadioGroupItem value="all" id="all" />
                 <Label htmlFor="all" className="flex items-center gap-2 cursor-pointer">
                   <Users className="w-4 h-4" />
-                  All Users
+                  {t("adminEmail.composer.allUsers")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="role" id="role" />
                 <Label htmlFor="role" className="flex items-center gap-2 cursor-pointer">
                   <Shield className="w-4 h-4" />
-                  By Role
+                  {t("adminEmail.composer.byRole")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="community" id="community" />
                 <Label htmlFor="community" className="flex items-center gap-2 cursor-pointer">
                   <Building2 className="w-4 h-4" />
-                  By Community
+                  {t("adminEmail.composer.byCommunity")}
                 </Label>
               </div>
             </RadioGroup>
@@ -303,12 +305,12 @@ export const EmailComposer = () => {
             {recipientType === "role" && (
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder={t("adminEmail.composer.selectRole")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="worship_leader">Worship Leader</SelectItem>
-                  <SelectItem value="user">Regular User</SelectItem>
+                  <SelectItem value="admin">{t("adminEmail.composer.roleAdmin")}</SelectItem>
+                  <SelectItem value="worship_leader">{t("adminEmail.composer.roleWorshipLeader")}</SelectItem>
+                  <SelectItem value="user">{t("adminEmail.composer.roleUser")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -316,7 +318,7 @@ export const EmailComposer = () => {
             {recipientType === "community" && (
               <Select value={selectedCommunityId} onValueChange={setSelectedCommunityId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select community" />
+                  <SelectValue placeholder={t("adminEmail.composer.selectCommunity")} />
                 </SelectTrigger>
                 <SelectContent>
                   {communities.map((community) => (
@@ -330,7 +332,7 @@ export const EmailComposer = () => {
 
             <div className="p-3 bg-muted rounded-lg text-center">
               <p className="text-2xl font-bold">{recipientCount}</p>
-              <p className="text-sm text-muted-foreground">Recipients</p>
+              <p className="text-sm text-muted-foreground">{t("adminEmail.composer.recipients")}</p>
             </div>
           </CardContent>
         </Card>
@@ -344,7 +346,7 @@ export const EmailComposer = () => {
               onClick={() => setShowPreview(true)}
             >
               <Eye className="w-4 h-4 mr-2" />
-              Preview Email
+              {t("adminEmail.composer.previewEmail")}
             </Button>
             <Button
               variant="outline"
@@ -357,7 +359,7 @@ export const EmailComposer = () => {
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              Send Test Email
+              {t("adminEmail.composer.sendTestEmail")}
             </Button>
             <Button
               className="w-full"
@@ -369,7 +371,7 @@ export const EmailComposer = () => {
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              Send to {recipientCount} Recipients
+              {t("adminEmail.composer.sendToRecipients", { count: recipientCount })}
             </Button>
           </CardContent>
         </Card>
@@ -379,9 +381,9 @@ export const EmailComposer = () => {
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Email Preview</DialogTitle>
+            <DialogTitle>{t("adminEmail.composer.previewTitle")}</DialogTitle>
             <DialogDescription>
-              Subject: {subject.replace(/\{\{(\w+)\}\}/g, "Sample Value")}
+              {t("adminEmail.composer.subject")}: {subject.replace(/\{\{(\w+)\}\}/g, t("adminEmail.composer.sampleValue"))}
             </DialogDescription>
           </DialogHeader>
           <div className="border rounded-lg p-4 bg-white">
@@ -396,29 +398,29 @@ export const EmailComposer = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              Confirm Email Send
+              {t("adminEmail.composer.confirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
-                <p>You are about to send an email to <strong>{recipientCount} recipients</strong>.</p>
+                <p>{t("adminEmail.composer.confirmMessage", { count: recipientCount })}</p>
                 <p className="text-sm">
-                  Estimated time: ~{Math.ceil(recipientCount / 50)} seconds
+                  {t("adminEmail.composer.estimatedTime", { seconds: Math.ceil(recipientCount / 50) })}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  This action cannot be undone.
+                  {t("adminEmail.composer.cannotUndo")}
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmSend}>
               {sendEmailMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              Send Now
+              {t("adminEmail.composer.sendNow")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
