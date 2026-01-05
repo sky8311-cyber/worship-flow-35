@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Save, Eye, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface EmailTemplate {
   id: string;
@@ -43,6 +44,7 @@ export const TemplateEditorDialog = ({
   template,
   isReadOnly = false,
 }: TemplateEditorDialogProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("edit");
@@ -109,31 +111,31 @@ export const TemplateEditorDialog = ({
       }
     },
     onSuccess: () => {
-      toast.success(template ? "Template updated" : "Template created");
+      toast.success(template ? t("adminEmail.editor.templateUpdated") : t("adminEmail.editor.templateCreated"));
       queryClient.invalidateQueries({ queryKey: ["email-templates-all"] });
       queryClient.invalidateQueries({ queryKey: ["email-templates"] });
       onOpenChange(false);
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to save template");
+      toast.error(error.message || t("adminEmail.editor.saveFailed"));
     },
   });
 
   const handleSave = () => {
     if (!name.trim()) {
-      toast.error("Please enter a template name");
+      toast.error(t("adminEmail.editor.pleaseEnterName"));
       return;
     }
     if (!slug.trim()) {
-      toast.error("Please enter a template slug");
+      toast.error(t("adminEmail.editor.pleaseEnterSlug"));
       return;
     }
     if (!subject.trim()) {
-      toast.error("Please enter a subject");
+      toast.error(t("adminEmail.editor.pleaseEnterSubject"));
       return;
     }
     if (!htmlContent.trim()) {
-      toast.error("Please enter template content");
+      toast.error(t("adminEmail.editor.pleaseEnterContent"));
       return;
     }
     saveMutation.mutate();
@@ -156,14 +158,16 @@ export const TemplateEditorDialog = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
           <DialogTitle>
-            {template ? (isReadOnly ? "View Template" : "Edit Template") : "Create Template"}
+            {template 
+              ? (isReadOnly ? t("adminEmail.editor.viewTemplate") : t("adminEmail.editor.editTemplate")) 
+              : t("adminEmail.editor.createTemplate")}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="edit">
-              {isReadOnly ? "View" : "Edit"}
+              {isReadOnly ? t("adminEmail.templates.view") : t("adminEmail.templates.edit")}
             </TabsTrigger>
             <TabsTrigger value="preview">
               <Eye className="w-4 h-4 mr-2" />
@@ -174,7 +178,7 @@ export const TemplateEditorDialog = ({
           <TabsContent value="edit" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Template Name</Label>
+                <Label htmlFor="name">{t("adminEmail.editor.templateName")}</Label>
                 <Input
                   id="name"
                   value={name}
@@ -184,7 +188,7 @@ export const TemplateEditorDialog = ({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="slug">Slug</Label>
+                <Label htmlFor="slug">{t("adminEmail.editor.slug")}</Label>
                 <Input
                   id="slug"
                   value={slug}
@@ -197,21 +201,21 @@ export const TemplateEditorDialog = ({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>{t("adminEmail.editor.category")}</Label>
                 <Select value={category} onValueChange={setCategory} disabled={isReadOnly || template?.is_system}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {template?.is_system && <SelectItem value="system">System</SelectItem>}
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="invitation">Invitation</SelectItem>
-                    <SelectItem value="announcement">Announcement</SelectItem>
+                    {template?.is_system && <SelectItem value="system">{t("adminEmail.editor.categorySystem")}</SelectItem>}
+                    <SelectItem value="general">{t("adminEmail.editor.categoryGeneral")}</SelectItem>
+                    <SelectItem value="invitation">{t("adminEmail.editor.categoryInvitation")}</SelectItem>
+                    <SelectItem value="announcement">{t("adminEmail.editor.categoryAnnouncement")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject Line</Label>
+                <Label htmlFor="subject">{t("adminEmail.editor.subjectLine")}</Label>
                 <Input
                   id="subject"
                   value={subject}
@@ -223,7 +227,7 @@ export const TemplateEditorDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label>Email Content (HTML)</Label>
+              <Label>{t("adminEmail.editor.emailContent")}</Label>
               {isReadOnly ? (
                 <div className="border rounded-lg p-4 bg-muted/50 max-h-[300px] overflow-auto">
                   <pre className="text-xs whitespace-pre-wrap">{htmlContent}</pre>
@@ -232,13 +236,13 @@ export const TemplateEditorDialog = ({
                 <RichTextEditor
                   content={htmlContent}
                   onChange={setHtmlContent}
-                  placeholder="Compose your email template..."
+                  placeholder={t("adminEmail.editor.contentPlaceholder")}
                 />
               )}
             </div>
 
             <div className="p-4 bg-muted rounded-lg">
-              <p className="text-sm font-medium mb-2">Available Variables:</p>
+              <p className="text-sm font-medium mb-2">{t("adminEmail.editor.availableVariables")}</p>
               <div className="flex flex-wrap gap-2 text-xs">
                 <code className="px-2 py-1 bg-background rounded">{"{{user_name}}"}</code>
                 <code className="px-2 py-1 bg-background rounded">{"{{app_url}}"}</code>
@@ -253,7 +257,7 @@ export const TemplateEditorDialog = ({
             <div className="border rounded-lg bg-white">
               <div className="p-4 border-b bg-muted/30">
                 <p className="text-sm">
-                  <strong>Subject:</strong> {subject.replace(/\{\{(\w+)\}\}/g, "Sample Value")}
+                  <strong>{t("adminEmail.composer.subject")}:</strong> {subject.replace(/\{\{(\w+)\}\}/g, t("adminEmail.composer.sampleValue"))}
                 </p>
               </div>
               <div className="p-4">
@@ -265,7 +269,7 @@ export const TemplateEditorDialog = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {isReadOnly ? "Close" : "Cancel"}
+            {isReadOnly ? t("common.close") : t("common.cancel")}
           </Button>
           {!isReadOnly && (
             <Button onClick={handleSave} disabled={saveMutation.isPending}>
@@ -274,7 +278,7 @@ export const TemplateEditorDialog = ({
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              {template ? "Update Template" : "Create Template"}
+              {template ? t("adminEmail.editor.updateTemplate") : t("adminEmail.editor.createTemplate")}
             </Button>
           )}
         </DialogFooter>

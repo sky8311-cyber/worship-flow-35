@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ChevronDown, ChevronRight, Mail, Users, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ const statusConfig: Record<string, { icon: React.ReactNode; color: string }> = {
 };
 
 export const EmailLogs = () => {
+  const { t } = useTranslation();
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
 
@@ -108,16 +110,16 @@ export const EmailLogs = () => {
 
   const getFilterLabel = (filter: unknown) => {
     const f = filter as { type?: string; roleValue?: string; communityId?: string } | null;
-    if (!f) return "Unknown";
+    if (!f) return t("adminEmail.logs.filterUnknown");
     switch (f.type) {
       case "all":
-        return "All Users";
+        return t("adminEmail.logs.filterAllUsers");
       case "role":
-        return `Role: ${f.roleValue}`;
+        return t("adminEmail.logs.filterRole", { role: f.roleValue || "" });
       case "community":
-        return "Community Members";
+        return t("adminEmail.logs.filterCommunity");
       default:
-        return f.type || "Unknown";
+        return f.type || t("adminEmail.logs.filterUnknown");
     }
   };
 
@@ -131,15 +133,15 @@ export const EmailLogs = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Email Send History</h2>
+      <h2 className="text-lg font-semibold">{t("adminEmail.logs.title")}</h2>
 
       {logs.length === 0 ? (
         <Card className="py-12">
           <CardContent className="text-center">
             <Mail className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No emails sent yet</h3>
+            <h3 className="text-lg font-medium mb-2">{t("adminEmail.logs.noLogs")}</h3>
             <p className="text-muted-foreground">
-              Your email send history will appear here
+              {t("adminEmail.logs.noLogsDescription")}
             </p>
           </CardContent>
         </Card>
@@ -194,19 +196,19 @@ export const EmailLogs = () => {
                   <CardContent className="pt-0">
                     <div className="grid gap-4 md:grid-cols-3 mb-4 p-4 bg-muted/50 rounded-lg">
                       <div>
-                        <p className="text-xs text-muted-foreground">Template</p>
-                        <p className="text-sm font-medium">{log.template_name || "Custom"}</p>
+                        <p className="text-xs text-muted-foreground">{t("adminEmail.logs.template")}</p>
+                        <p className="text-sm font-medium">{log.template_name || t("adminEmail.logs.custom")}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Recipients</p>
+                        <p className="text-xs text-muted-foreground">{t("adminEmail.logs.recipients")}</p>
                         <p className="text-sm font-medium">{getFilterLabel(log.recipient_filter)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Completed</p>
+                        <p className="text-xs text-muted-foreground">{t("adminEmail.logs.completed")}</p>
                         <p className="text-sm font-medium">
                           {log.completed_at
                             ? format(new Date(log.completed_at), "MMM d, yyyy HH:mm")
-                            : "In progress..."}
+                            : t("adminEmail.logs.inProgress")}
                         </p>
                       </div>
                     </div>
@@ -223,7 +225,7 @@ export const EmailLogs = () => {
                       size="sm"
                       onClick={() => setSelectedLogId(log.id)}
                     >
-                      View Recipients
+                      {t("adminEmail.logs.viewRecipients")}
                     </Button>
                   </CardContent>
                 )}
@@ -237,15 +239,15 @@ export const EmailLogs = () => {
       <Dialog open={!!selectedLogId} onOpenChange={() => setSelectedLogId(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Email Recipients</DialogTitle>
+            <DialogTitle>{t("adminEmail.logs.recipientsTitle")}</DialogTitle>
           </DialogHeader>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Recipient</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Sent At</TableHead>
+                <TableHead>{t("adminEmail.logs.recipient")}</TableHead>
+                <TableHead>{t("adminEmail.logs.email")}</TableHead>
+                <TableHead>{t("adminEmail.logs.status")}</TableHead>
+                <TableHead>{t("adminEmail.logs.sentAt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

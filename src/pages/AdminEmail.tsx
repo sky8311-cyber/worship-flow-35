@@ -19,10 +19,10 @@ const AdminEmail = () => {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Mail className="w-6 h-6" />
-            Email Management
+            {t("adminEmail.title")}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Send emails to users, manage templates, and view send history
+            {t("adminEmail.description")}
           </p>
         </div>
 
@@ -30,15 +30,15 @@ const AdminEmail = () => {
           <TabsList className="mb-6">
             <TabsTrigger value="compose" className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              Compose
+              {t("adminEmail.tabs.compose")}
             </TabsTrigger>
             <TabsTrigger value="templates" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
-              Templates
+              {t("adminEmail.tabs.templates")}
             </TabsTrigger>
             <TabsTrigger value="logs" className="flex items-center gap-2">
               <History className="w-4 h-4" />
-              Send History
+              {t("adminEmail.tabs.sendHistory")}
             </TabsTrigger>
           </TabsList>
 
