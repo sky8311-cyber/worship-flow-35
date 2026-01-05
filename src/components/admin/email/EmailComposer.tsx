@@ -118,12 +118,15 @@ export const EmailComposer = () => {
 
   // Load template content when selected
   useEffect(() => {
-    if (selectedTemplateId) {
+    if (selectedTemplateId && selectedTemplateId !== "scratch") {
       const template = templates.find((t) => t.id === selectedTemplateId);
       if (template) {
         setSubject(template.subject);
         setHtmlContent(template.html_content);
       }
+    } else if (selectedTemplateId === "scratch") {
+      setSubject("");
+      setHtmlContent("");
     }
   }, [selectedTemplateId, templates]);
 
@@ -197,7 +200,11 @@ export const EmailComposer = () => {
       .replace(/\{\{user_name\}\}/g, "John Doe")
       .replace(/\{\{app_url\}\}/g, "https://kworship.app")
       .replace(/\{\{subject\}\}/g, subject)
-      .replace(/\{\{content\}\}/g, "Sample email content here...");
+      .replace(/\{\{content\}\}/g, "Sample email content here...")
+      .replace(/\{\{community_name\}\}/g, "Sample Community")
+      .replace(/\{\{inviter_name\}\}/g, "Jane Smith")
+      .replace(/\{\{invite_link\}\}/g, "https://kworship.app/invite/sample")
+      .replace(/\{\{referral_link\}\}/g, "https://kworship.app/referral/sample");
   };
 
   return (
@@ -217,7 +224,7 @@ export const EmailComposer = () => {
                   <SelectValue placeholder="Select a template or start from scratch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Start from scratch</SelectItem>
+                  <SelectItem value="scratch">Start from scratch</SelectItem>
                   {templates.map((template) => (
                     <SelectItem key={template.id} value={template.id}>
                       {template.name}
@@ -254,6 +261,7 @@ export const EmailComposer = () => {
               <div className="flex flex-wrap gap-2 text-xs">
                 <code className="px-2 py-1 bg-background rounded">{"{{user_name}}"}</code>
                 <code className="px-2 py-1 bg-background rounded">{"{{app_url}}"}</code>
+                <code className="px-2 py-1 bg-background rounded">{"{{community_name}}"}</code>
               </div>
             </div>
           </CardContent>
@@ -300,6 +308,7 @@ export const EmailComposer = () => {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="worship_leader">Worship Leader</SelectItem>
+                  <SelectItem value="user">Regular User</SelectItem>
                 </SelectContent>
               </Select>
             )}
