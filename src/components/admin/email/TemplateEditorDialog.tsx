@@ -198,11 +198,12 @@ export const TemplateEditorDialog = ({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={category} onValueChange={setCategory} disabled={isReadOnly}>
+                <Select value={category} onValueChange={setCategory} disabled={isReadOnly || template?.is_system}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {template?.is_system && <SelectItem value="system">System</SelectItem>}
                     <SelectItem value="general">General</SelectItem>
                     <SelectItem value="invitation">Invitation</SelectItem>
                     <SelectItem value="announcement">Announcement</SelectItem>

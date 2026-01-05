@@ -121,6 +121,18 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Get recipients based on filter
     let recipients: Recipient[] = [];
+    let communityName = "";
+
+    // Fetch community name if sending to a community
+    if (recipientFilter.type === "community" && recipientFilter.communityId) {
+      const { data: community } = await supabaseClient
+        .from("worship_communities")
+        .select("name")
+        .eq("id", recipientFilter.communityId)
+        .single();
+      communityName = community?.name || "";
+      console.log("Community name:", communityName);
+    }
 
     if (testMode) {
       // In test mode, only send to the admin's email
@@ -231,10 +243,12 @@ const handler = async (req: Request): Promise<Response> => {
           const personalizedContent = replaceVariables(htmlContent, {
             user_name: recipient.full_name || "User",
             app_url: appUrl,
+            community_name: communityName,
           });
 
           const personalizedSubject = replaceVariables(subject, {
             user_name: recipient.full_name || "User",
+            community_name: communityName,
           });
 
           const result = await sendEmail(recipient.email, personalizedSubject, personalizedContent);
