@@ -33,16 +33,21 @@ const InvitedSignUp = () => {
     phone: "",
     birthDate: "",
   });
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    fullName: "",
-    phone: "",
-    birthDate: "",
+
+  // Fetch active legal documents for recording acceptance
+  const { data: legalDocuments } = useQuery({
+    queryKey: ["legal-docs-invited-signup", language],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("legal_documents")
+        .select("type, version")
+        .eq("language", language)
+        .eq("is_active", true)
+        .in("type", ["terms", "privacy"]);
+      return data || [];
+    },
   });
 
-  // Fetch invitation details using SECURITY DEFINER function (works for unauthenticated users)
   const { data: invitation, isLoading: invitationLoading, error: invitationError } = useQuery({
     queryKey: ["invitation", invitationId],
     queryFn: async () => {
@@ -365,7 +370,41 @@ const InvitedSignUp = () => {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
+            
+            {/* Legal Consent Checkbox */}
+            <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-0.5"
+              />
+              <div className="text-sm">
+                <Label htmlFor="terms" className="cursor-pointer leading-relaxed">
+                  {language === "ko" 
+                    ? "본인은 Kworship " 
+                    : "I agree to the Kworship "}
+                  <button
+                    type="button"
+                    className="text-primary hover:underline font-medium"
+                    onClick={() => setTermsDialogOpen(true)}
+                  >
+                    {language === "ko" ? "이용약관" : "Terms of Service"}
+                  </button>
+                  {language === "ko" ? " 및 " : " and "}
+                  <button
+                    type="button"
+                    className="text-primary hover:underline font-medium"
+                    onClick={() => setPrivacyDialogOpen(true)}
+                  >
+                    {language === "ko" ? "개인정보 처리방침" : "Privacy Policy"}
+                  </button>
+                  {language === "ko" ? "에 동의합니다." : "."}
+                </Label>
+              </div>
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={loading || !agreedToTerms}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -391,8 +430,25 @@ const InvitedSignUp = () => {
               </Button>
             </p>
           </div>
+          <div className="mt-2 text-center text-xs text-muted-foreground">
+            <Link to="/legal" className="hover:underline">
+              {language === "ko" ? "약관 및 정책 보기" : "View Terms & Policies"}
+            </Link>
+          </div>
         </CardContent>
       </Card>
+      
+      {/* Legal Document Dialogs */}
+      <LegalDocumentDialog
+        open={termsDialogOpen}
+        onOpenChange={setTermsDialogOpen}
+        documentType="terms"
+      />
+      <LegalDocumentDialog
+        open={privacyDialogOpen}
+        onOpenChange={setPrivacyDialogOpen}
+        documentType="privacy"
+      />
     </div>
   );
 };
