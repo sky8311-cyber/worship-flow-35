@@ -10,6 +10,8 @@ import { useNavigate } from "react-router-dom";
 import { TemplateCard } from "@/components/TemplateCard";
 import { EditTemplateDialog } from "@/components/EditTemplateDialog";
 import { EditRecurringDialog } from "@/components/EditRecurringDialog";
+import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
+import { FeatureGate } from "@/components/FeatureGate";
 
 interface Template {
   id: string;
@@ -133,6 +135,21 @@ const TemplateManager = () => {
               {language === "ko" ? "새 워십세트" : "New Set"}
             </Button>
           </div>
+
+          {/* Premium Feature Banner for Recurring */}
+          <FeatureGate 
+            feature="recurring_templates" 
+            showLockIcon={false}
+            fallback={
+              <LockedFeatureBanner 
+                feature="recurring_templates" 
+                message={language === "ko" ? "반복 일정 자동화" : "Recurring Schedule Automation"}
+                className="mb-6"
+              />
+            }
+          >
+            {null}
+          </FeatureGate>
 
           {/* Templates List */}
           {isLoading ? (
