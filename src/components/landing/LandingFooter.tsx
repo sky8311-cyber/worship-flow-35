@@ -80,8 +80,9 @@ export const LandingFooter = () => {
           
           {/* Bottom bar */}
           <div className="border-t border-primary-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-primary-foreground/60">
-              © {currentYear} K-Worship. All rights reserved.
+            <div className="text-sm text-primary-foreground/60 text-center md:text-left">
+              <p>© {currentYear} Goodpapa Inc. All rights reserved.</p>
+              <p className="mt-1">K-Worship™ is a trademark of Goodpapa Inc.</p>
             </div>
             
             {/* Social links */}
