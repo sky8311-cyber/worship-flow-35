@@ -32,10 +32,12 @@ import {
   Clock,
   Users,
   FileText,
-  Plus
+  Plus,
+  Lock
 } from "lucide-react";
 import { toast } from "sonner";
 import { getComponentLabel, WorshipComponentType } from "@/lib/worshipComponents";
+import { FeatureGate } from "@/components/FeatureGate";
 
 interface TemplateCardProps {
   template: {
@@ -239,13 +241,29 @@ export const TemplateCard = ({
                   {language === "ko" ? "템플릿 수정" : "Edit Template"}
                 </DropdownMenuItem>
                 {isSchedulerEnabled && (
-                  <DropdownMenuItem onClick={onEditRecurring}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {recurringSchedule 
-                      ? (language === "ko" ? "반복 일정 수정" : "Edit Recurring")
-                      : (language === "ko" ? "반복 일정 설정" : "Set Recurring")
+                  <FeatureGate feature="recurring_templates" showLockIcon={false}>
+                    <DropdownMenuItem onClick={onEditRecurring}>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {recurringSchedule 
+                        ? (language === "ko" ? "반복 일정 수정" : "Edit Recurring")
+                        : (language === "ko" ? "반복 일정 설정" : "Set Recurring")
+                      }
+                    </DropdownMenuItem>
+                  </FeatureGate>
+                )}
+                {isSchedulerEnabled && (
+                  <FeatureGate 
+                    feature="recurring_templates" 
+                    showLockIcon={false}
+                    fallback={
+                      <DropdownMenuItem disabled className="text-muted-foreground">
+                        <Lock className="w-4 h-4 mr-2" />
+                        {language === "ko" ? "반복 일정 (프리미엄)" : "Recurring (Premium)"}
+                      </DropdownMenuItem>
                     }
-                  </DropdownMenuItem>
+                  >
+                    {null}
+                  </FeatureGate>
                 )}
                 {isSchedulerEnabled && recurringSchedule && (
                   <>
