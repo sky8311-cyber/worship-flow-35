@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ export const LegalConsentModal = ({
 }: LegalConsentModalProps) => {
   const { language } = useTranslation();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
@@ -61,6 +63,12 @@ export const LegalConsentModal = ({
         
         if (error) throw error;
       }
+      
+      // Optimistically update the cache to prevent modal from re-appearing on back navigation
+      queryClient.setQueryData(
+        ["legal-consent-check", user.id, language],
+        { needsConsent: false, pendingDocuments: [] }
+      );
       
       toast.success(language === "ko" ? "약관에 동의하셨습니다" : "Terms accepted");
       onConsentComplete();
