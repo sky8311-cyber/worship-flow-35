@@ -77,7 +77,13 @@ export const LegalConsentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="max-w-lg" hideCloseButton>
+      <DialogContent 
+        className="max-w-lg" 
+        hideCloseButton
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>
             {language === "ko" ? "약관이 업데이트되었습니다" : "Updated Terms & Policies"}
