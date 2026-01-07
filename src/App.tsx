@@ -10,6 +10,8 @@ import { SongCartProvider } from "@/contexts/SongCartContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
+import { LegalConsentModal } from "@/components/legal/LegalConsentModal";
+import { useLegalConsent } from "@/hooks/useLegalConsent";
 
 // Critical path - keep synchronous for fast initial load
 import Landing from "./pages/Landing";
@@ -38,6 +40,7 @@ const RewardsStore = lazy(() => import("./pages/RewardsStore"));
 const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -71,6 +74,26 @@ const queryClient = new QueryClient({
   },
 });
 
+// Legal Consent Gate - shows modal if user needs to accept updated terms
+const LegalConsentGate = ({ children }: { children: React.ReactNode }) => {
+  const { needsConsent, pendingDocuments, isLoading, refetch } = useLegalConsent();
+  
+  if (isLoading) {
+    return <PageLoader />;
+  }
+  
+  return (
+    <>
+      {children}
+      <LegalConsentModal
+        open={needsConsent}
+        pendingDocuments={pendingDocuments}
+        onConsentComplete={() => refetch()}
+      />
+    </>
+  );
+};
+
 // ProtectedRoute component - must be used inside AuthProvider
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isFullyLoaded } = useAuth();
@@ -91,7 +114,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <PageLoader />;
   }
   
-  return <>{children}</>;
+  return <LegalConsentGate>{children}</LegalConsentGate>;
 };
 
 const App = () => {
@@ -117,6 +140,7 @@ const App = () => {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/r/:referralCode" element={<ReferralRedirect />} />
+              <Route path="/legal" element={<Legal />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

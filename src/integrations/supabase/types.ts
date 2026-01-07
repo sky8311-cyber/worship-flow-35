@@ -711,6 +711,72 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_acceptances: {
+        Row: {
+          accepted_at: string | null
+          document_type: Database["public"]["Enums"]["legal_document_type"]
+          id: string
+          ip_address: string | null
+          language: Database["public"]["Enums"]["legal_language"]
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          document_type: Database["public"]["Enums"]["legal_document_type"]
+          id?: string
+          ip_address?: string | null
+          language: Database["public"]["Enums"]["legal_language"]
+          user_id: string
+          version: string
+        }
+        Update: {
+          accepted_at?: string | null
+          document_type?: Database["public"]["Enums"]["legal_document_type"]
+          id?: string
+          ip_address?: string | null
+          language?: Database["public"]["Enums"]["legal_language"]
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      legal_documents: {
+        Row: {
+          content: string
+          created_at: string | null
+          effective_date: string
+          id: string
+          is_active: boolean | null
+          language: Database["public"]["Enums"]["legal_language"]
+          title: string
+          type: Database["public"]["Enums"]["legal_document_type"]
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          language: Database["public"]["Enums"]["legal_language"]
+          title: string
+          type: Database["public"]["Enums"]["legal_document_type"]
+          version: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          effective_date?: string
+          id?: string
+          is_active?: boolean | null
+          language?: Database["public"]["Enums"]["legal_language"]
+          title?: string
+          type?: Database["public"]["Enums"]["legal_document_type"]
+          version?: string
+        }
+        Relationships: []
+      }
       liturgical_calendar_items: {
         Row: {
           created_at: string
@@ -3100,6 +3166,8 @@ export type Database = {
     Enums: {
       app_role: "admin" | "worship_leader" | "user"
       collaborator_role: "editor" | "viewer"
+      legal_document_type: "terms" | "privacy" | "copyright" | "trademark"
+      legal_language: "ko" | "en"
       seed_activity_type:
         | "profile_setup"
         | "avatar_upload"
@@ -3246,6 +3314,8 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "worship_leader", "user"],
       collaborator_role: ["editor", "viewer"],
+      legal_document_type: ["terms", "privacy", "copyright", "trademark"],
+      legal_language: ["ko", "en"],
       seed_activity_type: [
         "profile_setup",
         "avatar_upload",

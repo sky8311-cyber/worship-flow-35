@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { LegalDocumentDialog } from "@/components/legal/LegalDocumentDialog";
 import { useQuery } from "@tanstack/react-query";
 import { Users, ChurchIcon, Loader2 } from "lucide-react";
 
@@ -17,9 +19,20 @@ const InvitedSignUp = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, signUp } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const signupInProgress = useRef(false); // Flag to prevent redirect during fresh signup
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsDialogOpen, setTermsDialogOpen] = useState(false);
+  const [privacyDialogOpen, setPrivacyDialogOpen] = useState(false);
+  const signupInProgress = useRef(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    phone: "",
+    birthDate: "",
+  });
   const [formData, setFormData] = useState({
     email: "",
     password: "",

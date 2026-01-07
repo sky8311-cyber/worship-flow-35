@@ -19,7 +19,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { signIn } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -256,6 +256,17 @@ const Login = () => {
                     >
                       {t("auth.signUp")}
                     </Button>
+                  </div>
+                  
+                  {/* Legal Links */}
+                  <div className="text-center pt-2 text-xs text-muted-foreground">
+                    <Link to="/legal" className="hover:underline">
+                      {language === "ko" ? "이용약관" : "Terms of Service"}
+                    </Link>
+                    <span className="mx-2">|</span>
+                    <Link to="/legal" className="hover:underline">
+                      {language === "ko" ? "개인정보 처리방침" : "Privacy Policy"}
+                    </Link>
                   </div>
                 </form>
               </CardContent>
