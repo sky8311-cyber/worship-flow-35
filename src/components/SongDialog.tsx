@@ -27,8 +27,6 @@ import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { FeatureGatedButton, FeatureGate } from "@/components/FeatureGate";
-import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
@@ -814,12 +812,12 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <div className="flex items-center gap-1 shrink-0">
-              <FeatureGatedButton
-                feature="ai_lyrics_enrichment"
+              <Button
                 onClick={handleAIEnrich}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-1"
+                disabled={aiEnriching || !formData.title.trim()}
               >
                 {aiEnriching ? (
                   <>
@@ -832,7 +830,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                     <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
                   </>
                 )}
-              </FeatureGatedButton>
+              </Button>
               <DialogClose asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <X className="h-4 w-4" />
@@ -845,59 +843,46 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
 
         {/* Usage Statistics Section - Only for existing songs */}
         {song && usageData && usageData.usage_count > 0 && (
-          <FeatureGate 
-            feature="song_usage_analytics" 
-            showLockIcon={false}
-            fallback={
-              <LockedFeatureBanner 
-                feature="song_usage_analytics" 
-                message={language === "ko" ? "곡 사용 분석" : "Song Usage Analytics"}
-                className="mb-4"
-                compact
-              />
-            }
-          >
-            <div className="mb-4 p-4 bg-accent/10 border border-border rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm">{t("songUsage.recentUsage")}</h3>
-              </div>
-              
-              <div className="space-y-2 mb-3">
-                <p className="text-sm">
-                  <span className="font-medium">{t("songUsage.totalUsageCount")}:</span>{" "}
-                  <span className="text-primary">{usageData.usage_count}{t("songUsage.times")}</span>
-                </p>
-                {usageData.last_used_at && usageData.last_used_service_name && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("songUsage.lastUsedAt")}: {format(new Date(usageData.last_used_at), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy", { locale: language === "ko" ? ko : enUS })} · {usageData.last_used_service_name}
-                  </p>
-                )}
-              </div>
-
-              {/* Recent usage list */}
-              {usageData.usage_history.slice(0, 3).length > 0 && (
-                <div className="space-y-2 mb-3">
-                  {usageData.usage_history.slice(0, 3).map((item, idx) => (
-                    <div key={idx} className="text-xs text-muted-foreground pl-3 border-l-2 border-border">
-                      {format(new Date(item.date), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy")} · {item.service_name}
-                      {item.community_name && ` · ${item.community_name}`}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                onClick={() => setUsageHistoryExpanded(true)}
-                className="h-auto p-0 text-primary"
-              >
-                {t("songUsage.viewAllHistory")} →
-              </Button>
+          <div className="mb-4 p-4 bg-accent/10 border border-border rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="w-4 h-4 text-primary" />
+              <h3 className="font-semibold text-sm">{t("songUsage.recentUsage")}</h3>
             </div>
-          </FeatureGate>
+            
+            <div className="space-y-2 mb-3">
+              <p className="text-sm">
+                <span className="font-medium">{t("songUsage.totalUsageCount")}:</span>{" "}
+                <span className="text-primary">{usageData.usage_count}{t("songUsage.times")}</span>
+              </p>
+              {usageData.last_used_at && usageData.last_used_service_name && (
+                <p className="text-sm text-muted-foreground">
+                  {t("songUsage.lastUsedAt")}: {format(new Date(usageData.last_used_at), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy", { locale: language === "ko" ? ko : enUS })} · {usageData.last_used_service_name}
+                </p>
+              )}
+            </div>
+
+            {/* Recent usage list */}
+            {usageData.usage_history.slice(0, 3).length > 0 && (
+              <div className="space-y-2 mb-3">
+                {usageData.usage_history.slice(0, 3).map((item, idx) => (
+                  <div key={idx} className="text-xs text-muted-foreground pl-3 border-l-2 border-border">
+                    {format(new Date(item.date), language === "ko" ? "yyyy-MM-dd" : "MMM d, yyyy")} · {item.service_name}
+                    {item.community_name && ` · ${item.community_name}`}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={() => setUsageHistoryExpanded(true)}
+              className="h-auto p-0 text-primary"
+            >
+              {t("songUsage.viewAllHistory")} →
+            </Button>
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
