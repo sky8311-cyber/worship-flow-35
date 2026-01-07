@@ -2420,6 +2420,60 @@ export type Database = {
           },
         ]
       }
+      tier_features: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          description_ko: string | null
+          display_order: number | null
+          feature_key: string
+          feature_name: string
+          feature_name_ko: string | null
+          id: string
+          is_active: boolean | null
+          tier_church: boolean | null
+          tier_member: boolean | null
+          tier_premium: boolean | null
+          tier_worship_leader: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          description_ko?: string | null
+          display_order?: number | null
+          feature_key: string
+          feature_name: string
+          feature_name_ko?: string | null
+          id?: string
+          is_active?: boolean | null
+          tier_church?: boolean | null
+          tier_member?: boolean | null
+          tier_premium?: boolean | null
+          tier_worship_leader?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          description_ko?: string | null
+          display_order?: number | null
+          feature_key?: string
+          feature_name?: string
+          feature_name_ko?: string | null
+          id?: string
+          is_active?: boolean | null
+          tier_church?: boolean | null
+          tier_member?: boolean | null
+          tier_premium?: boolean | null
+          tier_worship_leader?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_favorite_songs: {
         Row: {
           created_at: string | null

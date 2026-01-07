@@ -48,6 +48,7 @@ const AdminWorshipLeaderApplications = lazy(() => import("./pages/AdminWorshipLe
 const AdminCRM = lazy(() => import("./pages/AdminCRM"));
 const AdminRewards = lazy(() => import("./pages/AdminRewards"));
 const AdminEmail = lazy(() => import("./pages/AdminEmail"));
+const AdminFeatures = lazy(() => import("./pages/AdminFeatures"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -150,6 +151,7 @@ const App = () => {
               <Route path="/admin/crm" element={<AdminRoute><AdminCRM /></AdminRoute>} />
               <Route path="/admin/rewards" element={<AdminRoute><AdminRewards /></AdminRoute>} />
               <Route path="/admin/email" element={<AdminRoute><AdminEmail /></AdminRoute>} />
+              <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

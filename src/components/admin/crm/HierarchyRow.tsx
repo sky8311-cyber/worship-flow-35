@@ -2,9 +2,11 @@ import { TableRow, TableCell } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, ChevronDown, Building2, Crown, Users, User, ExternalLink } from "lucide-react";
+import { ChevronRight, ChevronDown, Building2, Crown, Users, User, ExternalLink, Star } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { TierLevel } from "@/hooks/useTierFeature";
 
 export type EntityType = "church_account" | "worship_leader" | "community" | "member";
 
@@ -76,6 +78,7 @@ export const HierarchyRow = ({
           typeLabel: data.subscription_status === "active" ? "Active" : data.subscription_status,
           stats: `${data.communityCount || 0} communities · ${data.memberCount || 0} members`,
           created: data.created_at,
+          tier: "church" as TierLevel,
         };
       case "worship_leader":
         return {
@@ -85,6 +88,7 @@ export const HierarchyRow = ({
           typeLabel: data.churchAccount ? "Church" : data.isPremium ? "Premium" : "Free",
           stats: `${data.communityCount || 0} communities`,
           created: data.createdAt || data.profile?.created_at,
+          tier: (data.churchAccount ? "church" : data.isPremium ? "premium" : "worship_leader") as TierLevel,
         };
       case "community":
         return {
@@ -94,8 +98,15 @@ export const HierarchyRow = ({
           typeLabel: data.is_active ? "Active" : "Inactive",
           stats: `${data.memberCount || 0} members`,
           created: data.created_at,
+          tier: null,
         };
       case "member":
+        // Determine member tier based on roles
+        const hasWorshipLeaderRole = data.roles?.some((r: any) => r.role === "worship_leader");
+        const hasPremium = data.profile?.isPremium;
+        const memberTier: TierLevel = hasWorshipLeaderRole 
+          ? (hasPremium ? "premium" : "worship_leader") 
+          : "member";
         return {
           name: data.profile?.full_name || "Unknown",
           email: data.profile?.email || "-",
@@ -103,9 +114,10 @@ export const HierarchyRow = ({
           typeLabel: data.role || "Member",
           stats: "",
           created: data.joined_at || data.profile?.created_at,
+          tier: memberTier,
         };
       default:
-        return { name: "Unknown", email: "-", avatar: null, typeLabel: "", stats: "", created: null };
+        return { name: "Unknown", email: "-", avatar: null, typeLabel: "", stats: "", created: null, tier: null };
     }
   };
 
@@ -195,11 +207,16 @@ export const HierarchyRow = ({
           {info.email}
         </TableCell>
 
-        {/* Type Column */}
+        {/* Type/Tier Column */}
         <TableCell>
-          <Badge variant="secondary" className={`${config.badgeClass} text-white text-xs`}>
-            {info.typeLabel}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {info.tier && <TierBadge tier={info.tier} size="sm" />}
+            {!info.tier && (
+              <Badge variant="secondary" className={`${config.badgeClass} text-white text-xs`}>
+                {info.typeLabel}
+              </Badge>
+            )}
+          </div>
         </TableCell>
 
         {/* Stats Column */}
