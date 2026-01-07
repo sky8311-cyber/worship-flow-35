@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { X, Building2, Crown, Users, User, ExternalLink, Mail, Globe, Calendar, Star, Pencil, Trash2, UserCog, Send } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import type { CRMEntity, CRMTab } from "@/pages/AdminCRM";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { TierLevel, TIER_CONFIG } from "@/hooks/useTierFeature";
 
 interface DetailPanelProps {
   entity: CRMEntity;
@@ -31,7 +33,10 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             </div>
           )}
           <div className="flex-1">
-            <h2 className="text-xl font-bold">{account.name}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-bold">{account.name}</h2>
+              <TierBadge tier="church" size="sm" />
+            </div>
             {account.slogan && (
               <p className="text-sm text-muted-foreground italic">"{account.slogan}"</p>
             )}
@@ -148,18 +153,21 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
             <Crown className="absolute -top-1 -right-1 h-5 w-5 text-purple-500" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              {leader.profile?.full_name || "Unknown"}
-              {leader.isPremium && <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />}
-            </h2>
-            <p className="text-sm text-muted-foreground">{leader.profile?.email}</p>
-            {leader.churchAccount ? (
-              <Badge className="bg-blue-500">Church Account</Badge>
-            ) : leader.isPremium ? (
-              <Badge className="bg-yellow-500">Premium</Badge>
-            ) : (
-              <Badge variant="secondary">Free</Badge>
-            )}
+            {/* Determine worship leader tier */}
+            {(() => {
+              const tier: TierLevel = leader.churchAccount ? "church" : leader.isPremium ? "premium" : "worship_leader";
+              return (
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-xl font-bold">
+                      {leader.profile?.full_name || "Unknown"}
+                    </h2>
+                    <TierBadge tier={tier} size="sm" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">{leader.profile?.email}</p>
+                </>
+              );
+            })()}
           </div>
         </div>
 
