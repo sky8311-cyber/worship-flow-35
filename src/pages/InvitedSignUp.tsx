@@ -190,6 +190,19 @@ const InvitedSignUp = () => {
       console.log('Welcome email failed, but signup succeeded:', emailError);
     }
     
+    // Record legal acceptance
+    if (legalDocuments?.length) {
+      for (const doc of legalDocuments) {
+        await supabase.from("legal_acceptances").insert({
+          user_id: newUser.id,
+          document_type: doc.type,
+          version: doc.version,
+          language: language as "ko" | "en",
+          ip_address: null,
+        });
+      }
+    }
+    
     // Credit K-Seed reward to the inviter (fire-and-forget)
     if (invitation?.invited_by) {
       import("@/lib/rewardsHelper").then(({ creditInviterReward }) => {
