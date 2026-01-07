@@ -1,6 +1,7 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Instagram, Youtube, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export const LandingFooter = () => {
   const { t } = useTranslation();
@@ -40,41 +41,41 @@ export const LandingFooter = () => {
             
             {/* Product links */}
             <nav className="space-y-3">
-              <h4 className="font-semibold text-lg mb-4">Product</h4>
+              <h4 className="font-semibold text-lg mb-4">{t("landing.footer.product")}</h4>
               <a href="#features" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                Features
+                {t("landing.footer.features")}
               </a>
               <a href="#how-it-works" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                How It Works
+                {t("landing.footer.howItWorks")}
               </a>
               <a href="#community" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                Community
+                {t("landing.footer.community")}
               </a>
             </nav>
             
             {/* Support links */}
             <nav className="space-y-3">
-              <h4 className="font-semibold text-lg mb-4">Support</h4>
+              <h4 className="font-semibold text-lg mb-4">{t("landing.footer.support")}</h4>
               <a href="#faq" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                FAQs
+                {t("landing.footer.faqs")}
               </a>
               <a href="mailto:hello@kworship.app" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                 {t("landing.footer.contact")}
               </a>
               <a href="mailto:hello@kworship.app" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
-                Help Center
+                {t("landing.footer.helpCenter")}
               </a>
             </nav>
             
             {/* Legal links */}
             <nav className="space-y-3">
-              <h4 className="font-semibold text-lg mb-4">Legal</h4>
-              <button className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors text-left">
+              <h4 className="font-semibold text-lg mb-4">{t("landing.footer.legal")}</h4>
+              <Link to="/legal" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                 {t("landing.footer.privacy")}
-              </button>
-              <button className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors text-left">
+              </Link>
+              <Link to="/legal" className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors">
                 {t("landing.footer.terms")}
-              </button>
+              </Link>
             </nav>
           </div>
           
