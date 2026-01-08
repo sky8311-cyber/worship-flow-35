@@ -884,6 +884,48 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_milestones: {
+        Row: {
+          category: string
+          created_at: string
+          description_en: string | null
+          description_ko: string | null
+          event_date: string
+          id: string
+          is_visible: boolean
+          sort_order: number
+          title_en: string
+          title_ko: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description_en?: string | null
+          description_ko?: string | null
+          event_date: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number
+          title_en: string
+          title_ko: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description_en?: string | null
+          description_ko?: string | null
+          event_date?: string
+          id?: string
+          is_visible?: boolean
+          sort_order?: number
+          title_en?: string
+          title_ko?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_comment_reads: {
         Row: {
           created_at: string
