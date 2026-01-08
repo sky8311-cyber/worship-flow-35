@@ -75,7 +75,10 @@ export const MiniPlayerBar = ({
   if (!currentTrack) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg safe-area-inset-bottom">
+    <div 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-lg"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       <div className="container max-w-5xl mx-auto">
         <div className="flex items-center gap-2 p-2 sm:p-3">
           {/* Expand button */}
