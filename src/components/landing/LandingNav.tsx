@@ -65,7 +65,7 @@ export const LandingNav = () => {
               variant="outline"
             >
               <Link to="/login">
-                {t("landing.nav.betaLogin")}
+                {t("landing.nav.login")}
               </Link>
             </Button>
             <Button
@@ -74,7 +74,7 @@ export const LandingNav = () => {
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Link to="/signup">
-                {t("landing.nav.betaSignup")}
+                {t("landing.nav.signup")}
               </Link>
             </Button>
           </div>
@@ -122,7 +122,7 @@ export const LandingNav = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Link to="/login">
-                  {t("landing.nav.betaLogin")}
+                  {t("landing.nav.login")}
                 </Link>
               </Button>
               <Button
@@ -131,7 +131,7 @@ export const LandingNav = () => {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Link to="/signup">
-                  {t("landing.nav.betaSignup")}
+                  {t("landing.nav.signup")}
                 </Link>
               </Button>
             </div>

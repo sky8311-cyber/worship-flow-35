@@ -8,7 +8,7 @@ import { LandingIntro } from "@/components/landing/LandingIntro";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingCommunity } from "@/components/landing/LandingCommunity";
-import { LandingBetaCTA } from "@/components/landing/LandingBetaCTA";
+import { LandingCTA } from "@/components/landing/LandingCTA";
 import { LandingFAQ } from "@/components/landing/LandingFAQ";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
@@ -37,7 +37,7 @@ const Landing = () => {
         <LandingFeatures />
         <LandingHowItWorks />
         <LandingCommunity />
-        <LandingBetaCTA />
+        <LandingCTA />
         <LandingFAQ />
       </div>
       

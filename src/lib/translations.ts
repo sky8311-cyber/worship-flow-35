@@ -241,7 +241,7 @@ export const translations = {
       headline: "For Worship Communities",
       subheadline: "Integrated Worship Leader Platform",
       description: "All-in-one worship preparation platform for song libraries, setlists, and team collaboration.",
-      betaBadge: "Beta Service",
+      badge: "Now Available",
       features: {
         library: {
           title: "Save and Share Song Library",
@@ -1428,15 +1428,15 @@ export const translations = {
         howItWorks: "How It Works",
         community: "Community",
         faq: "FAQ",
-        betaSignup: "Join Beta",
-        betaLogin: "Login",
+        signup: "Sign Up",
+        login: "Login",
       },
       hero: {
         title1: "Integrated Platform",
         title2: "for Worship Communities",
         subtitle: "K-Worship is an all-in-one worship preparation app where you can manage and share setlists, song libraries, and worship leader communities in one place.",
         description: "Save songs you've used, scores, and worship flows, then naturally share them with other worship leaders and team members.",
-        ctaButton: "Join Beta",
+        ctaButton: "Get Started Free",
         learnMore: "How does it help?",
         mockup: {
           date: "Nov",
@@ -1540,11 +1540,10 @@ export const translations = {
           referenceNote: "Reference other worship leaders' setlists",
         },
       },
-      betaCta: {
-        badge: "Beta Version",
-        title: "We're waiting for worship leaders",
-        description: "K-Worship is being built together with worship leaders actively serving in real worship settings. Join the beta and be the first to experience transformed worship preparation.",
-        ctaButton: "Join Beta",
+      cta: {
+        title: "Ready to Transform Your Worship Preparation?",
+        description: "Join thousands of worship leaders who are already using K-Worship to prepare and share worship sets effortlessly.",
+        ctaButton: "Get Started Free",
         hasAccount: "Already have an account?",
         login: "Login",
       },
@@ -1568,8 +1567,8 @@ export const translations = {
             answer: "PDFs include worship title, date, message text, each song's title, artist, key, BPM, score images, and performance notes (song form notes). With one click, you can share or print the entire worship setlist for your team.",
           },
           q5: {
-            question: "When will it be available?",
-            answer: "K-Worship is currently in beta development. If you sign up for early access, you'll get the opportunity to participate in testing and be the first to receive news of the official launch.",
+            question: "Is K-Worship free to use?",
+            answer: "K-Worship offers a free tier with core features for worship leaders. Premium features may be available in the future for advanced team collaboration and church management needs.",
           },
           q6: {
             question: "Is the song library managed separately for each church?",
@@ -2101,7 +2100,7 @@ export const translations = {
       headline: "예배 공동체를 위한",
       subheadline: "워십리더 통합 플랫폼",
       description: "곡 라이브러리, 워십세트, 예배공동체를 한 곳에서 관리하는 예배 준비 플랫폼입니다.",
-      betaBadge: "베타 서비스",
+      badge: "정식 출시",
       features: {
         library: {
           title: "곡 라이브러리 저장 및 공유",
@@ -3270,15 +3269,15 @@ export const translations = {
         howItWorks: "어떻게 쓰이나요",
         community: "워십리더 커뮤니티",
         faq: "FAQ",
-        betaSignup: "베타 가입",
-        betaLogin: "로그인",
+        signup: "가입하기",
+        login: "로그인",
       },
       hero: {
         title1: "예배 공동체를 위한",
         title2: "통합 플랫폼",
         subtitle: "K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 워십리더 커뮤니티를 한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.",
         description: "사용했던 곡과 악보, 예배 흐름을 저장하고, 다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.",
-        ctaButton: "베타 가입하기",
+        ctaButton: "무료로 시작하기",
         learnMore: "어떻게 돕나요?",
         mockup: {
           date: "Nov",
@@ -3382,11 +3381,10 @@ export const translations = {
           referenceNote: "다른 워십리더들의 콘티 참고",
         },
       },
-      betaCta: {
-        badge: "Beta Version",
-        title: "워십리더를 기다립니다",
-        description: "K-Worship은 실제 예배 현장에서 사역하는 워십리더들과 함께 만들어 가고 있습니다. 베타에 가입하시고, 가장 먼저 변화된 예배 준비를 경험해 보세요.",
-        ctaButton: "베타 가입하기",
+      cta: {
+        title: "예배 준비, 지금 바로 시작하세요",
+        description: "K-Worship과 함께 더 나은 예배 준비를 경험해 보세요. 수많은 워십리더들이 이미 사용하고 있습니다.",
+        ctaButton: "무료로 시작하기",
         hasAccount: "이미 계정이 있으신가요?",
         login: "로그인",
       },
@@ -3410,8 +3408,8 @@ export const translations = {
             answer: "PDF에는 예배 제목, 날짜, 메시지 본문, 각 곡의 제목, 아티스트, Key, BPM, 악보 이미지, 진행 설명(송폼 노트)이 포함됩니다. 한 번의 클릭으로 전체 예배 콘티를 팀원들과 공유하거나 인쇄할 수 있습니다.",
           },
           q5: {
-            question: "언제쯤 사용할 수 있게 되나요?",
-            answer: "K-Worship은 현재 베타 개발 중입니다. 얼리 액세스를 신청하시면, 테스트 참여 기회와 정식 출시 소식을 가장 먼저 받아보실 수 있습니다.",
+            question: "K-Worship은 무료인가요?",
+            answer: "K-Worship은 워십리더를 위한 핵심 기능을 무료로 제공합니다. 향후 팀 협업 및 교회 관리를 위한 고급 기능은 프리미엄으로 제공될 수 있습니다.",
           },
           q6: {
             question: "곡 라이브러리는 교회마다 따로 관리되나요?",
