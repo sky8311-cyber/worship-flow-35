@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
-  Repeat, Shuffle, Music, Volume2 
+  Repeat, Shuffle, Music, Volume2, ExternalLink 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
+import { toast } from "sonner";
 
 declare global {
   interface Window {
@@ -56,8 +57,10 @@ export const MusicPlayerMode = ({
 }: MusicPlayerModeProps) => {
   const { t, language } = useTranslation();
   const [apiReady, setApiReady] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const shuffleOrderRef = useRef<number[]>([]);
+  const pendingPlayRef = useRef(false);
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -100,23 +103,42 @@ export const MusicPlayerMode = ({
     }
 
     const createPlayer = () => {
+      setPlayerReady(false);
       playerRef.current = new window.YT.Player(playerId, {
         height: "100%",
         width: "100%",
         videoId: playlist[currentIndex]?.videoId,
         playerVars: {
-          autoplay: 0, // iOS Safari doesn't allow autoplay without user gesture
+          autoplay: 0,
           controls: 1,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1, // Required for inline playback on iOS
+          playsinline: 1,
+          origin: window.location.origin,
         },
         events: {
           onReady: () => {
-            // Don't auto-play - let user tap video or use play button
             console.log('YouTube player ready');
+            setPlayerReady(true);
+            // If user pressed play before ready, execute now
+            if (pendingPlayRef.current) {
+              pendingPlayRef.current = false;
+              playerRef.current?.playVideo();
+            }
           },
           onStateChange: handleStateChange,
+          onError: (event: any) => {
+            console.error('YouTube player error:', event.data);
+            const errorMessages: Record<number, string> = {
+              2: 'Invalid video ID',
+              5: 'HTML5 player error',
+              100: 'Video not found',
+              101: 'Embedding not allowed',
+              150: 'Embedding not allowed',
+            };
+            const msg = errorMessages[event.data] || `Error code: ${event.data}`;
+            toast.error(language === "ko" ? `재생 오류: ${msg}` : `Playback error: ${msg}`);
+          },
         },
       });
     };
@@ -196,11 +218,26 @@ export const MusicPlayerMode = ({
   };
 
   const togglePlayPause = () => {
-    if (!playerRef.current) return;
+    if (!playerRef.current) {
+      toast.info(language === "ko" ? "플레이어 로딩 중..." : "Loading player...");
+      pendingPlayRef.current = true;
+      return;
+    }
+    if (!playerReady) {
+      pendingPlayRef.current = true;
+      return;
+    }
     if (isPlaying) {
       playerRef.current.pauseVideo();
     } else {
       playerRef.current.playVideo();
+    }
+  };
+
+  const openInYouTube = () => {
+    const track = playlist[currentIndex];
+    if (track?.videoId) {
+      window.open(`https://www.youtube.com/watch?v=${track.videoId}`, '_blank');
     }
   };
 
@@ -231,29 +268,39 @@ export const MusicPlayerMode = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
+      {/* Full-screen overlay without transform - fixes iOS Safari iframe touch bug */}
       <DialogContent 
-        className="max-w-2xl w-[95vw] h-[90vh] max-h-[90vh] p-0 flex flex-col overflow-hidden"
+        className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-[100dvh] max-h-[100dvh] p-0 flex flex-col overflow-hidden rounded-none border-0"
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={handleClose}
         hideCloseButton={true}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 sm:p-4 border-b flex-shrink-0">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b flex-shrink-0 bg-background">
           <Button variant="ghost" size="sm" onClick={onMinimize} className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
             <ChevronDown className="w-4 h-4" />
             <span className="hidden sm:inline">{t("bandView.musicPlayer.minimize")}</span>
           </Button>
           <span className="font-semibold text-sm sm:text-base">{t("bandView.musicPlayer.title")}</span>
-          <Button variant="ghost" size="icon" onClick={handleClose} className="w-8 h-8 sm:w-10 sm:h-10">
-            <X className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={openInYouTube} className="w-8 h-8 sm:w-10 sm:h-10" title="Open in YouTube">
+              <ExternalLink className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleClose} className="w-8 h-8 sm:w-10 sm:h-10">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        {/* Video Player - constrained height to leave room for playlist */}
-        <div className="flex-shrink-0 bg-black max-h-[35vh]">
+        {/* Video Player - constrained height for playlist room */}
+        <div className="flex-shrink-0 bg-black max-h-[28dvh]">
           <div 
             ref={playerContainerRef}
-            className="aspect-video w-full max-h-[35vh]"
+            className="aspect-video w-full max-h-[28dvh]"
           />
         </div>
 
@@ -311,8 +358,8 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Playlist - minimum height to show at least 3 songs */}
-        <div className="flex-1 min-h-[180px] flex flex-col overflow-hidden">
+        {/* Playlist - guaranteed space for at least 3-4 songs */}
+        <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
           <div className="px-3 sm:px-4 py-2 border-b bg-muted/30 flex-shrink-0">
             <span className="text-xs sm:text-sm font-medium">
               {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
