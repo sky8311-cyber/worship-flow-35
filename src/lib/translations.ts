@@ -1432,12 +1432,24 @@ export const translations = {
         login: "Login",
       },
       hero: {
+        headline: "Worship Platform Built by Worship Leaders",
+        subheadline: "All-in-One System • Official Launch • Multi-Community • 100% Bilingual",
+        tagline: "Designed meticulously and practically — finally officially released. We're giving back your time.",
+        ctaButton: "Get Started Free",
+        learnMore: "See Features",
+        badges: {
+          allInOne: "All-in-One",
+          officialLaunch: "Official Launch",
+          multiCommunity: "Multi-Community",
+          bilingual: "EN/KO 100%",
+        },
+        videoLabel: "Product Demo",
+        videoTitle: "See K-Worship in Action",
+        // Keep old keys for compatibility
         title1: "Integrated Platform",
         title2: "for Worship Communities",
         subtitle: "K-Worship is an all-in-one worship preparation app where you can manage and share setlists, song libraries, and worship leader communities in one place.",
         description: "Save songs you've used, scores, and worship flows, then naturally share them with other worship leaders and team members.",
-        ctaButton: "Get Started Free",
-        learnMore: "How does it help?",
         mockup: {
           date: "Nov",
           serviceTitle: "Sunday 2nd Service",
@@ -1446,6 +1458,55 @@ export const translations = {
           teamCount: "7 members",
           shared: "Shared",
           viewAll: "View All",
+        },
+      },
+      trust: {
+        title: "Trusted by worship leaders worldwide",
+        leaders: "Worship Leaders",
+        communities: "Communities",
+        songs: "Songs Managed",
+      },
+      value: {
+        headline: "We're giving back your time",
+        subheadline: "So you can focus on what truly matters",
+        items: {
+          time: {
+            title: "Save Time",
+            description: "Cut your worship preparation time in half with streamlined workflows",
+          },
+          collect: {
+            title: "Collect",
+            description: "Preserve traces of your worship journey in one place",
+          },
+          connect: {
+            title: "Connect",
+            description: "Turn records into lasting memories and shared experiences",
+          },
+          focus: {
+            title: "Focus",
+            description: "Spend more time on ministry, less on logistics",
+          },
+        },
+      },
+      testimonials: {
+        title: "What Leaders Are Saying",
+        subtitle: "Hear from worship leaders who transformed their preparation",
+        items: {
+          item1: {
+            quote: "K-Worship cut my prep time in half. I finally have time to focus on what matters.",
+            author: "John D.",
+            role: "Worship Leader, Seoul",
+          },
+          item2: {
+            quote: "Finally, a tool that was built by someone who understands our needs.",
+            author: "Sarah K.",
+            role: "Music Director, LA",
+          },
+          item3: {
+            quote: "Our whole team is connected now. Communication has never been easier.",
+            author: "David P.",
+            role: "Youth Pastor, Busan",
+          },
         },
       },
       intro: {
@@ -3273,12 +3334,24 @@ export const translations = {
         login: "로그인",
       },
       hero: {
+        headline: "현장 워십리더가 만든 예배 공동체 플랫폼",
+        subheadline: "올인원 시스템 • 정식 출시 • 멀티 공동체 • 한/영 100%",
+        tagline: "실질적이고 섬세하게 디자인된 상품이 드디어 정식 출시. 여러분의 시간을 돌려드립니다.",
+        ctaButton: "무료로 시작하기",
+        learnMore: "기능 보기",
+        badges: {
+          allInOne: "올인원",
+          officialLaunch: "정식 출시",
+          multiCommunity: "멀티 공동체",
+          bilingual: "한/영 100%",
+        },
+        videoLabel: "제품 데모",
+        videoTitle: "K-Worship 살펴보기",
+        // Keep old keys for compatibility
         title1: "예배 공동체를 위한",
         title2: "통합 플랫폼",
         subtitle: "K-Worship은 찬양 송리스트(콘티), 곡 라이브러리, 워십리더 커뮤니티를 한 곳에서 관리하고 나눌 수 있는 예배 준비 올인원 앱입니다.",
         description: "사용했던 곡과 악보, 예배 흐름을 저장하고, 다른 예배 인도자와 팀원들과 자연스럽게 공유해 보세요.",
-        ctaButton: "무료로 시작하기",
-        learnMore: "어떻게 돕나요?",
         mockup: {
           date: "Nov",
           serviceTitle: "주일 2부 예배",
@@ -3287,6 +3360,55 @@ export const translations = {
           teamCount: "팀원 7명",
           shared: "공유됨",
           viewAll: "전체 보기",
+        },
+      },
+      trust: {
+        title: "전 세계 워십리더들이 신뢰하는 플랫폼",
+        leaders: "워십리더",
+        communities: "공동체",
+        songs: "관리 중인 곡",
+      },
+      value: {
+        headline: "여러분의 시간을 돌려드립니다",
+        subheadline: "더 중요한 것에 집중하세요",
+        items: {
+          time: {
+            title: "시간 절약",
+            description: "효율적인 워크플로우로 예배 준비 시간을 절반으로",
+          },
+          collect: {
+            title: "기록",
+            description: "예배인도의 흔적을 한 곳에 모아두세요",
+          },
+          connect: {
+            title: "연결",
+            description: "기록을 기억으로, 경험을 나눔으로 연결하세요",
+          },
+          focus: {
+            title: "집중",
+            description: "더 중요한 사역에 집중하세요",
+          },
+        },
+      },
+      testimonials: {
+        title: "사용자 후기",
+        subtitle: "예배 준비가 달라진 워십리더들의 이야기",
+        items: {
+          item1: {
+            quote: "예배 준비 시간이 절반으로 줄었어요. 드디어 중요한 것에 집중할 시간이 생겼습니다.",
+            author: "김OO",
+            role: "서울 OO교회 워십리더",
+          },
+          item2: {
+            quote: "우리의 필요를 이해하는 사람이 만든 도구라는 게 느껴져요.",
+            author: "이OO",
+            role: "부산 OO교회 음악감독",
+          },
+          item3: {
+            quote: "팀 전체가 연결되었어요. 소통이 이렇게 쉬웠던 적이 없어요.",
+            author: "박OO",
+            role: "인천 OO교회 청년부 목사",
+          },
         },
       },
       intro: {
