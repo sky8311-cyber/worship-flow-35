@@ -44,8 +44,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [loading, setLoading] = useState(false);
+const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [setUsageCount, setSetUsageCount] = useState<number>(0);
   const [usageHistoryExpanded, setUsageHistoryExpanded] = useState(false);
   const { data: usageData } = useSongUsage(song?.id || "");
   const [scoreVariations, setScoreVariations] = useState<Array<{
@@ -73,6 +74,22 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     lyrics: "",
     is_private: false,
   });
+
+// Check how many worship sets use this song
+  useEffect(() => {
+    const checkSetUsage = async () => {
+      if (!song?.id) {
+        setSetUsageCount(0);
+        return;
+      }
+      const { count } = await supabase
+        .from("set_songs")
+        .select("*", { count: "exact", head: true })
+        .eq("song_id", song.id);
+      setSetUsageCount(count || 0);
+    };
+    checkSetUsage();
+  }, [song?.id, open]);
 
   useEffect(() => {
     if (song) {
@@ -966,8 +983,16 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               id="is_private"
               checked={formData.is_private}
               onCheckedChange={(checked) => setFormData({...formData, is_private: checked})}
+              disabled={setUsageCount > 0 && !formData.is_private}
             />
           </div>
+          {setUsageCount > 0 && !formData.is_private && (
+            <p className="text-xs text-amber-600 mt-1">
+              {language === "ko" 
+                ? `이 곡은 ${setUsageCount}개의 워십세트에서 사용 중이므로 비공개로 전환할 수 없습니다.`
+                : `This song is used in ${setUsageCount} worship set(s) and cannot be made private.`}
+            </p>
+          )}
 
           <div>
             <Label>{t("songDialog.key")}</Label>
