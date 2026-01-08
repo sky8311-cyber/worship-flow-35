@@ -116,7 +116,7 @@ const Login = () => {
               {t("auth.loginPage.headline")}
             </h1>
                 <Badge variant="secondary" className="text-xs px-2 py-1">
-                  {t("auth.loginPage.betaBadge")}
+                  {t("auth.loginPage.badge")}
                 </Badge>
               </div>
             <h2 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground">

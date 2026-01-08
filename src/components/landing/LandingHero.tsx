@@ -94,7 +94,7 @@ export const LandingHero = () => {
             <motion.div variants={revealText} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button 
                 size="lg" 
-                onClick={() => smoothScrollTo("beta-cta")} 
+                onClick={() => smoothScrollTo("cta")} 
                 className="text-base px-8 py-6 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {t("landing.hero.ctaButton")}
