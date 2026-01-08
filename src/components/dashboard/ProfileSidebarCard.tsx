@@ -14,8 +14,11 @@ import { SeedWidget } from "@/components/seeds/SeedWidget";
 
 interface ProfileStats {
   sets: number;
+  setViews?: number;
   communities: number;
+  chatMessages?: number;
   songs: number;
+  songUsageCount?: number;
 }
 
 interface Profile {
@@ -40,11 +43,14 @@ interface ProfileSidebarCardProps {
 export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: ProfileSidebarCardProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { profile: authProfile, user } = useAuth();
+  const { profile: authProfile, user, isWorshipLeader, isAdmin } = useAuth();
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const profile = profileOverride || authProfile;
+  
+  // Show contribution stats only for worship leaders or admins
+  const showContributionStats = isWorshipLeader || isAdmin;
 
   const initials = profile?.full_name
     ? profile.full_name
@@ -54,11 +60,28 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
         .toUpperCase()
     : profile?.email?.[0]?.toUpperCase() || "U";
 
-  const StatItem = ({ icon, count, label }: { icon: React.ReactNode; count: number; label: string }) => (
+  const StatItem = ({ 
+    icon, 
+    count, 
+    label,
+    subCount,
+    subLabel
+  }: { 
+    icon: React.ReactNode; 
+    count: number; 
+    label: string;
+    subCount?: number;
+    subLabel?: string;
+  }) => (
     <div className="flex flex-col items-center gap-1">
       <div className="text-muted-foreground">{icon}</div>
       <div className="text-xl font-bold">{count}</div>
       <div className="text-xs text-muted-foreground">{label}</div>
+      {subCount !== undefined && subLabel && (
+        <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+          {subLabel} {subCount.toLocaleString()}
+        </div>
+      )}
     </div>
   );
 
@@ -166,23 +189,29 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
             )}
           </div>
 
-          {/* Stats Row - Only show if stats provided */}
-          {stats && (
+          {/* Stats Row - Only show for worship leaders or admins */}
+          {stats && showContributionStats && (
             <div className="grid grid-cols-3 gap-3 mt-6 pt-4 border-t">
               <StatItem
                 icon={<Calendar className="w-4 h-4" />}
                 count={stats.sets || 0}
                 label={t("profile.sets")}
+                subCount={stats.setViews}
+                subLabel={t("profile.views")}
               />
               <StatItem
                 icon={<Users className="w-4 h-4" />}
                 count={stats.communities || 0}
                 label={t("profile.communities")}
+                subCount={stats.chatMessages}
+                subLabel={t("profile.chats")}
               />
               <StatItem
                 icon={<Music className="w-4 h-4" />}
                 count={stats.songs || 0}
                 label={t("profile.songs")}
+                subCount={stats.songUsageCount}
+                subLabel={t("profile.timesUsed")}
               />
             </div>
           )}
