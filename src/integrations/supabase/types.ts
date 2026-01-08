@@ -2252,6 +2252,7 @@ export type Database = {
           default_key: string | null
           id: string
           interpretation: string | null
+          is_private: boolean | null
           language: string | null
           lyrics: string | null
           notes: string | null
@@ -2270,6 +2271,7 @@ export type Database = {
           default_key?: string | null
           id?: string
           interpretation?: string | null
+          is_private?: boolean | null
           language?: string | null
           lyrics?: string | null
           notes?: string | null
@@ -2288,6 +2290,7 @@ export type Database = {
           default_key?: string | null
           id?: string
           interpretation?: string | null
+          is_private?: boolean | null
           language?: string | null
           lyrics?: string | null
           notes?: string | null

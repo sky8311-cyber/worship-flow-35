@@ -1099,6 +1099,16 @@ const SetBuilder = () => {
       return;
     }
 
+    // Block private songs from being added to worship sets
+    if (song.is_private) {
+      toast.error(
+        language === "ko" 
+          ? "비공개 곡은 워십세트에 추가할 수 없습니다" 
+          : "Private songs cannot be added to worship sets"
+      );
+      return;
+    }
+
     // Check if required fields are filled
     const missingFields = getMissingRequiredFields();
     if (missingFields.length > 0) {

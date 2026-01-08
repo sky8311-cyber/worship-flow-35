@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check } from "lucide-react";
+import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check, Lock } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -274,12 +274,18 @@ export const SongTable = ({
                       />
                     ) : (
                       <div>
-                        <div className="flex items-baseline">
+                        <div className="flex items-baseline gap-1.5">
                           <span>{song.title}</span>
                           {isNewSong(song.created_at) && (
                             <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
                               N
                             </sup>
+                          )}
+                          {song.is_private && (
+                            <Badge variant="secondary" className="text-xs gap-0.5 shrink-0">
+                              <Lock className="w-3 h-3" />
+                              {t("songDialog.private")}
+                            </Badge>
                           )}
                         </div>
                         {song.subtitle && (
@@ -389,10 +395,13 @@ export const SongTable = ({
                            <Button
                              variant={selectedForSet.has(song.id) ? "default" : "ghost"}
                              size="sm"
-                             onClick={() => onSelectForSet(song, song.default_key, song.score_file_url)}
+                             onClick={() => !song.is_private && onSelectForSet(song, song.default_key, song.score_file_url)}
+                             disabled={song.is_private}
                              className="h-8"
                            >
-                             {selectedForSet.has(song.id) ? (
+                             {song.is_private ? (
+                               <><Lock className="h-4 w-4 mr-1" />{t("songDialog.private")}</>
+                             ) : selectedForSet.has(song.id) ? (
                                <><Check className="h-4 w-4 mr-1" />{t("songSelector.selected")}</>
                              ) : (
                                <><Plus className="h-4 w-4 mr-1" />{t("songSelector.addToSet")}</>
