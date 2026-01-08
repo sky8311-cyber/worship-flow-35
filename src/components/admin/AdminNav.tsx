@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail, Layers } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -65,9 +65,15 @@ export const AdminNav = () => {
     icon: Layers,
   };
 
+  const historyLink = {
+    to: "/admin/history",
+    label: language === "ko" ? "히스토리" : "History",
+    icon: History,
+  };
+
   const links = (!isLoading && isChurchMenuVisible) 
-    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink]
-    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink];
+    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink]
+    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink];
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">

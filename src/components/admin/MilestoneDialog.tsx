@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 
-interface MilestoneData {
+export interface MilestoneData {
   id?: string;
   event_date: string;
   title_ko: string;
