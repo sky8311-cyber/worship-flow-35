@@ -82,28 +82,47 @@ export const MusicPlayerMode = ({
   }, []);
 
   // Initialize player when API is ready and dialog is open
+  // Keep player alive even when dialog closes (for mini mode)
   useEffect(() => {
-    if (!apiReady || !open || !playerContainerRef.current || playlist.length === 0) return;
+    if (!apiReady || playlist.length === 0) return;
     
-    // Destroy existing player if any
-    if (playerRef.current) {
-      try {
-        playerRef.current.destroy();
-      } catch (e) {}
-      playerRef.current = null;
+    // Only create player if it doesn't exist
+    if (playerRef.current) return;
+    
+    // Wait for container - use persistent container or dialog container
+    const containerId = "persistent-youtube-player";
+    let container = document.getElementById(containerId);
+    
+    // If dialog is open and we have the ref, use that
+    if (open && playerContainerRef.current) {
+      container = playerContainerRef.current;
+    }
+    
+    if (!container) {
+      // Create persistent container in body
+      container = document.createElement("div");
+      container.id = containerId;
+      container.style.position = "fixed";
+      container.style.top = "-9999px";
+      container.style.left = "-9999px";
+      container.style.width = "1px";
+      container.style.height = "1px";
+      document.body.appendChild(container);
     }
 
-    // Create player container element
+    // Create player element
     const playerId = "music-player-iframe";
     let playerDiv = document.getElementById(playerId);
-    if (!playerDiv) {
-      playerDiv = document.createElement("div");
-      playerDiv.id = playerId;
-      playerContainerRef.current.appendChild(playerDiv);
+    if (playerDiv) {
+      playerDiv.remove();
     }
+    playerDiv = document.createElement("div");
+    playerDiv.id = playerId;
+    container.appendChild(playerDiv);
 
     const createPlayer = () => {
       setPlayerReady(false);
+      console.log('Creating YouTube player...');
       playerRef.current = new window.YT.Player(playerId, {
         height: "100%",
         width: "100%",
@@ -146,7 +165,20 @@ export const MusicPlayerMode = ({
     // Small delay to ensure container is mounted
     const timer = setTimeout(createPlayer, 100);
     return () => clearTimeout(timer);
-  }, [apiReady, open, playlist.length]);
+  }, [apiReady, playlist.length]);
+
+  // Move player iframe to dialog container when open, keep hidden when minimized
+  useEffect(() => {
+    const playerIframe = document.getElementById("music-player-iframe");
+    if (!playerIframe) return;
+
+    if (open && playerContainerRef.current) {
+      // Move iframe to visible container
+      playerContainerRef.current.appendChild(playerIframe);
+      playerIframe.style.width = "100%";
+      playerIframe.style.height = "100%";
+    }
+  }, [open]);
 
   // Generate shuffle order
   useEffect(() => {
