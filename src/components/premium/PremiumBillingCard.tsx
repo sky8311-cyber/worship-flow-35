@@ -98,10 +98,10 @@ export function PremiumBillingCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-yellow-500" />
-          {language === "ko" ? "프리미엄 구독" : "Premium Subscription"}
+          {language === "ko" ? "정식 멤버십(연간)" : "Full Membership (Annual)"}
         </CardTitle>
         <CardDescription>
-          {language === "ko" ? "프리미엄 기능으로 더 많은 것을 누리세요" : "Unlock premium features for more"}
+          {language === "ko" ? "정식 멤버 기능으로 더 많은 것을 누리세요" : "Unlock full member features for more"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -114,8 +114,8 @@ export function PremiumBillingCard() {
             <div>
               <p className="font-semibold">
                 {isSubscribed 
-                  ? (language === "ko" ? "프리미엄 멤버" : "Premium Member") 
-                  : (language === "ko" ? "무료 플랜" : "Free Plan")}
+                  ? (language === "ko" ? "정식 멤버" : "Full Member") 
+                  : (language === "ko" ? "기본 멤버십" : "Basic Membership")}
               </p>
               {subscriptionEnd && isSubscribed && (
                 <p className="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ export function PremiumBillingCard() {
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {language === "ko" 
-                ? "체험 기간이 끝나면 유료 구독으로 전환됩니다"
+                ? "체험 기간이 끝나면 연간 멤버십으로 전환됩니다"
                 : "You'll be charged when your trial ends"}
             </p>
           </div>
@@ -147,7 +147,7 @@ export function PremiumBillingCard() {
         <div className="space-y-3">
           <h4 className="font-medium flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            {language === "ko" ? "프리미엄 기능" : "Premium Features"}
+            {language === "ko" ? "정식 멤버 기능" : "Full Member Features"}
           </h4>
           <ul className="space-y-2">
             {features.map((feature, idx) => (
@@ -174,7 +174,7 @@ export function PremiumBillingCard() {
               )}
               {canStartTrial 
                 ? (language === "ko" ? "14일 무료 체험 시작" : "Start 14-Day Free Trial")
-                : (language === "ko" ? "프리미엄 구독" : "Subscribe to Premium")}
+                : (language === "ko" ? "정식 멤버로 전환" : "Become a Full Member")}
             </Button>
           ) : (
             <Button 
@@ -188,7 +188,7 @@ export function PremiumBillingCard() {
               ) : (
                 <ExternalLink className="w-4 h-4" />
               )}
-              {language === "ko" ? "구독 관리" : "Manage Subscription"}
+              {language === "ko" ? "멤버십 관리" : "Manage Membership"}
             </Button>
           )}
         </div>
@@ -196,7 +196,7 @@ export function PremiumBillingCard() {
         {/* Price Info */}
         <div className="text-center pt-2 border-t">
           <p className="text-lg font-bold">
-            {language === "ko" ? "₩9,900/월" : "$9.99/month"}
+            {language === "ko" ? "₩99,000/년" : "$99/year"}
           </p>
           <p className="text-xs text-muted-foreground">
             {language === "ko" ? "언제든 취소 가능" : "Cancel anytime"}
