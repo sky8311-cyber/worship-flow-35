@@ -105,16 +105,16 @@ export const MusicPlayerMode = ({
         width: "100%",
         videoId: playlist[currentIndex]?.videoId,
         playerVars: {
-          autoplay: 1,
+          autoplay: 0, // iOS Safari doesn't allow autoplay without user gesture
           controls: 1,
           modestbranding: 1,
           rel: 0,
-          playsinline: 1,
+          playsinline: 1, // Required for inline playback on iOS
         },
         events: {
-          onReady: (event: any) => {
-            event.target.playVideo();
-            setIsPlaying(true);
+          onReady: () => {
+            // Don't auto-play - let user tap video or use play button
+            console.log('YouTube player ready');
           },
           onStateChange: handleStateChange,
         },
@@ -249,11 +249,11 @@ export const MusicPlayerMode = ({
           </Button>
         </div>
 
-        {/* Video Player */}
-        <div className="flex-shrink-0 bg-black">
+        {/* Video Player - constrained height to leave room for playlist */}
+        <div className="flex-shrink-0 bg-black max-h-[35vh]">
           <div 
             ref={playerContainerRef}
-            className="aspect-video w-full"
+            className="aspect-video w-full max-h-[35vh]"
           />
         </div>
 
@@ -311,8 +311,8 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Playlist - Fixed scroll issue with min-h-0 */}
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* Playlist - minimum height to show at least 3 songs */}
+        <div className="flex-1 min-h-[180px] flex flex-col overflow-hidden">
           <div className="px-3 sm:px-4 py-2 border-b bg-muted/30 flex-shrink-0">
             <span className="text-xs sm:text-sm font-medium">
               {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})

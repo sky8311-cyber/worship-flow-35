@@ -524,7 +524,7 @@ const BandView = () => {
         )}
 
         {/* Action buttons */}
-        <div className="flex items-center justify-between mb-6 print:hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 print:hidden">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
               <Music className="w-6 h-6 text-white" />
@@ -535,7 +535,7 @@ const BandView = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {canEdit && (
               <>
                 <Button
