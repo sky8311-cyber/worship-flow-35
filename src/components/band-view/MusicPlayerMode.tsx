@@ -230,20 +230,21 @@ export const MusicPlayerMode = ({
   }
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent 
         className="max-w-2xl w-[95vw] h-[90vh] max-h-[90vh] p-0 flex flex-col overflow-hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={handleClose}
+        hideCloseButton={true}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <Button variant="ghost" size="sm" onClick={onMinimize} className="gap-2">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b flex-shrink-0">
+          <Button variant="ghost" size="sm" onClick={onMinimize} className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
             <ChevronDown className="w-4 h-4" />
-            {t("bandView.musicPlayer.minimize")}
+            <span className="hidden sm:inline">{t("bandView.musicPlayer.minimize")}</span>
           </Button>
-          <span className="font-semibold">{t("bandView.musicPlayer.title")}</span>
-          <Button variant="ghost" size="icon" onClick={handleClose}>
+          <span className="font-semibold text-sm sm:text-base">{t("bandView.musicPlayer.title")}</span>
+          <Button variant="ghost" size="icon" onClick={handleClose} className="w-8 h-8 sm:w-10 sm:h-10">
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -257,97 +258,97 @@ export const MusicPlayerMode = ({
         </div>
 
         {/* Now Playing Info */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
-              <Music className="w-6 h-6 text-white" />
+        <div className="p-3 sm:p-4 border-b flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
+              <Music className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-foreground truncate">
+              <h3 className="font-bold text-foreground truncate text-sm sm:text-base">
                 {currentTrack?.title || t("bandView.noTitle")}
               </h3>
-              <p className="text-sm text-muted-foreground truncate">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 {currentTrack?.artist || ""}
               </p>
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
               {currentIndex + 1} / {playlist.length}
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-4 mt-4">
+          {/* Controls - Responsive sizing */}
+          <div className="flex items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsShuffle(!isShuffle)}
-              className={cn(isShuffle && "text-primary")}
+              className={cn("w-8 h-8 sm:w-10 sm:h-10", isShuffle && "text-primary")}
             >
-              <Shuffle className="w-5 h-5" />
+              <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={playPrevious}>
-              <SkipBack className="w-6 h-6" />
+            <Button variant="ghost" size="icon" onClick={playPrevious} className="w-8 h-8 sm:w-10 sm:h-10">
+              <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
             <Button 
               variant="default" 
               size="icon" 
-              className="w-12 h-12 rounded-full"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full"
               onClick={togglePlayPause}
             >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+              {isPlaying ? <Pause className="w-5 h-5 sm:w-6 sm:h-6" /> : <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={playNext}>
-              <SkipForward className="w-6 h-6" />
+            <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8 sm:w-10 sm:h-10">
+              <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setIsRepeat(!isRepeat)}
-              className={cn(isRepeat && "text-primary")}
+              className={cn("w-8 h-8 sm:w-10 sm:h-10", isRepeat && "text-primary")}
             >
-              <Repeat className="w-5 h-5" />
+              <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
         </div>
 
-        {/* Playlist */}
-        <div className="flex-1 overflow-hidden">
-          <div className="px-4 py-2 border-b bg-muted/30">
-            <span className="text-sm font-medium">
+        {/* Playlist - Fixed scroll issue with min-h-0 */}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <div className="px-3 sm:px-4 py-2 border-b bg-muted/30 flex-shrink-0">
+            <span className="text-xs sm:text-sm font-medium">
               {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
             </span>
           </div>
-          <ScrollArea className="h-full">
+          <ScrollArea className="flex-1">
             <div className="p-2">
               {playlist.map((item, index) => (
                 <button
                   key={`${item.videoId}-${index}`}
                   onClick={() => playTrack(index)}
                   className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
+                    "w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg text-left transition-colors",
                     index === currentIndex 
                       ? "bg-primary/10 text-primary" 
                       : "hover:bg-muted"
                   )}
                 >
                   <span className={cn(
-                    "w-6 h-6 flex items-center justify-center text-sm font-medium rounded",
+                    "w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium rounded flex-shrink-0",
                     index === currentIndex ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}>
                     {index === currentIndex && isPlaying ? (
-                      <Volume2 className="w-4 h-4 animate-pulse" />
+                      <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
                     ) : (
                       item.position
                     )}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className={cn(
-                      "truncate font-medium",
+                      "truncate font-medium text-sm",
                       index === currentIndex ? "text-primary" : "text-foreground"
                     )}>
                       {item.title}
                     </p>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {item.artist}
                     </p>
                   </div>
