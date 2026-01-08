@@ -41,6 +41,7 @@ const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
+const AppHistory = lazy(() => import("./pages/AppHistory"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -165,6 +166,7 @@ const App = () => {
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
               <Route path="/public-view/:token" element={<PublicBandView />} /> {/* Public share link */}
+              <Route path="/app-history" element={<ProtectedRoute><AppHistory /></ProtectedRoute>} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
