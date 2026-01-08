@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, Plus, Pencil, Trash2, History } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History } from "lucide-react";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { MilestoneDialog } from "@/components/admin/MilestoneDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Switch } from "@/components/ui/switch";
@@ -15,14 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { format } from "date-fns";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const AdminDashboard = () => {
   const { t, language } = useTranslation();
   const queryClient = useQueryClient();
-  const [milestoneDialogOpen, setMilestoneDialogOpen] = useState(false);
-  const [editingMilestone, setEditingMilestone] = useState<any>(null);
   
   const {
     isLeaderboardEnabled,
@@ -95,19 +89,6 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false })
         .limit(5);
       return apps || [];
-    },
-  });
-
-  // Fetch milestones for admin management
-  const { data: milestones } = useQuery({
-    queryKey: ["admin-milestones"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("platform_milestones")
-        .select("*")
-        .order("event_date", { ascending: false });
-      if (error) throw error;
-      return data;
     },
   });
 
@@ -185,86 +166,6 @@ const AdminDashboard = () => {
       toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
     },
   });
-
-  // Milestone mutations
-  const saveMilestoneMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (editingMilestone?.id) {
-        const { error } = await supabase
-          .from("platform_milestones")
-          .update(data)
-          .eq("id", editingMilestone.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("platform_milestones")
-          .insert(data);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-milestones"] });
-      setMilestoneDialogOpen(false);
-      setEditingMilestone(null);
-      toast.success(language === "ko" ? "저장되었습니다" : "Saved successfully");
-    },
-    onError: () => {
-      toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
-    },
-  });
-
-  const toggleVisibilityMutation = useMutation({
-    mutationFn: async ({ id, isVisible }: { id: string; isVisible: boolean }) => {
-      const { error } = await supabase
-        .from("platform_milestones")
-        .update({ is_visible: isVisible })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-milestones"] });
-    },
-    onError: () => {
-      toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
-    },
-  });
-
-  const deleteMilestoneMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("platform_milestones")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-milestones"] });
-      toast.success(language === "ko" ? "삭제되었습니다" : "Deleted successfully");
-    },
-    onError: () => {
-      toast.error(language === "ko" ? "오류가 발생했습니다" : "An error occurred");
-    },
-  });
-
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, { ko: string; en: string }> = {
-      launch: { ko: "출시", en: "Launch" },
-      feature: { ko: "기능", en: "Feature" },
-      milestone: { ko: "마일스톤", en: "Milestone" },
-      update: { ko: "업데이트", en: "Update" },
-    };
-    return labels[category]?.[language] || category;
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "launch": return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-      case "feature": return "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300";
-      case "milestone": return "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300";
-      case "update": return "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
   
   const statCards = [
     {
@@ -642,7 +543,7 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Platform History Management */}
+            {/* Platform History Link Card */}
             <Card className="shadow-md mt-6">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -650,16 +551,11 @@ const AdminDashboard = () => {
                     <History className="w-5 h-5 text-purple-500" />
                     <CardTitle>{language === "ko" ? "플랫폼 히스토리" : "Platform History"}</CardTitle>
                   </div>
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      setEditingMilestone(null);
-                      setMilestoneDialogOpen(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {language === "ko" ? "추가" : "Add"}
-                  </Button>
+                  <Link to="/admin/history">
+                    <Button variant="outline" size="sm">
+                      {language === "ko" ? "관리하기" : "Manage"}
+                    </Button>
+                  </Link>
                 </div>
                 <CardDescription>
                   {language === "ko" 
@@ -667,101 +563,10 @@ const AdminDashboard = () => {
                     : "Manage milestones displayed on the App History page"}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {milestones?.map((milestone) => (
-                    <div 
-                      key={milestone.id} 
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="text-sm text-muted-foreground shrink-0">
-                          {format(new Date(milestone.event_date), "yyyy.MM.dd")}
-                        </div>
-                        <Badge className={getCategoryColor(milestone.category)}>
-                          {getCategoryLabel(milestone.category)}
-                        </Badge>
-                        <div className="truncate font-medium">
-                          {language === "ko" ? milestone.title_ko : milestone.title_en}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Switch
-                          checked={milestone.is_visible}
-                          onCheckedChange={(checked) => 
-                            toggleVisibilityMutation.mutate({ id: milestone.id, isVisible: checked })
-                          }
-                          disabled={toggleVisibilityMutation.isPending}
-                        />
-                        <span className="text-xs text-muted-foreground w-12">
-                          {milestone.is_visible 
-                            ? (language === "ko" ? "공개" : "On") 
-                            : (language === "ko" ? "비공개" : "Off")
-                          }
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => {
-                            setEditingMilestone(milestone);
-                            setMilestoneDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                {language === "ko" ? "마일스톤 삭제" : "Delete Milestone"}
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                {language === "ko" 
-                                  ? "이 마일스톤을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-                                  : "Are you sure you want to delete this milestone? This action cannot be undone."
-                                }
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>
-                                {language === "ko" ? "취소" : "Cancel"}
-                              </AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => deleteMilestoneMutation.mutate(milestone.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                {language === "ko" ? "삭제" : "Delete"}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))}
-                  {(!milestones || milestones.length === 0) && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {language === "ko" ? "등록된 마일스톤이 없습니다" : "No milestones yet"}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
             </Card>
           </>
         )}
       </main>
-
-      <MilestoneDialog
-        open={milestoneDialogOpen}
-        onOpenChange={setMilestoneDialogOpen}
-        milestone={editingMilestone}
-        onSave={(data) => saveMilestoneMutation.mutate(data)}
-        isLoading={saveMilestoneMutation.isPending}
-      />
     </div>
   );
 };
