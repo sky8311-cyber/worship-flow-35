@@ -185,11 +185,11 @@ export function ChurchAccountMembersTab({ churchAccountId, maxSeats, usedSeats, 
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>{language === "ko" ? "멤버 관리" : "Member Management"}</CardTitle>
+            <CardTitle>{language === "ko" ? "팀 멤버 관리" : "Team Member Management"}</CardTitle>
             <CardDescription>
               {language === "ko"
-                ? `${usedSeats}/${maxSeats} 시트 사용 중`
-                : `${usedSeats}/${maxSeats} seats used`}
+                ? `${usedSeats}/${maxSeats} 팀 멤버 등록됨`
+                : `${usedSeats}/${maxSeats} team members joined`}
             </CardDescription>
           </div>
           {isAdmin && (
@@ -255,8 +255,8 @@ export function ChurchAccountMembersTab({ churchAccountId, maxSeats, usedSeats, 
         {!canAddMore && (
           <p className="text-sm text-amber-600 mt-2">
             {language === "ko"
-              ? "모든 시트가 사용 중입니다. 더 추가하려면 플랜을 업그레이드하세요."
-              : "All seats are used. Upgrade your plan to add more members."}
+              ? "팀 멤버 최대 인원에 도달했습니다. 더 추가하려면 멤버십을 업그레이드하세요."
+              : "Maximum team members reached. Upgrade your membership to add more."}
           </p>
         )}
       </CardHeader>
@@ -337,8 +337,8 @@ export function ChurchAccountMembersTab({ churchAccountId, maxSeats, usedSeats, 
                           <AlertDialogTitle>{language === "ko" ? "멤버 제거" : "Remove Member"}</AlertDialogTitle>
                           <AlertDialogDescription>
                             {language === "ko"
-                              ? `${member.profile?.full_name || member.profile?.email}님을 교회 계정에서 제거하시겠습니까?`
-                              : `Remove ${member.profile?.full_name || member.profile?.email} from this church account?`}
+                              ? `${member.profile?.full_name || member.profile?.email}님을 예배 공동체 계정에서 제거하시겠습니까?`
+                              : `Remove ${member.profile?.full_name || member.profile?.email} from this Worship Community Account?`}
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

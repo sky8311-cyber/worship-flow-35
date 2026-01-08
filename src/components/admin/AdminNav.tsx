@@ -28,10 +28,10 @@ export const AdminNav = () => {
     },
   ];
 
-  // Conditionally add Church Accounts link
+  // Conditionally add Worship Community Accounts link
   const churchAccountLink = {
     to: "/admin/church-accounts",
-    label: t("admin.nav.churchAccounts"),
+    label: language === "ko" ? "공동체 계정" : "Community Accounts",
     icon: Church,
   };
 
