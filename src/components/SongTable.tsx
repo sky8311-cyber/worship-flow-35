@@ -198,8 +198,23 @@ export const SongTable = ({
     return languageMap[language] || language;
   };
 
-  const handleDelete = async (song: any) => {
+const handleDelete = async (song: any) => {
     try {
+      // Check if song is used in any worship sets
+      const { count } = await supabase
+        .from("set_songs")
+        .select("*", { count: "exact", head: true })
+        .eq("song_id", song.id);
+      
+      if (count && count > 0) {
+        toast.error(
+          t("songCard.cannotDeleteUsedSong").replace("{count}", String(count))
+        );
+        setDeleteDialogOpen(false);
+        setSongToDelete(null);
+        return;
+      }
+
       const { error } = await supabase.from("songs").delete().eq("id", song.id);
       if (error) throw error;
       

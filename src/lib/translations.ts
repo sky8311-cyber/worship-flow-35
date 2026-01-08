@@ -1088,7 +1088,7 @@ export const translations = {
       addNew: "Add new",
       noArtistFound: "No artist found",
     },
-    songCard: {
+songCard: {
       edit: "Edit",
       delete: "Delete",
       confirmDelete: "Are you sure you want to delete this song?",
@@ -1103,6 +1103,7 @@ export const translations = {
       viewYouTube: "YouTube",
       viewScore: "Score",
       key: "Key",
+      cannotDeleteUsedSong: "This song is used in {count} worship set(s) and cannot be deleted.",
     },
     setBuilder: {
       title: "Set Builder",
@@ -3003,7 +3004,7 @@ export const translations = {
       addNew: "새로 추가",
       noArtistFound: "아티스트를 찾을 수 없습니다",
     },
-    songCard: {
+songCard: {
       edit: "편집",
       delete: "삭제",
       confirmDelete: "이 곡을 삭제하시겠습니까?",
@@ -3018,6 +3019,7 @@ export const translations = {
       viewYouTube: "유튜브",
       viewScore: "악보",
       key: "키",
+      cannotDeleteUsedSong: "이 곡은 {count}개의 워십세트에서 사용 중이므로 삭제할 수 없습니다.",
     },
     setBuilder: {
       title: "워십세트 빌더",

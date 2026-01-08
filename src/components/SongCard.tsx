@@ -81,8 +81,23 @@ export const SongCard = memo(function SongCard({
   // Check if user can see usage history (admin or worship leader only)
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
-  const handleDelete = async () => {
+const handleDelete = async () => {
     try {
+      // Check if song is used in any worship sets
+      const { count } = await supabase
+        .from("set_songs")
+        .select("*", { count: "exact", head: true })
+        .eq("song_id", song.id);
+      
+      if (count && count > 0) {
+        toast.error(
+          language === "ko"
+            ? `이 곡은 ${count}개의 워십세트에서 사용 중이므로 삭제할 수 없습니다.`
+            : `This song is used in ${count} worship set(s) and cannot be deleted.`
+        );
+        return;
+      }
+
       const { error } = await supabase
         .from("songs")
         .delete()
