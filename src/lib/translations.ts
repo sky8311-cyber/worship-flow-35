@@ -1077,6 +1077,10 @@ export const translations = {
       scoreDownloadError: "Failed to download score",
       selectMultipleFiles: "Select multiple files",
       downloadingScore: "Downloading...",
+      privateToggle: "Private Song",
+      privateDescription: "Private songs are only visible to you and cannot be added to worship sets.",
+      private: "Private",
+      privateSongCannotAdd: "Private songs cannot be added to worship sets",
     },
     artistSelector: {
       selectArtist: "Select artist",
@@ -2988,6 +2992,10 @@ export const translations = {
       scoreDownloadError: "악보 다운로드에 실패했습니다",
       selectMultipleFiles: "여러 파일 선택",
       downloadingScore: "다운로드 중...",
+      privateToggle: "비공개 곡",
+      privateDescription: "비공개 곡은 본인만 볼 수 있으며 워십세트에 추가할 수 없습니다.",
+      private: "비공개",
+      privateSongCannotAdd: "비공개 곡은 워십세트에 추가할 수 없습니다",
     },
     artistSelector: {
       selectArtist: "아티스트 선택",

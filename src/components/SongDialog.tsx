@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -18,6 +18,7 @@ import { ArtistSelector } from "@/components/ArtistSelector";
 import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -70,6 +71,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
     notes: "",
     interpretation: "",
     lyrics: "",
+    is_private: false,
   });
 
   useEffect(() => {
@@ -87,6 +89,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         notes: song.notes || "",
         interpretation: song.interpretation || "",
         lyrics: song.lyrics || "",
+        is_private: song.is_private || false,
       });
       
       // Load score variations and youtube links
@@ -108,6 +111,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
         notes: "",
         interpretation: "",
         lyrics: "",
+        is_private: false,
       });
       setScoreVariations([{ key: "", files: [] }]);
       setYoutubeLinks([{ label: "", url: "" }]);
@@ -947,6 +951,22 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
                 <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Private Song Toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <Lock className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <Label htmlFor="is_private" className="font-medium">{t("songDialog.privateToggle")}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("songDialog.privateDescription")}</p>
+              </div>
+            </div>
+            <Switch
+              id="is_private"
+              checked={formData.is_private}
+              onCheckedChange={(checked) => setFormData({...formData, is_private: checked})}
+            />
           </div>
 
           <div>

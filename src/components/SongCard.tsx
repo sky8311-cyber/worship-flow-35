@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Trash2, Youtube, Eye, Plus, BarChart3, Check } from "lucide-react";
+import { Edit, Trash2, Youtube, Eye, Plus, BarChart3, Check, Lock } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -158,12 +158,18 @@ export const SongCard = memo(function SongCard({
         )}
         <CardContent className="p-5">
           <div className="mb-3">
-            <div className="flex items-baseline mb-1">
+            <div className="flex items-baseline gap-1.5 mb-1">
               <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{song.title}</h3>
               {isNewSong(song.created_at) && (
                 <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
                   N
                 </sup>
+              )}
+              {song.is_private && (
+                <Badge variant="secondary" className="text-xs gap-1 shrink-0">
+                  <Lock className="w-3 h-3" />
+                  {t("songDialog.private")}
+                </Badge>
               )}
             </div>
             {song.artist && (
@@ -221,10 +227,13 @@ export const SongCard = memo(function SongCard({
               <Button
                 variant={isSelectedForSet ? "default" : "outline"}
                 size="sm"
-                onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
+                onClick={() => !song.is_private && onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
+                disabled={song.is_private}
                 className="h-7 sm:h-8 px-2 tracking-tight"
               >
-                {isSelectedForSet ? (
+                {song.is_private ? (
+                  <><Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songDialog.private")}</>
+                ) : isSelectedForSet ? (
                   <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
                 ) : (
                   <><Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.addToSet")}</>
