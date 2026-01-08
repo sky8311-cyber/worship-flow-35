@@ -50,7 +50,11 @@ export const MiniPlayerBar = ({
   };
 
   const togglePlayPause = () => {
-    if (!playerRef.current) return;
+    console.log('MiniPlayerBar togglePlayPause', { hasPlayer: !!playerRef.current, isPlaying });
+    if (!playerRef.current) {
+      console.warn('No player ref in MiniPlayerBar');
+      return;
+    }
     if (isPlaying) {
       playerRef.current.pauseVideo();
       setIsPlaying(false);

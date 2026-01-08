@@ -503,6 +503,7 @@ const BandView = () => {
   );
 
   return (
+    <>
     <AppLayout breadcrumb={breadcrumbNav}>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Cross-community read-only banner */}
@@ -1048,26 +1049,42 @@ const BandView = () => {
         />
       </div>
 
-      {/* Mini Player Bar - Outside container for full width */}
-      {playerState === 'mini' && (
-        <MiniPlayerBar
-          playlist={musicPlaylist}
-          currentIndex={currentTrackIndex}
-          setCurrentIndex={setCurrentTrackIndex}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          onExpand={() => setPlayerState('full')}
-          onClose={() => {
-            setPlayerState('closed');
-            setIsPlaying(false);
-          }}
-          playerRef={playerRef}
-        />
-      )}
-
       {/* Bottom padding when mini player is visible */}
       {playerState === 'mini' && <div className="h-20" />}
     </AppLayout>
+
+    {/* Mini Player Bar - OUTSIDE AppLayout to ensure visibility */}
+    {playerState === 'mini' && (
+      <MiniPlayerBar
+        playlist={musicPlaylist}
+        currentIndex={currentTrackIndex}
+        setCurrentIndex={setCurrentTrackIndex}
+        isPlaying={isPlaying}
+        setIsPlaying={setIsPlaying}
+        onExpand={() => setPlayerState('full')}
+        onClose={() => {
+          setPlayerState('closed');
+          setIsPlaying(false);
+        }}
+        playerRef={playerRef}
+      />
+    )}
+
+    {/* Persistent hidden player container for audio continuity */}
+    {playerState !== 'closed' && (
+      <div 
+        id="persistent-player-audio"
+        className="fixed"
+        style={{ 
+          top: '-9999px', 
+          left: '-9999px', 
+          width: '1px', 
+          height: '1px',
+          pointerEvents: 'none' 
+        }}
+      />
+    )}
+  </>
   );
 };
 
