@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2, Share2 } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2, Share2, Headphones } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -12,9 +12,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
+import { MusicPlayerMode, PlaylistItem } from "@/components/band-view/MusicPlayerMode";
+import { MiniPlayerBar } from "@/components/band-view/MiniPlayerBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -92,6 +94,14 @@ const BandView = () => {
   // Unpublish confirmation states
   const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
+  
+  // Music player states
+  const [playerState, setPlayerState] = useState<'closed' | 'full' | 'mini'>('closed');
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(true);
+  const [isShuffle, setIsShuffle] = useState(false);
+  const playerRef = useRef<any>(null);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -410,6 +420,35 @@ const BandView = () => {
     return scores;
   }, [setSongs, allSongScores]);
 
+  // Build music playlist from songs with YouTube links
+  const musicPlaylist: PlaylistItem[] = useMemo(() => {
+    if (!setSongs || !allYoutubeLinks) return [];
+    
+    return setSongs
+      .map((setSong: any) => {
+        const song = setSong.songs;
+        // Get YouTube links for this song (from song_youtube_links table)
+        const songYoutubeLinks = (allYoutubeLinks || [])
+          .filter((link: any) => link.song_id === setSong.song_id)
+          .sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+        
+        // Use first link from song_youtube_links, or fallback to override/legacy URL
+        const youtubeUrl = songYoutubeLinks[0]?.url || setSong.override_youtube_url || song?.youtube_url;
+        const videoId = getYouTubeVideoId(youtubeUrl);
+        
+        if (!videoId) return null;
+        
+        return {
+          videoId,
+          title: song?.title || t("bandView.noTitle"),
+          artist: song?.artist || "",
+          position: setSong.position,
+        };
+      })
+      .filter((item: PlaylistItem | null): item is PlaylistItem => item !== null)
+      .sort((a: PlaylistItem, b: PlaylistItem) => a.position - b.position);
+  }, [setSongs, allYoutubeLinks, t]);
+
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
     return (
@@ -533,6 +572,16 @@ const BandView = () => {
               >
                 <Maximize2 className="w-4 h-4" />
                 <span className="hidden sm:inline">{t("bandView.fullscreenScores")}</span>
+              </Button>
+            )}
+            {musicPlaylist.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setPlayerState('full')}
+                className="flex items-center gap-2"
+              >
+                <Headphones className="w-4 h-4" />
+                <span className="hidden sm:inline">{t("bandView.musicPlayer.title")}</span>
               </Button>
             )}
           </div>
@@ -977,7 +1026,47 @@ const BandView = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Music Player - Fullscreen Mode */}
+        <MusicPlayerMode
+          open={playerState === 'full'}
+          onClose={() => {
+            setPlayerState('closed');
+            setIsPlaying(false);
+          }}
+          onMinimize={() => setPlayerState('mini')}
+          playlist={musicPlaylist}
+          currentIndex={currentTrackIndex}
+          setCurrentIndex={setCurrentTrackIndex}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+          playerRef={playerRef}
+          isRepeat={isRepeat}
+          setIsRepeat={setIsRepeat}
+          isShuffle={isShuffle}
+          setIsShuffle={setIsShuffle}
+        />
       </div>
+
+      {/* Mini Player Bar - Outside container for full width */}
+      {playerState === 'mini' && (
+        <MiniPlayerBar
+          playlist={musicPlaylist}
+          currentIndex={currentTrackIndex}
+          setCurrentIndex={setCurrentTrackIndex}
+          isPlaying={isPlaying}
+          setIsPlaying={setIsPlaying}
+          onExpand={() => setPlayerState('full')}
+          onClose={() => {
+            setPlayerState('closed');
+            setIsPlaying(false);
+          }}
+          playerRef={playerRef}
+        />
+      )}
+
+      {/* Bottom padding when mini player is visible */}
+      {playerState === 'mini' && <div className="h-20" />}
     </AppLayout>
   );
 };
