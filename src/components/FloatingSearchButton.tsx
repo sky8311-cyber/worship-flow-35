@@ -37,12 +37,12 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
       <>
         {/* Backdrop overlay */}
         <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 lg:hidden"
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
           onClick={() => setIsExpanded(false)}
         />
         
         {/* Top search bar */}
-        <div className="fixed top-0 left-0 right-0 z-50 p-3 bg-background border-b shadow-lg lg:hidden animate-in slide-in-from-top duration-200">
+        <div className="fixed top-0 left-0 right-0 z-50 p-3 bg-background border-b shadow-lg animate-in slide-in-from-top duration-200">
           <div className="flex items-center gap-2">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <Input
