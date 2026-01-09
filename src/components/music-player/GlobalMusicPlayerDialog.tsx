@@ -10,6 +10,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { useSwipeDown } from "@/hooks/useSwipeDown";
 import { toast } from "sonner";
 
 // Format seconds to mm:ss
@@ -205,9 +206,15 @@ export const GlobalMusicPlayerDialog = () => {
     closePlayer();
   };
 
-  const handleMinimize = () => {
+  const handleMinimize = useCallback(() => {
     setPlayerState('mini');
-  };
+  }, [setPlayerState]);
+
+  // Swipe down to minimize (works on non-playlist areas)
+  const swipeRef = useSwipeDown<HTMLDivElement>({
+    threshold: 60,
+    onSwipeDown: handleMinimize,
+  });
 
   const isOpen = playerState === 'full';
 
@@ -222,11 +229,18 @@ export const GlobalMusicPlayerDialog = () => {
           {t("bandView.musicPlayer.title")}
         </DialogTitle>
         
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-primary text-white">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+        {/* Swipeable area - everything except playlist */}
+        <div ref={swipeRef} className="touch-pan-y">
+          {/* Swipe indicator handle */}
+          <div className="flex justify-center pt-2 pb-0">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+          </div>
+          
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b bg-gradient-primary text-white">
+            <Button 
+              variant="ghost" 
+              size="icon"
             onClick={handleMinimize}
             className="text-white hover:bg-white/20"
           >
@@ -324,8 +338,9 @@ export const GlobalMusicPlayerDialog = () => {
             <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
         </div>
+        </div>
 
-        {/* Playlist */}
+        {/* Playlist - NOT in swipeable area (needs its own scroll) */}
         <div className="border-t">
           <div className="p-3 bg-muted/30">
             <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
