@@ -19,6 +19,8 @@ import {
   Building2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import logoMobile from "@/assets/kworship-logo-mobile.png";
+import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const Features = () => {
   const { language } = useTranslation();
@@ -103,13 +105,9 @@ const Features = () => {
       {!user && (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <img 
-                src="/kworship-icon.png" 
-                alt="K-Worship" 
-                className="h-8 w-8"
-              />
-              <span className="font-bold text-xl">K-Worship</span>
+            <Link to="/">
+              <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
+              <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-12" />
             </Link>
             <LanguageToggle />
           </div>
