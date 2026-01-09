@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
-  Music, Volume2 
+  Music, Volume2, RotateCcw, RotateCw 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -241,6 +241,18 @@ export const MusicPlayerMode = ({
     }
   }, [playerReady, isPlaying, sendCommand, language]);
 
+  const skipBackward = useCallback(() => {
+    const newTime = Math.max(0, currentTime - 10);
+    setCurrentTime(newTime);
+    sendCommand('seekTo', { seconds: newTime });
+  }, [currentTime, sendCommand]);
+
+  const skipForward = useCallback(() => {
+    const newTime = Math.min(duration, currentTime + 10);
+    setCurrentTime(newTime);
+    sendCommand('seekTo', { seconds: newTime });
+  }, [currentTime, duration, sendCommand]);
+
   // Periodically get current time while playing (skip if seeking)
   useEffect(() => {
     if (!isPlaying || !open) return;
@@ -359,7 +371,10 @@ export const MusicPlayerMode = ({
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4">
+          <div className="flex items-center justify-center gap-1 sm:gap-3 mt-3 sm:mt-4">
+            <Button variant="ghost" size="icon" onClick={skipBackward} className="w-8 h-8 sm:w-10 sm:h-10">
+              <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={playPrevious} className="w-8 h-8 sm:w-10 sm:h-10">
               <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
@@ -373,6 +388,9 @@ export const MusicPlayerMode = ({
             </Button>
             <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8 sm:w-10 sm:h-10">
               <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={skipForward} className="w-8 h-8 sm:w-10 sm:h-10">
+              <RotateCw className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
 
