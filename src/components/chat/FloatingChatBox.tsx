@@ -27,7 +27,7 @@ export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-24 right-6 z-50 hidden lg:flex",
+        "fixed bottom-24 right-6 z-[60] hidden lg:flex",
         "w-[400px] h-[500px] flex-col",
         "bg-card border rounded-xl shadow-2xl overflow-hidden",
         "animate-in slide-in-from-bottom-4 fade-in duration-200"

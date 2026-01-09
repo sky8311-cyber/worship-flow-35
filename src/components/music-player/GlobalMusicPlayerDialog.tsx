@@ -222,7 +222,15 @@ export const GlobalMusicPlayerDialog = () => {
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleMinimize()}>
       <DialogContent 
         className="max-w-lg p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border-0 shadow-2xl"
-        onPointerDownOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          // On desktop (lg+), clicking outside minimizes the player
+          if (window.innerWidth >= 1024) {
+            handleMinimize();
+          } else {
+            // On mobile, prevent click-outside (use swipe-down instead)
+            e.preventDefault();
+          }
+        }}
         hideCloseButton
       >
         <DialogTitle className="sr-only">

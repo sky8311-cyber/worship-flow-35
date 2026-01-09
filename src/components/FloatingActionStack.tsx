@@ -15,7 +15,7 @@ export const FloatingActionStack = ({
   return (
     <div
       className={cn(
-        "fixed right-4 z-40 flex flex-col-reverse gap-3 lg:hidden transition-all duration-300 ease-out",
+        "fixed right-4 z-40 flex flex-col-reverse gap-3 transition-all duration-300 ease-out",
         hasMiniPlayer ? "bottom-48" : "bottom-32",
         hidden 
           ? "translate-y-24 opacity-0 pointer-events-none" 
