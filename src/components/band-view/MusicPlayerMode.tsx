@@ -61,6 +61,7 @@ export const MusicPlayerMode = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const shuffleOrderRef = useRef<number[]>([]);
+  const handleVideoEndedRef = useRef<() => void>(() => {});
 
   // Send command to proxy iframe via postMessage
   const sendCommand = useCallback((command: string, args?: any) => {
@@ -92,8 +93,8 @@ export const MusicPlayerMode = ({
           if (event.data.duration !== undefined) setDuration(event.data.duration);
           // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2
           if (state === 0) {
-            // Video ended - play next
-            handleVideoEnded();
+            // Video ended - play next (use ref to avoid stale closure)
+            handleVideoEndedRef.current();
           } else if (state === 1) {
             setIsPlaying(true);
           } else if (state === 2) {
@@ -182,6 +183,11 @@ export const MusicPlayerMode = ({
     setCurrentIndex(nextIndex);
     sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
   }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
+
+  // Keep ref in sync with latest handleVideoEnded
+  useEffect(() => {
+    handleVideoEndedRef.current = handleVideoEnded;
+  }, [handleVideoEnded]);
 
   const playTrack = useCallback((index: number) => {
     setCurrentIndex(index);
