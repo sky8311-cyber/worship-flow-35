@@ -7,7 +7,7 @@ import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 export const GlobalMusicPlayer = () => {
   const { playerState, playlist } = useMusicPlayer();
 
-  // Don't render anything if no playlist
+  // Don't render anything if no playlist and player is closed
   if (playlist.length === 0 && playerState === 'closed') return null;
 
   return (
