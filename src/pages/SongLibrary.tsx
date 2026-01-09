@@ -16,6 +16,8 @@ import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { FloatingSearchButton } from "@/components/FloatingSearchButton";
+import { FloatingActionStack } from "@/components/FloatingActionStack";
+import { FloatingCartIndicator } from "@/components/FloatingCartIndicator";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -1043,92 +1045,34 @@ const SongLibrary = () => {
         )}
       </main>
 
-      {isWorshipLeader && (
-        <Button
-          onClick={handleAddSong}
-          className={cn(
-            "fixed right-4 md:hidden rounded-full w-14 h-14 shadow-lg z-40",
-            cartCount > 0 ? "bottom-40" : "bottom-24"
-          )}
-          size="icon"
-        >
-          <Plus className="w-6 h-6" />
-        </Button>
-      )}
-
-      <SongDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        song={selectedSong}
-        onClose={handleDialogClose}
-      />
-
-      <CSVImportDialog
-        open={isCSVDialogOpen}
-        onOpenChange={setIsCSVDialogOpen}
-        onImportComplete={() => refetch()}
-      />
-
-      <DuplicateReviewDialog
-        open={isDuplicateDialogOpen}
-        onClose={() => setIsDuplicateDialogOpen(false)}
-        songs={songs || []}
-        onMergeComplete={() => {
-          refetch();
-          setIsDuplicateDialogOpen(false);
-        }}
-      />
-
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("songLibrary.bulkDeleteConfirm", { count: selectedSongIds.size })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("songLibrary.bulkDeleteDesc", { count: selectedSongIds.size })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t("common.delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {selectionMode && selectedSongIds.size > 0 && (
-        <BulkActionsBar
-          selectedCount={selectedSongIds.size}
-          onBulkDelete={() => setShowDeleteConfirm(true)}
-          onBulkCategorize={handleBulkCategorize}
-          onClearSelection={handleClearSelection}
-          bulkEditMode={bulkEditMode}
-          onEnterBulkEdit={handleEnterBulkEdit}
-          onSaveBulkEdit={handleSaveBulkEdit}
-          onCancelBulkEdit={handleCancelBulkEdit}
+      {/* Mobile Floating Action Stack */}
+      <FloatingActionStack hasMiniPlayer={false}>
+        {/* Cart indicator - bottom of stack */}
+        {cartCount > 0 && (
+          <FloatingCartIndicator 
+            count={cartCount} 
+            onClick={() => setIsCartDialogOpen(true)} 
+          />
+        )}
+        
+        {/* Add Song button - middle of stack */}
+        {isWorshipLeader && (
+          <Button
+            onClick={handleAddSong}
+            className="h-14 w-14 rounded-full shadow-lg"
+            size="icon"
+          >
+            <Plus className="w-6 h-6" />
+          </Button>
+        )}
+        
+        {/* Search button - top of stack */}
+        <FloatingSearchButton
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder={t("songLibrary.searchPlaceholder")}
         />
-      )}
-
-      {/* Floating Search Button - Mobile only */}
-      <FloatingSearchButton
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder={t("songLibrary.searchPlaceholder")}
-        hasCartItems={cartCount > 0}
-      />
-
-      {/* Floating "Add to Set" button - always visible when cart has items */}
-      {isWorshipLeader && cartCount > 0 && (
-        <Button
-          onClick={() => setIsCartDialogOpen(true)}
-          className="fixed bottom-40 left-1/2 -translate-x-1/2 rounded-full shadow-lg z-50 gap-2 px-6"
-        >
-          <Plus className="w-4 h-4" />
-          세트에 {cartCount}곡 추가
-        </Button>
-      )}
+      </FloatingActionStack>
 
       {/* AddToSetDialog for cart items */}
       <AddToSetDialog
