@@ -1116,6 +1116,7 @@ const SongLibrary = () => {
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder={t("songLibrary.searchPlaceholder")}
+        hasCartItems={cartCount > 0}
       />
 
       {/* Floating "Add to Set" button - always visible when cart has items */}

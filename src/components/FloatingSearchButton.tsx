@@ -8,9 +8,10 @@ interface FloatingSearchButtonProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  hasCartItems?: boolean;
 }
 
-export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingSearchButtonProps) => {
+export const FloatingSearchButton = ({ value, onChange, placeholder, hasCartItems = false }: FloatingSearchButtonProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,8 +41,9 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     <div
       ref={containerRef}
       className={cn(
-        "fixed bottom-24 left-4 z-40 lg:hidden transition-all duration-300 ease-out",
-        isExpanded ? "left-4 right-4" : ""
+        "fixed left-4 z-40 lg:hidden transition-all duration-300 ease-out",
+        hasCartItems ? "bottom-40" : "bottom-24",
+        isExpanded ? "right-4" : ""
       )}
     >
       {isExpanded ? (
