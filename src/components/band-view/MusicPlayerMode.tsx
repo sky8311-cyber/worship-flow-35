@@ -67,6 +67,7 @@ export const MusicPlayerMode = ({
   const lastStateRef = useRef<number | null>(null);
   const wasPlayingBeforeSeekRef = useRef(false);
   const isPlayingRef = useRef(isPlaying); // Ref to track isPlaying for stable callbacks
+  const seekEndTimeRef = useRef<number>(0); // Track when seeking ended for debounce
 
   // Keep isPlayingRef in sync
   useEffect(() => {
@@ -315,6 +316,7 @@ export const MusicPlayerMode = ({
     setCurrentTime(seconds);
     setSeekValue(null);
     isSeekingRef.current = false;
+    seekEndTimeRef.current = Date.now(); // Record when seeking ended
     sendCommand('seekTo', { seconds });
     // Resume playback if was playing before seek
     if (wasPlayingBeforeSeekRef.current) {
@@ -323,6 +325,22 @@ export const MusicPlayerMode = ({
       }, 100);
     }
   }, [sendCommand]);
+
+  // Guarded click handlers to prevent accidental toggles during/after seeking
+  const handleRepeatClick = useCallback(() => {
+    // Ignore clicks during seeking or within 300ms after seeking
+    if (isSeekingRef.current || Date.now() - seekEndTimeRef.current < 300) {
+      return;
+    }
+    setIsRepeat(!isRepeat);
+  }, [isRepeat, setIsRepeat]);
+
+  const handleShuffleClick = useCallback(() => {
+    if (isSeekingRef.current || Date.now() - seekEndTimeRef.current < 300) {
+      return;
+    }
+    setIsShuffle(!isShuffle);
+  }, [isShuffle, setIsShuffle]);
 
   const handleClose = () => {
     sendCommand('pause');
@@ -403,7 +421,7 @@ export const MusicPlayerMode = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsShuffle(!isShuffle)}
+              onClick={handleShuffleClick}
               className={cn("w-8 h-8 sm:w-10 sm:h-10", isShuffle && "text-primary")}
             >
               <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -425,7 +443,7 @@ export const MusicPlayerMode = ({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setIsRepeat(!isRepeat)}
+              onClick={handleRepeatClick}
               className={cn("w-8 h-8 sm:w-10 sm:h-10", isRepeat && "text-primary")}
             >
               <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -437,6 +455,8 @@ export const MusicPlayerMode = ({
             className="flex items-center gap-3 mt-4 px-2"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
           >
             <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
               {formatTime(sliderTime)}
