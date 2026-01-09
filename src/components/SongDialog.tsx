@@ -826,7 +826,14 @@ const [loading, setLoading] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl max-h-[90vh] overflow-y-auto" hideCloseButton>
+      <DialogContent 
+        className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100vh-4rem)] sm:max-h-[90vh] overflow-y-auto" 
+        hideCloseButton
+        style={{
+          paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))'
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex-1 min-w-0">
