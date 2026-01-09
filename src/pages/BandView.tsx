@@ -477,11 +477,15 @@ const BandView = () => {
     }
   }, [playerState, currentTrackIndex, musicPlaylist, proxyHtml]);
 
-  // Clean up proxyHtml when player is closed to prevent white screen issues
+  // Clean up proxyHtml when player is closed with delay to prevent white screen
   useEffect(() => {
     if (playerState === 'closed') {
-      setProxyHtml(null);
-      proxyHtmlVideoIdRef.current = null;
+      // Delay cleanup to allow for smooth transition
+      const timer = setTimeout(() => {
+        setProxyHtml(null);
+        proxyHtmlVideoIdRef.current = null;
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [playerState]);
 
@@ -1106,17 +1110,21 @@ const BandView = () => {
       />
     )}
 
-    {/* YouTube Proxy Player iframe - persistent across mini/full transitions, using srcDoc for iOS compatibility */}
-    {playerState !== 'closed' && musicPlaylist.length > 0 && proxyHtml && (
+    {/* YouTube Proxy Player iframe - always fixed position, CSS-only visibility control */}
+    {proxyHtml && musicPlaylist.length > 0 && (
       <iframe
         ref={iframeRef}
         id="youtube-proxy-iframe"
         srcDoc={proxyHtml}
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
         className={cn(
-          "border-0",
-          playerState === 'full' && "fixed z-[200] top-0 left-0 w-full h-full opacity-0 pointer-events-none",
-          playerState === 'mini' && "fixed top-[-9999px] left-[-9999px] w-1 h-1"
+          "border-0 fixed",
+          // Full mode: behind dialog at z-40, visible 
+          playerState === 'full' && "inset-0 w-full h-full z-[40]",
+          // Mini mode: hidden off-screen (audio only)
+          playerState === 'mini' && "top-[-9999px] left-[-9999px] w-1 h-1",
+          // Closed: hidden
+          playerState === 'closed' && "hidden"
         )}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
