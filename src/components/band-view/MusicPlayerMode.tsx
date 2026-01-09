@@ -246,10 +246,13 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Video area is transparent - iframe shows through from behind (z-40) */}
-        <div className="flex-shrink-0 bg-transparent max-h-[28dvh]">
-          <div className="aspect-video w-full max-h-[28dvh] relative">
-            {/* The iframe is positioned behind this dialog at z-40, visible through transparent background */}
+        {/* Album Art Style Audio Visualization */}
+        <div className="flex-shrink-0 py-8 flex justify-center items-center bg-muted/30">
+          <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg">
+            <Music className="w-16 h-16 sm:w-20 sm:h-20 text-white" />
+            {isPlaying && (
+              <div className="absolute inset-0 rounded-2xl animate-pulse bg-white/10" />
+            )}
           </div>
         </div>
 
