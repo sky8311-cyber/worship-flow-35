@@ -477,6 +477,14 @@ const BandView = () => {
     }
   }, [playerState, currentTrackIndex, musicPlaylist, proxyHtml]);
 
+  // Clean up proxyHtml when player is closed to prevent white screen issues
+  useEffect(() => {
+    if (playerState === 'closed') {
+      setProxyHtml(null);
+      proxyHtmlVideoIdRef.current = null;
+    }
+  }, [playerState]);
+
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
     return (

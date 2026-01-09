@@ -136,7 +136,23 @@ export const MusicPlayerMode = ({
     
     // Small delay to ensure container is mounted
     const timer = setTimeout(moveIframe, 50);
-    return () => clearTimeout(timer);
+    
+    // Return iframe to body on cleanup to prevent orphaning
+    return () => {
+      clearTimeout(timer);
+      const iframe = document.getElementById('youtube-proxy-iframe');
+      if (iframe && iframe.parentElement?.id === 'music-player-video-container') {
+        // Move iframe back to body to keep it alive
+        iframe.style.position = 'fixed';
+        iframe.style.top = '-9999px';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.style.opacity = '0';
+        iframe.style.pointerEvents = 'none';
+        document.body.appendChild(iframe);
+      }
+    };
   }, [open]);
 
   // Generate shuffle order
