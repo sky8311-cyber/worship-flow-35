@@ -45,6 +45,10 @@ export const MiniPlayerBar = ({
   const playTrack = useCallback((index: number) => {
     setCurrentIndex(index);
     sendCommand('loadVideo', { videoId: playlist[index]?.videoId });
+    // Ensure autoplay after loading
+    setTimeout(() => {
+      sendCommand('play');
+    }, 150);
     setIsPlaying(true);
   }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
 
