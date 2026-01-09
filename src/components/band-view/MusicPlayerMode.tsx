@@ -60,8 +60,15 @@ export const MusicPlayerMode = ({
   const [playerReady, setPlayerReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [seekValue, setSeekValue] = useState<number | null>(null);
   const shuffleOrderRef = useRef<number[]>([]);
   const handleVideoEndedRef = useRef<() => void>(() => {});
+  const isSeekingRef = useRef(false);
+  const lastStateRef = useRef<number | null>(null);
+  const wasPlayingBeforeSeekRef = useRef(false);
+
+  // Compute displayed slider value
+  const sliderTime = seekValue ?? currentTime;
 
   // Send command to proxy iframe via postMessage
   const sendCommand = useCallback((command: string, args?: any) => {
@@ -72,6 +79,33 @@ export const MusicPlayerMode = ({
       );
     }
   }, [iframeRef]);
+
+  // Centralized state handler for both stateChange and currentState
+  const applyPlayerState = useCallback((state: number | undefined, time: number | undefined, dur: number | undefined) => {
+    // Only update time if not seeking (prevents rubber-banding)
+    if (!isSeekingRef.current) {
+      if (time !== undefined) setCurrentTime(time);
+      if (dur !== undefined) setDuration(dur);
+    }
+
+    if (state === undefined) return;
+
+    // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2, BUFFERING=3, CUED=5
+    if (state === 1) {
+      setIsPlaying(true);
+    } else if (state === 2) {
+      // Only set isPlaying false if not seeking (seeking causes temporary PAUSED)
+      if (!isSeekingRef.current) {
+        setIsPlaying(false);
+      }
+    }
+
+    // Handle ENDED - use guard to prevent double-firing
+    if (state === 0 && lastStateRef.current !== 0) {
+      handleVideoEndedRef.current();
+    }
+    lastStateRef.current = state;
+  }, [setIsPlaying]);
 
   // Listen for messages from proxy iframe
   useEffect(() => {
@@ -88,23 +122,12 @@ export const MusicPlayerMode = ({
           
         case 'stateChange':
           console.log('[MusicPlayer] State change:', state);
-          // Update time info if available
-          if (event.data.currentTime !== undefined) setCurrentTime(event.data.currentTime);
-          if (event.data.duration !== undefined) setDuration(event.data.duration);
-          // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2
-          if (state === 0) {
-            // Video ended - play next (use ref to avoid stale closure)
-            handleVideoEndedRef.current();
-          } else if (state === 1) {
-            setIsPlaying(true);
-          } else if (state === 2) {
-            setIsPlaying(false);
-          }
+          applyPlayerState(state, event.data.currentTime, event.data.duration);
           break;
           
         case 'currentState':
-          if (event.data.currentTime !== undefined) setCurrentTime(event.data.currentTime);
-          if (event.data.duration !== undefined) setDuration(event.data.duration);
+          // Also check for ENDED state here (polling backup)
+          applyPlayerState(event.data.state, event.data.currentTime, event.data.duration);
           break;
           
         case 'error':
@@ -129,7 +152,7 @@ export const MusicPlayerMode = ({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [language, setIsPlaying]);
+  }, [language, applyPlayerState]);
 
   // No iframe DOM manipulation - iframe is managed by parent with CSS positioning
 
@@ -231,21 +254,47 @@ export const MusicPlayerMode = ({
     }
   }, [playerReady, isPlaying, sendCommand, language]);
 
-  // Periodically get current time while playing
+  // Periodically get current time while playing (skip if seeking)
   useEffect(() => {
     if (!isPlaying || !open) return;
     
     const interval = setInterval(() => {
-      sendCommand('getState');
+      if (!isSeekingRef.current) {
+        sendCommand('getState');
+      }
     }, 1000);
     
     return () => clearInterval(interval);
   }, [isPlaying, open, sendCommand]);
 
-  const handleSeek = useCallback((value: number[]) => {
+  // Handle slider drag start
+  const handleSeekStart = useCallback(() => {
+    isSeekingRef.current = true;
+    wasPlayingBeforeSeekRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Handle slider value change during drag (preview only)
+  const handleSeekChange = useCallback((value: number[]) => {
+    if (!isSeekingRef.current) {
+      isSeekingRef.current = true;
+      wasPlayingBeforeSeekRef.current = isPlaying;
+    }
+    setSeekValue(value[0]);
+  }, [isPlaying]);
+
+  // Handle slider commit (actual seek)
+  const handleSeekCommit = useCallback((value: number[]) => {
     const seconds = value[0];
     setCurrentTime(seconds);
+    setSeekValue(null);
+    isSeekingRef.current = false;
     sendCommand('seekTo', { seconds });
+    // Resume playback if was playing before seek
+    if (wasPlayingBeforeSeekRef.current) {
+      setTimeout(() => {
+        sendCommand('play');
+      }, 100);
+    }
   }, [sendCommand]);
 
   const handleClose = () => {
@@ -357,15 +406,21 @@ export const MusicPlayerMode = ({
           </div>
 
           {/* Seek Bar */}
-          <div className="flex items-center gap-3 mt-4 px-2">
+          <div 
+            className="flex items-center gap-3 mt-4 px-2"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
             <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
-              {formatTime(currentTime)}
+              {formatTime(sliderTime)}
             </span>
             <Slider
-              value={[currentTime]}
+              value={[sliderTime]}
               max={duration || 100}
               step={1}
-              onValueCommit={handleSeek}
+              onPointerDown={handleSeekStart}
+              onValueChange={handleSeekChange}
+              onValueCommit={handleSeekCommit}
               className="flex-1"
             />
             <span className="text-xs text-muted-foreground w-10 tabular-nums">
