@@ -8,13 +8,11 @@ interface FloatingSearchButtonProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  hasCartItems?: boolean;
 }
 
-export const FloatingSearchButton = ({ value, onChange, placeholder, hasCartItems = false }: FloatingSearchButtonProps) => {
+export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingSearchButtonProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Focus input when expanded
   useEffect(() => {
@@ -23,67 +21,68 @@ export const FloatingSearchButton = ({ value, onChange, placeholder, hasCartItem
     }
   }, [isExpanded]);
 
-  // Close on click outside
+  // Close on escape key
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isExpanded) {
         setIsExpanded(false);
       }
     };
-    if (isExpanded) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [isExpanded]);
 
+  if (isExpanded) {
+    return (
+      <>
+        {/* Backdrop overlay */}
+        <div 
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 lg:hidden"
+          onClick={() => setIsExpanded(false)}
+        />
+        
+        {/* Top search bar */}
+        <div className="fixed top-0 left-0 right-0 z-50 p-3 bg-background border-b shadow-lg lg:hidden animate-in slide-in-from-top duration-200">
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+            <Input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-10 text-base"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              onClick={() => {
+                if (value) {
+                  onChange("");
+                } else {
+                  setIsExpanded(false);
+                }
+              }}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "fixed left-4 z-40 lg:hidden transition-all duration-300 ease-out",
-        hasCartItems ? "bottom-40" : "bottom-24",
-        isExpanded ? "right-4" : ""
-      )}
+    <Button
+      size="icon"
+      className="h-14 w-14 rounded-full shadow-lg"
+      onClick={() => setIsExpanded(true)}
     >
-      {isExpanded ? (
-        <div className="flex items-center gap-2 bg-card border rounded-full shadow-lg p-1.5 animate-scale-in">
-          <Search className="h-5 w-5 ml-3 text-muted-foreground shrink-0" />
-          <Input
-            ref={inputRef}
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 shrink-0"
-            onClick={() => {
-              if (value) {
-                onChange("");
-              } else {
-                setIsExpanded(false);
-              }
-            }}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <Button
-          size="icon"
-          className="h-14 w-14 rounded-full shadow-lg"
-          onClick={() => setIsExpanded(true)}
-        >
-          <Search className="h-6 w-6" />
-          {value && (
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
-          )}
-        </Button>
+      <Search className="h-6 w-6" />
+      {value && (
+        <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
       )}
-    </div>
+    </Button>
   );
 };
