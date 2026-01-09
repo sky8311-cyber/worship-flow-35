@@ -107,51 +107,33 @@ export const GlobalMusicPlayerDialog = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [applyPlayerState, handleVideoEnded, setPlayerReady, language]);
 
-  // Auto-play first song when player becomes ready - with retry logic
-  const hasAutoPlayedRef = useRef(false);
-  const autoplayAttemptsRef = useRef(0);
-  const setIdRef = useRef<string | null>(null);
+  // Load first video when player becomes ready (but don't auto-play - wait for user tap)
+  const hasLoadedFirstVideoRef = useRef(false);
+  const currentSetIdRef = useRef<string | null>(null);
   
   useEffect(() => {
-    // Reset autoplay flag when setId changes (new playlist session)
+    // Reset when playlist changes
     const currentSetId = playlist.length > 0 ? playlist[0]?.videoId : null;
-    if (currentSetId !== setIdRef.current) {
-      setIdRef.current = currentSetId;
-      hasAutoPlayedRef.current = false;
-      autoplayAttemptsRef.current = 0;
+    if (currentSetId !== currentSetIdRef.current) {
+      currentSetIdRef.current = currentSetId;
+      hasLoadedFirstVideoRef.current = false;
     }
     
-    if (playerReady && playerState === 'full' && playlist.length > 0 && !hasAutoPlayedRef.current) {
+    // Load the first video when ready (cued state - not playing)
+    if (playerReady && playerState === 'full' && playlist.length > 0 && !hasLoadedFirstVideoRef.current) {
       const videoId = playlist[currentIndex]?.videoId;
       if (videoId) {
-        console.log('[GlobalMusicPlayerDialog] Auto-playing first video:', videoId);
-        hasAutoPlayedRef.current = true;
-        
-        // Load and play with multiple retry attempts
+        console.log('[GlobalMusicPlayerDialog] Loading first video (waiting for user tap):', videoId);
+        hasLoadedFirstVideoRef.current = true;
         sendCommand('loadVideo', { videoId });
-        
-        const delays = [200, 500, 1000, 1500];
-        delays.forEach((delay) => {
-          setTimeout(() => {
-            if (!isPlaying && autoplayAttemptsRef.current < 4) {
-              autoplayAttemptsRef.current++;
-              console.log(`[GlobalMusicPlayerDialog] Autoplay attempt ${autoplayAttemptsRef.current}`);
-              sendCommand('play');
-              sendCommand('getState');
-            }
-          }, delay);
-        });
-        
-        setIsPlaying(true);
       }
     }
     
-    // Reset autoplay flag when player closes
+    // Reset when player closes
     if (playerState === 'closed') {
-      hasAutoPlayedRef.current = false;
-      autoplayAttemptsRef.current = 0;
+      hasLoadedFirstVideoRef.current = false;
     }
-  }, [playerReady, playerState, playlist, currentIndex, sendCommand, setIsPlaying, isPlaying]);
+  }, [playerReady, playerState, playlist, currentIndex, sendCommand]);
 
   // Periodically get current state while playing
   useEffect(() => {
@@ -268,13 +250,22 @@ export const GlobalMusicPlayerDialog = () => {
           </Button>
         </div>
 
-        {/* Current Track Display */}
+        {/* Current Track Display - with play overlay for first load */}
         <div className="p-6 text-center">
-          <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-4 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg">
+          <div 
+            className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-4 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-lg relative cursor-pointer"
+            onClick={() => !isPlaying && togglePlayPause()}
+          >
             {isPlaying ? (
               <Volume2 className="w-12 h-12 sm:w-16 sm:h-16 text-white animate-pulse" />
             ) : (
-              <Music className="w-12 h-12 sm:w-16 sm:h-16 text-white" />
+              <>
+                <Music className="w-12 h-12 sm:w-16 sm:h-16 text-white opacity-50" />
+                {/* Large play overlay when not playing */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl">
+                  <Play className="w-10 h-10 sm:w-12 sm:h-12 text-white fill-white" />
+                </div>
+              </>
             )}
           </div>
           <h4 className="font-bold text-lg sm:text-xl text-foreground mb-1 truncate px-4">

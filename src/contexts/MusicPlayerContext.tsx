@@ -166,7 +166,7 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
       currentTime: 0,
       duration: 0,
       playerState: 'full',
-      isPlaying: true,
+      isPlaying: false, // Wait for user to tap play (iOS autoplay policy)
       proxyHtml: null, // Force refetch with new playlist
     }));
     setPlayerReady(false);
