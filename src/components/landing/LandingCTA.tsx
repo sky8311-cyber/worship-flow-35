@@ -14,7 +14,9 @@ export const LandingCTA = () => {
       
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
-          {...revealOnScroll}
+          variants={revealOnScroll}
+          initial="hidden"
+          whileInView="visible"
           viewport={revealViewportOptions}
           className="max-w-3xl mx-auto text-center"
         >
