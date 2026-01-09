@@ -42,6 +42,8 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
 const AppHistory = lazy(() => import("./pages/AppHistory"));
+const Features = lazy(() => import("./pages/Features"));
+const Press = lazy(() => import("./pages/Press"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -144,6 +146,9 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/r/:referralCode" element={<ReferralRedirect />} />
               <Route path="/legal" element={<Legal />} />
+              <Route path="/app-history" element={<AppHistory />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/press" element={<Press />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -168,7 +173,6 @@ const App = () => {
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
               <Route path="/public-view/:token" element={<PublicBandView />} /> {/* Public share link */}
-              <Route path="/app-history" element={<ProtectedRoute><AppHistory /></ProtectedRoute>} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

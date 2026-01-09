@@ -1,15 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Rocket, Sparkles, Flag, ArrowUpCircle } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
+import { Link } from "react-router-dom";
 
 const AppHistory = () => {
   const { language } = useTranslation();
+  const { user } = useAuth();
 
   const { data: milestones, isLoading } = useQuery({
     queryKey: ["public-milestones"],
@@ -65,123 +70,160 @@ const AppHistory = () => {
     return labels[category]?.[language] || category;
   };
 
-  return (
-    <AppLayout>
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        {/* Header */}
-        <motion.div 
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            {language === "ko" ? "K-Worship 히스토리" : "K-Worship History"}
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            {language === "ko" ? "우리의 여정" : "Our Journey"}
-          </p>
-        </motion.div>
+  const timelineContent = (
+    <>
+      {/* Header */}
+      <motion.div 
+        className="text-center mb-12"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          {language === "ko" ? "K-Worship 히스토리" : "K-Worship History"}
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          {language === "ko" ? "우리의 여정" : "Our Journey"}
+        </p>
+      </motion.div>
 
-        {/* Timeline */}
-        {isLoading ? (
-          <div className="space-y-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex gap-4">
-                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
+      {/* Timeline */}
+      {isLoading ? (
+        <div className="space-y-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex gap-4">
+              <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
               </div>
-            ))}
-          </div>
-        ) : milestones && milestones.length > 0 ? (
-          <div className="relative">
-            {/* Timeline line */}
-            <motion.div 
-              className="absolute left-5 top-0 bottom-0 w-0.5 bg-border origin-top"
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-            />
-
-            <motion.div 
-              className="space-y-8"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-            >
-              {milestones.map((milestone, index) => (
-                <motion.div 
-                  key={milestone.id} 
-                  className="relative flex gap-4"
-                  variants={staggerItem}
-                  viewport={revealViewportOptions}
-                  whileInView="visible"
-                  initial="hidden"
-                >
-                  {/* Icon circle */}
-                  <motion.div 
-                    className={`relative z-10 flex items-center justify-center h-10 w-10 rounded-full shrink-0 ${getCategoryColor(milestone.category)}`}
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 300, 
-                      damping: 20,
-                      delay: index * 0.1 
-                    }}
-                  >
-                    {getCategoryIcon(milestone.category)}
-                  </motion.div>
-
-                  {/* Content */}
-                  <motion.div 
-                    className="flex-1 pb-8"
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ 
-                      duration: 0.5, 
-                      delay: index * 0.1 + 0.1 
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(milestone.event_date), "yyyy.MM.dd")}
-                      </span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${getCategoryColor(milestone.category)}`}>
-                        {getCategoryLabel(milestone.category)}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-1">
-                      {language === "ko" ? milestone.title_ko : milestone.title_en}
-                    </h3>
-                    {(language === "ko" ? milestone.description_ko : milestone.description_en) && (
-                      <p className="text-muted-foreground">
-                        {language === "ko" ? milestone.description_ko : milestone.description_en}
-                      </p>
-                    )}
-                  </motion.div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        ) : (
+            </div>
+          ))}
+        </div>
+      ) : milestones && milestones.length > 0 ? (
+        <div className="relative">
+          {/* Timeline line */}
           <motion.div 
-            className="text-center py-12 text-muted-foreground"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            className="absolute left-5 top-0 bottom-0 w-0.5 bg-border origin-top"
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+          />
+
+          <motion.div 
+            className="space-y-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
           >
-            {language === "ko" ? "아직 등록된 히스토리가 없습니다." : "No history entries yet."}
+            {milestones.map((milestone, index) => (
+              <motion.div 
+                key={milestone.id} 
+                className="relative flex gap-4"
+                variants={staggerItem}
+                viewport={revealViewportOptions}
+                whileInView="visible"
+                initial="hidden"
+              >
+                {/* Icon circle */}
+                <motion.div 
+                  className={`relative z-10 flex items-center justify-center h-10 w-10 rounded-full shrink-0 ${getCategoryColor(milestone.category)}`}
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 20,
+                    delay: index * 0.1 
+                  }}
+                >
+                  {getCategoryIcon(milestone.category)}
+                </motion.div>
+
+                {/* Content */}
+                <motion.div 
+                  className="flex-1 pb-8"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: index * 0.1 + 0.1 
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(milestone.event_date), "yyyy.MM.dd")}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${getCategoryColor(milestone.category)}`}>
+                      {getCategoryLabel(milestone.category)}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold mb-1">
+                    {language === "ko" ? milestone.title_ko : milestone.title_en}
+                  </h3>
+                  {(language === "ko" ? milestone.description_ko : milestone.description_en) && (
+                    <p className="text-muted-foreground">
+                      {language === "ko" ? milestone.description_ko : milestone.description_en}
+                    </p>
+                  )}
+                </motion.div>
+              </motion.div>
+            ))}
           </motion.div>
-        )}
-      </div>
-    </AppLayout>
+        </div>
+      ) : (
+        <motion.div 
+          className="text-center py-12 text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {language === "ko" ? "아직 등록된 히스토리가 없습니다." : "No history entries yet."}
+        </motion.div>
+      )}
+    </>
+  );
+
+  // For authenticated users, use AppLayout
+  if (user) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-8 max-w-3xl">
+          {timelineContent}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // For public users, use minimal header + footer like Legal page
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/kworship-icon.png" 
+              alt="K-Worship" 
+              className="h-8 w-8"
+            />
+            <span className="font-bold text-xl">K-Worship</span>
+          </Link>
+          <LanguageToggle />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 max-w-3xl">
+        {timelineContent}
+      </main>
+
+      {/* Footer */}
+      <LandingFooter />
+    </div>
   );
 };
 
