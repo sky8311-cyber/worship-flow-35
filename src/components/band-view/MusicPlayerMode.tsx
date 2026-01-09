@@ -181,7 +181,12 @@ export const MusicPlayerMode = ({
     // Play next track
     const nextIndex = getNextIndex();
     setCurrentIndex(nextIndex);
+    setCurrentTime(0);
     sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
+    // Ensure autoplay after loading
+    setTimeout(() => {
+      sendCommand('play');
+    }, 100);
   }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
 
   // Keep ref in sync with latest handleVideoEnded
@@ -237,9 +242,10 @@ export const MusicPlayerMode = ({
     return () => clearInterval(interval);
   }, [isPlaying, open, sendCommand]);
 
-  const handleSeek = useCallback((value: number) => {
-    setCurrentTime(value);
-    sendCommand('seekTo', { seconds: value });
+  const handleSeek = useCallback((value: number[]) => {
+    const seconds = value[0];
+    setCurrentTime(seconds);
+    sendCommand('seekTo', { seconds });
   }, [sendCommand]);
 
   const handleClose = () => {
@@ -359,7 +365,7 @@ export const MusicPlayerMode = ({
               value={[currentTime]}
               max={duration || 100}
               step={1}
-              onValueChange={([value]) => handleSeek(value)}
+              onValueCommit={handleSeek}
               className="flex-1"
             />
             <span className="text-xs text-muted-foreground w-10 tabular-nums">
