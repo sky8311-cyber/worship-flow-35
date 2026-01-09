@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
@@ -101,7 +102,7 @@ const BandView = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRepeat, setIsRepeat] = useState(true);
   const [isShuffle, setIsShuffle] = useState(false);
-  const playerRef = useRef<any>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -1041,7 +1042,7 @@ const BandView = () => {
           setCurrentIndex={setCurrentTrackIndex}
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
-          playerRef={playerRef}
+          iframeRef={iframeRef}
           isRepeat={isRepeat}
           setIsRepeat={setIsRepeat}
           isShuffle={isShuffle}
@@ -1066,22 +1067,23 @@ const BandView = () => {
           setPlayerState('closed');
           setIsPlaying(false);
         }}
-        playerRef={playerRef}
+        iframeRef={iframeRef}
       />
     )}
 
-    {/* Persistent hidden player container for audio continuity */}
-    {playerState !== 'closed' && (
-      <div 
-        id="persistent-player-audio"
-        className="fixed"
-        style={{ 
-          top: '-9999px', 
-          left: '-9999px', 
-          width: '1px', 
-          height: '1px',
-          pointerEvents: 'none' 
-        }}
+    {/* YouTube Proxy Player iframe - persistent across mini/full transitions */}
+    {playerState !== 'closed' && musicPlaylist.length > 0 && (
+      <iframe
+        ref={iframeRef}
+        id="youtube-proxy-iframe"
+        src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${musicPlaylist[currentTrackIndex]?.videoId || ''}`}
+        className={cn(
+          "border-0",
+          playerState === 'full' && "fixed z-[200] top-0 left-0 w-full h-full opacity-0 pointer-events-none",
+          playerState === 'mini' && "fixed top-[-9999px] left-[-9999px] w-1 h-1"
+        )}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
       />
     )}
   </>

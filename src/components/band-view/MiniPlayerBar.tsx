@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronUp, Play, Pause, SkipBack, SkipForward, X, Music, Volume2 
@@ -14,7 +15,7 @@ interface MiniPlayerBarProps {
   setIsPlaying: (playing: boolean) => void;
   onExpand: () => void;
   onClose: () => void;
-  playerRef: React.MutableRefObject<any | null>;
+  iframeRef: React.RefObject<HTMLIFrameElement>;
 }
 
 export const MiniPlayerBar = ({
@@ -25,19 +26,27 @@ export const MiniPlayerBar = ({
   setIsPlaying,
   onExpand,
   onClose,
-  playerRef,
+  iframeRef,
 }: MiniPlayerBarProps) => {
   const { t } = useTranslation();
 
   const currentTrack = playlist[currentIndex];
 
-  const playTrack = (index: number) => {
-    setCurrentIndex(index);
-    if (playerRef.current && playlist[index]) {
-      playerRef.current.loadVideoById(playlist[index].videoId);
-      setIsPlaying(true);
+  // Send command to proxy iframe via postMessage
+  const sendCommand = useCallback((command: string, args?: any) => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { type: 'command', command, args },
+        '*'
+      );
     }
-  };
+  }, [iframeRef]);
+
+  const playTrack = useCallback((index: number) => {
+    setCurrentIndex(index);
+    sendCommand('loadVideo', { videoId: playlist[index]?.videoId });
+    setIsPlaying(true);
+  }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
 
   const playNext = () => {
     const nextIndex = (currentIndex + 1) % playlist.length;
@@ -50,28 +59,17 @@ export const MiniPlayerBar = ({
   };
 
   const togglePlayPause = () => {
-    console.log('MiniPlayerBar togglePlayPause', { hasPlayer: !!playerRef.current, isPlaying });
-    if (!playerRef.current) {
-      console.warn('No player ref in MiniPlayerBar');
-      return;
-    }
     if (isPlaying) {
-      playerRef.current.pauseVideo();
+      sendCommand('pause');
       setIsPlaying(false);
     } else {
-      playerRef.current.playVideo();
+      sendCommand('play');
       setIsPlaying(true);
     }
   };
 
   const handleClose = () => {
-    if (playerRef.current) {
-      try {
-        playerRef.current.pauseVideo();
-        playerRef.current.destroy();
-      } catch (e) {}
-      playerRef.current = null;
-    }
+    sendCommand('pause');
     setIsPlaying(false);
     onClose();
   };
@@ -160,12 +158,6 @@ export const MiniPlayerBar = ({
           </Button>
         </div>
       </div>
-
-      {/* Hidden player container for audio continuity */}
-      <div 
-        id="mini-player-container" 
-        className="hidden"
-      />
     </div>
   );
 };

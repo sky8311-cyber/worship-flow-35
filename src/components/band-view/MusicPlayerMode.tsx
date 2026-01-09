@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,13 +9,6 @@ import {
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
-
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
-}
 
 export interface PlaylistItem {
   videoId: string;
@@ -33,7 +26,7 @@ interface MusicPlayerModeProps {
   setCurrentIndex: (index: number) => void;
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
-  playerRef: React.MutableRefObject<any | null>;
+  iframeRef: React.RefObject<HTMLIFrameElement>;
   isRepeat: boolean;
   setIsRepeat: (repeat: boolean) => void;
   isShuffle: boolean;
@@ -49,135 +42,101 @@ export const MusicPlayerMode = ({
   setCurrentIndex,
   isPlaying,
   setIsPlaying,
-  playerRef,
+  iframeRef,
   isRepeat,
   setIsRepeat,
   isShuffle,
   setIsShuffle,
 }: MusicPlayerModeProps) => {
   const { t, language } = useTranslation();
-  const [apiReady, setApiReady] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
-  const playerContainerRef = useRef<HTMLDivElement>(null);
   const shuffleOrderRef = useRef<number[]>([]);
-  const pendingPlayRef = useRef(false);
 
-  // Load YouTube IFrame API
+  // Send command to proxy iframe via postMessage
+  const sendCommand = useCallback((command: string, args?: any) => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        { type: 'command', command, args },
+        '*'
+      );
+    }
+  }, [iframeRef]);
+
+  // Listen for messages from proxy iframe
   useEffect(() => {
-    if (window.YT && window.YT.Player) {
-      setApiReady(true);
-      return;
-    }
-
-    const existingScript = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
-    if (!existingScript) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      document.head.appendChild(tag);
-    }
-
-    window.onYouTubeIframeAPIReady = () => {
-      setApiReady(true);
-    };
-  }, []);
-
-  // Initialize player when API is ready and dialog is open
-  // Keep player alive even when dialog closes (for mini mode)
-  useEffect(() => {
-    if (!apiReady || playlist.length === 0) return;
-    
-    // Only create player if it doesn't exist
-    if (playerRef.current) return;
-    
-    // Wait for container - use persistent container or dialog container
-    const containerId = "persistent-youtube-player";
-    let container = document.getElementById(containerId);
-    
-    // If dialog is open and we have the ref, use that
-    if (open && playerContainerRef.current) {
-      container = playerContainerRef.current;
-    }
-    
-    if (!container) {
-      // Create persistent container in body
-      container = document.createElement("div");
-      container.id = containerId;
-      container.style.position = "fixed";
-      container.style.top = "-9999px";
-      container.style.left = "-9999px";
-      container.style.width = "1px";
-      container.style.height = "1px";
-      document.body.appendChild(container);
-    }
-
-    // Create player element
-    const playerId = "music-player-iframe";
-    let playerDiv = document.getElementById(playerId);
-    if (playerDiv) {
-      playerDiv.remove();
-    }
-    playerDiv = document.createElement("div");
-    playerDiv.id = playerId;
-    container.appendChild(playerDiv);
-
-    const createPlayer = () => {
-      setPlayerReady(false);
-      console.log('Creating YouTube player...');
-      playerRef.current = new window.YT.Player(playerId, {
-        height: "100%",
-        width: "100%",
-        videoId: playlist[currentIndex]?.videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          origin: window.location.origin,
-        },
-        events: {
-          onReady: () => {
-            console.log('YouTube player ready');
-            setPlayerReady(true);
-            // If user pressed play before ready, execute now
-            if (pendingPlayRef.current) {
-              pendingPlayRef.current = false;
-              playerRef.current?.playVideo();
-            }
-          },
-          onStateChange: handleStateChange,
-          onError: (event: any) => {
-            console.error('YouTube player error:', event.data);
-            const errorMessages: Record<number, string> = {
-              2: 'Invalid video ID',
-              5: 'HTML5 player error',
-              100: 'Video not found',
-              101: 'Embedding not allowed',
-              150: 'Embedding not allowed',
-            };
-            const msg = errorMessages[event.data] || `Error code: ${event.data}`;
-            toast.error(language === "ko" ? `재생 오류: ${msg}` : `Playback error: ${msg}`);
-          },
-        },
-      });
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data || event.data.source !== 'youtube-proxy') return;
+      
+      const { type, state } = event.data;
+      
+      switch (type) {
+        case 'ready':
+          console.log('[MusicPlayer] Proxy player ready');
+          setPlayerReady(true);
+          break;
+          
+        case 'stateChange':
+          console.log('[MusicPlayer] State change:', state);
+          // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2
+          if (state === 0) {
+            // Video ended - play next
+            handleVideoEnded();
+          } else if (state === 1) {
+            setIsPlaying(true);
+          } else if (state === 2) {
+            setIsPlaying(false);
+          }
+          break;
+          
+        case 'error':
+          console.error('[MusicPlayer] Proxy error:', event.data);
+          const errorMessages: Record<number, string> = {
+            2: 'Invalid video ID',
+            5: 'HTML5 player error',
+            100: 'Video not found',
+            101: 'Embedding not allowed',
+            150: 'Embedding not allowed',
+          };
+          const code = event.data.code;
+          const msg = errorMessages[code] || `Error code: ${code}`;
+          toast.error(language === "ko" ? `재생 오류: ${msg}` : `Playback error: ${msg}`);
+          break;
+          
+        case 'proxyLoaded':
+          console.log('[MusicPlayer] Proxy page loaded');
+          break;
+      }
     };
 
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [language, setIsPlaying]);
+
+  // Move iframe to video container when dialog is open
+  useEffect(() => {
+    if (!open) return;
+    
+    const moveIframe = () => {
+      const iframe = document.getElementById('youtube-proxy-iframe');
+      const container = document.getElementById('music-player-video-container');
+      
+      if (iframe && container && iframe.parentElement !== container) {
+        // Reset iframe styles for in-container display
+        iframe.style.position = 'relative';
+        iframe.style.top = '0';
+        iframe.style.left = '0';
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.opacity = '1';
+        iframe.style.pointerEvents = 'auto';
+        iframe.className = 'w-full h-full border-0';
+        container.appendChild(iframe);
+      }
+    };
+    
     // Small delay to ensure container is mounted
-    const timer = setTimeout(createPlayer, 100);
+    const timer = setTimeout(moveIframe, 50);
     return () => clearTimeout(timer);
-  }, [apiReady, playlist.length]);
-
-  // Move player iframe to dialog container when open, keep hidden when minimized
-  useEffect(() => {
-    const playerIframe = document.getElementById("music-player-iframe");
-    if (!playerIframe) return;
-
-    if (open && playerContainerRef.current) {
-      // Move iframe to visible container
-      playerContainerRef.current.appendChild(playerIframe);
-      playerIframe.style.width = "100%";
-      playerIframe.style.height = "100%";
-    }
   }, [open]);
 
   // Generate shuffle order
@@ -193,78 +152,67 @@ export const MusicPlayerMode = ({
     }
   }, [isShuffle, playlist.length]);
 
-  const handleStateChange = (event: any) => {
-    // YT.PlayerState.ENDED = 0
-    if (event.data === 0) {
-      playNext();
-    }
-    // YT.PlayerState.PLAYING = 1
-    if (event.data === 1) {
-      setIsPlaying(true);
-    }
-    // YT.PlayerState.PAUSED = 2
-    if (event.data === 2) {
-      setIsPlaying(false);
-    }
-  };
-
-  const getNextIndex = () => {
+  const getNextIndex = useCallback(() => {
     if (isShuffle) {
       const currentShufflePos = shuffleOrderRef.current.indexOf(currentIndex);
       const nextShufflePos = (currentShufflePos + 1) % playlist.length;
       return shuffleOrderRef.current[nextShufflePos];
     }
     return (currentIndex + 1) % playlist.length;
-  };
+  }, [isShuffle, currentIndex, playlist.length]);
 
-  const getPrevIndex = () => {
+  const getPrevIndex = useCallback(() => {
     if (isShuffle) {
       const currentShufflePos = shuffleOrderRef.current.indexOf(currentIndex);
       const prevShufflePos = currentShufflePos === 0 ? playlist.length - 1 : currentShufflePos - 1;
       return shuffleOrderRef.current[prevShufflePos];
     }
     return currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-  };
+  }, [isShuffle, currentIndex, playlist.length]);
 
-  const playTrack = (index: number) => {
-    setCurrentIndex(index);
-    if (playerRef.current && playlist[index]) {
-      playerRef.current.loadVideoById(playlist[index].videoId);
-      setIsPlaying(true);
-    }
-  };
-
-  const playNext = () => {
-    const nextIndex = getNextIndex();
+  const handleVideoEnded = useCallback(() => {
     // If we're at the end and repeat is off, stop
     if (!isRepeat && currentIndex === playlist.length - 1 && !isShuffle) {
       setIsPlaying(false);
       return;
     }
-    playTrack(nextIndex);
-  };
+    const nextIndex = getNextIndex();
+    setCurrentIndex(nextIndex);
+    // loadVideo will be triggered by currentIndex change via parent
+    sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
+  }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
 
-  const playPrevious = () => {
-    const prevIndex = getPrevIndex();
-    playTrack(prevIndex);
-  };
+  const playTrack = useCallback((index: number) => {
+    setCurrentIndex(index);
+    sendCommand('loadVideo', { videoId: playlist[index]?.videoId });
+    setIsPlaying(true);
+  }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
 
-  const togglePlayPause = () => {
-    if (!playerRef.current) {
-      toast.info(language === "ko" ? "플레이어 로딩 중..." : "Loading player...");
-      pendingPlayRef.current = true;
+  const playNext = useCallback(() => {
+    const nextIndex = getNextIndex();
+    if (!isRepeat && currentIndex === playlist.length - 1 && !isShuffle) {
+      setIsPlaying(false);
       return;
     }
+    playTrack(nextIndex);
+  }, [getNextIndex, isRepeat, currentIndex, playlist.length, isShuffle, setIsPlaying, playTrack]);
+
+  const playPrevious = useCallback(() => {
+    const prevIndex = getPrevIndex();
+    playTrack(prevIndex);
+  }, [getPrevIndex, playTrack]);
+
+  const togglePlayPause = useCallback(() => {
     if (!playerReady) {
-      pendingPlayRef.current = true;
+      toast.info(language === "ko" ? "플레이어 로딩 중..." : "Loading player...");
       return;
     }
     if (isPlaying) {
-      playerRef.current.pauseVideo();
+      sendCommand('pause');
     } else {
-      playerRef.current.playVideo();
+      sendCommand('play');
     }
-  };
+  }, [playerReady, isPlaying, sendCommand, language]);
 
   const openInYouTube = () => {
     const track = playlist[currentIndex];
@@ -274,11 +222,7 @@ export const MusicPlayerMode = ({
   };
 
   const handleClose = () => {
-    if (playerRef.current) {
-      try {
-        playerRef.current.pauseVideo();
-      } catch (e) {}
-    }
+    sendCommand('pause');
     setIsPlaying(false);
     onClose();
   };
@@ -300,7 +244,6 @@ export const MusicPlayerMode = ({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
-      {/* Full-screen overlay without transform - fixes iOS Safari iframe touch bug */}
       <DialogContent 
         className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-[100dvh] max-h-[100dvh] p-0 flex flex-col overflow-hidden rounded-none border-0"
         style={{
@@ -328,12 +271,14 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Video Player - constrained height for playlist room */}
+        {/* Video Player Container - iframe is managed by parent and positioned here when full */}
         <div className="flex-shrink-0 bg-black max-h-[28dvh]">
           <div 
-            ref={playerContainerRef}
-            className="aspect-video w-full max-h-[28dvh]"
-          />
+            id="music-player-video-container"
+            className="aspect-video w-full max-h-[28dvh] relative"
+          >
+            {/* Iframe will be moved here by parent when in full mode */}
+          </div>
         </div>
 
         {/* Now Playing Info */}
@@ -355,7 +300,7 @@ export const MusicPlayerMode = ({
             </div>
           </div>
 
-          {/* Controls - Responsive sizing */}
+          {/* Controls */}
           <div className="flex items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4">
             <Button
               variant="ghost"
@@ -390,7 +335,7 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Playlist - guaranteed space for at least 3-4 songs */}
+        {/* Playlist */}
         <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
           <div className="px-3 sm:px-4 py-2 border-b bg-muted/30 flex-shrink-0">
             <span className="text-xs sm:text-sm font-medium">
