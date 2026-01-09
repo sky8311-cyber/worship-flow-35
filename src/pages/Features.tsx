@@ -98,7 +98,7 @@ const Features = () => {
   ];
 
   const content = (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative z-10">
       {/* Header for non-authenticated users */}
       {!user && (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
