@@ -6,21 +6,34 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
-import { Download, Palette, Mail, FileImage, ExternalLink } from "lucide-react";
+import { Download, Palette, Mail, FileImage, ExternalLink, Newspaper } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import kworshipLogoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const Press = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
 
+  // Actual brand colors from the app's design system (index.css)
   const brandColors = [
-    { name: "Primary", hex: "#6366F1", hsl: "239 84% 67%" },
-    { name: "Secondary", hex: "#8B5CF6", hsl: "258 90% 66%" },
-    { name: "Accent", hex: "#F59E0B", hsl: "38 92% 50%" },
-    { name: "Background", hex: "#FFFFFF", hsl: "0 0% 100%" },
-    { name: "Foreground", hex: "#1F2937", hsl: "215 28% 17%" },
+    { name: "Primary", hex: "#2B4C7E", hsl: "220 52% 35%", description: language === "ko" ? "네이비 블루" : "Navy Blue" },
+    { name: "Secondary", hex: "#F5F5F7", hsl: "240 20% 96%", description: language === "ko" ? "밝은 회색" : "Light Gray" },
+    { name: "Accent", hex: "#C96B6B", hsl: "358 55% 60%", description: language === "ko" ? "코랄 핑크" : "Coral Pink" },
+    { name: "Background", hex: "#FCFCFD", hsl: "240 20% 99%", description: language === "ko" ? "거의 흰색" : "Off White" },
+    { name: "Foreground", hex: "#232529", hsl: "240 10% 15%", description: language === "ko" ? "짙은 회색" : "Dark Gray" },
+  ];
+
+  // Media coverage articles - add real articles here when available
+  const mediaCoverage: Array<{
+    title: string;
+    publisher: string;
+    date: string;
+    url: string;
+  }> = [
+    // Example format:
+    // { title: "K-Worship: 예배팀을 위한 혁신적인 플랫폼", publisher: "크리스천투데이", date: "2024-01-15", url: "https://..." },
   ];
 
   const content = (
@@ -78,37 +91,65 @@ const Press = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Logo Downloads */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">
+                    {language === "ko" ? "로고 다운로드" : "Logo Downloads"}
+                  </h3>
+                  <div className="flex flex-wrap gap-3">
+                    <a 
+                      href="/kworship-icon.png" 
+                      download="kworship-icon.png"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-card hover:bg-muted transition-colors"
+                    >
+                      <FileImage className="h-4 w-4" />
+                      <span>{language === "ko" ? "아이콘 로고 (PNG)" : "Icon Logo (PNG)"}</span>
+                    </a>
+                    <a 
+                      href={kworshipLogoDesktop}
+                      download="kworship-logo-full.png"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-card hover:bg-muted transition-colors"
+                    >
+                      <FileImage className="h-4 w-4" />
+                      <span>{language === "ko" ? "가로형 로고 (PNG)" : "Full Logo (PNG)"}</span>
+                    </a>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ko" 
+                      ? "로고 사용 시 비율을 유지해 주세요."
+                      : "Please maintain aspect ratio when using the logo."
+                    }
+                  </p>
+                </div>
+
+                {/* Logo Preview */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Logo Downloads */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold">
-                      {language === "ko" ? "로고 다운로드" : "Logo Downloads"}
-                    </h3>
-                    <div className="flex flex-wrap gap-3">
-                      <a 
-                        href="/kworship-icon.png" 
-                        download="kworship-icon.png"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border bg-card hover:bg-muted transition-colors"
-                      >
-                        <FileImage className="h-4 w-4" />
-                        <span>Icon (PNG)</span>
-                      </a>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {language === "ko" 
-                        ? "로고 사용 시 비율을 유지해 주세요."
-                        : "Please maintain aspect ratio when using the logo."
-                      }
+                  {/* Icon Logo Preview */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {language === "ko" ? "아이콘 로고" : "Icon Logo"}
                     </p>
+                    <div className="flex items-center justify-center p-8 bg-muted/30 rounded-xl border">
+                      <img 
+                        src="/kworship-icon.png" 
+                        alt="K-Worship Icon Logo" 
+                        className="h-24 w-24"
+                      />
+                    </div>
                   </div>
 
-                  {/* Logo Preview */}
-                  <div className="flex items-center justify-center p-8 bg-muted/30 rounded-xl">
-                    <img 
-                      src="/kworship-icon.png" 
-                      alt="K-Worship Logo" 
-                      className="h-24 w-24"
-                    />
+                  {/* Full Logo Preview */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {language === "ko" ? "가로형 로고" : "Full Logo"}
+                    </p>
+                    <div className="flex items-center justify-center p-8 bg-muted/30 rounded-xl border">
+                      <img 
+                        src={kworshipLogoDesktop}
+                        alt="K-Worship Full Logo" 
+                        className="h-16 max-w-full object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -134,11 +175,57 @@ const Press = () => {
                       />
                       <div>
                         <p className="font-medium text-sm">{color.name}</p>
-                        <p className="text-xs text-muted-foreground">{color.hex}</p>
+                        <p className="text-xs text-muted-foreground">{color.description}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{color.hex}</p>
                       </div>
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </motion.section>
+
+          {/* Media Coverage Section */}
+          <motion.section variants={staggerItem}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Newspaper className="h-5 w-5" />
+                  {language === "ko" ? "미디어 보도" : "Media Coverage"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {mediaCoverage.length > 0 ? (
+                  <div className="space-y-3">
+                    {mediaCoverage.map((article, index) => (
+                      <a
+                        key={index}
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors group"
+                      >
+                        <Newspaper className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate group-hover:text-primary transition-colors">
+                            {article.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {article.publisher} • {article.date}
+                          </p>
+                        </div>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    {language === "ko" 
+                      ? "보도 자료가 준비 중입니다."
+                      : "Media coverage coming soon."
+                    }
+                  </p>
+                )}
               </CardContent>
             </Card>
           </motion.section>
