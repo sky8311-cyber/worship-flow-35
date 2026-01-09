@@ -71,7 +71,7 @@ export const GlobalMiniPlayer = () => {
   return (
     <div 
       className={cn(
-        "fixed left-0 right-0 z-40 bg-background border-t shadow-lg",
+        "fixed left-0 right-0 z-[55] bg-background border-t shadow-lg",
         "bottom-14", // Above mobile nav (nav hidden on desktop)
         "animate-in slide-in-from-bottom-2 duration-300"
       )}
