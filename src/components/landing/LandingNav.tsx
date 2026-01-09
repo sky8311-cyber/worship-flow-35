@@ -1,95 +1,58 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { smoothScrollTo } from "@/lib/smoothScroll";
-import { useScrollObserver } from "@/hooks/useScrollObserver";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useScrollObserver } from "@/hooks/useScrollObserver";
+import { HeaderLogo } from "@/components/layout/HeaderLogo";
 
 export const LandingNav = () => {
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scrolled = useScrollObserver(50);
-  const { t } = useTranslation();
-
-  const navItems = [
-    { label: t("landing.nav.intro"), id: "intro" },
-    { label: t("landing.nav.features"), id: "features" },
-    { label: t("landing.nav.howItWorks"), id: "how-it-works" },
-    { label: t("landing.nav.community"), id: "community" },
-    { label: t("landing.nav.faq"), id: "faq" },
-  ];
-
-  const handleNavClick = (id: string) => {
-    smoothScrollTo(id);
-    setMobileMenuOpen(false);
-  };
 
   return (
-    <nav
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-sm"
+          ? "bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm"
           : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <div className="flex items-center">
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="focus:outline-none"
-            >
-              <HeaderLogo />
-            </button>
-          </div>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="focus:outline-none"
+          >
+            <HeaderLogo />
+          </button>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
-              >
-                {item.label}
-              </button>
-            ))}
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-4">
             <LanguageToggle />
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-            >
-              <Link to="/login">
-                {t("landing.nav.login")}
-              </Link>
+            <Button variant="ghost" asChild>
+              <Link to="/login">{t("landing.nav.login")}</Link>
             </Button>
-            <Button
-              asChild
-              size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Link to="/signup">
-                {t("landing.nav.signup")}
-              </Link>
+            <Button asChild>
+              <Link to="/signup">{t("landing.nav.signup")}</Link>
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2"
-          >
-            {mobileMenuOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -100,37 +63,16 @@ export const LandingNav = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background/95 backdrop-blur-xl border-b border-border"
+            className="md:hidden bg-background border-b border-border"
           >
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className="text-left text-sm font-medium text-foreground/80 hover:text-foreground transition-colors py-2"
-                >
-                  {item.label}
-                </button>
-              ))}
-              <div className="py-2">
-                <LanguageToggle />
-              </div>
-              <Button
-                asChild
-                variant="outline"
-                className="w-full"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Link to="/login">
+            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                   {t("landing.nav.login")}
                 </Link>
               </Button>
-              <Button
-                asChild
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Link to="/signup">
+              <Button asChild className="w-full">
+                <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>
                   {t("landing.nav.signup")}
                 </Link>
               </Button>
@@ -138,6 +80,6 @@ export const LandingNav = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </header>
   );
 };
