@@ -29,7 +29,7 @@ interface MusicPlayerContextType extends MusicPlayerState {
   closePlayer: () => void;
   hidePlayer: () => void;
   showPlayer: () => void;
-  iframeRef: React.RefObject<HTMLIFrameElement>;
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
   sendCommand: (command: string, args?: any) => void;
   playerReady: boolean;
   setPlayerReady: (ready: boolean) => void;
@@ -73,7 +73,7 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
   });
 
   const [playerReady, setPlayerReady] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
   // Persist to localStorage on state changes (except when closed)
   useEffect(() => {
