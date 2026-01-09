@@ -1,6 +1,6 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Instagram, Youtube, Mail, ChevronDown } from "lucide-react";
+import { Instagram, Youtube, Mail, AtSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Accordion,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/accordion";
 
 export const LandingFooter = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const currentYear = new Date().getFullYear();
   
   const { scrollYProgress } = useScroll();
@@ -22,15 +22,16 @@ export const LandingFooter = () => {
   const contentOpacity = useTransform(progress, [0, 0.5, 1], [0, 0.5, 1]);
 
   const productLinks = [
-    { href: "#features", label: t("landing.footer.features") },
-    { href: "#how-it-works", label: t("landing.footer.howItWorks") },
-    { href: "#community", label: t("landing.footer.community") },
+    { to: "/features", label: language === "ko" ? "주요 기능" : "Key Features" },
+  ];
+
+  const companyLinks = [
+    { to: "/app-history", label: language === "ko" ? "앱 히스토리" : "App History" },
+    { to: "/press", label: language === "ko" ? "보도자료" : "Press Kit" },
   ];
 
   const supportLinks = [
-    { href: "#faq", label: t("landing.footer.faqs") },
     { href: "mailto:hello@kworship.app", label: t("landing.footer.contact") },
-    { href: "mailto:hello@kworship.app", label: t("landing.footer.helpCenter") },
   ];
 
   const legalLinks = [
@@ -71,13 +72,33 @@ export const LandingFooter = () => {
                 <AccordionContent className="pb-4">
                   <nav className="space-y-3">
                     {productLinks.map((link) => (
-                      <a
-                        key={link.href}
-                        href={link.href}
+                      <Link
+                        key={link.to}
+                        to={link.to}
                         className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
                       >
                         {link.label}
-                      </a>
+                      </Link>
+                    ))}
+                  </nav>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Company Section */}
+              <AccordionItem value="company" className="border-primary-foreground/20">
+                <AccordionTrigger className="text-primary-foreground hover:no-underline py-4 text-lg font-semibold">
+                  {language === "ko" ? "회사" : "Company"}
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <nav className="space-y-3">
+                    {companyLinks.map((link) => (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                      >
+                        {link.label}
+                      </Link>
                     ))}
                   </nav>
                 </AccordionContent>
@@ -126,18 +147,32 @@ export const LandingFooter = () => {
           </div>
 
           {/* Desktop: Grid layout */}
-          <div className="hidden md:grid md:grid-cols-3 gap-8 lg:gap-12 mb-16">
+          <div className="hidden md:grid md:grid-cols-4 gap-8 lg:gap-12 mb-16">
             {/* Product links */}
             <nav className="space-y-3">
               <h4 className="font-semibold text-lg mb-4">{t("landing.footer.product")}</h4>
               {productLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
+                <Link
+                  key={link.to}
+                  to={link.to}
                   className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
                 >
                   {link.label}
-                </a>
+                </Link>
+              ))}
+            </nav>
+
+            {/* Company links */}
+            <nav className="space-y-3">
+              <h4 className="font-semibold text-lg mb-4">{language === "ko" ? "회사" : "Company"}</h4>
+              {companyLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                >
+                  {link.label}
+                </Link>
               ))}
             </nav>
             
@@ -180,7 +215,7 @@ export const LandingFooter = () => {
             {/* Social links */}
             <div className="flex items-center gap-6">
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/kworship.app" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-primary-foreground/70 hover:text-primary-foreground transition-colors"
@@ -189,7 +224,16 @@ export const LandingFooter = () => {
                 <Instagram className="w-5 h-5" />
               </a>
               <a 
-                href="https://youtube.com" 
+                href="https://www.threads.net/@kworship.app" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                aria-label="Threads"
+              >
+                <AtSign className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://youtube.com/@kworship" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-primary-foreground/70 hover:text-primary-foreground transition-colors"
