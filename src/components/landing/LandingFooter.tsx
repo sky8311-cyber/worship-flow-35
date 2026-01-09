@@ -1,5 +1,4 @@
 import { useTranslation } from "@/hooks/useTranslation";
-import { motion, useScroll, useTransform } from "framer-motion";
 import { Instagram, Youtube, Mail, AtSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -12,14 +11,6 @@ import {
 export const LandingFooter = () => {
   const { t, language } = useTranslation();
   const currentYear = new Date().getFullYear();
-  
-  const { scrollYProgress } = useScroll();
-  
-  // Footer reveal animation - activates in the last 15% of scroll
-  const progress = useTransform(scrollYProgress, [0.85, 1], [0, 1]);
-  const overlayOpacity = useTransform(progress, [0, 1], [1, 0]);
-  const contentY = useTransform(progress, [0, 1], ["30%", "0%"]);
-  const contentOpacity = useTransform(progress, [0, 0.5, 1], [0, 0.5, 1]);
 
   const productLinks = [
     { to: "/features", label: language === "ko" ? "주요 기능" : "Key Features" },
@@ -40,18 +31,8 @@ export const LandingFooter = () => {
   ];
 
   return (
-    <footer className="sticky bottom-0 z-0 min-h-screen bg-primary text-primary-foreground overflow-hidden">
-      {/* Dark overlay that fades out as you scroll */}
-      <motion.div 
-        className="absolute inset-0 bg-background pointer-events-none z-10"
-        style={{ opacity: overlayOpacity }}
-      />
-      
-      {/* Footer content that slides up */}
-      <motion.div 
-        className="container mx-auto px-4 h-full flex flex-col justify-center relative z-0 py-16"
-        style={{ y: contentY, opacity: contentOpacity }}
-      >
+    <footer className="bg-primary text-primary-foreground">
+      <div className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto w-full">
           {/* Brand section */}
           <div className="mb-12">
@@ -251,7 +232,7 @@ export const LandingFooter = () => {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </footer>
   );
 };
