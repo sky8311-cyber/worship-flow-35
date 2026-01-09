@@ -12,12 +12,11 @@ export const MusicPill = () => {
     <button
       onClick={showPlayer}
       className={cn(
-        "fixed bottom-20 left-4 z-40 flex items-center gap-2 px-3 py-2 rounded-full",
+        "fixed left-4 bottom-24 z-40 flex items-center gap-2 h-10 px-3 rounded-full",
         "bg-primary text-primary-foreground shadow-lg",
-        "transition-all duration-300 hover:scale-105 active:scale-95",
+        "hover:scale-105 active:scale-95",
         "animate-in slide-in-from-left-4"
       )}
-      style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="relative">
         {isPlaying ? (

@@ -230,14 +230,14 @@ export const GlobalMusicPlayerDialog = () => {
         </DialogTitle>
         
         {/* Swipeable area - everything except playlist */}
-        <div {...swipeHandlers} className="touch-pan-y">
-          {/* Swipe indicator handle */}
-          <div className="flex justify-center pt-2 pb-0">
-            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+        <div {...swipeHandlers} className="touch-pan-y bg-gradient-primary rounded-t-lg">
+          {/* Swipe indicator handle - on gradient */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-white/30" />
           </div>
           
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-gradient-primary text-white">
+          <div className="flex items-center justify-between px-4 pb-4 text-white">
             <Button 
               variant="ghost" 
               size="icon"
