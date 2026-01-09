@@ -1,8 +1,8 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Copy, Clock, Lock, Eye, Maximize2, Share2, Headphones } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Lock, Eye, Maximize2, Share2, Headphones } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -13,11 +13,10 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
-import { MusicPlayerMode, PlaylistItem } from "@/components/band-view/MusicPlayerMode";
-import { MiniPlayerBar } from "@/components/band-view/MiniPlayerBar";
+import { useMusicPlayer, PlaylistItem } from "@/contexts/MusicPlayerContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
@@ -41,7 +40,7 @@ import {
 import { 
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
   ScrollText, Sparkles, Music2, MessageCircle, Wine, Droplets, 
-  Users, MessagesSquare, Circle
+  Users, MessagesSquare, Circle, Clock
 } from "lucide-react";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
 import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard";
@@ -96,13 +95,8 @@ const BandView = () => {
   const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
   const [showUnpublishConfirm, setShowUnpublishConfirm] = useState(false);
   
-  // Music player states
-  const [playerState, setPlayerState] = useState<'closed' | 'full' | 'mini'>('closed');
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [proxyHtml, setProxyHtml] = useState<string | null>(null);
-  const proxyHtmlVideoIdRef = useRef<string | null>(null);
+  // Use global music player context
+  const { startPlaylist } = useMusicPlayer();
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -450,43 +444,16 @@ const BandView = () => {
       .sort((a: PlaylistItem, b: PlaylistItem) => a.position - b.position);
   }, [setSongs, allYoutubeLinks, t]);
 
-  // Fetch proxy HTML ONCE when player opens (do NOT re-fetch on track change)
-  useEffect(() => {
-    const fetchProxyHtml = async () => {
-      // Already loaded - skip
-      if (proxyHtml) return;
-      
-      const videoId = musicPlaylist[0]?.videoId; // Initialize with first track
-      if (!videoId) return;
-      
-      try {
-        console.log('[BandView] Fetching proxy HTML once with initial videoId:', videoId);
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
-        const res = await fetch(url);
-        const html = await res.text();
-        setProxyHtml(html);
-        proxyHtmlVideoIdRef.current = videoId;
-      } catch (error) {
-        console.error('[BandView] Failed to fetch proxy HTML:', error);
-      }
-    };
-    
-    if (playerState !== 'closed' && musicPlaylist.length > 0) {
-      fetchProxyHtml();
+  // Handler to start music playback using global context
+  const handleStartMusicPlayer = () => {
+    if (musicPlaylist.length > 0) {
+      startPlaylist(
+        musicPlaylist, 
+        serviceSet?.service_name || "Worship Set", 
+        id || ""
+      );
     }
-  }, [playerState, musicPlaylist.length, proxyHtml]); // Removed currentTrackIndex dependency
-
-  // Clean up proxyHtml when player is closed with delay to prevent white screen
-  useEffect(() => {
-    if (playerState === 'closed') {
-      // Delay cleanup to allow for smooth transition
-      const timer = setTimeout(() => {
-        setProxyHtml(null);
-        proxyHtmlVideoIdRef.current = null;
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [playerState]);
+  };
 
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
@@ -617,7 +584,7 @@ const BandView = () => {
             {musicPlaylist.length > 0 && (
               <Button
                 variant="outline"
-                onClick={() => setPlayerState('full')}
+                onClick={handleStartMusicPlayer}
                 className="flex items-center gap-2"
               >
                 <Headphones className="w-4 h-4" />
@@ -848,7 +815,6 @@ const BandView = () => {
                           }}
                           className="print:hidden"
                         >
-                          <Copy className="w-3 h-3 mr-1" />
                           {t("bandView.copyLyrics")}
                         </Button>
                       </div>
@@ -1067,55 +1033,8 @@ const BandView = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Music Player - Fullscreen Mode */}
-        <MusicPlayerMode
-          open={playerState === 'full'}
-          onClose={() => {
-            setPlayerState('closed');
-            setIsPlaying(false);
-          }}
-          onMinimize={() => setPlayerState('mini')}
-          playlist={musicPlaylist}
-          currentIndex={currentTrackIndex}
-          setCurrentIndex={setCurrentTrackIndex}
-          isPlaying={isPlaying}
-          setIsPlaying={setIsPlaying}
-          iframeRef={iframeRef}
-        />
       </div>
-
-      {/* Bottom padding when mini player is visible */}
-      {playerState === 'mini' && <div className="h-20" />}
     </AppLayout>
-
-    {/* Mini Player Bar - OUTSIDE AppLayout to ensure visibility */}
-    {playerState === 'mini' && (
-      <MiniPlayerBar
-        playlist={musicPlaylist}
-        currentIndex={currentTrackIndex}
-        setCurrentIndex={setCurrentTrackIndex}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        onExpand={() => setPlayerState('full')}
-        onClose={() => {
-          setPlayerState('closed');
-          setIsPlaying(false);
-        }}
-        iframeRef={iframeRef}
-      />
-    )}
-
-    {/* YouTube Proxy Player iframe - always hidden off-screen (audio only) */}
-    {proxyHtml && musicPlaylist.length > 0 && (
-      <iframe
-        ref={iframeRef}
-        id="youtube-proxy-iframe"
-        srcDoc={proxyHtml}
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
-        className="fixed top-[-9999px] left-[-9999px] w-1 h-1 border-0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      />
-    )}
   </>
   );
 };

@@ -7,11 +7,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SongCartProvider } from "@/contexts/SongCartContext";
+import { MusicPlayerProvider } from "@/contexts/MusicPlayerContext";
 import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LegalConsentModal } from "@/components/legal/LegalConsentModal";
 import { useLegalConsent } from "@/hooks/useLegalConsent";
+import { GlobalMusicPlayer } from "@/components/music-player/GlobalMusicPlayer";
 
 // Critical path - keep synchronous for fast initial load
 import Landing from "./pages/Landing";
@@ -124,11 +126,12 @@ const App = () => {
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <SongCartProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <MusicPlayerProvider>
+          <SongCartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
             <ScrollToTop />
             <Suspense fallback={<PageLoader />}>
             <Routes>
@@ -184,10 +187,12 @@ const App = () => {
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </SongCartProvider>
+              </Suspense>
+              </BrowserRouter>
+              <GlobalMusicPlayer />
+            </TooltipProvider>
+          </SongCartProvider>
+        </MusicPlayerProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
