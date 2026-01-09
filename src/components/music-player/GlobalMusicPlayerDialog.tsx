@@ -287,7 +287,7 @@ export const GlobalMusicPlayerDialog = () => {
             onValueChange={handleSeekChange}
             onValueCommit={handleSeekCommit}
             className="w-full"
-            trackClassName="bg-muted/50 h-2"
+            trackClassName="bg-primary/20 h-2"
             rangeClassName="bg-gradient-to-r from-primary to-accent"
             thumbClassName="border-accent bg-background shadow-md"
           />
