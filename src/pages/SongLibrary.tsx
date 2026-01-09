@@ -1086,6 +1086,32 @@ const SongLibrary = () => {
         }))}
         onSuccess={handleCartSuccess}
       />
+
+      {/* Song Add/Edit Dialog */}
+      <SongDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        song={selectedSong}
+        onClose={handleDialogClose}
+      />
+
+      {/* CSV Import Dialog */}
+      <CSVImportDialog
+        open={isCSVDialogOpen}
+        onOpenChange={setIsCSVDialogOpen}
+        onImportComplete={() => {
+          refetch();
+          setIsDuplicateDialogOpen(true);
+        }}
+      />
+
+      {/* Duplicate Review Dialog */}
+      <DuplicateReviewDialog
+        open={isDuplicateDialogOpen}
+        onClose={() => setIsDuplicateDialogOpen(false)}
+        songs={songs || []}
+        onMergeComplete={() => refetch()}
+      />
     </AppLayout>
   );
 };
