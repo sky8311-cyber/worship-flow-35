@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
-  ChevronUp, Play, Pause, SkipBack, SkipForward, X, Music, Volume2 
+  ChevronUp, Play, Pause, SkipBack, SkipForward, X, Music, Volume2, Maximize2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -146,6 +146,16 @@ export const MiniPlayerBar = ({
               <SkipForward className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Maximize button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onExpand}
+            className="flex-shrink-0"
+          >
+            <Maximize2 className="w-5 h-5" />
+          </Button>
 
           {/* Close button */}
           <Button 
