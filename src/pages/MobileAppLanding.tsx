@@ -1,19 +1,34 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
+import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { Globe, Music, Calendar, Users, Heart, Home, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { fadeInUp, staggerContainer, staggerItem } from "@/lib/animations";
+import { staggerContainer, staggerItem } from "@/lib/animations";
 import logo from "@/assets/kworship-logo-mobile.png";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+
 const MobileAppLanding = () => {
   const { t } = useTranslation();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <FullScreenLoader label="Loading…" />;
+  }
 
   const handleComingSoon = () => {
     toast.info(t("mobileApp.comingSoonMessage"));
   };
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
@@ -246,7 +261,7 @@ const MobileAppLanding = () => {
 
           {/* Web Version Button */}
           <motion.div variants={staggerItem} className="w-full max-w-xs">
-            <Link to="/" className="block">
+            <Link to="/app" className="block">
               <Button 
                 size="lg" 
                 className="w-full gap-2 h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white transition-all duration-300 hover:scale-[1.02] hover:shadow-xl shadow-lg"

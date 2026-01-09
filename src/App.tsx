@@ -14,13 +14,11 @@ import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LegalConsentModal } from "@/components/legal/LegalConsentModal";
 import { useLegalConsent } from "@/hooks/useLegalConsent";
 import { GlobalMusicPlayer } from "@/components/music-player/GlobalMusicPlayer";
-
 // Critical path - keep synchronous for fast initial load
-import Landing from "./pages/Landing";
+import MobileAppLanding from "./pages/MobileAppLanding";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
-
 // Lazy load all other pages for code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const SongLibrary = lazy(() => import("./pages/SongLibrary"));
@@ -59,7 +57,7 @@ const AdminHistory = lazy(() => import("./pages/AdminHistory"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
-const MobileAppLanding = lazy(() => import("./pages/MobileAppLanding"));
+const Landing = lazy(() => import("./pages/Landing"));
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
 const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
@@ -136,8 +134,8 @@ const App = () => {
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Landing Pages */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/app" element={<MobileAppLanding />} />
+              <Route path="/" element={<MobileAppLanding />} />
+              <Route path="/app" element={<Landing />} />
               
               {/* Auth Routes */}
               <Route path="/signup" element={<SignUp />} />
