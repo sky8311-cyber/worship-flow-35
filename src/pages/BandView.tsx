@@ -103,6 +103,8 @@ const BandView = () => {
   const [isRepeat, setIsRepeat] = useState(true);
   const [isShuffle, setIsShuffle] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [proxyHtml, setProxyHtml] = useState<string | null>(null);
+  const proxyHtmlVideoIdRef = useRef<string | null>(null);
 
   // Redirect non-authenticated users to login with redirect URL
   useEffect(() => {
@@ -449,6 +451,31 @@ const BandView = () => {
       .filter((item: PlaylistItem | null): item is PlaylistItem => item !== null)
       .sort((a: PlaylistItem, b: PlaylistItem) => a.position - b.position);
   }, [setSongs, allYoutubeLinks, t]);
+
+  // Fetch proxy HTML when player opens (initial load only)
+  useEffect(() => {
+    const fetchProxyHtml = async () => {
+      const videoId = musicPlaylist[currentTrackIndex]?.videoId;
+      if (!videoId) return;
+      
+      // Only fetch if videoId changed or first load
+      if (proxyHtmlVideoIdRef.current === videoId && proxyHtml) return;
+      
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
+        const res = await fetch(url);
+        const html = await res.text();
+        setProxyHtml(html);
+        proxyHtmlVideoIdRef.current = videoId;
+      } catch (error) {
+        console.error('[BandView] Failed to fetch proxy HTML:', error);
+      }
+    };
+    
+    if (playerState !== 'closed' && musicPlaylist.length > 0) {
+      fetchProxyHtml();
+    }
+  }, [playerState, currentTrackIndex, musicPlaylist, proxyHtml]);
 
   // Show loading while checking auth or fetching data
   if (authLoading || isLoading) {
@@ -1071,12 +1098,13 @@ const BandView = () => {
       />
     )}
 
-    {/* YouTube Proxy Player iframe - persistent across mini/full transitions */}
-    {playerState !== 'closed' && musicPlaylist.length > 0 && (
+    {/* YouTube Proxy Player iframe - persistent across mini/full transitions, using srcDoc for iOS compatibility */}
+    {playerState !== 'closed' && musicPlaylist.length > 0 && proxyHtml && (
       <iframe
         ref={iframeRef}
         id="youtube-proxy-iframe"
-        src={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${musicPlaylist[currentTrackIndex]?.videoId || ''}`}
+        srcDoc={proxyHtml}
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
         className={cn(
           "border-0",
           playerState === 'full' && "fixed z-[200] top-0 left-0 w-full h-full opacity-0 pointer-events-none",
