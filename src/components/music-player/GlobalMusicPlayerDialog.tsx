@@ -211,7 +211,7 @@ export const GlobalMusicPlayerDialog = () => {
   }, [setPlayerState]);
 
   // Swipe down to minimize (works on non-playlist areas)
-  const swipeRef = useSwipeDown<HTMLDivElement>({
+  const swipeHandlers = useSwipeDown({
     threshold: 60,
     onSwipeDown: handleMinimize,
   });
@@ -230,7 +230,7 @@ export const GlobalMusicPlayerDialog = () => {
         </DialogTitle>
         
         {/* Swipeable area - everything except playlist */}
-        <div ref={swipeRef} className="touch-pan-y">
+        <div {...swipeHandlers} className="touch-pan-y">
           {/* Swipe indicator handle */}
           <div className="flex justify-center pt-2 pb-0">
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
