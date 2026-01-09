@@ -52,6 +52,11 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-10 text-base"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setIsExpanded(false);
+              }
+            }}
           />
           <Button
             variant="ghost"
