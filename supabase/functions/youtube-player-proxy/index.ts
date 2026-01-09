@@ -126,7 +126,15 @@ serve(async (req) => {
             break;
           case 'loadVideo':
             if (args && args.videoId) {
+              console.log('[Proxy] Loading video:', args.videoId);
               player.loadVideoById(args.videoId);
+              // YouTube loadVideoById doesn't guarantee autoplay, force it
+              setTimeout(() => {
+                if (player.getPlayerState() !== 1) { // Not PLAYING
+                  console.log('[Proxy] Auto-playing after loadVideo');
+                  player.playVideo();
+                }
+              }, 300);
             }
             break;
           case 'cueVideo':
