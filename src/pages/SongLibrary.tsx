@@ -15,7 +15,7 @@ import { CSVImportDialog } from "@/components/CSVImportDialog";
 import { BulkActionsBar } from "@/components/BulkActionsBar";
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
-
+import { FloatingSearchButton } from "@/components/FloatingSearchButton";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -95,7 +95,6 @@ const SongLibrary = () => {
   const [isCartDialogOpen, setIsCartDialogOpen] = useState(false);
   const [isSearchSticky, setIsSearchSticky] = useState(false);
   const [isSearchMini, setIsSearchMini] = useState(false);
-  const [isMobileSearchExpanded, setIsMobileSearchExpanded] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchSentinelRef = useRef<HTMLDivElement>(null);
   
@@ -1112,64 +1111,12 @@ const SongLibrary = () => {
         />
       )}
 
-      {/* Floating Action Buttons - Mobile only */}
-      {!isMobileSearchExpanded && (
-        <div className="fixed bottom-24 left-4 right-4 z-40 lg:hidden flex justify-between items-center pointer-events-none">
-          {/* Search Button - Left */}
-          <Button
-            size="icon"
-            className="h-14 w-14 rounded-full shadow-lg pointer-events-auto"
-            onClick={() => setIsMobileSearchExpanded(true)}
-          >
-            <Search className="h-6 w-6" />
-            {searchQuery && (
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
-            )}
-          </Button>
-          
-          {/* Add Song Button - Right */}
-          {(isWorshipLeader || isAdmin) && (
-            <Button
-              size="icon"
-              className="h-14 w-14 rounded-full shadow-lg pointer-events-auto"
-              onClick={handleAddSong}
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Expanded Search Bar - Full Width when active (Mobile only) */}
-      {isMobileSearchExpanded && (
-        <div className="fixed bottom-24 left-4 right-4 z-40 lg:hidden animate-scale-in">
-          <div className="flex items-center gap-2 bg-card border rounded-full shadow-lg p-1.5">
-            <Search className="h-5 w-5 ml-3 text-muted-foreground shrink-0" />
-            <Input
-              autoFocus
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t("songLibrary.searchPlaceholder")}
-              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-9"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={() => {
-                if (searchQuery) {
-                  setSearchQuery("");
-                } else {
-                  setIsMobileSearchExpanded(false);
-                }
-              }}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Floating Search Button - Mobile only */}
+      <FloatingSearchButton
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder={t("songLibrary.searchPlaceholder")}
+      />
 
       {/* Floating "Add to Set" button - always visible when cart has items */}
       {isWorshipLeader && cartCount > 0 && (
