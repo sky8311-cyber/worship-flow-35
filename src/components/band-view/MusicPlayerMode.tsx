@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
-  Repeat, Shuffle, Music, Volume2 
+  Music, Volume2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -35,10 +35,6 @@ interface MusicPlayerModeProps {
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
   iframeRef: React.RefObject<HTMLIFrameElement>;
-  isRepeat: boolean;
-  setIsRepeat: (repeat: boolean) => void;
-  isShuffle: boolean;
-  setIsShuffle: (shuffle: boolean) => void;
 }
 
 export const MusicPlayerMode = ({
@@ -51,23 +47,17 @@ export const MusicPlayerMode = ({
   isPlaying,
   setIsPlaying,
   iframeRef,
-  isRepeat,
-  setIsRepeat,
-  isShuffle,
-  setIsShuffle,
 }: MusicPlayerModeProps) => {
   const { t, language } = useTranslation();
   const [playerReady, setPlayerReady] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [seekValue, setSeekValue] = useState<number | null>(null);
-  const shuffleOrderRef = useRef<number[]>([]);
   const handleVideoEndedRef = useRef<() => void>(() => {});
   const isSeekingRef = useRef(false);
   const lastStateRef = useRef<number | null>(null);
   const wasPlayingBeforeSeekRef = useRef(false);
-  const isPlayingRef = useRef(isPlaying); // Ref to track isPlaying for stable callbacks
-  const seekEndTimeRef = useRef<number>(0); // Track when seeking ended for debounce
+  const isPlayingRef = useRef(isPlaying);
 
   // Keep isPlayingRef in sync
   useEffect(() => {
@@ -165,50 +155,19 @@ export const MusicPlayerMode = ({
 
   // No iframe DOM manipulation - iframe is managed by parent with CSS positioning
 
-  // Generate shuffle order
-  useEffect(() => {
-    if (isShuffle && playlist.length > 0) {
-      const order = [...Array(playlist.length).keys()];
-      // Fisher-Yates shuffle
-      for (let i = order.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      shuffleOrderRef.current = order;
-    }
-  }, [isShuffle, playlist.length]);
-
   const getNextIndex = useCallback(() => {
-    if (isShuffle) {
-      const currentShufflePos = shuffleOrderRef.current.indexOf(currentIndex);
-      const nextShufflePos = (currentShufflePos + 1) % playlist.length;
-      return shuffleOrderRef.current[nextShufflePos];
-    }
     return (currentIndex + 1) % playlist.length;
-  }, [isShuffle, currentIndex, playlist.length]);
+  }, [currentIndex, playlist.length]);
 
   const getPrevIndex = useCallback(() => {
-    if (isShuffle) {
-      const currentShufflePos = shuffleOrderRef.current.indexOf(currentIndex);
-      const prevShufflePos = currentShufflePos === 0 ? playlist.length - 1 : currentShufflePos - 1;
-      return shuffleOrderRef.current[prevShufflePos];
-    }
     return currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
-  }, [isShuffle, currentIndex, playlist.length]);
+  }, [currentIndex, playlist.length]);
 
   const handleVideoEnded = useCallback(() => {
-    console.log('[MusicPlayer] handleVideoEnded - isRepeat:', isRepeat, 'currentIndex:', currentIndex);
+    console.log('[MusicPlayer] handleVideoEnded - currentIndex:', currentIndex);
     
-    // If repeat is ON, replay the same song from beginning
-    if (isRepeat) {
-      console.log('[MusicPlayer] Repeating current track');
-      sendCommand('seekTo', { seconds: 0 });
-      setTimeout(() => sendCommand('play'), 100);
-      return;
-    }
-    
-    // If we're at the end with no shuffle, stop playback
-    if (currentIndex === playlist.length - 1 && !isShuffle) {
+    // If we're at the last song, stop playback
+    if (currentIndex === playlist.length - 1) {
       console.log('[MusicPlayer] Last track, stopping');
       setIsPlaying(false);
       return;
@@ -223,8 +182,8 @@ export const MusicPlayerMode = ({
     // loadVideo + multiple play attempts for reliability
     sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
     setTimeout(() => sendCommand('play'), 200);
-    setTimeout(() => sendCommand('play'), 500); // Backup play
-  }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
+    setTimeout(() => sendCommand('play'), 500);
+  }, [currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
 
   // Auto-play when player becomes ready
   useEffect(() => {
@@ -257,13 +216,13 @@ export const MusicPlayerMode = ({
   }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
 
   const playNext = useCallback(() => {
-    const nextIndex = getNextIndex();
-    if (!isRepeat && currentIndex === playlist.length - 1 && !isShuffle) {
+    if (currentIndex === playlist.length - 1) {
       setIsPlaying(false);
       return;
     }
+    const nextIndex = getNextIndex();
     playTrack(nextIndex);
-  }, [getNextIndex, isRepeat, currentIndex, playlist.length, isShuffle, setIsPlaying, playTrack]);
+  }, [getNextIndex, currentIndex, playlist.length, setIsPlaying, playTrack]);
 
   const playPrevious = useCallback(() => {
     const prevIndex = getPrevIndex();
@@ -316,7 +275,6 @@ export const MusicPlayerMode = ({
     setCurrentTime(seconds);
     setSeekValue(null);
     isSeekingRef.current = false;
-    seekEndTimeRef.current = Date.now(); // Record when seeking ended
     sendCommand('seekTo', { seconds });
     // Resume playback if was playing before seek
     if (wasPlayingBeforeSeekRef.current) {
@@ -325,22 +283,6 @@ export const MusicPlayerMode = ({
       }, 100);
     }
   }, [sendCommand]);
-
-  // Guarded click handlers to prevent accidental toggles during/after seeking
-  const handleRepeatClick = useCallback(() => {
-    // Ignore clicks during seeking or within 300ms after seeking
-    if (isSeekingRef.current || Date.now() - seekEndTimeRef.current < 300) {
-      return;
-    }
-    setIsRepeat(!isRepeat);
-  }, [isRepeat, setIsRepeat]);
-
-  const handleShuffleClick = useCallback(() => {
-    if (isSeekingRef.current || Date.now() - seekEndTimeRef.current < 300) {
-      return;
-    }
-    setIsShuffle(!isShuffle);
-  }, [isShuffle, setIsShuffle]);
 
   const handleClose = () => {
     sendCommand('pause');
@@ -418,14 +360,6 @@ export const MusicPlayerMode = ({
 
           {/* Controls */}
           <div className="flex items-center justify-center gap-2 sm:gap-4 mt-3 sm:mt-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleShuffleClick}
-              className={cn("w-8 h-8 sm:w-10 sm:h-10", isShuffle && "text-primary")}
-            >
-              <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
             <Button variant="ghost" size="icon" onClick={playPrevious} className="w-8 h-8 sm:w-10 sm:h-10">
               <SkipBack className="w-5 h-5 sm:w-6 sm:h-6" />
             </Button>
@@ -439,14 +373,6 @@ export const MusicPlayerMode = ({
             </Button>
             <Button variant="ghost" size="icon" onClick={playNext} className="w-8 h-8 sm:w-10 sm:h-10">
               <SkipForward className="w-5 h-5 sm:w-6 sm:h-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRepeatClick}
-              className={cn("w-8 h-8 sm:w-10 sm:h-10", isRepeat && "text-primary")}
-            >
-              <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
           </div>
 

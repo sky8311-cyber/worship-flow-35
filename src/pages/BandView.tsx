@@ -100,8 +100,6 @@ const BandView = () => {
   const [playerState, setPlayerState] = useState<'closed' | 'full' | 'mini'>('closed');
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isRepeat, setIsRepeat] = useState(false);
-  const [isShuffle, setIsShuffle] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [proxyHtml, setProxyHtml] = useState<string | null>(null);
   const proxyHtmlVideoIdRef = useRef<string | null>(null);
@@ -1083,10 +1081,6 @@ const BandView = () => {
           isPlaying={isPlaying}
           setIsPlaying={setIsPlaying}
           iframeRef={iframeRef}
-          isRepeat={isRepeat}
-          setIsRepeat={setIsRepeat}
-          isShuffle={isShuffle}
-          setIsShuffle={setIsShuffle}
         />
       </div>
 
