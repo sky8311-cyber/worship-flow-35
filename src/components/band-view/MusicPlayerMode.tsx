@@ -66,6 +66,12 @@ export const MusicPlayerMode = ({
   const isSeekingRef = useRef(false);
   const lastStateRef = useRef<number | null>(null);
   const wasPlayingBeforeSeekRef = useRef(false);
+  const isPlayingRef = useRef(isPlaying); // Ref to track isPlaying for stable callbacks
+
+  // Keep isPlayingRef in sync
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   // Compute displayed slider value
   const sliderTime = seekValue ?? currentTime;
@@ -91,10 +97,12 @@ export const MusicPlayerMode = ({
     if (state === undefined) return;
 
     // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2, BUFFERING=3, CUED=5
+    // Guard all isPlaying updates during seeking to prevent visual flicker
     if (state === 1) {
-      setIsPlaying(true);
+      if (!isSeekingRef.current) {
+        setIsPlaying(true);
+      }
     } else if (state === 2) {
-      // Only set isPlaying false if not seeking (seeking causes temporary PAUSED)
       if (!isSeekingRef.current) {
         setIsPlaying(false);
       }
@@ -286,20 +294,20 @@ export const MusicPlayerMode = ({
     return () => clearInterval(interval);
   }, [isPlaying, open, sendCommand]);
 
-  // Handle slider drag start
+  // Handle slider drag start - use ref for stable callback
   const handleSeekStart = useCallback(() => {
     isSeekingRef.current = true;
-    wasPlayingBeforeSeekRef.current = isPlaying;
-  }, [isPlaying]);
+    wasPlayingBeforeSeekRef.current = isPlayingRef.current;
+  }, []); // No dependencies - uses ref
 
   // Handle slider value change during drag (preview only)
   const handleSeekChange = useCallback((value: number[]) => {
     if (!isSeekingRef.current) {
       isSeekingRef.current = true;
-      wasPlayingBeforeSeekRef.current = isPlaying;
+      wasPlayingBeforeSeekRef.current = isPlayingRef.current;
     }
     setSeekValue(value[0]);
-  }, [isPlaying]);
+  }, []); // No dependencies - uses ref
 
   // Handle slider commit (actual seek)
   const handleSeekCommit = useCallback((value: number[]) => {
