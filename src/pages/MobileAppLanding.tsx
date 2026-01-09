@@ -275,7 +275,7 @@ const MobileAppLanding = () => {
       </div>
       
       {/* Scroll spacer for footer reveal animation */}
-      <div className="h-[60vh] bg-background" />
+      <div className="h-[30vh] bg-background" />
       
       <LandingFooter />
     </>
