@@ -29,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSongCart } from "@/contexts/SongCartContext";
 import { useCrossCommunityMode } from "@/hooks/useCrossCommunityMode";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { useScrollDirection } from "@/hooks/useScrollDirection";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import XLSX from 'xlsx-js-style';
@@ -51,6 +52,7 @@ const SongLibrary = () => {
   const showFavoritesOnly = filterMode === "favorites";
   const { isFeatureEnabled: isCrossCommunityFeatureEnabled, isInCrossCommunityMode, toggleMode: toggleCrossCommunityMode } = useCrossCommunityMode();
   const { playerState } = useMusicPlayer();
+  const isScrollingDown = useScrollDirection();
   
   // Remember scroll position
   useScrollPosition("song-library");
@@ -1048,7 +1050,7 @@ const SongLibrary = () => {
       </main>
 
       {/* Mobile Floating Action Stack */}
-      <FloatingActionStack hasMiniPlayer={playerState === 'mini'}>
+      <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown}>
         {/* Cart indicator - bottom of stack */}
         {cartCount > 0 && (
           <FloatingCartIndicator 
