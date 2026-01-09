@@ -2,13 +2,21 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
-  Repeat, Shuffle, Music, Volume2, ExternalLink 
+  Repeat, Shuffle, Music, Volume2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
+
+// Format seconds to mm:ss
+const formatTime = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
 
 export interface PlaylistItem {
   videoId: string;
@@ -50,6 +58,8 @@ export const MusicPlayerMode = ({
 }: MusicPlayerModeProps) => {
   const { t, language } = useTranslation();
   const [playerReady, setPlayerReady] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const shuffleOrderRef = useRef<number[]>([]);
 
   // Send command to proxy iframe via postMessage
@@ -77,6 +87,9 @@ export const MusicPlayerMode = ({
           
         case 'stateChange':
           console.log('[MusicPlayer] State change:', state);
+          // Update time info if available
+          if (event.data.currentTime !== undefined) setCurrentTime(event.data.currentTime);
+          if (event.data.duration !== undefined) setDuration(event.data.duration);
           // YT.PlayerState: ENDED=0, PLAYING=1, PAUSED=2
           if (state === 0) {
             // Video ended - play next
@@ -86,6 +99,11 @@ export const MusicPlayerMode = ({
           } else if (state === 2) {
             setIsPlaying(false);
           }
+          break;
+          
+        case 'currentState':
+          if (event.data.currentTime !== undefined) setCurrentTime(event.data.currentTime);
+          if (event.data.duration !== undefined) setDuration(event.data.duration);
           break;
           
         case 'error':
@@ -146,20 +164,33 @@ export const MusicPlayerMode = ({
   }, [isShuffle, currentIndex, playlist.length]);
 
   const handleVideoEnded = useCallback(() => {
-    // If we're at the end and repeat is off, stop
-    if (!isRepeat && currentIndex === playlist.length - 1 && !isShuffle) {
+    // If repeat is ON, replay the same song from beginning
+    if (isRepeat) {
+      sendCommand('seekTo', { seconds: 0 });
+      sendCommand('play');
+      return;
+    }
+    
+    // If we're at the end with no shuffle, stop playback
+    if (currentIndex === playlist.length - 1 && !isShuffle) {
       setIsPlaying(false);
       return;
     }
+    
+    // Play next track
     const nextIndex = getNextIndex();
     setCurrentIndex(nextIndex);
-    // loadVideo will be triggered by currentIndex change via parent
     sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
   }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
 
   const playTrack = useCallback((index: number) => {
     setCurrentIndex(index);
+    setCurrentTime(0);
     sendCommand('loadVideo', { videoId: playlist[index]?.videoId });
+    // Ensure autoplay by sending play command after a short delay
+    setTimeout(() => {
+      sendCommand('play');
+    }, 100);
     setIsPlaying(true);
   }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
 
@@ -189,12 +220,21 @@ export const MusicPlayerMode = ({
     }
   }, [playerReady, isPlaying, sendCommand, language]);
 
-  const openInYouTube = () => {
-    const track = playlist[currentIndex];
-    if (track?.videoId) {
-      window.open(`https://www.youtube.com/watch?v=${track.videoId}`, '_blank');
-    }
-  };
+  // Periodically get current time while playing
+  useEffect(() => {
+    if (!isPlaying || !open) return;
+    
+    const interval = setInterval(() => {
+      sendCommand('getState');
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [isPlaying, open, sendCommand]);
+
+  const handleSeek = useCallback((value: number) => {
+    setCurrentTime(value);
+    sendCommand('seekTo', { seconds: value });
+  }, [sendCommand]);
 
   const handleClose = () => {
     sendCommand('pause');
@@ -236,14 +276,9 @@ export const MusicPlayerMode = ({
             <span className="hidden sm:inline">{t("bandView.musicPlayer.minimize")}</span>
           </Button>
           <span className="font-semibold text-sm sm:text-base">{t("bandView.musicPlayer.title")}</span>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={openInYouTube} className="w-8 h-8 sm:w-10 sm:h-10" title="Open in YouTube">
-              <ExternalLink className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleClose} className="w-8 h-8 sm:w-10 sm:h-10">
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" onClick={handleClose} className="w-8 h-8 sm:w-10 sm:h-10">
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Album Art Style Audio Visualization */}
@@ -307,6 +342,23 @@ export const MusicPlayerMode = ({
             >
               <Repeat className="w-4 h-4 sm:w-5 sm:h-5" />
             </Button>
+          </div>
+
+          {/* Seek Bar */}
+          <div className="flex items-center gap-3 mt-4 px-2">
+            <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
+              {formatTime(currentTime)}
+            </span>
+            <Slider
+              value={[currentTime]}
+              max={duration || 100}
+              step={1}
+              onValueChange={([value]) => handleSeek(value)}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-10 tabular-nums">
+              {formatTime(duration)}
+            </span>
           </div>
         </div>
 
