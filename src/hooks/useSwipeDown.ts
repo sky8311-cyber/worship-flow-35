@@ -1,53 +1,47 @@
-import { useRef, useEffect, RefObject } from "react";
+import { useRef, useEffect, useCallback } from "react";
 
 interface UseSwipeDownOptions {
   threshold?: number;
   onSwipeDown: () => void;
+  enabled?: boolean;
 }
 
-export function useSwipeDown<T extends HTMLElement = HTMLDivElement>({
+export function useSwipeDown({
   threshold = 60,
   onSwipeDown,
-}: UseSwipeDownOptions): RefObject<T> {
-  const ref = useRef<T>(null);
+  enabled = true,
+}: UseSwipeDownOptions) {
   const touchStartY = useRef<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!enabled) return;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  }, [enabled]);
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchStartX.current = e.touches[0].clientX;
-    };
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!enabled) return;
+    if (touchStartY.current === null || touchStartX.current === null) return;
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (touchStartY.current === null || touchStartX.current === null) return;
+    const touchEndY = e.changedTouches[0].clientY;
+    const touchEndX = e.changedTouches[0].clientX;
+    
+    const deltaY = touchEndY - touchStartY.current;
+    const deltaX = Math.abs(touchEndX - touchStartX.current);
 
-      const touchEndY = e.changedTouches[0].clientY;
-      const touchEndX = e.changedTouches[0].clientX;
-      
-      const deltaY = touchEndY - touchStartY.current;
-      const deltaX = Math.abs(touchEndX - touchStartX.current);
+    // Swipe down: deltaY > threshold and vertical movement is dominant
+    if (deltaY > threshold && deltaY > deltaX) {
+      console.log('[useSwipeDown] Swipe detected, minimizing');
+      onSwipeDown();
+    }
 
-      // Swipe down: deltaY > threshold and vertical movement is dominant
-      if (deltaY > threshold && deltaY > deltaX) {
-        onSwipeDown();
-      }
+    touchStartY.current = null;
+    touchStartX.current = null;
+  }, [threshold, onSwipeDown, enabled]);
 
-      touchStartY.current = null;
-      touchStartX.current = null;
-    };
-
-    element.addEventListener("touchstart", handleTouchStart, { passive: true });
-    element.addEventListener("touchend", handleTouchEnd, { passive: true });
-
-    return () => {
-      element.removeEventListener("touchstart", handleTouchStart);
-      element.removeEventListener("touchend", handleTouchEnd);
-    };
-  }, [threshold, onSwipeDown]);
-
-  return ref;
+  return {
+    onTouchStart: handleTouchStart,
+    onTouchEnd: handleTouchEnd,
+  };
 }
