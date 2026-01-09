@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { Badge } from "@/components/ui/badge";
-import { Music, Users, FileText, Eye, EyeOff } from "lucide-react";
-import { motion } from "framer-motion";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
+import { Eye, EyeOff } from "lucide-react";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
 
 const Login = () => {
@@ -43,236 +40,145 @@ const Login = () => {
       toast.success(t("auth.loginSuccess"));
       // Clear stored redirect URL
       sessionStorage.removeItem("redirectAfterLogin");
-      // Navigate directly to dashboard (or redirect URL) to avoid extra route churn through Landing
+      // Navigate directly to dashboard (or redirect URL)
       navigate(redirectUrl || "/dashboard");
     }
     setLoading(false);
   };
 
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: { duration: 0.5 }
-  };
-
-  const fadeInLeft = {
-    initial: { opacity: 0, x: -20 },
-    animate: { opacity: 1, x: 0 },
-    transition: { duration: 0.5, delay: 0.2 }
-  };
-
-  const features = [
-    {
-      icon: Music,
-      title: t("auth.loginPage.features.library.title"),
-      description: t("auth.loginPage.features.library.description")
-    },
-    {
-      icon: FileText,
-      title: t("auth.loginPage.features.setBuilder.title"),
-      description: t("auth.loginPage.features.setBuilder.description")
-    },
-    {
-      icon: Users,
-      title: t("auth.loginPage.features.community.title"),
-      description: t("auth.loginPage.features.community.description")
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      {/* Header Navigation */}
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Simple Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo - Center on Desktop, Left on Mobile */}
-            <Link to="/" className="hidden md:block absolute left-1/2 -translate-x-1/2">
-              <img src={logoDesktop} alt="K-Worship" className="h-20 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
+            <Link to="/">
+              <img src={logoMobile} alt="K-Worship" className="h-10 md:h-12 w-auto" />
             </Link>
-            <Link to="/" className="md:hidden">
-              <img src={logoMobile} alt="K-Worship" className="h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
-            </Link>
-            
-            {/* Language Toggle - Right */}
-            <div className="ml-auto">
-              <LanguageToggle />
-            </div>
+            <LanguageToggle />
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-7xl mx-auto">
-          
-          {/* Left Column - Informational Panel */}
-          <motion.div 
-            className="space-y-8"
-            {...fadeInLeft}
-          >
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl lg:text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent leading-tight">
-              {t("auth.loginPage.headline")}
-            </h1>
-                <Badge variant="secondary" className="text-xs px-2 py-1">
-                  {t("auth.loginPage.badge")}
-                </Badge>
-              </div>
-            <h2 className="text-xl md:text-2xl lg:text-4xl font-bold text-foreground">
-              {t("auth.loginPage.subheadline")}
-            </h2>
-            <p className="text-sm md:text-base lg:text-lg text-muted-foreground leading-relaxed">
-              {t("auth.loginPage.description")}
+      {/* Centered Login Card */}
+      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <Card className="w-full max-w-md shadow-lg border-border/50">
+          <CardHeader className="space-y-2">
+            <CardTitle className="text-2xl font-bold">{t("auth.loginPage.cardTitle")}</CardTitle>
+            <CardDescription className="text-base">
+              {t("auth.loginPage.cardSubtitle")}
+            </CardDescription>
+            <p className="text-xs text-muted-foreground pt-2">
+              {t("auth.loginPage.helperText")}
             </p>
-            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <Label htmlFor="email">{t("auth.email")}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="worship@church.com"
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="h-11"
+                />
+              </div>
 
-            {/* Feature List */}
-            <div className="space-y-6">
-              {features.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                  className="flex gap-4 items-start"
-                >
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Right Column - Login Card */}
-          <motion.div
-            {...fadeInUp}
-            className="w-full"
-          >
-            <Card className="shadow-lg border-border/50">
-              <CardHeader className="space-y-2">
-                <CardTitle className="text-2xl font-bold">{t("auth.loginPage.cardTitle")}</CardTitle>
-                <CardDescription className="text-base">
-                  {t("auth.loginPage.cardSubtitle")}
-                </CardDescription>
-                <p className="text-xs text-muted-foreground pt-2">
-                  {t("auth.loginPage.helperText")}
-                </p>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Email Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("auth.email")}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="worship@church.com"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="h-11"
-                    />
-                  </div>
-
-                  {/* Password Input with Toggle */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t("auth.password")}</Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        required
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="h-11 pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-11 px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Remember Me & Forgot Password */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox 
-                        id="remember" 
-                        checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                      />
-                      <Label 
-                        htmlFor="remember" 
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {t("auth.loginPage.rememberMe")}
-                      </Label>
-                    </div>
-                    <Button 
-                      type="button"
-                      variant="link" 
-                      className="p-0 h-auto text-sm"
-                      onClick={() => navigate("/forgot-password")}
-                    >
-                      {t("auth.forgotPassword")}
-                    </Button>
-                  </div>
-
-                  {/* Login Button */}
-                  <Button 
-                    type="submit" 
-                    className="w-full h-11 text-base font-medium"
-                    disabled={loading}
+              {/* Password Input with Toggle */}
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("auth.password")}</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="h-11 pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-11 px-3 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
-                    {loading ? t("auth.loginPage.loggingIn") : t("auth.login")}
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
                   </Button>
+                </div>
+              </div>
 
-                  {/* Sign Up Link */}
-                  <div className="text-center pt-2">
-                    <span className="text-sm text-muted-foreground">
-                      {t("auth.loginPage.signUpPrompt")}{" "}
-                    </span>
-                    <Button 
-                      type="button"
-                      variant="link" 
-                      className="p-0 h-auto text-sm font-semibold"
-                      onClick={() => navigate(redirectUrl ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/signup")}
-                    >
-                      {t("auth.signUp")}
-                    </Button>
-                  </div>
-                  
-                  {/* Legal Links */}
-                  <div className="text-center pt-2 text-xs text-muted-foreground">
-                    <Link to="/legal" className="hover:underline">
-                      {language === "ko" ? "이용약관" : "Terms of Service"}
-                    </Link>
-                    <span className="mx-2">|</span>
-                    <Link to="/legal" className="hover:underline">
-                      {language === "ko" ? "개인정보 처리방침" : "Privacy Policy"}
-                    </Link>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Checkbox 
+                    id="remember" 
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  />
+                  <Label 
+                    htmlFor="remember" 
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {t("auth.loginPage.rememberMe")}
+                  </Label>
+                </div>
+                <Button 
+                  type="button"
+                  variant="link" 
+                  className="p-0 h-auto text-sm"
+                  onClick={() => navigate("/forgot-password")}
+                >
+                  {t("auth.forgotPassword")}
+                </Button>
+              </div>
+
+              {/* Login Button */}
+              <Button 
+                type="submit" 
+                className="w-full h-11 text-base font-medium"
+                disabled={loading}
+              >
+                {loading ? t("auth.loginPage.loggingIn") : t("auth.login")}
+              </Button>
+
+              {/* Sign Up Link */}
+              <div className="text-center pt-2">
+                <span className="text-sm text-muted-foreground">
+                  {t("auth.loginPage.signUpPrompt")}{" "}
+                </span>
+                <Button 
+                  type="button"
+                  variant="link" 
+                  className="p-0 h-auto text-sm font-semibold"
+                  onClick={() => navigate(redirectUrl ? `/signup?redirect=${encodeURIComponent(redirectUrl)}` : "/signup")}
+                >
+                  {t("auth.signUp")}
+                </Button>
+              </div>
+              
+              {/* Legal Links */}
+              <div className="text-center pt-2 text-xs text-muted-foreground">
+                <Link to="/legal" className="hover:underline">
+                  {language === "ko" ? "이용약관" : "Terms of Service"}
+                </Link>
+                <span className="mx-2">|</span>
+                <Link to="/legal" className="hover:underline">
+                  {language === "ko" ? "개인정보 처리방침" : "Privacy Policy"}
+                </Link>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

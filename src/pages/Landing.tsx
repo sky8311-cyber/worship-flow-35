@@ -3,13 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LandingNav } from "@/components/landing/LandingNav";
-import { LandingHero } from "@/components/landing/LandingHero";
-import { LandingTrustBar } from "@/components/landing/LandingTrustBar";
-import { LandingIntro } from "@/components/landing/LandingIntro";
-import { LandingFeatures } from "@/components/landing/LandingFeatures";
-import { LandingTestimonials } from "@/components/landing/LandingTestimonials";
+import { LandingHeroSimple } from "@/components/landing/LandingHeroSimple";
 import { LandingCTA } from "@/components/landing/LandingCTA";
-import { LandingFAQ } from "@/components/landing/LandingFAQ";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
 const Landing = () => {
@@ -30,18 +25,13 @@ const Landing = () => {
     <div className="min-h-screen bg-background overflow-x-hidden">
       <LandingNav />
       
-      {/* Main content - stacks above the footer */}
+      {/* Main content */}
       <div className="relative z-10 bg-background">
-        <LandingHero />
-        <LandingTrustBar />
-        <LandingIntro />
-        <LandingFeatures />
-        <LandingTestimonials />
+        <LandingHeroSimple />
         <LandingCTA />
-        <LandingFAQ />
       </div>
       
-      {/* Footer - sticky at bottom, revealed as content scrolls up */}
+      {/* Footer */}
       <LandingFooter />
     </div>
   );
