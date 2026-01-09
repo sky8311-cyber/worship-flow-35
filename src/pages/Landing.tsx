@@ -5,7 +5,6 @@ import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHeroSimple } from "@/components/landing/LandingHeroSimple";
 import { LandingCTA } from "@/components/landing/LandingCTA";
-import { LandingFooter } from "@/components/landing/LandingFooter";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -30,9 +29,6 @@ const Landing = () => {
         <LandingHeroSimple />
         <LandingCTA />
       </div>
-      
-      {/* Footer */}
-      <LandingFooter />
     </div>
   );
 };
