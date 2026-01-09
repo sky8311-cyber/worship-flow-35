@@ -447,9 +447,17 @@ const BandView = () => {
   // Handler to start music playback using global context
   const handleStartMusicPlayer = () => {
     if (musicPlaylist.length > 0) {
+      // Format: "2025-01-07 금요 찬양 예배"
+      const formattedDate = serviceSet?.date 
+        ? format(parseLocalDate(serviceSet.date), 'yyyy-MM-dd')
+        : '';
+      const displayTitle = formattedDate 
+        ? `${formattedDate} ${serviceSet?.service_name || ""}`.trim()
+        : serviceSet?.service_name || "Worship Set";
+      
       startPlaylist(
         musicPlaylist, 
-        serviceSet?.service_name || "Worship Set", 
+        displayTitle, 
         id || ""
       );
     }
