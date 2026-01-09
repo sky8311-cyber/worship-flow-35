@@ -72,7 +72,7 @@ export const GlobalMiniPlayer = () => {
     <div 
       className={cn(
         "fixed left-0 right-0 z-40 bg-background border-t shadow-lg",
-        "bottom-14 lg:bottom-0", // Above mobile nav, at bottom on desktop
+        "bottom-14", // Above mobile nav (nav hidden on desktop)
         "animate-in slide-in-from-bottom-2 duration-300"
       )}
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
