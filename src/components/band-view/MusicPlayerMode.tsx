@@ -112,48 +112,7 @@ export const MusicPlayerMode = ({
     return () => window.removeEventListener('message', handleMessage);
   }, [language, setIsPlaying]);
 
-  // Move iframe to video container when dialog is open
-  useEffect(() => {
-    if (!open) return;
-    
-    const moveIframe = () => {
-      const iframe = document.getElementById('youtube-proxy-iframe');
-      const container = document.getElementById('music-player-video-container');
-      
-      if (iframe && container && iframe.parentElement !== container) {
-        // Reset iframe styles for in-container display
-        iframe.style.position = 'relative';
-        iframe.style.top = '0';
-        iframe.style.left = '0';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.opacity = '1';
-        iframe.style.pointerEvents = 'auto';
-        iframe.className = 'w-full h-full border-0';
-        container.appendChild(iframe);
-      }
-    };
-    
-    // Small delay to ensure container is mounted
-    const timer = setTimeout(moveIframe, 50);
-    
-    // Return iframe to body on cleanup to prevent orphaning
-    return () => {
-      clearTimeout(timer);
-      const iframe = document.getElementById('youtube-proxy-iframe');
-      if (iframe && iframe.parentElement?.id === 'music-player-video-container') {
-        // Move iframe back to body to keep it alive
-        iframe.style.position = 'fixed';
-        iframe.style.top = '-9999px';
-        iframe.style.left = '-9999px';
-        iframe.style.width = '1px';
-        iframe.style.height = '1px';
-        iframe.style.opacity = '0';
-        iframe.style.pointerEvents = 'none';
-        document.body.appendChild(iframe);
-      }
-    };
-  }, [open]);
+  // No iframe DOM manipulation - iframe is managed by parent with CSS positioning
 
   // Generate shuffle order
   useEffect(() => {
@@ -261,7 +220,7 @@ export const MusicPlayerMode = ({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent 
-        className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-[100dvh] max-h-[100dvh] p-0 flex flex-col overflow-hidden rounded-none border-0"
+        className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-[100dvh] max-h-[100dvh] p-0 flex flex-col overflow-hidden rounded-none border-0 z-[50] bg-background"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -287,13 +246,10 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Video Player Container - iframe is managed by parent and positioned here when full */}
-        <div className="flex-shrink-0 bg-black max-h-[28dvh]">
-          <div 
-            id="music-player-video-container"
-            className="aspect-video w-full max-h-[28dvh] relative"
-          >
-            {/* Iframe will be moved here by parent when in full mode */}
+        {/* Video area is transparent - iframe shows through from behind (z-40) */}
+        <div className="flex-shrink-0 bg-transparent max-h-[28dvh]">
+          <div className="aspect-video w-full max-h-[28dvh] relative">
+            {/* The iframe is positioned behind this dialog at z-40, visible through transparent background */}
           </div>
         </div>
 
