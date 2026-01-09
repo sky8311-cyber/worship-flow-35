@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 export const LandingFooter = () => {
   const { t, language } = useTranslation();
@@ -36,7 +37,13 @@ export const LandingFooter = () => {
         <div className="max-w-6xl mx-auto w-full">
           {/* Brand section */}
           <div className="mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold mb-4">K-Worship</h3>
+            <Link to="/" className="inline-block mb-4">
+              <img 
+                src={logoDesktop} 
+                alt="K-Worship" 
+                className="h-12 md:h-14 brightness-0 invert" 
+              />
+            </Link>
             <p className="text-primary-foreground/80 text-sm md:text-base leading-relaxed max-w-md">
               {t("landing.hero.subtitle")}
             </p>
