@@ -452,16 +452,17 @@ const BandView = () => {
       .sort((a: PlaylistItem, b: PlaylistItem) => a.position - b.position);
   }, [setSongs, allYoutubeLinks, t]);
 
-  // Fetch proxy HTML when player opens (initial load only)
+  // Fetch proxy HTML ONCE when player opens (do NOT re-fetch on track change)
   useEffect(() => {
     const fetchProxyHtml = async () => {
-      const videoId = musicPlaylist[currentTrackIndex]?.videoId;
+      // Already loaded - skip
+      if (proxyHtml) return;
+      
+      const videoId = musicPlaylist[0]?.videoId; // Initialize with first track
       if (!videoId) return;
       
-      // Only fetch if videoId changed or first load
-      if (proxyHtmlVideoIdRef.current === videoId && proxyHtml) return;
-      
       try {
+        console.log('[BandView] Fetching proxy HTML once with initial videoId:', videoId);
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
         const res = await fetch(url);
         const html = await res.text();
@@ -475,7 +476,7 @@ const BandView = () => {
     if (playerState !== 'closed' && musicPlaylist.length > 0) {
       fetchProxyHtml();
     }
-  }, [playerState, currentTrackIndex, musicPlaylist, proxyHtml]);
+  }, [playerState, musicPlaylist.length, proxyHtml]); // Removed currentTrackIndex dependency
 
   // Clean up proxyHtml when player is closed with delay to prevent white screen
   useEffect(() => {

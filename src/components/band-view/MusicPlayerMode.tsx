@@ -188,29 +188,48 @@ export const MusicPlayerMode = ({
   }, [isShuffle, currentIndex, playlist.length]);
 
   const handleVideoEnded = useCallback(() => {
+    console.log('[MusicPlayer] handleVideoEnded - isRepeat:', isRepeat, 'currentIndex:', currentIndex);
+    
     // If repeat is ON, replay the same song from beginning
     if (isRepeat) {
+      console.log('[MusicPlayer] Repeating current track');
       sendCommand('seekTo', { seconds: 0 });
-      sendCommand('play');
+      setTimeout(() => sendCommand('play'), 100);
       return;
     }
     
     // If we're at the end with no shuffle, stop playback
     if (currentIndex === playlist.length - 1 && !isShuffle) {
+      console.log('[MusicPlayer] Last track, stopping');
       setIsPlaying(false);
       return;
     }
     
     // Play next track
     const nextIndex = getNextIndex();
+    console.log('[MusicPlayer] Advancing to track:', nextIndex);
     setCurrentIndex(nextIndex);
     setCurrentTime(0);
+    
+    // loadVideo + multiple play attempts for reliability
     sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
-    // Ensure autoplay after loading
-    setTimeout(() => {
-      sendCommand('play');
-    }, 100);
+    setTimeout(() => sendCommand('play'), 200);
+    setTimeout(() => sendCommand('play'), 500); // Backup play
   }, [isRepeat, isShuffle, currentIndex, playlist, getNextIndex, setCurrentIndex, setIsPlaying, sendCommand]);
+
+  // Auto-play when player becomes ready
+  useEffect(() => {
+    if (open && playerReady && playlist.length > 0) {
+      const currentVideoId = playlist[currentIndex]?.videoId;
+      if (currentVideoId) {
+        console.log('[MusicPlayer] Player ready, loading current track:', currentVideoId);
+        setTimeout(() => {
+          sendCommand('loadVideo', { videoId: currentVideoId });
+          setTimeout(() => sendCommand('play'), 200);
+        }, 100);
+      }
+    }
+  }, [open, playerReady]); // Intentionally exclude playlist/currentIndex for initial load only
 
   // Keep ref in sync with latest handleVideoEnded
   useEffect(() => {
