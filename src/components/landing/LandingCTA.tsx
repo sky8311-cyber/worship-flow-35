@@ -29,7 +29,7 @@ export const LandingCTA = () => {
           
           {/* CTA Button */}
           <Button asChild size="lg" className="mb-4">
-            <Link to="/signup">{t("landing.nav.signup")}</Link>
+            <Link to="/signup">{t("landing.cta.ctaButton")}</Link>
           </Button>
           
           {/* Login Link */}
