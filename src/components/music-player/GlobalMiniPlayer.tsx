@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { 
-  Play, Pause, SkipBack, SkipForward, X, Music, Volume2, Maximize2, ChevronRight 
+  Play, Pause, SkipBack, SkipForward, X, Music, Volume2, Maximize2, ChevronsLeft 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -79,6 +79,17 @@ export const GlobalMiniPlayer = () => {
     >
       <div className="container max-w-5xl mx-auto">
         <div className="flex items-center gap-2 p-2 sm:p-3">
+          {/* Hide button - far left */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleHide}
+            className="flex-shrink-0"
+            title={language === "ko" ? "숨기기" : "Hide"}
+          >
+            <ChevronsLeft className="w-5 h-5" />
+          </Button>
+
           {/* Current track info */}
           <button 
             onClick={handleExpand}
@@ -145,17 +156,6 @@ export const GlobalMiniPlayer = () => {
             title={language === "ko" ? "전체화면" : "Expand"}
           >
             <Maximize2 className="w-5 h-5" />
-          </Button>
-
-          {/* Hide button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleHide}
-            className="flex-shrink-0"
-            title={language === "ko" ? "숨기기" : "Hide"}
-          >
-            <ChevronRight className="w-5 h-5" />
           </Button>
 
           {/* Close button */}

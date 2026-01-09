@@ -106,19 +106,27 @@ export const GlobalMusicPlayerDialog = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [applyPlayerState, handleVideoEnded, setPlayerReady, language]);
 
-  // Auto-play when player becomes ready and dialog is open
+  // Auto-play first song when player becomes ready
+  const hasAutoPlayedRef = useRef(false);
+  
   useEffect(() => {
-    if (playerReady && isPlaying && playerState === 'full') {
+    if (playerReady && playerState === 'full' && playlist.length > 0 && !hasAutoPlayedRef.current) {
       const videoId = playlist[currentIndex]?.videoId;
       if (videoId) {
-        console.log('[GlobalMusicPlayerDialog] Auto-playing video:', videoId);
+        console.log('[GlobalMusicPlayerDialog] Auto-playing first video:', videoId);
+        hasAutoPlayedRef.current = true;
         sendCommand('loadVideo', { videoId });
         setTimeout(() => {
           sendCommand('play');
-        }, 150);
+          setIsPlaying(true);
+        }, 300);
       }
     }
-  }, [playerReady, playerState]);
+    // Reset autoplay flag when player closes
+    if (playerState === 'closed') {
+      hasAutoPlayedRef.current = false;
+    }
+  }, [playerReady, playerState, playlist.length]);
 
   // Periodically get current time while playing
   useEffect(() => {
