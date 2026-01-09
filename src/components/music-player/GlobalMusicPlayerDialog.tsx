@@ -83,16 +83,17 @@ export const GlobalMusicPlayerDialog = () => {
   // Listen to messages from the proxy iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const { type, state, currentTime: time, duration: dur, error, videoId } = event.data || {};
+      // Only handle messages from our youtube proxy
+      if (event.data?.source !== 'youtube-proxy') return;
       
-      if (type === 'stateChange') {
+      const { type, state, currentTime: time, duration: dur, error } = event.data || {};
+      
+      if (type === 'stateChange' || type === 'currentState') {
         applyPlayerState(state, time, dur);
         // Handle video ended
         if (state === 0) {
           handleVideoEnded();
         }
-      } else if (type === 'timeUpdate') {
-        applyPlayerState(undefined, time, dur);
       } else if (type === 'ready') {
         console.log('[GlobalMusicPlayerDialog] Player ready');
         setPlayerReady(true);
@@ -106,38 +107,62 @@ export const GlobalMusicPlayerDialog = () => {
     return () => window.removeEventListener('message', handleMessage);
   }, [applyPlayerState, handleVideoEnded, setPlayerReady, language]);
 
-  // Auto-play first song when player becomes ready
+  // Auto-play first song when player becomes ready - with retry logic
   const hasAutoPlayedRef = useRef(false);
+  const autoplayAttemptsRef = useRef(0);
+  const setIdRef = useRef<string | null>(null);
   
   useEffect(() => {
+    // Reset autoplay flag when setId changes (new playlist session)
+    const currentSetId = playlist.length > 0 ? playlist[0]?.videoId : null;
+    if (currentSetId !== setIdRef.current) {
+      setIdRef.current = currentSetId;
+      hasAutoPlayedRef.current = false;
+      autoplayAttemptsRef.current = 0;
+    }
+    
     if (playerReady && playerState === 'full' && playlist.length > 0 && !hasAutoPlayedRef.current) {
       const videoId = playlist[currentIndex]?.videoId;
       if (videoId) {
         console.log('[GlobalMusicPlayerDialog] Auto-playing first video:', videoId);
         hasAutoPlayedRef.current = true;
+        
+        // Load and play with multiple retry attempts
         sendCommand('loadVideo', { videoId });
-        setTimeout(() => {
-          sendCommand('play');
-          setIsPlaying(true);
-        }, 300);
+        
+        const delays = [200, 500, 1000, 1500];
+        delays.forEach((delay) => {
+          setTimeout(() => {
+            if (!isPlaying && autoplayAttemptsRef.current < 4) {
+              autoplayAttemptsRef.current++;
+              console.log(`[GlobalMusicPlayerDialog] Autoplay attempt ${autoplayAttemptsRef.current}`);
+              sendCommand('play');
+              sendCommand('getState');
+            }
+          }, delay);
+        });
+        
+        setIsPlaying(true);
       }
     }
+    
     // Reset autoplay flag when player closes
     if (playerState === 'closed') {
       hasAutoPlayedRef.current = false;
+      autoplayAttemptsRef.current = 0;
     }
-  }, [playerReady, playerState, playlist.length]);
+  }, [playerReady, playerState, playlist, currentIndex, sendCommand, setIsPlaying, isPlaying]);
 
-  // Periodically get current time while playing
+  // Periodically get current state while playing
   useEffect(() => {
-    if (!isPlaying || playerState !== 'full' || isSeeking) return;
+    if (playerState !== 'full' || isSeeking) return;
     
     const interval = setInterval(() => {
-      sendCommand('getTime');
+      sendCommand('getState');
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [isPlaying, playerState, sendCommand, isSeeking]);
+  }, [playerState, sendCommand, isSeeking]);
 
   const playTrack = useCallback((index: number) => {
     setCurrentIndex(index);
@@ -209,6 +234,7 @@ export const GlobalMusicPlayerDialog = () => {
       <DialogContent 
         className="max-w-lg p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border-0 shadow-2xl"
         onPointerDownOutside={(e) => e.preventDefault()}
+        hideCloseButton
       >
         <DialogTitle className="sr-only">
           {t("bandView.musicPlayer.title")}
@@ -270,6 +296,9 @@ export const GlobalMusicPlayerDialog = () => {
             onValueChange={handleSeekChange}
             onValueCommit={handleSeekCommit}
             className="w-full"
+            trackClassName="bg-muted/50 h-2"
+            rangeClassName="bg-gradient-to-r from-primary to-accent"
+            thumbClassName="border-accent bg-background shadow-md"
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>{formatTime(currentTime)}</span>
