@@ -1,8 +1,6 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { AppHeader } from "./AppHeader";
 import { BottomTabNavigation } from "./BottomTabNavigation";
-import { FloatingChatButton } from "@/components/chat/FloatingChatButton";
-import { FloatingChatBox } from "@/components/chat/FloatingChatBox";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 
 interface AppLayoutProps {
@@ -13,7 +11,6 @@ interface AppLayoutProps {
 }
 
 export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: AppLayoutProps) => {
-  const [chatOpen, setChatOpen] = useState(false);
   const { playerState } = useMusicPlayer();
 
   // Add extra bottom padding when mini player is visible
@@ -37,16 +34,6 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
       </main>
       
       <BottomTabNavigation />
-      
-      {/* Desktop floating chat */}
-      <FloatingChatButton 
-        onClick={() => setChatOpen(!chatOpen)} 
-        isOpen={chatOpen} 
-      />
-      <FloatingChatBox 
-        isOpen={chatOpen} 
-        onClose={() => setChatOpen(false)} 
-      />
     </div>
   );
 };
