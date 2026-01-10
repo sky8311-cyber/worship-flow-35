@@ -1,6 +1,5 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useTranslation } from "@/hooks/useTranslation";
-import { revealText } from "@/lib/animations";
 
 interface FeatureCaptionProps {
   titleKo: string;
@@ -10,6 +9,16 @@ interface FeatureCaptionProps {
   highlighted?: boolean;
   isVisible: boolean;
 }
+
+// Safe animation variant without clipPath (iOS Safari compatible)
+const safeTextReveal: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" as const }
+  }
+};
 
 export const FeatureCaption = ({ 
   titleKo, 
@@ -51,7 +60,7 @@ export const FeatureCaption = ({
                 ? "bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" 
                 : "text-foreground"
             }`}
-            variants={revealText}
+            variants={safeTextReveal}
           >
             {title}
             {highlighted && <span className="ml-2">✨</span>}
