@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { Globe } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Globe, Home, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import {
@@ -9,8 +9,52 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const LandingNav = () => {
+  const location = useLocation();
+  const { t } = useTranslation();
+  const isAppPage = location.pathname === "/app";
+
+  // Full header with text buttons for /app page
+  if (isAppPage) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Left side - Home */}
+            <Button variant="ghost" asChild className="gap-2">
+              <Link to="/">
+                <Home className="h-4 w-4" />
+                <span>{t("common.home")}</span>
+              </Link>
+            </Button>
+
+            {/* Right side - Auth buttons + Language */}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" asChild className="gap-2">
+                <Link to="/login">
+                  <LogIn className="h-4 w-4" />
+                  <span>{t("auth.login")}</span>
+                </Link>
+              </Button>
+              
+              <Button variant="default" asChild className="gap-2">
+                <Link to="/signup">
+                  <UserPlus className="h-4 w-4" />
+                  <span>{t("auth.signUp")}</span>
+                </Link>
+              </Button>
+              
+              <LanguageToggle />
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
+  // Minimal floating header for landing page (/)
   return (
     <TooltipProvider delayDuration={300}>
       <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
