@@ -6,7 +6,6 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHeroSimple } from "@/components/landing/LandingHeroSimple";
 import { LandingCTA } from "@/components/landing/LandingCTA";
 import { AppPageHero } from "@/components/landing/AppPageHero";
-import { AppPageTrust } from "@/components/landing/AppPageTrust";
 
 const Landing = () => {
   const { user, loading } = useAuth();
@@ -26,15 +25,12 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <LandingNav />
+      {!isAppPage && <LandingNav />}
       
       {/* Main content */}
       <div className="relative z-10 bg-background">
         {isAppPage ? (
-          <>
-            <AppPageHero />
-            <AppPageTrust />
-          </>
+          <AppPageHero />
         ) : (
           <>
             <LandingHeroSimple />
