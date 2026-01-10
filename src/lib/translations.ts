@@ -1940,6 +1940,25 @@ songCard: {
         pleaseEnterContent: "Please enter template content",
       },
     },
+    appPage: {
+      badge: "Worship Planning Made Simple",
+      headline1: "Ready to Transform",
+      headline2: "Your Worship?",
+      subheadline: "Create your first set in under 2 minutes",
+      startFree: "Start Free",
+      getStartedFree: "Get Started Free",
+      noCreditCard: "No credit card required",
+      stats: {
+        worshipLeaders: "Worship Leaders",
+        setsCreated: "Sets Created",
+        communities: "Communities",
+      },
+      testimonial: {
+        quote: "KWorship has completely transformed how our team prepares for Sunday services. What used to take hours now takes minutes.",
+        author: "Joshua Kim",
+        role: "Worship Leader, Grace Community Church",
+      },
+    },
   },
   ko: {
     common: {
@@ -3861,6 +3880,25 @@ songCard: {
         pleaseEnterSlug: "슬러그를 입력해주세요",
         pleaseEnterSubject: "제목을 입력해주세요",
         pleaseEnterContent: "내용을 입력해주세요",
+      },
+    },
+    appPage: {
+      badge: "간편한 예배 계획",
+      headline1: "예배를",
+      headline2: "새롭게 준비하세요",
+      subheadline: "2분 안에 첫 예배세트를 만들어보세요",
+      startFree: "무료로 시작하기",
+      getStartedFree: "무료로 시작하기",
+      noCreditCard: "신용카드 필요 없음",
+      stats: {
+        worshipLeaders: "예배인도자",
+        setsCreated: "생성된 예배세트",
+        communities: "예배공동체",
+      },
+      testimonial: {
+        quote: "KWorship 덕분에 주일예배 준비 방식이 완전히 달라졌어요. 몇 시간 걸리던 일이 이제 몇 분이면 끝나요.",
+        author: "김요셉",
+        role: "예배인도자, 은혜공동체교회",
       },
     },
   },

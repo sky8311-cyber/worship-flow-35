@@ -1,23 +1,26 @@
 import { motion } from "framer-motion";
 import { Users, Heart, Music } from "lucide-react";
 import { staggerContainer, staggerItem, fadeInUp } from "@/lib/animations";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const AppPageTrust = () => {
+  const { t } = useTranslation();
+
   const stats = [
     {
       icon: Users,
       value: "500+",
-      label: "Worship Leaders",
+      label: t("appPage.stats.worshipLeaders"),
     },
     {
       icon: Music,
       value: "10,000+",
-      label: "Sets Created",
+      label: t("appPage.stats.setsCreated"),
     },
     {
       icon: Heart,
       value: "50+",
-      label: "Communities",
+      label: t("appPage.stats.communities"),
     },
   ];
 
@@ -56,7 +59,7 @@ export const AppPageTrust = () => {
           {/* Testimonial */}
           <motion.div
             variants={fadeInUp}
-            className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-primary/5 via-card to-purple-500/5 border border-border/50 backdrop-blur-sm"
+            className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-primary/5 via-card to-accent/5 border border-border/50 backdrop-blur-sm"
           >
             {/* Quote mark */}
             <div className="absolute -top-4 left-8 text-6xl text-primary/20 font-serif">
@@ -64,19 +67,19 @@ export const AppPageTrust = () => {
             </div>
             
             <blockquote className="text-lg md:text-xl text-foreground/90 italic mb-4 pt-4">
-              KWorship has completely transformed how our team prepares for Sunday services. What used to take hours now takes minutes.
+              {t("appPage.testimonial.quote")}
             </blockquote>
             
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white font-semibold">
-                J
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-semibold">
+                {t("appPage.testimonial.author").charAt(0)}
               </div>
               <div>
                 <div className="font-medium text-foreground">
-                  Joshua Kim
+                  {t("appPage.testimonial.author")}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Worship Leader, Grace Community Church
+                  {t("appPage.testimonial.role")}
                 </div>
               </div>
             </div>
