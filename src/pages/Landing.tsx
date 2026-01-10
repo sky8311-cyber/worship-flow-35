@@ -1,14 +1,18 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHeroSimple } from "@/components/landing/LandingHeroSimple";
 import { LandingCTA } from "@/components/landing/LandingCTA";
+import { AppPageHero } from "@/components/landing/AppPageHero";
+import { AppPageTrust } from "@/components/landing/AppPageTrust";
 
 const Landing = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAppPage = location.pathname === "/app";
 
   useEffect(() => {
     if (!loading && user) {
@@ -26,8 +30,17 @@ const Landing = () => {
       
       {/* Main content */}
       <div className="relative z-10 bg-background">
-        <LandingHeroSimple />
-        <LandingCTA />
+        {isAppPage ? (
+          <>
+            <AppPageHero />
+            <AppPageTrust />
+          </>
+        ) : (
+          <>
+            <LandingHeroSimple />
+            <LandingCTA />
+          </>
+        )}
       </div>
     </div>
   );
