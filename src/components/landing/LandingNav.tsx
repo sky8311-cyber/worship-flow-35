@@ -72,7 +72,7 @@ export const LandingNav = () => {
                     className="h-8 w-8 rounded-full hover:bg-muted text-foreground"
                     asChild
                   >
-                    <Link to="/login">
+                    <Link to="/app">
                       <Globe className="h-4 w-4" />
                     </Link>
                   </Button>
