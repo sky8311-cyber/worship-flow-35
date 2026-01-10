@@ -214,10 +214,14 @@ export const ScrollFeatureSection = () => {
           )}
         </div>
 
-        {/* Row 2: Caption/CTA Area - fixed at bottom with safe area */}
+        {/* Row 2: Caption/CTA Area - fixed at bottom with mobile-safe padding */}
         <div 
-          className="relative z-20 px-6 py-4"
-          style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom, 0px))' }}
+          className="relative z-20 px-4 py-4 min-h-[100px] bg-background/70 backdrop-blur-md mx-4 rounded-2xl mb-4 md:bg-transparent md:backdrop-blur-none md:mx-0 md:rounded-none md:mb-0"
+          style={{ 
+            paddingBottom: isMobile 
+              ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' 
+              : 'max(16px, env(safe-area-inset-bottom, 0px))' 
+          }}
         >
           {/* Feature Caption */}
           {!showCTA && (
