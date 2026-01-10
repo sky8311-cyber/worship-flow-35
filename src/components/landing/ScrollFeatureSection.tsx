@@ -135,7 +135,7 @@ export const ScrollFeatureSection = () => {
             </ScreenWrapper>
           </PhoneMockupAnimated>
 
-          {/* Desktop Mockup */}
+          {/* Desktop Mockup - visible on all devices */}
           {showDesktop && (
             <DesktopMockupAnimated
               style={{
@@ -143,7 +143,7 @@ export const ScrollFeatureSection = () => {
                 scale: smoothDesktopScale,
                 x: smoothDesktopX
               }}
-              className="hidden md:block"
+              className="scale-[0.55] md:scale-100 -ml-8 md:ml-0"
             >
               <DesktopDashboardScreen />
             </DesktopMockupAnimated>
@@ -187,7 +187,7 @@ export const ScrollFeatureSection = () => {
               {/* App Store Button */}
               <Button 
                 size="lg" 
-                className="flex-1 gap-2 h-12 bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+                className="flex-1 gap-2 h-14 bg-gray-900 hover:bg-gray-800 text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
                 onClick={handleComingSoon}
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -196,11 +196,10 @@ export const ScrollFeatureSection = () => {
                 <span className="text-sm">{t("mobileApp.downloadIos")}</span>
               </Button>
 
-              {/* Play Store Button */}
+              {/* Play Store Button - filled style for visual consistency */}
               <Button 
-                variant="outline" 
                 size="lg" 
-                className="flex-1 gap-2 h-12"
+                className="flex-1 gap-2 h-14 bg-gray-700 hover:bg-gray-600 text-white dark:bg-gray-200 dark:text-gray-900 dark:hover:bg-gray-300"
                 onClick={handleComingSoon}
               >
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
@@ -210,11 +209,11 @@ export const ScrollFeatureSection = () => {
               </Button>
             </div>
 
-            {/* Web Version Button */}
+            {/* Web Version Button - same height */}
             <Link to="/app" className="w-full max-w-md">
               <Button 
                 size="lg" 
-                className="w-full gap-2 h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg"
+                className="w-full gap-2 h-14 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg"
               >
                 <Globe className="w-5 h-5" />
                 {t("mobileApp.webVersion")}
