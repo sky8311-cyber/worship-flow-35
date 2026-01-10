@@ -206,7 +206,7 @@ export const ScrollFeatureSection = () => {
               </div>
 
               {/* Web Version Button - identical styling */}
-              <Link to="/app" className="w-full max-w-md">
+              <Link to="/online" className="w-full max-w-md">
                 <Button 
                   size="lg" 
                   className="w-full gap-2 h-14 rounded-full text-base font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-lg"

@@ -138,6 +138,7 @@ const App = () => {
               {/* Public Landing Pages */}
               <Route path="/" element={<MobileAppLanding />} />
               <Route path="/app" element={<Landing />} />
+              <Route path="/online" element={<Landing />} />
               
               {/* Auth Routes */}
               <Route path="/signup" element={<SignUp />} />

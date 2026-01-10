@@ -11,7 +11,7 @@ const Landing = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isAppPage = location.pathname === "/app";
+  const isAppPage = location.pathname === "/app" || location.pathname === "/online";
 
   useEffect(() => {
     if (!loading && user) {
