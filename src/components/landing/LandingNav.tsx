@@ -14,7 +14,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 export const LandingNav = () => {
   const location = useLocation();
   const { t } = useTranslation();
-  const isAppPage = location.pathname === "/app" || location.pathname === "/online";
+  const isAppPage = location.pathname === "/app";
 
   // Full header with logo and enhanced buttons for /app page
   if (isAppPage) {
@@ -31,7 +31,7 @@ export const LandingNav = () => {
               </Button>
               
               {/* Logo */}
-              <Link to="/online" className="flex items-center">
+              <Link to="/app" className="flex items-center">
                 <img 
                   src="/kworship-icon.png" 
                   alt="KWorship" 
@@ -129,7 +129,7 @@ export const LandingNav = () => {
                     className="h-8 w-8 rounded-full hover:bg-muted text-foreground"
                     asChild
                   >
-                    <Link to="/online">
+                    <Link to="/app">
                       <Globe className="h-4 w-4" />
                     </Link>
                   </Button>
