@@ -1997,6 +1997,7 @@ songCard: {
       deletedUser: "삭제된 사용자",
       items: "항목",
       aWorshipLeader: "예배인도자",
+      and: "및",
     },
     worshipComponents: {
       title: "예배 순서",
