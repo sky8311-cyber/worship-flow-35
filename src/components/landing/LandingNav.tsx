@@ -23,10 +23,9 @@ export const LandingNav = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Left side - Home */}
-            <Button variant="ghost" asChild className="gap-2">
+            <Button variant="ghost" size="icon" asChild>
               <Link to="/">
                 <Home className="h-4 w-4" />
-                <span>{t("common.home")}</span>
               </Link>
             </Button>
 
