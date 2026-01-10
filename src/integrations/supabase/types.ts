@@ -3229,6 +3229,18 @@ export type Database = {
         | "score_uploaded"
         | "lyrics_added"
         | "admin_bonus"
+        | "signup"
+        | "first_song"
+        | "first_set"
+        | "first_community"
+        | "profile_complete"
+        | "first_invite"
+        | "post_create"
+        | "comment_create"
+        | "like_give"
+        | "song_add"
+        | "set_create"
+        | "score_upload"
       set_status: "draft" | "published"
     }
     CompositeTypes: {
@@ -3377,6 +3389,18 @@ export const Constants = {
         "score_uploaded",
         "lyrics_added",
         "admin_bonus",
+        "signup",
+        "first_song",
+        "first_set",
+        "first_community",
+        "profile_complete",
+        "first_invite",
+        "post_create",
+        "comment_create",
+        "like_give",
+        "song_add",
+        "set_create",
+        "score_upload",
       ],
       set_status: ["draft", "published"],
     },

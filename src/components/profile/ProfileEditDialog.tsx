@@ -113,10 +113,11 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
       });
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Profile update error:', error);
       toast({
         title: t("common.error"),
-        description: t("profile.updateError"),
+        description: error?.message || t("profile.updateError"),
         variant: "destructive",
       });
     },
