@@ -16,8 +16,21 @@ const MobileAppLanding = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) {
+    if (loading) return;
+    
+    // If logged in, go to dashboard
+    if (user) {
       navigate("/dashboard");
+      return;
+    }
+    
+    // If returning visitor (has visited dashboard before), go to login
+    const hasVisited = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('kworship_visited='));
+    
+    if (hasVisited) {
+      navigate("/login");
     }
   }, [user, loading, navigate]);
 

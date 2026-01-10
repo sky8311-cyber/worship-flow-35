@@ -44,8 +44,15 @@ import { useUserCommunities } from "@/hooks/useUserCommunities";
 import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalendarBanner";
 import { WLOnboardingChecklist } from "@/components/dashboard/WLOnboardingChecklist";
 
+import { useEffect } from "react";
+
 const Dashboard = () => {
   const navigate = useNavigate();
+  
+  // Set cookie to track that user has visited dashboard (for returning visitor detection)
+  useEffect(() => {
+    document.cookie = "kworship_visited=true; path=/; max-age=31536000; SameSite=Lax";
+  }, []);
   const queryClient = useQueryClient();
   const {
     t,
