@@ -106,7 +106,7 @@ export const ScrollFeatureSection = () => {
     <div ref={containerRef} className="relative h-[500vh]">
       {/* Sticky container with grid layout: Row1 = mockups, Row2 = caption/CTA */}
       <div 
-        className="sticky top-0 h-[100dvh] min-h-[100svh] overflow-hidden grid grid-rows-[1fr_auto]"
+        className="sticky top-0 h-[100svh] md:h-[100dvh] overflow-hidden grid grid-rows-[minmax(0,1fr)_auto]"
       >
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
@@ -123,8 +123,8 @@ export const ScrollFeatureSection = () => {
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        {/* Row 1: Device Mockups Area - aligned to start with top padding */}
-        <div className="relative z-10 flex items-start justify-center pt-8 md:pt-16">
+        {/* Row 1: Device Mockups Area - aligned to start with top padding, min-h-0 for grid shrink */}
+        <div className="relative z-10 flex items-start justify-center pt-8 md:pt-16 min-h-0">
           {/* Device Mockups Container - hide when CTA visible */}
           {!showCTA && (
             <div className="relative flex items-center justify-center gap-4 md:gap-8">
