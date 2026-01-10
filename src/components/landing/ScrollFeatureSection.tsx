@@ -122,7 +122,7 @@ export const ScrollFeatureSection = () => {
 
         {/* Device Mockups Container - hide when CTA visible to prevent overlap */}
         {!showCTA && (
-          <div className="relative z-10 flex items-center justify-center gap-4 md:gap-8">
+          <div className={`relative z-10 flex items-center justify-center gap-4 md:gap-8 ${showDesktop ? "-translate-y-8 md:translate-y-0" : ""}`}>
             {/* Phone Mockup */}
             <PhoneMockupAnimated 
               style={{ 
@@ -153,7 +153,7 @@ export const ScrollFeatureSection = () => {
         )}
 
         {/* Feature Caption - increased spacing from mockup */}
-        <div className="absolute bottom-16 md:bottom-28 left-0 right-0 px-4">
+        <div className="absolute bottom-20 md:bottom-28 left-0 right-0 px-6 pb-safe">
           <FeatureCaption
             titleKo={currentScreen.titleKo}
             titleEn={currentScreen.titleEn}
