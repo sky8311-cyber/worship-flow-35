@@ -94,13 +94,13 @@ const Dashboard = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("워십세트가 삭제되었습니다");
+      toast.success(t("dashboard.setDeleted"));
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
     },
     onError: (error) => {
       console.error("Delete error:", error);
-      toast.error("워십세트 삭제에 실패했습니다");
+      toast.error(t("dashboard.setDeleteFailed"));
     },
   });
 
@@ -116,11 +116,11 @@ const Dashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-      toast.success("상태가 변경되었습니다");
+      toast.success(t("dashboard.statusChanged"));
     },
     onError: (error) => {
       console.error("Publish toggle error:", error);
-      toast.error("상태 변경에 실패했습니다");
+      toast.error(t("dashboard.statusChangeFailed"));
     },
   });
 
@@ -140,7 +140,7 @@ const Dashboard = () => {
   const handleDelete = async (setId: string, setName: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm(`"${setName}" 워십세트를 삭제하시겠습니까?`)) {
+    if (confirm(t("dashboard.confirmDeleteSet").replace("{name}", setName))) {
       deleteMutation.mutate(setId);
     }
   };
@@ -472,14 +472,14 @@ const Dashboard = () => {
                                     </Badge>
                                   )}
                                   <Badge variant={set.status === "published" ? "default" : "secondary"} className="text-xs">
-                                    {set.status === "published" ? "게시됨" : "작성중"}
+                                    {set.status === "published" ? t("dashboard.statusPublished") : t("dashboard.statusDraft")}
                                   </Badge>
                                 </div>
                                 
                                 {/* Worship Leader - Priority */}
                                 {set.worship_leader && (
                                   <p className={`text-sm ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                    예배인도자: {set.worship_leader}
+                                    {t("dashboard.worshipLeader")}: {set.worship_leader}
                                   </p>
                                 )}
                                 
@@ -487,10 +487,10 @@ const Dashboard = () => {
                                 {(set.scripture_reference || set.theme) && (
                                   <div className={`text-sm space-y-1 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                                     {set.scripture_reference && (
-                                      <p>본문: {set.scripture_reference}</p>
+                                      <p>{t("dashboard.scripture")}: {set.scripture_reference}</p>
                                     )}
                                     {set.theme && (
-                                      <p>설교제목: {set.theme}</p>
+                                      <p>{t("dashboard.sermonTitle")}: {set.theme}</p>
                                     )}
                                   </div>
                                 )}
@@ -498,7 +498,7 @@ const Dashboard = () => {
                                 {/* Song List */}
                                 {songs.length > 0 && (
                                   <div className={`text-sm space-y-0.5 ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                                    <p className="font-medium mb-1">곡 목록:</p>
+                                    <p className="font-medium mb-1">{t("dashboard.songList")}:</p>
                                     {songs.map((song, idx) => (
                                       <p key={idx} className="pl-6">
                                         {song.title} {song.key && `(${song.key})`}
@@ -525,17 +525,17 @@ const Dashboard = () => {
                                   <DropdownMenuItem onClick={(e) => handleTogglePublish(set, e)}>
                                     {set.status === "draft" ? (
                                       <>
-                                        <Upload className="w-4 h-4 mr-2" /> 게시하기
+                                        <Upload className="w-4 h-4 mr-2" /> {t("dashboard.publish")}
                                       </>
                                     ) : (
                                       <>
-                                        <Lock className="w-4 h-4 mr-2" /> 비공개로 전환
+                                        <Lock className="w-4 h-4 mr-2" /> {t("dashboard.unpublish")}
                                       </>
                                     )}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={(e) => handleShareLink(set, e)}>
                                     <LinkIcon className="w-4 h-4 mr-2" />
-                                    링크 공유
+                                    {t("dashboard.shareLink")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={(e) => handleDelete(set.id, set.service_name, e)}

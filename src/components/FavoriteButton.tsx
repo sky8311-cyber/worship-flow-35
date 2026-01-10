@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface FavoriteButtonProps {
   songId: string;
@@ -24,6 +25,7 @@ export function FavoriteButton({
   className 
 }: FavoriteButtonProps) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
   // Local optimistic state for instant visual feedback
   const [optimisticFavorite, setOptimisticFavorite] = useState(initialFavorite);
@@ -69,7 +71,7 @@ export function FavoriteButton({
       // Rollback optimistic state on error
       setOptimisticFavorite(!shouldAdd);
       setOptimisticCount(prev => shouldAdd ? prev - 1 : prev + 1);
-      toast.error("오류가 발생했습니다");
+      toast.error(t("favoriteButton.error"));
     },
     onSettled: () => {
       // Refetch to sync state
@@ -78,7 +80,7 @@ export function FavoriteButton({
       queryClient.invalidateQueries({ queryKey: ["favorite-songs"] });
     },
     onSuccess: (wasAdded) => {
-      toast.success(wasAdded ? "즐겨찾기에 추가되었습니다" : "즐겨찾기에서 제거되었습니다");
+      toast.success(wasAdded ? t("favoriteButton.addedToFavorites") : t("favoriteButton.removedFromFavorites"));
     },
   });
   
