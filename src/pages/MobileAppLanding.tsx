@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 import logo from "@/assets/kworship-logo-mobile.png";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+import { LandingNav } from "@/components/landing/LandingNav";
 import { ScrollFeatureSection } from "@/components/landing/ScrollFeatureSection";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -26,6 +27,7 @@ const MobileAppLanding = () => {
 
   return (
     <>
+      <LandingNav />
       {/* Hero Section with Logo */}
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">
         {/* Animated background blobs */}
