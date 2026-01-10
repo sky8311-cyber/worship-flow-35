@@ -64,10 +64,11 @@ export function useAppSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform-feature-flags"] });
-      toast.success("설정이 저장되었습니다");
+      // Note: Toast message is now handled by the component using translations
     },
     onError: (error: Error) => {
-      toast.error("설정 저장 실패: " + error.message);
+      console.error("Settings save failed:", error.message);
+      // Note: Toast message is now handled by the component using translations
     },
   });
 
@@ -88,6 +89,8 @@ export function useAppSettings() {
     isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
+    updateError: updateFlagMutation.error,
+    updateSuccess: updateFlagMutation.isSuccess,
     toggleLeaderboard: () => toggleFlag("seed_leaderboard_enabled"),
     toggleChurchSubscription: () => toggleFlag("church_subscription_enabled"),
     toggleChurchMenu: () => toggleFlag("church_menu_visible"),
