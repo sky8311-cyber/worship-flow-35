@@ -107,6 +107,11 @@ export const ScrollFeatureSection = () => {
       {/* Sticky container with grid layout: Row1 = mockups, Row2 = caption/CTA */}
       <div 
         className="sticky top-0 h-[100svh] md:h-[100dvh] overflow-hidden grid grid-rows-[minmax(0,1fr)_auto]"
+        style={{
+          paddingBottom: isMobile 
+            ? 'calc(env(safe-area-inset-bottom, 0px) + 88px)' 
+            : '0px'
+        }}
       >
         {/* Background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
@@ -216,12 +221,7 @@ export const ScrollFeatureSection = () => {
 
         {/* Row 2: Caption/CTA Area - fixed at bottom with mobile-safe padding */}
         <div 
-          className="relative z-20 px-4 py-4 min-h-[100px] bg-background/70 backdrop-blur-md mx-4 rounded-2xl mb-4 md:bg-transparent md:backdrop-blur-none md:mx-0 md:rounded-none md:mb-0"
-          style={{ 
-            paddingBottom: isMobile 
-              ? 'calc(env(safe-area-inset-bottom, 0px) + 16px)' 
-              : 'max(16px, env(safe-area-inset-bottom, 0px))' 
-          }}
+          className="relative z-20 px-4 py-4 min-h-[140px] md:min-h-0 bg-background/70 backdrop-blur-md mx-4 rounded-2xl md:bg-transparent md:backdrop-blur-none md:mx-0 md:rounded-none"
         >
           {/* Feature Caption */}
           {!showCTA && (
