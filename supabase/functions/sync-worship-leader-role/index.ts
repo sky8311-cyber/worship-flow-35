@@ -22,32 +22,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Extract token from Bearer header
-    const token = authHeader.replace("Bearer ", "");
-
-    // Create Supabase client
+    // Create Supabase client with auth header
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
 
-    // Get the current user using the token directly
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      console.log("Failed to get user:", userError);
+    // Validate JWT and get claims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.log("Failed to validate token:", claimsError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Syncing worship leader role for user: ${user.id}`);
+    const userId = claimsData.claims.sub as string;
+
+    console.log(`Syncing worship leader role for user: ${userId}`);
 
     // Check if user has an approved application
     const { data: application, error: appError } = await supabase
       .from("worship_leader_applications")
       .select("id, status, church_name")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .limit(1)
@@ -74,7 +77,7 @@ Deno.serve(async (req) => {
     const { data: existingRole, error: roleError } = await supabase
       .from("user_roles")
       .select("id")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "worship_leader")
       .maybeSingle();
 
@@ -103,7 +106,7 @@ Deno.serve(async (req) => {
     const { error: insertError } = await adminSupabase
       .from("user_roles")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         role: "worship_leader",
       });
 
@@ -115,7 +118,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Successfully granted worship_leader role to user: ${user.id}`);
+    console.log(`Successfully granted worship_leader role to user: ${userId}`);
 
     return new Response(
       JSON.stringify({ 
