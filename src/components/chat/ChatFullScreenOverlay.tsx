@@ -43,7 +43,7 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
             <X className="h-5 w-5" />
           </Button>
         </DrawerHeader>
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <ChatFeed />
         </div>
       </DrawerContent>

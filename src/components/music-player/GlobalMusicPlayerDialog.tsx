@@ -238,7 +238,7 @@ export const GlobalMusicPlayerDialog = () => {
         </DialogTitle>
         
         {/* Swipeable area - everything except playlist */}
-        <div {...swipeHandlers} className="touch-pan-y bg-gradient-primary rounded-t-lg">
+        <div {...swipeHandlers} className="touch-pan-y bg-gradient-primary">
           {/* Swipe indicator handle - on gradient */}
           <div className="flex justify-center pt-3 pb-1">
             <div className="w-10 h-1 rounded-full bg-white/30" />
