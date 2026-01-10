@@ -17,15 +17,15 @@ export const LandingNav = () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-end h-16 md:h-20 gap-1.5">
             
-            {/* Quick Access Icons */}
-            <div className="flex items-center gap-1 pointer-events-auto">
+            {/* Quick Access Icons Container */}
+            <div className="flex items-center gap-1.5 p-1.5 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-border/40 shadow-md pointer-events-auto">
               {/* App Store - Coming Soon */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="relative h-9 w-9 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/90"
+                    className="relative h-8 w-8 rounded-full hover:bg-muted text-foreground"
                     onClick={() => toast("Coming Soon", { 
                       description: "iOS app is coming soon!" 
                     })}
@@ -47,7 +47,7 @@ export const LandingNav = () => {
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="relative h-9 w-9 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/90"
+                    className="relative h-8 w-8 rounded-full hover:bg-muted text-foreground"
                     onClick={() => toast("Coming Soon", { 
                       description: "Android app is coming soon!" 
                     })}
@@ -69,7 +69,7 @@ export const LandingNav = () => {
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    className="h-9 w-9 rounded-full bg-background/70 backdrop-blur-md hover:bg-background/90"
+                    className="h-8 w-8 rounded-full hover:bg-muted text-foreground"
                     asChild
                   >
                     <Link to="/login">
@@ -81,10 +81,8 @@ export const LandingNav = () => {
                   <p>Open Web App</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
 
-            {/* Language Toggle */}
-            <div className="pointer-events-auto">
+              {/* Language Toggle */}
               <LanguageToggle />
             </div>
             
