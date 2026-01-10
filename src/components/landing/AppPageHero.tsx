@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fadeInUp, staggerContainer, staggerItem, scaleIn } from "@/lib/animations";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -9,111 +9,66 @@ export const AppPageHero = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background to-accent/10" />
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/20 rounded-full blur-3xl"
-          animate={{
-            x: [0, -40, 0],
-            y: [0, 40, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      </div>
+    <section className="relative min-h-screen flex items-center justify-center">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 via-background to-background" />
 
-      {/* Hero content */}
+      {/* Content */}
       <motion.div
-        className="container mx-auto px-4 text-center"
+        className="container mx-auto px-4 text-center max-w-md"
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
       >
-        {/* Badge */}
-        <motion.div variants={staggerItem} className="mb-6">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
-            <Sparkles className="w-4 h-4" />
-            {t("appPage.badge")}
-          </span>
+        {/* Logo */}
+        <motion.div variants={staggerItem} className="mb-8">
+          <img
+            src="/kworship-icon.png"
+            alt="KWorship"
+            className="w-16 h-16 mx-auto"
+          />
         </motion.div>
 
-        {/* Main headline */}
+        {/* Tagline */}
         <motion.h1
           variants={fadeInUp}
-          className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+          className="text-2xl sm:text-3xl font-semibold text-foreground mb-8"
         >
-          <span className="block text-foreground">{t("appPage.headline1")}</span>
-          <span className="block bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            {t("appPage.headline2")}
-          </span>
+          {t("appPage.tagline")}
         </motion.h1>
 
-        {/* Subheadline */}
-        <motion.p
-          variants={fadeInUp}
-          className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
-        >
-          {t("appPage.subheadline")}
-        </motion.p>
-
         {/* CTA Button */}
-        <motion.div variants={scaleIn}>
+        <motion.div variants={scaleIn} className="mb-4">
           <Button
             asChild
             size="lg"
-            className="group h-14 px-8 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-105"
+            className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
           >
             <Link to="/signup">
-              {t("appPage.startFree")}
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              {t("appPage.createAccount")}
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         </motion.div>
 
-        {/* Small helper text */}
+        {/* Login link */}
         <motion.p
           variants={fadeInUp}
-          className="mt-4 text-sm text-muted-foreground"
+          className="text-sm text-muted-foreground"
+        >
+          {t("appPage.alreadyHaveAccount")}{" "}
+          <Link to="/login" className="text-primary hover:underline font-medium">
+            {t("appPage.logIn")}
+          </Link>
+        </motion.p>
+
+        {/* Helper text */}
+        <motion.p
+          variants={fadeInUp}
+          className="mt-8 text-xs text-muted-foreground/70"
         >
           {t("appPage.noCreditCard")}
         </motion.p>
-      </motion.div>
-
-      {/* Mobile sticky CTA */}
-      <motion.div
-        className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-border md:hidden z-50"
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 1, duration: 0.5 }}
-      >
-        <Button
-          asChild
-          className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-accent"
-        >
-          <Link to="/signup">
-            {t("appPage.getStartedFree")}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
       </motion.div>
     </section>
   );
