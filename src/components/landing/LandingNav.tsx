@@ -16,18 +16,29 @@ export const LandingNav = () => {
   const { t } = useTranslation();
   const isAppPage = location.pathname === "/app";
 
-  // Full header with text buttons for /app page
+  // Full header with logo and enhanced buttons for /app page
   if (isAppPage) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Left side - Home */}
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/">
-                <Home className="h-4 w-4" />
+            {/* Left side - Home + Logo */}
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/">
+                  <Home className="h-4 w-4" />
+                </Link>
+              </Button>
+              
+              {/* Logo */}
+              <Link to="/app" className="flex items-center">
+                <img 
+                  src="/kworship-icon.png" 
+                  alt="KWorship" 
+                  className="h-8 w-8"
+                />
               </Link>
-            </Button>
+            </div>
 
             {/* Right side - Auth buttons + Language */}
             <div className="flex items-center gap-2">
@@ -38,7 +49,10 @@ export const LandingNav = () => {
                 </Link>
               </Button>
               
-              <Button variant="default" asChild className="gap-2">
+              <Button 
+                asChild 
+                className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/20"
+              >
                 <Link to="/signup">
                   <UserPlus className="h-4 w-4" />
                   <span>{t("auth.signUp")}</span>
