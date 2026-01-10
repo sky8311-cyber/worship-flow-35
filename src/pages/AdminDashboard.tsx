@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -36,7 +37,22 @@ const AdminDashboard = () => {
     toggleCrossCommunity,
     toggleWorshipLeaderAutoApprove,
     isUpdating,
+    updateSuccess,
+    updateError,
   } = useAppSettings();
+
+  // Show toast when settings are updated
+  useEffect(() => {
+    if (updateSuccess) {
+      toast.success(t("admin.settings.settingsSaved"));
+    }
+  }, [updateSuccess, t]);
+
+  useEffect(() => {
+    if (updateError) {
+      toast.error(t("admin.settings.settingsSaveFailed"));
+    }
+  }, [updateError, t]);
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
@@ -440,9 +456,9 @@ const AdminDashboard = () => {
                   {/* Worship Leader Auto Approve Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">예배인도자 자동 승인</Label>
+                      <Label className="text-base">{t("admin.settings.worshipLeaderAutoApprove")}</Label>
                       <p className="text-sm text-muted-foreground">
-                        베타 기간 동안 예배인도자 승급신청을 자동으로 승인합니다
+                        {t("admin.settings.worshipLeaderAutoApproveDesc")}
                       </p>
                     </div>
                     <Switch
@@ -459,17 +475,17 @@ const AdminDashboard = () => {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Crown className="w-5 h-5 text-amber-500" />
-                    <CardTitle>Premium Account 설정</CardTitle>
+                    <CardTitle>{t("admin.settings.premiumSettingsTitle")}</CardTitle>
                   </div>
-                  <CardDescription>프리미엄 개인 계정 Tier 기능을 관리합니다</CardDescription>
+                  <CardDescription>{t("admin.settings.premiumSettingsDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Premium Enabled Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Premium 구독 기능 활성화</Label>
+                      <Label className="text-base">{t("admin.settings.premiumEnabled")}</Label>
                       <p className="text-sm text-muted-foreground">
-                        프리미엄 계정 Tier 구독 기능을 활성화합니다
+                        {t("admin.settings.premiumEnabledDesc")}
                       </p>
                     </div>
                     <Switch
@@ -484,9 +500,9 @@ const AdminDashboard = () => {
                   {/* Premium Menu Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Premium 메뉴 표시</Label>
+                      <Label className="text-base">{t("admin.settings.premiumMenu")}</Label>
                       <p className="text-sm text-muted-foreground">
-                        네비게이션에 Premium 메뉴를 표시합니다
+                        {t("admin.settings.premiumMenuDesc")}
                       </p>
                     </div>
                     <Switch
@@ -503,18 +519,18 @@ const AdminDashboard = () => {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-blue-500" />
-                    <CardTitle>Scheduler 설정</CardTitle>
+                    <CardTitle>{t("admin.settings.schedulerSettingsTitle")}</CardTitle>
                   </div>
-                  <CardDescription>반복 일정 및 Cross-Community 스케줄링 기능을 관리합니다</CardDescription>
+                  <CardDescription>{t("admin.settings.schedulerSettingsDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-6 md:grid-cols-2">
                     {/* Scheduler Enabled Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Recurring Scheduler 활성화</Label>
+                        <Label className="text-base">{t("admin.settings.schedulerEnabled")}</Label>
                         <p className="text-sm text-muted-foreground">
-                          반복 캘린더 스케줄러 기능을 활성화합니다
+                          {t("admin.settings.schedulerEnabledDesc")}
                         </p>
                       </div>
                       <Switch
@@ -527,9 +543,9 @@ const AdminDashboard = () => {
                     {/* Cross-Community Toggle */}
                     <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
                       <div className="space-y-0.5">
-                        <Label className="text-base">Cross-Community Scheduling</Label>
+                        <Label className="text-base">{t("admin.settings.crossCommunity")}</Label>
                         <p className="text-sm text-muted-foreground">
-                          Church Account의 커뮤니티 간 스케줄링 기능
+                          {t("admin.settings.crossCommunityDesc")}
                         </p>
                       </div>
                       <Switch
