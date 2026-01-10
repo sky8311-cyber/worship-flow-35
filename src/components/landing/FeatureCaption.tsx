@@ -32,21 +32,21 @@ export const FeatureCaption = ({
           animate="visible"
           exit="hidden"
           variants={{
-            hidden: { opacity: 0, y: 30 },
+            hidden: { opacity: 0, y: 20 },
             visible: { 
               opacity: 1, 
               y: 0,
               transition: { 
-                duration: 0.6, 
+                duration: 0.5, 
                 ease: [0.35, 0.35, 0, 1],
                 staggerChildren: 0.1
               }
             }
           }}
-          className="text-center space-y-3 min-h-[80px] md:min-h-[100px]"
+          className="text-center space-y-2"
         >
           <motion.h2 
-            className={`text-xl md:text-2xl lg:text-3xl font-bold leading-tight text-balance ${
+            className={`text-xl md:text-2xl lg:text-3xl font-bold leading-tight ${
               highlighted 
                 ? "bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" 
                 : "text-foreground"
@@ -57,13 +57,13 @@ export const FeatureCaption = ({
             {highlighted && <span className="ml-2">✨</span>}
           </motion.h2>
           <motion.p 
-            className="text-sm md:text-base text-muted-foreground max-w-xs md:max-w-md mx-auto"
+            className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-sm md:max-w-md mx-auto"
             variants={{
-              hidden: { opacity: 0, y: 10 },
+              hidden: { opacity: 0, y: 8 },
               visible: { 
                 opacity: 1, 
                 y: 0,
-                transition: { delay: 0.15, duration: 0.4 }
+                transition: { delay: 0.1, duration: 0.4 }
               }
             }}
           >
