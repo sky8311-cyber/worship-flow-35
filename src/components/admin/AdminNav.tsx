@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History } from "lucide-react";
+import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { HeaderLogo } from "@/components/layout/HeaderLogo";
@@ -71,9 +71,15 @@ export const AdminNav = () => {
     icon: History,
   };
 
+  const tierGuideLink = {
+    to: "/admin/tier-guide",
+    label: language === "ko" ? "티어 가이드" : "Tier Guide",
+    icon: BookOpen,
+  };
+
   const links = (!isLoading && isChurchMenuVisible) 
-    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink]
-    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink];
+    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink, tierGuideLink]
+    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink, tierGuideLink];
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
