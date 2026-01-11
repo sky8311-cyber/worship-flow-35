@@ -56,6 +56,7 @@ const AdminRewards = lazy(() => import("./pages/AdminRewards"));
 const AdminEmail = lazy(() => import("./pages/AdminEmail"));
 const AdminFeatures = lazy(() => import("./pages/AdminFeatures"));
 const AdminHistory = lazy(() => import("./pages/AdminHistory"));
+const AdminTierGuide = lazy(() => import("./pages/AdminTierGuide"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -185,6 +186,7 @@ const App = () => {
               <Route path="/admin/email" element={<AdminRoute><AdminEmail /></AdminRoute>} />
               <Route path="/admin/features" element={<AdminRoute><AdminFeatures /></AdminRoute>} />
               <Route path="/admin/history" element={<AdminRoute><AdminHistory /></AdminRoute>} />
+              <Route path="/admin/tier-guide" element={<AdminRoute><AdminTierGuide /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
