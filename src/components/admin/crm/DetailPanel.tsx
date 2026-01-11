@@ -536,10 +536,10 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
   const getTitle = () => {
     switch (entity.type) {
-      case "church_accounts": return "Church Account";
-      case "worship_leaders": return "Worship Leader";
+      case "church_accounts": return "Worship Community Account";
+      case "worship_leaders": return "Basic Member";
       case "communities": return "Community";
-      case "members": return "Member";
+      case "members": return "Team Member";
       default: return "Details";
     }
   };

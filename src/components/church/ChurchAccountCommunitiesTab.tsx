@@ -126,8 +126,8 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
             <CardTitle>{language === "ko" ? "예배공동체" : "Communities"}</CardTitle>
             <CardDescription>
               {language === "ko"
-                ? "이 교회 계정에 연결된 예배공동체를 관리합니다."
-                : "Manage communities linked to this church account."}
+                ? "이 예배 공동체 계정에 연결된 커뮤니티를 관리합니다."
+                : "Manage communities linked to this worship community account."}
             </CardDescription>
           </div>
           {isAdmin && (
@@ -143,8 +143,8 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
                   <DialogTitle>{language === "ko" ? "커뮤니티 연결" : "Link Community"}</DialogTitle>
                   <DialogDescription>
                     {language === "ko"
-                      ? "내가 운영하는 커뮤니티를 이 교회 계정에 연결합니다."
-                      : "Link a community you own to this church account."}
+                      ? "내가 운영하는 커뮤니티를 이 예배 공동체 계정에 연결합니다."
+                      : "Link a community you own to this worship community account."}
                   </DialogDescription>
                 </DialogHeader>
                 {loadingUnlinked ? (
@@ -222,8 +222,8 @@ export function ChurchAccountCommunitiesTab({ churchAccountId, isAdmin }: Church
             </h3>
             <p className="text-sm">
               {language === "ko"
-                ? "커뮤니티를 이 교회 계정에 연결하면 통합 관리할 수 있습니다."
-                : "Link communities to this church account for unified management."}
+                ? "커뮤니티를 이 예배 공동체 계정에 연결하면 통합 관리할 수 있습니다."
+                : "Link communities to this worship community account for unified management."}
             </p>
           </div>
         ) : (

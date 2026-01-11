@@ -31,8 +31,8 @@ export interface TierFeature {
 
 export const TIER_CONFIG = {
   member: {
-    label: "Member",
-    labelKo: "멤버",
+    label: "Team Member",
+    labelKo: "팀 멤버",
     color: "bg-muted text-muted-foreground",
     borderColor: "border-muted-foreground/30",
   },
@@ -49,8 +49,8 @@ export const TIER_CONFIG = {
     borderColor: "border-yellow-300 dark:border-yellow-700",
   },
   church: {
-    label: "Community",
-    labelKo: "공동체",
+    label: "Worship Community Account",
+    labelKo: "예배 공동체 계정",
     color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
     borderColor: "border-blue-300 dark:border-blue-700",
   },

@@ -85,7 +85,7 @@ export const HierarchyRow = ({
           name: data.profile?.full_name || "Unknown",
           email: data.profile?.email || "-",
           avatar: data.profile?.avatar_url,
-          typeLabel: data.churchAccount ? "Church" : data.isPremium ? "Premium" : "Free",
+          typeLabel: data.churchAccount ? "Worship Community" : data.isPremium ? "Full Member" : "Basic Member",
           stats: `${data.communityCount || 0} communities`,
           created: data.createdAt || data.profile?.created_at,
           tier: (data.churchAccount ? "church" : data.isPremium ? "premium" : "worship_leader") as TierLevel,

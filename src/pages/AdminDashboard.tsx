@@ -192,10 +192,10 @@ const AdminDashboard = () => {
       color: "text-blue-500",
     },
     {
-      title: language === "ko" ? "예배인도자" : "Worship Leaders",
+      title: language === "ko" ? "기본 멤버" : "Basic Members",
       value: stats?.worshipLeaders || 0,
       icon: Music,
-      description: language === "ko" ? "승인된 예배인도자 수" : "Approved worship leaders",
+      description: language === "ko" ? "승인된 기본 멤버 수" : "Approved basic members",
       color: "text-indigo-500",
     },
     {
