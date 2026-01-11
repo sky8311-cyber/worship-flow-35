@@ -1340,7 +1340,7 @@ export default function CommunityManagement() {
             </Card>
               </TabsContent>
 
-              {/* Rotation Tab - Only for Church Account communities */}
+              {/* Rotation Tab - Only for Worship Community Account communities */}
               {showRotationTab && (
                 <TabsContent value="rotation">
                   {hasRotationFeature ? (
@@ -1358,8 +1358,8 @@ export default function CommunityManagement() {
                         </h3>
                         <p className="text-muted-foreground mb-4">
                           {language === "ko" 
-                            ? "팀 로테이션 기능을 사용하려면 교회 계정 구독이 필요합니다."
-                            : "Subscribe to Church Account to use team rotation feature."}
+                            ? "팀 로테이션 기능을 사용하려면 예배 공동체 계정 구독이 필요합니다."
+                            : "Subscribe to Worship Community Account to use team rotation feature."}
                         </p>
                         <Button onClick={() => setShowUpgradeDialog(true)}>
                           {language === "ko" ? "플랜 선택하기" : "Choose a Plan"}

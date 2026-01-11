@@ -105,7 +105,7 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(language === "ko" ? "교회 계정이 삭제되었습니다" : "Church account deleted");
+      toast.success(language === "ko" ? "예배 공동체 계정이 삭제되었습니다" : "Worship community account deleted");
       queryClient.invalidateQueries({ queryKey: ["church-accounts"] });
       navigate("/church-account");
     },
@@ -181,8 +181,8 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
           <CardTitle>{language === "ko" ? "기본 정보" : "Basic Information"}</CardTitle>
           <CardDescription>
             {language === "ko"
-              ? "교회 계정의 기본 정보를 수정합니다."
-              : "Edit basic information for this church account."}
+              ? "예배 공동체 계정의 기본 정보를 수정합니다."
+              : "Edit basic information for this worship community account."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -260,7 +260,7 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="gap-2 w-full sm:w-auto">
                   <Trash2 className="w-4 h-4" />
-                  <span className="truncate">{language === "ko" ? "교회 계정 삭제" : "Delete Church Account"}</span>
+                  <span className="truncate">{language === "ko" ? "공동체 계정 삭제" : "Delete Worship Community Account"}</span>
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -270,8 +270,8 @@ export function ChurchAccountSettingsTab({ churchAccount, isOwner, onUpdate }: C
                   </AlertDialogTitle>
                   <AlertDialogDescription>
                     {language === "ko"
-                      ? "이 교회 계정을 삭제하면 모든 멤버가 제거되고 연결된 커뮤니티의 연결이 해제됩니다. 이 작업은 되돌릴 수 없습니다."
-                      : "Deleting this church account will remove all members and unlink all connected communities. This action cannot be undone."}
+                      ? "이 예배 공동체 계정을 삭제하면 모든 멤버가 제거되고 연결된 커뮤니티의 연결이 해제됩니다. 이 작업은 되돌릴 수 없습니다."
+                      : "Deleting this worship community account will remove all members and unlink all connected communities. This action cannot be undone."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

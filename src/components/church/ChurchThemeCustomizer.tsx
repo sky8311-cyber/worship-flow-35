@@ -178,8 +178,8 @@ export function ChurchThemeCustomizer({ themeConfig, onChange }: ChurchThemeCust
 
       <p className="text-xs text-muted-foreground">
         {language === "ko"
-          ? "이 색상은 교회 계정의 화이트레이블 브랜딩에 사용됩니다."
-          : "These colors will be used for your church's white-label branding."}
+          ? "이 색상은 예배 공동체 계정의 화이트레이블 브랜딩에 사용됩니다."
+          : "These colors will be used for your community's white-label branding."}
       </p>
     </div>
   );

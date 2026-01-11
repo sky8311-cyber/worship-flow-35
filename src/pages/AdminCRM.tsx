@@ -385,7 +385,7 @@ const AdminCRM = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold">{stats.church}</div>
-                <div className="text-xs text-muted-foreground">Church Accounts</div>
+                <div className="text-xs text-muted-foreground">Worship Community Accounts</div>
               </div>
             </CardContent>
           </Card>
@@ -399,7 +399,7 @@ const AdminCRM = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold">{stats.leaders}</div>
-                <div className="text-xs text-muted-foreground">Worship Leaders</div>
+                <div className="text-xs text-muted-foreground">Basic Members</div>
               </div>
             </CardContent>
           </Card>
@@ -454,10 +454,10 @@ const AdminCRM = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="church_account">Church Accounts</SelectItem>
-                <SelectItem value="worship_leader">Worship Leaders</SelectItem>
+                <SelectItem value="church_account">Worship Community Accounts</SelectItem>
+                <SelectItem value="worship_leader">Basic Members</SelectItem>
                 <SelectItem value="community">Communities</SelectItem>
-                <SelectItem value="member">Members</SelectItem>
+                <SelectItem value="member">Team Members</SelectItem>
               </SelectContent>
             </Select>
 

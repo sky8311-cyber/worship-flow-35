@@ -135,7 +135,7 @@ const AdminChurchAccounts = () => {
             {t("admin.churchAccounts.title")}
           </h1>
           <p className="text-muted-foreground">
-            Manage all church accounts, subscriptions, and settings
+            Manage all worship community accounts, subscriptions, and settings
           </p>
         </div>
 
@@ -166,7 +166,7 @@ const AdminChurchAccounts = () => {
           {isLoading && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading church accounts...</p>
+              <p className="text-muted-foreground">Loading worship community accounts...</p>
             </div>
           )}
 

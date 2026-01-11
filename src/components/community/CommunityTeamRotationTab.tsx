@@ -252,7 +252,7 @@ export function CommunityTeamRotationTab({ communityId, isAdmin, churchAccountId
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
           <RefreshCw className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>{language === "ko" ? "이 기능은 Church Account가 필요합니다" : "This feature requires a Church Account"}</p>
+          <p>{language === "ko" ? "이 기능은 예배 공동체 계정이 필요합니다" : "This feature requires a Worship Community Account"}</p>
         </CardContent>
       </Card>
     );
