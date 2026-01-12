@@ -1,8 +1,50 @@
-# Welcome to your Lovable project
+# K-Worship
 
-## Project info
+예배팀을 위한 통합 관리 플랫폼
 
-**URL**: https://lovable.dev/projects/2ed7309e-d6b0-4f05-9642-be9265249510
+**Lovable Project**: https://lovable.dev/projects/2ed7309e-d6b0-4f05-9642-be9265249510
+
+## 네이티브 앱 빌드 가이드 (Android/iOS)
+
+이 프로젝트는 Capacitor를 사용하여 네이티브 앱으로 빌드할 수 있습니다.
+
+### 요구 사항
+
+- **Android**: Android Studio + JDK 17+
+- **iOS**: Mac + Xcode 15+ (iOS 빌드는 Mac에서만 가능)
+
+### 빌드 단계
+
+```bash
+# 1. GitHub에서 프로젝트 클론
+git clone <YOUR_GIT_URL>
+cd <YOUR_PROJECT_NAME>
+
+# 2. 의존성 설치
+npm install
+
+# 3. 네이티브 플랫폼 추가
+npx cap add android  # Android용
+npx cap add ios      # iOS용 (Mac 필요)
+
+# 4. 웹 앱 빌드 및 동기화
+npm run build
+npx cap sync
+
+# 5. 앱 실행
+npx cap run android  # Android 에뮬레이터/디바이스
+npx cap run ios      # iOS 시뮬레이터/디바이스
+```
+
+### 개발 중 핫 리로드
+
+현재 설정은 Lovable 샌드박스 URL을 사용하여 개발 중 실시간 미리보기가 가능합니다.
+프로덕션 빌드 시에는 `capacitor.config.ts`의 `server.url`을 제거하세요.
+
+### 참고 자료
+
+- [Capacitor 공식 문서](https://capacitorjs.com/docs)
+- [Lovable 네이티브 앱 가이드](https://docs.lovable.dev/tips-tricks/native-mobile-apps)
 
 ## How can I edit this code?
 
