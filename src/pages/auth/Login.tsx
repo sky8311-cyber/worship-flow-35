@@ -11,6 +11,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Eye, EyeOff } from "lucide-react";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -48,6 +49,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <SEOHead
+        title="Login - K-Worship"
+        titleKo="로그인 - K-Worship"
+        description="Sign in to K-Worship to manage your worship songs, create setlists, and collaborate with your team."
+        descriptionKo="K-Worship에 로그인하여 찬양곡을 관리하고, 콘티를 제작하고, 팀과 협업하세요."
+        canonicalPath="/login"
+        noIndex={true}
+      />
       {/* Simple Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">

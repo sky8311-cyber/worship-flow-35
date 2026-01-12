@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -124,6 +125,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   return (
+  <HelmetProvider>
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
@@ -200,6 +202,7 @@ const App = () => {
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
+  </HelmetProvider>
   );
 };
 

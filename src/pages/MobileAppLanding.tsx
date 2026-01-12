@@ -9,6 +9,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { ScrollFeatureSection } from "@/components/landing/ScrollFeatureSection";
 import { useTranslation } from "@/hooks/useTranslation";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const MobileAppLanding = () => {
   const { t, language } = useTranslation();
@@ -40,6 +41,15 @@ const MobileAppLanding = () => {
 
   return (
     <>
+      <SEOHead
+        title="K-Worship - Worship Team Management Platform"
+        titleKo="K-Worship - 예배팀을 위한 통합 플랫폼"
+        description="All-in-one worship team management platform. Song library, setlist creation, real-time team collaboration, and sheet music sharing."
+        descriptionKo="예배팀을 위한 통합 관리 플랫폼. 곡 라이브러리, 콘티 제작, 실시간 팀 협업, 악보 공유를 한곳에서."
+        keywords="K-Worship, worship, church, setlist, worship leader, praise, CCM, sheet music, team collaboration"
+        keywordsKo="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 찬양팀, 예배 인도자, 교회, 악보"
+        canonicalPath="/"
+      />
       <LandingNav />
       {/* Hero Section with Logo */}
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5 flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden">

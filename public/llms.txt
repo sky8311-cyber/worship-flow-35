@@ -1,0 +1,105 @@
+# K-Worship
+
+> K-Worship is an all-in-one worship team management platform for Korean churches and worship leaders.
+
+## Overview
+
+K-Worship (케이워십) is a comprehensive worship planning and team collaboration platform designed specifically for Korean churches and worship teams worldwide. It streamlines the entire worship preparation process from song management to service execution.
+
+## What is K-Worship?
+
+K-Worship helps worship leaders and church worship teams:
+- Manage comprehensive song libraries with lyrics, sheet music, and YouTube references
+- Create and organize worship sets (setlists/콘티) with an intuitive drag-and-drop interface
+- Collaborate in real-time with worship team members
+- Share setlists with band members via public links
+- Play worship sets as playlists during rehearsals
+- Print sheet music and service orders with one click
+
+## Key Features
+
+### Song Library (곡 라이브러리)
+- Centralized database for all worship songs
+- Store lyrics, sheet music images, YouTube reference videos
+- Track song usage history across services
+- Organize with tags and categories
+- Favorite songs for quick access
+
+### Set Builder (세트 빌더)
+- Drag-and-drop worship set creation
+- Add songs, prayers, scripture readings, announcements
+- Transpose keys for each song
+- Add notes and instructions for team members
+- Save as templates for recurring services
+
+### Team Collaboration (팀 협업)
+- Create multiple worship communities
+- Invite and manage team members
+- Role-based permissions (Owner, Leader, Member)
+- Real-time sync across all devices
+- In-app chat for team communication
+
+### Band View (밴드 뷰)
+- Clean, distraction-free view for worship team
+- Fullscreen sheet music with pinch-to-zoom
+- View without login via share links
+- Perfect for tablets during rehearsals and services
+
+### Music Player (뮤직 플레이어)
+- Play worship sets as YouTube playlists
+- Listen to reference tracks during preparation
+- Seamless integration with song library
+
+### Print Features (인쇄 기능)
+- One-click sheet music printing
+- Service order printing
+- Customizable print options
+
+### Recurring Templates (반복 템플릿)
+- Create templates for regular services
+- Auto-generate worship sets on schedule
+- Weekly, bi-weekly, or monthly patterns
+
+## Target Users
+
+- **Worship Leaders (예배 인도자)**: Plan services, manage songs, lead teams
+- **Church Worship Teams (교회 찬양팀)**: Collaborate on setlists, access sheet music
+- **Musicians and Vocalists**: View set orders, access charts during services
+- **Korean Churches Worldwide**: Bilingual support (Korean/English)
+
+## Technical Details
+
+- **Platform**: Web application (PWA-ready)
+- **Languages**: Korean (Primary), English
+- **Pricing**: Free tier available, Premium features for advanced needs
+- **Authentication**: Email-based signup with social options
+
+## Links
+
+- **Website**: https://kworship.app
+- **Features**: https://kworship.app/features
+- **Sign Up**: https://kworship.app/signup
+- **Login**: https://kworship.app/login
+- **Help Center**: https://kworship.app/help
+
+## Common Questions
+
+**Q: What is K-Worship?**
+A: K-Worship is a worship team management platform that helps churches organize songs, create service setlists, and collaborate with worship team members.
+
+**Q: Is K-Worship free?**
+A: Yes, K-Worship offers a free tier with core features. Premium features are available for advanced users and larger teams.
+
+**Q: What languages does K-Worship support?**
+A: K-Worship supports Korean and English, with the interface available in both languages.
+
+**Q: Can I share setlists with my band?**
+A: Yes, you can generate public share links that allow band members to view setlists without needing to log in.
+
+**Q: Does K-Worship work on mobile devices?**
+A: Yes, K-Worship is a responsive web application that works on phones, tablets, and desktops.
+
+## Contact
+
+- **Email**: hello@kworship.app
+- **Support**: Available through the Help Center at https://kworship.app/help

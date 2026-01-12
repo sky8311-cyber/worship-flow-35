@@ -13,6 +13,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { LegalDocumentDialog } from "@/components/legal/LegalDocumentDialog";
 import { getReferralCode, clearReferralCode } from "@/pages/ReferralRedirect";
 import { useQuery } from "@tanstack/react-query";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -185,6 +186,15 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <SEOHead
+        title="Sign Up - K-Worship"
+        titleKo="회원가입 - K-Worship"
+        description="Create your free K-Worship account. Start managing your worship songs, creating setlists, and collaborating with your team today."
+        descriptionKo="K-Worship 무료 계정을 만드세요. 지금 바로 찬양곡을 관리하고, 콘티를 제작하고, 팀과 협업을 시작하세요."
+        canonicalPath="/signup"
+        keywords="K-Worship signup, create account, worship leader, church worship team"
+        keywordsKo="K-Worship 회원가입, 계정 만들기, 예배 인도자, 교회 찬양팀"
+      />
       <div className="absolute top-4 right-4">
         <LanguageToggle />
       </div>
