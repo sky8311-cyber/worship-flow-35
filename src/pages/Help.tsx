@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Mail, HelpCircle, ChevronRight, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const Help = () => {
   const { language } = useTranslation();
@@ -796,8 +797,32 @@ Method 2 - Share Link:
     }
   ];
 
+  // FAQ Page JSON-LD for rich results
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems.slice(0, 10).map(item => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer.substring(0, 500)
+      }
+    }))
+  };
+
   return (
     <AppLayout>
+      <SEOHead
+        title="Help Center - K-Worship"
+        titleKo="도움말 센터 - K-Worship"
+        description="Get help with K-Worship. Find answers to frequently asked questions about song library, setlist creation, team collaboration, and more."
+        descriptionKo="K-Worship 도움말 센터입니다. 곡 라이브러리, 콘티 제작, 팀 협업 등에 관한 자주 묻는 질문의 답변을 확인하세요."
+        keywords="K-Worship help, FAQ, support, worship software help, church software support"
+        keywordsKo="K-Worship 도움말, FAQ, 지원, 예배 소프트웨어 도움말, 교회 소프트웨어 지원"
+        canonicalPath="/help"
+        jsonLd={faqJsonLd}
+      />
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* Header */}
         <div className="mb-8 text-center">

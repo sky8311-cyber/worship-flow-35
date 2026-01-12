@@ -1,3 +1,7 @@
+# K-Worship Robots.txt
+# https://kworship.app
+
+# Search Engine Crawlers
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +14,48 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# AI/LLM Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# All other crawlers
 User-agent: *
 Allow: /
+
+# Protected paths (require authentication)
+Disallow: /dashboard
+Disallow: /songs
+Disallow: /worship-sets
+Disallow: /set-builder
+Disallow: /community
+Disallow: /settings
+Disallow: /admin
+Disallow: /templates
+Disallow: /rewards
+Disallow: /referral
+Disallow: /church-account
+Disallow: /band-view
+
+# Sitemap location
+Sitemap: https://kworship.app/sitemap.xml

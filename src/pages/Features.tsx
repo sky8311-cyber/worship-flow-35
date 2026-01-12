@@ -6,6 +6,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
+import { SEOHead } from "@/components/seo/SEOHead";
 import {
   Music,
   ListMusic,
@@ -99,8 +100,32 @@ const Features = () => {
     },
   ];
 
+  // Feature list JSON-LD for rich results
+  const featuresJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": language === "ko" ? "K-Worship 주요 기능" : "K-Worship Key Features",
+    "numberOfItems": features.length,
+    "itemListElement": features.map((feature, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": language === "ko" ? feature.titleKo : feature.titleEn,
+      "description": language === "ko" ? feature.descriptionKo : feature.descriptionEn
+    }))
+  };
+
   const content = (
     <div className="min-h-screen bg-background relative z-10">
+      <SEOHead
+        title="K-Worship Features - All-in-One Worship Team Tools"
+        titleKo="K-Worship 기능 소개 - 예배팀을 위한 모든 도구"
+        description="Discover K-Worship features: Song Library, Set Builder, Team Collaboration, Music Player, Print, and more. Everything for worship preparation."
+        descriptionKo="K-Worship의 주요 기능을 알아보세요. 곡 라이브러리, 세트 빌더, 팀 협업, 뮤직 플레이어, 인쇄 기능 등 예배 준비의 모든 것."
+        keywords="K-Worship features, worship software, church software, setlist builder, song library, team collaboration"
+        keywordsKo="K-Worship 기능, 예배 소프트웨어, 교회 소프트웨어, 콘티 제작, 곡 라이브러리, 팀 협업"
+        canonicalPath="/features"
+        jsonLd={featuresJsonLd}
+      />
       {/* Header for non-authenticated users */}
       {!user && (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
