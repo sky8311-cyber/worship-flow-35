@@ -290,10 +290,10 @@ export const GlobalMusicPlayerDialog = () => {
               </>
             )}
           </div>
-          <h4 className="font-bold text-lg sm:text-xl text-foreground mb-1 truncate px-4">
+          <h4 className="font-bold text-lg sm:text-xl text-white mb-1 truncate px-4">
             {currentTrack?.title || t("bandView.noTitle")}
           </h4>
-          <p className="text-sm text-muted-foreground truncate px-4">
+          <p className="text-sm text-white/80 truncate px-4">
             {currentTrack?.artist || ""}
           </p>
         </div>
@@ -313,7 +313,7 @@ export const GlobalMusicPlayerDialog = () => {
             rangeClassName="bg-gradient-to-r from-primary to-accent"
             thumbClassName="border-accent bg-background shadow-md"
           />
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <div className="flex justify-between text-xs text-white/70 mt-1">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
