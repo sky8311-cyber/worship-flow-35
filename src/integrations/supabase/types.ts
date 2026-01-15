@@ -681,36 +681,6 @@ export type Database = {
           },
         ]
       }
-      feedback_posts: {
-        Row: {
-          author_id: string
-          content: string
-          created_at: string | null
-          id: string
-          image_urls: string[] | null
-          post_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          author_id: string
-          content: string
-          created_at?: string | null
-          id?: string
-          image_urls?: string[] | null
-          post_type?: string
-          updated_at?: string | null
-        }
-        Update: {
-          author_id?: string
-          content?: string
-          created_at?: string | null
-          id?: string
-          image_urls?: string[] | null
-          post_type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       legal_acceptances: {
         Row: {
           accepted_at: string | null
