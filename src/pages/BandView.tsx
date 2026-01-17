@@ -292,7 +292,7 @@ const BandView = () => {
           : "Worship set unpublished. Please republish after editing."
       );
       
-      navigate(`/set-builder/${id}`);
+      navigate(`/set-builder/${id}?unpublished=true`);
     } catch (error) {
       toast.error(language === "ko" ? "게시 취소 중 오류가 발생했습니다." : "Error unpublishing worship set.");
     } finally {

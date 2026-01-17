@@ -517,7 +517,7 @@ export default function WorshipSets() {
           : "Worship set unpublished. Please republish after editing."
       );
       
-      navigate(`/set-builder/${pendingSetId}`);
+      navigate(`/set-builder/${pendingSetId}?unpublished=true`);
     } catch (error) {
       toast.error(language === "ko" ? "게시 취소 중 오류가 발생했습니다." : "Error unpublishing worship set.");
     } finally {
