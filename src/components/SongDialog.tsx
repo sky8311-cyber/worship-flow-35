@@ -716,44 +716,56 @@ const [loading, setLoading] = useState(false);
           </Select>
           
           {/* Hidden file input - supports multiple files */}
+          {/* Android/tablet fix: use opacity-0 instead of hidden, and capture attribute for camera */}
           <Input
             type="file"
             multiple
             onChange={async (e) => {
+              console.log('[Score Upload] File input changed, files:', e.target.files);
               const files = e.target.files;
               if (files && files.length > 0) {
+                console.log('[Score Upload] Processing', files.length, 'files');
                 // Process all files in parallel for speed
                 await Promise.all(
                   Array.from(files).map(file => onFileUpload(file, index))
                 );
+                // Reset input value to allow re-selecting the same file
+                e.target.value = '';
+              } else {
+                console.log('[Score Upload] No files selected');
               }
             }}
-            accept=".pdf,.jpg,.jpeg,.png,.webp"
-            className="hidden"
+            accept="image/*,.pdf,application/pdf,.jpg,.jpeg,.png,.webp"
+            className="absolute opacity-0 w-0 h-0 overflow-hidden"
+            style={{ pointerEvents: 'none' }}
             id={`file-upload-${index}`}
           />
           
-          {/* Upload button with drag-drop visual feedback */}
-          <Button
-            type="button"
-            variant={isDragging ? "default" : "outline"}
-            size="sm"
-            onClick={() => document.getElementById(`file-upload-${index}`)?.click()}
-            disabled={uploadingVariationIndex === index}
-            className={isDragging ? "border-2 border-dashed border-primary" : ""}
-          >
-            {uploadingVariationIndex === index ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                업로드 중
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                악보 업로드
-              </>
-            )}
-          </Button>
+          {/* Upload button using label for better mobile compatibility */}
+          <label htmlFor={`file-upload-${index}`} className="cursor-pointer">
+            <Button
+              type="button"
+              variant={isDragging ? "default" : "outline"}
+              size="sm"
+              asChild
+              disabled={uploadingVariationIndex === index}
+              className={isDragging ? "border-2 border-dashed border-primary" : ""}
+            >
+              <span>
+                {uploadingVariationIndex === index ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    업로드 중
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    악보 업로드
+                  </>
+                )}
+              </span>
+            </Button>
+          </label>
           
           {/* Delete variation (only show if index > 0) */}
           {index > 0 && (
