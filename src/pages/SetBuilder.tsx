@@ -537,7 +537,17 @@ const SetBuilder = () => {
     setFormDataInitialized(true);
     
     if (!statusInitialized) {
-      setStatus(existingSet.status || "draft");
+      // Check if coming from unpublish action via URL parameter
+      const unpublishedFromUrl = searchParams.get("unpublished") === "true";
+      if (unpublishedFromUrl) {
+        setStatus("draft");
+        // Clear the URL parameter
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("unpublished");
+        setSearchParams(newParams, { replace: true });
+      } else {
+        setStatus(existingSet.status || "draft");
+      }
       setStatusInitialized(true);
     }
   }, [existingSet, isExistingSetLoading, isSaving, statusInitialized, formDataInitialized, isEditMode]);
