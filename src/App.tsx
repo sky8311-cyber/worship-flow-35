@@ -61,6 +61,7 @@ const AdminTierGuide = lazy(() => import("./pages/AdminTierGuide"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
+const PublicLinkProxy = lazy(() => import("./pages/PublicLinkProxy"));
 const Landing = lazy(() => import("./pages/Landing"));
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
@@ -176,6 +177,7 @@ const App = () => {
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
               <Route path="/public-view/:token" element={<PublicBandView />} /> {/* Public share link */}
+              <Route path="/link/:token" element={<PublicLinkProxy />} /> {/* Short public link with OG tags */}
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
