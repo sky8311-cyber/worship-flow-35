@@ -43,10 +43,10 @@ export const ShareLinkDialog = ({
 
   const teamLink = `${window.location.origin}/band-view/${setId}`;
   
-  // Use shorter branded URL for public share links
-  // The /link/:token route handles OG tags and redirects to public-view
+  // Use Edge Function URL for public share links (required for social media OG tags)
+  // The edge function renders server-side HTML with proper OG meta tags for Kakao/Facebook
   const publicLink = localToken 
-    ? `https://kworship.app/link/${localToken}` 
+    ? `https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/og-public-view/${localToken}` 
     : null;
   
   // Direct link for preview button (skips the OG redirect)
