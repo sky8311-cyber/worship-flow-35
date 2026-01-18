@@ -43,8 +43,15 @@ export const ShareLinkDialog = ({
 
   const teamLink = `${window.location.origin}/band-view/${setId}`;
   
-  // Public share link using the public-view route
+  // Use Edge Function URL for social media OG tags (server-side rendered HTML)
+  // The edge function provides proper OG meta tags for Kakao/Facebook previews
+  // then redirects to the actual public-view page
   const publicLink = localToken 
+    ? `https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/og-public-view/${localToken}` 
+    : null;
+  
+  // Direct link for preview button (skips the OG redirect for faster access)
+  const directPublicLink = localToken 
     ? `${window.location.origin}/public-view/${localToken}` 
     : null;
 
@@ -241,7 +248,7 @@ export const ShareLinkDialog = ({
                     variant="ghost"
                     size="sm"
                     className="text-xs gap-1.5"
-                    onClick={() => window.open(publicLink, "_blank")}
+                    onClick={() => window.open(directPublicLink, "_blank")}
                   >
                     <ExternalLink className="w-3 h-3" />
                     {language === "ko" ? "미리보기" : "Preview"}
