@@ -31,6 +31,7 @@ interface AuthContextType {
   isFullyLoaded: boolean;
   signUp: (email: string, password: string, fullName: string, phone?: string, birthDate?: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
   updatePassword: (newPassword: string) => Promise<{ error: any }>;
@@ -347,6 +348,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    // Bump epoch to invalidate any in-flight async work from previous session
+    authEpochRef.current += 1;
+    // Immediately gate UI + clear local user data
+    setLoading(true);
+    setProfileLoaded(false);
+    setProfile(null);
+    setRoles([]);
+    setIsCommunityLeaderInAnyCommunity(false);
+    setIsCommunityOwnerInAnyCommunity(false);
+
+    // Clear React Query cache
+    queryClient.clear();
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     // Bump epoch FIRST to invalidate any in-flight async profile/role fetches
     authEpochRef.current += 1;
@@ -452,6 +476,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isFullyLoaded,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         resetPassword,
         updatePassword,

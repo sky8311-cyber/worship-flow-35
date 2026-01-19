@@ -242,6 +242,8 @@ export const translations = {
       alreadyRegisteredLoggedIn: "You already have an account. We've logged you in with that account.",
       accountCreated: "Account created successfully! Redirecting to dashboard...",
       signupError: "Failed to get user after signup",
+      orContinueWith: "Or continue with",
+      continueWithGoogle: "Continue with Google",
     loginPage: {
       headline: "For Worship Communities",
       subheadline: "Integrated Worship Leader Platform",
@@ -2228,6 +2230,8 @@ songCard: {
       alreadyRegisteredLoggedIn: "이미 가입된 계정입니다. 해당 계정으로 로그인되었습니다.",
       accountCreated: "계정이 생성되었습니다! 대시보드로 이동합니다...",
       signupError: "회원가입 후 사용자 정보를 가져오지 못했습니다",
+      orContinueWith: "또는",
+      continueWithGoogle: "Google로 계속하기",
     loginPage: {
       headline: "예배 공동체를 위한",
       subheadline: "워십리더 통합 플랫폼",
