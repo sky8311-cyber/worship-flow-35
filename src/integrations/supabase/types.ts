@@ -681,6 +681,48 @@ export type Database = {
           },
         ]
       }
+      friends: {
+        Row: {
+          addressee_user_id: string
+          created_at: string | null
+          id: string
+          requester_user_id: string
+          status: Database["public"]["Enums"]["friend_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          addressee_user_id: string
+          created_at?: string | null
+          id?: string
+          requester_user_id: string
+          status?: Database["public"]["Enums"]["friend_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          addressee_user_id?: string
+          created_at?: string | null
+          id?: string
+          requester_user_id?: string
+          status?: Database["public"]["Enums"]["friend_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_addressee_user_id_fkey"
+            columns: ["addressee_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friends_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_acceptances: {
         Row: {
           accepted_at: string | null
@@ -1044,6 +1086,7 @@ export type Database = {
           id: string
           instagram_url: string | null
           instrument: string | null
+          is_ambassador: boolean | null
           location: string | null
           ministry_role: string | null
           needs_worship_leader_profile: boolean | null
@@ -1070,6 +1113,7 @@ export type Database = {
           id: string
           instagram_url?: string | null
           instrument?: string | null
+          is_ambassador?: boolean | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
@@ -1096,6 +1140,7 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           instrument?: string | null
+          is_ambassador?: boolean | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
@@ -1567,6 +1612,96 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      room_posts: {
+        Row: {
+          author_user_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_pinned: boolean | null
+          post_type: Database["public"]["Enums"]["room_post_type"]
+          room_id: string
+          updated_at: string | null
+          visibility: Database["public"]["Enums"]["room_visibility"] | null
+        }
+        Insert: {
+          author_user_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          post_type?: Database["public"]["Enums"]["room_post_type"]
+          room_id: string
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["room_visibility"] | null
+        }
+        Update: {
+          author_user_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          post_type?: Database["public"]["Enums"]["room_post_type"]
+          room_id?: string
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["room_visibility"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_posts_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_posts_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "worship_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction_type: Database["public"]["Enums"]["room_reaction_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction_type: Database["public"]["Enums"]["room_reaction_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction_type?: Database["public"]["Enums"]["room_reaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "room_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seed_achievements: {
         Row: {
@@ -2854,6 +2989,51 @@ export type Database = {
         }
         Relationships: []
       }
+      worship_rooms: {
+        Row: {
+          bgm_song_id: string | null
+          created_at: string | null
+          id: string
+          owner_user_id: string
+          theme_config: Json | null
+          updated_at: string | null
+          visibility: Database["public"]["Enums"]["room_visibility"]
+        }
+        Insert: {
+          bgm_song_id?: string | null
+          created_at?: string | null
+          id?: string
+          owner_user_id: string
+          theme_config?: Json | null
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["room_visibility"]
+        }
+        Update: {
+          bgm_song_id?: string | null
+          created_at?: string | null
+          id?: string
+          owner_user_id?: string
+          theme_config?: Json | null
+          updated_at?: string | null
+          visibility?: Database["public"]["Enums"]["room_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worship_rooms_bgm_song_id_fkey"
+            columns: ["bgm_song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "worship_rooms_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worship_set_positions: {
         Row: {
           created_at: string | null
@@ -3002,6 +3182,10 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { invitation_uuid: string }; Returns: boolean }
+      are_friends: {
+        Args: { user_a: string; user_b: string }
+        Returns: boolean
+      }
       award_seeds: {
         Args: {
           _activity_type: Database["public"]["Enums"]["seed_activity_type"]
@@ -3014,6 +3198,10 @@ export type Database = {
       }
       can_manage_church_roles: {
         Args: { _church_account_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_room: {
+        Args: { room_id_param: string; viewer_id: string }
         Returns: boolean
       }
       decline_invitation: {
@@ -3181,8 +3369,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "worship_leader" | "user"
       collaborator_role: "editor" | "viewer"
+      friend_status: "pending" | "accepted" | "declined"
       legal_document_type: "terms" | "privacy" | "copyright" | "trademark"
       legal_language: "ko" | "en"
+      room_post_type: "prayer" | "concern" | "note" | "testimony" | "general"
+      room_reaction_type: "amen" | "praying" | "like"
+      room_visibility: "private" | "friends" | "public"
       seed_activity_type:
         | "profile_setup"
         | "avatar_upload"
@@ -3341,8 +3533,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "worship_leader", "user"],
       collaborator_role: ["editor", "viewer"],
+      friend_status: ["pending", "accepted", "declined"],
       legal_document_type: ["terms", "privacy", "copyright", "trademark"],
       legal_language: ["ko", "en"],
+      room_post_type: ["prayer", "concern", "note", "testimony", "general"],
+      room_reaction_type: ["amen", "praying", "like"],
+      room_visibility: ["private", "friends", "public"],
       seed_activity_type: [
         "profile_setup",
         "avatar_upload",
