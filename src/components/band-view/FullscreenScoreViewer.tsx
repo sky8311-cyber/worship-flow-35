@@ -27,6 +27,7 @@ export function FullscreenScoreViewer({
   const [currentPage, setCurrentPage] = useState(0);
   const [showUI, setShowUI] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [isActualFullscreen, setIsActualFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
@@ -118,9 +119,12 @@ export function FullscreenScoreViewer({
   useEffect(() => {
     if (open && containerRef.current) {
       // Try to request fullscreen
-      containerRef.current.requestFullscreen?.().catch(() => {
-        // Fullscreen not supported, continue anyway
-      });
+      containerRef.current.requestFullscreen?.()
+        .then(() => setIsActualFullscreen(true))
+        .catch(() => {
+          // Fullscreen not supported, continue anyway
+          setIsActualFullscreen(true); // Treat as fullscreen for UI purposes
+        });
 
       // Lock orientation to portrait (for consistent iPad experience)
       if ('orientation' in screen && (screen.orientation as any)?.lock) {
@@ -167,21 +171,17 @@ export function FullscreenScoreViewer({
     }
   }, [open, requestWakeLock, releaseWakeLock, enableNoSleep, disableNoSleep]);
 
-  // Handle fullscreen change - DON'T auto-close, just try to re-enter fullscreen
+  // Handle fullscreen change - track actual fullscreen state for iOS recovery
   useEffect(() => {
     const handleFullscreenChange = () => {
-      // If fullscreen exited but viewer is still open, try to re-enter fullscreen
-      // but don't close the viewer - user must explicitly close it
-      if (!document.fullscreenElement && open && containerRef.current) {
-        containerRef.current.requestFullscreen?.().catch(() => {
-          // Fullscreen re-request failed (iOS Safari), continue without fullscreen
-          console.log('Fullscreen re-request failed, continuing without fullscreen');
-        });
-      }
+      const isNowFullscreen = !!document.fullscreenElement;
+      setIsActualFullscreen(isNowFullscreen);
+      // Don't auto-request fullscreen here - iOS Safari blocks without user gesture
+      // Instead, we'll show a "Return to Fullscreen" button
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, [open]);
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -475,6 +475,43 @@ export function FullscreenScoreViewer({
           {t("bandView.fullscreenViewer.swipeHint")}
         </p>
       </div>
+
+      {/* Fullscreen Recovery Overlay - shows when fullscreen exited (e.g., iPad screen off/on) */}
+      {!isActualFullscreen && (
+        <div 
+          className="absolute inset-0 z-20 bg-black/95 flex flex-col items-center justify-center gap-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-white text-center text-lg px-6">
+            {t("bandView.fullscreenViewer.fullscreenExited")}
+          </p>
+          <Button
+            size="lg"
+            className="bg-white text-black hover:bg-white/90 font-medium px-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              containerRef.current?.requestFullscreen?.()
+                .then(() => setIsActualFullscreen(true))
+                .catch(() => {
+                  // If fullscreen still not supported, just continue
+                  setIsActualFullscreen(true);
+                });
+            }}
+          >
+            {t("bandView.fullscreenViewer.returnToFullscreen")}
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-white/70 hover:text-white hover:bg-white/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+          >
+            {t("common.close")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

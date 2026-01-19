@@ -1462,6 +1462,8 @@ songCard: {
         noScores: "No scores available",
         swipeHint: "Swipe left/right to navigate",
         doubleTapZoom: "Double tap to zoom",
+        fullscreenExited: "Screen was reduced",
+        returnToFullscreen: "Return to Fullscreen",
       },
       musicPlayer: {
         title: "Music Mode",
@@ -3428,6 +3430,8 @@ songCard: {
         noScores: "악보가 없습니다",
         swipeHint: "좌우로 스와이프하여 이동",
         doubleTapZoom: "더블 탭으로 확대/축소",
+        fullscreenExited: "화면이 축소되었습니다",
+        returnToFullscreen: "전체 화면으로 돌아가기",
       },
       musicPlayer: {
         title: "음악 듣기",
