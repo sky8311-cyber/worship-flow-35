@@ -66,6 +66,7 @@ const Landing = lazy(() => import("./pages/Landing"));
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
 const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
+const WorshipRooms = lazy(() => import("./pages/WorshipRooms"));
 
 // Page loader component for Suspense fallback
 const PageLoader = () => <FullScreenLoader />;
@@ -173,6 +174,8 @@ const App = () => {
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
+              <Route path="/rooms" element={<ProtectedRoute><WorshipRooms /></ProtectedRoute>} />
+              <Route path="/rooms/:roomId" element={<ProtectedRoute><WorshipRooms /></ProtectedRoute>} />
               <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}

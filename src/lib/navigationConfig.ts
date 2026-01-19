@@ -1,4 +1,4 @@
-import { Home, Calendar, Music, Users, MessageCircle, LucideIcon } from "lucide-react";
+import { Home, Calendar, Music, DoorOpen, MessageCircle, LucideIcon } from "lucide-react";
 
 export interface NavigationTab {
   to: string;
@@ -27,10 +27,10 @@ export const navigationTabs: NavigationTab[] = [
     match: (path: string) => path === "/songs" || path === "/favorites",
   },
   {
-    to: "/community/search",
-    icon: Users,
-    labelKey: "navigation.community",
-    match: (path: string) => path.includes("/community"),
+    to: "/rooms",
+    icon: DoorOpen,
+    labelKey: "navigation.rooms",
+    match: (path: string) => path.includes("/rooms"),
   },
 ];
 
