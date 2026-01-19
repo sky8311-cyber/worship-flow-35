@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useDeletePost, useToggleReaction, useTogglePinPost, type RoomPost } from "@/hooks/useRoomPosts";
@@ -22,8 +21,6 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { LanguageContext } from "@/contexts/LanguageContext";
-import { useContext } from "react";
 import type { Database } from "@/integrations/supabase/types";
 
 type RoomReactionType = Database["public"]["Enums"]["room_reaction_type"];
@@ -57,9 +54,7 @@ const reactionConfig: Record<RoomReactionType, { icon: typeof Heart; label: stri
 };
 
 export function RoomPostCard({ post, roomId, isOwnRoom = false }: RoomPostCardProps) {
-  const { t } = useTranslation();
-  const languageContext = useContext(LanguageContext);
-  const language = languageContext?.language || "en";
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const deletePost = useDeletePost();
   const toggleReaction = useToggleReaction();
