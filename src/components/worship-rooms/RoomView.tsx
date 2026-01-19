@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useWorshipRoomById } from "@/hooks/useWorshipRoom";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import { RoomHeader } from "./RoomHeader";
-import { RoomPostFeed } from "./RoomPostFeed";
+import { RoomScene } from "./RoomScene";
 import { RoomPostComposer } from "./RoomPostComposer";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -50,8 +50,7 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
     return (
       <div className="p-4 space-y-4">
         <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -76,11 +75,11 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
       <RoomHeader room={room} isOwnRoom={isOwnRoom} />
       
       <div className="p-4 space-y-4">
+        {/* 2D Room Scene */}
+        <RoomScene room={room} isOwnRoom={isOwnRoom} />
+        
         {/* Post composer - only show if user can post */}
         <RoomPostComposer roomId={room.id} />
-        
-        {/* Post feed */}
-        <RoomPostFeed roomId={room.id} isOwnRoom={isOwnRoom} />
       </div>
     </div>
   );
