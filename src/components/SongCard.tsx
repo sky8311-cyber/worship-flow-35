@@ -242,16 +242,17 @@ const handleDelete = async () => {
               <Button
                 variant={isSelectedForSet ? "default" : "outline"}
                 size="sm"
-                onClick={() => !song.is_private && onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
-                disabled={song.is_private}
+                onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
                 className="h-7 sm:h-8 px-2 tracking-tight"
               >
-                {song.is_private ? (
-                  <><Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songDialog.private")}</>
-                ) : isSelectedForSet ? (
+                {isSelectedForSet ? (
                   <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
                 ) : (
-                  <><Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.addToSet")}</>
+                  <>
+                    <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
+                    {song.is_private && <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
+                    {t("songSelector.addToSet")}
+                  </>
                 )}
               </Button>
             )}

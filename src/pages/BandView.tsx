@@ -78,8 +78,8 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
 
 // Union type for items
 type SetItem = 
-  | { type: "song"; data: any; position: number }
-  | { type: "component"; data: any; position: number };
+  | { type: "song"; data: any; position: number; canView: boolean; isPrivate: boolean }
+  | { type: "component"; data: any; position: number; canView: boolean; isPrivate: boolean };
 
 const BandView = () => {
   const { id } = useParams();
@@ -336,17 +336,38 @@ const BandView = () => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  // Merge songs and components by position
+  // Check if current user can view a private song in this set
+  const canViewPrivateSong = (song: any) => {
+    if (!song) return false;
+    // Public songs are always visible
+    if (!song.is_private) return true;
+    // Song owner can always see their own private songs
+    if (song.created_by === user?.id) return true;
+    // Check if both viewer and song owner are in the same community (the set's community)
+    if (!serviceSet?.community_id) return false;
+    // User must be a member of the set's community
+    if (!userCommunities?.includes(serviceSet.community_id)) return false;
+    // At this point, user is a member of the set's community
+    // The song owner must also be a member (checked by the fact they could add it to this community's set)
+    return true;
+  };
+
+  // Merge songs and components by position, with private song filtering
   const mergedItems: SetItem[] = [
-    ...(setSongs || []).map((song: any) => ({ 
-      type: "song" as const, 
-      data: song, 
-      position: song.position 
-    })),
+    ...(setSongs || [])
+      .map((song: any) => ({ 
+        type: "song" as const, 
+        data: song, 
+        position: song.position,
+        canView: canViewPrivateSong(song.songs),
+        isPrivate: song.songs?.is_private || false,
+      })),
     ...(setComponents || []).map((comp: any) => ({ 
       type: "component" as const, 
       data: comp, 
-      position: comp.position 
+      position: comp.position,
+      canView: true,
+      isPrivate: false,
     })),
   ].sort((a, b) => a.position - b.position);
 
@@ -733,6 +754,32 @@ const BandView = () => {
             const setSong = item.data;
             const song = setSong.songs;
             
+            // Render hidden placeholder for private songs the user cannot view
+            if (!item.canView) {
+              return (
+                <Card key={`song-${setSong.id}`} className="shadow-md print:shadow-none print:break-inside-avoid bg-muted/30">
+                  <CardContent className="p-6">
+                    <div className="flex gap-4 items-center">
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
+                          <Lock className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
+                          <Lock className="w-4 h-4" />
+                          {t("songDialog.privateSongInSet")}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {t("songDialog.privateSongHidden")}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            }
+            
             // Get multiple YouTube links for this song
             const youtubeLinks = getYoutubeLinksForSong(setSong.song_id);
             // Fallback to legacy single URL if no links in new table
@@ -759,9 +806,17 @@ const BandView = () => {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-foreground mb-1">
-                        {song?.title || t("bandView.noTitle")}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-xl font-bold text-foreground">
+                          {song?.title || t("bandView.noTitle")}
+                        </h3>
+                        {item.isPrivate && (
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <Lock className="w-3 h-3" />
+                            {t("songDialog.private")}
+                          </Badge>
+                        )}
+                      </div>
                       {song?.subtitle && (
                         <p className="text-sm italic text-muted-foreground mb-2">
                           {song.subtitle}
