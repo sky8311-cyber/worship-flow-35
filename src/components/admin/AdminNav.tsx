@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useAdminSupportUnreadCount } from "@/hooks/useSupportChat";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ export const AdminNav = () => {
   const location = useLocation();
   const { t, language } = useTranslation();
   const { isChurchMenuVisible, isLoading } = useAppSettings();
+  const supportUnread = useAdminSupportUnreadCount();
   
   // Primary links (always visible in header)
   const primaryLinks = [
@@ -37,6 +40,12 @@ export const AdminNav = () => {
       to: "/admin/crm",
       label: "CRM",
       icon: LayoutList,
+    },
+    {
+      to: "/admin/support",
+      label: language === "ko" ? "고객지원" : "Support",
+      icon: Headset,
+      badge: supportUnread > 0 ? supportUnread : undefined,
     },
   ];
 
@@ -100,13 +109,14 @@ export const AdminNav = () => {
             {primaryLinks.map((link) => {
               const active = isActive(link.to);
               const Icon = link.icon;
+              const badgeValue = 'badge' in link ? link.badge : undefined;
               
               return (
                 <Link
                   key={link.to}
                   to={link.to}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap relative",
                     active
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -114,6 +124,14 @@ export const AdminNav = () => {
                 >
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                   <span className="hidden sm:inline">{link.label}</span>
+                  {badgeValue !== undefined && badgeValue > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 text-xs"
+                    >
+                      {badgeValue}
+                    </Badge>
+                  )}
                 </Link>
               );
             })}
