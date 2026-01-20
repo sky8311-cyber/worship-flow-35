@@ -78,8 +78,8 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
         {/* 2D Room Scene */}
         <RoomScene room={room} isOwnRoom={isOwnRoom} />
         
-        {/* Post composer - only show if user can post */}
-        <RoomPostComposer roomId={room.id} />
+        {/* Post composer - only show for room owner */}
+        {isOwnRoom && <RoomPostComposer roomId={room.id} />}
       </div>
     </div>
   );

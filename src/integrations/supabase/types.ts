@@ -1613,6 +1613,87 @@ export type Database = {
         }
         Relationships: []
       }
+      room_furniture_catalog: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          image_url: string
+          is_default: boolean | null
+          name: string
+          name_ko: string | null
+          price_seeds: number | null
+          sort_order: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_default?: boolean | null
+          name: string
+          name_ko?: string | null
+          price_seeds?: number | null
+          sort_order?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_default?: boolean | null
+          name?: string
+          name_ko?: string | null
+          price_seeds?: number | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
+      room_furniture_placements: {
+        Row: {
+          created_at: string | null
+          furniture_id: string
+          id: string
+          position_x: number
+          position_y: number
+          room_id: string
+          z_index: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          furniture_id: string
+          id?: string
+          position_x?: number
+          position_y?: number
+          room_id: string
+          z_index?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          furniture_id?: string
+          id?: string
+          position_x?: number
+          position_y?: number
+          room_id?: string
+          z_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_furniture_placements_furniture_id_fkey"
+            columns: ["furniture_id"]
+            isOneToOne: false
+            referencedRelation: "room_furniture_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_furniture_placements_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "worship_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_posts: {
         Row: {
           author_user_id: string
@@ -2995,6 +3076,8 @@ export type Database = {
           created_at: string | null
           id: string
           owner_user_id: string
+          status_emoji: string | null
+          status_text: string | null
           theme_config: Json | null
           updated_at: string | null
           visibility: Database["public"]["Enums"]["room_visibility"]
@@ -3004,6 +3087,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           owner_user_id: string
+          status_emoji?: string | null
+          status_text?: string | null
           theme_config?: Json | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"]
@@ -3013,6 +3098,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           owner_user_id?: string
+          status_emoji?: string | null
+          status_text?: string | null
           theme_config?: Json | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"]

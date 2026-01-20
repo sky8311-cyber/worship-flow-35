@@ -199,6 +199,11 @@ export const translations = {
       morePosts: "more",
       anonymousOwner: "Anonymous",
       writeFirst: "Write your first post",
+      setStatus: "Set status...",
+      todayIs: "TODAY IS...",
+      statusPlaceholder: "How are you feeling?",
+      furniture: "Furniture",
+      furnitureCatalog: "Furniture Catalog",
     },
     settings: {
       regionalSettings: "Regional Settings",
@@ -2253,6 +2258,11 @@ songCard: {
       morePosts: "개 더보기",
       anonymousOwner: "익명",
       writeFirst: "첫 글 작성하기",
+      setStatus: "상태 설정...",
+      todayIs: "TODAY IS...",
+      statusPlaceholder: "오늘 기분이 어때요?",
+      furniture: "가구",
+      furnitureCatalog: "가구 카탈로그",
     },
     settings: {
       regionalSettings: "지역 설정",
