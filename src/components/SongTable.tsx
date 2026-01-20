@@ -406,20 +406,21 @@ const handleDelete = async (song: any) => {
                    <TableCell>
                      {!bulkEditMode && (
                        <div className="flex items-center gap-1">
-                         {selectorMode && onSelectForSet && (
+                          {selectorMode && onSelectForSet && (
                            <Button
                              variant={selectedForSet.has(song.id) ? "default" : "ghost"}
                              size="sm"
-                             onClick={() => !song.is_private && onSelectForSet(song, song.default_key, song.score_file_url)}
-                             disabled={song.is_private}
+                             onClick={() => onSelectForSet(song, song.default_key, song.score_file_url)}
                              className="h-8"
                            >
-                             {song.is_private ? (
-                               <><Lock className="h-4 w-4 mr-1" />{t("songDialog.private")}</>
-                             ) : selectedForSet.has(song.id) ? (
+                             {selectedForSet.has(song.id) ? (
                                <><Check className="h-4 w-4 mr-1" />{t("songSelector.selected")}</>
                              ) : (
-                               <><Plus className="h-4 w-4 mr-1" />{t("songSelector.addToSet")}</>
+                               <>
+                                 <Plus className="h-4 w-4 mr-1" />
+                                 {song.is_private && <Lock className="h-4 w-4 mr-1" />}
+                                 {t("songSelector.addToSet")}
+                               </>
                              )}
                            </Button>
                          )}

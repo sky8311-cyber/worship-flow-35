@@ -3367,6 +3367,14 @@ export type Database = {
         Args: { _church_account_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_private_song: {
+        Args: {
+          _set_community_id: string
+          _song_id: string
+          _viewer_id: string
+        }
+        Returns: boolean
+      }
       can_view_room: {
         Args: { room_id_param: string; viewer_id: string }
         Returns: boolean

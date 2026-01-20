@@ -1109,14 +1109,13 @@ const SetBuilder = () => {
       return;
     }
 
-    // Block private songs from being added to worship sets
+    // Show info message for private songs (but allow adding)
     if (song.is_private) {
-      toast.error(
+      toast.info(
         language === "ko" 
-          ? "비공개 곡은 워십세트에 추가할 수 없습니다" 
-          : "Private songs cannot be added to worship sets"
+          ? "비공개 곡이 추가되었습니다. 이 곡은 내 커뮤니티 멤버에게만 표시됩니다." 
+          : "Private song added. This song is only visible to your community members."
       );
-      return;
     }
 
     // Check if required fields are filled
