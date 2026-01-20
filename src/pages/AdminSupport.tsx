@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SupportChatBubble } from "@/components/support/SupportChatBubble";
 import { SupportChatInput } from "@/components/support/SupportChatInput";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -26,6 +27,8 @@ import {
   Headset,
   MoreHorizontal,
   UserPlus,
+  X,
+  CheckSquare,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,6 +47,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -72,6 +88,11 @@ export default function AdminSupport() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [showUserSearch, setShowUserSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Bulk selection state
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
   // Filter conversations
   const filteredConversations = conversations.filter((conv) => {
@@ -182,6 +203,55 @@ export default function AdminSupport() {
     });
   };
 
+  // Bulk selection handlers
+  const toggleSelect = (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filteredConversations.map(c => c.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
+  const handleBulkArchive = async () => {
+    for (const id of selectedIds) {
+      await archiveConversation.mutateAsync(id);
+    }
+    toast.success(language === "ko" ? `${selectedIds.size}개 대화가 보관되었습니다` : `${selectedIds.size} conversations archived`);
+    clearSelection();
+  };
+
+  const handleBulkDelete = async () => {
+    for (const id of selectedIds) {
+      await deleteConversation.mutateAsync(id);
+    }
+    toast.success(language === "ko" ? `${selectedIds.size}개 대화가 삭제되었습니다` : `${selectedIds.size} conversations deleted`);
+    clearSelection();
+    setBulkDeleteDialogOpen(false);
+  };
+
+  const handleBulkMarkRead = async (isRead: boolean) => {
+    for (const id of selectedIds) {
+      await toggleReadStatus.mutateAsync({ conversationId: id, isRead });
+    }
+    toast.success(
+      isRead 
+        ? (language === "ko" ? `${selectedIds.size}개 대화를 읽음으로 표시했습니다` : `Marked ${selectedIds.size} as read`)
+        : (language === "ko" ? `${selectedIds.size}개 대화를 안읽음으로 표시했습니다` : `Marked ${selectedIds.size} as unread`)
+    );
+    clearSelection();
+  };
+
   return (
     <AdminLayout>
       <div className="flex h-[calc(100vh-8rem)] gap-4">
@@ -194,49 +264,91 @@ export default function AdminSupport() {
                 <Headset className="h-5 w-5" />
                 {language === "ko" ? "고객 지원" : "Support"}
               </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowUserSearch(!showUserSearch)}
-              >
-                <UserPlus className="h-4 w-4 mr-1" />
-                {language === "ko" ? "새 대화" : "New"}
-              </Button>
+              <div className="flex items-center gap-1">
+                {/* Toggle selection mode */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (selectMode) {
+                      clearSelection();
+                    } else {
+                      setSelectMode(true);
+                    }
+                  }}
+                  className="h-8 px-2"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                </Button>
+                
+                {/* New conversation with floating search */}
+                <Popover open={showUserSearch} onOpenChange={setShowUserSearch}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      {language === "ko" ? "새 대화" : "New"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-0" align="end">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder={language === "ko" ? "사용자 검색..." : "Search users..."}
+                        value={userSearchQuery}
+                        onValueChange={setUserSearchQuery}
+                      />
+                      <CommandList className="max-h-64">
+                        {userSearchQuery.length < 2 ? (
+                          <CommandEmpty>
+                            {language === "ko" ? "2자 이상 입력하세요" : "Type at least 2 characters"}
+                          </CommandEmpty>
+                        ) : !searchedUsers || searchedUsers.length === 0 ? (
+                          <CommandEmpty>
+                            {language === "ko" ? "사용자를 찾을 수 없습니다" : "No users found"}
+                          </CommandEmpty>
+                        ) : (
+                          <CommandGroup>
+                            {searchedUsers.map((user) => (
+                              <CommandItem
+                                key={user.id}
+                                value={user.id}
+                                onSelect={() => handleStartConversation(user.id)}
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatar_url || undefined} />
+                                  <AvatarFallback>
+                                    {(user.full_name || user.email || "U").charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{user.full_name || user.email}</p>
+                                  {user.full_name && user.email && (
+                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
-            {/* User search for new conversation */}
-            {showUserSearch && (
-              <div className="space-y-2">
-                <Input
-                  placeholder={language === "ko" ? "사용자 검색..." : "Search users..."}
-                  value={userSearchQuery}
-                  onChange={(e) => setUserSearchQuery(e.target.value)}
-                  className="h-8"
-                />
-                {searchedUsers && searchedUsers.length > 0 && (
-                  <div className="border rounded-md max-h-40 overflow-auto">
-                    {searchedUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        onClick={() => handleStartConversation(user.id)}
-                        className="w-full p-2 text-left hover:bg-muted flex items-center gap-2 text-sm"
-                      >
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={user.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {(user.full_name || user.email || "U").charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="truncate">
-                          <p className="font-medium truncate">{user.full_name || user.email}</p>
-                          {user.full_name && user.email && (
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                          )}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {/* Select all button when in select mode */}
+            {selectMode && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {selectedIds.size > 0 
+                    ? (language === "ko" ? `${selectedIds.size}개 선택됨` : `${selectedIds.size} selected`)
+                    : (language === "ko" ? "선택 모드" : "Select mode")
+                  }
+                </span>
+                <Button variant="ghost" size="sm" onClick={selectAll} className="h-7 text-xs">
+                  {language === "ko" ? "전체 선택" : "Select All"}
+                </Button>
               </div>
             )}
 
@@ -284,43 +396,131 @@ export default function AdminSupport() {
             ) : (
               <div className="divide-y">
                 {filteredConversations.map((conv) => (
-                  <button
+                  <div
                     key={conv.id}
-                    onClick={() => setSelectedConversation(conv)}
                     className={cn(
-                      "w-full p-3 text-left hover:bg-muted/50 transition-colors",
+                      "relative group",
                       selectedConversation?.id === conv.id && "bg-muted",
                       !conv.is_read_by_admin && "bg-primary/5"
                     )}
                   >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10 flex-shrink-0">
-                        <AvatarImage src={conv.profiles?.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {(conv.profiles?.full_name || conv.profiles?.email || "U").charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={cn("font-medium truncate", !conv.is_read_by_admin && "font-semibold")}>
-                            {conv.profiles?.full_name || conv.profiles?.email || "Unknown"}
-                          </span>
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {conv.is_flagged && <Flag className="h-3 w-3 text-destructive" />}
-                            {!conv.is_read_by_admin && (
-                              <span className="h-2 w-2 rounded-full bg-primary" />
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {conv.last_message?.content || (language === "ko" ? "메시지 없음" : "No messages")}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {formatTime(conv.last_message_at || conv.created_at)}
-                        </p>
+                    {/* Checkbox for bulk selection */}
+                    {selectMode && (
+                      <div 
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-10"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selectedIds.has(conv.id)}
+                          onCheckedChange={() => toggleSelect(conv.id)}
+                        />
                       </div>
-                    </div>
-                  </button>
+                    )}
+                    
+                    <button
+                      onClick={() => !selectMode && setSelectedConversation(conv)}
+                      className={cn(
+                        "w-full p-3 text-left hover:bg-muted/50 transition-colors",
+                        selectMode && "pl-10"
+                      )}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 flex-shrink-0">
+                          <AvatarImage src={conv.profiles?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {(conv.profiles?.full_name || conv.profiles?.email || "U").charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className={cn("font-medium truncate", !conv.is_read_by_admin && "font-semibold")}>
+                              {conv.profiles?.full_name || conv.profiles?.email || "Unknown"}
+                            </span>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {conv.is_flagged && <Flag className="h-3 w-3 text-destructive" />}
+                              {!conv.is_read_by_admin && (
+                                <span className="h-2 w-2 rounded-full bg-primary" />
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {conv.last_message?.content || (language === "ko" ? "메시지 없음" : "No messages")}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {formatTime(conv.last_message_at || conv.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    {/* Three-dot menu - appears on hover when not in select mode */}
+                    {!selectMode && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleReadStatus.mutate({ conversationId: conv.id, isRead: !conv.is_read_by_admin });
+                              }}
+                            >
+                              {conv.is_read_by_admin ? (
+                                <>
+                                  <Mail className="h-4 w-4 mr-2" />
+                                  {language === "ko" ? "안읽음으로 표시" : "Mark Unread"}
+                                </>
+                              ) : (
+                                <>
+                                  <MailOpen className="h-4 w-4 mr-2" />
+                                  {language === "ko" ? "읽음으로 표시" : "Mark Read"}
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFlag.mutate({ conversationId: conv.id, isFlagged: !conv.is_flagged });
+                              }}
+                            >
+                              <Flag className="h-4 w-4 mr-2" />
+                              {conv.is_flagged 
+                                ? (language === "ko" ? "플래그 해제" : "Unflag") 
+                                : (language === "ko" ? "플래그" : "Flag")
+                              }
+                            </DropdownMenuItem>
+                            {conv.status !== "archived" && (
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  archiveConversation.mutate(conv.id);
+                                }}
+                              >
+                                <Archive className="h-4 w-4 mr-2" />
+                                {language === "ko" ? "보관" : "Archive"}
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-destructive" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedConversation(conv);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {language === "ko" ? "삭제" : "Delete"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -471,7 +671,44 @@ export default function AdminSupport() {
         </div>
       </div>
 
-      {/* Delete confirmation dialog */}
+      {/* Floating bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="bg-primary text-primary-foreground rounded-lg shadow-lg px-4 py-3 flex items-center gap-4">
+            <span className="font-medium whitespace-nowrap">
+              {selectedIds.size} {language === "ko" ? "개 선택됨" : "selected"}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => handleBulkMarkRead(true)}>
+                <MailOpen className="h-4 w-4 mr-1" />
+                {language === "ko" ? "읽음" : "Read"}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => handleBulkMarkRead(false)}>
+                <Mail className="h-4 w-4 mr-1" />
+                {language === "ko" ? "안읽음" : "Unread"}
+              </Button>
+              <Button variant="secondary" size="sm" onClick={handleBulkArchive}>
+                <Archive className="h-4 w-4 mr-1" />
+                {language === "ko" ? "보관" : "Archive"}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)}>
+                <Trash2 className="h-4 w-4 mr-1" />
+                {language === "ko" ? "삭제" : "Delete"}
+              </Button>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={clearSelection} 
+              className="text-primary-foreground hover:bg-primary-foreground/20"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation dialog for single conversation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -495,6 +732,31 @@ export default function AdminSupport() {
                 }
                 setDeleteDialogOpen(false);
               }}
+            >
+              {language === "ko" ? "삭제" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete confirmation dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ko" ? `${selectedIds.size}개 대화 삭제` : `Delete ${selectedIds.size} Conversations`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ko"
+                ? "선택한 모든 대화와 메시지가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+                : "All selected conversations and messages will be permanently deleted. This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === "ko" ? "취소" : "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleBulkDelete}
             >
               {language === "ko" ? "삭제" : "Delete"}
             </AlertDialogAction>
