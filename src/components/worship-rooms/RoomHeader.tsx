@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Settings, Share2, Lock, Users, Globe, Crown } from "lucide-react";
 import { FriendRequestButton } from "./FriendRequestButton";
 import { RoomCustomizeDialog } from "./RoomCustomizeDialog";
+import { RoomFurnitureCatalog } from "./RoomFurnitureCatalog";
+import { useRoomFurniture } from "./RoomFurnitureLayer";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import type { WorshipRoom } from "@/hooks/useWorshipRoom";
 
@@ -32,6 +34,9 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
   const { profile } = useAuth();
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const { data: furniture } = useRoomFurniture(room.id);
+  
+  const existingFurnitureIds = furniture?.map(f => f.furniture_id) || [];
   
   const VisibilityIcon = visibilityIcons[room.visibility];
   const isAmbassador = room.owner?.is_ambassador;
@@ -81,6 +86,10 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
           <div className="flex items-center gap-2">
             {isOwnRoom ? (
               <>
+                <RoomFurnitureCatalog 
+                  roomId={room.id} 
+                  existingFurnitureIds={existingFurnitureIds}
+                />
                 <Button 
                   variant="outline" 
                   size="sm"
