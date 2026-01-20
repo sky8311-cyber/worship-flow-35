@@ -1617,35 +1617,47 @@ export type Database = {
         Row: {
           category: string
           created_at: string | null
+          default_slot: string | null
+          height_px: number | null
           id: string
           image_url: string
           is_default: boolean | null
+          layer: string | null
           name: string
           name_ko: string | null
           price_seeds: number | null
           sort_order: number | null
+          width_px: number | null
         }
         Insert: {
           category: string
           created_at?: string | null
+          default_slot?: string | null
+          height_px?: number | null
           id?: string
           image_url: string
           is_default?: boolean | null
+          layer?: string | null
           name: string
           name_ko?: string | null
           price_seeds?: number | null
           sort_order?: number | null
+          width_px?: number | null
         }
         Update: {
           category?: string
           created_at?: string | null
+          default_slot?: string | null
+          height_px?: number | null
           id?: string
           image_url?: string
           is_default?: boolean | null
+          layer?: string | null
           name?: string
           name_ko?: string | null
           price_seeds?: number | null
           sort_order?: number | null
+          width_px?: number | null
         }
         Relationships: []
       }
