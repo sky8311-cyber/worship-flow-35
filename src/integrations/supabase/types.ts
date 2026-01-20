@@ -2602,6 +2602,92 @@ export type Database = {
         }
         Relationships: []
       }
+      support_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          is_flagged: boolean
+          is_read_by_admin: boolean
+          is_read_by_user: boolean
+          last_message_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_flagged?: boolean
+          is_read_by_admin?: boolean
+          is_read_by_user?: boolean
+          last_message_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_flagged?: boolean
+          is_read_by_admin?: boolean
+          is_read_by_user?: boolean
+          last_message_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          image_urls: string[] | null
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          image_urls?: string[] | null
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_rotation_assignments: {
         Row: {
           assigned_date: string
