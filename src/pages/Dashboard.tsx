@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,16 +43,11 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
 import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalendarBanner";
 import { WLOnboardingChecklist } from "@/components/dashboard/WLOnboardingChecklist";
-
-import { useEffect } from "react";
+import { RoleSelectionDialog } from "@/components/onboarding/RoleSelectionDialog";
+import { InvitedUserWelcomeDialog } from "@/components/onboarding/InvitedUserWelcomeDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  
-  // Set cookie to track that user has visited dashboard (for returning visitor detection)
-  useEffect(() => {
-    document.cookie = "kworship_visited=true; path=/; max-age=31536000; SameSite=Lax";
-  }, []);
   const queryClient = useQueryClient();
   const {
     t,
@@ -70,11 +65,73 @@ const Dashboard = () => {
   const { unreadCount } = useNotifications();
   const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
   const dateLocale = language === "ko" ? ko : enUS;
-  // importSetOpen removed - import functionality moved to WorshipSets page
+  
+  // State
   const [addSongOpen, setAddSongOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const [showInvitedDialog, setShowInvitedDialog] = useState(false);
+  const [invitedCommunityInfo, setInvitedCommunityInfo] = useState<{ name: string; avatarUrl?: string; inviterName?: string } | null>(null);
+  
+  // Set cookie to track that user has visited dashboard (for returning visitor detection)
+  useEffect(() => {
+    document.cookie = "kworship_visited=true; path=/; max-age=31536000; SameSite=Lax";
+  }, []);
+  
+  // Role selection dialog for new users
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user || !profile || isWorshipLeader || isAdmin) return;
+      
+      // Fetch latest profile with onboarding fields
+      const { data: latestProfile } = await supabase
+        .from("profiles")
+        .select("onboarding_role_asked, onboarding_role_asked_count, invited_by_community_id, created_at")
+        .eq("id", user.id)
+        .single();
+      
+      if (!latestProfile) return;
+      
+      // If already asked and completed, skip
+      if (latestProfile.onboarding_role_asked) return;
+      
+      // Check if user was invited (show different dialog)
+      if (latestProfile.invited_by_community_id) {
+        // Fetch community info
+        const { data: community } = await supabase
+          .from("worship_communities")
+          .select("name, avatar_url")
+          .eq("id", latestProfile.invited_by_community_id)
+          .single();
+        
+        if (community) {
+          setInvitedCommunityInfo({
+            name: community.name,
+            avatarUrl: community.avatar_url,
+          });
+          setShowInvitedDialog(true);
+          return;
+        }
+      }
+      
+      // Check if new user (within 24 hours of signup)
+      const signupTime = new Date(latestProfile.created_at || 0);
+      const now = new Date();
+      const hoursSinceSignup = (now.getTime() - signupTime.getTime()) / (1000 * 60 * 60);
+      
+      // Show dialog if: new user (< 24h) OR asked less than 3 times
+      const askCount = latestProfile.onboarding_role_asked_count || 0;
+      if (hoursSinceSignup < 24 || askCount < 3) {
+        setShowRoleDialog(true);
+      }
+    };
+    
+    // Small delay to ensure profile is loaded
+    const timer = setTimeout(checkOnboardingStatus, 1000);
+    return () => clearTimeout(timer);
+  }, [user, profile, isWorshipLeader, isAdmin]);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
@@ -391,6 +448,29 @@ const Dashboard = () => {
   return <AppLayout>
       {/* Worship Leader Profile Completion Dialog */}
       <CompleteWorshipLeaderProfileDialog />
+      
+      {/* Role Selection Dialog for new users */}
+      {user && (
+        <RoleSelectionDialog
+          open={showRoleDialog}
+          onOpenChange={setShowRoleDialog}
+          userId={user.id}
+          onComplete={() => setShowRoleDialog(false)}
+        />
+      )}
+      
+      {/* Invited User Welcome Dialog */}
+      {user && invitedCommunityInfo && (
+        <InvitedUserWelcomeDialog
+          open={showInvitedDialog}
+          onOpenChange={setShowInvitedDialog}
+          userId={user.id}
+          communityName={invitedCommunityInfo.name}
+          communityAvatarUrl={invitedCommunityInfo.avatarUrl}
+          inviterName={invitedCommunityInfo.inviterName}
+          onComplete={() => setShowInvitedDialog(false)}
+        />
+      )}
       
       {/* Main Content - Desktop Layout (3 columns) */}
       <div className="container mx-auto px-4 py-8 hidden lg:block">

@@ -1086,10 +1086,13 @@ export type Database = {
           id: string
           instagram_url: string | null
           instrument: string | null
+          invited_by_community_id: string | null
           is_ambassador: boolean | null
           location: string | null
           ministry_role: string | null
           needs_worship_leader_profile: boolean | null
+          onboarding_role_asked: boolean | null
+          onboarding_role_asked_count: number | null
           phone: string | null
           referral_code: string | null
           serving_position: string | null
@@ -1113,10 +1116,13 @@ export type Database = {
           id: string
           instagram_url?: string | null
           instrument?: string | null
+          invited_by_community_id?: string | null
           is_ambassador?: boolean | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
+          onboarding_role_asked?: boolean | null
+          onboarding_role_asked_count?: number | null
           phone?: string | null
           referral_code?: string | null
           serving_position?: string | null
@@ -1140,10 +1146,13 @@ export type Database = {
           id?: string
           instagram_url?: string | null
           instrument?: string | null
+          invited_by_community_id?: string | null
           is_ambassador?: boolean | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
+          onboarding_role_asked?: boolean | null
+          onboarding_role_asked_count?: number | null
           phone?: string | null
           referral_code?: string | null
           serving_position?: string | null
@@ -1153,7 +1162,15 @@ export type Database = {
           years_serving?: number | null
           youtube_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_invited_by_community_id_fkey"
+            columns: ["invited_by_community_id"]
+            isOneToOne: false
+            referencedRelation: "worship_communities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recurring_schedules: {
         Row: {

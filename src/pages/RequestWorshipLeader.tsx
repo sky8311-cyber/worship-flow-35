@@ -115,28 +115,7 @@ const RequestWorshipLeader = () => {
         .single();
 
       if (autoApproveFlag?.enabled && application) {
-        // Add worship_leader role
-        const { data: existingRole } = await supabase
-          .from("user_roles")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("role", "worship_leader")
-          .maybeSingle();
-
-        if (!existingRole) {
-          await supabase.from("user_roles").insert({
-            user_id: user.id,
-            role: "worship_leader",
-          });
-        }
-
-        // Update application status to approved
-        await supabase
-          .from("worship_leader_applications")
-          .update({ status: "approved", reviewed_at: new Date().toISOString() })
-          .eq("id", application.id);
-
-        // Update profile with application data (only fill empty fields)
+        // Build profile updates (only fill empty fields)
         const { data: profile } = await supabase
           .from("profiles")
           .select("church_name, church_website, country, years_serving, ministry_role, worship_leader_intro")
@@ -151,8 +130,26 @@ const RequestWorshipLeader = () => {
         if (!profile?.ministry_role && formData.servingPosition) profileUpdates.ministry_role = formData.servingPosition;
         if (!profile?.worship_leader_intro && formData.introduction) profileUpdates.worship_leader_intro = formData.introduction;
 
-        if (Object.keys(profileUpdates).length > 0) {
-          await supabase.from("profiles").update(profileUpdates).eq("id", user.id);
+        // Call Edge Function to handle auto-approve (bypasses RLS)
+        const { data: approveResult, error: approveError } = await supabase.functions.invoke(
+          'auto-approve-worship-leader',
+          {
+            body: {
+              applicationId: application.id,
+              profileUpdates: Object.keys(profileUpdates).length > 0 ? profileUpdates : undefined,
+            },
+          }
+        );
+
+        if (approveError) {
+          console.error('Auto-approve failed:', approveError);
+          // Fall back to showing pending state
+          toast({
+            title: t("worshipLeaderRequest.success"),
+            description: t("worshipLeaderRequest.successDesc"),
+          });
+          window.location.href = "/dashboard";
+          return;
         }
 
         toast({
