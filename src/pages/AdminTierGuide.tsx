@@ -1,4 +1,4 @@
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -145,9 +145,7 @@ const AdminTierGuide = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminNav />
-      
+    <AdminLayout>
       <div className="container mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div>
@@ -352,7 +350,7 @@ const AdminTierGuide = () => {
           </AlertDescription>
         </Alert>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

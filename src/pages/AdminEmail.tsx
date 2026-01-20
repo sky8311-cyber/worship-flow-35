@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailComposer } from "@/components/admin/email/EmailComposer";
 import { TemplateLibrary } from "@/components/admin/email/TemplateLibrary";
@@ -12,9 +12,7 @@ const AdminEmail = () => {
   const [activeTab, setActiveTab] = useState("compose");
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminNav />
-      
+    <AdminLayout>
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -55,7 +53,7 @@ const AdminEmail = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

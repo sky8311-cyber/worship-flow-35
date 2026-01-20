@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TierLevel, TIER_CONFIG, TierFeature } from "@/hooks/useTierFeature";
 import { TierBadge } from "@/components/admin/TierBadge";
@@ -115,9 +115,7 @@ export default function AdminFeatures() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminNav />
-      
+    <AdminLayout>
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -296,6 +294,6 @@ export default function AdminFeatures() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

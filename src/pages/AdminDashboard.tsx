@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation } from "lucide-react";
 import { NavigationManager } from "@/components/admin/NavigationManager";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Switch } from "@/components/ui/switch";
@@ -245,10 +245,8 @@ const AdminDashboard = () => {
   ];
   
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft">
-      <AdminNav />
-      
-      <main className="container mx-auto px-4 py-8 pb-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {t("admin.dashboard.title")}
@@ -544,8 +542,8 @@ const AdminDashboard = () => {
             </Card>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

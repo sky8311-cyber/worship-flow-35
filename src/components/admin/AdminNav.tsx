@@ -1,16 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, ArrowLeft, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen } from "lucide-react";
+import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
-import { HeaderLogo } from "@/components/layout/HeaderLogo";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export const AdminNav = () => {
   const location = useLocation();
   const { t, language } = useTranslation();
   const { isChurchMenuVisible, isLoading } = useAppSettings();
   
-  const baseLinks = [
+  // Primary links (always visible in header)
+  const primaryLinks = [
     {
       to: "/admin",
       label: t("admin.nav.dashboard"),
@@ -26,102 +33,125 @@ export const AdminNav = () => {
       label: t("admin.nav.communities"),
       icon: Building2,
     },
+    {
+      to: "/admin/crm",
+      label: "CRM",
+      icon: LayoutList,
+    },
   ];
 
-  // Conditionally add Worship Community Accounts link
-  const churchAccountLink = {
-    to: "/admin/church-accounts",
-    label: language === "ko" ? "공동체 계정" : "Community Accounts",
-    icon: Church,
+  // Secondary links (in "More" dropdown)
+  const secondaryLinks = [
+    {
+      to: "/admin/applications",
+      label: t("admin.applications.title"),
+      icon: UserPlus,
+    },
+    // Conditionally add Worship Community Accounts link
+    ...(!isLoading && isChurchMenuVisible ? [{
+      to: "/admin/church-accounts",
+      label: language === "ko" ? "공동체 계정" : "Community Accounts",
+      icon: Church,
+    }] : []),
+    {
+      to: "/admin/rewards",
+      label: "Rewards",
+      icon: Sprout,
+    },
+    {
+      to: "/admin/email",
+      label: "Email",
+      icon: Mail,
+    },
+    {
+      to: "/admin/features",
+      label: language === "ko" ? "티어 기능" : "Features",
+      icon: Layers,
+    },
+    {
+      to: "/admin/history",
+      label: language === "ko" ? "히스토리" : "History",
+      icon: History,
+    },
+    {
+      to: "/admin/tier-guide",
+      label: language === "ko" ? "티어 가이드" : "Tier Guide",
+      icon: BookOpen,
+    },
+  ];
+
+  // Check if a path is active (exact match for /admin, prefix match for others)
+  const isActive = (path: string) => {
+    if (path === "/admin") {
+      return location.pathname === "/admin";
+    }
+    return location.pathname.startsWith(path);
   };
 
-  const applicationsLink = {
-    to: "/admin/applications",
-    label: t("admin.applications.title"),
-    icon: UserPlus,
-  };
-
-  const crmLink = {
-    to: "/admin/crm",
-    label: "CRM",
-    icon: LayoutList,
-  };
-
-  const rewardsLink = {
-    to: "/admin/rewards",
-    label: "Rewards",
-    icon: Sprout,
-  };
-
-  const emailLink = {
-    to: "/admin/email",
-    label: "Email",
-    icon: Mail,
-  };
-
-  const featuresLink = {
-    to: "/admin/features",
-    label: language === "ko" ? "티어 기능" : "Features",
-    icon: Layers,
-  };
-
-  const historyLink = {
-    to: "/admin/history",
-    label: language === "ko" ? "히스토리" : "History",
-    icon: History,
-  };
-
-  const tierGuideLink = {
-    to: "/admin/tier-guide",
-    label: language === "ko" ? "티어 가이드" : "Tier Guide",
-    icon: BookOpen,
-  };
-
-  const links = (!isLoading && isChurchMenuVisible) 
-    ? [...baseLinks, churchAccountLink, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink, tierGuideLink]
-    : [...baseLinks, applicationsLink, crmLink, rewardsLink, emailLink, featuresLink, historyLink, tierGuideLink];
+  // Check if any secondary link is active (for More dropdown highlight)
+  const isSecondaryActive = secondaryLinks.some(link => isActive(link.to));
   
   return (
     <nav className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-2 sm:gap-4 py-4">
-          <div className="flex-shrink-0">
-            <HeaderLogo />
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="flex items-center justify-between gap-2 py-3">
+          {/* Primary Navigation Links */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {primaryLinks.map((link) => {
+              const active = isActive(link.to);
+              const Icon = link.icon;
+              
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
+                    active
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  )}
+                >
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  <span className="hidden sm:inline">{link.label}</span>
+                </Link>
+              );
+            })}
           </div>
-          
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">{t("admin.nav.backToDashboard")}</span>
-          </Link>
-          
-          {/* Horizontal scroll container for mobile */}
-          <div className="flex-1 overflow-x-auto hide-scrollbar">
-            <div className="flex items-center gap-1 min-w-max">
-              {links.map((link) => {
-                const isActive = location.pathname === link.to;
+
+          {/* More Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant={isSecondaryActive ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 sm:px-3 py-2 h-auto text-xs sm:text-sm font-medium",
+                  isSecondaryActive && "bg-primary text-primary-foreground"
+                )}
+              >
+                <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">
+                  {language === "ko" ? "더보기" : "More"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px] bg-popover z-50">
+              {secondaryLinks.map((link) => {
+                const active = isActive(link.to);
                 const Icon = link.icon;
                 
                 return (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className={cn(
-                      "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    )}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="hidden md:inline">{link.label}</span>
-                  </Link>
+                  <DropdownMenuItem key={link.to} asChild className={cn(active && "bg-accent")}>
+                    <Link to={link.to} className="flex items-center gap-2 cursor-pointer">
+                      <Icon className="w-4 h-4" />
+                      <span>{link.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
                 );
               })}
-            </div>
-          </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>
