@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Users } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function CommunitySearch() {
@@ -119,6 +119,31 @@ export default function CommunitySearch() {
     },
   });
 
+  const cancelRequestMutation = useMutation({
+    mutationFn: async (communityId: string) => {
+      const { error } = await supabase
+        .from("community_join_requests")
+        .delete()
+        .eq("community_id", communityId)
+        .eq("user_id", user?.id)
+        .eq("status", "pending");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-join-requests"] });
+      toast({
+        title: t("community.joinRequestCanceled"),
+        description: t("community.joinRequestCanceledDesc"),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t("community.joinError"),
+        variant: "destructive",
+      });
+    },
+  });
+
   const isMember = (communityId: string) => {
     return userMemberships?.includes(communityId);
   };
@@ -183,9 +208,11 @@ export default function CommunitySearch() {
                       <Button
                         variant="outline"
                         className="w-full"
-                        disabled
+                        onClick={() => cancelRequestMutation.mutate(community.id)}
+                        disabled={cancelRequestMutation.isPending}
                       >
-                        {t("community.joinRequestPending")}
+                        <X className="h-4 w-4 mr-2" />
+                        {t("community.cancelJoinRequest")}
                       </Button>
                     ) : (
                       <Button
