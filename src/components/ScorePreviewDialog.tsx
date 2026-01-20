@@ -57,9 +57,12 @@ export const ScorePreviewDialog = ({
 
       if (error) throw error;
 
-      // Group by key
+      // Group by key - filter out empty keys
       const grouped: Record<string, Array<{ url: string; page: number }>> = {};
       data?.forEach((score) => {
+        // Skip entries with empty or missing keys
+        if (!score.key || score.key.trim() === "") return;
+        
         if (!grouped[score.key]) {
           grouped[score.key] = [];
         }
@@ -69,10 +72,12 @@ export const ScorePreviewDialog = ({
         });
       });
 
-      const variations = Object.entries(grouped).map(([key, files]) => ({
-        key,
-        files: files.sort((a, b) => a.page - b.page),
-      }));
+      const variations = Object.entries(grouped)
+        .filter(([key]) => key && key.trim() !== "") // Extra safety check
+        .map(([key, files]) => ({
+          key,
+          files: files.sort((a, b) => a.page - b.page),
+        }));
 
       setScoreVariations(variations);
       
@@ -150,12 +155,14 @@ export const ScorePreviewDialog = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {scoreVariations.map((variation) => (
-                      <SelectItem key={variation.key} value={variation.key}>
-                        {variation.key} ({variation.files.length}{" "}
-                        {variation.files.length === 1 ? t("songDialog.page") : t("songDialog.page")})
-                      </SelectItem>
-                    ))}
+                    {scoreVariations
+                      .filter((variation) => variation.key && variation.key.trim() !== "")
+                      .map((variation) => (
+                        <SelectItem key={variation.key} value={variation.key}>
+                          {variation.key} ({variation.files.length}{" "}
+                          {variation.files.length === 1 ? t("songDialog.page") : t("songDialog.page")})
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
