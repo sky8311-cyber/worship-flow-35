@@ -1669,6 +1669,7 @@ export type Database = {
           position_x: number
           position_y: number
           room_id: string
+          rotation: number | null
           z_index: number | null
         }
         Insert: {
@@ -1678,6 +1679,7 @@ export type Database = {
           position_x?: number
           position_y?: number
           room_id: string
+          rotation?: number | null
           z_index?: number | null
         }
         Update: {
@@ -1687,6 +1689,7 @@ export type Database = {
           position_x?: number
           position_y?: number
           room_id?: string
+          rotation?: number | null
           z_index?: number | null
         }
         Relationships: [

@@ -205,6 +205,9 @@ export const translations = {
       furniture: "Furniture",
       furnitureCatalog: "Furniture Catalog",
       posts: "posts",
+      editRoom: "Edit Room",
+      doneEditing: "Done",
+      editModeHint: "Drag furniture to move • Click ↻ to rotate",
     },
     settings: {
       regionalSettings: "Regional Settings",
@@ -2265,6 +2268,9 @@ songCard: {
       furniture: "가구",
       furnitureCatalog: "가구 카탈로그",
       posts: "개의 글",
+      editRoom: "방 꾸미기",
+      doneEditing: "완료",
+      editModeHint: "가구를 드래그하여 이동 • ↻ 클릭하여 회전",
     },
     settings: {
       regionalSettings: "지역 설정",
