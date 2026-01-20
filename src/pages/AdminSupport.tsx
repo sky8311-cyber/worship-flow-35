@@ -83,7 +83,7 @@ export default function AdminSupport() {
 
     // Filter by search
     if (searchQuery) {
-      const name = conv.profiles?.display_name?.toLowerCase() || "";
+      const name = conv.profiles?.full_name?.toLowerCase() || "";
       const email = conv.profiles?.email?.toLowerCase() || "";
       const query = searchQuery.toLowerCase();
       return name.includes(query) || email.includes(query);
@@ -127,8 +127,8 @@ export default function AdminSupport() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, email")
-        .or(`display_name.ilike.%${userSearchQuery}%,email.ilike.%${userSearchQuery}%`)
+        .select("id, full_name, avatar_url, email")
+        .or(`full_name.ilike.%${userSearchQuery}%,email.ilike.%${userSearchQuery}%`)
         .limit(10);
 
       if (error) return [];
@@ -224,12 +224,12 @@ export default function AdminSupport() {
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={user.avatar_url || undefined} />
                           <AvatarFallback>
-                            {(user.display_name || user.email || "U").charAt(0)}
+                            {(user.full_name || user.email || "U").charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="truncate">
-                          <p className="font-medium truncate">{user.display_name || user.email}</p>
-                          {user.display_name && user.email && (
+                          <p className="font-medium truncate">{user.full_name || user.email}</p>
+                          {user.full_name && user.email && (
                             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                           )}
                         </div>
@@ -297,13 +297,13 @@ export default function AdminSupport() {
                       <Avatar className="h-10 w-10 flex-shrink-0">
                         <AvatarImage src={conv.profiles?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {(conv.profiles?.display_name || conv.profiles?.email || "U").charAt(0)}
+                          {(conv.profiles?.full_name || conv.profiles?.email || "U").charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <span className={cn("font-medium truncate", !conv.is_read_by_admin && "font-semibold")}>
-                            {conv.profiles?.display_name || conv.profiles?.email || "Unknown"}
+                            {conv.profiles?.full_name || conv.profiles?.email || "Unknown"}
                           </span>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             {conv.is_flagged && <Flag className="h-3 w-3 text-destructive" />}
@@ -337,12 +337,12 @@ export default function AdminSupport() {
                   <Avatar>
                     <AvatarImage src={selectedConversation.profiles?.avatar_url || undefined} />
                     <AvatarFallback>
-                      {(selectedConversation.profiles?.display_name || "U").charAt(0)}
+                      {(selectedConversation.profiles?.full_name || "U").charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">
-                      {selectedConversation.profiles?.display_name || "Unknown"}
+                      {selectedConversation.profiles?.full_name || "Unknown"}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {selectedConversation.profiles?.email}

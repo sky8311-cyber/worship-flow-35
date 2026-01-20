@@ -15,7 +15,7 @@ export interface SupportConversation {
   created_at: string;
   profiles?: {
     id: string;
-    display_name: string | null;
+    full_name: string | null;
     avatar_url: string | null;
     email: string | null;
   };
@@ -35,7 +35,7 @@ export interface SupportMessage {
   created_at: string;
   profiles?: {
     id: string;
-    display_name: string | null;
+    full_name: string | null;
     avatar_url: string | null;
   };
 }
@@ -95,7 +95,7 @@ export function useSupportChat() {
       const senderIds = [...new Set((data || []).map(m => m.sender_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url")
+        .select("id, full_name, avatar_url")
         .in("id", senderIds);
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -236,7 +236,7 @@ export function useAdminSupportChat() {
       const userIds = [...new Set((data || []).map(c => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, email")
+        .select("id, full_name, avatar_url, email")
         .in("id", userIds);
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -280,7 +280,7 @@ export function useAdminSupportChat() {
     const senderIds = [...new Set((data || []).map(m => m.sender_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, display_name, avatar_url")
+      .select("id, full_name, avatar_url")
       .in("id", senderIds);
     
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
