@@ -134,6 +134,7 @@ export const translations = {
       menu: "Menu",
       feed: "Feed",
       chat: "Chat",
+      communitySearch: "Communities",
     },
     rooms: {
       title: "Worship Rooms",
@@ -2200,6 +2201,7 @@ songCard: {
       menu: "메뉴",
       feed: "피드",
       chat: "채팅",
+      communitySearch: "공동체 찾기",
     },
     rooms: {
       title: "예배의 방",

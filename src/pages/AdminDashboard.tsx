@@ -184,6 +184,7 @@ const AdminDashboard = () => {
     },
   });
   
+  // Unified 8-card stats array for 4-column grid
   const statCards = [
     {
       title: t("admin.stats.totalUsers"),
@@ -193,18 +194,25 @@ const AdminDashboard = () => {
       color: "text-blue-500",
     },
     {
-      title: language === "ko" ? "기본 멤버" : "Basic Members",
+      title: language === "ko" ? "기본 멤버 (워십리더)" : "Basic Members",
       value: stats?.worshipLeaders || 0,
       icon: Music,
       description: language === "ko" ? "승인된 기본 멤버 수" : "Approved basic members",
       color: "text-indigo-500",
     },
     {
-      title: t("admin.stats.communities"),
-      value: stats?.communities || 0,
-      icon: Building2,
-      description: t("admin.stats.activeCommunities"),
-      color: "text-green-500",
+      title: language === "ko" ? "정식 멤버 (프리미엄)" : "Premium Members",
+      value: stats?.premiumSubscribers || 0,
+      icon: Crown,
+      description: language === "ko" ? "활성 프리미엄 계정" : "Active premium accounts",
+      color: "text-amber-500",
+    },
+    {
+      title: t("admin.stats.churchAccounts"),
+      value: stats?.churchAccounts || 0,
+      icon: Church,
+      description: t("admin.stats.totalChurchAccounts"),
+      color: "text-orange-500",
     },
     {
       title: t("admin.stats.serviceSets"),
@@ -221,16 +229,6 @@ const AdminDashboard = () => {
       color: "text-pink-500",
     },
     {
-      title: t("admin.stats.churchAccounts"),
-      value: stats?.churchAccounts || 0,
-      icon: Church,
-      description: t("admin.stats.totalChurchAccounts"),
-      color: "text-orange-500",
-    },
-  ];
-
-  const activityCards = [
-    {
       title: language === "ko" ? "이번 주 신규 가입" : "Weekly Sign-ups",
       value: stats?.weeklySignups || 0,
       icon: UserPlus,
@@ -243,13 +241,6 @@ const AdminDashboard = () => {
       icon: CalendarDays,
       description: language === "ko" ? "이번 달 생성된 세트" : "Sets created this month",
       color: "text-emerald-500",
-    },
-    {
-      title: language === "ko" ? "프리미엄 구독자" : "Premium Subscribers",
-      value: stats?.premiumSubscribers || 0,
-      icon: Crown,
-      description: language === "ko" ? "활성 프리미엄 계정" : "Active premium accounts",
-      color: "text-amber-500",
     },
   ];
   
@@ -339,44 +330,19 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
-            {/* Main Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-              {statCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <Card key={card.title} className="shadow-md hover:shadow-lg transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{card.title}</CardTitle>
-                        <Icon className={`w-5 h-5 ${card.color}`} />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold text-foreground mb-1">
-                        {card.value}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {card.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Activity Stats */}
+            {/* Activity Metrics - 4-column grid with 8 cards */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 text-muted-foreground">
                 {language === "ko" ? "📊 활동 지표" : "📊 Activity Metrics"}
               </h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                {activityCards.map((card) => {
+              <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+                {statCards.map((card) => {
                   const Icon = card.icon;
                   return (
                     <Card key={card.title} className="shadow-sm border-dashed">
                       <CardContent className="pt-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg bg-muted`}>
+                          <div className="p-2 rounded-lg bg-muted">
                             <Icon className={`w-5 h-5 ${card.color}`} />
                           </div>
                           <div>
