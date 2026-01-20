@@ -825,6 +825,54 @@ export type Database = {
         }
         Relationships: []
       }
+      navigation_items: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          icon: string
+          id: string
+          is_system: boolean
+          key: string
+          label_key: string
+          location: string
+          match_pattern: string | null
+          order_index: number
+          path: string | null
+          role_required: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          icon: string
+          id?: string
+          is_system?: boolean
+          key: string
+          label_key: string
+          location: string
+          match_pattern?: string | null
+          order_index?: number
+          path?: string | null
+          role_required?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          icon?: string
+          id?: string
+          is_system?: boolean
+          key?: string
+          label_key?: string
+          location?: string
+          match_pattern?: string | null
+          order_index?: number
+          path?: string | null
+          role_required?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string

@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation } from "lucide-react";
+import { NavigationManager } from "@/components/admin/NavigationManager";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -557,6 +558,11 @@ const AdminDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Navigation Management */}
+            <div className="mt-6">
+              <NavigationManager />
             </div>
 
             {/* Platform History Link Card */}
