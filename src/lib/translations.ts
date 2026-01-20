@@ -225,6 +225,8 @@ export const translations = {
     chat: {
       communityFeed: "Community Feed",
       close: "Close",
+      community: "Community",
+      support: "Support",
     },
     feedbackBoard: {
       title: "Feedback Board",
@@ -2295,6 +2297,8 @@ songCard: {
     chat: {
       communityFeed: "커뮤니티 피드",
       close: "닫기",
+      community: "커뮤니티",
+      support: "고객지원",
     },
     feedbackBoard: {
       title: "피드백 보드",

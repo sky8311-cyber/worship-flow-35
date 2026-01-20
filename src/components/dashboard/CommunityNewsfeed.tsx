@@ -167,13 +167,22 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
         {/* Community Tabs (only show if multiple communities) */}
         {communities.length > 1 ? (
           <Tabs value={activeCommunityId} onValueChange={setSelectedCommunityId}>
-            <TabsList className="w-full justify-start px-4 py-2 h-auto flex-wrap gap-1 bg-muted/50 rounded-none border-b">
+            <TabsList className="w-full justify-start px-4 py-3 h-auto flex-wrap gap-2 bg-muted/30 rounded-none border-b">
               {communities.map((community) => (
                 <TabsTrigger
                   key={community.id}
                   value={community.id}
-                  className="text-xs px-3 py-1.5 data-[state=active]:bg-background"
+                  className="flex items-center gap-2 text-sm px-4 py-2 rounded-full border border-border bg-background/80 text-muted-foreground transition-all
+                    hover:bg-muted hover:text-foreground
+                    data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm"
                 >
+                  {community.avatar_url && (
+                    <img 
+                      src={community.avatar_url} 
+                      alt="" 
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  )}
                   {community.name}
                 </TabsTrigger>
               ))}

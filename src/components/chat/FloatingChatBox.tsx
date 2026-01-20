@@ -1,9 +1,13 @@
-import { useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { X, Users, Headset } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { ChatFeed } from "@/components/dashboard/ChatFeed";
+import { SupportChatFeed } from "@/components/support/SupportChatFeed";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useSupportUnreadCount } from "@/hooks/useSupportChat";
 import { cn } from "@/lib/utils";
 
 interface FloatingChatBoxProps {
@@ -14,6 +18,8 @@ interface FloatingChatBoxProps {
 export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
   const { t } = useTranslation();
   const { markChatNotificationsAsRead } = useNotifications();
+  const supportUnread = useSupportUnreadCount();
+  const [activeTab, setActiveTab] = useState<"community" | "support">("community");
 
   // Mark chat notifications as read when opened
   useEffect(() => {
@@ -33,16 +39,40 @@ export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
         "animate-in slide-in-from-bottom-4 fade-in duration-200"
       )}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
-        <h3 className="font-semibold text-foreground">
-          {t("chat.communityFeed")}
-        </h3>
+      {/* Header with Tabs */}
+      <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "community" | "support")} className="flex-1">
+          <TabsList className="h-9 bg-transparent p-0 gap-1">
+            <TabsTrigger 
+              value="community" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background/80 data-[state=inactive]:text-muted-foreground"
+            >
+              <Users className="w-3.5 h-3.5" />
+              {t("chat.community")}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="support" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background/80 data-[state=inactive]:text-muted-foreground"
+            >
+              <Headset className="w-3.5 h-3.5" />
+              {t("chat.support")}
+              {supportUnread > 0 && (
+                <Badge variant="destructive" className="ml-0.5 h-4 min-w-4 px-1 text-[10px]">
+                  {supportUnread}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="h-8 w-8"
+          className="h-7 w-7 ml-1"
         >
           <X className="h-4 w-4" />
         </Button>
@@ -50,7 +80,7 @@ export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
 
       {/* Chat content */}
       <div className="flex-1 overflow-hidden min-h-0">
-        <ChatFeed />
+        {activeTab === "community" ? <ChatFeed /> : <SupportChatFeed />}
       </div>
     </div>
   );
