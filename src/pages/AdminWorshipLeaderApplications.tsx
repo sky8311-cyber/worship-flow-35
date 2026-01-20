@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { ApplicationCard } from "@/components/admin/ApplicationCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format, formatDistanceToNow } from "date-fns";
@@ -319,8 +319,7 @@ const AdminWorshipLeaderApplications = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <AdminNav />
+    <AdminLayout>
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
@@ -441,7 +440,7 @@ const AdminWorshipLeaderApplications = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

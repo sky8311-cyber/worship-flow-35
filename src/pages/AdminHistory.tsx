@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,8 +160,7 @@ const AdminHistory = () => {
   const categories: CategoryFilter[] = ["all", "launch", "feature", "milestone", "update"];
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminNav />
+    <AdminLayout>
       <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -353,7 +352,7 @@ const AdminHistory = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AdminLayout>
   );
 };
 

@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { UnifiedHierarchyTable } from "@/components/admin/crm/UnifiedHierarchyTable";
 import { HierarchyNode, EntityType } from "@/components/admin/crm/HierarchyRow";
 import { DetailPanel } from "@/components/admin/crm/DetailPanel";
@@ -359,10 +359,8 @@ const AdminCRM = () => {
   );
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft">
-      <AdminNav />
-      
-      <main className="container mx-auto px-4 py-6">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
@@ -536,8 +534,8 @@ const AdminCRM = () => {
             )}
           </PanelGroup>
         )}
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

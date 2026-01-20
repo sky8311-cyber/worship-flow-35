@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -378,9 +378,7 @@ const AdminRewards = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminNav />
-      
+    <AdminLayout>
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -1116,7 +1114,7 @@ const AdminRewards = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

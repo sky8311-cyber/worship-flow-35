@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { CommunityCard } from "@/components/admin/CommunityCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { format, formatDistanceToNow } from "date-fns";
@@ -124,10 +124,8 @@ const AdminCommunities = () => {
   });
   
   return (
-    <div className="min-h-screen bg-gradient-soft">
-      <AdminNav />
-      
-      <main className="container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -237,8 +235,8 @@ const AdminCommunities = () => {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

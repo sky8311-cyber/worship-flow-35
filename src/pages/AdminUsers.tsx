@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { UserCard } from "@/components/admin/UserCard";
 import { AdminUserProfileDialog } from "@/components/admin/AdminUserProfileDialog";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -548,10 +548,8 @@ const AdminUsers = () => {
   };
   
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft">
-      <AdminNav />
-      
-      <main className="container mx-auto px-4 py-8 pb-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8 pb-8">
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -848,7 +846,7 @@ const AdminUsers = () => {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, userId: "", userName: "" })}>
@@ -916,7 +914,7 @@ const AdminUsers = () => {
         onOpenChange={(open) => setProfileDialog({ open, userId: open ? profileDialog.userId : null })}
         userId={profileDialog.userId}
       />
-    </div>
+    </AdminLayout>
   );
 };
 

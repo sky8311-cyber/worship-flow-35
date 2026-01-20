@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminNav } from "@/components/admin/AdminNav";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -126,10 +126,8 @@ const AdminChurchAccounts = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-soft">
-      <AdminNav />
-      
-      <main className="container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {t("admin.churchAccounts.title")}
@@ -282,7 +280,7 @@ const AdminChurchAccounts = () => {
             ))}
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Detail Dialog */}
       {selectedAccount && (
@@ -484,7 +482,7 @@ const AdminChurchAccounts = () => {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 
