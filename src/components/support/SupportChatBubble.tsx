@@ -13,7 +13,7 @@ export function SupportChatBubble({ message, isOwn }: SupportChatBubbleProps) {
   const isAdmin = message.sender_type === "admin";
   const displayName = isAdmin
     ? "Support Team"
-    : message.profiles?.display_name || "User";
+    : message.profiles?.full_name || "User";
   const avatarUrl = message.profiles?.avatar_url;
 
   return (
