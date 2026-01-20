@@ -204,6 +204,7 @@ export const translations = {
       statusPlaceholder: "How are you feeling?",
       furniture: "Furniture",
       furnitureCatalog: "Furniture Catalog",
+      posts: "posts",
     },
     settings: {
       regionalSettings: "Regional Settings",
@@ -2263,6 +2264,7 @@ songCard: {
       statusPlaceholder: "오늘 기분이 어때요?",
       furniture: "가구",
       furnitureCatalog: "가구 카탈로그",
+      posts: "개의 글",
     },
     settings: {
       regionalSettings: "지역 설정",
