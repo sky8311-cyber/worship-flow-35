@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.og-public-view]
 verify_jwt = false
+
+[functions.auto-approve-worship-leader]
+verify_jwt = false
