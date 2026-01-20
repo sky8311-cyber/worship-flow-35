@@ -357,9 +357,9 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Platform Settings */}
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* General Platform Settings */}
+            {/* Settings Cards - 2-column layout */}
+            <div className="grid gap-6 lg:grid-cols-2 mb-6">
+              {/* Platform Settings Card */}
               <Card className="shadow-md">
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -369,6 +369,23 @@ const AdminDashboard = () => {
                   <CardDescription>{t("admin.settings.subtitle")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Worship Leader Auto Approve Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.worshipLeaderAutoApprove")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.worshipLeaderAutoApproveDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isWorshipLeaderAutoApproveEnabled}
+                      onCheckedChange={toggleWorshipLeaderAutoApprove}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
                   {/* Leaderboard Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
@@ -386,58 +403,41 @@ const AdminDashboard = () => {
 
                   <Separator />
 
-                  {/* Church Subscription Toggle */}
+                  {/* Scheduler Enabled Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">{t("admin.settings.churchSubscription")}</Label>
+                      <Label className="text-base">{t("admin.settings.schedulerEnabled")}</Label>
                       <p className="text-sm text-muted-foreground">
-                        {t("admin.settings.churchSubscriptionDesc")}
+                        {t("admin.settings.schedulerEnabledDesc")}
                       </p>
                     </div>
                     <Switch
-                      checked={isChurchSubscriptionEnabled}
-                      onCheckedChange={toggleChurchSubscription}
+                      checked={isSchedulerEnabled}
+                      onCheckedChange={toggleScheduler}
                       disabled={isUpdating}
                     />
                   </div>
 
                   <Separator />
 
-                  {/* Church Menu Toggle */}
+                  {/* Cross-Community Toggle */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">{t("admin.settings.churchMenu")}</Label>
+                      <Label className="text-base">{t("admin.settings.crossCommunity")}</Label>
                       <p className="text-sm text-muted-foreground">
-                        {t("admin.settings.churchMenuDesc")}
+                        {t("admin.settings.crossCommunityDesc")}
                       </p>
                     </div>
                     <Switch
-                      checked={isChurchMenuVisible}
-                      onCheckedChange={toggleChurchMenu}
-                      disabled={isUpdating}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  {/* Worship Leader Auto Approve Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-base">{t("admin.settings.worshipLeaderAutoApprove")}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t("admin.settings.worshipLeaderAutoApproveDesc")}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={isWorshipLeaderAutoApproveEnabled}
-                      onCheckedChange={toggleWorshipLeaderAutoApprove}
+                      checked={isCrossCommunityEnabled}
+                      onCheckedChange={toggleCrossCommunity}
                       disabled={isUpdating}
                     />
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Premium Account Settings */}
+              {/* Membership Account Settings Card */}
               <Card className="shadow-md">
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -478,49 +478,39 @@ const AdminDashboard = () => {
                       disabled={isUpdating}
                     />
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Scheduler Settings */}
-              <Card className="shadow-md lg:col-span-2">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-5 h-5 text-blue-500" />
-                    <CardTitle>{t("admin.settings.schedulerSettingsTitle")}</CardTitle>
+                  <Separator />
+
+                  {/* Church Subscription Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.churchSubscription")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.churchSubscriptionDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isChurchSubscriptionEnabled}
+                      onCheckedChange={toggleChurchSubscription}
+                      disabled={isUpdating}
+                    />
                   </div>
-                  <CardDescription>{t("admin.settings.schedulerSettingsDesc")}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {/* Scheduler Enabled Toggle */}
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">{t("admin.settings.schedulerEnabled")}</Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t("admin.settings.schedulerEnabledDesc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={isSchedulerEnabled}
-                        onCheckedChange={toggleScheduler}
-                        disabled={isUpdating}
-                      />
-                    </div>
 
-                    {/* Cross-Community Toggle */}
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">{t("admin.settings.crossCommunity")}</Label>
-                        <p className="text-sm text-muted-foreground">
-                          {t("admin.settings.crossCommunityDesc")}
-                        </p>
-                      </div>
-                      <Switch
-                        checked={isCrossCommunityEnabled}
-                        onCheckedChange={toggleCrossCommunity}
-                        disabled={isUpdating}
-                      />
+                  <Separator />
+
+                  {/* Church Menu Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">{t("admin.settings.churchMenu")}</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {t("admin.settings.churchMenuDesc")}
+                      </p>
                     </div>
+                    <Switch
+                      checked={isChurchMenuVisible}
+                      onCheckedChange={toggleChurchMenu}
+                      disabled={isUpdating}
+                    />
                   </div>
                 </CardContent>
               </Card>
