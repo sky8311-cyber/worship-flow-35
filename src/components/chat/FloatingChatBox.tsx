@@ -45,18 +45,18 @@ export function FloatingChatBox({ isOpen, onClose }: FloatingChatBoxProps) {
           <TabsList className="h-9 bg-transparent p-0 gap-1">
             <TabsTrigger 
               value="community" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
-                data-[state=inactive]:bg-background/80 data-[state=inactive]:text-muted-foreground"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border"
             >
               <Users className="w-3.5 h-3.5" />
               {t("chat.community")}
             </TabsTrigger>
             <TabsTrigger 
               value="support" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium
-                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
-                data-[state=inactive]:bg-background/80 data-[state=inactive]:text-muted-foreground"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border"
             >
               <Headset className="w-3.5 h-3.5" />
               {t("chat.support")}

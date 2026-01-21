@@ -39,21 +39,21 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
           <div className="flex items-center justify-between px-4 py-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "community" | "support")} className="flex-1">
               <TabsList className="h-10 bg-transparent p-0 gap-1">
-                <TabsTrigger 
-                  value="community" 
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-                    data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
-                    data-[state=inactive]:bg-muted/50 data-[state=inactive]:text-muted-foreground"
-                >
-                  <Users className="w-4 h-4" />
-                  {t("chat.community")}
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="support" 
-                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-                    data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
-                    data-[state=inactive]:bg-muted/50 data-[state=inactive]:text-muted-foreground"
-                >
+            <TabsTrigger 
+              value="community" 
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border"
+            >
+              <Users className="w-4 h-4" />
+              {t("chat.community")}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="support" 
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium border
+                data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:shadow-sm
+                data-[state=inactive]:bg-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:border-border"
+            >
                   <Headset className="w-4 h-4" />
                   {t("chat.support")}
                   {supportUnread > 0 && (
