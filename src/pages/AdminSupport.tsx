@@ -180,21 +180,46 @@ export default function AdminSupport() {
     );
   };
 
-  const handleStartConversation = async (userId: string) => {
-    const conversationId = await createConversationForUser.mutateAsync(userId);
-    setShowUserSearch(false);
-    setUserSearchQuery("");
+  const [isStartingConversation, setIsStartingConversation] = useState(false);
+  const [pendingConversationId, setPendingConversationId] = useState<string | null>(null);
 
-    // Find and select the conversation
-    const conv = conversations.find((c) => c.id === conversationId);
-    if (conv) {
-      setSelectedConversation(conv);
-    } else {
-      // Refetch and then select
-      setTimeout(() => {
-        const newConv = conversations.find((c) => c.user_id === userId);
-        if (newConv) setSelectedConversation(newConv);
-      }, 500);
+  // Effect to select conversation once it appears in the list
+  useEffect(() => {
+    if (pendingConversationId && conversations.length > 0) {
+      const conv = conversations.find((c) => c.id === pendingConversationId);
+      if (conv) {
+        setSelectedConversation(conv);
+        setPendingConversationId(null);
+      }
+    }
+  }, [conversations, pendingConversationId]);
+
+  const handleStartConversation = async (userId: string) => {
+    if (isStartingConversation) return; // Prevent double-trigger
+    
+    setIsStartingConversation(true);
+    try {
+      const conversationId = await createConversationForUser.mutateAsync(userId);
+      setShowUserSearch(false);
+      setUserSearchQuery("");
+
+      // Find and select the conversation immediately if available
+      const conv = conversations.find((c) => c.id === conversationId);
+      if (conv) {
+        setSelectedConversation(conv);
+      } else {
+        // Set pending ID - effect will select it when list updates
+        setPendingConversationId(conversationId);
+      }
+    } catch (error: any) {
+      console.error("Failed to start conversation:", error);
+      toast.error(
+        language === "ko" 
+          ? "대화를 시작할 수 없습니다" 
+          : "Failed to start conversation"
+      );
+    } finally {
+      setIsStartingConversation(false);
     }
   };
 
@@ -319,16 +344,10 @@ export default function AdminSupport() {
                         ) : (
                           <CommandGroup>
                             {searchedUsers.map((user) => (
-                              <CommandItem
+                              <div
                                 key={user.id}
-                                value={user.full_name || user.email || user.id}
-                                onSelect={() => handleStartConversation(user.id)}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleStartConversation(user.id);
-                                }}
-                                className="flex items-center gap-2 cursor-pointer py-2 px-2 hover:bg-accent/80"
+                                onClick={() => handleStartConversation(user.id)}
+                                className="flex items-center gap-2 cursor-pointer py-2 px-3 hover:bg-accent rounded-sm transition-colors"
                               >
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage src={user.avatar_url || undefined} />
@@ -342,7 +361,10 @@ export default function AdminSupport() {
                                     <p className="text-xs opacity-70 truncate">{user.email}</p>
                                   )}
                                 </div>
-                              </CommandItem>
+                                {isStartingConversation && (
+                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                )}
+                              </div>
                             ))}
                           </CommandGroup>
                         )}
