@@ -12,6 +12,7 @@ interface FeatureFlags {
   scheduler_enabled: boolean;
   cross_community_enabled: boolean;
   worship_leader_auto_approve: boolean;
+  google_login_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -23,6 +24,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   scheduler_enabled: false,
   cross_community_enabled: false,
   worship_leader_auto_approve: false,
+  google_login_enabled: true,
 };
 
 export function useAppSettings() {
@@ -87,6 +89,7 @@ export function useAppSettings() {
     isSchedulerEnabled: !isLoading && (flags?.scheduler_enabled ?? false),
     isCrossCommunityEnabled: !isLoading && (flags?.cross_community_enabled ?? false),
     isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
+    isGoogleLoginEnabled: !isLoading && (flags?.google_login_enabled ?? true),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     updateError: updateFlagMutation.error,
@@ -99,5 +102,6 @@ export function useAppSettings() {
     toggleScheduler: () => toggleFlag("scheduler_enabled"),
     toggleCrossCommunity: () => toggleFlag("cross_community_enabled"),
     toggleWorshipLeaderAutoApprove: () => toggleFlag("worship_leader_auto_approve"),
+    toggleGoogleLogin: () => toggleFlag("google_login_enabled"),
   };
 }
