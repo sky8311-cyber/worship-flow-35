@@ -321,9 +321,14 @@ export default function AdminSupport() {
                             {searchedUsers.map((user) => (
                               <CommandItem
                                 key={user.id}
-                                value={user.id}
+                                value={user.full_name || user.email || user.id}
                                 onSelect={() => handleStartConversation(user.id)}
-                                className="flex items-center gap-2 cursor-pointer"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleStartConversation(user.id);
+                                }}
+                                className="flex items-center gap-2 cursor-pointer py-2 px-2 hover:bg-accent/80"
                               >
                                 <Avatar className="h-8 w-8">
                                   <AvatarImage src={user.avatar_url || undefined} />
@@ -334,7 +339,7 @@ export default function AdminSupport() {
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium truncate">{user.full_name || user.email}</p>
                                   {user.full_name && user.email && (
-                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                    <p className="text-xs opacity-70 truncate">{user.email}</p>
                                   )}
                                 </div>
                               </CommandItem>
