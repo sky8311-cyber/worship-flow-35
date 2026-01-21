@@ -29,6 +29,7 @@ const AdminDashboard = () => {
     isSchedulerEnabled,
     isCrossCommunityEnabled,
     isWorshipLeaderAutoApproveEnabled,
+    isGoogleLoginEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
@@ -37,6 +38,7 @@ const AdminDashboard = () => {
     toggleScheduler,
     toggleCrossCommunity,
     toggleWorshipLeaderAutoApprove,
+    toggleGoogleLogin,
     isUpdating,
     updateSuccess,
     updateError,
@@ -429,6 +431,27 @@ const AdminDashboard = () => {
                     <Switch
                       checked={isCrossCommunityEnabled}
                       onCheckedChange={toggleCrossCommunity}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Google Login Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        {language === "ko" ? "Google 로그인" : "Google Login"}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "로그인/회원가입 페이지에서 Google OAuth 표시 여부"
+                          : "Show Google OAuth on login/signup pages"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isGoogleLoginEnabled}
+                      onCheckedChange={toggleGoogleLogin}
                       disabled={isUpdating}
                     />
                   </div>
