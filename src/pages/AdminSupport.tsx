@@ -29,7 +29,9 @@ import {
   UserPlus,
   X,
   CheckSquare,
+  ChevronLeft,
 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +69,7 @@ type FilterTab = "all" | "unread" | "flagged" | "archived";
 
 export default function AdminSupport() {
   const { t, language } = useTranslation();
+  const isMobile = useIsMobile();
   const {
     conversations,
     isLoading,
@@ -254,9 +257,17 @@ export default function AdminSupport() {
 
   return (
     <AdminLayout>
-      <div className="flex h-[calc(100vh-8rem)] gap-4">
+      <div className={cn(
+        "flex h-[calc(100vh-8rem)]",
+        isMobile ? "flex-col" : "flex-row gap-4"
+      )}>
         {/* Left Panel - Conversation List */}
-        <div className="w-80 flex-shrink-0 flex flex-col border rounded-lg bg-card">
+        <div className={cn(
+          "flex flex-col border rounded-lg bg-card",
+          isMobile ? "flex-1" : "w-80 flex-shrink-0",
+          // Hide on mobile when a conversation is selected
+          isMobile && selectedConversation && "hidden"
+        )}>
           {/* Header */}
           <div className="p-4 border-b space-y-3">
             <div className="flex items-center justify-between">
@@ -528,12 +539,27 @@ export default function AdminSupport() {
         </div>
 
         {/* Right Panel - Chat Window */}
-        <div className="flex-1 flex flex-col border rounded-lg bg-card">
+        <div className={cn(
+          "flex-1 flex flex-col border rounded-lg bg-card",
+          // Hide on mobile when no conversation is selected
+          isMobile && !selectedConversation && "hidden"
+        )}>
           {selectedConversation ? (
             <>
               {/* Chat header */}
               <div className="p-4 border-b flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  {/* Mobile back button */}
+                  {isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSelectedConversation(null)}
+                      className="mr-1 -ml-2"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                  )}
                   <Avatar>
                     <AvatarImage src={selectedConversation.profiles?.avatar_url || undefined} />
                     <AvatarFallback>
@@ -673,12 +699,36 @@ export default function AdminSupport() {
 
       {/* Floating bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <div className="bg-primary text-primary-foreground rounded-lg shadow-lg px-4 py-3 flex items-center gap-4">
-            <span className="font-medium whitespace-nowrap">
-              {selectedIds.size} {language === "ko" ? "개 선택됨" : "selected"}
-            </span>
-            <div className="flex items-center gap-2">
+        <div className={cn(
+          "fixed z-50",
+          isMobile 
+            ? "bottom-20 left-4 right-4" 
+            : "bottom-6 left-1/2 -translate-x-1/2"
+        )}>
+          <div className={cn(
+            "bg-primary text-primary-foreground rounded-lg shadow-lg px-4 py-3 flex items-center gap-4",
+            isMobile && "flex-col gap-3"
+          )}>
+            <div className={cn(
+              "flex items-center gap-4 w-full",
+              isMobile && "justify-between"
+            )}>
+              <span className="font-medium whitespace-nowrap">
+                {selectedIds.size} {language === "ko" ? "개 선택됨" : "selected"}
+              </span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={clearSelection} 
+                className="text-primary-foreground hover:bg-primary-foreground/20"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className={cn(
+              "flex items-center gap-2",
+              isMobile && "flex-wrap justify-center w-full"
+            )}>
               <Button variant="secondary" size="sm" onClick={() => handleBulkMarkRead(true)}>
                 <MailOpen className="h-4 w-4 mr-1" />
                 {language === "ko" ? "읽음" : "Read"}
@@ -696,14 +746,6 @@ export default function AdminSupport() {
                 {language === "ko" ? "삭제" : "Delete"}
               </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={clearSelection} 
-              className="text-primary-foreground hover:bg-primary-foreground/20"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       )}
