@@ -223,6 +223,57 @@ const [loading, setLoading] = useState(false);
   // State for "Add to Worship Set?" prompt after creating a new song
   const [showAddToSetPrompt, setShowAddToSetPrompt] = useState(false);
   const [newlyCreatedSong, setNewlyCreatedSong] = useState<any>(null);
+  
+  // State for close confirmation dialog
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  
+  // Check if form has unsaved changes
+  const hasUnsavedChanges = () => {
+    // For new song: check if any field has been filled
+    if (!song) {
+      return !!(
+        formData.title.trim() ||
+        formData.artist.trim() ||
+        formData.subtitle.trim() ||
+        formData.notes.trim() ||
+        formData.lyrics.trim() ||
+        formData.tags.length > 0 ||
+        youtubeLinks.some(link => link.url.trim()) ||
+        scoreVariations.some(v => v.files.length > 0)
+      );
+    }
+    // For existing song: check if any field has changed
+    const originalTags = song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [];
+    return (
+      formData.title !== (song.title || "") ||
+      formData.artist !== (song.artist || "") ||
+      formData.subtitle !== (song.subtitle || "") ||
+      formData.notes !== (song.notes || "") ||
+      formData.lyrics !== (song.lyrics || "") ||
+      formData.language !== (song.language || "") ||
+      formData.category !== (song.category || "") ||
+      formData.is_private !== (song.is_private || false) ||
+      JSON.stringify(formData.tags.sort()) !== JSON.stringify(originalTags.sort())
+    );
+  };
+  
+  // Handle dialog close with confirmation
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen && open) {
+      // User is trying to close the dialog
+      if (hasUnsavedChanges()) {
+        setShowCloseConfirm(true);
+        return; // Don't close yet
+      }
+    }
+    onOpenChange(newOpen);
+  };
+  
+  const handleConfirmClose = () => {
+    setShowCloseConfirm(false);
+    onOpenChange(false);
+    onClose();
+  };
   const [showAddToSetDialog, setShowAddToSetDialog] = useState(false);
 
   const sensors = useSensors(
@@ -837,7 +888,7 @@ const [loading, setLoading] = useState(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
         hideCloseButton
@@ -1231,6 +1282,30 @@ const [loading, setLoading] = useState(false);
           onClose();
         }}
       />
+      
+      {/* Close confirmation dialog */}
+      <AlertDialog open={showCloseConfirm} onOpenChange={setShowCloseConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === "ko" ? "창을 닫으시겠습니까?" : "Close this window?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "ko" 
+                ? "작성 중인 내용이 저장되지 않습니다. 정말 닫으시겠습니까?" 
+                : "Your unsaved changes will be lost. Are you sure?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "계속 작성" : "Stay"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>
+              {language === "ko" ? "닫기" : "Close"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
