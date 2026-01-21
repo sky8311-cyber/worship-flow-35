@@ -839,7 +839,7 @@ const [loading, setLoading] = useState(false);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className="w-[calc(100vw-2rem)] max-w-2xl max-h-[calc(100vh-4rem)] sm:max-h-[90vh] overflow-y-auto" 
+        className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
         hideCloseButton
         style={{
           paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
