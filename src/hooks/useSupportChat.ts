@@ -323,7 +323,7 @@ export function useAdminSupportChat() {
       if (msgError) throw msgError;
 
       // Create notification for user
-      await supabase.from("notifications").insert({
+      const { error: notifError } = await supabase.from("notifications").insert({
         user_id: userId,
         type: "support_reply",
         title: "Support Reply",
@@ -331,6 +331,11 @@ export function useAdminSupportChat() {
         related_id: conversationId,
         related_type: "support_conversation",
       });
+
+      // Log error but don't fail the message send
+      if (notifError) {
+        console.error("Failed to create support_reply notification:", notifError);
+      }
 
       return message;
     },
