@@ -2433,6 +2433,72 @@ export type Database = {
         }
         Relationships: []
       }
+      song_enrichment_suggestions: {
+        Row: {
+          ai_notes: string | null
+          applied_fields: string[] | null
+          confidence: string | null
+          created_at: string | null
+          id: string
+          lyrics_source: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          song_id: string
+          status: string | null
+          suggested_key: string | null
+          suggested_lyrics: string | null
+          suggested_topics: string[] | null
+        }
+        Insert: {
+          ai_notes?: string | null
+          applied_fields?: string[] | null
+          confidence?: string | null
+          created_at?: string | null
+          id?: string
+          lyrics_source?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          song_id: string
+          status?: string | null
+          suggested_key?: string | null
+          suggested_lyrics?: string | null
+          suggested_topics?: string[] | null
+        }
+        Update: {
+          ai_notes?: string | null
+          applied_fields?: string[] | null
+          confidence?: string | null
+          created_at?: string | null
+          id?: string
+          lyrics_source?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          song_id?: string
+          status?: string | null
+          suggested_key?: string | null
+          suggested_lyrics?: string | null
+          suggested_topics?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_enrichment_suggestions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_enrichment_suggestions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       song_scores: {
         Row: {
           created_at: string | null
@@ -2542,10 +2608,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_key: string | null
+          enrichment_status: string | null
           id: string
           interpretation: string | null
           is_private: boolean | null
           language: string | null
+          last_enrichment_at: string | null
           lyrics: string | null
           notes: string | null
           score_file_url: string | null
@@ -2561,10 +2629,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_key?: string | null
+          enrichment_status?: string | null
           id?: string
           interpretation?: string | null
           is_private?: boolean | null
           language?: string | null
+          last_enrichment_at?: string | null
           lyrics?: string | null
           notes?: string | null
           score_file_url?: string | null
@@ -2580,10 +2650,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_key?: string | null
+          enrichment_status?: string | null
           id?: string
           interpretation?: string | null
           is_private?: boolean | null
           language?: string | null
+          last_enrichment_at?: string | null
           lyrics?: string | null
           notes?: string | null
           score_file_url?: string | null

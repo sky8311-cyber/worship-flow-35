@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset } from "lucide-react";
+import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useAdminSupportUnreadCount } from "@/hooks/useSupportChat";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -18,6 +20,18 @@ export const AdminNav = () => {
   const { t, language } = useTranslation();
   const { isChurchMenuVisible, isLoading } = useAppSettings();
   const supportUnread = useAdminSupportUnreadCount();
+  
+  // Fetch pending enrichment count
+  const { data: enrichmentCount } = useQuery({
+    queryKey: ["pending-enrichments-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("song_enrichment_suggestions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      return count || 0;
+    },
+  });
   
   // Primary links (always visible in header)
   const primaryLinks = [
@@ -51,6 +65,12 @@ export const AdminNav = () => {
 
   // Secondary links (in "More" dropdown)
   const secondaryLinks = [
+    {
+      to: "/admin/song-enrichment",
+      label: language === "ko" ? "AI 곡 추천" : "AI Enrichment",
+      icon: Sparkles,
+      badge: enrichmentCount && enrichmentCount > 0 ? enrichmentCount : undefined,
+    },
     {
       to: "/admin/applications",
       label: t("admin.applications.title"),

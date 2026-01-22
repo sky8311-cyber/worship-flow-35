@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation, Sparkles } from "lucide-react";
 import { NavigationManager } from "@/components/admin/NavigationManager";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -108,6 +108,18 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false })
         .limit(5);
       return apps || [];
+    },
+  });
+
+  // Fetch pending enrichment suggestions count
+  const { data: pendingEnrichmentCount } = useQuery({
+    queryKey: ["pending-enrichments-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("song_enrichment_suggestions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      return count || 0;
     },
   });
 
@@ -319,6 +331,39 @@ const AdminDashboard = () => {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI Enrichment Widget */}
+        {pendingEnrichmentCount && pendingEnrichmentCount > 0 && (
+          <Card className="mb-8 border-purple-200 bg-purple-50/50 dark:bg-purple-950/20 dark:border-purple-800">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-500" />
+                  <CardTitle className="text-lg">
+                    {language === "ko" ? "AI 곡 추천 대기중" : "AI Song Enrichment Pending"}
+                  </CardTitle>
+                  <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                    {pendingEnrichmentCount}{language === "ko" ? "건" : ""}
+                  </Badge>
+                </div>
+                <Link to="/admin/song-enrichment">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    {language === "ko" ? "검토하기" : "Review"}
+                  </Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                {language === "ko" 
+                  ? "AI가 추천한 가사, 키, 주제가 검토를 기다리고 있습니다. 검토 후 승인하면 곡 정보가 자동으로 업데이트됩니다."
+                  : "AI-suggested lyrics, keys, and topics are waiting for your review. After approval, song information will be automatically updated."
+                }
+              </p>
             </CardContent>
           </Card>
         )}
