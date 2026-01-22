@@ -2552,6 +2552,7 @@ export type Database = {
           subtitle: string | null
           tags: string | null
           title: string
+          topics: string | null
           updated_at: string
           youtube_url: string | null
         }
@@ -2570,6 +2571,7 @@ export type Database = {
           subtitle?: string | null
           tags?: string | null
           title: string
+          topics?: string | null
           updated_at?: string
           youtube_url?: string | null
         }
@@ -2588,6 +2590,7 @@ export type Database = {
           subtitle?: string | null
           tags?: string | null
           title?: string
+          topics?: string | null
           updated_at?: string
           youtube_url?: string | null
         }

@@ -63,6 +63,11 @@ export const AdminNav = () => {
       icon: Church,
     }] : []),
     {
+      to: "/admin/topics",
+      label: language === "ko" ? "주제 관리" : "Topics",
+      icon: LayoutList,
+    },
+    {
       to: "/admin/rewards",
       label: "Rewards",
       icon: Sprout,

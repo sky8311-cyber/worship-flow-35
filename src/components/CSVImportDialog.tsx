@@ -23,8 +23,7 @@ interface CSVRow {
   artist?: string;
   language?: string;
   default_key?: string;
-  category?: string;
-  tags?: string;
+  topics?: string;  // "찬양, 감사, 기쁨" format (2-3 required)
   youtube_url?: string;
   score_file_url?: string;
   interpretation?: string;
@@ -259,8 +258,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             artist: row.artist || null,
             language: row.language || null,
             default_key: row.default_key || null,
-            category: row.category || null,
-            tags: row.tags || null,
+            topics: row.topics || null,
             youtube_url: row.youtube_url?.trim() || null,
             score_file_url: uploadedScoreUrl,
             interpretation: row.interpretation || null,
@@ -334,8 +332,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             artist: row.artist || null,
             language: row.language || null,
             default_key: row.default_key || null,
-            category: row.category || null,
-            tags: row.tags || null,
+            topics: row.topics || null,
             youtube_url: row.youtube_url?.trim() || null,
             interpretation: row.interpretation || null,
             notes: row.notes || null,
@@ -433,8 +430,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       { v: "artist", s: headerStyle },
       { v: "language", s: headerStyle },
       { v: "default_key", s: headerStyle },
-      { v: "category", s: headerStyle },
-      { v: "tags", s: headerStyle },
+      { v: "topics", s: headerStyle },
       { v: "youtube_url", s: headerStyle },
       { v: "score_file_url", s: headerStyle },
       { v: "interpretation", s: headerStyle },
@@ -445,15 +441,15 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
     ];
 
     const exampleRows = [
-      ["", "Amazing Grace", "", "Traditional", "EN", "G", "모던워십 (서양)", "grace,worship", "https://youtube.com/watch?v=main", "amazing-grace.pdf", "Classic hymn", "Notes", "", "베이스|https://youtube.com/bass;;피아노|https://youtube.com/piano", "C|https://storage.../score-c.jpg;;G|https://storage.../score-g.jpg"],
-      ["", "주 안에 있는 나에게", "", "김명식", "KO", "D", "모던워십 (한국)", "은혜,감사", "https://youtube.com/watch?v=main", "", "주님 안에서의 평안", "", "", "드럼|https://youtube.com/drum", "D|https://storage.../score-d.jpg"],
-      ["", "거룩하신 하나님", "주님 찬양해", "마커스워십", "KO", "C", "모던워십 (한국)", "경배,찬양", "", "", "", "", "", "", ""],
+      ["", "Amazing Grace", "", "Traditional", "EN", "G", "찬양, 은혜", "https://youtube.com/watch?v=main", "amazing-grace.pdf", "Classic hymn", "Notes", "", "베이스|https://youtube.com/bass;;피아노|https://youtube.com/piano", "C|https://storage.../score-c.jpg;;G|https://storage.../score-g.jpg"],
+      ["", "주 안에 있는 나에게", "", "김명식", "KO", "D", "은혜, 감사, 평안", "https://youtube.com/watch?v=main", "", "주님 안에서의 평안", "", "", "드럼|https://youtube.com/drum", "D|https://storage.../score-d.jpg"],
+      ["", "거룩하신 하나님", "주님 찬양해", "마커스워십", "KO", "C", "경배, 찬양", "", "", "", "", "", "", ""],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleRows]);
     ws['!cols'] = [
       { wch: 36 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 8 },
-      { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 35 }, { wch: 25 },
+      { wch: 8 }, { wch: 20 }, { wch: 35 }, { wch: 25 },
       { wch: 30 }, { wch: 20 }, { wch: 40 }, { wch: 50 }, { wch: 50 },
     ];
 
@@ -656,7 +652,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                       <th className="p-2 text-left w-20">타입</th>
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
-                      <th className="p-2 text-left">{t("songDialog.category")}</th>
+                      <th className="p-2 text-left">{t("songDialog.topics")}</th>
                       <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
                     </tr>
                   </thead>
@@ -682,7 +678,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                           </td>
                           <td className="p-2 font-medium">{row.title}</td>
                           <td className="p-2 text-sm">{row.artist || "-"}</td>
-                          <td className="p-2 text-sm">{row.category || "-"}</td>
+                          <td className="p-2 text-sm">{row.topics || "-"}</td>
                           <td className="p-2">
                             {scoreStatus === "existing" ? (
                               <Badge variant="outline" className="gap-1">
