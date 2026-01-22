@@ -176,17 +176,7 @@ export const SongTable = ({
     );
   };
 
-  const getCategoryTranslation = (category: string | null) => {
-    if (!category) return t("songLibrary.categories.uncategorized");
-    const categoryMap: Record<string, string> = {
-      "찬송가": t("songLibrary.categories.hymn"),
-      "모던워십 (한국)": t("songLibrary.categories.modernKorean"),
-      "모던워십 (서양)": t("songLibrary.categories.modernWestern"),
-      "모던워십 (기타)": t("songLibrary.categories.modernOther"),
-      "한국 복음성가": t("songLibrary.categories.koreanGospel"),
-    };
-    return categoryMap[category] || category;
-  };
+  // Category removed - now using topics
 
   const getLanguageTranslation = (language: string | null) => {
     if (!language) return "-";
@@ -258,7 +248,7 @@ const handleDelete = async (song: any) => {
             )}
             <TableHead>{renderColumnHeader('title', t("songLibrary.tableHeaders.title"))}</TableHead>
             <TableHead>{renderColumnHeader('artist', t("songLibrary.tableHeaders.artist"))}</TableHead>
-            <TableHead>{renderColumnHeader('category', t("songLibrary.tableHeaders.category"))}</TableHead>
+            <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
@@ -318,32 +308,6 @@ const handleDelete = async (song: any) => {
                       />
                     ) : (
                       <span>{song.artist || "-"}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditable ? (
-                      <Select
-                        value={displaySong.category || 'uncategorized'}
-                        onValueChange={(value) => 
-                          onUpdateEditedSong?.(song.id, 'category', value === 'uncategorized' ? null : value)
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
-                          <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
-                          <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
-                          <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
-                          <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
-                          <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        {getCategoryTranslation(song.category)}
-                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>

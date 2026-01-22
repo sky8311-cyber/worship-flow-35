@@ -2477,6 +2477,30 @@ export type Database = {
           },
         ]
       }
+      song_topics: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name_en: string | null
+          name_ko: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name_en?: string | null
+          name_ko: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name_en?: string | null
+          name_ko?: string
+        }
+        Relationships: []
+      }
       song_youtube_links: {
         Row: {
           created_at: string | null
@@ -2515,7 +2539,6 @@ export type Database = {
       songs: {
         Row: {
           artist: string | null
-          category: string | null
           created_at: string
           created_by: string | null
           default_key: string | null
@@ -2534,7 +2557,6 @@ export type Database = {
         }
         Insert: {
           artist?: string | null
-          category?: string | null
           created_at?: string
           created_by?: string | null
           default_key?: string | null
@@ -2553,7 +2575,6 @@ export type Database = {
         }
         Update: {
           artist?: string | null
-          category?: string | null
           created_at?: string
           created_by?: string | null
           default_key?: string | null

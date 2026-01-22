@@ -1,12 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface BulkActionsBarProps {
   selectedCount: number;
   onBulkDelete: () => void;
-  onBulkCategorize: (category: string) => void;
   onClearSelection: () => void;
   bulkEditMode: boolean;
   onEnterBulkEdit: () => void;
@@ -17,7 +15,6 @@ interface BulkActionsBarProps {
 export const BulkActionsBar = ({
   selectedCount,
   onBulkDelete,
-  onBulkCategorize,
   onClearSelection,
   bulkEditMode,
   onEnterBulkEdit,
@@ -43,20 +40,6 @@ export const BulkActionsBar = ({
             >
               {t("songLibrary.bulkEdit")}
             </Button>
-            
-            <Select onValueChange={onBulkCategorize}>
-              <SelectTrigger className="h-9 bg-primary-foreground text-primary border-none w-[140px]">
-                <SelectValue placeholder={t("songLibrary.bulkCategorize")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
-                <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
-                <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
-                <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
-                <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
-                <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
-              </SelectContent>
-            </Select>
 
             <Button
               variant="destructive"

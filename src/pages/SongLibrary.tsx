@@ -78,7 +78,7 @@ const SongLibrary = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  // Category removed - now using topics
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -186,20 +186,12 @@ const SongLibrary = () => {
   });
 
   const { data: songs, isLoading, refetch } = useQuery({
-    queryKey: ["songs", debouncedSearchQuery, selectedCategory, selectedLanguage, sortBy],
+    queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select("*");
 
       if (debouncedSearchQuery) {
         query = query.or(`title.ilike.%${debouncedSearchQuery}%,tags.ilike.%${debouncedSearchQuery}%`);
-      }
-
-      if (selectedCategory !== "all") {
-        if (selectedCategory === "uncategorized") {
-          query = query.is("category", null);
-        } else {
-          query = query.eq("category", selectedCategory);
-        }
       }
 
       if (selectedLanguage !== "all") {
@@ -386,7 +378,6 @@ const SongLibrary = () => {
       { v: "artist", s: headerStyle },
       { v: "language", s: headerStyle },
       { v: "default_key", s: headerStyle },
-      { v: "category", s: headerStyle },
       { v: "tags", s: headerStyle },
       { v: "youtube_url", s: headerStyle },
       { v: "score_file_url", s: headerStyle },
@@ -405,7 +396,6 @@ const SongLibrary = () => {
       song.artist || "",
       song.language || "",
       song.default_key || "",
-      song.category || "",
       song.tags || "",
       song.youtube_url || "",
       song.score_file_url || "",
@@ -484,25 +474,7 @@ const SongLibrary = () => {
     }
   };
 
-  const handleBulkCategorize = async (category: string) => {
-    const count = selectedSongIds.size;
-    const categoryValue = category === "uncategorized" ? null : category;
-    
-    const { error } = await supabase
-      .from("songs")
-      .update({ category: categoryValue })
-      .in("id", Array.from(selectedSongIds));
-
-    if (error) {
-      toast.error(t("common.error"));
-      console.error("Bulk categorize error:", error);
-    } else {
-      toast.success(t("songLibrary.bulkCategorizeSuccess", { count }));
-      setSelectedSongIds(new Set());
-      setSelectionMode(false);
-      refetch();
-    }
-  };
+  // Bulk categorize removed - category column no longer exists
 
   const handleClearSelection = () => {
     setSelectedSongIds(new Set());
@@ -546,7 +518,6 @@ const SongLibrary = () => {
         supabase.from("songs").update({
           title: song.title,
           artist: song.artist,
-          category: song.category,
           language: song.language,
           default_key: song.default_key,
           bpm: song.bpm,
@@ -849,21 +820,6 @@ const SongLibrary = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("songLibrary.selectCategory")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("songLibrary.allCategories")}</SelectItem>
-                  <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
-                  <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
-                  <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
-                  <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
-                  <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
-                  <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("songLibrary.selectLanguage")} />
@@ -927,7 +883,7 @@ const SongLibrary = () => {
             )}
 
             {/* Active filters display */}
-            {(selectedCategory !== "all" || selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0 || isInCrossCommunityMode) && (
+            {(selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0 || isInCrossCommunityMode) && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">{t("songLibrary.activeFilters")}:</span>
                 {isInCrossCommunityMode && (
@@ -935,12 +891,6 @@ const SongLibrary = () => {
                     <Globe className="h-3 w-3" />
                     {t("songLibrary.crossCommunity.label")}
                     <X className="h-3 w-3 cursor-pointer" onClick={toggleCrossCommunityMode} />
-                  </Badge>
-                )}
-                {selectedCategory !== "all" && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    {selectedCategory}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory("all")} />
                   </Badge>
                 )}
                 {selectedLanguage !== "all" && (
@@ -966,7 +916,6 @@ const SongLibrary = () => {
                   size="sm" 
                   className="text-xs h-6 px-2"
                   onClick={() => {
-                    setSelectedCategory("all");
                     setSelectedLanguage("all");
                     setSelectedKey("all");
                     setSelectedTags([]);
@@ -1034,7 +983,7 @@ const SongLibrary = () => {
             <CardContent className="text-center py-12">
               <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground mb-4">
-                {searchQuery || selectedCategory !== "all" || selectedLanguage !== "all"
+                {searchQuery || selectedLanguage !== "all"
                   ? t("common.noResults")
                   : t("songLibrary.noSongs")}
               </p>
