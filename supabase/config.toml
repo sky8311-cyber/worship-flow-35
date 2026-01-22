@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.admin-resend-verification]
 verify_jwt = true
 
+[functions.process-enrichment-queue]
+verify_jwt = false
+
 [functions.enrich-song]
 verify_jwt = true
 

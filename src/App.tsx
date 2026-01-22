@@ -60,6 +60,7 @@ const AdminHistory = lazy(() => import("./pages/AdminHistory"));
 const AdminTierGuide = lazy(() => import("./pages/AdminTierGuide"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminTopics = lazy(() => import("./pages/AdminTopics"));
+const AdminSongEnrichment = lazy(() => import("./pages/AdminSongEnrichment"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -198,6 +199,7 @@ const App = () => {
               <Route path="/admin/tier-guide" element={<AdminRoute><AdminTierGuide /></AdminRoute>} />
               <Route path="/admin/support" element={<AdminRoute><AdminSupport /></AdminRoute>} />
               <Route path="/admin/topics" element={<AdminRoute><AdminTopics /></AdminRoute>} />
+              <Route path="/admin/song-enrichment" element={<AdminRoute><AdminSongEnrichment /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
