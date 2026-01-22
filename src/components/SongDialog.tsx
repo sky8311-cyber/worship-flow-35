@@ -825,8 +825,8 @@ const [loading, setLoading] = useState(false);
           )}
         </div>
 
-        {/* URL input for downloading from external link */}
-        <div className="flex items-center gap-2 mt-3">
+                  {/* URL input for downloading from external link - pl-8 aligns with drag handle */}
+                  <div className="flex items-center gap-2 mt-3 pl-8">
           <Input
             type="url"
             placeholder={t('songDialog.pasteScoreUrl') || "이미지 URL 붙여넣기 (예: https://...)"}
