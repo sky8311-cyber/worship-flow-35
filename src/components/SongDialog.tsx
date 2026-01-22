@@ -14,7 +14,7 @@ import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkle
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
-import { TagSelector } from "@/components/TagSelector";
+import { TopicSelector } from "@/components/TopicSelector";
 import { ArtistSelector } from "@/components/ArtistSelector";
 import { YouTubeSearchBar } from "@/components/YouTubeSearchBar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -66,8 +66,7 @@ const [loading, setLoading] = useState(false);
     artist: "",
     language: "",
     default_key: "",
-    category: "",
-    tags: [] as string[],
+    topics: [] as string[],
     youtube_url: "",
     score_file_url: "",
     notes: "",
@@ -100,8 +99,7 @@ const [loading, setLoading] = useState(false);
         artist: song.artist || "",
         language: song.language || "",
         default_key: song.default_key || "",
-        category: song.category || "",
-        tags: song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [],
+        topics: song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [],
         youtube_url: song.youtube_url || "",
         score_file_url: song.score_file_url || "",
         notes: song.notes || "",
@@ -122,8 +120,7 @@ const [loading, setLoading] = useState(false);
         artist: "",
         language: "",
         default_key: "",
-        category: "",
-        tags: [],
+        topics: [],
         youtube_url: "",
         score_file_url: "",
         notes: "",
@@ -238,13 +235,13 @@ const [loading, setLoading] = useState(false);
         formData.subtitle.trim() ||
         formData.notes.trim() ||
         formData.lyrics.trim() ||
-        formData.tags.length > 0 ||
+        formData.topics.length > 0 ||
         youtubeLinks.some(link => link.url.trim()) ||
         scoreVariations.some(v => v.files.length > 0)
       );
     }
     // For existing song: check if any field has changed
-    const originalTags = song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [];
+    const originalTopics = song.tags ? song.tags.split(",").map((t: string) => t.trim()) : [];
     return (
       formData.title !== (song.title || "") ||
       formData.artist !== (song.artist || "") ||
@@ -252,9 +249,8 @@ const [loading, setLoading] = useState(false);
       formData.notes !== (song.notes || "") ||
       formData.lyrics !== (song.lyrics || "") ||
       formData.language !== (song.language || "") ||
-      formData.category !== (song.category || "") ||
       formData.is_private !== (song.is_private || false) ||
-      JSON.stringify(formData.tags.sort()) !== JSON.stringify(originalTags.sort())
+      JSON.stringify(formData.topics.sort()) !== JSON.stringify(originalTopics.sort())
     );
   };
   
@@ -369,15 +365,14 @@ const [loading, setLoading] = useState(false);
 
     setLoading(true);
     try {
-      const normalizedCategory = formData.category === "uncategorized" ? null : formData.category;
-      
       const data: any = {
         ...formData,
         default_key: scoreVariations[0]?.key || "",
         score_file_url: scoreVariations[0]?.files[0]?.url || "",
-        category: normalizedCategory || null,
-        tags: formData.tags.join(", "),
+        tags: formData.topics.join(", "),
       };
+      // Remove topics from data since DB uses 'tags' column
+      delete data.topics;
 
       let songId: string;
       let isNewSong = false;
@@ -672,12 +667,11 @@ const [loading, setLoading] = useState(false);
         setScoreVariations(updated);
       }
     }
-    if (selectedFields.category) updates.category = selectedFields.category;
     if (selectedFields.tags && selectedFields.tags.length > 0) {
-      // Merge with existing tags
-      const existingTags = new Set(formData.tags);
-      selectedFields.tags.forEach((tag: string) => existingTags.add(tag));
-      updates.tags = Array.from(existingTags);
+      // Merge with existing topics
+      const existingTopics = new Set(formData.topics);
+      selectedFields.tags.forEach((tag: string) => existingTopics.add(tag));
+      updates.topics = Array.from(existingTopics);
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -858,29 +852,56 @@ const [loading, setLoading] = useState(false);
           </Button>
         </div>
         
-        {/* File preview badges */}
+        {/* Score file thumbnails - matching YouTube thumbnail style */}
         {variation.files.length > 0 && (
-          <div className="flex items-center gap-1 flex-wrap mt-3">
-            {variation.files.map((file, fileIndex) => (
-              <Badge key={fileIndex} variant="secondary" className="flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                <span className="text-xs">Page {fileIndex + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => window.open(file.url, "_blank")}
-                  className="ml-1 hover:text-primary transition-colors"
-                >
-                  👁️
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onFileRemove(index, fileIndex)}
-                  className="ml-1 hover:text-destructive transition-colors"
-                >
-                  ✕
-                </button>
-              </Badge>
-            ))}
+          <div className="flex flex-wrap gap-2 mt-3 justify-center">
+            {variation.files.map((file, fileIndex) => {
+              const isImage = file.url.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+              return (
+                <div key={fileIndex} className="relative group">
+                  <div 
+                    className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer border"
+                    onClick={() => window.open(file.url, "_blank")}
+                  >
+                    {isImage ? (
+                      <img 
+                        src={file.url}
+                        alt={`Page ${fileIndex + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    
+                    {/* Eye icon overlay - always visible with hover effect */}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                      <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center group-hover:bg-white transition-colors">
+                        <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    {/* Page number */}
+                    <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                      {fileIndex + 1}
+                    </div>
+                  </div>
+                  
+                  {/* Delete button - top right */}
+                  <button
+                    type="button"
+                    onClick={() => onFileRemove(index, fileIndex)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-white rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -1024,31 +1045,14 @@ const [loading, setLoading] = useState(false);
             </div>
           </div>
 
+          {/* Topics (주제) - replaces category and tags */}
           <div>
-            <Label htmlFor="category">
-              {t("songDialog.category")}
-            </Label>
-            <Select value={formData.category || "uncategorized"} onValueChange={(value) => setFormData({ ...formData, category: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("songLibrary.selectCategory")} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                <SelectItem value="uncategorized">{t("songLibrary.categories.uncategorized")}</SelectItem>
-                <SelectItem value="찬송가">{t("songLibrary.categories.hymn")}</SelectItem>
-                <SelectItem value="모던워십 (한국)">{t("songLibrary.categories.modernKorean")}</SelectItem>
-                <SelectItem value="모던워십 (서양)">{t("songLibrary.categories.modernWestern")}</SelectItem>
-                <SelectItem value="모던워십 (기타)">{t("songLibrary.categories.modernOther")}</SelectItem>
-                <SelectItem value="한국 복음성가">{t("songLibrary.categories.koreanGospel")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tags - moved after Category */}
-          <div>
-            <Label htmlFor="tags">{t("songDialog.tags")}</Label>
-            <TagSelector 
-              selectedTags={formData.tags} 
-              onTagsChange={(tags) => setFormData({ ...formData, tags })} 
+            <Label htmlFor="topics">{t("songDialog.topics")}</Label>
+            <TopicSelector 
+              selectedTopics={formData.topics} 
+              onTopicsChange={(topics) => setFormData({ ...formData, topics })} 
+              minTopics={2}
+              maxTopics={3}
             />
           </div>
 
@@ -1241,8 +1245,7 @@ const [loading, setLoading] = useState(false);
           currentValues={{
             lyrics: formData.lyrics,
             default_key: formData.default_key,
-            category: formData.category,
-            tags: formData.tags
+            topics: formData.topics
           }}
           onApply={handleApplySuggestions}
         />

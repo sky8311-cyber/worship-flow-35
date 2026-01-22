@@ -1141,6 +1141,8 @@ export const translations = {
         koreanGospel: "Korean Gospel Song"
       },
       tags: "Tags",
+      topics: "Topics",
+      topicsRequired: "Please select 2-3 topics",
       tagsPlaceholder: "e.g., praise, grace, modern",
       tagPlaceholder: "Search or add tags...",
       youtubeUrl: "YouTube URL",
@@ -3202,6 +3204,8 @@ songCard: {
         koreanGospel: "한국 복음성가"
       },
       tags: "태그",
+      topics: "주제",
+      topicsRequired: "주제를 2-3개 선택해주세요",
       tagsPlaceholder: "예: 찬양, 은혜, 현대",
       tagPlaceholder: "태그 검색 또는 추가...",
       youtubeUrl: "유튜브 URL",

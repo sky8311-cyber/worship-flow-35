@@ -17,7 +17,6 @@ interface BilingualTag {
 interface Suggestions {
   lyrics?: string;
   default_key?: string;
-  category?: string;
   tags?: BilingualTag[];
   confidence?: 'high' | 'medium' | 'low';
   notes?: string;
@@ -30,13 +29,11 @@ interface AIEnrichmentDialogProps {
   currentValues: {
     lyrics?: string;
     default_key?: string;
-    category?: string;
-    tags?: string[];
+    topics?: string[];
   };
   onApply: (selectedFields: {
     lyrics?: string;
     default_key?: string;
-    category?: string;
     tags?: string[];
   }) => void;
 }
@@ -49,10 +46,13 @@ export const AIEnrichmentDialog = ({
   onApply
 }: AIEnrichmentDialogProps) => {
   const { t } = useTranslation();
-  const [selectedFields, setSelectedFields] = useState({
+  const [selectedFields, setSelectedFields] = useState<{
+    lyrics: boolean;
+    default_key: boolean;
+    tags: Set<number>;
+  }>({
     lyrics: !!suggestions.lyrics,
     default_key: !!suggestions.default_key,
-    category: !!suggestions.category,
     tags: new Set(suggestions.tags?.map((_, index) => index) || [])
   });
   const [lyricsExpanded, setLyricsExpanded] = useState(false);
@@ -82,9 +82,6 @@ export const AIEnrichmentDialog = ({
     }
     if (selectedFields.default_key && suggestions.default_key) {
       result.default_key = suggestions.default_key;
-    }
-    if (selectedFields.category && suggestions.category) {
-      result.category = suggestions.category;
     }
     if (selectedFields.tags.size > 0 && suggestions.tags) {
       const selectedTagObjects = Array.from(selectedFields.tags)
@@ -163,24 +160,6 @@ export const AIEnrichmentDialog = ({
               </div>
             )}
 
-            {/* Category */}
-            {suggestions.category && (
-              <div className="flex items-center space-x-2 p-3 rounded-lg border">
-                <Checkbox
-                  id="category"
-                  checked={selectedFields.category}
-                  onCheckedChange={() => handleToggleField('category')}
-                />
-                <label htmlFor="category" className="flex-1 cursor-pointer">
-                  <span className="font-medium">{t('aiEnrich.category')}:</span> {suggestions.category}
-                  {currentValues.category && (
-                    <span className="text-sm text-muted-foreground ml-2">
-                      ({t('aiEnrich.currentValue', { value: currentValues.category })})
-                    </span>
-                  )}
-                </label>
-              </div>
-            )}
 
             {/* Tags */}
             {suggestions.tags && suggestions.tags.length > 0 && (
