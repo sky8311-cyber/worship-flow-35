@@ -419,7 +419,9 @@ const BandView = () => {
 
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
-      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, setSong.key);
+      // Priority: score_key (leader's chosen score key) > key (performance key)
+      const leaderScoreKey = setSong.score_key || setSong.key;
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
@@ -800,10 +802,11 @@ const BandView = () => {
             
             // Get available keys for this song
             const availableKeys = getAvailableKeysForSong(setSong.song_id);
-            const leaderSelectedKey = setSong.key;
-            const defaultKeyIndex = availableKeys.indexOf(leaderSelectedKey);
+            // Priority: score_key (leader's chosen score key) > key (performance key)
+            const leaderSelectedScoreKey = setSong.score_key || setSong.key;
+            const defaultKeyIndex = availableKeys.indexOf(leaderSelectedScoreKey);
             const currentKeyIndex = browsingKeyIndex[setSong.id] ?? (defaultKeyIndex >= 0 ? defaultKeyIndex : 0);
-            const currentBrowsingKey = availableKeys[currentKeyIndex] || leaderSelectedKey;
+            const currentBrowsingKey = availableKeys[currentKeyIndex] || leaderSelectedScoreKey;
             
             // Get score files for the currently browsing key
             const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey);
@@ -1003,9 +1006,9 @@ const BandView = () => {
                         
                         <Badge variant="default" className="px-3">
                           {scoreKeyUsed}
-                          {scoreKeyUsed !== leaderSelectedKey && (
+                          {scoreKeyUsed !== leaderSelectedScoreKey && (
                             <span className="ml-1.5 text-xs opacity-70">
-                              ({language === "ko" ? "인도자 선택" : "Leader"}: {leaderSelectedKey})
+                              ({language === "ko" ? "인도자 선택" : "Leader"}: {leaderSelectedScoreKey})
                             </span>
                           )}
                         </Badge>

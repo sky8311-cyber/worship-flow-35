@@ -999,20 +999,11 @@ const [loading, setLoading] = useState(false);
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Label htmlFor="artist">{t("songDialog.artist")}</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-[280px]">
-                      <p className="text-sm">{t("songDialog.artistTooltip")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+              <p className="text-xs text-muted-foreground">
+                {t("songDialog.artistTooltip")}
+              </p>
               <ArtistSelector
                 value={formData.artist}
                 onValueChange={(artist) => setFormData({ ...formData, artist })}
