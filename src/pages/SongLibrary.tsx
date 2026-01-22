@@ -78,10 +78,9 @@ const SongLibrary = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  // Category removed - now using topics
+  // Category and Tags removed - now using Topics system
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("recent");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -166,24 +165,7 @@ const SongLibrary = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  // Fetch unique tags from all songs
-  const { data: uniqueTags } = useQuery({
-    queryKey: ["unique-tags"],
-    queryFn: async () => {
-      const { data } = await supabase.from("songs").select("tags");
-      const tagSet = new Set<string>();
-      data?.forEach(song => {
-        if (song.tags) {
-          song.tags.split(",").forEach((tag: string) => {
-            const trimmed = tag.trim();
-            if (trimmed) tagSet.add(trimmed);
-          });
-        }
-      });
-      return Array.from(tagSet).sort();
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes - tags rarely change
-  });
+  // Tags query removed - using Topics system now
 
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
@@ -250,15 +232,6 @@ const SongLibrary = () => {
     // Key filter
     if (selectedKey !== "all" && song.default_key !== selectedKey) {
       return false;
-    }
-    
-    // Tag filter
-    if (selectedTags.length > 0) {
-      const songTags = song.tags ? song.tags.split(",").map((t: string) => t.trim().toLowerCase()) : [];
-      const hasAllTags = selectedTags.every(tag => 
-        songTags.some((st: string) => st.includes(tag.toLowerCase()))
-      );
-      if (!hasAllTags) return false;
     }
     
     // Column filters
@@ -857,33 +830,8 @@ const SongLibrary = () => {
               </Select>
             </div>
 
-            {/* Tag filter chips */}
-            {uniqueTags && uniqueTags.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">{t("songLibrary.filterByTags")}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {uniqueTags.slice(0, 20).map(tag => (
-                    <Badge
-                      key={tag}
-                      variant={selectedTags.includes(tag) ? "default" : "outline"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => {
-                        setSelectedTags(prev => 
-                          prev.includes(tag) 
-                            ? prev.filter(t => t !== tag) 
-                            : [...prev, tag]
-                        );
-                      }}
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Active filters display */}
-            {(selectedLanguage !== "all" || selectedKey !== "all" || selectedTags.length > 0 || isInCrossCommunityMode) && (
+            {(selectedLanguage !== "all" || selectedKey !== "all" || isInCrossCommunityMode) && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">{t("songLibrary.activeFilters")}:</span>
                 {isInCrossCommunityMode && (
@@ -905,12 +853,6 @@ const SongLibrary = () => {
                     <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedKey("all")} />
                   </Badge>
                 )}
-                {selectedTags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
-                    {tag}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))} />
-                  </Badge>
-                ))}
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -918,7 +860,6 @@ const SongLibrary = () => {
                   onClick={() => {
                     setSelectedLanguage("all");
                     setSelectedKey("all");
-                    setSelectedTags([]);
                   }}
                 >
                   {t("songLibrary.clearAllFilters")}
