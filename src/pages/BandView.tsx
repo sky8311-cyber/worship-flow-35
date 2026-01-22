@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Lock, Eye, Maximize2, Share2, Headphones } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Lock, Eye, Maximize2, Share2, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -90,6 +90,9 @@ const BandView = () => {
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  // State for browsing different score keys per song
+  const [browsingKeyIndex, setBrowsingKeyIndex] = useState<Record<string, number>>({});
   
   // Unpublish confirmation states
   const [showUnpublishWarning, setShowUnpublishWarning] = useState(false);
@@ -393,6 +396,15 @@ const BandView = () => {
     }
     
     return { scoreFiles, scoreKeyUsed, isUsingFallback: scoreKeyUsed !== selectedKey && scoreFiles.length > 0 };
+  };
+
+  // Helper function to get all available keys for a song
+  const getAvailableKeysForSong = (songId: string) => {
+    const keys = (allSongScores || [])
+      .filter((s: any) => s.song_id === songId)
+      .map((s: any) => s.key)
+      .filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i);
+    return keys;
   };
 
   // Collect all scores for fullscreen viewer
@@ -786,8 +798,15 @@ const BandView = () => {
             const fallbackYoutubeUrl = setSong.override_youtube_url || song?.youtube_url;
             const fallbackVideoId = getYouTubeVideoId(fallbackYoutubeUrl);
             
-            // Get score files for the selected key with fallback
-            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, setSong.key);
+            // Get available keys for this song
+            const availableKeys = getAvailableKeysForSong(setSong.song_id);
+            const leaderSelectedKey = setSong.key;
+            const defaultKeyIndex = availableKeys.indexOf(leaderSelectedKey);
+            const currentKeyIndex = browsingKeyIndex[setSong.id] ?? (defaultKeyIndex >= 0 ? defaultKeyIndex : 0);
+            const currentBrowsingKey = availableKeys[currentKeyIndex] || leaderSelectedKey;
+            
+            // Get score files for the currently browsing key
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey);
 
             // Fallback to default score_file_url if no key-specific scores at all
             const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
@@ -966,11 +985,49 @@ const BandView = () => {
                   {/* Embedded Score Images */}
                   {scoreFiles.length > 0 ? (
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground">
-                          {t("bandView.scoreForKey", { key: scoreKeyUsed })}
-                        </p>
-                        {isUsingFallback && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Key navigation for multiple score keys */}
+                        {availableKeys.length > 1 && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              disabled={currentKeyIndex <= 0}
+                              onClick={() => setBrowsingKeyIndex(prev => ({ ...prev, [setSong.id]: currentKeyIndex - 1 }))}
+                            >
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                        
+                        <Badge variant="default" className="px-3">
+                          {scoreKeyUsed}
+                          {scoreKeyUsed !== leaderSelectedKey && (
+                            <span className="ml-1.5 text-xs opacity-70">
+                              ({language === "ko" ? "인도자 선택" : "Leader"}: {leaderSelectedKey})
+                            </span>
+                          )}
+                        </Badge>
+                        
+                        {availableKeys.length > 1 && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8"
+                              disabled={currentKeyIndex >= availableKeys.length - 1}
+                              onClick={() => setBrowsingKeyIndex(prev => ({ ...prev, [setSong.id]: currentKeyIndex + 1 }))}
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                            <span className="text-xs text-muted-foreground">
+                              ({currentKeyIndex + 1}/{availableKeys.length})
+                            </span>
+                          </>
+                        )}
+                        
+                        {isUsingFallback && availableKeys.length <= 1 && (
                           <Badge variant="outline" className="text-xs text-amber-600 border-amber-400 bg-amber-50 dark:bg-amber-900/20">
                             {language === "ko" ? `선택된 키: ${setSong.key}` : `Selected: ${setSong.key}`}
                           </Badge>

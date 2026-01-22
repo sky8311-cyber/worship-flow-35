@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { TagSelector } from "@/components/TagSelector";
@@ -999,7 +1000,19 @@ const [loading, setLoading] = useState(false);
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[280px]">
+                      <p className="text-sm">{t("songDialog.artistTooltip")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <ArtistSelector
                 value={formData.artist}
                 onValueChange={(artist) => setFormData({ ...formData, artist })}
@@ -1125,39 +1138,61 @@ const [loading, setLoading] = useState(false);
             <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
             
             <div className="space-y-3">
-              {youtubeLinks.map((link, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      placeholder={t("songDialog.youtubeLabel")}
-                      value={link.label}
-                      onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
-                      className="w-1/3"
-                    />
-                    <Input
-                      type="url"
-                      placeholder="https://youtube.com/..."
-                      value={link.url}
-                      onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
-                      className="flex-1"
-                    />
-                    {youtubeLinks.length > 1 && (
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeYoutubeLink(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+              {youtubeLinks.map((link, index) => {
+                // Extract video ID for thumbnail
+                const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
+                
+                return (
+                  <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        placeholder={t("songDialog.youtubeLabel")}
+                        value={link.label}
+                        onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
+                        className="w-24 sm:w-32 text-sm"
+                      />
+                      <Input
+                        type="url"
+                        placeholder="https://youtube.com/..."
+                        value={link.url}
+                        onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
+                        className="flex-1 text-sm"
+                      />
+                      {youtubeLinks.length > 1 && (
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => removeYoutubeLink(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {/* YouTube Thumbnail Preview */}
+                    {videoId && (
+                      <div 
+                        className="relative w-16 h-12 rounded overflow-hidden cursor-pointer group"
+                        onClick={() => window.open(link.url, "_blank")}
+                      >
+                        <img 
+                          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                          alt="YouTube thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Youtube className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
                     )}
+                    
+                    <div className="pl-3 border-l-2 border-primary/50">
+                      <YouTubeSearchBar
+                        defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
+                        onSelectVideo={(url) => {
+                          updateYoutubeLink(index, 'url', url);
+                        }}
+                      />
+                    </div>
                   </div>
-                  
-                  <div className="pl-4 border-l-2 border-primary">
-                    <YouTubeSearchBar
-                      defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
-                      onSelectVideo={(url) => {
-                        updateYoutubeLink(index, 'url', url);
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
                 <Plus className="h-4 w-4 mr-2" />
                 {t("songDialog.addYoutubeLink")}
