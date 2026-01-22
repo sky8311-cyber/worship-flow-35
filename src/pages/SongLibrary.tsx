@@ -19,7 +19,7 @@ import { FloatingSearchButton } from "@/components/FloatingSearchButton";
 import { FloatingActionStack } from "@/components/FloatingActionStack";
 import { FloatingCartIndicator } from "@/components/FloatingCartIndicator";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MobileSelect } from "@/components/MobileSelect";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -81,6 +81,7 @@ const SongLibrary = () => {
   // Category and Tags removed - now using Topics system
   const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
   const [selectedKey, setSelectedKey] = useState<string>("all");
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("recent");
   const [viewMode, setViewMode] = useState<"card" | "table">("table");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -167,13 +168,33 @@ const SongLibrary = () => {
 
   // Tags query removed - using Topics system now
 
+  // Fetch all topics for filter chips
+  const { data: allTopics } = useQuery({
+    queryKey: ["song-topics-list"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("song_topics")
+        .select("id, name_ko, name_en")
+        .order("name_ko");
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select("*");
 
       if (debouncedSearchQuery) {
-        query = query.or(`title.ilike.%${debouncedSearchQuery}%,tags.ilike.%${debouncedSearchQuery}%`);
+        // Enhanced search: title, subtitle, artist, topics, lyrics
+        query = query.or(
+          `title.ilike.%${debouncedSearchQuery}%,` +
+          `subtitle.ilike.%${debouncedSearchQuery}%,` +
+          `artist.ilike.%${debouncedSearchQuery}%,` +
+          `topics.ilike.%${debouncedSearchQuery}%,` +
+          `lyrics.ilike.%${debouncedSearchQuery}%`
+        );
       }
 
       if (selectedLanguage !== "all") {
@@ -232,6 +253,15 @@ const SongLibrary = () => {
     // Key filter
     if (selectedKey !== "all" && song.default_key !== selectedKey) {
       return false;
+    }
+
+    // Topic filter - show only songs matching selected topics (OR logic)
+    if (selectedTopics.length > 0) {
+      const songTopics = song.topics?.split(',').map((t: string) => t.trim()) || [];
+      const hasMatchingTopic = selectedTopics.some(topic => songTopics.includes(topic));
+      if (!hasMatchingTopic) {
+        return false;
+      }
     }
     
     // Column filters
@@ -792,46 +822,82 @@ const SongLibrary = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("songLibrary.selectLanguage")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("songLibrary.allLanguages")}</SelectItem>
-                  <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                  <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                  <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <MobileSelect
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+                placeholder={t("songLibrary.selectLanguage")}
+                options={[
+                  { value: "all", label: t("songLibrary.allLanguages") },
+                  { value: "KO", label: t("songLibrary.languages.ko") },
+                  { value: "EN", label: t("songLibrary.languages.en") },
+                  { value: "KO/EN", label: t("songLibrary.languages.koen") },
+                ]}
+              />
 
-              <Select value={selectedKey} onValueChange={setSelectedKey}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("songLibrary.filterByKey")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("songLibrary.allKeys")}</SelectItem>
-                  {["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"].map(key => (
-                    <SelectItem key={key} value={key}>{key}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={selectedKey}
+                onValueChange={setSelectedKey}
+                placeholder={t("songLibrary.filterByKey")}
+                options={[
+                  { value: "all", label: t("songLibrary.allKeys") },
+                  ...["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"].map(key => ({
+                    value: key,
+                    label: key,
+                  })),
+                ]}
+              />
 
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("songLibrary.sortBy")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="title-asc">{t("songLibrary.sortOptions.titleAsc")}</SelectItem>
-                  <SelectItem value="title-desc">{t("songLibrary.sortOptions.titleDesc")}</SelectItem>
-                  <SelectItem value="recent">{t("songLibrary.sortOptions.recentlyAdded")}</SelectItem>
-                  <SelectItem value="artist">{t("songLibrary.sortOptions.artist")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <MobileSelect
+                value={sortBy}
+                onValueChange={setSortBy}
+                placeholder={t("songLibrary.sortBy")}
+                options={[
+                  { value: "title-asc", label: t("songLibrary.sortOptions.titleAsc") },
+                  { value: "title-desc", label: t("songLibrary.sortOptions.titleDesc") },
+                  { value: "recent", label: t("songLibrary.sortOptions.recentlyAdded") },
+                  { value: "artist", label: t("songLibrary.sortOptions.artist") },
+                ]}
+              />
             </div>
 
+            {/* Topic Filter Chips */}
+            {allTopics && allTopics.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs text-muted-foreground font-medium">
+                  {t("songLibrary.topicFilter")}
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {allTopics.map((topic) => (
+                    <Badge
+                      key={topic.id}
+                      variant={selectedTopics.includes(topic.name_ko) ? "default" : "outline"}
+                      className={cn(
+                        "cursor-pointer transition-colors",
+                        selectedTopics.includes(topic.name_ko) 
+                          ? "bg-primary hover:bg-primary/90" 
+                          : "hover:bg-muted"
+                      )}
+                      onClick={() => {
+                        if (selectedTopics.includes(topic.name_ko)) {
+                          setSelectedTopics(selectedTopics.filter(t => t !== topic.name_ko));
+                        } else {
+                          setSelectedTopics([...selectedTopics, topic.name_ko]);
+                        }
+                      }}
+                    >
+                      {topic.name_ko}
+                      {selectedTopics.includes(topic.name_ko) && (
+                        <X className="h-3 w-3 ml-1" />
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Active filters display */}
-            {(selectedLanguage !== "all" || selectedKey !== "all" || isInCrossCommunityMode) && (
+            {(selectedLanguage !== "all" || selectedKey !== "all" || selectedTopics.length > 0 || isInCrossCommunityMode) && (
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs text-muted-foreground">{t("songLibrary.activeFilters")}:</span>
                 {isInCrossCommunityMode && (
@@ -853,6 +919,15 @@ const SongLibrary = () => {
                     <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedKey("all")} />
                   </Badge>
                 )}
+                {selectedTopics.map(topic => (
+                  <Badge key={topic} variant="secondary" className="flex items-center gap-1">
+                    {topic}
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
+                      onClick={() => setSelectedTopics(selectedTopics.filter(t => t !== topic))} 
+                    />
+                  </Badge>
+                ))}
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -860,6 +935,7 @@ const SongLibrary = () => {
                   onClick={() => {
                     setSelectedLanguage("all");
                     setSelectedKey("all");
+                    setSelectedTopics([]);
                   }}
                 >
                   {t("songLibrary.clearAllFilters")}
