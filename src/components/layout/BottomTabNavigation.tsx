@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,20 @@ export const BottomTabNavigation = () => {
   const { user } = useAuth();
   const { cartCount } = useSongCart();
   const [chatOpen, setChatOpen] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Detect keyboard visibility to hide navigation when keyboard is open
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const isKeyboard = window.visualViewport.height < window.innerHeight * 0.75;
+        setKeyboardVisible(isKeyboard);
+      }
+    };
+    
+    window.visualViewport?.addEventListener('resize', handleResize);
+    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch navigation items from DB
   const { data: navItems, isLoading: navLoading } = useEnabledNavigationItems("bottom");
@@ -84,11 +98,20 @@ export const BottomTabNavigation = () => {
   const totalItems = regularItems.length + (chatItem ? 1 : 0);
   const gridCols = totalItems <= 4 ? `grid-cols-${totalItems}` : "grid-cols-5";
   
+  // Hide navigation when keyboard is visible
+  if (keyboardVisible) {
+    return null;
+  }
+
   if (navLoading) {
     return (
       <nav 
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
+        style={{ 
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)',
+        }}
       >
         <div className="grid grid-cols-5 h-14">
           {[1, 2, 3, 4, 5].map(i => (
@@ -104,9 +127,11 @@ export const BottomTabNavigation = () => {
   return (
     <>
       <nav 
-        className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
+        className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          transform: 'translateZ(0)',
+          WebkitTransform: 'translateZ(0)',
         }}
       >
         <div className={cn("grid h-14", `grid-cols-${totalItems}`)}>
