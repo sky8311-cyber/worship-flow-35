@@ -620,14 +620,39 @@ const AdminSongEnrichment = () => {
                       <span className="font-medium">{language === "ko" ? "가사" : "Lyrics"}</span>
                       {selectedSuggestion.songs?.lyrics && (
                         <Badge variant="destructive" className="text-xs">
-                          {language === "ko" ? "기존 가사 덮어쓰기" : "Will overwrite"}
+                          {language === "ko" ? "⚠️ 기존 가사 덮어쓰기" : "⚠️ Will overwrite existing"}
                         </Badge>
                       )}
                     </div>
-                    <pre className="text-xs whitespace-pre-wrap bg-muted p-3 rounded max-h-40 overflow-auto">
-                      {selectedSuggestion.suggested_lyrics.slice(0, 800)}
-                      {selectedSuggestion.suggested_lyrics.length > 800 && "..."}
-                    </pre>
+                    
+                    {/* Side-by-side comparison when existing lyrics exist */}
+                    {selectedSuggestion.songs?.lyrics ? (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            {language === "ko" ? "기존 가사" : "Current Lyrics"}
+                          </p>
+                          <pre className="text-xs whitespace-pre-wrap bg-muted/50 p-3 rounded max-h-40 overflow-auto border border-dashed">
+                            {selectedSuggestion.songs.lyrics.slice(0, 400)}
+                            {selectedSuggestion.songs.lyrics.length > 400 && "..."}
+                          </pre>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-primary mb-1">
+                            {language === "ko" ? "새 가사" : "New Lyrics"}
+                          </p>
+                          <pre className="text-xs whitespace-pre-wrap bg-primary/5 p-3 rounded max-h-40 overflow-auto border border-primary/20">
+                            {selectedSuggestion.suggested_lyrics.slice(0, 400)}
+                            {selectedSuggestion.suggested_lyrics.length > 400 && "..."}
+                          </pre>
+                        </div>
+                      </div>
+                    ) : (
+                      <pre className="text-xs whitespace-pre-wrap bg-muted p-3 rounded max-h-40 overflow-auto">
+                        {selectedSuggestion.suggested_lyrics.slice(0, 800)}
+                        {selectedSuggestion.suggested_lyrics.length > 800 && "..."}
+                      </pre>
+                    )}
                   </div>
                 )}
 
