@@ -73,6 +73,11 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
     const url = `https://www.youtube.com/watch?v=${videoId}`;
     onSelectVideo(url);
     toast.success(t("songDialog.youtubeUrlSelected"));
+    
+    // Reset search state after selection
+    setResults([]);
+    setSearched(false);
+    setQuery("");
   };
 
   const handlePreview = (videoId: string) => {

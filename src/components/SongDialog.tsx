@@ -1044,6 +1044,15 @@ const [loading, setLoading] = useState(false);
             </Select>
           </div>
 
+          {/* Tags - moved after Category */}
+          <div>
+            <Label htmlFor="tags">{t("songDialog.tags")}</Label>
+            <TagSelector 
+              selectedTags={formData.tags} 
+              onTagsChange={(tags) => setFormData({ ...formData, tags })} 
+            />
+          </div>
+
           {/* Private Song Toggle */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center gap-3">
@@ -1112,16 +1121,8 @@ const [loading, setLoading] = useState(false);
               onClick={addVariation}
             >
               <Plus className="h-4 w-4 mr-2" />
-              키 변주 추가
+              {t("songDialog.addKeyVariation")}
             </Button>
-          </div>
-
-          <div>
-            <Label htmlFor="tags">{t("songDialog.tags")}</Label>
-            <TagSelector 
-              selectedTags={formData.tags} 
-              onTagsChange={(tags) => setFormData({ ...formData, tags })} 
-            />
           </div>
 
           <div>
@@ -1135,13 +1136,16 @@ const [loading, setLoading] = useState(false);
                 
                 return (
                   <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                    {/* Line 1: Label */}
+                    <Input
+                      placeholder={t("songDialog.youtubeLabel")}
+                      value={link.label}
+                      onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
+                      className="text-sm"
+                    />
+                    
+                    {/* Line 2: URL + Delete button */}
                     <div className="flex gap-2 items-center">
-                      <Input
-                        placeholder={t("songDialog.youtubeLabel")}
-                        value={link.label}
-                        onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
-                        className="w-24 sm:w-32 text-sm"
-                      />
                       <Input
                         type="url"
                         placeholder="https://youtube.com/..."
@@ -1156,19 +1160,24 @@ const [loading, setLoading] = useState(false);
                       )}
                     </div>
                     
-                    {/* YouTube Thumbnail Preview */}
+                    {/* YouTube Thumbnail Preview - 2x size, centered, play overlay */}
                     {videoId && (
-                      <div 
-                        className="relative w-16 h-12 rounded overflow-hidden cursor-pointer group"
-                        onClick={() => window.open(link.url, "_blank")}
-                      >
-                        <img 
-                          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                          alt="YouTube thumbnail"
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Youtube className="w-5 h-5 text-white" />
+                      <div className="flex justify-center">
+                        <div 
+                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
+                          onClick={() => window.open(link.url, "_blank")}
+                        >
+                          <img 
+                            src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                            alt="YouTube thumbnail"
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Always visible subtle play overlay */}
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                            <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center group-hover:bg-white transition-colors">
+                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-red-600 border-b-[6px] border-b-transparent ml-1" />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
