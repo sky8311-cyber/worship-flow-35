@@ -184,7 +184,8 @@ export function PrintOptionsDialog({
       const printScores: { title: string; key: string; url: string }[] = [];
       setSongs.forEach((setSong) => {
         const song = setSong.songs;
-        const selectedKey = setSong.key || song?.default_key || "";
+        // Priority: score_key (leader's chosen score key) > key (performance key)
+        const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
         
         // Get scores for this song from allSongScores prop
         const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
@@ -292,7 +293,8 @@ export function PrintOptionsDialog({
       // Full mode - one page per song with all info + score
       content = setSongs.map((setSong, index) => {
         const song = setSong.songs;
-        const selectedKey = setSong.key || song?.default_key || "";
+        // Priority: score_key (leader's chosen score key) > key (performance key)
+        const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
         
         // Get score URL
         const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);

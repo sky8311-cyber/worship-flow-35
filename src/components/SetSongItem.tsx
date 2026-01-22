@@ -81,7 +81,8 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   const handleKeyVariationChange = (selectedKey: string) => {
     const variation = keyVariations.find(v => v.key === selectedKey);
     onUpdate(index, { 
-      override_score_file_url: variation?.scoreUrl || null 
+      override_score_file_url: variation?.scoreUrl || null,
+      score_key: selectedKey  // Save the selected score key for BandView
     });
   };
 
