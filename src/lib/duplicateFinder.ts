@@ -46,8 +46,7 @@ const calculateMasterScore = (song: any, usageCount: number): number => {
   if (song.youtube_url) score += 10;
   if (song.score_file_url) score += 10;
   if (song.artist) score += 5;
-  if (song.tags) score += 5;
-  if (song.category) score += 5;
+  if (song.tags) score += 10;
   if (song.interpretation) score += 5;
   
   // Usage frequency (30 points - capped at 30)

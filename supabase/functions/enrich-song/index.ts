@@ -37,8 +37,7 @@ Language: ${language || 'Unknown'}
 Please find and suggest:
 1. Full lyrics (if available online)
 2. Musical key
-3. Category (choose one: 찬송가, 모던워십 (한국), 모던워십 (서양), 모던워십 (기타), 한국 복음성가)
-4. Bilingual tags in Korean and English that describe the song's themes, mood, and worship context (e.g., grace, repentance, thanksgiving, etc.)
+3. Bilingual tags in Korean and English that describe the song's themes, mood, and worship context (e.g., grace, repentance, thanksgiving, etc.)
 
 Be accurate and research-based. If you cannot find information, indicate that clearly.`;
 
@@ -61,7 +60,7 @@ Be accurate and research-based. If you cannot find information, indicate that cl
           type: 'function',
           function: {
             name: 'suggest_song_metadata',
-            description: 'Return detailed song metadata including lyrics, BPM, key, energy level, category, and bilingual tags',
+            description: 'Return detailed song metadata including lyrics, key, and bilingual tags',
             parameters: {
               type: 'object',
               properties: {
@@ -73,11 +72,6 @@ Be accurate and research-based. If you cannot find information, indicate that cl
                   type: 'string', 
                   enum: ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
                   description: 'Suggested musical key'
-                },
-                category: { 
-                  type: 'string', 
-                  enum: ['찬송가', '모던워십 (한국)', '모던워십 (서양)', '모던워십 (기타)', '한국 복음성가'],
-                  description: 'Song category classification'
                 },
                 tags: {
                   type: 'array',
@@ -101,7 +95,7 @@ Be accurate and research-based. If you cannot find information, indicate that cl
                   description: 'Any additional notes about the song or limitations of the information found'
                 }
               },
-              required: ['default_key', 'category', 'tags', 'confidence'],
+              required: ['default_key', 'tags', 'confidence'],
               additionalProperties: false
             }
           }
