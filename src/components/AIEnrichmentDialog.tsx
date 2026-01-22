@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronDown, Sparkles, Info } from "lucide-react";
+import { ChevronDown, Sparkles, Info, Music, Globe } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -16,6 +16,7 @@ interface BilingualTag {
 
 interface Suggestions {
   lyrics?: string;
+  lyrics_source?: 'bugs' | 'melon' | 'none';
   default_key?: string;
   tags?: BilingualTag[];
   confidence?: 'high' | 'medium' | 'low';
@@ -58,7 +59,7 @@ export const AIEnrichmentDialog = ({
   const [lyricsExpanded, setLyricsExpanded] = useState(false);
 
   const handleToggleField = (field: keyof typeof selectedFields) => {
-    if (field === 'tags') return; // Tags handled separately
+    if (field === 'tags') return;
     setSelectedFields(prev => ({ ...prev, [field]: !prev[field] }));
   };
 
@@ -96,9 +97,9 @@ export const AIEnrichmentDialog = ({
 
   const getConfidenceBadge = () => {
     const colors = {
-      high: 'bg-green-100 text-green-800 border-green-300',
-      medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      low: 'bg-red-100 text-red-800 border-red-300'
+      high: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700',
+      medium: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700',
+      low: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700'
     };
     
     const labels = {
@@ -115,14 +116,35 @@ export const AIEnrichmentDialog = ({
     );
   };
 
+  const getLyricsSourceBadge = () => {
+    if (!suggestions.lyrics_source || suggestions.lyrics_source === 'none') {
+      return null;
+    }
+    
+    const sourceLabels = {
+      bugs: 'Bugs Music',
+      melon: 'Melon'
+    };
+    
+    return (
+      <Badge variant="secondary" className="gap-1">
+        <Globe className="h-3 w-3" />
+        {sourceLabels[suggestions.lyrics_source]}
+      </Badge>
+    );
+  };
+
+  const hasScrapedLyrics = suggestions.lyrics && suggestions.lyrics_source && suggestions.lyrics_source !== 'none';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh]">
         <DialogHeader>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Sparkles className="h-5 w-5 text-primary" />
             <DialogTitle>{t('aiEnrich.dialogTitle')}</DialogTitle>
             {getConfidenceBadge()}
+            {getLyricsSourceBadge()}
           </div>
         </DialogHeader>
 
@@ -150,16 +172,19 @@ export const AIEnrichmentDialog = ({
                   onCheckedChange={() => handleToggleField('default_key')}
                 />
                 <label htmlFor="key" className="flex-1 cursor-pointer">
-                  <span className="font-medium">{t('aiEnrich.key')}:</span> {suggestions.default_key}
+                  <div className="flex items-center gap-2">
+                    <Music className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{t('aiEnrich.key')}:</span> 
+                    <span className="text-primary font-semibold">{suggestions.default_key}</span>
+                  </div>
                   {currentValues.default_key && (
-                    <span className="text-sm text-muted-foreground ml-2">
-                      ({t('aiEnrich.currentValue', { value: currentValues.default_key })})
+                    <span className="text-xs text-muted-foreground block mt-1">
+                      {t('aiEnrich.currentValue', { value: currentValues.default_key })}
                     </span>
                   )}
                 </label>
               </div>
             )}
-
 
             {/* Tags */}
             {suggestions.tags && suggestions.tags.length > 0 && (
@@ -201,7 +226,14 @@ export const AIEnrichmentDialog = ({
                     onCheckedChange={() => handleToggleField('lyrics')}
                   />
                   <CollapsibleTrigger className="flex-1 flex items-center justify-between cursor-pointer">
-                    <span className="font-medium">{t('aiEnrich.suggestedLyrics')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{t('aiEnrich.suggestedLyrics')}</span>
+                      {hasScrapedLyrics && (
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                          스크래핑됨
+                        </Badge>
+                      )}
+                    </div>
                     <ChevronDown
                       className={`h-4 w-4 transition-transform ${
                         lyricsExpanded ? 'transform rotate-180' : ''
@@ -216,9 +248,24 @@ export const AIEnrichmentDialog = ({
                         {suggestions.lyrics}
                       </pre>
                     </ScrollArea>
+                    {currentValues.lyrics && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        ⚠️ 기존 가사가 있습니다. 적용하면 덮어씌워집니다.
+                      </p>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+            )}
+
+            {/* No lyrics warning */}
+            {!suggestions.lyrics && (
+              <Alert variant="default" className="border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20">
+                <Info className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                <AlertDescription className="text-sm text-yellow-700 dark:text-yellow-400">
+                  가사를 찾을 수 없습니다. 키와 주제는 곡 제목 기반으로 추천되었습니다.
+                </AlertDescription>
+              </Alert>
             )}
           </div>
         </ScrollArea>

@@ -6,6 +6,79 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Allowed topics from song_topics table - these are the only valid options
+const ALLOWED_TOPICS = [
+  { ko: '감사', en: 'Thanksgiving' },
+  { ko: '결단', en: 'Decision' },
+  { ko: '경배', en: 'Worship' },
+  { ko: '고백', en: 'Confession' },
+  { ko: '공동체', en: 'Community' },
+  { ko: '구원', en: 'Salvation' },
+  { ko: '기도', en: 'Prayer' },
+  { ko: '기쁨', en: 'Joy' },
+  { ko: '나라', en: 'Kingdom' },
+  { ko: '동행', en: 'Walking with God' },
+  { ko: '믿음', en: 'Faith' },
+  { ko: '사랑', en: 'Love' },
+  { ko: '사명', en: 'Calling' },
+  { ko: '선교', en: 'Mission' },
+  { ko: '성령', en: 'Holy Spirit' },
+  { ko: '소망', en: 'Hope' },
+  { ko: '순종', en: 'Obedience' },
+  { ko: '십자가', en: 'Cross' },
+  { ko: '영광', en: 'Glory' },
+  { ko: '위로', en: 'Comfort' },
+  { ko: '은혜', en: 'Grace' },
+  { ko: '인도하심', en: 'Guidance' },
+  { ko: '찬양', en: 'Praise' },
+  { ko: '축복', en: 'Blessing' },
+  { ko: '치유', en: 'Healing' },
+  { ko: '평안', en: 'Peace' },
+  { ko: '헌신', en: 'Commitment' },
+  { ko: '회개', en: 'Repentance' },
+  { ko: '회복', en: 'Restoration' },
+];
+
+const TOPIC_NAMES_KO = ALLOWED_TOPICS.map(t => t.ko);
+
+interface ScrapeResult {
+  lyrics: string | null;
+  source: 'bugs' | 'melon' | 'none';
+  error?: string;
+}
+
+// Call the scrape-lyrics function
+async function scrapeLyrics(title: string, artist: string): Promise<ScrapeResult> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.log('Missing Supabase config, skipping scrape');
+      return { lyrics: null, source: 'none', error: 'Missing config' };
+    }
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/scrape-lyrics`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify({ title, artist }),
+    });
+    
+    if (!response.ok) {
+      console.log('Scrape function failed:', response.status);
+      return { lyrics: null, source: 'none', error: `Scrape failed: ${response.status}` };
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error calling scrape-lyrics:', error);
+    return { lyrics: null, source: 'none', error: error instanceof Error ? error.message : 'Unknown' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,18 +101,59 @@ serve(async (req) => {
 
     console.log('Enriching song:', { title, artist, language });
 
-    // Construct research prompt
-    const prompt = `Research and provide detailed information about the worship song:
-Title: ${title}
-Artist: ${artist || 'Unknown'}
-Language: ${language || 'Unknown'}
+    // Step 1: Try to scrape actual lyrics
+    console.log('Step 1: Scraping lyrics...');
+    const scrapeResult = await scrapeLyrics(title, artist || '');
+    
+    const hasScrapedLyrics = scrapeResult.lyrics && scrapeResult.lyrics.length > 50;
+    console.log('Scrape result:', { 
+      hasLyrics: hasScrapedLyrics, 
+      source: scrapeResult.source,
+      lyricsLength: scrapeResult.lyrics?.length || 0 
+    });
 
-Please find and suggest:
-1. Full lyrics (if available online)
-2. Musical key
-3. Bilingual tags in Korean and English that describe the song's themes, mood, and worship context (e.g., grace, repentance, thanksgiving, etc.)
+    // Step 2: AI analysis with lyrics context (if available)
+    console.log('Step 2: AI analysis...');
+    
+    // Build the analysis prompt based on whether we have lyrics
+    let analysisPrompt: string;
+    
+    if (hasScrapedLyrics) {
+      // We have real lyrics - analyze them for key and topics
+      analysisPrompt = `다음 찬양/예배곡의 실제 가사를 분석하여 음악적 정보를 추천해주세요.
 
-Be accurate and research-based. If you cannot find information, indicate that clearly.`;
+곡 정보:
+- 제목: ${title}
+- 아티스트: ${artist || '미상'}
+- 언어: ${language || '한국어'}
+
+[가사 내용]
+${scrapeResult.lyrics}
+
+분석 요청:
+1. 가사의 분위기와 멜로디 라인을 고려하여 적절한 음악 키를 추천해주세요.
+2. 가사 내용을 분석하여 가장 적합한 주제를 2-3개 선택해주세요.
+
+주의: 주제는 반드시 아래 목록에서만 선택하세요:
+${TOPIC_NAMES_KO.join(', ')}`;
+    } else {
+      // No lyrics available - do best-effort analysis based on title/artist
+      analysisPrompt = `다음 찬양/예배곡의 정보를 기반으로 음악적 메타데이터를 추천해주세요.
+
+곡 정보:
+- 제목: ${title}
+- 아티스트: ${artist || '미상'}
+- 언어: ${language || '한국어'}
+
+주의: 가사를 직접 찾을 수 없었습니다. 곡 제목과 아티스트 정보만으로 최선의 추측을 해주세요.
+
+분석 요청:
+1. 이 곡의 일반적인 연주 키를 추천해주세요.
+2. 곡 제목에서 유추할 수 있는 주제를 2-3개 선택해주세요.
+
+주의: 주제는 반드시 아래 목록에서만 선택하세요:
+${TOPIC_NAMES_KO.join(', ')}`;
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -52,55 +166,55 @@ Be accurate and research-based. If you cannot find information, indicate that cl
         messages: [
           { 
             role: 'system', 
-            content: 'You are a worship music expert assistant that researches and provides accurate information about worship songs. Provide detailed, research-based information.'
+            content: `당신은 한국 CCM과 예배 음악 전문가입니다. 곡의 가사와 분위기를 분석하여 정확한 메타데이터를 추천합니다.
+
+중요 규칙:
+1. 주제(topics)는 반드시 지정된 목록에서만 선택하세요.
+2. 가사가 제공된 경우, 가사 내용을 깊이 분석하여 주제를 선택하세요.
+3. 키는 실제 곡의 일반적인 연주 키를 추천하세요.
+4. 확신이 없으면 confidence를 낮게 설정하세요.`
           },
-          { role: 'user', content: prompt }
+          { role: 'user', content: analysisPrompt }
         ],
         tools: [{
           type: 'function',
           function: {
-            name: 'suggest_song_metadata',
-            description: 'Return detailed song metadata including lyrics, key, and bilingual tags',
+            name: 'analyze_song_metadata',
+            description: 'Return analyzed song metadata including key and topics',
             parameters: {
               type: 'object',
               properties: {
-                lyrics: { 
-                  type: 'string', 
-                  description: 'Full song lyrics if found. If not found, return empty string.' 
-                },
                 default_key: { 
                   type: 'string', 
                   enum: ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
-                  description: 'Suggested musical key'
+                  description: '추천하는 음악 키'
                 },
-                tags: {
+                topics: {
                   type: 'array',
-                  description: 'Bilingual tags describing themes, mood, and worship context',
+                  description: '가사 내용에서 분석된 주제들 (2-3개)',
                   items: {
-                    type: 'object',
-                    properties: {
-                      ko: { type: 'string', description: 'Korean tag' },
-                      en: { type: 'string', description: 'English translation' }
-                    },
-                    required: ['ko', 'en']
-                  }
+                    type: 'string',
+                    enum: TOPIC_NAMES_KO
+                  },
+                  minItems: 2,
+                  maxItems: 3
                 },
                 confidence: {
                   type: 'string',
                   enum: ['high', 'medium', 'low'],
-                  description: 'Confidence level of the suggestions based on available information'
+                  description: '분석 결과의 신뢰도'
                 },
-                notes: {
+                analysis_notes: {
                   type: 'string',
-                  description: 'Any additional notes about the song or limitations of the information found'
+                  description: '분석에 대한 간단한 설명이나 참고사항'
                 }
               },
-              required: ['default_key', 'tags', 'confidence'],
+              required: ['default_key', 'topics', 'confidence'],
               additionalProperties: false
             }
           }
         }],
-        tool_choice: { type: 'function', function: { name: 'suggest_song_metadata' } }
+        tool_choice: { type: 'function', function: { name: 'analyze_song_metadata' } }
       }),
     });
 
@@ -126,7 +240,7 @@ Be accurate and research-based. If you cannot find information, indicate that cl
     }
 
     const data = await response.json();
-    console.log('AI response:', JSON.stringify(data, null, 2));
+    console.log('AI response received');
 
     // Extract tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
@@ -137,9 +251,39 @@ Be accurate and research-based. If you cannot find information, indicate that cl
       );
     }
 
-    const suggestions = JSON.parse(toolCall.function.arguments);
+    const aiAnalysis = JSON.parse(toolCall.function.arguments);
     
-    console.log('Suggestions generated:', suggestions);
+    // Map topic names to bilingual format
+    const bilingualTopics = aiAnalysis.topics
+      .map((topicKo: string) => {
+        const found = ALLOWED_TOPICS.find(t => t.ko === topicKo);
+        return found ? { ko: found.ko, en: found.en } : null;
+      })
+      .filter(Boolean);
+
+    // Build final suggestions
+    const suggestions = {
+      lyrics: hasScrapedLyrics ? scrapeResult.lyrics : null,
+      lyrics_source: scrapeResult.source,
+      default_key: aiAnalysis.default_key,
+      tags: bilingualTopics,
+      confidence: hasScrapedLyrics ? 
+        (aiAnalysis.confidence === 'low' ? 'medium' : aiAnalysis.confidence) : 
+        'low', // Lower confidence if no lyrics
+      notes: aiAnalysis.analysis_notes || (
+        hasScrapedLyrics 
+          ? `${scrapeResult.source === 'bugs' ? 'Bugs Music' : 'Melon'}에서 가사를 가져왔습니다.`
+          : '가사를 찾을 수 없어 곡 제목 기반으로 분석했습니다. 정확도가 낮을 수 있습니다.'
+      )
+    };
+    
+    console.log('Final suggestions:', { 
+      hasLyrics: !!suggestions.lyrics,
+      source: suggestions.lyrics_source,
+      key: suggestions.default_key,
+      topicsCount: suggestions.tags.length,
+      confidence: suggestions.confidence
+    });
 
     return new Response(
       JSON.stringify({ 
