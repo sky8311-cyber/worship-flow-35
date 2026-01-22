@@ -412,7 +412,6 @@ const [loading, setLoading] = useState(false);
               default_key: newSong.default_key,
               lyrics: newSong.lyrics,
               youtube_url: youtubeLinks[0]?.url || newSong.youtube_url,
-              category: newSong.category,
               language: newSong.language,
               score_file_url: scoreVariations[0]?.files[0]?.url || newSong.score_file_url,
             })) {

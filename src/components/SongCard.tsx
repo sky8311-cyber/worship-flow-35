@@ -115,19 +115,7 @@ const handleDelete = async () => {
     }
   };
 
-  const getCategoryTranslation = (category: string | null) => {
-    if (!category) {
-      return t("songLibrary.categories.uncategorized");
-    }
-    const categoryMap: { [key: string]: string } = {
-      "찬송가": t("songLibrary.categories.hymn"),
-      "모던워십 (한국)": t("songLibrary.categories.modernKorean"),
-      "모던워십 (서양)": t("songLibrary.categories.modernWestern"),
-      "모던워십 (기타)": t("songLibrary.categories.modernOther"),
-      "한국 복음성가": t("songLibrary.categories.koreanGospel"),
-    };
-    return categoryMap[category] || category;
-  };
+  // Category removed - now using topics
 
   const getLanguageTranslation = (lang: string) => {
     const langMap: { [key: string]: string } = {
@@ -204,9 +192,6 @@ const handleDelete = async () => {
                   {getLanguageTranslation(song.language)}
                 </span>
               )}
-              <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">
-                {getCategoryTranslation(song.category)}
-              </span>
             </div>
           </div>
 

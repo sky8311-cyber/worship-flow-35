@@ -64,7 +64,7 @@ export const SetImportDialog = ({
     queryFn: async () => {
       const { data } = await supabase
         .from("songs")
-        .select("id, title, artist, category, language, default_key")
+        .select("id, title, artist, language, default_key")
         .order("title");
       return (data || []) as Song[];
     },

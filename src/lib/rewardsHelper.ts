@@ -148,7 +148,6 @@ export function isSongMetadataComplete(song: {
   default_key?: string | null;
   lyrics?: string | null;
   youtube_url?: string | null;
-  category?: string | null;
   language?: string | null;
   score_file_url?: string | null;
 }): boolean {
@@ -157,7 +156,6 @@ export function isSongMetadataComplete(song: {
     song.default_key &&
     song.lyrics &&
     song.youtube_url &&
-    song.category &&
     song.language &&
     song.score_file_url
   );
