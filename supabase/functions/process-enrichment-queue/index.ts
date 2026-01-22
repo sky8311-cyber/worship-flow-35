@@ -143,10 +143,11 @@ serve(async (req) => {
         };
 
         // Only include fields that were actually missing and have suggestions
-        if (needsLyrics && suggestions.lyrics) {
-          suggestionData.suggested_lyrics = suggestions.lyrics;
-          suggestionData.lyrics_source = suggestions.lyrics_source || 'none';
-        }
+      // Always save lyrics if available - admin can compare and decide
+      if (suggestions.lyrics) {
+        suggestionData.suggested_lyrics = suggestions.lyrics;
+        suggestionData.lyrics_source = suggestions.lyrics_source || 'none';
+      }
 
         if (needsKey && suggestions.default_key) {
           suggestionData.suggested_key = suggestions.default_key;
