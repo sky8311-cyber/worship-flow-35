@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isCommunityOwnerInAnyCommunity, setIsCommunityOwnerInAnyCommunity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [roleSyncComplete, setRoleSyncComplete] = useState(false);
   const syncInProgress = useRef(false);
   const prevUserIdRef = useRef<string | null>(null);
   // Auth epoch: increments on every user switch / signIn / signOut to invalidate stale async results
@@ -161,6 +162,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       if (!currentSession) {
         syncInProgress.current = false;
+        setRoleSyncComplete(true);
         return false;
       }
 
@@ -173,6 +175,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (response.error) {
         console.log('Role sync error:', response.error);
         syncInProgress.current = false;
+        setRoleSyncComplete(true);
         return false;
       }
 
@@ -182,14 +185,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Refresh profile to pick up the new role
         await fetchProfile(currentSession.user.id);
         syncInProgress.current = false;
+        setRoleSyncComplete(true);
         return true;
       }
 
       syncInProgress.current = false;
+      setRoleSyncComplete(true);
       return false;
     } catch (err) {
       console.log('Role sync exception:', err);
       syncInProgress.current = false;
+      setRoleSyncComplete(true);
       return false;
     }
   };
@@ -232,6 +238,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         authEpochRef.current += 1;
         setLoading(true);
         setProfileLoaded(false);
+        setRoleSyncComplete(false);
         setProfile(null);
         setRoles([]);
         setIsCommunityLeaderInAnyCommunity(false);
@@ -251,13 +258,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Show timezone toast on SIGNED_IN event (login)
         const showToast = event === "SIGNED_IN";
         // Use setTimeout to avoid potential deadlock; fetchProfile will set loading=false
-        setTimeout(() => {
-          fetchProfile(session.user.id, showToast);
+        setTimeout(async () => {
+          await fetchProfile(session.user.id, showToast);
           
           // Credit daily login reward on SIGNED_IN event (fire-and-forget)
           if (event === "SIGNED_IN") {
             creditDailyLoginReward(session.user.id);
           }
+          
+          // Sync worship leader role after profile is loaded
+          await syncWorshipLeaderRole();
         }, 0);
       } else {
         // Signed out
@@ -266,6 +276,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsCommunityLeaderInAnyCommunity(false);
         setIsCommunityOwnerInAnyCommunity(false);
         setProfileLoaded(false);
+        setRoleSyncComplete(false);
         setLoading(false);
       }
     });
@@ -418,7 +429,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const hasRole = (role: string) => roles.includes(role);
   const isAdmin = hasRole("admin");
   const isWorshipLeader = hasRole("worship_leader");
-  const isFullyLoaded = !loading && !!user && profileLoaded;
+  // Wait for role sync to complete before marking as fully loaded
+  const isFullyLoaded = !loading && !!user && profileLoaded && roleSyncComplete;
 
   const isCommunityLeader = async (communityId: string): Promise<boolean> => {
     if (!user) return false;

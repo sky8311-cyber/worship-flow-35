@@ -58,6 +58,7 @@ const Dashboard = () => {
     isAdmin,
     isWorshipLeader,
     isCommunityLeaderInAnyCommunity,
+    isFullyLoaded,
     signOut,
     profile,
     user
@@ -82,7 +83,8 @@ const Dashboard = () => {
   const communitiesReady = communitiesFetched && !communitiesLoading;
   
   // CRITICAL: Gate to prevent dashboard flash - wait for ALL essential data
-  const isDashboardReady = !!profile && communitiesReady;
+  // isFullyLoaded now includes role sync completion from AuthContext
+  const isDashboardReady = isFullyLoaded && communitiesReady;
   
   // Set cookie to track that user has visited dashboard (for returning visitor detection)
   useEffect(() => {
@@ -675,7 +677,8 @@ const Dashboard = () => {
             {/* Community Feed Tabs */}
             <Card>
               <CardContent className="p-0">
-                <DashboardFeedTabs 
+                <DashboardFeedTabs
+                  key={`feed-${communityIds.length > 0 ? 'has' : 'no'}-${isWorshipLeader ? 'wl' : 'tm'}`}
                   isWorshipLeader={isWorshipLeader || false}
                   isAdmin={isAdmin || false}
                   isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
@@ -845,7 +848,8 @@ const Dashboard = () => {
           {/* Community Feed Tabs */}
           <Card>
             <CardContent className="p-0">
-              <DashboardFeedTabs 
+              <DashboardFeedTabs
+                key={`feed-mobile-${communityIds.length > 0 ? 'has' : 'no'}-${isWorshipLeader ? 'wl' : 'tm'}`}
                 isWorshipLeader={isWorshipLeader || false}
                 isAdmin={isAdmin || false}
                 isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
