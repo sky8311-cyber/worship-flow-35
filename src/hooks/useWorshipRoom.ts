@@ -156,34 +156,25 @@ export function usePublicRooms(searchQuery?: string) {
   });
 }
 
-// Fetch ambassador rooms
+// Fetch ambassador rooms - optimized single query
 export function useAmbassadorRooms() {
   return useQuery({
     queryKey: ["ambassador-rooms"],
     queryFn: async () => {
-      // First get ambassador profiles
-      const { data: ambassadors, error: ambassadorError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("is_ambassador", true);
-      
-      if (ambassadorError) throw ambassadorError;
-      if (!ambassadors?.length) return [];
-      
-      const ambassadorIds = ambassadors.map(a => a.id);
-      
-      // Then fetch their rooms
+      // Single query with join - filter in JS since Supabase doesn't support filtering on joined tables easily
       const { data, error } = await supabase
         .from("worship_rooms")
         .select(`
           *,
           owner:profiles!owner_user_id(id, full_name, avatar_url, is_ambassador)
         `)
-        .in("owner_user_id", ambassadorIds)
         .order("updated_at", { ascending: false });
       
       if (error) throw error;
-      return data as unknown as WorshipRoom[];
+      
+      // Filter to only ambassador-owned rooms
+      return (data?.filter(room => room.owner?.is_ambassador === true) || []) as unknown as WorshipRoom[];
     },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 }

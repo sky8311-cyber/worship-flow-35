@@ -53,6 +53,6 @@ export function useUserCommunities() {
       };
     },
     enabled: !!user,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes (community changes are rare)
   });
 }

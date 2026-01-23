@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +19,8 @@ import { SEOHead } from "@/components/seo/SEOHead";
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signInWithGoogle } = useAuth();
+  const queryClient = useQueryClient();
+  const { signIn, signInWithGoogle, user } = useAuth();
   const { t, language } = useTranslation();
   const { isGoogleLoginEnabled } = useAppSettings();
   const [loading, setLoading] = useState(false);
@@ -40,14 +43,42 @@ const Login = () => {
     
     if (error) {
       toast.error(error.message);
+      setLoading(false);
     } else {
       toast.success(t("auth.loginSuccess"));
       // Clear stored redirect URL
       sessionStorage.removeItem("redirectAfterLogin");
+      
+      // Prefetch community data in background while navigating
+      // This reduces perceived dashboard load time
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        queryClient.prefetchQuery({
+          queryKey: ["user-communities-unified", currentUser.id],
+          queryFn: async () => {
+            const { data } = await supabase
+              .from("community_members")
+              .select("community_id, role, worship_communities(id, name, avatar_url, leader_id, is_active)")
+              .eq("user_id", currentUser.id);
+            
+            const memberships = data || [];
+            const communityIds = memberships.map((m) => m.community_id);
+            const communities = memberships
+              .map((m) => m.worship_communities)
+              .filter(Boolean);
+            const roleMap = new Map(
+              memberships.map((m) => [m.community_id, m.role || "member"])
+            );
+            
+            return { communityIds, communities, memberships, roleMap };
+          },
+        });
+      }
+      
       // Navigate directly to dashboard (or redirect URL)
       navigate(redirectUrl || "/dashboard");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleLogin = async () => {

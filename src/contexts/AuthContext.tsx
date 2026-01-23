@@ -63,6 +63,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const prevUserIdRef = useRef<string | null>(null);
   // Auth epoch: increments on every user switch / signIn / signOut to invalidate stale async results
   const authEpochRef = useRef(0);
+  // Track last visibility refresh to debounce tab switches
+  const lastRefreshRef = useRef<number>(0);
   const queryClient = useQueryClient();
 
   /**
@@ -155,7 +157,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Sync worship leader role from approved application
   const syncWorshipLeaderRole = async (): Promise<boolean> => {
-    if (syncInProgress.current) return false;
+    // Skip if already a worship leader - no need to call edge function
+    if (roles.includes('worship_leader')) {
+      setRoleSyncComplete(true);
+      return false;
+    }
+    
+    if (syncInProgress.current) {
+      setRoleSyncComplete(true);
+      return false;
+    }
     syncInProgress.current = true;
     
     try {
@@ -281,9 +292,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // Keep session alive when tab becomes visible again
+    // Keep session alive when tab becomes visible again (debounced to 5 minutes)
     const handleVisibilityChange = async () => {
       if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+        
+        // Skip if refreshed within last 5 minutes
+        if (now - lastRefreshRef.current < fiveMinutes) {
+          return;
+        }
+        
+        lastRefreshRef.current = now;
         const startEpoch = authEpochRef.current;
         try {
           const { data: { session: currentSession } } = await supabase.auth.getSession();
