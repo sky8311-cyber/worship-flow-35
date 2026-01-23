@@ -21,17 +21,26 @@ export const BottomTabNavigation = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-  // Detect keyboard visibility to hide navigation when keyboard is open
+  // Detect keyboard visibility using focus events (more reliable than viewport changes)
   useEffect(() => {
-    const handleResize = () => {
-      if (window.visualViewport) {
-        const isKeyboard = window.visualViewport.height < window.innerHeight * 0.75;
-        setKeyboardVisible(isKeyboard);
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        setKeyboardVisible(true);
       }
     };
     
-    window.visualViewport?.addEventListener('resize', handleResize);
-    return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    const handleFocusOut = () => {
+      setKeyboardVisible(false);
+    };
+    
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
   }, []);
 
   // Fetch navigation items from DB
