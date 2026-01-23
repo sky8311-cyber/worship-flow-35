@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Sparkles } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -32,23 +32,15 @@ export function DashboardFeedTabs({
   const { language } = useTranslation();
   const { chatUnreadCount, markChatNotificationsAsRead } = useNotifications();
 
-  // Only show Welcome tab if communities are confirmed to be empty (not during loading)
+  // Parent (Dashboard) now guarantees hasCommunities is never null on mount
+  // because isDashboardReady gate waits for community data
   const showWelcomeTab = (!isWorshipLeader && hasCommunities === false) || isAdmin;
 
-  // Default tab: community for users with communities, welcome for those without
-  const defaultTab = hasCommunities !== false ? "community" : "welcome";
+  // Default tab is now stable - no switching needed since data is ready
+  const defaultTab = hasCommunities ? "community" : "welcome";
   const [activeTab, setActiveTab] = useState(defaultTab);
 
-  // Sync activeTab when community data loads asynchronously
-  useEffect(() => {
-    if (hasCommunities === null) return;
-    
-    if (hasCommunities && activeTab === "welcome" && !isAdmin) {
-      setActiveTab("community");
-    } else if (!hasCommunities && activeTab === "community" && !isWorshipLeader && !isCommunityLeader) {
-      setActiveTab("welcome");
-    }
-  }, [hasCommunities, isAdmin, isWorshipLeader, isCommunityLeader, activeTab]);
+  // No useEffect for tab switching needed - parent guarantees data is loaded
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
