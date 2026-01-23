@@ -80,6 +80,7 @@ export const SeedLeaderboard = () => {
       dateFilter = monthAgo.toISOString();
     }
 
+    // 1. Fetch only user_id and seeds_earned (minimal data)
     let query = supabase
       .from('seed_transactions')
       .select('user_id, seeds_earned');
@@ -89,44 +90,48 @@ export const SeedLeaderboard = () => {
     }
 
     const { data: transactions } = await query;
-
     if (!transactions) return [];
 
-    // Aggregate by user
+    // 2. Aggregate in JS, excluding admins during aggregation
     const userTotals = transactions.reduce((acc, tx) => {
-      acc[tx.user_id] = (acc[tx.user_id] || 0) + tx.seeds_earned;
+      if (!EXCLUDED_USER_IDS.includes(tx.user_id)) {
+        acc[tx.user_id] = (acc[tx.user_id] || 0) + tx.seeds_earned;
+      }
       return acc;
     }, {} as Record<string, number>);
 
-    // Get user profiles and seed info
-    const userIds = Object.keys(userTotals);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url')
-      .in('id', userIds);
+    // 3. Get only top 10 user IDs (buffer for edge cases)
+    const topUserIds = Object.entries(userTotals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([id]) => id);
 
-    const { data: userSeeds } = await supabase
-      .from('user_seeds')
-      .select('user_id, current_level')
-      .in('user_id', userIds);
+    if (topUserIds.length === 0) return [];
 
-    const leaderboard = userIds
-      .filter((userId) => !EXCLUDED_USER_IDS.includes(userId)) // Exclude admins
-      .map((userId) => {
-        const profile = profiles?.find((p) => p.id === userId);
-        const seedData = userSeeds?.find((s) => s.user_id === userId);
-        return {
-          userId,
-          name: profile?.full_name || 'Unknown',
-          avatarUrl: profile?.avatar_url,
-          seeds: userTotals[userId],
-          level: seedData?.current_level || 1
-        };
-      })
-      .sort((a, b) => b.seeds - a.seeds)
-      .slice(0, 5); // Top 5
+    // 4. Fetch profiles and seed levels only for top 10 users (60+ → 10)
+    const [{ data: profiles }, { data: userSeeds }] = await Promise.all([
+      supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', topUserIds),
+      supabase
+        .from('user_seeds')
+        .select('user_id, current_level')
+        .in('user_id', topUserIds)
+    ]);
 
-    return leaderboard;
+    // 5. Return final top 5
+    return topUserIds.slice(0, 5).map((userId) => {
+      const profile = profiles?.find((p) => p.id === userId);
+      const seedData = userSeeds?.find((s) => s.user_id === userId);
+      return {
+        userId,
+        name: profile?.full_name || 'Unknown',
+        avatarUrl: profile?.avatar_url,
+        seeds: userTotals[userId],
+        level: seedData?.current_level || 1
+      };
+    });
   };
 
   const getNewMembersData = async () => {
