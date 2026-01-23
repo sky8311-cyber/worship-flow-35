@@ -38,7 +38,10 @@ import { NotificationPanel } from "@/components/dashboard/NotificationPanel";
 import { NotificationBadge } from "@/components/dashboard/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const SeedLeaderboard = lazy(() => import("@/components/seeds/SeedLeaderboard").then(m => ({ default: m.SeedLeaderboard })));
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
 import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalendarBanner";
@@ -508,7 +511,11 @@ const Dashboard = () => {
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
-            {!settingsLoading && isLeaderboardEnabled && <SeedLeaderboard />}
+            {!settingsLoading && isLeaderboardEnabled && (
+              <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+                <SeedLeaderboard />
+              </Suspense>
+            )}
           </div>
 
           {/* Columns A+B: Main Feed */}

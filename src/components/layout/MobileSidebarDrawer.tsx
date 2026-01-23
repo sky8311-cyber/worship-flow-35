@@ -1,15 +1,18 @@
+import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileSidebarCard } from "@/components/dashboard/ProfileSidebarCard";
 import { CommunitiesSidebarList } from "@/components/dashboard/CommunitiesSidebarList";
 import { QuickActionsCard } from "@/components/dashboard/QuickActionsCard";
 import { UpcomingEventsWidget } from "@/components/dashboard/UpcomingEventsWidget";
-import { SeedLeaderboard } from "@/components/seeds/SeedLeaderboard";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
+
+const SeedLeaderboard = lazy(() => import("@/components/seeds/SeedLeaderboard").then(m => ({ default: m.SeedLeaderboard })));
 
 interface MobileSidebarDrawerProps {
   open: boolean;
@@ -163,7 +166,11 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
               isAdmin={isAdmin}
               isCommunityLeader={isCommunityLeaderInAnyCommunity}
             />
-            {!settingsLoading && isLeaderboardEnabled && <SeedLeaderboard />}
+            {!settingsLoading && isLeaderboardEnabled && (
+              <Suspense fallback={<Skeleton className="h-64 rounded-lg" />}>
+                <SeedLeaderboard />
+              </Suspense>
+            )}
           </div>
         </ScrollArea>
       </SheetContent>
