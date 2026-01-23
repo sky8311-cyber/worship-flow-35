@@ -75,12 +75,21 @@ const Dashboard = () => {
   const [showInvitedDialog, setShowInvitedDialog] = useState(false);
   const [invitedCommunityInfo, setInvitedCommunityInfo] = useState<{ name: string; avatarUrl?: string; inviterName?: string } | null>(null);
   
+  // Use shared community data with loading state tracking - MUST be before any useEffects that depend on it
+  const { data: communitiesData, isLoading: communitiesLoading, isFetched: communitiesFetched } = useUserCommunities();
+  const communityIds = communitiesData?.communityIds || [];
+  // Only consider communities "ready" when data has been fetched (not just loading)
+  const communitiesReady = communitiesFetched && !communitiesLoading;
+  
+  // CRITICAL: Gate to prevent dashboard flash - wait for ALL essential data
+  const isDashboardReady = !!profile && communitiesReady;
+  
   // Set cookie to track that user has visited dashboard (for returning visitor detection)
   useEffect(() => {
     document.cookie = "kworship_visited=true; path=/; max-age=31536000; SameSite=Lax";
   }, []);
   
-  // Role selection dialog for new users
+  // Role selection dialog for new users - only run after dashboard is fully ready
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       if (!user || !profile || isWorshipLeader || isAdmin) return;
@@ -128,10 +137,13 @@ const Dashboard = () => {
       }
     };
     
+    // Only run after communities are fetched to prevent flash
+    if (!communitiesReady) return;
+    
     // Small delay to ensure profile is loaded
-    const timer = setTimeout(checkOnboardingStatus, 1000);
+    const timer = setTimeout(checkOnboardingStatus, 500);
     return () => clearTimeout(timer);
-  }, [user, profile, isWorshipLeader, isAdmin]);
+  }, [user, profile, isWorshipLeader, isAdmin, communitiesReady]);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
@@ -222,11 +234,7 @@ const Dashboard = () => {
     const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     return t(`common.dayOfWeek.${days[dayIndex]}` as any);
   };
-  // Use shared community data with loading state tracking
-  const { data: communitiesData, isLoading: communitiesLoading, isFetched: communitiesFetched } = useUserCommunities();
-  const communityIds = communitiesData?.communityIds || [];
-  // Only consider communities "ready" when data has been fetched (not just loading)
-  const communitiesReady = communitiesFetched && !communitiesLoading;
+  // communityIds moved up to before useEffects that depend on it
 
   // Fetch collaborated set IDs
   const { data: collaboratedSetIds = [] } = useQuery({
@@ -445,6 +453,16 @@ const Dashboard = () => {
     },
     enabled: !!user && !!profile
   });
+
+  // Show loading state until dashboard is fully ready - prevents flash
+  if (!isDashboardReady) {
+    return (
+      <div className="min-h-screen bg-gradient-soft flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
   return <AppLayout>
       {/* Worship Leader Profile Completion Dialog */}
       <CompleteWorshipLeaderProfileDialog />
