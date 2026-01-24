@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
@@ -17,8 +18,9 @@ import { PremiumBillingCard } from "@/components/premium/PremiumBillingCard";
 import { RoleBadge } from "@/components/RoleBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff } from "lucide-react";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -188,6 +190,140 @@ const Settings = () => {
     },
   });
 
+  // Push notification settings
+  const {
+    isSupported: isPushSupported,
+    isSubscribed: isPushSubscribed,
+    isLoading: isPushLoading,
+    preferences: pushPreferences,
+    togglePush,
+    updatePreference,
+    isUpdatingPreferences,
+    permission: pushPermission,
+  } = usePushNotifications();
+
+  // Push Notification Settings Card Component
+  const PushNotificationSettingsCard = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="h-5 w-5" />
+          {language === "ko" ? "푸시 알림 설정" : "Push Notification Settings"}
+        </CardTitle>
+        <CardDescription>
+          {language === "ko" 
+            ? "브라우저를 닫아도 중요한 알림을 받을 수 있습니다" 
+            : "Receive important notifications even when browser is closed"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {!isPushSupported ? (
+          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+            <BellOff className="h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {language === "ko" 
+                ? "이 브라우저는 푸시 알림을 지원하지 않습니다" 
+                : "This browser does not support push notifications"}
+            </p>
+          </div>
+        ) : pushPermission === "denied" ? (
+          <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <BellOff className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm font-medium text-destructive">
+                {language === "ko" ? "알림이 차단됨" : "Notifications Blocked"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {language === "ko" 
+                  ? "브라우저 설정에서 알림 권한을 허용해주세요" 
+                  : "Please enable notifications in your browser settings"}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Main toggle */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>{language === "ko" ? "푸시 알림 켜기" : "Enable Push Notifications"}</Label>
+                <p className="text-xs text-muted-foreground">
+                  {isPushSubscribed 
+                    ? (language === "ko" ? "알림이 활성화되어 있습니다" : "Notifications are enabled")
+                    : (language === "ko" ? "알림을 받으려면 켜세요" : "Turn on to receive notifications")}
+                </p>
+              </div>
+              <Switch
+                checked={isPushSubscribed}
+                onCheckedChange={togglePush}
+                disabled={isPushLoading}
+              />
+            </div>
+
+            {/* Category toggles (only show when subscribed) */}
+            {isPushSubscribed && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {language === "ko" ? "알림 유형 선택" : "Notification Types"}
+                  </p>
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <span>📅</span>
+                      <span className="text-sm">{language === "ko" ? "일정 리마인더" : "Event Reminders"}</span>
+                    </div>
+                    <Switch
+                      checked={pushPreferences.event_reminder}
+                      onCheckedChange={(checked) => updatePreference("event_reminder", checked)}
+                      disabled={isUpdatingPreferences}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <span>🎵</span>
+                      <span className="text-sm">{language === "ko" ? "새 워십세트 업로드" : "New Worship Sets"}</span>
+                    </div>
+                    <Switch
+                      checked={pushPreferences.new_worship_set}
+                      onCheckedChange={(checked) => updatePreference("new_worship_set", checked)}
+                      disabled={isUpdatingPreferences}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <span>📝</span>
+                      <span className="text-sm">{language === "ko" ? "커뮤니티 피드 글" : "Community Posts"}</span>
+                    </div>
+                    <Switch
+                      checked={pushPreferences.community_post}
+                      onCheckedChange={(checked) => updatePreference("community_post", checked)}
+                      disabled={isUpdatingPreferences}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex items-center gap-2">
+                      <span>💬</span>
+                      <span className="text-sm">{language === "ko" ? "채팅 메시지" : "Chat Messages"}</span>
+                    </div>
+                    <Switch
+                      checked={pushPreferences.chat_message}
+                      onCheckedChange={(checked) => updatePreference("chat_message", checked)}
+                      disabled={isUpdatingPreferences}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <AppLayout>
       <div className="container max-w-2xl mx-auto py-6 px-4 space-y-6">
@@ -312,6 +448,9 @@ const Settings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Push Notification Settings */}
+        <PushNotificationSettingsCard />
 
         <Card>
           <CardHeader>

@@ -155,6 +155,23 @@ Deno.serve(async (req) => {
             continue;
           }
 
+          // Send push notification
+          try {
+            await supabase.functions.invoke("send-push-notification", {
+              body: {
+                userId: member.user_id,
+                title: "📅 일정 알림",
+                body: `"${event.title}" 일정이 ${timeMessage} 시작됩니다.`,
+                url: "/dashboard",
+                notificationType: "event_reminder",
+                notificationId: event.id,
+              },
+            });
+          } catch (pushError) {
+            console.error(`Error sending push notification to user ${member.user_id}:`, pushError);
+            // Don't fail the whole process if push fails
+          }
+
           // Log the reminder to prevent duplicates
           const { error: logError } = await supabase
             .from("event_reminder_log")
