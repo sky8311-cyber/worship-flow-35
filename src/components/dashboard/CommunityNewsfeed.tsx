@@ -11,6 +11,7 @@ import { SocialFeedPost } from "./SocialFeedPost";
 import { ProfileDialog } from "./ProfileDialog";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { AnnouncementsSection } from "./AnnouncementsSection";
 
 interface Author {
   id: string;
@@ -53,6 +54,24 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
 
   // Set default selected community
   const activeCommunityId = selectedCommunityId || communities[0]?.id;
+
+  // Fetch welcome posts (announcements)
+  const { data: welcomePosts = [], isLoading: postsLoading } = useQuery({
+    queryKey: ["welcome-posts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("welcome_posts")
+        .select(`
+          *,
+          author:profiles!welcome_posts_author_id_fkey(id, full_name, avatar_url)
+        `)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: feedItems, isLoading: feedLoading } = useQuery({
     queryKey: ["community-newsfeed", activeCommunityId],
@@ -131,6 +150,9 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
   // Admin, Worship Leader, Community Leader can post
   const canPostInCommunity = canPost || isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
 
+  // Show announcements if admin or posts exist
+  const showAnnouncements = isAdmin || welcomePosts.length > 0;
+
   if (communitiesLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -143,6 +165,17 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
   if (communities.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full">
+        {/* Announcements at top even when no communities */}
+        {showAnnouncements && (
+          <div className="w-full mb-6">
+            <AnnouncementsSection
+              posts={welcomePosts}
+              isLoading={postsLoading}
+              isAdmin={isAdmin}
+            />
+          </div>
+        )}
+        
         <Users className="w-16 h-16 text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold mb-2">
           {language === "ko" ? "아직 예배공동체에 가입하지 않았어요" : "You haven't joined a community yet"}
@@ -164,6 +197,15 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
   return (
     <>
       <div>
+        {/* Announcements Section (top of feed) */}
+        {showAnnouncements && (
+          <AnnouncementsSection
+            posts={welcomePosts}
+            isLoading={postsLoading}
+            isAdmin={isAdmin}
+          />
+        )}
+
         {/* Community Tabs (only show if multiple communities) */}
         {communities.length > 1 ? (
           <Tabs value={activeCommunityId} onValueChange={setSelectedCommunityId}>
