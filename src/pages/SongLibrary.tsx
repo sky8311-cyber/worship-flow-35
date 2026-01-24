@@ -149,15 +149,19 @@ const SongLibrary = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  // Batch fetch usage counts for all songs in ONE query
+  // Batch fetch usage counts for all songs - ONLY count published sets
   const { data: usageCounts } = useQuery({
-    queryKey: ["song-usage-counts"],
+    queryKey: ["song-usage-counts-published"],
     queryFn: async () => {
       const { data } = await supabase
         .from("set_songs")
-        .select("song_id");
+        .select(`
+          song_id,
+          service_sets!inner(status)
+        `)
+        .eq("service_sets.status", "published");
       
-      // Count usage per song_id client-side
+      // Count usage per song_id client-side (only published sets)
       const counts = new Map<string, number>();
       data?.forEach(({ song_id }) => {
         counts.set(song_id, (counts.get(song_id) || 0) + 1);

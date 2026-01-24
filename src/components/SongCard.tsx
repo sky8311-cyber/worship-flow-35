@@ -78,8 +78,9 @@ export const SongCard = memo(function SongCard({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   
-  // Check if user can see usage history (admin or worship leader only)
-  const canViewUsageHistory = isAdmin || isWorshipLeader;
+  // Song usage history is available to ALL authenticated users
+  // This allows everyone to discover other worship leaders' published sets
+  const canViewUsageHistory = true;
 
 const handleDelete = async () => {
     try {

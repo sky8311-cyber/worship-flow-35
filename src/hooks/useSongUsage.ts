@@ -24,7 +24,7 @@ export interface SongUsageData {
 }
 
 export const useSongUsage = (songId: string) => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isWorshipLeader } = useAuth();
 
   return useQuery({
     queryKey: ["song-usage", songId, user?.id],
@@ -98,9 +98,15 @@ export const useSongUsage = (songId: string) => {
 
         const isSameCommunity = set.community_id && userCommunityIds.has(set.community_id);
         const isCreator = set.created_by === user?.id;
+        const isLeadershipRole = isAdmin || isWorshipLeader || (set.community_id && leaderCommunityIds.has(set.community_id));
 
-        // Filter logic: show all sets from same community, only published from other communities
-        if (isSameCommunity || set.status === 'published') {
+        // Draft visibility: only creator, collaborators, or leadership roles can see drafts
+        // Published sets are visible to everyone
+        const canSeeDraft = isAdmin || isCreator || collaboratorSetIds.has(set.id) 
+          || (isSameCommunity && leaderCommunityIds.has(set.community_id));
+        const canSeeThisSet = set.status === 'published' || canSeeDraft;
+
+        if (canSeeThisSet) {
           // Check if user can edit using cached data
           let canEdit = false;
           if (isAdmin || isCreator) {
