@@ -20,6 +20,7 @@ import { WorshipSetCard } from "@/components/WorshipSetCard";
 import { WorshipSetFilters, MainFilterType } from "@/components/worship-set/WorshipSetFilters";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getLastEditedDraftId, clearLastEditedDraft } from "@/hooks/useAutoSaveDraft";
+import { useUserCommunities } from "@/hooks/useUserCommunities";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -185,11 +186,35 @@ export default function WorshipSets() {
   // Check if user can create new sets
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
   
-  // History page shows ALL worship sets with songs (no date filtering)
+  // Get user's communities for filtering
+  const { data: userCommunitiesData } = useUserCommunities();
+  const userCommunityIds = userCommunitiesData?.communityIds || [];
+
+  // History page shows only: my sets + my community sets + collaborator sets
+  // (Admins see all sets)
   const { data: allSets, isLoading } = useQuery({
-    queryKey: ["worship-sets-history"],
+    queryKey: ["worship-sets-history", user?.id, userCommunityIds, userCollaboratorSetIds?.size ?? 0, isAdmin],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!user) return [];
+      
+      // Admin sees all sets
+      if (isAdmin) {
+        const { data, error } = await supabase
+          .from("service_sets")
+          .select(`
+            *,
+            set_songs(
+              position,
+              songs(title)
+            )
+          `)
+          .order("date", { ascending: false });
+        if (error) throw error;
+        return data as SetWithSongs[];
+      }
+      
+      // 1. My sets (regardless of community)
+      const { data: mySets, error: myError } = await supabase
         .from("service_sets")
         .select(`
           *,
@@ -198,11 +223,66 @@ export default function WorshipSets() {
             songs(title)
           )
         `)
+        .eq("created_by", user.id)
         .order("date", { ascending: false });
       
-      if (error) throw error;
-      return data as SetWithSongs[];
+      if (myError) throw myError;
+      
+      // 2. My community sets (excluding my own to avoid duplicates)
+      let communitySets: SetWithSongs[] = [];
+      if (userCommunityIds.length > 0) {
+        const { data, error } = await supabase
+          .from("service_sets")
+          .select(`
+            *,
+            set_songs(
+              position,
+              songs(title)
+            )
+          `)
+          .in("community_id", userCommunityIds)
+          .neq("created_by", user.id)
+          .order("date", { ascending: false });
+        
+        if (error) throw error;
+        communitySets = (data || []) as SetWithSongs[];
+      }
+      
+      // 3. Collaborator sets (not already included)
+      let collaboratorSets: SetWithSongs[] = [];
+      if (userCollaboratorSetIds && userCollaboratorSetIds.size > 0) {
+        const collabIds = Array.from(userCollaboratorSetIds);
+        const existingIds = new Set([
+          ...(mySets?.map(s => s.id) || []),
+          ...communitySets.map(s => s.id)
+        ]);
+        const remainingCollabIds = collabIds.filter(id => !existingIds.has(id));
+        
+        if (remainingCollabIds.length > 0) {
+          const { data, error } = await supabase
+            .from("service_sets")
+            .select(`
+              *,
+              set_songs(
+                position,
+                songs(title)
+              )
+            `)
+            .in("id", remainingCollabIds)
+            .order("date", { ascending: false });
+          
+          if (error) throw error;
+          collaboratorSets = (data || []) as SetWithSongs[];
+        }
+      }
+      
+      // Merge and sort by date
+      const allData = [...(mySets || []), ...communitySets, ...collaboratorSets];
+      return allData.sort((a, b) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      ) as SetWithSongs[];
     },
+    enabled: !!user?.id && (isAdmin || userCommunitiesData !== undefined),
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
