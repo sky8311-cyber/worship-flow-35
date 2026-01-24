@@ -123,32 +123,37 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch upcoming sets
+  // Fetch upcoming sets - filtered by user's communities
   const { data: upcomingSets = [] } = useQuery({
-    queryKey: ["upcoming-sets", user?.id],
+    queryKey: ["upcoming-sets-sidebar", user?.id, communityIds, isAdmin, isCommunityLeaderInAnyCommunity],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || communityIds.length === 0) return [];
 
-      const today = new Date().toISOString().split("T")[0];
+      const now = new Date();
+      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
       let query = supabase
         .from("service_sets")
         .select("*")
-        .gte("date", today)
+        .in("community_id", communityIds)  // 내 공동체로 제한
+        .gte("date", localToday)
         .order("date", { ascending: true });
 
-      if (!isAdmin) {
-        if (isCommunityLeaderInAnyCommunity) {
-          query = query.or(`status.eq.published,created_by.eq.${user.id}`);
-        } else {
-          query = query.eq("status", "published");
-        }
+      // 역할 기반 필터링
+      if (isAdmin) {
+        // Admin: 모든 상태 표시
+      } else if (isCommunityLeaderInAnyCommunity) {
+        // 리더: 내 draft + published
+        query = query.or(`status.eq.published,created_by.eq.${user.id}`);
+      } else {
+        // 일반 멤버: published만
+        query = query.eq("status", "published");
       }
 
       const { data } = await query.limit(4);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user && communityIds.length > 0,
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
