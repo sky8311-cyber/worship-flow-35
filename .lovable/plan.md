@@ -1,179 +1,137 @@
 
+# 곡 사용 횟수 기능을 모든 유저에게 공개하기
 
-# 리더보드 데이터 최적화 계획
+## 문제 요약
 
-## 현재 문제점
-
-현재 `getLeaderboardData` 함수의 흐름:
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  1. seed_transactions 전체 조회 (수천 개 가능)                    │
-│                          ↓                                      │
-│  2. JavaScript에서 사용자별 합계 계산 (60+ 사용자)                │
-│                          ↓                                      │
-│  3. 60+ 사용자의 profiles 조회                                   │
-│                          ↓                                      │
-│  4. 60+ 사용자의 user_seeds 조회                                 │
-│                          ↓                                      │
-│  5. 정렬 후 상위 5명만 표시                                      │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**문제**: 상위 5명만 보여주는데 60+ 프로필과 시드 데이터를 불필요하게 로드
+현재 곡 사용 횟수 버튼과 배지가 **관리자와 워십리더에게만** 보이도록 설정되어 있습니다. 하지만 이 기능은 K-Worship의 핵심 기능으로, **모든 유저**가 다른 워십리더의 published 예배세트를 참조할 수 있는 유일한 경로입니다.
 
 ---
 
-## 해결 방법: 데이터베이스에서 집계 후 상위 N명만 조회
+## 수정 사항
 
-### 방법 1: RPC 함수 생성 (권장)
+### 1. Usage 버튼 가시성 제한 제거
 
-데이터베이스에서 집계와 정렬을 처리하여 상위 5명만 반환:
+**SongCard.tsx** (line 81-82):
+```typescript
+// Before:
+const canViewUsageHistory = isAdmin || isWorshipLeader;
 
-**새로운 SQL 함수:**
-```sql
-CREATE OR REPLACE FUNCTION get_seed_leaderboard(
-  time_range TEXT DEFAULT 'allTime',
-  result_limit INT DEFAULT 5
-)
-RETURNS TABLE (
-  user_id UUID,
-  total_seeds BIGINT,
-  full_name TEXT,
-  avatar_url TEXT,
-  current_level INT
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    st.user_id,
-    SUM(st.seeds_earned)::BIGINT as total_seeds,
-    p.full_name,
-    p.avatar_url,
-    COALESCE(us.current_level, 1) as current_level
-  FROM seed_transactions st
-  LEFT JOIN profiles p ON p.id = st.user_id
-  LEFT JOIN user_seeds us ON us.user_id = st.user_id
-  WHERE 
-    st.user_id != '3d927691-b9a8-4fe0-a1ba-7919ed00a0ec'  -- Exclude admin
-    AND (
-      time_range = 'allTime' 
-      OR st.created_at >= NOW() - INTERVAL '1 month'
-    )
-  GROUP BY st.user_id, p.full_name, p.avatar_url, us.current_level
-  ORDER BY total_seeds DESC
-  LIMIT result_limit;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+// After: 모든 인증된 사용자가 볼 수 있도록 변경
+const canViewUsageHistory = true;
 ```
 
-**프론트엔드 호출:**
+**SongTable.tsx** (line 90-91):
 ```typescript
-const { data } = await supabase.rpc('get_seed_leaderboard', {
-  time_range: timeRange,
-  result_limit: 5
+// Before:
+const canViewUsageHistory = isAdmin || isWorshipLeader;
+
+// After:
+const canViewUsageHistory = true;
+```
+
+---
+
+### 2. Usage Count에서 Draft 제외
+
+**SongLibrary.tsx** (line 152-168):
+
+현재 `set_songs` 테이블 전체를 조회해서 카운트하는데, 이는 draft 상태 세트도 포함합니다. Published 세트만 카운트하도록 변경합니다.
+
+```typescript
+// Before:
+const { data: usageCounts } = useQuery({
+  queryKey: ["song-usage-counts"],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("set_songs")
+      .select("song_id");
+    // ...
+  },
+});
+
+// After: service_sets와 조인하여 published만 카운트
+const { data: usageCounts } = useQuery({
+  queryKey: ["song-usage-counts-published"],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from("set_songs")
+      .select(`
+        song_id,
+        service_sets!inner(status)
+      `)
+      .eq("service_sets.status", "published");
+
+    const counts = new Map<string, number>();
+    data?.forEach(({ song_id }) => {
+      counts.set(song_id, (counts.get(song_id) || 0) + 1);
+    });
+    return counts;
+  },
+  staleTime: 60 * 1000,
 });
 ```
 
-### 방법 2: 프론트엔드 로직 개선 (RPC 없이)
+---
 
-RPC 함수 없이 현재 구조에서 최적화:
+### 3. useSongUsage 훅 필터링 강화 (일반 유저용)
 
-1. **seed_transactions에서 user_id만 집계** (전체 데이터 대신)
-2. **상위 10명 user_id만 추출** (admin 제외 여유분 포함)
-3. **해당 user_id들의 profiles/user_seeds만 조회**
+현재 훅은 `isSameCommunity || set.status === 'published'`로 필터링합니다. 일반 유저(비-워십리더)의 경우 **같은 커뮤니티의 draft도 숨겨야** 합니다.
+
+**useSongUsage.ts** (line 102-103):
+```typescript
+// Before:
+if (isSameCommunity || set.status === 'published') {
+
+// After: 일반 유저는 published만, 리더십은 같은 커뮤니티 draft도 볼 수 있음
+const isLeadershipRole = isAdmin || isWorshipLeader || leaderCommunityIds.has(set.community_id);
+const canSeeThisSet = set.status === 'published' 
+  || (isSameCommunity && (isCreator || collaboratorSetIds.has(set.id) || isLeadershipRole));
+
+if (canSeeThisSet) {
+```
+
+실제로 현재 로직도 괜찮을 수 있습니다 - 다만 일반 팀 멤버가 같은 커뮤니티의 draft를 볼 수 있게 되어 있는데, 이것이 의도된 것인지 확인이 필요합니다.
+
+**사용자 의도 재확인**: Draft 예배세트는 **절대** 아무도 볼 수 없어야 한다고 하셨으므로:
 
 ```typescript
-const getLeaderboardData = async (timeRange: 'monthly' | 'allTime') => {
-  let dateFilter = '';
-  if (timeRange === 'monthly') {
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
-    dateFilter = monthAgo.toISOString();
-  }
+// 더 엄격한 버전: 일반 유저는 published만 볼 수 있음
+const canSeeThisSet = set.status === 'published';
+```
 
-  // 1. 트랜잭션에서 user_id, seeds_earned만 조회 (최소 데이터)
-  let query = supabase
-    .from('seed_transactions')
-    .select('user_id, seeds_earned');
+단, 세트 생성자/협업자/커뮤니티 리더는 자기 커뮤니티 draft를 볼 수 있어야 의미가 있으므로:
 
-  if (dateFilter) {
-    query = query.gte('created_at', dateFilter);
-  }
-
-  const { data: transactions } = await query;
-  if (!transactions) return [];
-
-  // 2. JavaScript에서 집계 후 상위 10명만 추출 (admin 제외 버퍼)
-  const userTotals = transactions.reduce((acc, tx) => {
-    if (!EXCLUDED_USER_IDS.includes(tx.user_id)) {
-      acc[tx.user_id] = (acc[tx.user_id] || 0) + tx.seeds_earned;
-    }
-    return acc;
-  }, {} as Record<string, number>);
-
-  // 상위 10명 user_id만
-  const topUserIds = Object.entries(userTotals)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 10)
-    .map(([id]) => id);
-
-  if (topUserIds.length === 0) return [];
-
-  // 3. 상위 10명의 프로필과 시드 레벨만 조회 (60+ → 10개로 감소)
-  const [{ data: profiles }, { data: userSeeds }] = await Promise.all([
-    supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url')
-      .in('id', topUserIds),
-    supabase
-      .from('user_seeds')
-      .select('user_id, current_level')
-      .in('user_id', topUserIds)
-  ]);
-
-  // 4. 최종 상위 5명 반환
-  return topUserIds.slice(0, 5).map((userId) => {
-    const profile = profiles?.find((p) => p.id === userId);
-    const seedData = userSeeds?.find((s) => s.user_id === userId);
-    return {
-      userId,
-      name: profile?.full_name || 'Unknown',
-      avatarUrl: profile?.avatar_url,
-      seeds: userTotals[userId],
-      level: seedData?.current_level || 1
-    };
-  });
-};
+```typescript
+const canSeeDraft = isAdmin || isCreator || collaboratorSetIds.has(set.id) 
+  || (isSameCommunity && leaderCommunityIds.has(set.community_id));
+const canSeeThisSet = set.status === 'published' || canSeeDraft;
 ```
 
 ---
 
-## 예상 효과
-
-| 항목 | 현재 | 최적화 후 |
-|------|------|----------|
-| profiles 쿼리 | 60+ rows | 10 rows |
-| user_seeds 쿼리 | 60+ rows | 10 rows |
-| 데이터 전송량 | ~15KB | ~3KB |
-| 프로필 조회 비용 | 60회 | 10회 |
-
----
-
-## 권장 접근 방식
-
-**방법 2 (프론트엔드 최적화)** 를 권장합니다:
-- 데이터베이스 마이그레이션 없이 즉시 적용 가능
-- 프로필 조회를 60+ → 10개로 80% 이상 감소
-- seed_transactions 전체 조회는 여전히 필요하지만, 이는 가벼운 쿼리 (user_id, seeds_earned만)
-
-나중에 사용자가 더 많아지면 방법 1 (RPC 함수)로 전환하여 완전한 서버사이드 집계 적용 가능
-
----
-
-## 수정 파일
+## 수정 파일 목록
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/seeds/SeedLeaderboard.tsx` | `getLeaderboardData` 함수 최적화 - 상위 10명만 프로필 조회 |
+| `src/components/SongCard.tsx` | `canViewUsageHistory = true` (line 82) |
+| `src/components/SongTable.tsx` | `canViewUsageHistory = true` (line 91) |
+| `src/pages/SongLibrary.tsx` | usageCounts 쿼리에서 published만 카운트 |
+| `src/hooks/useSongUsage.ts` | (선택) 일반 유저 draft 접근 제한 강화 |
 
+---
+
+## 예상 결과
+
+- **모든 유저**가 Song Library에서 곡 사용 횟수 배지를 볼 수 있음
+- 배지 숫자는 **published 세트만** 카운트 (draft 제외)
+- 클릭 시 Usage History 다이얼로그에서 **published 세트만** 표시
+- 다른 워십 커뮤니티의 published 세트를 읽기 전용으로 열람 가능
+- Draft 세트는 생성자/협업자/리더십 외에는 완전히 숨김
+
+---
+
+## 보안 참고
+
+- RLS 정책은 이미 올바르게 설정되어 있음 (published만 커뮤니티 멤버에게 공개)
+- Frontend 필터링은 RLS의 추가 방어선 역할
+- 일반 유저가 draft에 접근 시도해도 RLS에서 차단됨
