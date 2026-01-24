@@ -77,3 +77,9 @@ verify_jwt = false
 
 [functions.scrape-lyrics]
 verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
