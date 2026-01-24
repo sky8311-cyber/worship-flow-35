@@ -11,9 +11,10 @@ interface WLWelcomeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   churchName?: string;
+  existingCommunityId?: string;
 }
 
-export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDialogProps) {
+export function WLWelcomeDialog({ open, onOpenChange, churchName, existingCommunityId }: WLWelcomeDialogProps) {
   const navigate = useNavigate();
   const { language } = useTranslation();
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
@@ -21,6 +22,15 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDia
   const handleCreateCommunity = () => {
     onOpenChange(false);
     setShowCreateCommunity(true);
+  };
+
+  const handleInviteTeam = () => {
+    onOpenChange(false);
+    if (existingCommunityId) {
+      navigate(`/community/${existingCommunityId}`);
+    } else {
+      setShowCreateCommunity(true);
+    }
   };
 
   const handleCreateSet = () => {
@@ -82,9 +92,9 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDia
               </div>
             </button>
 
-            {/* Step 2: Invite Team (NEW) */}
+            {/* Step 2: Invite Team */}
             <button
-              onClick={handleCreateCommunity}
+              onClick={handleInviteTeam}
               className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
             >
               <div className="flex items-start gap-3">

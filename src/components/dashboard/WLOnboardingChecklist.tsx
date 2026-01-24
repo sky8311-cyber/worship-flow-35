@@ -101,8 +101,8 @@ export function WLOnboardingChecklist() {
       completed: !!hasInvitedMembers,
       icon: UserPlus,
       action: firstCommunityId 
-        ? () => navigate(`/community/${firstCommunityId}/manage`)
-        : undefined,
+        ? () => navigate(`/community/${firstCommunityId}`)
+        : () => setShowCreateCommunity(true),
       showReward: true,
     },
     { 

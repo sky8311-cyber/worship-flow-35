@@ -104,7 +104,7 @@ export const CreateCommunityDialog = ({ open, onOpenChange, defaultName }: Creat
   const handleInviteTeam = () => {
     onOpenChange(false);
     if (newCommunityId) {
-      navigate(`/community/${newCommunityId}/manage`);
+      navigate(`/community/${newCommunityId}`);
     }
   };
 
