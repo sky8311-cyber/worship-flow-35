@@ -1453,7 +1453,7 @@ export default function CommunityManagement() {
               {/* Calendar Tab - Recurring schedules */}
               {isSchedulerEnabled && id && (
                 <TabsContent value="calendar">
-                  <CommunityRecurringCalendarTab communityId={id} />
+                  <CommunityRecurringCalendarTab communityId={id} canManage={canManage} />
                 </TabsContent>
               )}
 

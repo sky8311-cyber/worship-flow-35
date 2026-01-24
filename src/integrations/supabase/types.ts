@@ -115,6 +115,7 @@ export type Database = {
           location: string | null
           notification_enabled: boolean | null
           notification_time: number | null
+          rsvp_enabled: boolean | null
           start_time: string | null
           title: string
           updated_at: string | null
@@ -132,6 +133,7 @@ export type Database = {
           location?: string | null
           notification_enabled?: boolean | null
           notification_time?: number | null
+          rsvp_enabled?: boolean | null
           start_time?: string | null
           title: string
           updated_at?: string | null
@@ -149,6 +151,7 @@ export type Database = {
           location?: string | null
           notification_enabled?: boolean | null
           notification_time?: number | null
+          rsvp_enabled?: boolean | null
           start_time?: string | null
           title?: string
           updated_at?: string | null
@@ -675,6 +678,51 @@ export type Database = {
           {
             foreignKeyName: "email_templates_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_rsvp_responses: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          responded_at: string | null
+          response: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          responded_at?: string | null
+          response: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          responded_at?: string | null
+          response?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_rsvp_responses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_rsvp_responses_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]

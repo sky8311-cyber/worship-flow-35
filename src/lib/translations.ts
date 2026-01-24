@@ -444,7 +444,25 @@ export const translations = {
         "60": "1 hour before",
         "120": "2 hours before",
         "1440": "1 day before"
-      }
+      },
+      calendarView: "Calendar View",
+      listView: "List View",
+      monthView: "Monthly",
+      weekView: "Weekly",
+      today: "Today",
+      rsvpSettings: "RSVP Settings",
+      enableRsvp: "Enable RSVP",
+      enableRsvpDesc: "Allow team members to respond with attendance",
+    },
+    rsvp: {
+      title: "Attendance Check",
+      description: "Please respond to the following upcoming events",
+      attending: "Attending",
+      notAttending: "Not Attending",
+      remindLater: "Remind Later",
+      responseSaved: "Response saved",
+      attendees: "Attendees",
+      viewAttendees: "View Attendees",
     },
     seeds: {
       title: "K-Seed",
@@ -2538,7 +2556,25 @@ songCard: {
         "60": "1시간 전",
         "120": "2시간 전",
         "1440": "1일 전"
-      }
+      },
+      calendarView: "캘린더 보기",
+      listView: "목록 보기",
+      monthView: "월간",
+      weekView: "주간",
+      today: "오늘",
+      rsvpSettings: "참석 확인 설정",
+      enableRsvp: "참석 확인 받기",
+      enableRsvpDesc: "팀 멤버들이 참석 여부를 응답할 수 있습니다",
+    },
+    rsvp: {
+      title: "참석 여부 확인",
+      description: "다가오는 일정에 참석 여부를 알려주세요",
+      attending: "참석",
+      notAttending: "불참",
+      remindLater: "다음에 보기",
+      responseSaved: "응답이 저장되었습니다",
+      attendees: "참석자",
+      viewAttendees: "참석자 보기",
     },
     seeds: {
       title: "K-Seed",

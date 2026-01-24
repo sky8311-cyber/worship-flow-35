@@ -13,6 +13,7 @@ interface FeatureFlags {
   cross_community_enabled: boolean;
   worship_leader_auto_approve: boolean;
   google_login_enabled: boolean;
+  team_rotation_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -25,6 +26,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   cross_community_enabled: false,
   worship_leader_auto_approve: false,
   google_login_enabled: true,
+  team_rotation_enabled: false,
 };
 
 export function useAppSettings() {
@@ -90,6 +92,7 @@ export function useAppSettings() {
     isCrossCommunityEnabled: !isLoading && (flags?.cross_community_enabled ?? false),
     isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
     isGoogleLoginEnabled: !isLoading && (flags?.google_login_enabled ?? true),
+    isTeamRotationEnabled: !isLoading && (flags?.team_rotation_enabled ?? false),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     updateError: updateFlagMutation.error,
@@ -103,5 +106,6 @@ export function useAppSettings() {
     toggleCrossCommunity: () => toggleFlag("cross_community_enabled"),
     toggleWorshipLeaderAutoApprove: () => toggleFlag("worship_leader_auto_approve"),
     toggleGoogleLogin: () => toggleFlag("google_login_enabled"),
+    toggleTeamRotation: () => toggleFlag("team_rotation_enabled"),
   };
 }

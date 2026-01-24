@@ -30,6 +30,7 @@ const AdminDashboard = () => {
     isCrossCommunityEnabled,
     isWorshipLeaderAutoApproveEnabled,
     isGoogleLoginEnabled,
+    isTeamRotationEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
     toggleCrossCommunity,
     toggleWorshipLeaderAutoApprove,
     toggleGoogleLogin,
+    toggleTeamRotation,
     isUpdating,
     updateSuccess,
     updateError,
@@ -497,6 +499,27 @@ const AdminDashboard = () => {
                     <Switch
                       checked={isGoogleLoginEnabled}
                       onCheckedChange={toggleGoogleLogin}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Team Rotation Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        {language === "ko" ? "팀 로테이션" : "Team Rotation"}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "공동체 팀 로테이션 관리 기능 활성화"
+                          : "Enable team rotation management for communities"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isTeamRotationEnabled}
+                      onCheckedChange={toggleTeamRotation}
                       disabled={isUpdating}
                     />
                   </div>
