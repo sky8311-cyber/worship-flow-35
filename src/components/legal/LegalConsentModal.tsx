@@ -51,6 +51,18 @@ export const LegalConsentModal = ({
     
     setLoading(true);
     try {
+      // 세션 갱신 시도
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !sessionData.session) {
+        toast.error(
+          language === "ko" 
+            ? "세션이 만료되었습니다. 페이지를 새로고침 해주세요." 
+            : "Session expired. Please refresh the page."
+        );
+        setLoading(false);
+        return;
+      }
+
       // Record acceptance for each pending document
       for (const doc of pendingDocuments) {
         const { error } = await supabase.from("legal_acceptances").insert({
@@ -73,7 +85,16 @@ export const LegalConsentModal = ({
       toast.success(language === "ko" ? "약관에 동의하셨습니다" : "Terms accepted");
       onConsentComplete();
     } catch (error: any) {
-      toast.error(error.message);
+      // RLS 오류인 경우 친절한 메시지
+      if (error.code === "42501") {
+        toast.error(
+          language === "ko"
+            ? "인증 오류가 발생했습니다. 페이지를 새로고침 해주세요."
+            : "Authentication error. Please refresh the page."
+        );
+      } else {
+        toast.error(error.message);
+      }
     } finally {
       setLoading(false);
     }

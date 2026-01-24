@@ -88,16 +88,20 @@ const queryClient = new QueryClient({
 // Legal Consent Gate - shows modal if user needs to accept updated terms
 const LegalConsentGate = ({ children }: { children: React.ReactNode }) => {
   const { needsConsent, pendingDocuments, isLoading, refetch } = useLegalConsent();
+  const { session } = useAuth();
   
   if (isLoading) {
     return <PageLoader />;
   }
   
+  // 세션이 없으면 모달 표시 안 함 (ProtectedRoute가 처리)
+  const shouldShowModal = needsConsent && !!session;
+  
   return (
     <>
       {children}
       <LegalConsentModal
-        open={needsConsent}
+        open={shouldShowModal}
         pendingDocuments={pendingDocuments}
         onConsentComplete={() => refetch()}
       />
