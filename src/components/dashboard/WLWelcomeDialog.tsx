@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,8 @@ import { Users, Music, ArrowRight, Sparkles, UserPlus, Gift } from "lucide-react
 import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import Confetti from "react-confetti";
 
 interface WLWelcomeDialogProps {
   open: boolean;
@@ -14,10 +16,43 @@ interface WLWelcomeDialogProps {
   existingCommunityId?: string;
 }
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12, delayChildren: 0.2 }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4 }
+  }
+};
+
+const bounceAnimation = {
+  y: [0, -8, 0],
+  transition: { duration: 0.6, repeat: Infinity, repeatDelay: 2 }
+};
+
 export function WLWelcomeDialog({ open, onOpenChange, churchName, existingCommunityId }: WLWelcomeDialogProps) {
   const navigate = useNavigate();
   const { language } = useTranslation();
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [dialogSize, setDialogSize] = useState({ width: 400, height: 500 });
+
+  // Start confetti when dialog opens
+  useEffect(() => {
+    if (open) {
+      setShowConfetti(true);
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
 
   const handleCreateCommunity = () => {
     onOpenChange(false);
@@ -45,108 +80,156 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName, existingCommun
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="text-center pb-2">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Sparkles className="w-8 h-8 text-primary" />
+        <DialogContent className="max-w-md overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
+          {/* Confetti */}
+          {showConfetti && (
+            <Confetti
+              width={dialogSize.width}
+              height={dialogSize.height}
+              recycle={false}
+              numberOfPieces={100}
+              gravity={0.15}
+              style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                pointerEvents: 'none',
+                zIndex: 50
+              }}
+            />
+          )}
+
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <DialogHeader className="text-center pb-2">
+              <motion.div 
+                className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4"
+                variants={staggerItem}
+              >
+                <motion.div animate={bounceAnimation}>
+                  <Sparkles className="w-8 h-8 text-primary" />
+                </motion.div>
+              </motion.div>
+              <motion.div variants={staggerItem}>
+                <DialogTitle className="text-2xl">
+                  {language === "ko" ? "🎉 환영합니다, 예배인도자님!" : "🎉 Welcome, Worship Leader!"}
+                </DialogTitle>
+              </motion.div>
+              <motion.div variants={staggerItem}>
+                <DialogDescription className="text-base pt-2">
+                  {language === "ko" 
+                    ? "예배인도자로 승인되었습니다. 이제 예배세트를 만들고 팀과 함께 예배를 준비할 수 있습니다."
+                    : "You've been approved as a worship leader. You can now create worship sets and prepare worship with your team."}
+                </DialogDescription>
+              </motion.div>
+            </DialogHeader>
+
+            <div className="space-y-3 py-4">
+              <motion.h4 
+                className="font-medium text-sm text-muted-foreground"
+                variants={staggerItem}
+              >
+                {language === "ko" ? "다음 단계" : "Next Steps"}
+              </motion.h4>
+              
+              {/* Step 1: Create Community */}
+              <motion.button
+                variants={staggerItem}
+                onClick={handleCreateCommunity}
+                className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-all duration-200 group"
+                whileHover={{ scale: 1.01, x: 4 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">
+                      {language === "ko" ? "1. 예배공동체 만들기" : "1. Create Your Worship Community"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {language === "ko" 
+                        ? churchName 
+                          ? `"${churchName}" 공동체를 만들어보세요` 
+                          : "팀원들과 함께 예배를 준비하세요"
+                        : churchName 
+                          ? `Create "${churchName}" community`
+                          : "Prepare worship with your team members"}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </div>
+              </motion.button>
+
+              {/* Step 2: Invite Team */}
+              <motion.button
+                variants={staggerItem}
+                onClick={handleInviteTeam}
+                className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-all duration-200 group"
+                whileHover={{ scale: 1.01, x: 4 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <UserPlus className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">
+                      {language === "ko" ? "2. 팀원 초대하기" : "2. Invite Your Team"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {language === "ko" 
+                        ? "초대 시 30 K-Seed 보상!" 
+                        : "Earn 30 K-Seeds per invite!"}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="shrink-0 gap-1">
+                    <Gift className="w-3 h-3" />
+                    +30
+                  </Badge>
+                </div>
+              </motion.button>
+
+              {/* Step 3: Create First Set */}
+              <motion.button
+                variants={staggerItem}
+                onClick={handleCreateSet}
+                className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-all duration-200 group"
+                whileHover={{ scale: 1.01, x: 4 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Music className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">
+                      {language === "ko" ? "3. 첫 번째 워십세트 만들기" : "3. Create Your First Worship Set"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {language === "ko" 
+                        ? "예배 순서와 곡 목록을 구성하세요"
+                        : "Organize your worship order and song list"}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                </div>
+              </motion.button>
             </div>
-            <DialogTitle className="text-2xl">
-              {language === "ko" ? "🎉 환영합니다, 예배인도자님!" : "🎉 Welcome, Worship Leader!"}
-            </DialogTitle>
-            <DialogDescription className="text-base pt-2">
-              {language === "ko" 
-                ? "예배인도자로 승인되었습니다. 이제 예배세트를 만들고 팀과 함께 예배를 준비할 수 있습니다."
-                : "You've been approved as a worship leader. You can now create worship sets and prepare worship with your team."}
-            </DialogDescription>
-          </DialogHeader>
 
-          <div className="space-y-3 py-4">
-            <h4 className="font-medium text-sm text-muted-foreground">
-              {language === "ko" ? "다음 단계" : "Next Steps"}
-            </h4>
-            
-            {/* Step 1: Create Community */}
-            <button
-              onClick={handleCreateCommunity}
-              className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
+            <motion.div 
+              className="flex justify-end pt-2"
+              variants={staggerItem}
             >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">
-                    {language === "ko" ? "1. 예배공동체 만들기" : "1. Create Your Worship Community"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {language === "ko" 
-                      ? churchName 
-                        ? `"${churchName}" 공동체를 만들어보세요` 
-                        : "팀원들과 함께 예배를 준비하세요"
-                      : churchName 
-                        ? `Create "${churchName}" community`
-                        : "Prepare worship with your team members"}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </button>
-
-            {/* Step 2: Invite Team */}
-            <button
-              onClick={handleInviteTeam}
-              className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <UserPlus className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">
-                    {language === "ko" ? "2. 팀원 초대하기" : "2. Invite Your Team"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {language === "ko" 
-                      ? "초대 시 30 K-Seed 보상!" 
-                      : "Earn 30 K-Seeds per invite!"}
-                  </p>
-                </div>
-                <Badge variant="secondary" className="shrink-0 gap-1">
-                  <Gift className="w-3 h-3" />
-                  +30
-                </Badge>
-              </div>
-            </button>
-
-            {/* Step 3: Create First Set */}
-            <button
-              onClick={handleCreateSet}
-              className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Music className="w-4 h-4 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">
-                    {language === "ko" ? "3. 첫 번째 워십세트 만들기" : "3. Create Your First Worship Set"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {language === "ko" 
-                      ? "예배 순서와 곡 목록을 구성하세요"
-                      : "Organize your worship order and song list"}
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-            </button>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <Button variant="ghost" onClick={handleGoToDashboard}>
-              {language === "ko" ? "나중에 하기" : "Maybe Later"}
-            </Button>
-          </div>
+              <Button variant="ghost" onClick={handleGoToDashboard}>
+                {language === "ko" ? "나중에 하기" : "Maybe Later"}
+              </Button>
+            </motion.div>
+          </motion.div>
         </DialogContent>
       </Dialog>
 

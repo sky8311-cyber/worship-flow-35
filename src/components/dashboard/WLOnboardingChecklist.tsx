@@ -16,8 +16,18 @@ export function WLOnboardingChecklist() {
   const navigate = useNavigate();
   const { user, isWorshipLeader, profile } = useAuth();
   const { t, language } = useTranslation();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('wl-onboarding-dismissed') === 'true';
+    }
+    return false;
+  });
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem('wl-onboarding-dismissed', 'true');
+  };
 
   // Check if user has communities and get the first one
   const { data: communityData } = useQuery({
@@ -139,7 +149,7 @@ export function WLOnboardingChecklist() {
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
-              onClick={() => setDismissed(true)}
+              onClick={handleDismiss}
             >
               <X className="w-4 h-4" />
             </Button>
