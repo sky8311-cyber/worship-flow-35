@@ -1,137 +1,139 @@
 
-# 곡 사용 횟수 기능을 모든 유저에게 공개하기
+# RLS 정책 수정: 모든 유저에게 Published 세트 공개
 
-## 문제 요약
+## 문제 원인
 
-현재 곡 사용 횟수 버튼과 배지가 **관리자와 워십리더에게만** 보이도록 설정되어 있습니다. 하지만 이 기능은 K-Worship의 핵심 기능으로, **모든 유저**가 다른 워십리더의 published 예배세트를 참조할 수 있는 유일한 경로입니다.
+현재 RLS 정책이 **같은 커뮤니티 멤버**에게만 published 세트를 허용하고 있음:
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  service_sets SELECT 정책:                                       │
+│  (status = 'published' AND is_community_member(user, community)) │
+│                                                                  │
+│  → 다른 커뮤니티의 published 세트 접근 불가 ❌                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+K-Worship 핵심 기능인 **다른 워십 커뮤니티의 예배세트 참조**가 작동하지 않음.
 
 ---
 
-## 수정 사항
+## 해결 방법
 
-### 1. Usage 버튼 가시성 제한 제거
+### 1. `service_sets` SELECT RLS 정책 수정
 
-**SongCard.tsx** (line 81-82):
-```typescript
-// Before:
-const canViewUsageHistory = isAdmin || isWorshipLeader;
-
-// After: 모든 인증된 사용자가 볼 수 있도록 변경
-const canViewUsageHistory = true;
+**현재:**
+```sql
+(created_by = auth.uid()) OR 
+is_set_collaborator(auth.uid(), id) OR 
+is_admin(auth.uid()) OR 
+((status = 'published') AND (community_id IS NOT NULL) AND is_community_member(auth.uid(), community_id))
 ```
 
-**SongTable.tsx** (line 90-91):
-```typescript
-// Before:
-const canViewUsageHistory = isAdmin || isWorshipLeader;
-
-// After:
-const canViewUsageHistory = true;
+**수정 후:**
+```sql
+(created_by = auth.uid()) OR 
+is_set_collaborator(auth.uid(), id) OR 
+is_admin(auth.uid()) OR 
+(status = 'published')  -- 모든 인증된 사용자가 published 세트 열람 가능
 ```
 
----
+### 2. `set_songs` SELECT RLS 정책 수정
 
-### 2. Usage Count에서 Draft 제외
-
-**SongLibrary.tsx** (line 152-168):
-
-현재 `set_songs` 테이블 전체를 조회해서 카운트하는데, 이는 draft 상태 세트도 포함합니다. Published 세트만 카운트하도록 변경합니다.
-
-```typescript
-// Before:
-const { data: usageCounts } = useQuery({
-  queryKey: ["song-usage-counts"],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from("set_songs")
-      .select("song_id");
-    // ...
-  },
-});
-
-// After: service_sets와 조인하여 published만 카운트
-const { data: usageCounts } = useQuery({
-  queryKey: ["song-usage-counts-published"],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from("set_songs")
-      .select(`
-        song_id,
-        service_sets!inner(status)
-      `)
-      .eq("service_sets.status", "published");
-
-    const counts = new Map<string, number>();
-    data?.forEach(({ song_id }) => {
-      counts.set(song_id, (counts.get(song_id) || 0) + 1);
-    });
-    return counts;
-  },
-  staleTime: 60 * 1000,
-});
+**현재:**
+```sql
+EXISTS (
+  SELECT 1 FROM service_sets ss
+  LEFT JOIN community_members cm ON (cm.community_id = ss.community_id)
+  WHERE ss.id = set_songs.service_set_id 
+  AND (
+    ss.created_by = auth.uid() OR 
+    (ss.status = 'published' AND cm.user_id = auth.uid()) OR  -- 같은 커뮤니티만
+    is_set_collaborator(auth.uid(), ss.id) OR 
+    is_admin(auth.uid())
+  )
+)
 ```
 
----
-
-### 3. useSongUsage 훅 필터링 강화 (일반 유저용)
-
-현재 훅은 `isSameCommunity || set.status === 'published'`로 필터링합니다. 일반 유저(비-워십리더)의 경우 **같은 커뮤니티의 draft도 숨겨야** 합니다.
-
-**useSongUsage.ts** (line 102-103):
-```typescript
-// Before:
-if (isSameCommunity || set.status === 'published') {
-
-// After: 일반 유저는 published만, 리더십은 같은 커뮤니티 draft도 볼 수 있음
-const isLeadershipRole = isAdmin || isWorshipLeader || leaderCommunityIds.has(set.community_id);
-const canSeeThisSet = set.status === 'published' 
-  || (isSameCommunity && (isCreator || collaboratorSetIds.has(set.id) || isLeadershipRole));
-
-if (canSeeThisSet) {
-```
-
-실제로 현재 로직도 괜찮을 수 있습니다 - 다만 일반 팀 멤버가 같은 커뮤니티의 draft를 볼 수 있게 되어 있는데, 이것이 의도된 것인지 확인이 필요합니다.
-
-**사용자 의도 재확인**: Draft 예배세트는 **절대** 아무도 볼 수 없어야 한다고 하셨으므로:
-
-```typescript
-// 더 엄격한 버전: 일반 유저는 published만 볼 수 있음
-const canSeeThisSet = set.status === 'published';
-```
-
-단, 세트 생성자/협업자/커뮤니티 리더는 자기 커뮤니티 draft를 볼 수 있어야 의미가 있으므로:
-
-```typescript
-const canSeeDraft = isAdmin || isCreator || collaboratorSetIds.has(set.id) 
-  || (isSameCommunity && leaderCommunityIds.has(set.community_id));
-const canSeeThisSet = set.status === 'published' || canSeeDraft;
+**수정 후:**
+```sql
+EXISTS (
+  SELECT 1 FROM service_sets ss
+  WHERE ss.id = set_songs.service_set_id 
+  AND (
+    ss.created_by = auth.uid() OR 
+    ss.status = 'published' OR  -- 모든 published 세트의 곡 열람 가능
+    is_set_collaborator(auth.uid(), ss.id) OR 
+    is_admin(auth.uid())
+  )
+)
 ```
 
 ---
 
-## 수정 파일 목록
+## SQL 마이그레이션
 
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/components/SongCard.tsx` | `canViewUsageHistory = true` (line 82) |
-| `src/components/SongTable.tsx` | `canViewUsageHistory = true` (line 91) |
-| `src/pages/SongLibrary.tsx` | usageCounts 쿼리에서 published만 카운트 |
-| `src/hooks/useSongUsage.ts` | (선택) 일반 유저 draft 접근 제한 강화 |
+```sql
+-- 1. Drop existing policies
+DROP POLICY IF EXISTS "Users can view their sets and community sets" ON service_sets;
+DROP POLICY IF EXISTS "View set songs" ON set_songs;
+
+-- 2. Create updated service_sets SELECT policy
+-- Published sets are visible to ALL authenticated users (cross-community discovery)
+CREATE POLICY "Users can view own, collaborator, or published sets"
+ON service_sets FOR SELECT
+TO public
+USING (
+  created_by = auth.uid() OR 
+  is_set_collaborator(auth.uid(), id) OR 
+  is_admin(auth.uid()) OR 
+  status = 'published'
+);
+
+-- 3. Create updated set_songs SELECT policy
+-- Songs from published sets are visible to all authenticated users
+CREATE POLICY "View set songs"
+ON set_songs FOR SELECT
+TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM service_sets ss
+    WHERE ss.id = set_songs.service_set_id 
+    AND (
+      ss.created_by = auth.uid() OR 
+      ss.status = 'published' OR
+      is_set_collaborator(auth.uid(), ss.id) OR 
+      is_admin(auth.uid())
+    )
+  )
+);
+```
 
 ---
 
 ## 예상 결과
 
-- **모든 유저**가 Song Library에서 곡 사용 횟수 배지를 볼 수 있음
-- 배지 숫자는 **published 세트만** 카운트 (draft 제외)
-- 클릭 시 Usage History 다이얼로그에서 **published 세트만** 표시
-- 다른 워십 커뮤니티의 published 세트를 읽기 전용으로 열람 가능
-- Draft 세트는 생성자/협업자/리더십 외에는 완전히 숨김
+| 시나리오 | 현재 | 수정 후 |
+|---------|------|--------|
+| 다른 커뮤니티의 published 세트 | ❌ 접근 불가 | ✅ 열람 가능 |
+| Song usage count 배지 | 0 (RLS 차단) | ✅ 정확한 숫자 |
+| Usage history 다이얼로그 | 빈 리스트 | ✅ 모든 published 세트 표시 |
+| Draft 세트 | ❌ 숨김 | ❌ 숨김 (유지) |
 
 ---
 
-## 보안 참고
+## 보안 고려사항
 
-- RLS 정책은 이미 올바르게 설정되어 있음 (published만 커뮤니티 멤버에게 공개)
-- Frontend 필터링은 RLS의 추가 방어선 역할
-- 일반 유저가 draft에 접근 시도해도 RLS에서 차단됨
+- **Published 세트만** 공개 (draft는 여전히 숨김)
+- K-Worship의 핵심 가치: 워십 커뮤니티 간 레퍼런스 공유
+- 읽기 전용 접근 (수정 RLS는 변경 없음)
+- 프론트엔드에서 이미 read-only 모드로 다른 커뮤니티 세트 표시
+
+---
+
+## 수정 범위
+
+| 변경 | 설명 |
+|------|------|
+| DB 마이그레이션 | `service_sets`, `set_songs` SELECT RLS 정책 업데이트 |
+| 프론트엔드 변경 | 없음 (이미 이전 작업에서 완료) |
