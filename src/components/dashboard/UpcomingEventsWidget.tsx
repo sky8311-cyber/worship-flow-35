@@ -11,13 +11,16 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { CalendarDays, Calendar, Music, Users, Church, MoreHorizontal, Trash2, Upload, Lock, Link as LinkIcon } from "lucide-react";
+import { CalendarDays, Calendar, Music, Users, Church, MoreHorizontal, Trash2, Upload, Lock, Link as LinkIcon, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
+import { EventDetailDialog } from "@/components/community/EventDetailDialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useUserCommunities } from "@/hooks/useUserCommunities";
+import { getCountdown } from "@/lib/countdownHelper";
+import { cn } from "@/lib/utils";
 
 interface ServiceSet {
   id: string;
@@ -52,6 +55,8 @@ interface UnifiedEvent {
   onClick?: () => void;
   created_by?: string;
   status?: "draft" | "published";
+  rsvp_enabled?: boolean;
+  rawEvent?: any;
 }
 
 interface UpcomingEventsWidgetProps {
@@ -69,11 +74,13 @@ export function UpcomingEventsWidget({
   isAdmin = false,
   isCommunityLeader = false
 }: UpcomingEventsWidgetProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState<string | undefined>();
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedEventForDetail, setSelectedEventForDetail] = useState<any>(null);
   
   const { data: communitiesData } = useUserCommunities();
   const communityIds = communitiesData?.communityIds || [];
@@ -230,6 +237,21 @@ export function UpcomingEventsWidget({
   const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const futureSets = sets?.filter(set => set.date >= localToday) || [];
 
+  // Handle calendar event click based on permissions
+  const handleCalendarEventClick = (event: any) => {
+    const canManageEvent = isAdmin || (isCommunityLeader && event.created_by === currentUserId);
+    
+    if (canManageEvent) {
+      // Managers: open edit dialog
+      setSelectedEventId(event.id);
+      setEventDialogOpen(true);
+    } else {
+      // Regular members: open detail view dialog
+      setSelectedEventForDetail(event);
+      setDetailDialogOpen(true);
+    }
+  };
+
   // Combine and sort events
   const unifiedEvents: UnifiedEvent[] = [
     ...futureSets.map((set: any) => ({
@@ -240,7 +262,7 @@ export function UpcomingEventsWidget({
       subtitle: set.worship_leader || undefined,
       icon: <Church className="w-4 h-4" />,
       linkTo: set.status === "published" ? `/band-view/${set.id}` : `/set-builder/${set.id}`,
-      badgeLabel: set.status === "published" ? "게시됨" : "임시저장",
+      badgeLabel: set.status === "published" ? (language === "ko" ? "게시됨" : "Published") : (language === "ko" ? "임시저장" : "Draft"),
       created_by: set.created_by,
       status: set.status,
     })),
@@ -261,10 +283,9 @@ export function UpcomingEventsWidget({
         icon: iconMap[event.event_type],
         badgeLabel: t(`calendarEvent.types.${event.event_type}` as any),
         created_by: event.created_by,
-        onClick: () => {
-          setSelectedEventId(event.id);
-          setEventDialogOpen(true);
-        },
+        rsvp_enabled: event.rsvp_enabled,
+        rawEvent: event,
+        onClick: () => handleCalendarEventClick(event),
       };
     }) || []),
   ]
@@ -287,10 +308,11 @@ export function UpcomingEventsWidget({
             <div className="space-y-2">
               {unifiedEvents.map((event) => {
                 const isPast = isPastDate(event.date);
-            const canManage = (event.type === "service_set" && 
-              (isAdmin || (isCommunityLeader && event.created_by === currentUserId))) ||
-              (event.type === "calendar_event" && 
-              (isAdmin || (isCommunityLeader && event.created_by === currentUserId)));
+                const countdown = getCountdown(event.date);
+                const canManage = (event.type === "service_set" && 
+                  (isAdmin || (isCommunityLeader && event.created_by === currentUserId))) ||
+                  (event.type === "calendar_event" && 
+                  (isAdmin || (isCommunityLeader && event.created_by === currentUserId)));
 
                 return event.linkTo ? (
                   <div key={`${event.type}-${event.id}`} className="relative group">
@@ -308,11 +330,17 @@ export function UpcomingEventsWidget({
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             {event.icon}
                             <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
                               {event.title}
                             </p>
+                            {/* Countdown badge */}
+                            {!isPast && countdown.text && (
+                              <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent shrink-0">
+                                {countdown.text}
+                              </Badge>
+                            )}
                           </div>
                           {event.subtitle && (
                             <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
@@ -381,11 +409,24 @@ export function UpcomingEventsWidget({
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           {event.icon}
                           <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
                             {event.title}
                           </p>
+                          {/* RSVP badge */}
+                          {event.rsvp_enabled && (
+                            <Badge variant="outline" className="text-xs shrink-0">
+                              <Users className="h-3 w-3 mr-1" />
+                              RSVP
+                            </Badge>
+                          )}
+                          {/* Countdown badge */}
+                          {!isPast && countdown.text && (
+                            <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent shrink-0">
+                              {countdown.text}
+                            </Badge>
+                          )}
                         </div>
                         <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
                           {format(parseLocalDate(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
@@ -416,15 +457,15 @@ export function UpcomingEventsWidget({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={(e) => handleEditCalendarEvent(event.id, e)}>
-                            <Calendar className="w-4 h-4 mr-2" />
-                            수정
+                            <Pencil className="w-4 h-4 mr-2" />
+                            {language === "ko" ? "수정" : "Edit"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={(e) => handleDeleteCalendarEvent(event.id, event.title, e)}
                             className="text-destructive"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
-                            삭제
+                            {language === "ko" ? "삭제" : "Delete"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -452,6 +493,12 @@ export function UpcomingEventsWidget({
           queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
           queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
         }}
+      />
+
+      <EventDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        event={selectedEventForDetail}
       />
     </>
   );
