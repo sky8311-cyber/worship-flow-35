@@ -33,6 +33,7 @@ interface CalendarEventForm {
   location?: string;
   notification_enabled: boolean;
   notification_time: number;
+  rsvp_enabled: boolean;
 }
 
 export function CalendarEventDialog({
@@ -60,6 +61,7 @@ export function CalendarEventDialog({
       event_type: "rehearsal",
       notification_enabled: true,
       notification_time: 60,
+      rsvp_enabled: false,
     },
   });
 
@@ -94,6 +96,7 @@ export function CalendarEventDialog({
   }, [communityId, setValue]);
 
   const notificationEnabled = watch("notification_enabled");
+  const rsvpEnabled = watch("rsvp_enabled");
 
   const onSubmit = async (data: CalendarEventForm) => {
     if (!user) {
@@ -295,6 +298,25 @@ export function CalendarEventDialog({
                 </Select>
               </div>
             )}
+          </div>
+
+          {/* RSVP Settings */}
+          <div className="space-y-4 border-t pt-4">
+            <h4 className="font-medium">{t("calendarEvent.rsvpSettings" as any) || "RSVP Settings"}</h4>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="rsvp_enabled">{t("calendarEvent.enableRsvp" as any) || "Enable RSVP"}</Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("calendarEvent.enableRsvpDesc" as any) || "Allow team members to respond with attendance"}
+                </p>
+              </div>
+              <Switch
+                id="rsvp_enabled"
+                checked={rsvpEnabled}
+                onCheckedChange={(checked) => setValue("rsvp_enabled", checked)}
+              />
+            </div>
           </div>
 
           {/* Actions */}

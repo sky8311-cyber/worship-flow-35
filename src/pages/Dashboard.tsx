@@ -49,6 +49,7 @@ import { WLOnboardingChecklist } from "@/components/dashboard/WLOnboardingCheckl
 import { RoleSelectionDialog } from "@/components/onboarding/RoleSelectionDialog";
 import { InvitedUserWelcomeDialog } from "@/components/onboarding/InvitedUserWelcomeDialog";
 import { TeamMemberWelcomeDialog } from "@/components/onboarding/TeamMemberWelcomeDialog";
+import { RsvpPromptDialog } from "@/components/dashboard/RsvpPromptDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -79,6 +80,7 @@ const Dashboard = () => {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showInvitedDialog, setShowInvitedDialog] = useState(false);
   const [showTeamMemberDialog, setShowTeamMemberDialog] = useState(false);
+  const [showRsvpDialog, setShowRsvpDialog] = useState(false);
   const [invitedCommunityInfo, setInvitedCommunityInfo] = useState<{ name: string; avatarUrl?: string; inviterName?: string } | null>(null);
   
   // Use shared community data with loading state tracking - MUST be before any useEffects that depend on it
@@ -151,6 +153,52 @@ const Dashboard = () => {
     const timer = setTimeout(checkOnboardingStatus, 500);
     return () => clearTimeout(timer);
   }, [user, profile, isWorshipLeader, isAdmin, communitiesReady]);
+
+  // RSVP prompt check - show after onboarding dialogs
+  useEffect(() => {
+    const checkPendingRsvp = async () => {
+      if (!user || !isDashboardReady) return;
+      if (showRoleDialog || showInvitedDialog || showTeamMemberDialog) return;
+
+      // Get user's communities
+      const { data: memberships } = await supabase
+        .from("community_members")
+        .select("community_id")
+        .eq("user_id", user.id);
+
+      if (!memberships || memberships.length === 0) return;
+
+      const today = new Date().toISOString().split("T")[0];
+      
+      // Check for RSVP-enabled future events
+      const { data: events } = await supabase
+        .from("calendar_events")
+        .select("id")
+        .in("community_id", memberships.map(m => m.community_id))
+        .eq("rsvp_enabled", true)
+        .gte("event_date", today);
+
+      if (!events || events.length === 0) return;
+
+      // Check which events the user hasn't responded to
+      const { data: responses } = await supabase
+        .from("event_rsvp_responses")
+        .select("event_id")
+        .eq("user_id", user.id)
+        .in("event_id", events.map(e => e.id));
+
+      const respondedIds = new Set(responses?.map(r => r.event_id) || []);
+      const hasPending = events.some(e => !respondedIds.has(e.id));
+
+      if (hasPending) {
+        setShowRsvpDialog(true);
+      }
+    };
+
+    // Small delay after dashboard is ready
+    const timer = setTimeout(checkPendingRsvp, 1000);
+    return () => clearTimeout(timer);
+  }, [user, isDashboardReady, showRoleDialog, showInvitedDialog, showTeamMemberDialog]);
 
   // Check if user can create sets (worship leaders, community leaders, or admins)
   const canCreateSets = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
@@ -897,6 +945,12 @@ const Dashboard = () => {
         onOpenChange={setAddSongOpen}
         song={null}
         onClose={() => setAddSongOpen(false)}
+      />
+
+      {/* RSVP Prompt Dialog */}
+      <RsvpPromptDialog
+        open={showRsvpDialog}
+        onOpenChange={setShowRsvpDialog}
       />
     </AppLayout>;
 };
