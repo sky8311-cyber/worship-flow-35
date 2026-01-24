@@ -1953,6 +1953,7 @@ songCard: {
       allComplete: "You're all set!",
       dismiss: "Dismiss",
       start: "Start",
+      dontShowAgain: "Don't show again",
       steps: {
         worshipLeader: "Become Worship Leader",
         worshipLeaderDesc: "You're now a worship leader!",
@@ -1965,6 +1966,14 @@ songCard: {
       },
       inviteRewardBanner: "Earn 30 K-Seeds for each team member you invite!",
       inviteRewardHint: "Rewards are granted when they sign up",
+      teamMember: {
+        welcome: "Starting as a Team Member! 🎵",
+        description: "Welcome to K-Worship! You can now use these features.",
+        searchCommunity: "Find a Community",
+        exploreLater: "I'll explore later",
+        becomeLeaderHint: "Want to become a Worship Leader?",
+        apply: "Apply",
+      },
     },
     adminEmail: {
       title: "Email Management",
@@ -4015,6 +4024,7 @@ songCard: {
       allComplete: "모든 준비가 완료되었습니다!",
       dismiss: "닫기",
       start: "시작",
+      dontShowAgain: "다시 보지 않기",
       steps: {
         worshipLeader: "예배인도자 승급",
         worshipLeaderDesc: "예배인도자가 되었습니다!",
@@ -4027,6 +4037,14 @@ songCard: {
       },
       inviteRewardBanner: "팀원을 초대하면 30 K-Seed를 받아요!",
       inviteRewardHint: "초대받은 분이 가입하면 보상이 지급됩니다",
+      teamMember: {
+        welcome: "팀멤버로 시작합니다! 🎵",
+        description: "K-Worship에 오신 것을 환영합니다! 다음 기능들을 사용할 수 있어요.",
+        searchCommunity: "공동체 찾아보기",
+        exploreLater: "나중에 둘러볼게요",
+        becomeLeaderHint: "예배인도자가 되고 싶으시면?",
+        apply: "신청하기",
+      },
     },
     adminEmail: {
       title: "이메일 관리",

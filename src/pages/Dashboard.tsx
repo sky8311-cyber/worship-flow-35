@@ -48,6 +48,7 @@ import { LiturgicalCalendarBanner } from "@/components/dashboard/LiturgicalCalen
 import { WLOnboardingChecklist } from "@/components/dashboard/WLOnboardingChecklist";
 import { RoleSelectionDialog } from "@/components/onboarding/RoleSelectionDialog";
 import { InvitedUserWelcomeDialog } from "@/components/onboarding/InvitedUserWelcomeDialog";
+import { TeamMemberWelcomeDialog } from "@/components/onboarding/TeamMemberWelcomeDialog";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -77,6 +78,7 @@ const Dashboard = () => {
   const [selectedSetForShare, setSelectedSetForShare] = useState<any>(null);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [showInvitedDialog, setShowInvitedDialog] = useState(false);
+  const [showTeamMemberDialog, setShowTeamMemberDialog] = useState(false);
   const [invitedCommunityInfo, setInvitedCommunityInfo] = useState<{ name: string; avatarUrl?: string; inviterName?: string } | null>(null);
   
   // Use shared community data with loading state tracking - MUST be before any useEffects that depend on it
@@ -479,6 +481,7 @@ const Dashboard = () => {
           onOpenChange={setShowRoleDialog}
           userId={user.id}
           onComplete={() => setShowRoleDialog(false)}
+          onTeamMemberSelected={() => setShowTeamMemberDialog(true)}
         />
       )}
       
@@ -494,6 +497,12 @@ const Dashboard = () => {
           onComplete={() => setShowInvitedDialog(false)}
         />
       )}
+      
+      {/* Team Member Welcome Dialog */}
+      <TeamMemberWelcomeDialog
+        open={showTeamMemberDialog}
+        onOpenChange={setShowTeamMemberDialog}
+      />
       
       {/* Main Content - Desktop Layout (3 columns) */}
       <div className="container mx-auto px-4 py-8 hidden lg:block">
