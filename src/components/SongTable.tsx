@@ -87,8 +87,9 @@ export const SongTable = ({
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
   
-  // Check if user can see usage history (admin or worship leader only)
-  const canViewUsageHistory = isAdmin || isWorshipLeader;
+  // Song usage history is available to ALL authenticated users
+  // This allows everyone to discover other worship leaders' published sets
+  const canViewUsageHistory = true;
 
   const renderColumnHeader = (
     columnKey: string,
