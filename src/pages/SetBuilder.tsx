@@ -72,6 +72,7 @@ const SetBuilder = () => {
   const [items, setItems] = useState<SetItem[]>([]);
   const [hasInitializedItems, setHasInitializedItems] = useState(false);
   const localChangeIdsRef = useRef<Set<string>>(new Set());
+  const itemsEndRef = useRef<HTMLDivElement>(null);
   const externalAddedIdsRef = useRef<Set<string>>(new Set()); // Track externally added items
   const suppressAutoSaveRef = useRef(false); // Suppress auto-save during revert
   const prevIdRef = useRef<string | undefined>(undefined);
@@ -1150,6 +1151,11 @@ const SetBuilder = () => {
     };
     
     setItems(prev => [...prev, newSetItem]);
+    
+    // Auto-scroll to the newly added item
+    setTimeout(() => {
+      itemsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   const handleAddComponent = (type: WorshipComponentType, customLabel?: string) => {
@@ -1188,6 +1194,11 @@ const SetBuilder = () => {
     };
     
     setItems(prev => [...prev, newComponent]);
+    
+    // Auto-scroll to the newly added component
+    setTimeout(() => {
+      itemsEndRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
   };
 
   const handleSelectTemplate = (template: any) => {
@@ -2071,6 +2082,8 @@ const SetBuilder = () => {
                               />
                             )
                           )}
+                          {/* Scroll target for auto-scroll after adding items */}
+                          <div ref={itemsEndRef} />
                         </div>
                       </SortableContext>
                     </DndContext>
