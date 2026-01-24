@@ -2,7 +2,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Music, Calendar, Printer, Edit, Lock, Eye, Maximize2, Share2, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
+import { Music, Calendar, Printer, Edit, Lock, Globe, Eye, Maximize2, Share2, Headphones, ChevronLeft, ChevronRight } from "lucide-react";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -557,17 +557,29 @@ const BandView = () => {
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Cross-community read-only banner */}
         {isCrossCommunity && serviceSet?.status === 'published' && (
-          <div className="mb-6 p-4 bg-accent/10 border border-accent/30 rounded-lg flex items-center gap-3">
-            <Lock className="w-5 h-5 text-accent flex-shrink-0" />
-            <div className="flex-1" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
-              <p className="text-sm font-medium text-foreground">
-                {t("songUsage.crossCommunityReadOnly")}
+          <div className="mb-6 p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/30 rounded-xl flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+              <Globe className="w-6 h-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0" style={{ wordBreak: "keep-all", overflowWrap: "break-word" }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-base font-semibold text-foreground">
+                  {t("songUsage.crossCommunityTitle")}
+                </p>
+                <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                  {t("songUsage.readOnly")}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t("songUsage.crossCommunitySubtext")}
               </p>
               {serviceSet.view_count > 0 && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5" />
-                  {t("songUsage.viewCount")}: {serviceSet.view_count}{t("songUsage.times")}
-                </p>
+                <div className="mt-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-background/80 rounded-full text-xs text-muted-foreground border border-border/50">
+                    <Eye className="w-3.5 h-3.5" />
+                    {t("songUsage.viewCount")} {serviceSet.view_count}{t("songUsage.times")}
+                  </span>
+                </div>
               )}
             </div>
           </div>
