@@ -50,7 +50,7 @@ import { RoleSelectionDialog } from "@/components/onboarding/RoleSelectionDialog
 import { InvitedUserWelcomeDialog } from "@/components/onboarding/InvitedUserWelcomeDialog";
 import { TeamMemberWelcomeDialog } from "@/components/onboarding/TeamMemberWelcomeDialog";
 import { RsvpPromptDialog } from "@/components/dashboard/RsvpPromptDialog";
-
+import { useEventReminders } from "@/hooks/useEventReminders";
 const Dashboard = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -71,6 +71,9 @@ const Dashboard = () => {
   const { unreadCount } = useNotifications();
   const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
   const dateLocale = language === "ko" ? ko : enUS;
+  
+  // Check for event reminders when dashboard loads
+  useEventReminders();
   
   // State
   const [addSongOpen, setAddSongOpen] = useState(false);

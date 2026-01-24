@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Notification } from "@/hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import { parseLocalDate } from "@/lib/countdownHelper";
-import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown, XCircle, MessageCircle, FileText } from "lucide-react";
+import { Cake, Music, Calendar, Users, Sparkles, Crown, ArrowDown, XCircle, MessageCircle, FileText, Bell } from "lucide-react";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { useState, useEffect } from "react";
 import { LevelUpDialog } from "@/components/seeds/LevelUpDialog";
@@ -26,6 +26,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const isWorshipLeaderRejected = notification.type === "worship_leader_rejected";
   const isPostComment = notification.type === "post_comment";
   const isNewFeedbackPost = notification.type === "new_feedback_post";
+  const isEventReminder = notification.type === "event_reminder";
 
   useEffect(() => {
     if (isLevelUp && !notification.is_read) {
@@ -96,7 +97,7 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const displayName = actorName || (language === "ko" ? "시스템" : "System");
   const isBirthday = notification.type === "birthday";
   const isWorshipSet = notification.type === "new_worship_set";
-  const isCalendarEvent = notification.type === "new_calendar_event";
+  const isCalendarEvent = notification.type === "new_calendar_event" || notification.type === "event_reminder";
   const isNewSong = notification.type === "new_song";
   const isJoinRequest = notification.type === "join_request";
   const isJoinApproved = notification.type === "join_approved";
@@ -121,6 +122,10 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
         ) : isWorshipSet ? (
           <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
             <Music className="h-5 w-5 text-primary" />
+          </div>
+        ) : isEventReminder ? (
+          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-amber-500/10 flex items-center justify-center">
+            <Bell className="h-5 w-5 text-amber-500" />
           </div>
         ) : isCalendarEvent ? (
           <div className="h-10 w-10 flex-shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
