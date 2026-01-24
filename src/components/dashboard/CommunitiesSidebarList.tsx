@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Users, ChevronRight } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
 interface Community {
   id: string;
@@ -19,9 +20,10 @@ interface Community {
 interface CommunitiesSidebarListProps {
   communities: Community[];
   maxVisible?: number;
+  currentCommunityId?: string;
 }
 
-export function CommunitiesSidebarList({ communities, maxVisible = 5 }: CommunitiesSidebarListProps) {
+export function CommunitiesSidebarList({ communities, maxVisible = 5, currentCommunityId }: CommunitiesSidebarListProps) {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
 
@@ -72,7 +74,13 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5 }: Communit
               <Link
                 key={community.id}
                 to={`/community/${community.id}`}
-                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors group ${isInactive ? 'opacity-70' : ''}`}
+                className={cn(
+                  "flex items-center gap-3 p-2 rounded-lg transition-colors group",
+                  community.id === currentCommunityId
+                    ? "bg-primary/10 border border-primary/30"
+                    : "hover:bg-accent",
+                  isInactive && "opacity-70"
+                )}
               >
                 {cardContent}
               </Link>

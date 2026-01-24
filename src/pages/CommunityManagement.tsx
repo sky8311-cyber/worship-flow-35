@@ -778,13 +778,29 @@ export default function CommunityManagement() {
       <TooltipProvider>
         <div className="container mx-auto py-6 px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-              <h1 className="text-3xl font-bold">{t("community.manage")}</h1>
-              {!canManage && (
-                <Badge variant="outline" className="text-sm">
-                  {t("community.readOnlyMode")}
-                </Badge>
-              )}
+            <div className="flex flex-col gap-4 mb-8">
+              {/* 공동체 아바타 + 이름 */}
+              <div className="flex items-center gap-4">
+                <Avatar className="w-14 h-14 border-2 border-primary/20">
+                  <AvatarImage src={community?.avatar_url || undefined} />
+                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                    {community?.name?.[0] || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold truncate">
+                    {community?.name}
+                  </h1>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    {t("community.manage")}
+                    {!canManage && (
+                      <Badge variant="outline" className="text-xs">
+                        {t("community.readOnlyMode")}
+                      </Badge>
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <Tabs defaultValue="members" className="space-y-6">

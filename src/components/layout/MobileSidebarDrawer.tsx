@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -22,6 +23,7 @@ interface MobileSidebarDrawerProps {
 export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerProps) {
   const { user, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const { isLeaderboardEnabled, isLoading: settingsLoading } = useAppSettings();
+  const { id: currentCommunityId } = useParams();
   
   const { data: communitiesData } = useUserCommunities();
   const communityIds = communitiesData?.communityIds || [];
@@ -157,7 +159,7 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
         <ScrollArea className="h-full">
           <div className="p-4 space-y-4">
             <ProfileSidebarCard stats={userStats} onNavigate={handleClose} />
-            <CommunitiesSidebarList communities={joinedCommunities} maxVisible={5} />
+            <CommunitiesSidebarList communities={joinedCommunities} maxVisible={5} currentCommunityId={currentCommunityId} />
             <QuickActionsCard showCreateCommunity={isWorshipLeader || isAdmin} />
             <UpcomingEventsWidget 
               sets={upcomingSets} 
