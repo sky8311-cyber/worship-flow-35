@@ -134,8 +134,8 @@ export function RoleSelectionDialog({
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   {language === "ko" 
-                    ? "기존 팀에 초대받아 참여하기" 
-                    : "Join an existing team through invitation"}
+                    ? "초대를 받거나, 공동체를 직접 찾아서 가입" 
+                    : "Get invited or search for a community to join"}
                 </p>
               </div>
             </div>
