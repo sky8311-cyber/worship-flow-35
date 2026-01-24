@@ -700,7 +700,6 @@ const Dashboard = () => {
                   isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
                   hasCommunities={communitiesReady ? communityIds.length > 0 : null}
                   communitiesLoading={communitiesLoading}
-                  userName={profile?.full_name || undefined}
                   userStats={userStats}
                 />
               </CardContent>
@@ -871,7 +870,6 @@ const Dashboard = () => {
                 isCommunityLeader={isCommunityLeaderInAnyCommunity || false}
                 hasCommunities={communitiesReady ? communityIds.length > 0 : null}
                 communitiesLoading={communitiesLoading}
-                userName={profile?.full_name || undefined}
                 userStats={userStats}
               />
             </CardContent>
