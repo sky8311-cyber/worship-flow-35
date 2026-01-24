@@ -2,9 +2,10 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Users, Music, ArrowRight, Sparkles } from "lucide-react";
+import { Users, Music, ArrowRight, Sparkles, UserPlus, Gift } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
+import { Badge } from "@/components/ui/badge";
 
 interface WLWelcomeDialogProps {
   open: boolean;
@@ -81,7 +82,33 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDia
               </div>
             </button>
 
-            {/* Step 2: Create First Set */}
+            {/* Step 2: Invite Team (NEW) */}
+            <button
+              onClick={handleCreateCommunity}
+              className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <UserPlus className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">
+                    {language === "ko" ? "2. 팀원 초대하기" : "2. Invite Your Team"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {language === "ko" 
+                      ? "초대 시 30 K-Seed 보상!" 
+                      : "Earn 30 K-Seeds per invite!"}
+                  </p>
+                </div>
+                <Badge variant="secondary" className="shrink-0 gap-1">
+                  <Gift className="w-3 h-3" />
+                  +30
+                </Badge>
+              </div>
+            </button>
+
+            {/* Step 3: Create First Set */}
             <button
               onClick={handleCreateSet}
               className="w-full p-4 border rounded-lg text-left hover:bg-muted/50 transition-colors group"
@@ -92,7 +119,7 @@ export function WLWelcomeDialog({ open, onOpenChange, churchName }: WLWelcomeDia
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium">
-                    {language === "ko" ? "2. 첫 번째 워십세트 만들기" : "2. Create Your First Worship Set"}
+                    {language === "ko" ? "3. 첫 번째 워십세트 만들기" : "3. Create Your First Worship Set"}
                   </p>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     {language === "ko" 

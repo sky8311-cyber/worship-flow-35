@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, CalendarClock } from "lucide-react";
+import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, CalendarClock, Gift } from "lucide-react";
 import { RoleBadge } from "@/components/RoleBadge";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { CommunityRecurringCalendarTab } from "@/components/community/CommunityRecurringCalendarTab";
@@ -899,6 +899,70 @@ export default function CommunityManagement() {
                     </CardContent>
                   </Card>
                 )}
+
+            {/* K-Seed Reward Banner + Quick Invite Link */}
+            {canManage && (
+              <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Gift className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">
+                        {t("onboarding.inviteRewardBanner")}
+                      </CardTitle>
+                      <CardDescription className="text-sm">
+                        {t("onboarding.inviteRewardHint")}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                {community?.invite_token && (
+                  <CardContent className="pt-0">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        value={`${window.location.origin}/join/${community.invite_token}`}
+                        readOnly
+                        className="font-mono text-sm flex-1"
+                      />
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/join/${community.invite_token}`);
+                            toast({ title: t("community.copyInviteLink") + " ✓" });
+                          }}
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
+                        {navigator.share && (
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={() => {
+                              navigator.share({
+                                title: community.name,
+                                text: language === "ko" 
+                                  ? `${community.name} 예배공동체에 초대합니다!`
+                                  : `Join ${community.name} worship community!`,
+                                url: `${window.location.origin}/join/${community.invite_token}`
+                              });
+                            }}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {t("community.shareThisLink")}
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+            )}
 
             {/* Email Invitation */}
             {canManage && (

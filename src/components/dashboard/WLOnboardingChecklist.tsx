@@ -7,31 +7,52 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight } from "lucide-react";
+import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight, UserPlus, Gift } from "lucide-react";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export function WLOnboardingChecklist() {
   const navigate = useNavigate();
   const { user, isWorshipLeader, profile } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [dismissed, setDismissed] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
 
-  // Check if user has communities
-  const { data: hasCommunity } = useQuery({
+  // Check if user has communities and get the first one
+  const { data: communityData } = useQuery({
     queryKey: ["wl-onboarding-community", user?.id],
     queryFn: async () => {
-      if (!user) return false;
+      if (!user) return null;
       const { data, error } = await supabase
         .from("community_members")
-        .select("id")
+        .select("community_id")
         .eq("user_id", user.id)
+        .eq("role", "owner")
         .limit(1);
       if (error) throw error;
-      return (data?.length || 0) > 0;
+      return data?.[0] || null;
     },
     enabled: !!user && !!profile && isWorshipLeader,
+    staleTime: 60 * 1000,
+  });
+
+  const hasCommunity = !!communityData;
+  const firstCommunityId = communityData?.community_id;
+
+  // Check if user has invited team members (community has more than 1 member)
+  const { data: hasInvitedMembers } = useQuery({
+    queryKey: ["wl-onboarding-invited", firstCommunityId],
+    queryFn: async () => {
+      if (!firstCommunityId) return false;
+      const { count, error } = await supabase
+        .from("community_members")
+        .select("id", { count: "exact", head: true })
+        .eq("community_id", firstCommunityId);
+      if (error) throw error;
+      return (count || 0) > 1;
+    },
+    enabled: !!firstCommunityId,
     staleTime: 60 * 1000,
   });
 
@@ -53,7 +74,7 @@ export function WLOnboardingChecklist() {
   });
 
   // Don't show if profile not loaded, not worship leader, dismissed, or already completed all steps
-  if (!profile || !isWorshipLeader || dismissed || (hasCommunity && hasSet)) {
+  if (!profile || !isWorshipLeader || dismissed || (hasCommunity && hasInvitedMembers && hasSet)) {
     return null;
   }
 
@@ -72,6 +93,17 @@ export function WLOnboardingChecklist() {
       completed: !!hasCommunity,
       icon: Users,
       action: () => setShowCreateCommunity(true),
+    },
+    { 
+      id: "invite", 
+      label: t("onboarding.steps.inviteTeam"),
+      description: t("onboarding.steps.inviteTeamDesc"),
+      completed: !!hasInvitedMembers,
+      icon: UserPlus,
+      action: firstCommunityId 
+        ? () => navigate(`/community/${firstCommunityId}/manage`)
+        : undefined,
+      showReward: true,
     },
     { 
       id: "set", 
@@ -154,14 +186,22 @@ export function WLOnboardingChecklist() {
                 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className={cn(
-                    "text-sm font-medium",
-                    step.completed && "text-green-700 dark:text-green-400 line-through",
-                    isCurrent && "text-foreground",
-                    isPending && "text-muted-foreground"
-                  )}>
-                    {step.label}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={cn(
+                      "text-sm font-medium",
+                      step.completed && "text-green-700 dark:text-green-400 line-through",
+                      isCurrent && "text-foreground",
+                      isPending && "text-muted-foreground"
+                    )}>
+                      {step.label}
+                    </p>
+                    {step.showReward && !step.completed && (
+                      <Badge variant="secondary" className="text-xs gap-1 py-0">
+                        <Gift className="w-3 h-3" />
+                        +30
+                      </Badge>
+                    )}
+                  </div>
                   <p className={cn(
                     "text-xs",
                     step.completed ? "text-green-600/70 dark:text-green-500/70" : "text-muted-foreground"
