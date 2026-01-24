@@ -20,6 +20,13 @@ export const useLegalConsent = () => {
     queryFn: async () => {
       if (!user) return { needsConsent: false, pendingDocuments: [] };
 
+      // 세션 유효성 검증 - 실제 토큰이 있는지 확인
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.warn("[useLegalConsent] No active session, skipping consent check");
+        return { needsConsent: false, pendingDocuments: [] };
+      }
+
       // Get active terms and privacy documents
       const { data: activeDocuments, error: docsError } = await supabase
         .from("legal_documents")
