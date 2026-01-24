@@ -1,336 +1,358 @@
 
-# 대시보드 RSVP 및 일정 기능 개선
+# 웹 푸시 알림 시스템 구현
 
-## 발견된 문제들
+## 개요
+
+웹 푸시 알림을 구현하여 브라우저가 닫혀 있어도 사용자가 중요한 알림을 받을 수 있도록 합니다.
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 문제 1: RSVP 다이얼로그가 사이드바를 열기 전까지 표시되지 않음               │
-│    → Dashboard.tsx의 RSVP 체크가 communityIds에 의존하지만,                 │
-│      UpcomingEventsWidget에서 별도로 communityIds를 가져오며                │
-│      초기화 타이밍 불일치 발생                                               │
+│                          웹 푸시 알림 아키텍처                               │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 문제 2: 사이드바에서 캘린더 일정 클릭 시 모든 사용자에게 수정 화면 표시       │
-│    → UpcomingEventsWidget에서 캘린더 이벤트 클릭 시                         │
-│      handleEventClick 로직이 없이 무조건 수정 다이얼로그 열림                │
-│    → 일반 멤버: 상세 내용 + 참석자 명단 보기                                 │
-│    → 관리자: 수정 다이얼로그 보기 (현재대로)                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ 문제 3: 지나간 일정과 다가올 일정 구분 표시 필요                             │
-│    → 지나간 일정: 희미하게 표시 (WorshipSet History 스타일)                  │
-│    → 다가올 일정: 카운트다운 배지 표시 (WorshipSet처럼)                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ 문제 4: 일정 삭제 버튼 필요 (canManage 권한자용)                             │
+│                                                                             │
+│  ┌──────────────┐      ┌──────────────────┐      ┌──────────────────┐      │
+│  │   사용자     │ ───► │  Service Worker  │ ◄─── │   푸시 서버      │      │
+│  │   브라우저   │      │  (sw.js)         │      │   (Edge Func)    │      │
+│  └──────────────┘      └──────────────────┘      └──────────────────┘      │
+│         │                      │                         │                 │
+│         ▼                      ▼                         ▼                 │
+│  ┌──────────────┐      ┌──────────────────┐      ┌──────────────────┐      │
+│  │   설정 UI    │      │   구독 정보      │      │   VAPID 키       │      │
+│  │   (토글)     │      │   (DB 저장)      │      │   (Secrets)      │      │
+│  └──────────────┘      └──────────────────┘      └──────────────────┘      │
+│                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 해결 방안
+## 구현 단계
 
-### 1. RSVP 다이얼로그 타이밍 문제 수정 (src/pages/Dashboard.tsx)
+### 1단계: VAPID 키 저장
 
-**문제 원인:** RSVP 체크 useEffect가 `isDashboardReady`에만 의존하지만, 실제로는 `communitiesData`가 로드된 후에 실행되어야 함
+사용자가 생성한 VAPID 키를 Supabase Secrets에 저장합니다:
+- `VAPID_PUBLIC_KEY` - 클라이언트에서 구독 시 사용
+- `VAPID_PRIVATE_KEY` - Edge Function에서 푸시 전송 시 사용
 
-**수정 내용:**
-```typescript
-// 기존: community_members를 다시 조회
-const { data: memberships } = await supabase
-  .from("community_members")
-  .select("community_id")
-  .eq("user_id", user.id);
+---
 
-// 변경: 이미 로드된 communityIds 활용
-useEffect(() => {
-  const checkPendingRsvp = async () => {
-    if (!user || !isDashboardReady) return;
-    if (showRoleDialog || showInvitedDialog || showTeamMemberDialog) return;
-    if (communityIds.length === 0) return;  // 커뮤니티 데이터 확인
+### 2단계: Service Worker 생성
 
-    const today = new Date().toISOString().split("T")[0];
-    
-    // 이미 로드된 communityIds 사용
-    const { data: events } = await supabase
-      .from("calendar_events")
-      .select("id")
-      .in("community_id", communityIds)  // 변경
-      .eq("rsvp_enabled", true)
-      .gte("event_date", today);
+**새 파일: public/sw.js**
 
-    // ... 나머지 동일
+Service Worker는 브라우저 백그라운드에서 실행되어 푸시 알림을 수신합니다.
+
+```javascript
+// Service Worker for Push Notifications
+self.addEventListener('push', function(event) {
+  const data = event.data?.json() || {};
+  
+  const options = {
+    body: data.body || '새 알림이 있습니다',
+    icon: '/kworship-icon.png',
+    badge: '/kworship-icon.png',
+    data: {
+      url: data.url || '/',
+      notificationId: data.notificationId
+    },
+    vibrate: [200, 100, 200]
   };
-
-  const timer = setTimeout(checkPendingRsvp, 500);  // 타이밍 조정
-  return () => clearTimeout(timer);
-}, [user, isDashboardReady, showRoleDialog, showInvitedDialog, showTeamMemberDialog, communityIds]);  // communityIds 의존성 추가
-```
-
----
-
-### 2. 일반 멤버용 일정 상세 보기 다이얼로그 생성
-
-**새 파일: src/components/community/EventDetailDialog.tsx**
-
-```typescript
-interface EventDetailDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  event: CalendarEvent | null;
-}
-
-export function EventDetailDialog({ open, onOpenChange, event }: EventDetailDialogProps) {
-  // 일정 상세 정보 표시
-  // - 제목, 날짜/시간, 장소, 설명
-  // - RSVP가 활성화된 경우 참석자 명단 표시
-  // - 내 참석 여부 변경 가능 (RSVP 활성화 시)
   
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{event?.title}</DialogTitle>
-        </DialogHeader>
-        
-        {/* 일정 상세 정보 */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm">
-              📅 {format(parseLocalDate(event.event_date), "yyyy년 M월 d일 (eee)")}
-              {event.start_time && ` ${event.start_time}`}
-            </p>
-            {event.location && (
-              <p className="text-sm">📍 {event.location}</p>
-            )}
-            {event.description && (
-              <p className="text-sm text-muted-foreground">{event.description}</p>
-            )}
-          </div>
-          
-          {/* RSVP 섹션 - rsvp_enabled일 때만 */}
-          {event?.rsvp_enabled && (
-            <div className="border-t pt-4">
-              {/* 내 참석 여부 버튼 */}
-              {/* 참석자/불참자 명단 */}
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'K-Worship', options)
   );
-}
-```
-
----
-
-### 3. UpcomingEventsWidget에서 권한별 클릭 처리 (src/components/dashboard/UpcomingEventsWidget.tsx)
-
-**변경 내용:**
-1. EventDetailDialog import 및 state 추가
-2. 캘린더 이벤트 클릭 시 권한 체크
-3. 삭제 버튼 추가 (canManage 권한자용)
-
-```typescript
-// State 추가
-const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-const [selectedEventForDetail, setSelectedEventForDetail] = useState<any>(null);
-
-// 이벤트 클릭 핸들러 수정
-const handleCalendarEventClick = (event: any, e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  const canManageEvent = isAdmin || (isCommunityLeader && event.created_by === currentUserId);
-  
-  if (canManageEvent) {
-    // 관리자: 수정 다이얼로그
-    setSelectedEventId(event.id);
-    setEventDialogOpen(true);
-  } else {
-    // 일반 멤버: 상세 보기 다이얼로그
-    setSelectedEventForDetail(event);
-    setDetailDialogOpen(true);
-  }
-};
-
-// onClick 수정 (calendar_event 타입)
-onClick: (e) => handleCalendarEventClick(event, e),
-```
-
----
-
-### 4. 지나간 일정과 다가올 일정 시각적 구분 (CommunityRecurringCalendarTab)
-
-**변경 내용:**
-1. 과거/미래 일정 모두 표시하도록 쿼리 수정
-2. 지나간 일정: 희미하게 표시 + "지난 일정" 배지
-3. 다가올 일정: 카운트다운 배지 표시
-
-```typescript
-// 쿼리 수정 - 과거 일정도 포함 (최근 30일)
-const { data: calendarEvents = [], isLoading: eventsLoading } = useQuery({
-  queryKey: ["community-calendar-events", communityId],
-  queryFn: async () => {
-    const now = new Date();
-    const past30Days = new Date(now);
-    past30Days.setDate(past30Days.getDate() - 30);
-    
-    const pastDate = `${past30Days.getFullYear()}-${String(past30Days.getMonth() + 1).padStart(2, '0')}-${String(past30Days.getDate()).padStart(2, '0')}`;
-    
-    const { data, error } = await supabase
-      .from("calendar_events")
-      .select("*")
-      .eq("community_id", communityId)
-      .gte("event_date", pastDate)  // 최근 30일 포함
-      .order("event_date", { ascending: true });
-    
-    if (error) throw error;
-    return data || [];
-  },
 });
 
-// 렌더링 시 스타일 분기
-{calendarEvents.map((event) => {
-  const isPast = isPastDate(event.event_date);
-  const countdown = getCountdown(event.event_date, event.start_time);
-  
-  return (
-    <div
-      key={event.id}
-      className={cn(
-        "flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50",
-        isPast && "opacity-60 bg-muted/30"  // 지나간 일정 스타일
-      )}
-      onClick={() => handleEventClick(event)}
-    >
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className={cn("font-medium truncate", isPast && "line-through text-muted-foreground")}>
-            {event.title}
-          </p>
-          
-          {/* 지나간 일정 배지 */}
-          {isPast && (
-            <Badge variant="outline" className="text-xs opacity-60">
-              {t("calendarEvent.past") || "지난 일정"}
-            </Badge>
-          )}
-          
-          {/* 카운트다운 배지 (7일 이내 미래 일정) */}
-          {!isPast && countdown.text && (
-            <Badge className="text-xs bg-accent text-white hover:bg-accent">
-              {countdown.text}
-            </Badge>
-          )}
-          
-          {event.rsvp_enabled && (
-            <Badge variant="outline" className="text-xs">
-              <Users className="h-3 w-3 mr-1" />
-              RSVP
-            </Badge>
-          )}
-        </div>
-        {/* ... 나머지 내용 */}
-      </div>
-      
-      {/* 관리 메뉴 (수정/삭제) */}
-      {canManage && (
-        <DropdownMenu>
-          {/* ... 기존 메뉴에 삭제 버튼 포함 */}
-        </DropdownMenu>
-      )}
-    </div>
+// 알림 클릭 시 앱으로 이동
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
   );
-})}
+});
 ```
 
 ---
 
-### 5. UpcomingEventsWidget에 카운트다운 배지 추가
+### 3단계: 푸시 구독 관리 훅 생성
 
-**변경 내용:**
+**새 파일: src/hooks/usePushNotifications.ts**
+
 ```typescript
-import { getCountdown } from "@/lib/countdownHelper";
-
-// 렌더링 시 카운트다운 추가
-{unifiedEvents.map((event) => {
-  const isPast = isPastDate(event.date);
-  const countdown = getCountdown(event.date);  // 추가
+export function usePushNotifications() {
+  const { user } = useAuth();
   
-  return (
-    <div key={event.id}>
-      {/* ... 기존 내용 */}
-      
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* 기존 배지들 */}
-        {event.badgeLabel && (
-          <Badge variant="secondary" className="text-xs">
-            {event.badgeLabel}
-          </Badge>
-        )}
-        
-        {/* 카운트다운 배지 추가 */}
-        {!isPast && countdown.text && (
-          <Badge className="text-xs bg-accent text-white hover:bg-accent">
-            {countdown.text}
-          </Badge>
-        )}
-      </div>
-    </div>
-  );
-})}
+  // 푸시 알림 지원 여부 확인
+  const isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
+  
+  // 현재 구독 상태 조회
+  const { data: subscription } = useQuery(...);
+  
+  // 알림 설정 조회
+  const { data: preferences } = useQuery(...);
+  
+  // Service Worker 등록 및 푸시 구독
+  const subscribePush = async () => {
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    const pushSubscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: VAPID_PUBLIC_KEY
+    });
+    
+    // DB에 구독 정보 저장
+    await supabase.from('push_subscriptions').upsert({...});
+  };
+  
+  // 구독 해제
+  const unsubscribePush = async () => {...};
+  
+  // 알림 설정 업데이트
+  const updatePreferences = async (prefs) => {...};
+  
+  return { 
+    isSupported, 
+    isSubscribed, 
+    preferences,
+    subscribePush, 
+    unsubscribePush,
+    updatePreferences 
+  };
+}
 ```
 
 ---
 
-## 파일 수정 요약
+### 4단계: 설정 페이지에 알림 설정 UI 추가
 
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/pages/Dashboard.tsx` | RSVP 체크 로직 수정 - communityIds 의존성 추가 |
-| `src/components/community/EventDetailDialog.tsx` | **새 파일** - 일반 멤버용 일정 상세 보기 다이얼로그 |
-| `src/components/dashboard/UpcomingEventsWidget.tsx` | 권한별 클릭 처리, 카운트다운 배지, 상세 보기 다이얼로그 연동 |
-| `src/components/community/CommunityRecurringCalendarTab.tsx` | 과거 일정 포함, 카운트다운 배지, 시각적 구분 |
-| `src/lib/translations.ts` | 번역 키 추가 (calendarEvent.past 등) |
+**수정 파일: src/pages/Settings.tsx**
+
+```typescript
+// 새 카드 추가: 알림 설정
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Bell className="h-5 w-5" />
+      {language === "ko" ? "푸시 알림 설정" : "Push Notification Settings"}
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-4">
+    {/* 푸시 알림 활성화 토글 */}
+    <div className="flex items-center justify-between">
+      <Label>푸시 알림 켜기</Label>
+      <Switch 
+        checked={isSubscribed} 
+        onCheckedChange={handleTogglePush}
+      />
+    </div>
+    
+    <Separator />
+    
+    {/* 항목별 알림 설정 */}
+    {isSubscribed && (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span>📅 일정 리마인더</span>
+          <Switch checked={preferences.event_reminder} ... />
+        </div>
+        <div className="flex items-center justify-between">
+          <span>🎵 새 워십세트 업로드</span>
+          <Switch checked={preferences.new_worship_set} ... />
+        </div>
+        <div className="flex items-center justify-between">
+          <span>📝 커뮤니티 피드 글</span>
+          <Switch checked={preferences.community_post} ... />
+        </div>
+        <div className="flex items-center justify-between">
+          <span>💬 채팅 메시지</span>
+          <Switch checked={preferences.chat_message} ... />
+        </div>
+      </div>
+    )}
+  </CardContent>
+</Card>
+```
 
 ---
 
-## 시각화
+### 5단계: 대시보드에 알림 활성화 프롬프트 추가
+
+**새 파일: src/components/dashboard/PushNotificationPrompt.tsx**
+
+첫 방문 시 또는 알림이 비활성화된 경우 사용자에게 활성화를 요청하는 배너/다이얼로그:
+
+```typescript
+export function PushNotificationPrompt() {
+  const { isSupported, isSubscribed, subscribePush } = usePushNotifications();
+  const [dismissed, setDismissed] = useState(() => 
+    localStorage.getItem('push-prompt-dismissed') === 'true'
+  );
+  
+  if (!isSupported || isSubscribed || dismissed) return null;
+  
+  return (
+    <Card className="border-primary/20 bg-primary/5">
+      <CardContent className="flex items-center justify-between py-3">
+        <div className="flex items-center gap-3">
+          <Bell className="h-5 w-5 text-primary" />
+          <span>중요한 알림을 놓치지 마세요!</span>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={handleDismiss}>
+            나중에
+          </Button>
+          <Button size="sm" onClick={subscribePush}>
+            알림 켜기
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+### 6단계: 푸시 알림 전송 Edge Function
+
+**새 파일: supabase/functions/send-push-notification/index.ts**
+
+web-push 라이브러리를 사용하여 실제 푸시 알림을 전송합니다:
+
+```typescript
+import webpush from "npm:web-push@3.6.7";
+
+Deno.serve(async (req) => {
+  const { userId, title, body, url, notificationType } = await req.json();
+  
+  // VAPID 키 설정
+  webpush.setVapidDetails(
+    'mailto:hello@kworship.app',
+    Deno.env.get('VAPID_PUBLIC_KEY'),
+    Deno.env.get('VAPID_PRIVATE_KEY')
+  );
+  
+  // 사용자의 푸시 구독 정보 조회
+  const { data: subscriptions } = await supabase
+    .from('push_subscriptions')
+    .select('*')
+    .eq('user_id', userId);
+  
+  // 사용자 알림 설정 확인
+  const { data: preferences } = await supabase
+    .from('push_notification_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+  
+  // 알림 유형별 설정 확인
+  if (preferences && !preferences[notificationType]) {
+    return; // 해당 유형 알림이 비활성화됨
+  }
+  
+  // 각 구독에 푸시 전송
+  for (const sub of subscriptions) {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify({ title, body, url })
+    );
+  }
+});
+```
+
+---
+
+### 7단계: 기존 알림 시스템에 푸시 통합
+
+기존 알림이 생성될 때 푸시 알림도 함께 전송되도록 수정합니다.
+
+**수정 파일: supabase/functions/process-event-reminders/index.ts**
+
+```typescript
+// 알림 삽입 후 푸시 전송
+const { error: notifError } = await supabase
+  .from("notifications")
+  .insert({...});
+
+if (!notifError) {
+  // 푸시 알림 전송
+  await supabase.functions.invoke('send-push-notification', {
+    body: {
+      userId: member.user_id,
+      title: "일정 알림",
+      body: `"${event.title}" 일정이 ${timeMessage} 시작됩니다.`,
+      url: `/dashboard`,
+      notificationType: 'event_reminder'
+    }
+  });
+}
+```
+
+---
+
+### 8단계: 추가 알림 트리거 구현
+
+새 워십세트, 커뮤니티 피드 글, 채팅 메시지에 대한 푸시 알림도 구현합니다.
+
+1. **새 워십세트 업로드**: worship_sets 테이블에 INSERT 후 커뮤니티 멤버들에게 알림
+2. **커뮤니티 피드 글**: community_posts 테이블에 INSERT 후 팔로워/멤버에게 알림
+3. **채팅 메시지**: 기존 채팅 시스템에 푸시 통합
+
+---
+
+## 파일 수정/생성 요약
+
+| 파일 | 작업 | 설명 |
+|------|------|------|
+| `public/sw.js` | 생성 | Service Worker - 푸시 수신 및 표시 |
+| `src/main.tsx` | 수정 | Service Worker 등록 코드 추가 |
+| `src/hooks/usePushNotifications.ts` | 생성 | 푸시 구독 관리 훅 |
+| `src/pages/Settings.tsx` | 수정 | 알림 설정 UI 추가 |
+| `src/components/dashboard/PushNotificationPrompt.tsx` | 생성 | 알림 활성화 프롬프트 |
+| `src/pages/Dashboard.tsx` | 수정 | 프롬프트 컴포넌트 추가 |
+| `supabase/functions/send-push-notification/index.ts` | 생성 | 푸시 전송 Edge Function |
+| `supabase/functions/process-event-reminders/index.ts` | 수정 | 푸시 전송 호출 추가 |
+| `supabase/config.toml` | 수정 | 새 Edge Function 설정 |
+
+---
+
+## 알림 유형별 동작
 
 ```text
-캘린더 일정 클릭 시 동작 분기:
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 사용자가 캘린더 일정 클릭                                                    │
-│    ↓                                                                        │
-│ 권한 체크: isAdmin || (isCommunityLeader && event.created_by === userId)    │
-│    ↓                                                                        │
-│ ┌──────────────────────┐    ┌──────────────────────────────────────────────┐│
-│ │ 관리자 (canManage)   │    │ 일반 멤버                                     ││
-│ │    ↓                 │    │    ↓                                         ││
-│ │ 수정 다이얼로그 열기  │    │ 상세 보기 다이얼로그 열기                      ││
-│ │ (CalendarEventDialog)│    │ (EventDetailDialog)                          ││
-│ │                      │    │    - 일정 정보 표시                           ││
-│ │                      │    │    - RSVP 응답 가능                           ││
-│ │                      │    │    - 참석자 명단 확인                          ││
-│ └──────────────────────┘    └──────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────────────────┘
-
-일정 목록 시각적 구분:
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 지나간 일정 (opacity-60, bg-muted/30)                                       │
-│ ┌─────────────────────────────────────────────────────────────────────────┐ │
-│ │ [1/20] ̶월̶간̶ ̶하̶기̶오̶스̶                              [지난 일정]           │ │
-│ │        2026년 1월 20일 (월)                                             │ │
-│ └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                             │
-│ 다가올 일정 (정상 스타일 + 카운트다운 배지)                                   │
-│ ┌─────────────────────────────────────────────────────────────────────────┐ │
-│ │ [1/25] 주일 예배 리허설            [RSVP] [3d to go]         [수정][삭제]│ │
-│ │        2026년 1월 25일 (토) 14:00                                       │ │
-│ └─────────────────────────────────────────────────────────────────────────┘ │
-│                                                                             │
-│ ┌─────────────────────────────────────────────────────────────────────────┐ │
-│ │ [1/26] 주일 예배                   [RSVP] [4d to go]         [수정][삭제]│ │
-│ │        2026년 1월 26일 (일) 11:00                                       │ │
-│ └─────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────┬─────────────────────────────────────────────────────────┐
+│ 알림 유형           │ 동작                                                    │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ 📅 일정 리마인더    │ 일정 시작 전 설정된 시간에 푸시 전송                     │
+│                    │ 클릭 시 → 대시보드 또는 일정 상세                        │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ 🎵 새 워십세트      │ 내 커뮤니티에 새 세트 발행 시 푸시 전송                  │
+│                    │ 클릭 시 → 해당 워십세트 페이지                           │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ 📝 커뮤니티 피드    │ 내 커뮤니티에 새 글 작성 시 푸시 전송                    │
+│                    │ 클릭 시 → 대시보드 피드                                  │
+├────────────────────┼─────────────────────────────────────────────────────────┤
+│ 💬 채팅 메시지      │ 새 채팅 메시지 수신 시 푸시 전송                         │
+│                    │ 클릭 시 → 채팅 페이지                                    │
+└────────────────────┴─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 구현 순서
+
+1. **VAPID 키 저장** - Secrets에 키 추가
+2. **Service Worker 생성** - public/sw.js 작성
+3. **훅 생성** - usePushNotifications.ts 구현
+4. **설정 UI** - Settings.tsx에 알림 설정 카드 추가
+5. **프롬프트** - 대시보드에 활성화 프롬프트 추가
+6. **Edge Function** - send-push-notification 함수 작성
+7. **기존 시스템 통합** - 알림 생성 시 푸시 호출
+
+---
+
+## 기술 요약
+
+- **Service Worker**: 브라우저 백그라운드에서 푸시 수신
+- **web-push 라이브러리**: Edge Function에서 푸시 전송
+- **VAPID**: 브라우저가 푸시 서버를 신뢰할 수 있도록 하는 인증 방식
+- **PushManager API**: 브라우저의 푸시 구독 관리
+- **Push Subscription**: endpoint, p256dh, auth 키로 구성된 구독 정보
