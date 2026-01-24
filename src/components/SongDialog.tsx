@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle } from "lucide-react";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -221,6 +221,11 @@ const [loading, setLoading] = useState(false);
   // State for "Add to Worship Set?" prompt after creating a new song
   const [showAddToSetPrompt, setShowAddToSetPrompt] = useState(false);
   const [newlyCreatedSong, setNewlyCreatedSong] = useState<any>(null);
+  
+  // State for in-app score preview dialog
+  const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
+  const [previewVariationIndex, setPreviewVariationIndex] = useState(0);
+  const [previewFileIndex, setPreviewFileIndex] = useState(0);
   
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -861,7 +866,11 @@ const [loading, setLoading] = useState(false);
                 <div key={fileIndex} className="relative group">
                   <div 
                     className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer border"
-                    onClick={() => window.open(file.url, "_blank")}
+                    onClick={() => {
+                      setPreviewVariationIndex(index);
+                      setPreviewFileIndex(fileIndex);
+                      setScorePreviewOpen(true);
+                    }}
                   >
                     {isImage ? (
                       <img 
@@ -1343,6 +1352,50 @@ const [loading, setLoading] = useState(false);
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* In-app Score Preview Dialog */}
+      <Dialog open={scorePreviewOpen} onOpenChange={setScorePreviewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {language === "ko" ? "악보 미리보기" : "Score Preview"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+            {scoreVariations[previewVariationIndex]?.files[previewFileIndex] && (
+              <img 
+                src={scoreVariations[previewVariationIndex].files[previewFileIndex].url}
+                alt="Score preview"
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+          {/* Page navigation for multiple pages */}
+          {scoreVariations[previewVariationIndex]?.files.length > 1 && (
+            <div className="flex items-center justify-center gap-4 py-2 border-t">
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={previewFileIndex === 0}
+                onClick={() => setPreviewFileIndex(prev => prev - 1)}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm">
+                {previewFileIndex + 1} / {scoreVariations[previewVariationIndex].files.length}
+              </span>
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={previewFileIndex >= scoreVariations[previewVariationIndex].files.length - 1}
+                onClick={() => setPreviewFileIndex(prev => prev + 1)}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
