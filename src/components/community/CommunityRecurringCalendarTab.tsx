@@ -15,6 +15,9 @@ import { toast } from "@/hooks/use-toast";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
 import { CommunityCalendarView } from "./CommunityCalendarView";
 import { EventRsvpListDialog } from "./EventRsvpListDialog";
+import { EventDetailDialog } from "./EventDetailDialog";
+import { getCountdown } from "@/lib/countdownHelper";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,19 +44,26 @@ export function CommunityRecurringCalendarTab({ communityId, canManage = false }
   // RSVP list dialog state
   const [rsvpListOpen, setRsvpListOpen] = useState(false);
   const [selectedEventForRsvp, setSelectedEventForRsvp] = useState<any>(null);
+  
+  // Event detail dialog state (for non-managers)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedEventForDetail, setSelectedEventForDetail] = useState<any>(null);
 
-  // Fetch calendar events for this community
+  // Fetch calendar events for this community (include past 30 days for history)
   const { data: calendarEvents = [], isLoading: eventsLoading } = useQuery({
     queryKey: ["community-calendar-events", communityId],
     queryFn: async () => {
       const now = new Date();
-      const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const past30Days = new Date(now);
+      past30Days.setDate(past30Days.getDate() - 30);
+      
+      const pastDate = `${past30Days.getFullYear()}-${String(past30Days.getMonth() + 1).padStart(2, '0')}-${String(past30Days.getDate()).padStart(2, '0')}`;
       
       const { data, error } = await supabase
         .from("calendar_events")
         .select("*")
         .eq("community_id", communityId)
-        .gte("event_date", localToday)
+        .gte("event_date", pastDate)
         .order("event_date", { ascending: true });
       
       if (error) throw error;
@@ -167,6 +177,14 @@ export function CommunityRecurringCalendarTab({ communityId, canManage = false }
     return new Date(year, month - 1, day);
   };
 
+  const isPastDate = (dateString: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDate = parseEventDate(dateString);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  };
+
   const handleEditEvent = (eventId: string) => {
     setSelectedEventId(eventId);
     setEventDialogOpen(true);
@@ -188,10 +206,10 @@ export function CommunityRecurringCalendarTab({ communityId, canManage = false }
     if (canManage) {
       // Managers can edit
       handleEditEvent(event.id);
-    } else if (event.rsvp_enabled) {
-      // Regular members can view RSVP list
-      setSelectedEventForRsvp(event);
-      setRsvpListOpen(true);
+    } else {
+      // Regular members see detail view with RSVP capability
+      setSelectedEventForDetail(event);
+      setDetailDialogOpen(true);
     }
   };
 
@@ -246,56 +264,84 @@ export function CommunityRecurringCalendarTab({ communityId, canManage = false }
             <CardContent>
               {calendarEvents.length > 0 ? (
                 <div className="space-y-3">
-                  {calendarEvents.map((event: any) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleEventClick(event)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium truncate">{event.title}</p>
-                          {event.rsvp_enabled && (
-                            <Badge variant="outline" className="text-xs">
-                              <Users className="h-3 w-3 mr-1" />
-                              RSVP
-                            </Badge>
+                  {calendarEvents.map((event: any) => {
+                    const isPast = isPastDate(event.event_date);
+                    const countdown = getCountdown(event.event_date, event.start_time);
+                    
+                    return (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          "flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors",
+                          isPast && "opacity-60 bg-muted/30"
+                        )}
+                        onClick={() => handleEventClick(event)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className={cn(
+                              "font-medium truncate",
+                              isPast && "line-through text-muted-foreground"
+                            )}>
+                              {event.title}
+                            </p>
+                            
+                            {/* Past event badge */}
+                            {isPast && (
+                              <Badge variant="outline" className="text-xs opacity-60 shrink-0">
+                                {language === "ko" ? "지난 일정" : "Past"}
+                              </Badge>
+                            )}
+                            
+                            {/* Countdown badge for upcoming events */}
+                            {!isPast && countdown.text && (
+                              <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent shrink-0">
+                                {countdown.text}
+                              </Badge>
+                            )}
+                            
+                            {event.rsvp_enabled && (
+                              <Badge variant="outline" className="text-xs shrink-0">
+                                <Users className="h-3 w-3 mr-1" />
+                                RSVP
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {format(parseEventDate(event.event_date), language === "ko" ? "yyyy년 M월 d일" : "PPP", { locale: language === "ko" ? ko : enUS })}
+                            {event.start_time && ` ${event.start_time}`}
+                          </p>
+                          {event.location && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              📍 {event.location}
+                            </p>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {format(parseEventDate(event.event_date), language === "ko" ? "yyyy년 M월 d일" : "PPP", { locale: language === "ko" ? ko : enUS })}
-                          {event.start_time && ` ${event.start_time}`}
-                        </p>
-                        {event.location && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            📍 {event.location}
-                          </p>
+                        {canManage && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditEvent(event.id); }}>
+                                <Pencil className="h-4 w-4 mr-2" />
+                                {t("calendarEvent.edit")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id); }}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {t("common.delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
-                      {canManage && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEditEvent(event.id); }}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              {t("calendarEvent.edit")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => { e.stopPropagation(); handleDeleteEvent(event.id); }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              {t("common.delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center py-4">
@@ -409,6 +455,13 @@ export function CommunityRecurringCalendarTab({ communityId, canManage = false }
         open={rsvpListOpen}
         onOpenChange={setRsvpListOpen}
         event={selectedEventForRsvp}
+      />
+
+      {/* Event Detail Dialog (for non-managers) */}
+      <EventDetailDialog
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        event={selectedEventForDetail}
       />
     </div>
   );
