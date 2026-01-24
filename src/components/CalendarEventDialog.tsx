@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface CalendarEventDialogProps {
@@ -89,11 +89,65 @@ export function CalendarEventDialog({
     enabled: !!user && !communityId,
   });
 
+  // eventId가 있으면 기존 이벤트 데이터 조회
+  const { data: existingEvent, isLoading: eventLoading } = useQuery({
+    queryKey: ["calendar-event-detail", eventId],
+    queryFn: async () => {
+      if (!eventId) return null;
+      
+      const { data, error } = await supabase
+        .from("calendar_events")
+        .select("*")
+        .eq("id", eventId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!eventId && open,
+  });
+
+  // 기존 이벤트 데이터로 폼 초기화
   useEffect(() => {
-    if (communityId) {
+    if (existingEvent && open) {
+      setValue("community_id", existingEvent.community_id);
+      setValue("title", existingEvent.title);
+      setValue("description", existingEvent.description || "");
+      setValue("event_type", existingEvent.event_type as CalendarEventForm["event_type"]);
+      setValue("event_date", existingEvent.event_date);
+      setValue("start_time", existingEvent.start_time || "");
+      setValue("end_time", existingEvent.end_time || "");
+      setValue("location", existingEvent.location || "");
+      setValue("notification_enabled", existingEvent.notification_enabled ?? true);
+      setValue("notification_time", existingEvent.notification_time ?? 60);
+      setValue("rsvp_enabled", existingEvent.rsvp_enabled ?? false);
+    }
+  }, [existingEvent, open, setValue]);
+
+  // 다이얼로그 닫힐 때 폼 초기화
+  useEffect(() => {
+    if (!open) {
+      reset({
+        community_id: communityId || "",
+        event_type: "rehearsal",
+        notification_enabled: true,
+        notification_time: 60,
+        rsvp_enabled: false,
+        title: "",
+        description: "",
+        event_date: "",
+        start_time: "",
+        end_time: "",
+        location: "",
+      });
+    }
+  }, [open, communityId, reset]);
+
+  useEffect(() => {
+    if (communityId && !eventId) {
       setValue("community_id", communityId);
     }
-  }, [communityId, setValue]);
+  }, [communityId, eventId, setValue]);
 
   const notificationEnabled = watch("notification_enabled");
   const rsvpEnabled = watch("rsvp_enabled");
@@ -161,6 +215,12 @@ export function CalendarEventDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {eventLoading ? (
+          <div className="py-8 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span>{t("common.loading")}</span>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Community Selection (if not provided) */}
           {!communityId && (
@@ -334,6 +394,7 @@ export function CalendarEventDialog({
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );
