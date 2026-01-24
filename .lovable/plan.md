@@ -1,215 +1,251 @@
 
+# 환영 탭 제거 및 Welcome Posts 공지 통합
 
-# 온보딩 UI/UX 개선 전체 구현 계획
+## 변경 개요
 
-## 남은 작업 목록
+```text
+현재 구조:
+┌─────────────────────────────────────────┐
+│  [환영 탭]  [내 예배공동체 탭]           │
+├─────────────────────────────────────────┤
+│  환영 탭 선택 시:                        │
+│  - 환영 메시지 카드                      │
+│  - WL 승인 CTA                          │
+│  - Welcome Posts (관리자 공지)          │
+└─────────────────────────────────────────┘
 
-이전 플랜에서 텍스트 변경만 완료되었고, 다음 항목들이 아직 구현되지 않았습니다:
+변경 후:
+┌─────────────────────────────────────────┐
+│  (탭 UI 완전 제거)                       │
+├─────────────────────────────────────────┤
+│  📢 Welcome Posts (공지사항)            │  ← 상단 공지 영역
+│  - 고정된 공지 우선 표시                 │
+│  - 접을 수 있는 UI                       │
+├─────────────────────────────────────────┤
+│  [공동체 탭들] (다중 공동체 시)          │
+│  - 포스트 컴포저                        │
+│  - 커뮤니티 피드                        │
+└─────────────────────────────────────────┘
+```
 
 ---
 
-## 1. RoleSelectionDialog 개선
+## 수정 파일 목록
 
-**파일**: `src/components/onboarding/RoleSelectionDialog.tsx`
+### 1. DashboardFeedTabs.tsx - 대폭 간소화
 
-### 추가할 기능:
-- framer-motion 애니메이션 (staggered fade-in)
-- 배경 그라데이션 + 아이콘 pulse 효과
-- X 닫기 버튼 추가 (우상단)
-- "다시 보지 않기" 체크박스 추가
-- "다시 보지 않기" 선택 시 `onboarding_role_asked_count: 99` 설정
+**변경 내용:**
+- `WelcomeFeed` import 및 관련 로직 전부 제거
+- `showWelcomeTab`, `activeTab` 등 탭 관련 state 제거
+- `userName` prop 제거
+- 항상 `CommunityNewsfeed`만 렌더링
 
 ```tsx
-// 추가할 imports
-import { motion } from "framer-motion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { X } from "lucide-react";
+// 변경 전: 복잡한 탭 구조
+export function DashboardFeedTabs({ ... }) {
+  const showWelcomeTab = ...;
+  return (
+    <Tabs>
+      <TabsTrigger value="welcome" />
+      <TabsTrigger value="community" />
+      <TabsContent value="welcome"><WelcomeFeed /></TabsContent>
+      <TabsContent value="community"><CommunityNewsfeed /></TabsContent>
+    </Tabs>
+  );
+}
 
-// 새로운 state
-const [dontShowAgain, setDontShowAgain] = useState(false);
-
-// handleLater 로직 개선
-if (dontShowAgain) {
-  // 영구 종료
-  await supabase.from("profiles").update({ 
-    onboarding_role_asked: true,
-    onboarding_role_asked_count: 99 
-  }).eq("id", userId);
+// 변경 후: 단순화
+export function DashboardFeedTabs({ ... }) {
+  return (
+    <div className="h-full">
+      <CommunityNewsfeed 
+        userStats={userStats} 
+        canPost={isWorshipLeader || isAdmin || isCommunityLeader} 
+      />
+    </div>
+  );
 }
 ```
 
 ---
 
-## 2. WLWelcomeDialog 애니메이션 추가
+### 2. CommunityNewsfeed.tsx - Welcome Posts 통합
 
-**파일**: `src/components/dashboard/WLWelcomeDialog.tsx`
-
-### 추가할 기능:
-- react-confetti로 축하 효과
-- framer-motion으로 staggered 애니메이션
-- 아이콘 bounce/pulse 애니메이션
-- 배경 그라데이션 효과
+**추가할 기능:**
+- `welcome_posts` 테이블에서 공지 fetch
+- 공지 영역을 피드 상단에 렌더링
+- 관리자용 `WelcomePostComposer` 통합
+- 접기/펼치기 UI (공지가 많을 때)
 
 ```tsx
-// 추가할 imports
-import { motion } from "framer-motion";
-import Confetti from "react-confetti";
-
-// Confetti 상태
-const [showConfetti, setShowConfetti] = useState(true);
-
-useEffect(() => {
-  const timer = setTimeout(() => setShowConfetti(false), 3000);
-  return () => clearTimeout(timer);
-}, []);
+// 새로운 구조
+<div>
+  {/* Welcome Posts 공지 영역 (최상단) */}
+  <AnnouncementsSection 
+    posts={welcomePosts} 
+    isAdmin={isAdmin} 
+  />
+  
+  {/* 기존 커뮤니티 탭/피드 */}
+  {communities.length > 1 ? (
+    <Tabs>...</Tabs>
+  ) : (
+    <FeedContent />
+  )}
+</div>
 ```
 
----
-
-## 3. InvitedUserWelcomeDialog 애니메이션 추가
-
-**파일**: `src/components/onboarding/InvitedUserWelcomeDialog.tsx`
-
-### 추가할 기능:
-- Avatar scale-in 애니메이션
-- 콘텐츠 fade-in 효과
-- 버튼 hover 애니메이션
+**공지 영역 UI:**
+- 고정(pinned) 공지는 항상 표시
+- 비고정 공지는 "더보기"로 접기/펼치기
+- 관리자만 볼 수 있는 작성 버튼
 
 ---
 
-## 4. TeamMemberWelcomeDialog 신규 생성
+### 3. 새 컴포넌트: AnnouncementsSection.tsx
 
-**새 파일**: `src/components/onboarding/TeamMemberWelcomeDialog.tsx`
-
-팀멤버로 선택한 유저 전용 환영 화면:
+공지사항을 표시하는 독립 컴포넌트:
 
 ```tsx
-<Dialog>
-  {/* 환영 애니메이션 */}
-  <motion.div>
-    <Users className="h-16 w-16 text-primary" />
-  </motion.div>
+interface AnnouncementsSectionProps {
+  posts: WelcomePost[];
+  isLoading: boolean;
+  isAdmin: boolean;
+}
+
+export function AnnouncementsSection({ posts, isLoading, isAdmin }) {
+  const pinnedPosts = posts.filter(p => p.is_pinned);
+  const regularPosts = posts.filter(p => !p.is_pinned);
+  const [showAll, setShowAll] = useState(false);
   
-  <h2>팀멤버로 시작합니다! 🎵</h2>
-  
-  {/* 할 수 있는 것들 */}
-  <Feature icon={Music} text="찬양 라이브러리 이용" />
-  <Feature icon={Heart} text="좋아하는 곡 저장" />
-  <Feature icon={Search} text="공동체 찾기" />
-  
-  {/* 공동체 찾기 버튼 */}
-  <Button onClick={() => navigate("/community/search")}>
-    공동체 찾아보기
-  </Button>
-  
-  {/* WL 승급 안내 */}
-  <p>나중에 예배인도자가 되고 싶으시면 언제든 신청 가능</p>
-</Dialog>
-```
-
----
-
-## 5. WLOnboardingChecklist dismiss 영구 저장
-
-**파일**: `src/components/dashboard/WLOnboardingChecklist.tsx`
-
-현재: `useState(false)` → 세션 내에서만 dismiss
-변경: `localStorage` 활용하여 영구 저장
-
-```tsx
-const [dismissed, setDismissed] = useState(() => {
-  return localStorage.getItem('wl-onboarding-dismissed') === 'true';
-});
-
-const handleDismiss = () => {
-  setDismissed(true);
-  localStorage.setItem('wl-onboarding-dismissed', 'true');
-};
-```
-
----
-
-## 6. Dashboard 통합
-
-**파일**: `src/pages/Dashboard.tsx`
-
-- TeamMemberWelcomeDialog 통합
-- 팀멤버 선택 후 환영 다이얼로그 표시
-
----
-
-## 7. 번역 키 추가
-
-**파일**: `src/lib/translations.ts`
-
-```typescript
-onboarding: {
-  dontShowAgain: {
-    ko: "다시 보지 않기",
-    en: "Don't show again"
-  },
-  teamMember: {
-    welcome: {
-      ko: "팀멤버로 시작합니다! 🎵",
-      en: "Starting as a Team Member! 🎵"
-    },
-    searchCommunity: {
-      ko: "공동체 찾아보기",
-      en: "Find a Community"
-    },
-    // ... 기타 번역 키
-  }
+  return (
+    <div className="border-b bg-muted/30">
+      {/* 관리자 작성 버튼 */}
+      {isAdmin && <WelcomePostComposer />}
+      
+      {/* 고정 공지 */}
+      {pinnedPosts.map(post => (
+        <AnnouncementCard key={post.id} post={post} />
+      ))}
+      
+      {/* 일반 공지 (접기/펼치기) */}
+      {regularPosts.length > 0 && (
+        <>
+          {(showAll ? regularPosts : regularPosts.slice(0, 2)).map(...)}
+          {regularPosts.length > 2 && (
+            <Button onClick={() => setShowAll(!showAll)}>
+              {showAll ? "접기" : `${regularPosts.length - 2}개 더보기`}
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 ```
 
 ---
 
-## 파일 변경 요약
+### 4. 새 컴포넌트: AnnouncementCard.tsx
 
-| 파일 | 변경 내용 |
-|------|----------|
-| `RoleSelectionDialog.tsx` | framer-motion, X 버튼, "다시 보지 않기" 체크박스 |
-| `WLWelcomeDialog.tsx` | Confetti, 애니메이션 아이콘, stagger 효과 |
-| `InvitedUserWelcomeDialog.tsx` | scale-in 애니메이션, fade 효과 |
-| `TeamMemberWelcomeDialog.tsx` (신규) | 팀멤버 전용 환영 화면 |
-| `WLOnboardingChecklist.tsx` | localStorage 영구 dismiss |
-| `Dashboard.tsx` | TeamMemberWelcomeDialog 통합 |
-| `translations.ts` | 새 번역 키 추가 |
+`WelcomePostCard`를 기반으로 공지 스타일로 수정:
+
+```tsx
+// 더 컴팩트한 공지 카드 디자인
+<div className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
+  <Megaphone className="w-5 h-5 text-primary shrink-0" />
+  <div className="flex-1 min-w-0">
+    <div className="flex items-center gap-2">
+      {post.is_pinned && <Pin className="w-3 h-3" />}
+      <span className="font-medium text-sm">{post.title || "공지"}</span>
+      <span className="text-xs text-muted-foreground">{timeAgo}</span>
+    </div>
+    <p className="text-sm text-muted-foreground line-clamp-2">{post.content}</p>
+  </div>
+  {isAdmin && <AdminActions />}
+</div>
+```
 
 ---
 
-## 기술적 세부사항
+### 5. 파일 정리
 
-### 애니메이션 variants (공통 사용)
+**삭제할 파일:**
+- `src/components/dashboard/WelcomeFeed.tsx` - 더 이상 사용 안 함
 
-```typescript
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
+**수정할 import:**
+- `DashboardFeedTabs.tsx`에서 `WelcomeFeed` import 제거
 
-const staggerItem = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.4 }
-  }
-};
-```
+---
 
-### Confetti 설정
+## Dashboard.tsx 변경
 
-```typescript
-<Confetti 
-  width={400} 
-  height={500} 
-  recycle={false} 
-  numberOfPieces={100}
-  style={{ position: 'absolute', pointerEvents: 'none' }}
+`DashboardFeedTabs`에서 `userName` prop 제거:
+
+```tsx
+// 변경 전
+<DashboardFeedTabs
+  userName={userName}
+  hasCommunities={hasCommunities}
+  ...
+/>
+
+// 변경 후
+<DashboardFeedTabs
+  hasCommunities={hasCommunities}
+  ...
 />
 ```
 
+---
+
+## 최종 파일 변경 요약
+
+| 파일 | 작업 |
+|------|------|
+| `DashboardFeedTabs.tsx` | 탭 로직 제거, 단순화 |
+| `CommunityNewsfeed.tsx` | Welcome Posts fetch 및 상단 공지 렌더링 |
+| `AnnouncementsSection.tsx` | **신규 생성** - 공지 영역 컴포넌트 |
+| `AnnouncementCard.tsx` | **신규 생성** - 공지 카드 컴포넌트 |
+| `WelcomeFeed.tsx` | **삭제** |
+| `Dashboard.tsx` | userName prop 전달 제거 |
+
+---
+
+## 기술 세부사항
+
+### Welcome Posts Query (CommunityNewsfeed에 추가)
+
+```typescript
+const { data: welcomePosts = [], isLoading: postsLoading } = useQuery({
+  queryKey: ["welcome-posts"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("welcome_posts")
+      .select(`
+        *,
+        author:profiles!welcome_posts_author_id_fkey(id, full_name, avatar_url)
+      `)
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (error) throw error;
+    return data;
+  },
+});
+```
+
+### 공지 영역 조건부 렌더링
+
+```typescript
+// 공지가 있거나 관리자일 때만 영역 표시
+const showAnnouncements = isAdmin || welcomePosts.length > 0;
+
+{showAnnouncements && (
+  <AnnouncementsSection 
+    posts={welcomePosts} 
+    isLoading={postsLoading}
+    isAdmin={isAdmin}
+  />
+)}
+```
