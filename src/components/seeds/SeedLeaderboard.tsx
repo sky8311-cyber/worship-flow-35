@@ -73,65 +73,28 @@ export const SeedLeaderboard = () => {
   };
 
   const getLeaderboardData = async (timeRange: 'monthly' | 'allTime') => {
-    let dateFilter = '';
-    if (timeRange === 'monthly') {
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      dateFilter = monthAgo.toISOString();
-    }
-
-    // 1. Fetch only user_id and seeds_earned (minimal data)
-    let query = supabase
-      .from('seed_transactions')
-      .select('user_id, seeds_earned');
-
-    if (dateFilter) {
-      query = query.gte('created_at', dateFilter);
-    }
-
-    const { data: transactions } = await query;
-    if (!transactions) return [];
-
-    // 2. Aggregate in JS, excluding admins during aggregation
-    const userTotals = transactions.reduce((acc, tx) => {
-      if (!EXCLUDED_USER_IDS.includes(tx.user_id)) {
-        acc[tx.user_id] = (acc[tx.user_id] || 0) + tx.seeds_earned;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    // 3. Get only top 10 user IDs (buffer for edge cases)
-    const topUserIds = Object.entries(userTotals)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([id]) => id);
-
-    if (topUserIds.length === 0) return [];
-
-    // 4. Fetch profiles and seed levels only for top 10 users (60+ → 10)
-    const [{ data: profiles }, { data: userSeeds }] = await Promise.all([
-      supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', topUserIds),
-      supabase
-        .from('user_seeds')
-        .select('user_id, current_level')
-        .in('user_id', topUserIds)
-    ]);
-
-    // 5. Return final top 5
-    return topUserIds.slice(0, 5).map((userId) => {
-      const profile = profiles?.find((p) => p.id === userId);
-      const seedData = userSeeds?.find((s) => s.user_id === userId);
-      return {
-        userId,
-        name: profile?.full_name || 'Unknown',
-        avatarUrl: profile?.avatar_url,
-        seeds: userTotals[userId],
-        level: seedData?.current_level || 1
-      };
+    // Use server-side RPC for aggregation - much faster than JS aggregation
+    const { data, error } = await supabase.rpc('get_seed_leaderboard', {
+      time_range: timeRange,
+      excluded_user_ids: EXCLUDED_USER_IDS,
+      result_limit: 5
     });
+
+    if (error || !data) return [];
+
+    return data.map((entry: {
+      user_id: string;
+      total_seeds: number;
+      user_name: string;
+      avatar_url: string | null;
+      current_level: number;
+    }) => ({
+      userId: entry.user_id,
+      name: entry.user_name,
+      avatarUrl: entry.avatar_url,
+      seeds: entry.total_seeds,
+      level: entry.current_level
+    }));
   };
 
   const getNewMembersData = async () => {
