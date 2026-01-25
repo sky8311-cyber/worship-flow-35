@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeedSocialData } from "@/contexts/FeedSocialDataContext";
 
 interface CommentStatus {
   totalCount: number;
@@ -11,9 +12,13 @@ interface CommentStatus {
 export function usePostCommentStatus(postId: string, postType: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Try to use batch context first
+  const feedSocialData = useFeedSocialData();
+  const batchCommentStatus = feedSocialData?.getCommentStatus(postId);
 
-  // Fetch comment count and read status
-  const { data: status, isLoading } = useQuery({
+  // Fallback query for when not in batch context
+  const { data: fallbackStatus, isLoading: fallbackLoading } = useQuery({
     queryKey: ["post-comment-status", postId, postType, user?.id],
     queryFn: async (): Promise<CommentStatus> => {
       // Get total comment count
@@ -62,14 +67,19 @@ export function usePostCommentStatus(postId: string, postType: string) {
         lastReadAt,
       };
     },
-    enabled: !!postId && !!postType,
-    staleTime: 30000, // Cache for 30 seconds
+    enabled: !!postId && !!postType && !feedSocialData,
+    staleTime: 30 * 1000,
   });
 
-  // Mark comments as read
+  // Mark comments as read mutation (fallback)
   const markAsReadMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
+
+      if (feedSocialData) {
+        feedSocialData.markAsRead(postId, postType);
+        return;
+      }
 
       const { error } = await supabase
         .from("post_comment_reads")
@@ -88,17 +98,32 @@ export function usePostCommentStatus(postId: string, postType: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["post-comment-status", postId, postType, user?.id],
-      });
+      if (!feedSocialData) {
+        queryClient.invalidateQueries({
+          queryKey: ["post-comment-status", postId, postType, user?.id],
+        });
+      }
     },
   });
+
+  // Use batch data if available, otherwise fallback
+  const status = feedSocialData
+    ? batchCommentStatus
+    : fallbackStatus;
+
+  const handleMarkAsRead = () => {
+    if (feedSocialData) {
+      feedSocialData.markAsRead(postId, postType);
+    } else {
+      markAsReadMutation.mutate();
+    }
+  };
 
   return {
     totalCount: status?.totalCount || 0,
     unreadCount: status?.unreadCount || 0,
     lastReadAt: status?.lastReadAt || null,
-    isLoading,
-    markAsRead: markAsReadMutation.mutate,
+    isLoading: feedSocialData ? feedSocialData.isCommentStatusLoading : fallbackLoading,
+    markAsRead: handleMarkAsRead,
   };
 }

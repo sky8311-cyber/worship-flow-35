@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,8 @@ import { SocialFeedPost } from "./SocialFeedPost";
 import { ProfileDialog } from "./ProfileDialog";
 import { BirthdayFeedCard } from "./BirthdayFeedCard";
 import { parseLocalDate } from "@/lib/dateUtils";
+import { FeedSocialDataProvider } from "@/contexts/FeedSocialDataContext";
+
 
 interface Author {
   id: string;
@@ -314,29 +316,48 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
     );
   }
 
+  // Prepare batch data for FeedSocialDataProvider
+  const { postIds, postTypes } = useMemo(() => {
+    if (!feedItems) return { postIds: [], postTypes: new Map<string, string>() };
+    
+    const ids: string[] = [];
+    const types = new Map<string, string>();
+    
+    feedItems.forEach((item) => {
+      if (item.type !== "birthday") {
+        ids.push(item.id);
+        types.set(item.id, item.type);
+      }
+    });
+    
+    return { postIds: ids, postTypes: types };
+  }, [feedItems]);
+
   return (
     <>
       <div className="space-y-4">
         <PostComposer />
-        {feedItems.map((item) => {
-          if (item.type === "birthday") {
+        <FeedSocialDataProvider postIds={postIds} postTypes={postTypes}>
+          {feedItems.map((item) => {
+            if (item.type === "birthday") {
+              return (
+                <BirthdayFeedCard
+                  key={`${item.type}-${item.id}`}
+                  profile={item.profile}
+                  community={item.community}
+                  onProfileClick={openProfile}
+                />
+              );
+            }
             return (
-              <BirthdayFeedCard
+              <SocialFeedPost
                 key={`${item.type}-${item.id}`}
-                profile={item.profile}
-                community={item.community}
+                item={item}
                 onProfileClick={openProfile}
               />
             );
-          }
-          return (
-            <SocialFeedPost
-              key={`${item.type}-${item.id}`}
-              item={item}
-              onProfileClick={openProfile}
-            />
-          );
-        })}
+          })}
+        </FeedSocialDataProvider>
       </div>
 
       <ProfileDialog
@@ -348,3 +369,4 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
     </>
   );
 }
+
