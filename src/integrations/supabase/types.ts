@@ -2864,6 +2864,45 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_post_categories: {
+        Row: {
+          color: string
+          created_at: string | null
+          icon: string
+          id: string
+          is_enabled: boolean
+          key: string
+          label_en: string
+          label_ko: string
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          icon?: string
+          id?: string
+          is_enabled?: boolean
+          key: string
+          label_en: string
+          label_ko: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          icon?: string
+          id?: string
+          is_enabled?: boolean
+          key?: string
+          label_en?: string
+          label_ko?: string
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       support_conversations: {
         Row: {
           created_at: string
@@ -3503,6 +3542,7 @@ export type Database = {
           bgm_song_id: string | null
           created_at: string | null
           id: string
+          is_active: boolean | null
           owner_user_id: string
           status_emoji: string | null
           status_text: string | null
@@ -3514,6 +3554,7 @@ export type Database = {
           bgm_song_id?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           owner_user_id: string
           status_emoji?: string | null
           status_text?: string | null
@@ -3525,6 +3566,7 @@ export type Database = {
           bgm_song_id?: string | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           owner_user_id?: string
           status_emoji?: string | null
           status_text?: string | null

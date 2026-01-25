@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useWorshipRoomById } from "@/hooks/useWorshipRoom";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { useRoomPosts } from "@/hooks/useRoomPosts";
 import { RoomHeader } from "./RoomHeader";
-import { RoomScene } from "./RoomScene";
+import { RoomPostCard } from "./RoomPostCard";
 import { RoomPostComposer } from "./RoomPostComposer";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface RoomViewProps {
   roomId: string;
@@ -18,7 +20,9 @@ function extractVideoId(url: string): string | null {
 }
 
 export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
+  const { t } = useTranslation();
   const { room, isLoading } = useWorshipRoomById(roomId);
+  const { data: posts, isLoading: postsLoading } = useRoomPosts(roomId);
   const { startPlaylist, closePlayer, setPlayerState } = useMusicPlayer();
 
   // Auto-play BGM when entering the room
@@ -75,11 +79,32 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
       <RoomHeader room={room} isOwnRoom={isOwnRoom} />
       
       <div className="p-4 space-y-4">
-        {/* 2D Room Scene */}
-        <RoomScene room={room} isOwnRoom={isOwnRoom} />
-        
         {/* Post composer - only show for room owner */}
         {isOwnRoom && <RoomPostComposer roomId={room.id} />}
+        
+        {/* Posts list */}
+        {postsLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        ) : posts?.length ? (
+          <div className="space-y-4">
+            {posts.map(post => (
+              <RoomPostCard 
+                key={post.id} 
+                post={post} 
+                roomId={room.id} 
+                isOwnRoom={isOwnRoom} 
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>{isOwnRoom ? t("rooms.emptyOwnRoom") : t("rooms.emptyRoom")}</p>
+            {isOwnRoom && <p className="text-sm mt-1">{t("rooms.startPosting")}</p>}
+          </div>
+        )}
       </div>
     </div>
   );
