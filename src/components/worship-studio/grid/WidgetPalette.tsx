@@ -21,6 +21,10 @@ import {
   List,
   ListOrdered,
   Minus,
+  ExternalLink,
+  Music,
+  FileEdit,
+  Book,
 } from "lucide-react";
 
 interface WidgetPaletteProps {
@@ -33,99 +37,36 @@ interface WidgetOption {
   icon: React.ReactNode;
   labelKo: string;
   labelEn: string;
-  descKo: string;
-  descEn: string;
+  category: "basic" | "media" | "list" | "embed";
 }
 
 const widgetOptions: WidgetOption[] = [
-  {
-    type: "text",
-    icon: <Type className="h-5 w-5" />,
-    labelKo: "텍스트",
-    labelEn: "Text",
-    descKo: "일반 텍스트 블록",
-    descEn: "Plain text block",
-  },
-  {
-    type: "heading",
-    icon: <Heading1 className="h-5 w-5" />,
-    labelKo: "제목",
-    labelEn: "Heading",
-    descKo: "섹션 제목",
-    descEn: "Section heading",
-  },
-  {
-    type: "quote",
-    icon: <Quote className="h-5 w-5" />,
-    labelKo: "인용구",
-    labelEn: "Quote",
-    descKo: "인용문 또는 말씀",
-    descEn: "Quote or verse",
-  },
-  {
-    type: "callout",
-    icon: <AlertCircle className="h-5 w-5" />,
-    labelKo: "콜아웃",
-    labelEn: "Callout",
-    descKo: "강조 박스",
-    descEn: "Highlighted box",
-  },
-  {
-    type: "image",
-    icon: <Image className="h-5 w-5" />,
-    labelKo: "이미지",
-    labelEn: "Image",
-    descKo: "사진 또는 그래픽",
-    descEn: "Photo or graphic",
-  },
-  {
-    type: "video",
-    icon: <Video className="h-5 w-5" />,
-    labelKo: "영상",
-    labelEn: "Video",
-    descKo: "YouTube 영상",
-    descEn: "YouTube video",
-  },
-  {
-    type: "post",
-    icon: <FileText className="h-5 w-5" />,
-    labelKo: "게시물",
-    labelEn: "Post",
-    descKo: "초안함에서 가져오기",
-    descEn: "Embed from drafts",
-  },
-  {
-    type: "todo",
-    icon: <CheckSquare className="h-5 w-5" />,
-    labelKo: "체크리스트",
-    labelEn: "Checklist",
-    descKo: "할 일 목록",
-    descEn: "To-do list",
-  },
-  {
-    type: "bullet-list",
-    icon: <List className="h-5 w-5" />,
-    labelKo: "글머리 기호",
-    labelEn: "Bullet List",
-    descKo: "점 목록",
-    descEn: "Bulleted list",
-  },
-  {
-    type: "numbered-list",
-    icon: <ListOrdered className="h-5 w-5" />,
-    labelKo: "번호 목록",
-    labelEn: "Numbered List",
-    descKo: "숫자 목록",
-    descEn: "Numbered list",
-  },
-  {
-    type: "divider",
-    icon: <Minus className="h-5 w-5" />,
-    labelKo: "구분선",
-    labelEn: "Divider",
-    descKo: "섹션 구분",
-    descEn: "Section separator",
-  },
+  // Basic
+  { type: "text", icon: <Type className="h-5 w-5" />, labelKo: "텍스트", labelEn: "Text", category: "basic" },
+  { type: "heading", icon: <Heading1 className="h-5 w-5" />, labelKo: "제목", labelEn: "Heading", category: "basic" },
+  { type: "quote", icon: <Quote className="h-5 w-5" />, labelKo: "인용구", labelEn: "Quote", category: "basic" },
+  { type: "callout", icon: <AlertCircle className="h-5 w-5" />, labelKo: "콜아웃", labelEn: "Callout", category: "basic" },
+  { type: "divider", icon: <Minus className="h-5 w-5" />, labelKo: "구분선", labelEn: "Divider", category: "basic" },
+  // Media
+  { type: "image", icon: <Image className="h-5 w-5" />, labelKo: "이미지", labelEn: "Image", category: "media" },
+  { type: "video", icon: <Video className="h-5 w-5" />, labelKo: "영상", labelEn: "Video", category: "media" },
+  { type: "song", icon: <Music className="h-5 w-5" />, labelKo: "노래", labelEn: "Song", category: "media" },
+  // List
+  { type: "todo", icon: <CheckSquare className="h-5 w-5" />, labelKo: "체크리스트", labelEn: "Checklist", category: "list" },
+  { type: "bullet-list", icon: <List className="h-5 w-5" />, labelKo: "글머리", labelEn: "Bullet", category: "list" },
+  { type: "numbered-list", icon: <ListOrdered className="h-5 w-5" />, labelKo: "번호", labelEn: "Numbered", category: "list" },
+  // Embed
+  { type: "post", icon: <FileText className="h-5 w-5" />, labelKo: "게시물", labelEn: "Post", category: "embed" },
+  { type: "recent-drafts", icon: <FileEdit className="h-5 w-5" />, labelKo: "최근 초안", labelEn: "Recent", category: "embed" },
+  { type: "external-link", icon: <ExternalLink className="h-5 w-5" />, labelKo: "외부링크", labelEn: "Link", category: "embed" },
+  { type: "bible-verse", icon: <Book className="h-5 w-5" />, labelKo: "성경", labelEn: "Bible", category: "embed" },
+];
+
+const categories = [
+  { key: "basic", labelKo: "📝 기본", labelEn: "📝 Basic" },
+  { key: "media", labelKo: "🎨 미디어", labelEn: "🎨 Media" },
+  { key: "list", labelKo: "📋 목록", labelEn: "📋 Lists" },
+  { key: "embed", labelKo: "🔗 임베드", labelEn: "🔗 Embed" },
 ];
 
 export function WidgetPalette({ onAddWidget, disabled }: WidgetPaletteProps) {
@@ -150,32 +91,34 @@ export function WidgetPalette({ onAddWidget, disabled }: WidgetPaletteProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-80 p-2 bg-popover" 
+        className="w-80 p-3 bg-popover" 
         align="center"
         sideOffset={8}
       >
-        <div className="grid grid-cols-2 gap-1">
-          {widgetOptions.map((option) => (
-            <button
-              key={option.type}
-              onClick={() => handleSelect(option.type)}
-              className={cn(
-                "flex items-start gap-3 p-3 rounded-lg text-left transition-colors",
-                "hover:bg-muted/80"
-              )}
-            >
-              <div className="p-1.5 rounded-md bg-primary/10 text-primary">
-                {option.icon}
+        <div className="space-y-3">
+          {categories.map((cat) => (
+            <div key={cat.key}>
+              <p className="text-xs font-medium text-muted-foreground mb-1.5 px-1">
+                {language === "ko" ? cat.labelKo : cat.labelEn}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {widgetOptions
+                  .filter(opt => opt.category === cat.key)
+                  .map((option) => (
+                    <button
+                      key={option.type}
+                      onClick={() => handleSelect(option.type)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm",
+                        "border border-border hover:bg-muted/80 hover:border-primary/30 transition-colors"
+                      )}
+                    >
+                      <span className="text-primary">{option.icon}</span>
+                      <span>{language === "ko" ? option.labelKo : option.labelEn}</span>
+                    </button>
+                  ))}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm">
-                  {language === "ko" ? option.labelKo : option.labelEn}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {language === "ko" ? option.descKo : option.descEn}
-                </p>
-              </div>
-            </button>
+            </div>
           ))}
         </div>
       </PopoverContent>

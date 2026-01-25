@@ -3605,6 +3605,8 @@ export type Database = {
           grid_columns: number | null
           id: string
           is_active: boolean | null
+          layout_type: string | null
+          max_widgets: number | null
           owner_user_id: string
           status_emoji: string | null
           status_text: string | null
@@ -3620,6 +3622,8 @@ export type Database = {
           grid_columns?: number | null
           id?: string
           is_active?: boolean | null
+          layout_type?: string | null
+          max_widgets?: number | null
           owner_user_id: string
           status_emoji?: string | null
           status_text?: string | null
@@ -3635,6 +3639,8 @@ export type Database = {
           grid_columns?: number | null
           id?: string
           is_active?: boolean | null
+          layout_type?: string | null
+          max_widgets?: number | null
           owner_user_id?: string
           status_emoji?: string | null
           status_text?: string | null

@@ -1,35 +1,44 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
-import { PenLine, Users } from "lucide-react";
+import { PenLine, Users, Sparkles, HelpCircle } from "lucide-react";
 
 interface StudioEmptyStateProps {
   type: "studio" | "feed";
   onAction?: () => void;
+  onHelp?: () => void;
 }
 
-export function StudioEmptyState({ type, onAction }: StudioEmptyStateProps) {
+export function StudioEmptyState({ type, onAction, onHelp }: StudioEmptyStateProps) {
   const { language } = useTranslation();
   
   if (type === "studio") {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <PenLine className="h-8 w-8 text-primary" />
+        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6">
+          <Sparkles className="h-10 w-10 text-primary" />
         </div>
-        <h3 className="text-xl font-semibold mb-2">
-          {language === "ko" ? "스튜디오가 준비되었습니다." : "Your Studio is ready."}
+        <h3 className="text-xl font-semibold mb-3">
+          {language === "ko" ? "예배는 일상에서 빚어집니다" : "Worship is shaped in daily life"}
         </h3>
-        <p className="text-muted-foreground max-w-sm mb-6">
+        <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
           {language === "ko"
-            ? "예배는 일상에서 빚어집니다. 이 스튜디오에 하나님이 빚어가시는 것들을 하나씩 모아보세요—노트, 기도, 노래."
-            : "Your worship is shaped in daily life. Use this Studio to collect what God is forming—one note, one prayer, one song at a time."}
+            ? "하나님이 오늘 빚어가시는 것들을 이곳에 하나씩 모아보세요—기도, 묵상, 노래, 감사. 이 공간은 당신만의 예배 아카이브입니다."
+            : "Collect what God is forming in you—one prayer, one thought, one song, one thanksgiving at a time. This space is your personal worship archive."}
         </p>
-        {onAction && (
-          <Button onClick={onAction}>
-            <PenLine className="h-4 w-4 mr-2" />
-            {language === "ko" ? "첫 노트 작성하기" : "Write your first note"}
-          </Button>
-        )}
+        <div className="flex flex-col sm:flex-row gap-3">
+          {onAction && (
+            <Button onClick={onAction} className="gap-2">
+              <PenLine className="h-4 w-4" />
+              {language === "ko" ? "공간 꾸미기 시작" : "Start decorating"}
+            </Button>
+          )}
+          {onHelp && (
+            <Button variant="outline" onClick={onHelp} className="gap-2">
+              <HelpCircle className="h-4 w-4" />
+              {language === "ko" ? "어떻게 쓸까요?" : "How to use?"}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
