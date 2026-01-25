@@ -90,7 +90,7 @@ export function RoomBGMSelector({ selectedSongId, onSelect }: RoomBGMSelectorPro
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={t("rooms.searchSongs")}
+          placeholder={t("studio.searchSongs")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
@@ -140,13 +140,13 @@ export function RoomBGMSelector({ selectedSongId, onSelect }: RoomBGMSelectorPro
           </div>
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            {t("rooms.noSongsWithYouTube")}
+            {t("studio.noSongsWithYouTube")}
           </div>
         )}
       </ScrollArea>
       
       <p className="text-xs text-muted-foreground">
-        {t("rooms.bgmNote")}
+        {t("studio.bgmNote")}
       </p>
     </div>
   );

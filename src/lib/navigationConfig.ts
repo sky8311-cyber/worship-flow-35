@@ -1,4 +1,4 @@
-import { Home, Calendar, Music, DoorOpen, MessageCircle, LucideIcon } from "lucide-react";
+import { Home, Calendar, Music, Palette, MessageCircle, LucideIcon } from "lucide-react";
 
 export interface NavigationTab {
   to: string;
@@ -28,7 +28,7 @@ export const navigationTabs: NavigationTab[] = [
   },
   {
     to: "/rooms",
-    icon: DoorOpen,
+    icon: Palette,
     labelKey: "navigation.rooms",
     match: (path: string) => path.includes("/rooms"),
   },

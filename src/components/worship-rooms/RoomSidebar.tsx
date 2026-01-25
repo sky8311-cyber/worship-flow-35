@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { usePublicRooms, useAmbassadorRooms, type WorshipRoom } from "@/hooks/useWorshipRoom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,7 +65,7 @@ export function RoomSidebar({
   showAmbassadors = true,
   showPublicRooms = true,
 }: RoomSidebarProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   
   const { data: ambassadorRooms, isLoading: ambassadorsLoading } = useAmbassadorRooms();
@@ -86,12 +85,12 @@ export function RoomSidebar({
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold mb-3">{t("rooms.title")}</h2>
+        <h2 className="text-lg font-semibold mb-3">{t("studio.title")}</h2>
         {showPublicRooms && (
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={t("rooms.searchRooms")}
+              placeholder={t("studio.searchStudios")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -107,7 +106,7 @@ export function RoomSidebar({
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
                 <Crown className="h-4 w-4 text-amber-500" />
-                {t("rooms.brandAmbassadors")}
+                {t("studio.ambassadors")}
               </h3>
               {ambassadorsLoading ? (
                 <div className="space-y-2">
@@ -128,7 +127,7 @@ export function RoomSidebar({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground py-2">
-                  {t("rooms.noAmbassadors")}
+                  {t("studio.noAmbassadors")}
                 </p>
               )}
             </div>
@@ -138,7 +137,7 @@ export function RoomSidebar({
           {showPublicRooms && (
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-                {t("rooms.publicRooms")}
+                {language === "ko" ? "공개 스튜디오" : "Public Studios"}
               </h3>
               {publicLoading ? (
                 <div className="space-y-2">
@@ -159,7 +158,7 @@ export function RoomSidebar({
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground py-2">
-                  {searchQuery ? t("common.noResults") : t("rooms.noPublicRooms")}
+                  {searchQuery ? t("common.noResults") : t("studio.noPublicStudios")}
                 </p>
               )}
             </div>

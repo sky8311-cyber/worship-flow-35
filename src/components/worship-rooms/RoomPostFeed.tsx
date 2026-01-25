@@ -25,9 +25,9 @@ export function RoomPostFeed({ roomId, isOwnRoom = false }: RoomPostFeedProps) {
   if (!posts?.length) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p>{t("rooms.noPosts")}</p>
+        <p>{t("studio.noPosts")}</p>
         {isOwnRoom && (
-          <p className="text-sm mt-2">{t("rooms.startPosting")}</p>
+          <p className="text-sm mt-2">{t("studio.startPosting")}</p>
         )}
       </div>
     );

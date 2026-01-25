@@ -35,13 +35,13 @@ const floorStyles = [
 ];
 
 const visibilityOptions = [
-  { value: "private", icon: Lock, label: "rooms.visibility.private", description: "rooms.visibilityDesc.private" },
-  { value: "friends", icon: Users, label: "rooms.visibility.friends", description: "rooms.visibilityDesc.friends" },
-  { value: "public", icon: Globe, label: "rooms.visibility.public", description: "rooms.visibilityDesc.public" },
+  { value: "private", icon: Lock, label: "studio.visibility.private", description: "studio.visibilityDesc.private" },
+  { value: "friends", icon: Users, label: "studio.visibility.friends", description: "studio.visibilityDesc.friends" },
+  { value: "public", icon: Globe, label: "studio.visibility.public", description: "studio.visibilityDesc.public" },
 ];
 
 export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeDialogProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const updateRoom = useUpdateRoom();
   
   const initialConfig = room.theme_config || {
@@ -91,14 +91,14 @@ export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("rooms.customizeRoom")}</DialogTitle>
+          <DialogTitle>{language === "ko" ? "스튜디오 설정" : "Studio Settings"}</DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="theme" className="w-full">
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="theme">
               <Palette className="h-4 w-4 mr-2" />
-              {t("rooms.theme")}
+              {language === "ko" ? "테마" : "Theme"}
             </TabsTrigger>
             <TabsTrigger value="bgm">
               <Music className="h-4 w-4 mr-2" />
@@ -106,14 +106,14 @@ export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeD
             </TabsTrigger>
             <TabsTrigger value="privacy">
               <Lock className="h-4 w-4 mr-2" />
-              {t("rooms.privacy")}
+              {language === "ko" ? "공개설정" : "Privacy"}
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="theme" className="space-y-4 mt-4">
             {/* Wallpaper Selection */}
             <div>
-              <Label className="text-sm font-medium">{t("rooms.wallpaper")}</Label>
+              <Label className="text-sm font-medium">{language === "ko" ? "배경" : "Background"}</Label>
               <div className="grid grid-cols-5 gap-2 mt-2">
                 {wallpapers.map((wp) => (
                   <button
@@ -133,7 +133,7 @@ export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeD
             
             {/* Floor Style */}
             <div>
-              <Label className="text-sm font-medium">{t("rooms.floorStyle")}</Label>
+              <Label className="text-sm font-medium">{language === "ko" ? "스타일" : "Style"}</Label>
               <Select 
                 value={themeConfig.floorStyle} 
                 onValueChange={(v) => setThemeConfig(prev => ({ ...prev, floorStyle: v as ThemeConfig["floorStyle"] }))}
@@ -167,26 +167,16 @@ export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeD
             >
               {visibilityOptions.map((option) => {
                 const Icon = option.icon;
-                const labelKey = option.value === "private" 
-                  ? "rooms.visibility.private" 
-                  : option.value === "friends" 
-                    ? "rooms.visibility.friends" 
-                    : "rooms.visibility.public";
-                const descKey = option.value === "private"
-                  ? "rooms.visibilityDesc.private"
-                  : option.value === "friends"
-                    ? "rooms.visibilityDesc.friends"
-                    : "rooms.visibilityDesc.public";
                 return (
                   <div key={option.value} className="flex items-start space-x-3">
                     <RadioGroupItem value={option.value} id={option.value} className="mt-1" />
                     <div className="flex-1">
                       <Label htmlFor={option.value} className="flex items-center gap-2 cursor-pointer">
                         <Icon className="h-4 w-4" />
-                        {t(labelKey)}
+                        {t(option.label as any)}
                       </Label>
                       <p className="text-sm text-muted-foreground mt-0.5">
-                        {t(descKey)}
+                        {t(option.description as any)}
                       </p>
                     </div>
                   </div>
