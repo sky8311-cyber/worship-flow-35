@@ -70,15 +70,15 @@ const AppHistory = () => {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "launch":
-        return "bg-green-500 text-white";
+        return "bg-primary text-primary-foreground";
       case "feature":
-        return "bg-blue-500 text-white";
+        return "bg-accent text-accent-foreground";
       case "milestone":
-        return "bg-purple-500 text-white";
+        return "bg-primary/80 text-primary-foreground";
       case "update":
-        return "bg-orange-500 text-white";
+        return "bg-muted-foreground text-background";
       case "bugfix":
-        return "bg-red-500 text-white";
+        return "bg-destructive text-destructive-foreground";
       default:
         return "bg-muted text-muted-foreground";
     }
