@@ -1,468 +1,373 @@
 
-# 예배공작소 UI/UX 대폭 리뉴얼 - 노션/핀터레스트 스타일 그리드 시스템
 
-## 현재 상태 분석
+# 예배공작소 위젯 시스템 종합 감사 및 개선 계획
 
-현재 스튜디오는 **정적인 리스트 기반 레이아웃**으로, 게시물이 카테고리별로 수직 정렬됩니다. 사용자가 제공한 Pinterest 참조 이미지처럼 **동적 Masonry 그리드 + 위젯 시스템**이 필요합니다.
+## 현재 문제점 분석
 
-## 변경 목표
+### 1. 위젯 기능 부재
 
-| 영역 | 현재 | 목표 |
-|------|------|------|
-| 메인 레이아웃 | 수직 리스트 (post cards) | **Masonry Grid + 드래그 가능한 위젯** |
-| 사이드바 | 항상 펼쳐진 280px | **기본 숨김 (아바타만 표시), 펼침 가능** |
-| 헤더 | 설정/공유 버튼 노출 | **아바타 드롭다운 메뉴로 통합** |
-| 콘텐츠 관리 | 바로 게시 | **Drafts 탭에서 작성 → 그리드에 임베드** |
-| 커버/프로필 | 단순 배경색 | **커버 이미지 + 스튜디오 이름 커스터마이징** |
+| 문제 | 현재 상태 | 필요 사항 |
+|------|----------|----------|
+| **이미지 추가** | 위젯 생성만 됨, 업로드 UI 없음 | 이미지 업로드 다이얼로그 필요 |
+| **초안함 불러오기** | Post 위젯 placeholder만 존재 | 초안함 목록에서 선택하는 UI 필요 |
+| **YouTube/링크 입력** | Video 위젯 placeholder만 존재 | URL 입력 다이얼로그 필요 |
+| **스크롤** | StudioView에 ScrollArea 있으나 작동 안함 | 컨테이너 높이 문제 해결 필요 |
 
----
+### 2. 그리드 설정 부재
 
-## 1. 신규 DB 스키마
+- 그리드 컬럼 수 변경 UI 없음 (DB에는 `grid_columns` 컬럼 존재)
+- 위젯 개수 제한 없음 (무한 추가 가능)
+- 갤러리/테이블 뷰 전환 없음
 
-### 1.1 스튜디오 위젯 테이블
+### 3. 철학/온보딩 부재
 
-```sql
--- 스튜디오 그리드 위젯 저장
-CREATE TABLE studio_widgets (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  room_id uuid NOT NULL REFERENCES worship_rooms(id) ON DELETE CASCADE,
-  widget_type text NOT NULL, -- 'text', 'heading', 'quote', 'callout', 'image', 'video', 'post', 'todo', 'numbered-list', 'bullet-list', 'divider'
-  content jsonb NOT NULL DEFAULT '{}',
-  -- Grid positioning (like CSS Grid)
-  grid_column integer NOT NULL DEFAULT 1, -- 1-based column position
-  grid_row integer NOT NULL DEFAULT 1,    -- 1-based row position
-  column_span integer NOT NULL DEFAULT 1, -- number of columns to span
-  row_span integer NOT NULL DEFAULT 1,    -- number of rows to span
-  -- Optional link to existing post
-  post_id uuid REFERENCES room_posts(id) ON DELETE SET NULL,
-  sort_order integer NOT NULL DEFAULT 0,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+- 빈 스튜디오 Empty State가 단조로움
+- "스튜디오 놀러가기" 같은 재미있는 안내 없음
+- 예배공작소 철학 표현 부족
 
--- 인덱스
-CREATE INDEX idx_studio_widgets_room ON studio_widgets(room_id);
-CREATE INDEX idx_studio_widgets_order ON studio_widgets(room_id, sort_order);
+### 4. 추가 위젯 필요
 
--- RLS
-ALTER TABLE studio_widgets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Anyone can read public studio widgets" ON studio_widgets 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM worship_rooms wr 
-      WHERE wr.id = studio_widgets.room_id 
-      AND (wr.visibility = 'public' OR wr.owner_user_id = auth.uid())
-    )
-  );
-CREATE POLICY "Owners can manage their widgets" ON studio_widgets 
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM worship_rooms wr 
-      WHERE wr.id = studio_widgets.room_id AND wr.owner_user_id = auth.uid()
-    )
-  );
-```
+현재 위젯: `text`, `heading`, `quote`, `callout`, `image`, `video`, `post`, `todo`, `bullet-list`, `numbered-list`, `divider`
 
-### 1.2 worship_rooms 컬럼 추가
-
-```sql
-ALTER TABLE worship_rooms ADD COLUMN IF NOT EXISTS 
-  cover_image_url text,
-  studio_name text,
-  grid_columns integer DEFAULT 3; -- 그리드 컬럼 수 설정
-```
+**필요한 추가 위젯:**
+- 외부 링크 (External Link)
+- 노래/음악 (Song/Music)
+- 최근 초안 자동 표시 (Recent Drafts)
+- 갤러리 (Gallery - 여러 이미지)
+- 프로필 카드 (Profile Card)
+- 성경 말씀 (Bible Verse)
 
 ---
 
-## 2. 아키텍처 개요
+## 구현 계획
+
+### Phase 1: 위젯 편집 다이얼로그 시스템
+
+**신규 컴포넌트: `WidgetEditDialog.tsx`**
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  StudioHeader (슬림화)                                                        │
-│  [←] [예배공작소]                     [🔔] [👤 프로필 메뉴 ▼]                 │
-├──────┬───────────────────────────────────────────────────────────────────────┤
-│      │  ┌──────────────────────────────────────────────────────────────────┐ │
-│  📌  │  │  COVER IMAGE (업로드 가능)                                       │ │
-│  ──  │  │  [스튜디오 이름] [✏️ 편집]                                       │ │
-│  👤  │  ├──────────────────────────────────────────────────────────────────┤ │
-│  👤  │  │  [피드] [내 스튜디오] [초안함]                                    │ │
-│  👤  │  ├──────────────────────────────────────────────────────────────────┤ │
-│  👤  │  │                                                                  │ │
-│  👤  │  │  ┌─────────┐ ┌─────────────────┐ ┌─────────┐                     │ │
-│  ──  │  │  │ 🖼 IMAGE │ │    QUOTE        │ │ 📝 TEXT │                     │ │
-│  🔍  │  │  │         │ │  "Worship is... │ │         │                     │ │
-│      │  │  └─────────┘ │                 │ └─────────┘                     │ │
-│[펼침]│  │              │    "            │                                 │ │
-│      │  │              └─────────────────┘ ┌──────────────┐                │ │
-│      │  │  ┌─────────────────────────────┐ │ 📹 VIDEO     │                │ │
-│      │  │  │   ✨ TESTIMONY (Post)       │ │ (YouTube)    │                │ │
-│      │  │  │   "오늘 하나님께서..."       │ │              │                │ │
-│      │  │  └─────────────────────────────┘ └──────────────┘                │ │
-│      │  │                                                                  │ │
-│      │  │  [+ 위젯 추가]                                                   │ │
-│      │  └──────────────────────────────────────────────────────────────────┘ │
-├──────┴───────────────────────────────────────────────────────────────────────┤
-│  🎵 BGM Bar (조건부)                                                         │
-└──────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  위젯 편집                                     [X]  │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  [타입별 편집 폼]                                   │
+│                                                     │
+│  - 텍스트: Textarea                                │
+│  - 이미지: 파일 업로드 + 미리보기                   │
+│  - 영상: YouTube URL 입력                          │
+│  - 게시물: 초안함 목록에서 선택                     │
+│  - 외부링크: URL + 제목 + 아이콘                   │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│               [취소]           [저장]               │
+└─────────────────────────────────────────────────────┘
 ```
 
----
+**구현 세부사항:**
 
-## 3. 컴포넌트 구조
+1. `WidgetEditDialog.tsx` - 통합 편집 다이얼로그
+2. `ImageUploader.tsx` - 이미지 업로드 with 미리보기
+3. `VideoUrlInput.tsx` - YouTube/Vimeo URL 입력 with 썸네일 미리보기
+4. `PostSelector.tsx` - 초안함에서 게시물 선택
+5. `ExternalLinkEditor.tsx` - URL + 메타데이터 편집
 
-### 3.1 신규 컴포넌트
+### Phase 2: 스크롤 및 레이아웃 수정
 
-| 컴포넌트 | 역할 |
-|----------|------|
-| `StudioGrid.tsx` | Masonry 그리드 컨테이너 (dnd-kit 통합) |
-| `StudioWidget.tsx` | 개별 위젯 래퍼 (드래그 핸들, 리사이즈) |
-| `WidgetRenderer.tsx` | 위젯 타입별 렌더링 분기 |
-| `WidgetPalette.tsx` | 위젯 추가 팔레트 (노션 `/` 메뉴 스타일) |
-| `widgets/TextWidget.tsx` | 텍스트 블록 |
-| `widgets/HeadingWidget.tsx` | H1/H2/H3 헤딩 |
-| `widgets/QuoteWidget.tsx` | 인용구 |
-| `widgets/CalloutWidget.tsx` | 콜아웃 박스 |
-| `widgets/ImageWidget.tsx` | 이미지 |
-| `widgets/VideoWidget.tsx` | YouTube/비디오 임베드 |
-| `widgets/PostWidget.tsx` | 기존 room_posts 임베드 |
-| `widgets/TodoWidget.tsx` | 체크리스트 |
-| `widgets/ListWidget.tsx` | 번호/글머리 기호 목록 |
-| `widgets/DividerWidget.tsx` | 구분선 |
-| `StudioDraftsTab.tsx` | 초안함 탭 (기존 포스트 관리) |
-| `StudioCoverEditor.tsx` | 커버 이미지 + 이름 편집 |
-| `CollapsibleSidebar.tsx` | 접힘/펼침 사이드바 |
-| `ProfileDropdownMenu.tsx` | 아바타 클릭 시 드롭다운 |
+**문제:** `StudioView.tsx`의 `ScrollArea`가 작동하지 않음
 
-### 3.2 수정할 컴포넌트
+**원인:** 부모 컨테이너 높이 문제
 
-| 컴포넌트 | 변경 사항 |
-|----------|----------|
-| `StudioHeader.tsx` | 설정/공유 버튼 제거 → 아바타 드롭다운으로 이동 |
-| `StudioSidebar.tsx` | 접힘 모드 (아바타만 표시), 검색 → 아이콘만 |
-| `StudioMainPanel.tsx` | "Drafts" 탭 추가, "내 스튜디오"를 그리드 뷰로 변경 |
-| `StudioView.tsx` | 리스트 → 그리드 레이아웃으로 전환 |
-| `StudioViewHeader.tsx` | 커버 이미지 업로드, 스튜디오 이름 편집 기능 |
-| `StudioModules.tsx` | 기존 리스트 → 그리드 위젯으로 마이그레이션 |
-| `StudioPostComposer.tsx` | Drafts 탭 전용으로 이동 |
+**수정 사항:**
+- `StudioMainPanel.tsx`: TabsContent에 `h-0 flex-1` 추가
+- `StudioView.tsx`: ScrollArea에 `h-full` 확인
+- `StudioGrid.tsx`: 내부 컨텐츠 min-height 제거
 
----
+### Phase 3: 그리드 설정 UI
 
-## 4. 위젯 타입 상세
+**StudioSettingsDialog 또는 새 GridSettingsPanel에 추가:**
 
-### 4.1 위젯 content JSONB 스키마
+```text
+┌─────────────────────────────────────────────────────┐
+│  그리드 설정                                        │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  컬럼 수:  [2] [3] [4]                              │
+│                                                     │
+│  레이아웃: [○ 그리드] [○ 갤러리] [○ 리스트]        │
+│                                                     │
+│  최대 위젯 수: [12] ▼                               │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**DB 변경:** `worship_rooms` 테이블에 `layout_type` 컬럼 추가 (`grid`, `gallery`, `list`)
+
+### Phase 4: 새로운 위젯 타입 추가
+
+**4.1 외부 링크 위젯 (`external-link`)**
 
 ```typescript
 type WidgetContent = {
-  // text, heading, quote
-  text?: string;
-  level?: 1 | 2 | 3; // heading level
-  
-  // image
-  imageUrl?: string;
-  alt?: string;
-  
-  // video
-  videoUrl?: string;
-  platform?: 'youtube' | 'vimeo';
-  
-  // post (links to room_posts)
-  postId?: string;
-  
-  // callout
-  icon?: string;
-  backgroundColor?: string;
-  
-  // list (todo, bullet, numbered)
-  items?: { id: string; text: string; checked?: boolean }[];
-  listType?: 'bullet' | 'numbered' | 'todo';
+  // ... existing
+  url?: string;
+  linkTitle?: string;
+  linkDescription?: string;
+  linkIcon?: string; // 이모지 또는 아이콘 이름
+  linkType?: "youtube-channel" | "book" | "ebook" | "website" | "social" | "other";
 };
 ```
 
-### 4.2 위젯 렌더링 예시
-
+**렌더링:**
 ```text
-┌─────────────────────────────┐
-│ ═══ HEADING ═══             │   widget_type: 'heading'
-│   "오늘의 묵상"              │   content: { text: "오늘의 묵상", level: 1 }
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ 📸 IMAGE                    │   widget_type: 'image'
-│ [  실제 이미지 렌더링  ]     │   content: { imageUrl: "...", alt: "..." }
-│                             │   row_span: 2 (더 크게)
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ 💬 QUOTE                    │   widget_type: 'quote'
-│   "예배는 삶입니다..."       │   content: { text: "..." }
-│            - 작성자          │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ 🙏 기도 (from Drafts)       │   widget_type: 'post'
-│   "주님, 오늘도 감사..."     │   post_id: "uuid"
-│   ❤️ 12  💬 3               │   (room_posts 테이블에서 가져옴)
-└─────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ 🎬 유튜브 채널                                       │
+│ "홍길동의 예배 채널"                                 │
+│ youtube.com/@worshipchannel                          │
+│                                           [→ 방문]  │
+└─────────────────────────────────────────────────────┘
 ```
 
----
+**4.2 노래/음악 위젯 (`song`)**
 
-## 5. 사이드바 접힘/펼침 동작
-
-### 5.1 접힌 상태 (기본)
-
-```text
-┌──────┐
-│  📌  │  ← 내 스튜디오 (고정)
-│  ──  │  ← 구분선
-│  👤  │  ← 친구1 아바타
-│  👤  │  ← 친구2 아바타
-│  👤  │  ← 친구3 아바타
-│  ──  │  ← 구분선
-│  🔍  │  ← 검색 아이콘
-│      │
-│ [→]  │  ← 펼침 버튼
-└──────┘
-  48px
-```
-
-### 5.2 펼친 상태
-
-```text
-┌────────────────────────┐
-│  🔍 스튜디오 검색...    │
-├────────────────────────┤
-│  👤 My Network         │
-│    • 홍길동             │
-│    • 김예배             │
-│  👑 Ambassadors        │
-│    • 앰버서더1          │
-│  🌐 Discover           │
-│    • 공개 스튜디오...    │
-│                        │
-│         [←]            │  ← 접기 버튼
-└────────────────────────┘
-     280px
-```
-
----
-
-## 6. 헤더 및 아바타 메뉴
-
-### 6.1 새 헤더 레이아웃
-
-```text
-┌──────────────────────────────────────────────────────────────────┐
-│  [←]  예배공작소                            [🔔] [👤 ▼]          │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### 6.2 아바타 드롭다운 메뉴
-
-```text
-┌────────────────────────┐
-│ 👤 홍길동               │
-│    팀원 • 3 시드         │
-├────────────────────────┤
-│ ⚙️  스튜디오 설정        │
-│ 🔗  링크 공유            │
-│ 🎵  BGM 설정             │
-│ 👁️  공개 설정            │
-├────────────────────────┤
-│ ❓  도움말               │
-│ 🚪  나가기               │
-└────────────────────────┘
-```
-
----
-
-## 7. 드래그 앤 드롭 구현
-
-### 7.1 dnd-kit 통합 (기존 패턴 활용)
+기존 DB의 `songs` 테이블과 연동하거나, 단순 임베드
 
 ```typescript
-// StudioGrid.tsx
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-
-// rectSortingStrategy: 그리드 정렬에 최적화
-// verticalListSortingStrategy 대신 사용
+type WidgetContent = {
+  // ... existing
+  songTitle?: string;
+  songArtist?: string;
+  songUrl?: string; // YouTube/Spotify/etc
+  isOriginal?: boolean; // 자작곡 여부
+};
 ```
 
-### 7.2 위젯 드래그 핸들
+**4.3 최근 초안 위젯 (`recent-drafts`)**
+
+자동으로 최근 N개 초안을 표시
 
 ```typescript
-// StudioWidget.tsx
-const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ 
-  id: widget.id 
-});
-
-// 드래그 핸들 아이콘 (GripVertical)
-<button {...listeners} {...attributes}>
-  <GripVertical className="h-4 w-4 text-muted-foreground" />
-</button>
+type WidgetContent = {
+  // ... existing
+  draftCount?: number; // 표시할 초안 수 (1-5)
+  draftFilter?: string; // 카테고리 필터 (optional)
+};
 ```
 
----
+**렌더링:**
+```text
+┌─────────────────────────────────────────────────────┐
+│ 📝 최근 노트                                        │
+├─────────────────────────────────────────────────────┤
+│ 🙏 오늘의 기도          2시간 전                    │
+│ ✨ 주일 예배 묵상        어제                       │
+│ 📝 성경공부 노트        3일 전                      │
+└─────────────────────────────────────────────────────┘
+```
 
-## 8. 커버 이미지 및 스튜디오 이름
+**4.4 갤러리 위젯 (`gallery`)**
 
-### 8.1 StudioCoverEditor 컴포넌트
+여러 이미지를 그리드로 표시
+
+```typescript
+type WidgetContent = {
+  // ... existing
+  images?: { url: string; alt?: string }[];
+  galleryLayout?: "grid" | "carousel" | "masonry";
+};
+```
+
+**4.5 성경 말씀 위젯 (`bible-verse`)**
+
+```typescript
+type WidgetContent = {
+  // ... existing
+  verseReference?: string; // "요한복음 3:16"
+  verseText?: string;
+  translation?: string; // "개역개정", "NIV", etc
+};
+```
+
+**4.6 프로필 카드 위젯 (`profile-card`)**
+
+```typescript
+type WidgetContent = {
+  // ... existing
+  bio?: string;
+  socialLinks?: { platform: string; url: string }[];
+};
+```
+
+### Phase 5: 철학 표현 및 온보딩 개선
+
+**5.1 빈 스튜디오 Empty State 개선**
+
+현재:
+```text
+"나만의 공간을 꾸며보세요"
+```
+
+개선:
+```text
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│                       ✨                            │
+│                                                     │
+│         "예배는 일상에서 빚어집니다"                 │
+│                                                     │
+│    하나님이 오늘 빚어가시는 것들을 이곳에           │
+│    하나씩 모아보세요—기도, 묵상, 노래               │
+│                                                     │
+│    [🎨 공간 꾸미기 시작]     [💡 어떻게 쓸까요?]    │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**5.2 StudioEmptyState.tsx 개선**
+
+- 철학적 메시지 추가
+- 시작 가이드 링크
+- 예시 스튜디오 둘러보기 버튼
+
+**5.3 WelcomeGuideDialog 추가**
+
+첫 방문 시 표시되는 가이드:
+```text
+┌─────────────────────────────────────────────────────┐
+│  예배공작소에 오신 것을 환영합니다! 🎉              │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  [1] 📝 먼저 '초안함'에서 기도나 묵상을 적어보세요   │
+│                                                     │
+│  [2] 🧩 그리드에 위젯을 추가해 공간을 꾸며보세요     │
+│                                                     │
+│  [3] 🎵 BGM을 설정해 분위기를 만들어보세요          │
+│                                                     │
+│  [4] 👋 친구를 초대해 서로의 공간을 방문해보세요     │
+│                                                     │
+├─────────────────────────────────────────────────────┤
+│  [앰버서더 스튜디오 둘러보기]    [시작하기]         │
+└─────────────────────────────────────────────────────┘
+```
+
+**5.4 Sidebar에 "스튜디오 놀러가기" 버튼 추가**
+
+`CollapsibleSidebar.tsx`에 랜덤 공개 스튜디오 방문 버튼:
+```text
+[🎲 랜덤 스튜디오 방문]
+```
+
+### Phase 6: WidgetPalette 개선
+
+현재 팔레트를 카테고리별로 그룹화:
 
 ```text
-┌──────────────────────────────────────────────────────────────────┐
-│                                                                  │
-│                    [  COVER IMAGE  ]                             │
-│                                                                  │
-│  [📷 커버 변경]                                                   │
-│                                                                  │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │  👤 [스튜디오 이름 입력...]                         [✏️]    │ │
-│  │      "홍길동의 예배공작소"                                   │ │
-│  └─────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  공개 설정: [친구 공개 ▼]                                        │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  위젯 추가                                          │
+├─────────────────────────────────────────────────────┤
+│  📝 기본                                            │
+│    텍스트 | 제목 | 인용구 | 콜아웃 | 구분선         │
+│                                                     │
+│  🎨 미디어                                          │
+│    이미지 | 갤러리 | 영상 | 노래                    │
+│                                                     │
+│  📋 목록                                            │
+│    체크리스트 | 글머리 | 번호목록                   │
+│                                                     │
+│  🔗 임베드                                          │
+│    게시물 | 최근초안 | 외부링크 | 성경말씀          │
+│                                                     │
+│  ℹ️ 정보                                            │
+│    프로필카드                                       │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 9. 탭 구조 변경
+## 파일 변경 요약
 
-### 9.1 기존 vs 신규
+### 신규 생성
 
-| 기존 | 신규 |
+| 파일 | 설명 |
 |------|------|
-| 피드 | 피드 (변경 없음) |
-| 내 스튜디오 (리스트) | **내 스튜디오 (그리드)** |
-| - | **초안함 (Drafts)** |
-| 탐색 (모바일) | 탐색 (모바일, 변경 없음) |
+| `grid/WidgetEditDialog.tsx` | 위젯 편집 통합 다이얼로그 |
+| `grid/editors/ImageEditor.tsx` | 이미지 업로드 폼 |
+| `grid/editors/VideoEditor.tsx` | 영상 URL 입력 폼 |
+| `grid/editors/PostSelector.tsx` | 초안함 게시물 선택기 |
+| `grid/editors/ExternalLinkEditor.tsx` | 외부 링크 편집기 |
+| `grid/editors/ListEditor.tsx` | 체크리스트/목록 편집기 |
+| `grid/editors/GalleryEditor.tsx` | 갤러리 편집기 |
+| `grid/editors/BibleVerseEditor.tsx` | 성경 말씀 편집기 |
+| `grid/editors/SongEditor.tsx` | 노래 위젯 편집기 |
+| `grid/GridSettingsPanel.tsx` | 그리드 설정 패널 |
+| `WelcomeGuideDialog.tsx` | 첫 방문 가이드 |
 
-### 9.2 탭 흐름
+### 수정
 
-```text
-[피드]        → 친구/앰버서더 포스트 모아보기 (변경 없음)
-[내 스튜디오] → 그리드 위젯 뷰 (Masonry layout)
-[초안함]      → 기존 포스트 작성/관리 (나만 보는 게시판)
-                - 여기서 작성한 글을 그리드에 임베드 가능
+| 파일 | 변경 사항 |
+|------|----------|
+| `useStudioWidgets.ts` | 새 위젯 타입 추가 (`external-link`, `song`, `recent-drafts`, `gallery`, `bible-verse`, `profile-card`) |
+| `WidgetPalette.tsx` | 카테고리별 그룹화, 새 위젯 추가 |
+| `WidgetRenderer.tsx` | 새 위젯 렌더링 로직 추가 |
+| `StudioWidget.tsx` | onEdit 콜백 연결 |
+| `StudioGrid.tsx` | 위젯 편집 다이얼로그 통합, 위젯 개수 제한 |
+| `StudioMainPanel.tsx` | TabsContent 높이 수정 (`h-0 flex-1`) |
+| `StudioView.tsx` | 스크롤 컨테이너 수정 |
+| `StudioEmptyState.tsx` | 철학 메시지 추가, 가이드 버튼 |
+| `CollapsibleSidebar.tsx` | "랜덤 스튜디오 방문" 버튼 추가 |
+| `StudioSettingsDialog.tsx` | 그리드 설정 추가 |
+
+### DB 마이그레이션
+
+```sql
+-- worship_rooms에 레이아웃 타입 추가
+ALTER TABLE worship_rooms 
+  ADD COLUMN IF NOT EXISTS layout_type text DEFAULT 'grid' CHECK (layout_type IN ('grid', 'gallery', 'list')),
+  ADD COLUMN IF NOT EXISTS max_widgets integer DEFAULT 20;
 ```
 
 ---
 
-## 10. 파일 구조 (최종)
+## 구현 우선순위
 
-### 10.1 신규 생성
+### 높음 (즉시 필요)
+1. 스크롤 문제 해결
+2. 이미지 업로드 다이얼로그
+3. 영상 URL 입력 다이얼로그
+4. 초안함에서 게시물 불러오기
 
-```text
-src/components/worship-studio/
-├── grid/
-│   ├── StudioGrid.tsx              🆕 Masonry 그리드 컨테이너
-│   ├── StudioWidget.tsx            🆕 위젯 래퍼 (드래그/리사이즈)
-│   ├── WidgetRenderer.tsx          🆕 타입별 렌더링 분기
-│   └── WidgetPalette.tsx           🆕 위젯 추가 팔레트
-│
-├── widgets/
-│   ├── TextWidget.tsx              🆕 텍스트
-│   ├── HeadingWidget.tsx           🆕 헤딩
-│   ├── QuoteWidget.tsx             🆕 인용구
-│   ├── CalloutWidget.tsx           🆕 콜아웃
-│   ├── ImageWidget.tsx             🆕 이미지
-│   ├── VideoWidget.tsx             🆕 비디오 임베드
-│   ├── PostWidget.tsx              🆕 포스트 임베드
-│   ├── TodoWidget.tsx              🆕 체크리스트
-│   ├── ListWidget.tsx              🆕 목록
-│   └── DividerWidget.tsx           🆕 구분선
-│
-├── CollapsibleSidebar.tsx          🆕 접힘/펼침 사이드바
-├── ProfileDropdownMenu.tsx         🆕 아바타 드롭다운
-├── StudioCoverEditor.tsx           🆕 커버/이름 편집
-└── StudioDraftsTab.tsx             🆕 초안함 탭
+### 중간 (핵심 기능)
+5. 외부 링크 위젯
+6. 노래/음악 위젯
+7. 그리드 설정 (컬럼 수)
+8. 위젯 편집 기능 (현재 삭제만 가능)
 
-src/hooks/
-└── useStudioWidgets.ts             🆕 위젯 CRUD 훅
-```
-
-### 10.2 수정
-
-```text
-src/components/worship-studio/
-├── StudioHeader.tsx               ♻️ 슬림화 + 아바타 메뉴
-├── StudioSidebar.tsx              ♻️ 접힘 모드 추가
-├── StudioMainPanel.tsx            ♻️ Drafts 탭 추가
-├── StudioView.tsx                 ♻️ 그리드 레이아웃으로 변경
-├── StudioViewHeader.tsx           ♻️ 커버 이미지 지원
-└── StudioModules.tsx              ♻️ 그리드 위젯으로 마이그레이션
-
-src/pages/
-└── WorshipStudio.tsx              ♻️ 사이드바 접힘 상태 관리
-```
+### 낮음 (개선)
+9. 최근 초안 자동 위젯
+10. 갤러리 위젯
+11. 성경 말씀 위젯
+12. 온보딩 가이드
+13. 랜덤 스튜디오 방문
 
 ---
 
-## 11. 마이그레이션 순서
+## 기술 고려사항
 
-### Phase 1: DB 스키마
-1. `studio_widgets` 테이블 생성
-2. `worship_rooms`에 `cover_image_url`, `studio_name`, `grid_columns` 컬럼 추가
-3. RLS 정책 설정
+### 이미지 업로드
+- 기존 `component-images` 버킷 사용
+- 경로: `studio-widgets/{room_id}/{widget_id}.{ext}`
+- 최대 크기: 5MB
 
-### Phase 2: 사이드바 & 헤더 UX
-4. `CollapsibleSidebar.tsx` 구현 (접힌 상태 기본)
-5. `ProfileDropdownMenu.tsx` 구현
-6. `StudioHeader.tsx` 슬림화
-
-### Phase 3: 그리드 시스템
-7. `useStudioWidgets.ts` 훅 구현
-8. `StudioGrid.tsx` (dnd-kit Masonry)
-9. `StudioWidget.tsx` (드래그 핸들)
-10. `WidgetRenderer.tsx`
-
-### Phase 4: 위젯 컴포넌트
-11-20. 각 위젯 타입 컴포넌트 구현
-
-### Phase 5: 탭 통합
-21. `StudioDraftsTab.tsx` (기존 포스트 관리)
-22. `StudioMainPanel.tsx` 탭 추가
-23. `StudioView.tsx` 그리드 뷰 전환
-
-### Phase 6: 커버 & 커스터마이징
-24. `StudioCoverEditor.tsx`
-25. `StudioViewHeader.tsx` 업데이트
-
-### Phase 7: 번역 & 마무리
-26. translations.ts 업데이트
-27. 통합 테스트
-
----
-
-## 12. 기술 고려사항
-
-### 12.1 Masonry 그리드 구현
-
-CSS Grid + dnd-kit 조합으로 구현합니다. `react-masonry-css` 같은 라이브러리 추가 없이 Tailwind CSS Grid로 충분합니다.
-
-```css
-/* Tailwind 클래스 */
-grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-min
+### YouTube 썸네일 미리보기
+```typescript
+const getThumbnail = (videoId: string) => 
+  `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
 ```
 
-### 12.2 이미지 저장소
+### 위젯 개수 제한
+- 기본 최대 20개
+- 프리미엄 사용자: 50개
 
-커버 이미지 및 위젯 이미지는 기존 `component-images` 버킷 사용 또는 새 `studio-media` 버킷 생성.
-
-### 12.3 기존 데이터 마이그레이션
-
-기존 `room_posts`는 그대로 유지되며, 사용자가 원할 때 그리드에 "Post Widget"으로 임베드할 수 있습니다. 강제 마이그레이션 없음.
-
----
-
-## 13. 예상 결과물
-
-- **Pinterest 스타일 Masonry 그리드**: 다양한 크기의 위젯이 자동 정렬
-- **드래그 앤 드롭**: 위젯 순서/위치 변경 가능
-- **노션 스타일 블록**: 텍스트, 헤딩, 리스트, 인용구 등 다양한 콘텐츠 타입
-- **감성적 커스터마이징**: 커버 이미지, 스튜디오 이름
-- **공간 효율성**: 접힘 사이드바, 아바타 메뉴로 컴팩트한 UI
-- **유연한 콘텐츠 관리**: Drafts 탭에서 글 작성 → 원하는 위치에 임베드
+### 성능 최적화
+- 이미지 lazy loading
+- 위젯 가상화 (많을 경우)
 
