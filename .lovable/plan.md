@@ -1,373 +1,223 @@
 
 
-# 예배공작소 위젯 시스템 종합 감사 및 개선 계획
+# 위젯 시스템 버그 수정 계획
 
-## 현재 문제점 분석
+## 발견된 문제점 분석
 
-### 1. 위젯 기능 부재
+### 1. 게시물 임베드 위젯에서 게시물이 불러오질 않음
 
-| 문제 | 현재 상태 | 필요 사항 |
-|------|----------|----------|
-| **이미지 추가** | 위젯 생성만 됨, 업로드 UI 없음 | 이미지 업로드 다이얼로그 필요 |
-| **초안함 불러오기** | Post 위젯 placeholder만 존재 | 초안함 목록에서 선택하는 UI 필요 |
-| **YouTube/링크 입력** | Video 위젯 placeholder만 존재 | URL 입력 다이얼로그 필요 |
-| **스크롤** | StudioView에 ScrollArea 있으나 작동 안함 | 컨테이너 높이 문제 해결 필요 |
+**원인 분석:**
+- `PostSelector.tsx` (line 21)에서 `useRoomPosts(roomId)`를 호출하는데, **전달되는 `roomId`가 스튜디오의 room_id**
+- `WidgetEditDialog.tsx`에서 `PostSelector`에 `roomId={roomId}`를 전달 (line 110-112)
+- 이 `roomId`는 `StudioGrid`에서 받은 스튜디오 room_id
+- **문제:** 사용자가 초안함에서 작성한 글은 해당 사용자의 `room_id`에 저장되어 있어야 하는데, 현재 다른 사람의 스튜디오를 방문할 때도 그 스튜디오의 room_id로 게시물을 조회하고 있음
 
-### 2. 그리드 설정 부재
+실제로 데이터베이스를 확인한 결과, `room_posts` 테이블에 게시물이 존재함:
+- room_id: `137cab82-0876-4b2a-ab73-c2037b58e6e4`에 3개의 게시물 확인
 
-- 그리드 컬럼 수 변경 UI 없음 (DB에는 `grid_columns` 컬럼 존재)
-- 위젯 개수 제한 없음 (무한 추가 가능)
-- 갤러리/테이블 뷰 전환 없음
+**해결 방법:**
+- `PostSelector`는 **현재 로그인한 사용자의 스튜디오 room_id**로 초안을 조회해야 함
+- `WidgetEditDialog`에서 사용자의 own room_id를 별도로 전달하거나, `PostSelector` 내부에서 `useAuth` + `useWorshipRoom`으로 자체 조회
 
-### 3. 철학/온보딩 부재
+---
 
-- 빈 스튜디오 Empty State가 단조로움
-- "스튜디오 놀러가기" 같은 재미있는 안내 없음
-- 예배공작소 철학 표현 부족
+### 2. 스크롤이 없음
 
-### 4. 추가 위젯 필요
+**원인 분석:**
+- `StudioView.tsx` (line 99): `<ScrollArea className="h-full">` 사용
+- `StudioMainPanel.tsx` (line 69): `<TabsContent value="studio" className="flex-1 overflow-auto mt-0 p-0">`
+- 문제: **부모 컨테이너의 높이가 명시적으로 정의되지 않음**
 
-현재 위젯: `text`, `heading`, `quote`, `callout`, `image`, `video`, `post`, `todo`, `bullet-list`, `numbered-list`, `divider`
+`TabsContent`에 `flex-1`만 있고 `h-0`이 없음. Flexbox에서 자식이 부모를 넘어설 때 스크롤이 작동하려면:
+1. 부모에 명시적 높이 또는 `h-0 flex-1` 패턴 필요
+2. 자식에 `overflow-auto` 또는 `ScrollArea` 필요
 
-**필요한 추가 위젯:**
-- 외부 링크 (External Link)
-- 노래/음악 (Song/Music)
-- 최근 초안 자동 표시 (Recent Drafts)
-- 갤러리 (Gallery - 여러 이미지)
-- 프로필 카드 (Profile Card)
-- 성경 말씀 (Bible Verse)
+**현재 구조:**
+```
+WorshipStudio (fixed inset-0)
+└─ div.flex-1.overflow-hidden.flex
+   └─ StudioMainPanel (flex-1 flex flex-col overflow-hidden)
+      └─ Tabs (flex-1 flex flex-col)
+         └─ TabsContent (flex-1 overflow-auto) ← 여기에 h-0 필요
+            └─ StudioView
+               └─ ScrollArea (h-full) ← 부모 높이 없으면 작동 안함
+```
+
+**해결 방법:**
+- `StudioMainPanel.tsx` line 69: `className="flex-1 overflow-auto mt-0 p-0"` → `"flex-1 h-0 overflow-hidden mt-0 p-0"`
+- 동일하게 다른 `TabsContent`에도 적용 (line 76, 81, 87)
+
+---
+
+### 3. "새 위젯 추가" 버튼이 보이지 않음
+
+**원인 분석:**
+- `StudioGrid.tsx` line 167-174: 버튼은 `isOwner && ...` 조건으로 렌더링
+- 버튼 자체는 존재하지만, 스크롤이 작동하지 않아 **화면 아래에 숨겨져 있음**
+
+추가로 확인:
+- `StudioGrid.tsx` line 120: `<div className="p-4 pb-20">` - 하단 패딩이 있음
+- 빈 상태(empty state)일 때 (line 150-164) 위젯이 없으면 메시지가 표시됨
+- 버튼은 line 167-174에 `{isOwner && ...}` 조건으로 표시됨
+
+**문제 확인:**
+- 스크롤이 없어서 버튼까지 도달 불가
+- 또한 `isOwner` 값이 제대로 전달되지 않을 가능성도 있음
+
+`StudioView.tsx`에서 `StudioGrid`로 `isOwner={isActuallyOwnRoom}` 전달 (line 106), `isActuallyOwnRoom = room?.owner_user_id === user?.id` (line 31)
+
+**해결 방법:**
+1. 스크롤 문제 해결 (문제 #2)
+2. 빈 상태에서는 버튼을 empty state 내부에 배치하여 바로 보이도록 수정
 
 ---
 
 ## 구현 계획
 
-### Phase 1: 위젯 편집 다이얼로그 시스템
+### Phase 1: 스크롤 문제 해결 (최우선)
 
-**신규 컴포넌트: `WidgetEditDialog.tsx`**
-
-```text
-┌─────────────────────────────────────────────────────┐
-│  위젯 편집                                     [X]  │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  [타입별 편집 폼]                                   │
-│                                                     │
-│  - 텍스트: Textarea                                │
-│  - 이미지: 파일 업로드 + 미리보기                   │
-│  - 영상: YouTube URL 입력                          │
-│  - 게시물: 초안함 목록에서 선택                     │
-│  - 외부링크: URL + 제목 + 아이콘                   │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│               [취소]           [저장]               │
-└─────────────────────────────────────────────────────┘
-```
-
-**구현 세부사항:**
-
-1. `WidgetEditDialog.tsx` - 통합 편집 다이얼로그
-2. `ImageUploader.tsx` - 이미지 업로드 with 미리보기
-3. `VideoUrlInput.tsx` - YouTube/Vimeo URL 입력 with 썸네일 미리보기
-4. `PostSelector.tsx` - 초안함에서 게시물 선택
-5. `ExternalLinkEditor.tsx` - URL + 메타데이터 편집
-
-### Phase 2: 스크롤 및 레이아웃 수정
-
-**문제:** `StudioView.tsx`의 `ScrollArea`가 작동하지 않음
-
-**원인:** 부모 컨테이너 높이 문제
-
-**수정 사항:**
-- `StudioMainPanel.tsx`: TabsContent에 `h-0 flex-1` 추가
-- `StudioView.tsx`: ScrollArea에 `h-full` 확인
-- `StudioGrid.tsx`: 내부 컨텐츠 min-height 제거
-
-### Phase 3: 그리드 설정 UI
-
-**StudioSettingsDialog 또는 새 GridSettingsPanel에 추가:**
-
-```text
-┌─────────────────────────────────────────────────────┐
-│  그리드 설정                                        │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  컬럼 수:  [2] [3] [4]                              │
-│                                                     │
-│  레이아웃: [○ 그리드] [○ 갤러리] [○ 리스트]        │
-│                                                     │
-│  최대 위젯 수: [12] ▼                               │
-│                                                     │
-└─────────────────────────────────────────────────────┘
-```
-
-**DB 변경:** `worship_rooms` 테이블에 `layout_type` 컬럼 추가 (`grid`, `gallery`, `list`)
-
-### Phase 4: 새로운 위젯 타입 추가
-
-**4.1 외부 링크 위젯 (`external-link`)**
+**파일:** `src/components/worship-studio/StudioMainPanel.tsx`
 
 ```typescript
-type WidgetContent = {
-  // ... existing
-  url?: string;
-  linkTitle?: string;
-  linkDescription?: string;
-  linkIcon?: string; // 이모지 또는 아이콘 이름
-  linkType?: "youtube-channel" | "book" | "ebook" | "website" | "social" | "other";
-};
+// 변경 전 (line 69)
+<TabsContent value="studio" className="flex-1 overflow-auto mt-0 p-0">
+
+// 변경 후
+<TabsContent value="studio" className="flex-1 h-0 overflow-hidden mt-0 p-0">
 ```
 
-**렌더링:**
-```text
-┌─────────────────────────────────────────────────────┐
-│ 🎬 유튜브 채널                                       │
-│ "홍길동의 예배 채널"                                 │
-│ youtube.com/@worshipchannel                          │
-│                                           [→ 방문]  │
-└─────────────────────────────────────────────────────┘
-```
+동일 패턴을 모든 `TabsContent`에 적용:
+- Line 69: studio 탭
+- Line 76: feed 탭  
+- Line 81: drafts 탭
+- Line 87: discover 탭
 
-**4.2 노래/음악 위젯 (`song`)**
+**파일:** `src/components/worship-studio/StudioView.tsx`
 
-기존 DB의 `songs` 테이블과 연동하거나, 단순 임베드
+`ScrollArea`에 명시적 높이 확인 (현재 `h-full`은 부모가 높이를 가지면 작동함)
 
-```typescript
-type WidgetContent = {
-  // ... existing
-  songTitle?: string;
-  songArtist?: string;
-  songUrl?: string; // YouTube/Spotify/etc
-  isOriginal?: boolean; // 자작곡 여부
-};
-```
+---
 
-**4.3 최근 초안 위젯 (`recent-drafts`)**
+### Phase 2: PostSelector 게시물 조회 수정
 
-자동으로 최근 N개 초안을 표시
-
-```typescript
-type WidgetContent = {
-  // ... existing
-  draftCount?: number; // 표시할 초안 수 (1-5)
-  draftFilter?: string; // 카테고리 필터 (optional)
-};
-```
-
-**렌더링:**
-```text
-┌─────────────────────────────────────────────────────┐
-│ 📝 최근 노트                                        │
-├─────────────────────────────────────────────────────┤
-│ 🙏 오늘의 기도          2시간 전                    │
-│ ✨ 주일 예배 묵상        어제                       │
-│ 📝 성경공부 노트        3일 전                      │
-└─────────────────────────────────────────────────────┘
-```
-
-**4.4 갤러리 위젯 (`gallery`)**
-
-여러 이미지를 그리드로 표시
-
-```typescript
-type WidgetContent = {
-  // ... existing
-  images?: { url: string; alt?: string }[];
-  galleryLayout?: "grid" | "carousel" | "masonry";
-};
-```
-
-**4.5 성경 말씀 위젯 (`bible-verse`)**
-
-```typescript
-type WidgetContent = {
-  // ... existing
-  verseReference?: string; // "요한복음 3:16"
-  verseText?: string;
-  translation?: string; // "개역개정", "NIV", etc
-};
-```
-
-**4.6 프로필 카드 위젯 (`profile-card`)**
-
-```typescript
-type WidgetContent = {
-  // ... existing
-  bio?: string;
-  socialLinks?: { platform: string; url: string }[];
-};
-```
-
-### Phase 5: 철학 표현 및 온보딩 개선
-
-**5.1 빈 스튜디오 Empty State 개선**
+**파일:** `src/components/worship-studio/grid/editors/PostSelector.tsx`
 
 현재:
-```text
-"나만의 공간을 꾸며보세요"
+```typescript
+interface PostSelectorProps {
+  roomId: string;  // 이 값이 스튜디오 room_id
+  selectedPostId?: string;
+  onSelect: (postId: string | undefined) => void;
+}
+
+export function PostSelector({ roomId, selectedPostId, onSelect }: PostSelectorProps) {
+  const { data: posts, isLoading } = useRoomPosts(roomId);
+  // ...
+}
 ```
 
-개선:
-```text
-┌─────────────────────────────────────────────────────┐
-│                                                     │
-│                       ✨                            │
-│                                                     │
-│         "예배는 일상에서 빚어집니다"                 │
-│                                                     │
-│    하나님이 오늘 빚어가시는 것들을 이곳에           │
-│    하나씩 모아보세요—기도, 묵상, 노래               │
-│                                                     │
-│    [🎨 공간 꾸미기 시작]     [💡 어떻게 쓸까요?]    │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+수정:
+```typescript
+export function PostSelector({ roomId, selectedPostId, onSelect }: PostSelectorProps) {
+  const { user } = useAuth();
+  const { room: myRoom } = useWorshipRoom(user?.id);
+  
+  // 사용자 자신의 스튜디오에서 게시물 조회
+  const { data: posts, isLoading } = useRoomPosts(myRoom?.id);
+  // ...
+}
 ```
 
-**5.2 StudioEmptyState.tsx 개선**
+**이유:** 게시물 임베드 위젯에서 선택할 수 있는 게시물은 **자신이 초안함에서 작성한 게시물**이어야 함. 다른 사람의 스튜디오에 위젯을 추가할 때도 자신의 게시물을 가져와야 함.
 
-- 철학적 메시지 추가
-- 시작 가이드 링크
-- 예시 스튜디오 둘러보기 버튼
+---
 
-**5.3 WelcomeGuideDialog 추가**
+### Phase 3: 위젯 추가 버튼 가시성 개선
 
-첫 방문 시 표시되는 가이드:
-```text
-┌─────────────────────────────────────────────────────┐
-│  예배공작소에 오신 것을 환영합니다! 🎉              │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  [1] 📝 먼저 '초안함'에서 기도나 묵상을 적어보세요   │
-│                                                     │
-│  [2] 🧩 그리드에 위젯을 추가해 공간을 꾸며보세요     │
-│                                                     │
-│  [3] 🎵 BGM을 설정해 분위기를 만들어보세요          │
-│                                                     │
-│  [4] 👋 친구를 초대해 서로의 공간을 방문해보세요     │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│  [앰버서더 스튜디오 둘러보기]    [시작하기]         │
-└─────────────────────────────────────────────────────┘
+**파일:** `src/components/worship-studio/grid/StudioGrid.tsx`
+
+빈 상태(empty state)일 때 버튼을 empty state 컨테이너 내부로 이동:
+
+```typescript
+// 변경 전 (line 150-174)
+{sortedWidgets.length === 0 && (
+  <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+      <span className="text-3xl">✨</span>
+    </div>
+    <h3>...</h3>
+    <p>...</p>
+  </div>
+)}
+
+{/* Add widget button - 별도 위치 */}
+{isOwner && (
+  <div className="mt-6">
+    <WidgetPalette ... />
+  </div>
+)}
 ```
 
-**5.4 Sidebar에 "스튜디오 놀러가기" 버튼 추가**
+```typescript
+// 변경 후
+{sortedWidgets.length === 0 && (
+  <div className="flex flex-col items-center justify-center py-16 text-center">
+    <div className="w-20 h-20 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+      <span className="text-3xl">✨</span>
+    </div>
+    <h3>...</h3>
+    <p>...</p>
+    
+    {/* Empty state 내부에 버튼 배치 */}
+    {isOwner && (
+      <div className="mt-8 w-full max-w-sm">
+        <WidgetPalette 
+          onAddWidget={handleAddWidget} 
+          disabled={createWidget.isPending}
+        />
+      </div>
+    )}
+  </div>
+)}
 
-`CollapsibleSidebar.tsx`에 랜덤 공개 스튜디오 방문 버튼:
-```text
-[🎲 랜덤 스튜디오 방문]
-```
-
-### Phase 6: WidgetPalette 개선
-
-현재 팔레트를 카테고리별로 그룹화:
-
-```text
-┌─────────────────────────────────────────────────────┐
-│  위젯 추가                                          │
-├─────────────────────────────────────────────────────┤
-│  📝 기본                                            │
-│    텍스트 | 제목 | 인용구 | 콜아웃 | 구분선         │
-│                                                     │
-│  🎨 미디어                                          │
-│    이미지 | 갤러리 | 영상 | 노래                    │
-│                                                     │
-│  📋 목록                                            │
-│    체크리스트 | 글머리 | 번호목록                   │
-│                                                     │
-│  🔗 임베드                                          │
-│    게시물 | 최근초안 | 외부링크 | 성경말씀          │
-│                                                     │
-│  ℹ️ 정보                                            │
-│    프로필카드                                       │
-└─────────────────────────────────────────────────────┘
+{/* 위젯이 있을 때만 하단에 버튼 표시 */}
+{isOwner && sortedWidgets.length > 0 && (
+  <div className="mt-6">
+    <WidgetPalette 
+      onAddWidget={handleAddWidget} 
+      disabled={createWidget.isPending}
+    />
+  </div>
+)}
 ```
 
 ---
 
 ## 파일 변경 요약
 
-### 신규 생성
-
-| 파일 | 설명 |
-|------|------|
-| `grid/WidgetEditDialog.tsx` | 위젯 편집 통합 다이얼로그 |
-| `grid/editors/ImageEditor.tsx` | 이미지 업로드 폼 |
-| `grid/editors/VideoEditor.tsx` | 영상 URL 입력 폼 |
-| `grid/editors/PostSelector.tsx` | 초안함 게시물 선택기 |
-| `grid/editors/ExternalLinkEditor.tsx` | 외부 링크 편집기 |
-| `grid/editors/ListEditor.tsx` | 체크리스트/목록 편집기 |
-| `grid/editors/GalleryEditor.tsx` | 갤러리 편집기 |
-| `grid/editors/BibleVerseEditor.tsx` | 성경 말씀 편집기 |
-| `grid/editors/SongEditor.tsx` | 노래 위젯 편집기 |
-| `grid/GridSettingsPanel.tsx` | 그리드 설정 패널 |
-| `WelcomeGuideDialog.tsx` | 첫 방문 가이드 |
-
-### 수정
-
-| 파일 | 변경 사항 |
+| 파일 | 변경 내용 |
 |------|----------|
-| `useStudioWidgets.ts` | 새 위젯 타입 추가 (`external-link`, `song`, `recent-drafts`, `gallery`, `bible-verse`, `profile-card`) |
-| `WidgetPalette.tsx` | 카테고리별 그룹화, 새 위젯 추가 |
-| `WidgetRenderer.tsx` | 새 위젯 렌더링 로직 추가 |
-| `StudioWidget.tsx` | onEdit 콜백 연결 |
-| `StudioGrid.tsx` | 위젯 편집 다이얼로그 통합, 위젯 개수 제한 |
-| `StudioMainPanel.tsx` | TabsContent 높이 수정 (`h-0 flex-1`) |
-| `StudioView.tsx` | 스크롤 컨테이너 수정 |
-| `StudioEmptyState.tsx` | 철학 메시지 추가, 가이드 버튼 |
-| `CollapsibleSidebar.tsx` | "랜덤 스튜디오 방문" 버튼 추가 |
-| `StudioSettingsDialog.tsx` | 그리드 설정 추가 |
-
-### DB 마이그레이션
-
-```sql
--- worship_rooms에 레이아웃 타입 추가
-ALTER TABLE worship_rooms 
-  ADD COLUMN IF NOT EXISTS layout_type text DEFAULT 'grid' CHECK (layout_type IN ('grid', 'gallery', 'list')),
-  ADD COLUMN IF NOT EXISTS max_widgets integer DEFAULT 20;
-```
+| `src/components/worship-studio/StudioMainPanel.tsx` | TabsContent에 `h-0` 추가 (4곳) |
+| `src/components/worship-studio/grid/editors/PostSelector.tsx` | `useAuth` + `useWorshipRoom` 추가, 자신의 room_id로 게시물 조회 |
+| `src/components/worship-studio/grid/StudioGrid.tsx` | Empty state 내부에 WidgetPalette 배치, 조건부 렌더링 분리 |
 
 ---
 
-## 구현 우선순위
+## 기술 검증
 
-### 높음 (즉시 필요)
-1. 스크롤 문제 해결
-2. 이미지 업로드 다이얼로그
-3. 영상 URL 입력 다이얼로그
-4. 초안함에서 게시물 불러오기
-
-### 중간 (핵심 기능)
-5. 외부 링크 위젯
-6. 노래/음악 위젯
-7. 그리드 설정 (컬럼 수)
-8. 위젯 편집 기능 (현재 삭제만 가능)
-
-### 낮음 (개선)
-9. 최근 초안 자동 위젯
-10. 갤러리 위젯
-11. 성경 말씀 위젯
-12. 온보딩 가이드
-13. 랜덤 스튜디오 방문
-
----
-
-## 기술 고려사항
-
-### 이미지 업로드
-- 기존 `component-images` 버킷 사용
-- 경로: `studio-widgets/{room_id}/{widget_id}.{ext}`
-- 최대 크기: 5MB
-
-### YouTube 썸네일 미리보기
-```typescript
-const getThumbnail = (videoId: string) => 
-  `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+**스크롤 문제 해결 원리:**
 ```
+flex container (height: fixed)
+└─ flex-1 h-0 overflow-hidden
+   └─ ScrollArea h-full
+      └─ content (자유 높이)
+```
+- `h-0`은 flex item의 기본 높이를 0으로 설정
+- `flex-1`이 남은 공간을 채움
+- 이 조합으로 컨테이너가 명시적 높이를 가지게 되어 내부 스크롤 작동
 
-### 위젯 개수 제한
-- 기본 최대 20개
-- 프리미엄 사용자: 50개
-
-### 성능 최적화
-- 이미지 lazy loading
-- 위젯 가상화 (많을 경우)
+**게시물 조회 수정 원리:**
+- 현재 로그인한 사용자의 `user.id`로 `useWorshipRoom(user.id)` 호출
+- 반환된 `myRoom.id`로 `useRoomPosts(myRoom.id)` 호출
+- 이렇게 하면 항상 자신의 초안함 게시물만 조회됨
 
