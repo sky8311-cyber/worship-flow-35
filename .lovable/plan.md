@@ -1,176 +1,139 @@
 
 
-# K-Worship 종합 속도 감사 (Speed Audit)
+# 앱 히스토리 업데이트 및 버그 픽스 탭 추가
 
-## 현재 문제점 분석
+## 요청 사항 정리
 
-### 1. 네트워크 요청 분석 (Network Analysis)
-
-네트워크 로그 검토 결과, 단일 대시보드 로드 시 **15개 이상의 병렬 API 호출**이 발생:
-- `seed_transactions` - 전체 트랜잭션 조회 (모든 사용자)
-- `community_members` - 여러 번 중복 호출
-- `profiles` - 최근 가입자 조회
-- `community_posts` - 뉴스피드 조회
-- `user_roles` - 역할 확인
-- `post_likes` - 각 게시물별 좋아요 상태
-- `welcome_posts` - 공지사항
-- `legal_documents` - 법적 문서
+1. **마지막 앱 히스토리(2026-01-10) 이후 주요 업데이트 정리** - 관리자 페이지에 토글 OFF 상태로 추가
+2. **AppHistory 페이지에 버그 픽스 탭 추가** - 전체 업데이트 히스토리 (기능 + 버그 픽스) 나열
 
 ---
 
-## 발견된 성능 문제 (Critical Issues)
+## Part 1: 새 마일스톤 데이터 추가 (2026-01-10 이후 업데이트)
 
-### Issue 1: N+1 쿼리 패턴 (Critical)
+### 추가할 마일스톤 목록 (토글 OFF 상태로 생성)
 
-**위치: `src/components/dashboard/CommunityFeed.tsx:203-223`**
-
-```typescript
-// 문제: 생일 대상 각각에 대해 별도 DB 호출
-const birthdayItems = await Promise.all(
-  birthdaysThisWeek.map(async (profile) => {
-    const memberCommunity = (await supabase
-      .from("community_members")
-      .select("community_id")
-      .eq("user_id", profile.id)  // 각 유저별 개별 호출 ❌
-      ...
-```
-
-**해결 방안:**
-```typescript
-// 배치 쿼리로 변환
-const birthdayUserIds = birthdaysThisWeek.map(p => p.id);
-const { data: memberCommunities } = await supabase
-  .from("community_members")
-  .select("user_id, community_id")
-  .in("user_id", birthdayUserIds)  // 단일 호출 ✅
-  .in("community_id", communityIds);
-
-const communityByUser = new Map(memberCommunities?.map(m => [m.user_id, m.community_id]));
-```
+| 날짜 | 카테고리 | 제목 (KO/EN) | 설명 |
+|------|----------|--------------|------|
+| 2026-01-25 | update | 플랫폼 속도 최적화 / Platform Speed Optimization | N+1 쿼리 해결, 배치 쿼리 패턴, 캐시 최적화로 체감 속도 향상 |
+| 2026-01-25 | feature | 서버 집계 리더보드 / Server-side Leaderboard | DB RPC로 리더보드 집계 최적화, 데이터 전송량 80% 감소 |
+| 2026-01-24 | feature | 웹 푸시 알림 / Web Push Notifications | 브라우저 닫아도 일정, 워십세트, 커뮤니티 알림 수신 |
+| 2026-01-23 | update | 이벤트 위젯 UI 개선 / Event Widget UI Improvement | 메뉴 버튼 겹침 해결, 2줄 레이아웃 통일 |
+| 2026-01-22 | bugfix | 시드 레벨업 중복 알림 수정 / Seed Level-up Duplicate Fix | 레벨업 알림 1회만 표시, 트랜잭션 동기화 |
+| 2026-01-21 | bugfix | 생일 쿼리 N+1 해결 / Birthday Query N+1 Fix | 피드 로딩 속도 개선 |
+| 2026-01-20 | feature | 일정 상세 다이얼로그 / Event Detail Dialog | 일반 멤버도 일정 상세 및 RSVP 목록 확인 가능 |
+| 2026-01-19 | feature | 팀 로테이션 관리 / Team Rotation Management | 커뮤니티별 팀 로테이션 스케줄 설정 |
 
 ---
 
-### Issue 2: 게시물별 개별 Like/Comment 쿼리 (Critical)
+## Part 2: DB 스키마 - bugfix 카테고리 추가
 
-**위치: `src/components/dashboard/LikeButton.tsx:22-50`**
+현재 `category` 컬럼은 text 타입으로 `launch`, `feature`, `milestone`, `update` 값을 사용합니다.
 
-각 `SocialFeedPost` 컴포넌트가 렌더링될 때마다 **2개의 쿼리 발생**:
-1. `post-like` - 현재 사용자의 좋아요 여부
-2. `post-like-count` - 총 좋아요 수
-
-**10개 게시물 = 20개 쿼리** ❌
-
-**위치: `src/hooks/usePostCommentStatus.ts:16-67`**
-
-각 게시물당 **3개의 쿼리 발생**:
-1. 총 댓글 수
-2. 마지막 읽은 시간
-3. 읽지 않은 댓글 수
-
-**10개 게시물 = 50개 쿼리 (Like + Comment)** ❌
-
-**해결 방안:**
-- 피드 조회 시 좋아요/댓글 수를 **서버 조인**으로 함께 가져오기
-- 또는 배치 쿼리로 모든 게시물의 상태를 한 번에 조회
+**새 카테고리 추가**: `bugfix` (별도 마이그레이션 불필요 - text 타입이므로 바로 사용 가능)
 
 ---
 
-### Issue 3: 과도한 Refetch 설정 (High)
+## Part 3: MilestoneDialog 카테고리 옵션 추가
 
-**위치: `src/pages/Dashboard.tsx:356-357`**
+**파일: `src/components/admin/MilestoneDialog.tsx`**
+
 ```typescript
-staleTime: 0,
-refetchOnWindowFocus: true,
-```
-
-**문제점:**
-- 탭 전환할 때마다 전체 데이터 재조회
-- 사용자가 느끼는 "느림" 현상의 주요 원인
-
-**영향받는 쿼리:**
-| 위치 | staleTime | 문제 |
-|------|-----------|------|
-| Dashboard upcoming-sets | 0 | 탭 전환 시 재조회 |
-| useNotifications | 0 | 매번 새로고침 |
-| MobileSidebarDrawer | 0 | 사이드바 열 때마다 재조회 |
-
-**해결 방안:**
-```typescript
-staleTime: 30 * 1000, // 30초 캐시
-refetchOnWindowFocus: false, // 또는 조건부
+const categories = [
+  { value: "launch", label: language === "ko" ? "출시" : "Launch" },
+  { value: "feature", label: language === "ko" ? "기능" : "Feature" },
+  { value: "milestone", label: language === "ko" ? "마일스톤" : "Milestone" },
+  { value: "update", label: language === "ko" ? "업데이트" : "Update" },
+  { value: "bugfix", label: language === "ko" ? "버그수정" : "Bug Fix" }, // 추가
+];
 ```
 
 ---
 
-### Issue 4: Support Chat N+1 (Medium - Admin Only)
+## Part 4: AdminHistory 버그픽스 카테고리 지원
 
-**위치: `src/hooks/useSupportChat.ts:245-262`**
-```typescript
-const conversationsWithLastMessage = await Promise.all(
-  (data || []).map(async (conv) => {
-    const { data: lastMsg } = await supabase
-      .from("support_messages")
-      .select("content, sender_type")
-      .eq("conversation_id", conv.id)  // 각 대화별 개별 호출 ❌
+**파일: `src/pages/AdminHistory.tsx`**
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ 플랫폼 히스토리 관리                         [+ 마일스톤 추가] │
+├──────────────────────────────────────────────────────────────┤
+│ [전체] [출시] [기능] [마일스톤] [업데이트] [버그수정] 🔍검색  │
+├──────────────────────────────────────────────────────────────┤
+│ 날짜       │ 카테고리   │ 제목                │ 공개 │ 액션  │
+│ 2026-01-25 │ 🔧 버그수정│ 시드 레벨업 수정    │ [ ]  │ ✏️ 🗑️│
+│ 2026-01-24 │ ✨ 기능    │ 웹 푸시 알림        │ [ ]  │ ✏️ 🗑️│
+│ ...        │ ...       │ ...                 │ ...  │ ...  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**해결 방안:**
-- 대화 ID 배치로 마지막 메시지 조회
-- 또는 DB View/RPC 함수로 최적화
+**변경 내용**:
+1. `CategoryFilter` 타입에 `"bugfix"` 추가
+2. `categories` 배열에 `"bugfix"` 추가
+3. `getCategoryIcon`에 `Wrench` 아이콘 추가
+4. `getCategoryLabel`에 버그수정 라벨 추가
 
 ---
 
-### Issue 5: SeedLeaderboard 전체 트랜잭션 조회 (Medium)
+## Part 5: AppHistory 탭 구조 추가
 
-**위치: `src/components/seeds/SeedLeaderboard.tsx:84-92`**
-```typescript
-const { data: transactions } = await supabase
-  .from('seed_transactions')
-  .select('user_id, seeds_earned'); // 전체 트랜잭션 조회 (제한 없음)
+**파일: `src/pages/AppHistory.tsx`**
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│              K-Worship 히스토리                               │
+│              우리의 여정                                      │
+├──────────────────────────────────────────────────────────────┤
+│       [주요 기능]           [전체 기록]                       │
+├──────────────────────────────────────────────────────────────┤
+│ (현재 타임라인 UI 유지)     (버그 픽스 포함 전체 목록)        │
+│                                                              │
+│ ● 2026-01-10 공개 밴드뷰    │ ● 2026-01-25 속도 최적화      │
+│ ● 2026-01-09 뮤직 플레이어  │ ● 2026-01-24 푸시 알림        │
+│ ● 2026-01-08 정식 출시      │ 🔧 2026-01-22 레벨업 버그 수정│
+│                             │ ...                           │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-**현재 상태:** 최적화 시도됨 (JS 집계 후 상위 10명만 프로필 조회)  
-**개선 가능:** DB 집계 함수(RPC)로 변경하여 데이터 전송량 감소
+**탭 구성**:
+- **주요 기능 (Highlights)**: 기존 로직 유지 - `is_visible: true` 필터
+- **전체 기록 (All Updates)**: 모든 기록 표시 - `is_visible` 무시, bugfix 포함
+
+**UI 변경**:
+1. `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` 임포트
+2. 헤더 아래에 탭 네비게이션 추가
+3. 탭별 필터링 로직 구현
+4. bugfix 아이콘 및 스타일 추가
 
 ---
 
-### Issue 6: 불필요한 중복 쿼리 (Medium)
+## Part 6: AppHistory 아이콘 및 스타일 확장
 
-**`useUserCommunities` 중복 호출:**
-- Dashboard에서 호출
-- CommunityNewsfeed에서 호출
-- UpcomingEventsWidget에서 호출
+```typescript
+import { Wrench } from "lucide-react"; // 추가
 
-**현재 상태:** React Query 캐시로 일부 완화 (staleTime: 5분)  
-**확인 필요:** 동일한 queryKey 사용 여부
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "launch": return <Rocket className="h-5 w-5" />;
+    case "feature": return <Sparkles className="h-5 w-5" />;
+    case "milestone": return <Flag className="h-5 w-5" />;
+    case "update": return <ArrowUpCircle className="h-5 w-5" />;
+    case "bugfix": return <Wrench className="h-5 w-5" />; // 추가
+    default: return <Flag className="h-5 w-5" />;
+  }
+};
 
----
-
-## 우선순위별 최적화 계획
-
-### Phase 1: 즉시 효과 (Quick Wins)
-
-| 작업 | 예상 효과 | 난이도 |
-|------|----------|--------|
-| Dashboard `staleTime` 30초로 증가 | 탭 전환 속도 50%↑ | 낮음 |
-| MobileSidebarDrawer `staleTime` 60초로 증가 | 모바일 UX 개선 | 낮음 |
-| useNotifications `staleTime` 10초로 설정 | 불필요한 재조회 방지 | 낮음 |
-
-### Phase 2: 배치 쿼리 최적화
-
-| 작업 | 예상 효과 | 난이도 |
-|------|----------|--------|
-| CommunityFeed 생일 N+1 해결 | 쿼리 수 90%↓ | 중간 |
-| LikeButton 배치 조회 | 게시물당 쿼리 80%↓ | 중간 |
-| PostCommentStatus 배치 조회 | 게시물당 쿼리 60%↓ | 중간 |
-
-### Phase 3: 아키텍처 개선
-
-| 작업 | 예상 효과 | 난이도 |
-|------|----------|--------|
-| 피드 조회 시 좋아요/댓글 수 포함 조인 | 전체 쿼리 70%↓ | 높음 |
-| SeedLeaderboard DB 집계 RPC | 데이터 전송량 80%↓ | 높음 |
-| Support Chat 마지막 메시지 배치 조회 | Admin 페이지 속도↑ | 중간 |
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "launch": return "bg-green-500 text-white";
+    case "feature": return "bg-blue-500 text-white";
+    case "milestone": return "bg-purple-500 text-white";
+    case "update": return "bg-orange-500 text-white";
+    case "bugfix": return "bg-red-500 text-white"; // 추가
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+```
 
 ---
 
@@ -178,48 +141,17 @@ const { data: transactions } = await supabase
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/pages/Dashboard.tsx` | upcoming-sets 쿼리 staleTime 증가 |
-| `src/hooks/useNotifications.ts` | staleTime 0 → 10초 |
-| `src/components/layout/MobileSidebarDrawer.tsx` | staleTime 0 → 60초 |
-| `src/components/dashboard/CommunityFeed.tsx` | 생일 N+1 쿼리 배치 최적화 |
-| `src/components/dashboard/LikeButton.tsx` | 배치 조회 패턴 적용 (Phase 2) |
-| `src/hooks/usePostCommentStatus.ts` | 배치 조회 패턴 적용 (Phase 2) |
-| `src/hooks/useSupportChat.ts` | 마지막 메시지 배치 조회 (Phase 3) |
+| `src/components/admin/MilestoneDialog.tsx` | bugfix 카테고리 옵션 추가 |
+| `src/pages/AdminHistory.tsx` | bugfix 필터, 아이콘, 라벨 추가 |
+| `src/pages/AppHistory.tsx` | 탭 구조 (주요 기능 / 전체 기록), bugfix 스타일 추가 |
+| DB Insert | 2026-01-10 이후 마일스톤 8건 추가 (is_visible: false) |
 
 ---
 
-## 예상 성능 개선
+## 예상 결과
 
-| 시나리오 | Before | After |
-|----------|--------|-------|
-| 대시보드 초기 로드 | ~50개 쿼리 | ~20개 쿼리 |
-| 탭 전환 시 | 전체 재조회 | 캐시 사용 |
-| 10개 게시물 피드 | ~50개 추가 쿼리 | ~5개 배치 쿼리 |
-| 체감 속도 | 느림 | 즉각 반응 |
-
----
-
-## 기술 상세
-
-### React Query 권장 설정
-```typescript
-// 글로벌 기본값 (현재)
-staleTime: 10 * 1000,  // 10초 ✅
-gcTime: 5 * 60 * 1000, // 5분 ✅
-
-// 페이지별 권장 설정
-// - 자주 변경되는 데이터: 10-30초
-// - 드물게 변경되는 데이터: 5분
-// - 협업 기능 필수 데이터: refetchOnWindowFocus: true 유지
-```
-
-### 배치 쿼리 패턴 (이미 구현된 예시)
-```typescript
-// src/hooks/useSongUsage.ts 참조
-const setIds = data.map(item => item.id);
-const { data: collaborators } = await supabase
-  .from("set_collaborators")
-  .select("service_set_id")
-  .in("service_set_id", setIds);  // 배치 쿼리 ✅
-```
+1. **관리자 페이지**: 새 업데이트 항목들이 토글 OFF 상태로 표시됨 → 원하는 항목만 ON
+2. **앱 히스토리 페이지**: 
+   - "주요 기능" 탭: 기존과 동일 (공개 마일스톤만)
+   - "전체 기록" 탭: 버그 픽스 포함 전체 히스토리
 
