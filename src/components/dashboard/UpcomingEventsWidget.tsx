@@ -322,28 +322,30 @@ export function UpcomingEventsWidget({
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {/* Line 1: Icon + Title */}
+                          <div className="flex items-center gap-1.5">
                             {event.icon}
-                            <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                            <p className={cn(
+                              "text-sm font-medium truncate flex-1",
+                              isPast && "text-muted-foreground"
+                            )}>
                               {event.title}
                             </p>
-                            {/* Countdown badge */}
+                          </div>
+                          {/* Line 2: Subtitle + Badge + Countdown */}
+                          <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <p className={cn(
+                              "text-xs truncate",
+                              isPast ? "text-muted-foreground/70" : "text-muted-foreground"
+                            )}>
+                              {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
+                            </p>
                             {!isPast && countdown.text && (
-                              <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent shrink-0">
+                              <Badge className="shrink-0 h-5 px-1.5 text-[10px] bg-accent text-accent-foreground hover:bg-accent">
                                 {countdown.text}
                               </Badge>
                             )}
                           </div>
-                          {event.subtitle && (
-                            <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                              {event.subtitle}
-                            </p>
-                          )}
-                          {event.badgeLabel && (
-                            <Badge variant="secondary" className="text-xs mt-1">
-                              {event.badgeLabel}
-                            </Badge>
-                          )}
                         </div>
                       </div>
                     </Link>
@@ -401,31 +403,35 @@ export function UpcomingEventsWidget({
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                        {/* Line 1: Icon + Title + RSVP */}
+                        <div className="flex items-center gap-1.5">
                           {event.icon}
                           <p className={cn(
-                            "text-sm font-medium truncate",
+                            "text-sm font-medium truncate flex-1",
                             isPast && "text-muted-foreground"
                           )}>
                             {event.title}
                           </p>
                           {event.rsvp_enabled && (
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
+                            <Badge variant="outline" className="shrink-0 h-5 px-1.5 text-[10px]">
                               RSVP
                             </Badge>
                           )}
+                        </div>
+                        {/* Line 2: Subtitle + Badge + Countdown */}
+                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                          <p className={cn(
+                            "text-xs truncate",
+                            isPast ? "text-muted-foreground/70" : "text-muted-foreground"
+                          )}>
+                            {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
+                          </p>
                           {!isPast && countdown.text && (
-                            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-accent text-accent-foreground hover:bg-accent shrink-0 ml-auto">
+                            <Badge className="shrink-0 h-5 px-1.5 text-[10px] bg-accent text-accent-foreground hover:bg-accent">
                               {countdown.text}
                             </Badge>
                           )}
                         </div>
-                        <p className={cn(
-                          "text-xs truncate mt-0.5",
-                          isPast ? "text-muted-foreground/70" : "text-muted-foreground"
-                        )}>
-                          {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
-                        </p>
                       </div>
                     </div>
                     {canManage && event.type === "calendar_event" && (
