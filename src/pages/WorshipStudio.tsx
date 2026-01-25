@@ -6,10 +6,11 @@ import { useWorshipRoom, useWorshipRoomById } from "@/hooks/useWorshipRoom";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StudioHeader } from "@/components/worship-studio/StudioHeader";
-import { StudioSidebar } from "@/components/worship-studio/StudioSidebar";
+import { CollapsibleSidebar } from "@/components/worship-studio/CollapsibleSidebar";
 import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
 import { StudioBGMBar } from "@/components/worship-studio/StudioBGMBar";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
+import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 
 function extractVideoId(url: string | null): string | null {
   if (!url) return null;
@@ -24,8 +25,12 @@ export default function WorshipStudio() {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   
-  // Settings dialog state
+  // Dialog states
   const [showSettings, setShowSettings] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  
+  // Sidebar collapsed state (default: collapsed)
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   
   // Get user's own studio
   const { room: myStudio, isLoading: myStudioLoading } = useWorshipRoom(user?.id);
@@ -61,11 +66,10 @@ export default function WorshipStudio() {
   
   const handleStudioSelect = (studioId: string) => {
     setSelectedStudioId(studioId);
-    // Update URL without full navigation
     window.history.replaceState(null, '', `/rooms/${studioId}`);
   };
   
-  const handleClearSelection = () => {
+  const handleMyStudioSelect = () => {
     setSelectedStudioId(null);
     window.history.replaceState(null, '', '/rooms');
   };
@@ -77,19 +81,24 @@ export default function WorshipStudio() {
         description={t("studio.description")} 
       />
       
-      {/* Header with back button */}
+      {/* Header with avatar dropdown */}
       <StudioHeader 
         onBack={handleBack}
         onSettings={() => setShowSettings(true)}
+        onShare={() => setShowShare(true)}
       />
       
       {/* Main content area */}
       <div className="flex-1 overflow-hidden flex">
-        {/* Desktop: Show sidebar */}
+        {/* Desktop: Show collapsible sidebar */}
         {!isMobile && (
-          <StudioSidebar 
+          <CollapsibleSidebar
+            isExpanded={sidebarExpanded}
+            onExpandedChange={setSidebarExpanded}
             onStudioSelect={handleStudioSelect}
+            onMyStudioSelect={handleMyStudioSelect}
             selectedStudioId={selectedStudioId}
+            myStudioId={myStudio?.id}
           />
         )}
         
@@ -120,6 +129,12 @@ export default function WorshipStudio() {
           room={myStudio}
         />
       )}
+      
+      {/* Share Dialog */}
+      <ShareReferralDialog
+        open={showShare}
+        onOpenChange={setShowShare}
+      />
     </div>
   );
 }
