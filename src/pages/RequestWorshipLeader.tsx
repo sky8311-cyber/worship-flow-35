@@ -495,7 +495,12 @@ const RequestWorshipLeader = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading}
+                aria-busy={loading}
+              >
                 {loading ? t("auth.loading") : t("worshipLeaderRequest.submit")}
               </Button>
             </form>
