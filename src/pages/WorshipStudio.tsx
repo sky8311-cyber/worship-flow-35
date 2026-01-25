@@ -89,7 +89,7 @@ export default function WorshipStudio() {
       />
       
       {/* Main content area */}
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 h-0 overflow-hidden flex">
         {/* Desktop: Show collapsible sidebar */}
         {!isMobile && (
           <CollapsibleSidebar

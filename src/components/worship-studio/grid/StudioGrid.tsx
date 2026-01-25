@@ -117,7 +117,7 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
   const sortedWidgets = widgets?.slice().sort((a, b) => a.sort_order - b.sort_order) || [];
   
   return (
-    <div className="p-4 pb-20">
+    <div className="p-4 pb-28">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
