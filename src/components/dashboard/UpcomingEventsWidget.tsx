@@ -237,19 +237,11 @@ export function UpcomingEventsWidget({
   const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const futureSets = sets?.filter(set => set.date >= localToday) || [];
 
-  // Handle calendar event click based on permissions
+  // Handle calendar event click - all users view details
   const handleCalendarEventClick = (event: any) => {
-    const canManageEvent = isAdmin || (isCommunityLeader && event.created_by === currentUserId);
-    
-    if (canManageEvent) {
-      // Managers: open edit dialog
-      setSelectedEventId(event.id);
-      setEventDialogOpen(true);
-    } else {
-      // Regular members: open detail view dialog
-      setSelectedEventForDetail(event);
-      setDetailDialogOpen(true);
-    }
+    // 모든 사용자: 일정 상세 및 참석자 명단 보기
+    setSelectedEventForDetail(event);
+    setDetailDialogOpen(true);
   };
 
   // Combine and sort events
@@ -409,38 +401,31 @@ export function UpcomingEventsWidget({
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {event.icon}
-                          <p className={`text-sm font-medium truncate ${isPast ? 'text-muted-foreground' : ''}`}>
+                          <p className={cn(
+                            "text-sm font-medium truncate",
+                            isPast && "text-muted-foreground"
+                          )}>
                             {event.title}
                           </p>
-                          {/* RSVP badge */}
                           {event.rsvp_enabled && (
-                            <Badge variant="outline" className="text-xs shrink-0">
-                              <Users className="h-3 w-3 mr-1" />
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 shrink-0">
                               RSVP
                             </Badge>
                           )}
-                          {/* Countdown badge */}
                           {!isPast && countdown.text && (
-                            <Badge className="text-xs bg-accent text-accent-foreground hover:bg-accent shrink-0">
+                            <Badge className="text-[10px] px-1.5 py-0 h-4 bg-accent text-accent-foreground hover:bg-accent shrink-0 ml-auto">
                               {countdown.text}
                             </Badge>
                           )}
                         </div>
-                        <p className={`text-xs ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                          {format(parseLocalDate(event.date), "yyyy.MM.dd")} ({getDayOfWeek(event.date)})
+                        <p className={cn(
+                          "text-xs truncate mt-0.5",
+                          isPast ? "text-muted-foreground/70" : "text-muted-foreground"
+                        )}>
+                          {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
                         </p>
-                        {event.subtitle && (
-                          <p className={`text-xs truncate ${isPast ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
-                            {event.subtitle}
-                          </p>
-                        )}
-                        {event.badgeLabel && (
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {event.badgeLabel}
-                          </Badge>
-                        )}
                       </div>
                     </div>
                     {canManage && event.type === "calendar_event" && (
