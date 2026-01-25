@@ -47,7 +47,7 @@ export function StudioBGMBar({
   };
   
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border">
+    <div className="bg-background/95 backdrop-blur-sm border-t border-border flex-shrink-0">
       <div className="flex items-center gap-3 px-4 py-3 max-w-3xl mx-auto">
         {/* Music icon */}
         <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

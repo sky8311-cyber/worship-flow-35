@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +21,13 @@ export function StudioMainPanel({
   const { language } = useTranslation();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<string>("feed");
+  
+  // Auto-switch to studio tab when a studio is selected from sidebar
+  useEffect(() => {
+    if (selectedStudioId && selectedStudioId !== myStudioId) {
+      setActiveTab("studio");
+    }
+  }, [selectedStudioId, myStudioId]);
   
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
