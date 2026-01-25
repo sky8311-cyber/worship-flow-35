@@ -353,8 +353,8 @@ const Dashboard = () => {
       return data;
     },
     enabled: !!user && !!profile && communityIds.length > 0,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000, // 30 seconds - prevent excessive refetching
+    refetchOnWindowFocus: false, // Manual refresh via realtime or user action
   });
   const {
     data: songsCount

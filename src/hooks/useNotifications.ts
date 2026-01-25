@@ -40,8 +40,8 @@ export function useNotifications() {
       return data as Notification[];
     },
     enabled: !!user,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 10 * 1000, // 10 seconds cache - realtime handles updates
+    refetchOnWindowFocus: false, // Realtime subscription handles new notifications
   });
 
   // Count unread notifications

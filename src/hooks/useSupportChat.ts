@@ -241,25 +241,35 @@ export function useAdminSupportChat() {
       
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
 
-      // Fetch last message for each conversation
-      const conversationsWithLastMessage = await Promise.all(
-        (data || []).map(async (conv) => {
-          const { data: lastMsg } = await supabase
+      // Batch fetch last messages for all conversations (N+1 prevention)
+      const conversationIds = (data || []).map(c => c.id);
+      
+      // Fetch all recent messages in one query, ordered by created_at desc
+      const { data: allMessages } = conversationIds.length > 0
+        ? await supabase
             .from("support_messages")
-            .select("content, sender_type")
-            .eq("conversation_id", conv.id)
+            .select("conversation_id, content, sender_type, created_at")
+            .in("conversation_id", conversationIds)
             .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+        : { data: [] };
+      
+      // Build last message map (keep only the most recent per conversation)
+      const lastMessageMap = new Map<string, { content: string | null; sender_type: string }>();
+      (allMessages || []).forEach(msg => {
+        if (!lastMessageMap.has(msg.conversation_id)) {
+          lastMessageMap.set(msg.conversation_id, {
+            content: msg.content,
+            sender_type: msg.sender_type,
+          });
+        }
+      });
 
-          return {
-            ...conv,
-            status: conv.status as "open" | "archived" | "closed",
-            profiles: profileMap.get(conv.user_id),
-            last_message: lastMsg,
-          } as SupportConversation;
-        })
-      );
+      const conversationsWithLastMessage = (data || []).map(conv => ({
+        ...conv,
+        status: conv.status as "open" | "archived" | "closed",
+        profiles: profileMap.get(conv.user_id),
+        last_message: lastMessageMap.get(conv.id) || null,
+      })) as SupportConversation[];
 
       return conversationsWithLastMessage;
     },
