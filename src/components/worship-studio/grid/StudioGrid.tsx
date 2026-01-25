@@ -160,11 +160,21 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
               ? "하나님이 오늘 빚어가시는 것들을 이곳에 하나씩 모아보세요—기도, 묵상, 노래."
               : "Collect what God is forming—one prayer, one thought, one song at a time."}
           </p>
+          
+          {/* Empty state 내부에 위젯 추가 버튼 */}
+          {isOwner && (
+            <div className="w-full max-w-sm">
+              <WidgetPalette 
+                onAddWidget={handleAddWidget} 
+                disabled={createWidget.isPending}
+              />
+            </div>
+          )}
         </div>
       )}
       
-      {/* Add widget button */}
-      {isOwner && (
+      {/* 위젯이 있을 때만 하단에 버튼 표시 */}
+      {isOwner && sortedWidgets.length > 0 && (
         <div className="mt-6">
           <WidgetPalette 
             onAddWidget={handleAddWidget} 
