@@ -307,12 +307,12 @@ export function UpcomingEventsWidget({
                   (isAdmin || (isCommunityLeader && event.created_by === currentUserId)));
 
                 return event.linkTo ? (
-                  <div key={`${event.type}-${event.id}`} className="relative group">
-                    <Link
-                      to={event.linkTo}
-                      className="block p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-start gap-3">
+                  <div key={`${event.type}-${event.id}`} className="group p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <Link
+                        to={event.linkTo}
+                        className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                      >
                         <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
                           <span className="text-xs font-medium">
                             {format(new Date(event.date), "MMM")}
@@ -347,120 +347,122 @@ export function UpcomingEventsWidget({
                             )}
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                    {canManage && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleTogglePublish(event, e)}>
-                            {event.status === "draft" ? (
-                              <>
-                                <Upload className="w-4 h-4 mr-2" /> 게시하기
-                              </>
-                            ) : (
-                              <>
-                                <Lock className="w-4 h-4 mr-2" /> 비공개로 전환
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => handleShareLink(event, e)}>
-                            <LinkIcon className="w-4 h-4 mr-2" />
-                            링크 복사
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleDelete(event.id, event.title, e)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                      </Link>
+                      {canManage && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => handleTogglePublish(event, e)}>
+                              {event.status === "draft" ? (
+                                <>
+                                  <Upload className="w-4 h-4 mr-2" /> 게시하기
+                                </>
+                              ) : (
+                                <>
+                                  <Lock className="w-4 h-4 mr-2" /> 비공개로 전환
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => handleShareLink(event, e)}>
+                              <LinkIcon className="w-4 h-4 mr-2" />
+                              링크 복사
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => handleDelete(event.id, event.title, e)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              삭제
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <div key={`${event.type}-${event.id}`} className="relative group">
-                    <div
-                      onClick={event.onClick}
-                      className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
-                        <span className="text-xs font-medium">
-                          {format(new Date(event.date), "MMM")}
-                        </span>
-                        <span className="text-lg font-bold">
-                          {format(new Date(event.date), "d")}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        {/* Line 1: Icon + Title + RSVP */}
-                        <div className="flex items-center gap-1.5">
-                          {event.icon}
-                          <p className={cn(
-                            "text-sm font-medium truncate flex-1",
-                            isPast && "text-muted-foreground"
-                          )}>
-                            {event.title}
-                          </p>
-                          {event.rsvp_enabled && (
-                            <Badge variant="outline" className="shrink-0 h-5 px-1.5 text-[10px]">
-                              RSVP
-                            </Badge>
-                          )}
+                  <div key={`${event.type}-${event.id}`} className="group p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div
+                        onClick={event.onClick}
+                        className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                      >
+                        <div className="flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary shrink-0">
+                          <span className="text-xs font-medium">
+                            {format(new Date(event.date), "MMM")}
+                          </span>
+                          <span className="text-lg font-bold">
+                            {format(new Date(event.date), "d")}
+                          </span>
                         </div>
-                        {/* Line 2: Subtitle + Badge + Countdown */}
-                        <div className="flex items-center justify-between gap-2 mt-0.5">
-                          <p className={cn(
-                            "text-xs truncate",
-                            isPast ? "text-muted-foreground/70" : "text-muted-foreground"
-                          )}>
-                            {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
-                          </p>
-                          {!isPast && countdown.text && (
-                            <Badge className="shrink-0 h-5 px-1.5 text-[10px] bg-accent text-accent-foreground hover:bg-accent">
-                              {countdown.text}
-                            </Badge>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          {/* Line 1: Icon + Title + RSVP */}
+                          <div className="flex items-center gap-1.5">
+                            {event.icon}
+                            <p className={cn(
+                              "text-sm font-medium truncate flex-1",
+                              isPast && "text-muted-foreground"
+                            )}>
+                              {event.title}
+                            </p>
+                            {event.rsvp_enabled && (
+                              <Badge variant="outline" className="shrink-0 h-5 px-1.5 text-[10px]">
+                                RSVP
+                              </Badge>
+                            )}
+                          </div>
+                          {/* Line 2: Subtitle + Badge + Countdown */}
+                          <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <p className={cn(
+                              "text-xs truncate",
+                              isPast ? "text-muted-foreground/70" : "text-muted-foreground"
+                            )}>
+                              {[event.subtitle, event.badgeLabel].filter(Boolean).join(" • ")}
+                            </p>
+                            {!isPast && countdown.text && (
+                              <Badge className="shrink-0 h-5 px-1.5 text-[10px] bg-accent text-accent-foreground hover:bg-accent">
+                                {countdown.text}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      {canManage && event.type === "calendar_event" && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => handleEditCalendarEvent(event.id, e)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              {language === "ko" ? "수정" : "Edit"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={(e) => handleDeleteCalendarEvent(event.id, event.title, e)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              {language === "ko" ? "삭제" : "Delete"}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
-                    {canManage && event.type === "calendar_event" && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 h-8 w-8 md:opacity-0 md:group-hover:opacity-100"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => handleEditCalendarEvent(event.id, e)}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            {language === "ko" ? "수정" : "Edit"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => handleDeleteCalendarEvent(event.id, event.title, e)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            {language === "ko" ? "삭제" : "Delete"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
                   </div>
                 );
               })}
