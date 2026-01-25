@@ -57,7 +57,7 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
               {isAmbassador && (
                 <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                   <Crown className="h-3 w-3 mr-1" />
-                  {t("rooms.ambassador")}
+                  {t("studio.ambassador")}
                 </Badge>
               )}
             </div>
@@ -66,7 +66,7 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
             <div className="flex items-center gap-2 mt-1">
               <Badge variant="outline" className={visibilityColors[room.visibility]}>
                 <VisibilityIcon className="h-3 w-3 mr-1" />
-                {t(`rooms.visibility.${room.visibility}`)}
+                {t(`studio.visibility.${room.visibility}` as any)}
               </Badge>
               
               {room.bgm_song && (
@@ -87,7 +87,7 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
                   onClick={() => setCustomizeOpen(true)}
                 >
                   <Settings className="h-4 w-4 mr-2" />
-                  {t("rooms.customize")}
+                  {t("studio.settings")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -95,7 +95,7 @@ export function RoomHeader({ room, isOwnRoom = false }: RoomHeaderProps) {
                   onClick={() => setShareOpen(true)}
                 >
                   <Share2 className="h-4 w-4 mr-2" />
-                  {t("rooms.share")}
+                  {t("studio.share")}
                 </Button>
               </>
             ) : (

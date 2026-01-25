@@ -127,7 +127,7 @@ export function useSendFriendRequest() {
     onSuccess: (_, targetUserId) => {
       queryClient.invalidateQueries({ queryKey: ["friend-status", user?.id, targetUserId] });
       queryClient.invalidateQueries({ queryKey: ["friends"] });
-      toast.success(t("rooms.friendRequestSent"));
+      toast.success(t("studio.friendRequestSent"));
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -154,7 +154,7 @@ export function useRespondToFriendRequest() {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["friend-requests"] });
       queryClient.invalidateQueries({ queryKey: ["friend-status"] });
-      toast.success(accept ? t("rooms.friendRequestAccepted") : t("rooms.friendRequestDeclined"));
+      toast.success(accept ? t("studio.friendRequestAccepted") : t("studio.friendRequestDeclined"));
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -179,7 +179,7 @@ export function useRemoveFriend() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["friends"] });
       queryClient.invalidateQueries({ queryKey: ["friend-status"] });
-      toast.success(t("rooms.friendRemoved"));
+      toast.success(t("studio.friendRemoved"));
     },
     onError: () => {
       toast.error(t("common.error"));

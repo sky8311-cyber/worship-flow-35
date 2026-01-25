@@ -101,8 +101,8 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
           </div>
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <p>{isOwnRoom ? t("rooms.emptyOwnRoom") : t("rooms.emptyRoom")}</p>
-            {isOwnRoom && <p className="text-sm mt-1">{t("rooms.startPosting")}</p>}
+            <p>{isOwnRoom ? t("studio.emptyStudio") : t("studio.noPosts")}</p>
+            {isOwnRoom && <p className="text-sm mt-1">{t("studio.startPosting")}</p>}
           </div>
         )}
       </div>
