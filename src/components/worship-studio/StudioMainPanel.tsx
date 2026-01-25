@@ -27,8 +27,8 @@ export function StudioMainPanel({
   const isOwnStudio = !selectedStudioId || selectedStudioId === myStudioId;
   
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+    <div className="flex-1 h-0 flex flex-col overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 h-0 flex flex-col overflow-hidden">
         <div className="border-b border-border px-4">
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger 
