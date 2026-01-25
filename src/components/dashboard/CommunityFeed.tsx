@@ -199,28 +199,37 @@ export function CommunityFeed({ userStats }: CommunityFeedProps) {
         avatar_url: null,
       };
 
-      // Build birthday items
-      const birthdayItems = await Promise.all(
-        birthdaysThisWeek.map(async (profile) => {
-          // Get first community this person belongs to from user's communities
-          const memberCommunity = (await supabase
+      // Build birthday items with batch query (N+1 prevention)
+      const birthdayUserIds = birthdaysThisWeek.map(p => p.id);
+      
+      // Single batch query for all birthday users' communities
+      const { data: birthdayMemberCommunities } = birthdayUserIds.length > 0
+        ? await supabase
             .from("community_members")
-            .select("community_id")
-            .eq("user_id", profile.id)
+            .select("user_id, community_id")
+            .in("user_id", birthdayUserIds)
             .in("community_id", communityIds)
-            .limit(1)
-            .single()
-          ).data;
-          
-          return {
-            id: `birthday-${profile.id}`,
-            type: "birthday" as const,
-            profile: profile,
-            community: memberCommunity ? communityMap.get(memberCommunity.community_id) || fallbackCommunity : fallbackCommunity,
-            created_at: profile.birth_date || new Date().toISOString(),
-          };
-        })
-      );
+        : { data: [] };
+      
+      // Build user -> community map
+      const birthdayCommunityMap = new Map<string, string>();
+      (birthdayMemberCommunities || []).forEach(m => {
+        // Only keep first community for each user
+        if (!birthdayCommunityMap.has(m.user_id)) {
+          birthdayCommunityMap.set(m.user_id, m.community_id);
+        }
+      });
+      
+      const birthdayItems = birthdaysThisWeek.map((profile) => {
+        const communityId = birthdayCommunityMap.get(profile.id);
+        return {
+          id: `birthday-${profile.id}`,
+          type: "birthday" as const,
+          profile: profile,
+          community: communityId ? communityMap.get(communityId) || fallbackCommunity : fallbackCommunity,
+          created_at: profile.birth_date || new Date().toISOString(),
+        };
+      });
 
       // Build unified feed items manually
       const allItems = [

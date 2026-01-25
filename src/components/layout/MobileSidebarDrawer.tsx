@@ -154,8 +154,8 @@ export function MobileSidebarDrawer({ open, onOpenChange }: MobileSidebarDrawerP
       return data || [];
     },
     enabled: !!user && communityIds.length > 0,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000, // 60 seconds - sidebar data doesn't need frequent refresh
+    refetchOnWindowFocus: false,
   });
 
   return (
