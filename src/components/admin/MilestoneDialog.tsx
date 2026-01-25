@@ -92,6 +92,7 @@ export const MilestoneDialog = ({
     { value: "feature", label: language === "ko" ? "기능" : "Feature" },
     { value: "milestone", label: language === "ko" ? "마일스톤" : "Milestone" },
     { value: "update", label: language === "ko" ? "업데이트" : "Update" },
+    { value: "bugfix", label: language === "ko" ? "버그수정" : "Bug Fix" },
   ];
 
   return (
