@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Search, Rocket, Sparkles, Flag, ArrowUpCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Rocket, Sparkles, Flag, ArrowUpCircle, Wrench } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { MilestoneDialog, MilestoneData } from "@/components/admin/MilestoneDialog";
@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type CategoryFilter = "all" | "launch" | "feature" | "milestone" | "update";
+type CategoryFilter = "all" | "launch" | "feature" | "milestone" | "update" | "bugfix";
 
 const AdminHistory = () => {
   const { language } = useTranslation();
@@ -135,6 +135,7 @@ const AdminHistory = () => {
       case "feature": return <Sparkles className="h-4 w-4" />;
       case "milestone": return <Flag className="h-4 w-4" />;
       case "update": return <ArrowUpCircle className="h-4 w-4" />;
+      case "bugfix": return <Wrench className="h-4 w-4" />;
       default: return <Sparkles className="h-4 w-4" />;
     }
   };
@@ -145,6 +146,7 @@ const AdminHistory = () => {
       feature: { ko: "기능", en: "Feature" },
       milestone: { ko: "마일스톤", en: "Milestone" },
       update: { ko: "업데이트", en: "Update" },
+      bugfix: { ko: "버그수정", en: "Bug Fix" },
     };
     return labels[category]?.[language] || category;
   };
@@ -157,7 +159,7 @@ const AdminHistory = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const categories: CategoryFilter[] = ["all", "launch", "feature", "milestone", "update"];
+  const categories: CategoryFilter[] = ["all", "launch", "feature", "milestone", "update", "bugfix"];
 
   return (
     <AdminLayout>
