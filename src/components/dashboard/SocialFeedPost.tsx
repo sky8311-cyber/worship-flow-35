@@ -198,6 +198,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     onSuccess: () => {
       toast.success(t("common.deleteSuccess"));
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
     },
     onError: () => {
       toast.error(t("common.error"));
@@ -217,6 +218,7 @@ export function SocialFeedPost({ item, onProfileClick }: SocialFeedPostProps) {
     onSuccess: () => {
       toast.success(t("common.saveSuccess"));
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
       setEditDialogOpen(false);
     },
     onError: () => {
