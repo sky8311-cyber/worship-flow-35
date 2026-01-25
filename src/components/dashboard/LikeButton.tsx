@@ -1,7 +1,7 @@
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useFeedSocialData } from "@/contexts/FeedSocialDataContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -15,11 +15,15 @@ interface LikeButtonProps {
 
 export function LikeButton({ postId, postType }: LikeButtonProps) {
   const { user } = useAuth();
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [showLikersDialog, setShowLikersDialog] = useState(false);
+  
+  // Try to use batch context first
+  const feedSocialData = useFeedSocialData();
+  const batchLikeData = feedSocialData?.getLikeData(postId);
 
-  const { data: likeData } = useQuery({
+  // Fallback queries for when not in batch context
+  const { data: fallbackLikeData } = useQuery({
     queryKey: ["post-like", postId, user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -33,10 +37,11 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && !feedSocialData,
+    staleTime: 30 * 1000,
   });
 
-  const { data: likeCount } = useQuery({
+  const { data: fallbackLikeCount } = useQuery({
     queryKey: ["post-like-count", postId],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -47,13 +52,31 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
       if (error) throw error;
       return count || 0;
     },
+    enabled: !feedSocialData,
+    staleTime: 30 * 1000,
   });
+
+  // Use batch data if available, otherwise fallback
+  const isLiked = feedSocialData 
+    ? batchLikeData?.isLiked || false
+    : !!fallbackLikeData;
+  
+  const likeCount = feedSocialData
+    ? batchLikeData?.likeCount || 0
+    : fallbackLikeCount || 0;
 
   const likeMutation = useMutation({
     mutationFn: async () => {
       if (!user) return;
 
-      if (likeData) {
+      if (feedSocialData) {
+        // Use batch context
+        feedSocialData.toggleLike(postId, postType);
+        return;
+      }
+
+      // Fallback: individual mutation
+      if (isLiked) {
         const { error } = await supabase
           .from("post_likes")
           .delete()
@@ -69,17 +92,24 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
         });
         if (error) throw error;
         
-        // Credit K-Seed reward for liking a post (fire-and-forget)
         creditPostLikedReward(user.id, postId);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["post-like", postId] });
-      queryClient.invalidateQueries({ queryKey: ["post-like-count", postId] });
+      if (!feedSocialData) {
+        queryClient.invalidateQueries({ queryKey: ["post-like", postId] });
+        queryClient.invalidateQueries({ queryKey: ["post-like-count", postId] });
+      }
     },
   });
 
-  const isLiked = !!likeData;
+  const handleClick = () => {
+    if (feedSocialData) {
+      feedSocialData.toggleLike(postId, postType);
+    } else {
+      likeMutation.mutate();
+    }
+  };
 
   return (
     <>
@@ -87,13 +117,13 @@ export function LikeButton({ postId, postType }: LikeButtonProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => likeMutation.mutate()}
+          onClick={handleClick}
           disabled={!user || likeMutation.isPending}
           className={`h-8 w-8 p-0 ${isLiked ? "text-red-500" : ""}`}
         >
           <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
         </Button>
-        {likeCount !== undefined && likeCount > 0 && (
+        {likeCount > 0 && (
           <button
             onClick={() => setShowLikersDialog(true)}
             className="text-base font-semibold hover:underline"
