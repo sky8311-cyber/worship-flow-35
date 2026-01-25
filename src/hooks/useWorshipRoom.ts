@@ -22,6 +22,9 @@ export interface WorshipRoom {
   bgm_song_id: string | null;
   created_at: string;
   updated_at: string;
+  cover_image_url?: string | null;
+  studio_name?: string | null;
+  grid_columns?: number | null;
   owner?: {
     id: string;
     full_name: string | null;

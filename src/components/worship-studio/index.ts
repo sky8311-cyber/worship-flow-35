@@ -1,6 +1,7 @@
 // Worship Studio - Main exports
 export { StudioHeader } from "./StudioHeader";
 export { StudioSidebar } from "./StudioSidebar";
+export { CollapsibleSidebar } from "./CollapsibleSidebar";
 export { StudioMainPanel } from "./StudioMainPanel";
 export { StudioFeed } from "./StudioFeed";
 export { StudioFeedCard } from "./StudioFeedCard";
@@ -15,4 +16,7 @@ export { StudioEmptyState } from "./StudioEmptyState";
 export { StudioLockedState } from "./StudioLockedState";
 export { StudioContractPrompt } from "./StudioContractPrompt";
 export { StudioDiscover } from "./StudioDiscover";
+export { StudioDraftsTab } from "./StudioDraftsTab";
+export { StudioCoverEditor } from "./StudioCoverEditor";
+export { ProfileDropdownMenu } from "./ProfileDropdownMenu";
 export { FriendStudioList } from "./FriendStudioList";

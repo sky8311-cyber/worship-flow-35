@@ -2903,6 +2903,66 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_widgets: {
+        Row: {
+          column_span: number
+          content: Json
+          created_at: string | null
+          grid_column: number
+          grid_row: number
+          id: string
+          post_id: string | null
+          room_id: string
+          row_span: number
+          sort_order: number
+          updated_at: string | null
+          widget_type: string
+        }
+        Insert: {
+          column_span?: number
+          content?: Json
+          created_at?: string | null
+          grid_column?: number
+          grid_row?: number
+          id?: string
+          post_id?: string | null
+          room_id: string
+          row_span?: number
+          sort_order?: number
+          updated_at?: string | null
+          widget_type: string
+        }
+        Update: {
+          column_span?: number
+          content?: Json
+          created_at?: string | null
+          grid_column?: number
+          grid_row?: number
+          id?: string
+          post_id?: string | null
+          room_id?: string
+          row_span?: number
+          sort_order?: number
+          updated_at?: string | null
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_widgets_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "room_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_widgets_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "worship_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_conversations: {
         Row: {
           created_at: string
@@ -3540,36 +3600,45 @@ export type Database = {
       worship_rooms: {
         Row: {
           bgm_song_id: string | null
+          cover_image_url: string | null
           created_at: string | null
+          grid_columns: number | null
           id: string
           is_active: boolean | null
           owner_user_id: string
           status_emoji: string | null
           status_text: string | null
+          studio_name: string | null
           theme_config: Json | null
           updated_at: string | null
           visibility: Database["public"]["Enums"]["room_visibility"]
         }
         Insert: {
           bgm_song_id?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
+          grid_columns?: number | null
           id?: string
           is_active?: boolean | null
           owner_user_id: string
           status_emoji?: string | null
           status_text?: string | null
+          studio_name?: string | null
           theme_config?: Json | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"]
         }
         Update: {
           bgm_song_id?: string | null
+          cover_image_url?: string | null
           created_at?: string | null
+          grid_columns?: number | null
           id?: string
           is_active?: boolean | null
           owner_user_id?: string
           status_emoji?: string | null
           status_text?: string | null
+          studio_name?: string | null
           theme_config?: Json | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"]
