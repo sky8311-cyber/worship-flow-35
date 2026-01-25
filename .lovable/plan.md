@@ -1,64 +1,160 @@
 
 
-# 중복 예배인도자 신청서 문제 해결
+# 뉴스피드 게시물 삭제/편집 후 UI 갱신 안됨 수정 계획
 
-## 문제 원인
+## 문제 분석
 
-**김주은** (june3616@naver.com) 사용자의 예배인도자 신청서가 3개 중복 생성됨:
-- 13:29:47 → 첫 번째 제출
-- 13:29:49 → 두 번째 제출 (+2초)
-- 13:29:50 → 세 번째 제출 (+1초)
+### 확인된 현상
+- 관리자가 뉴스피드에서 게시물 삭제 → **UI에서 사라지지 않음**
+- 새로고침하면 정상적으로 삭제됨 확인
+- 일반 유저도 동일한 문제 발생 예상
 
-**원인**: 신청 버튼을 빠르게 여러 번 클릭했을 때 중복 제출 방지 로직이 없음
+### 근본 원인: **쿼리 키 불일치**
+
+| 위치 | 사용하는 쿼리 키 |
+|------|-----------------|
+| `CommunityNewsfeed.tsx` (뉴스피드 데이터) | `["community-newsfeed", activeCommunityId]` |
+| `SocialFeedPost.tsx` (삭제/편집) | `["unified-community-feed"]` ❌ |
+| `ChatBubble.tsx` (삭제/편집) | `["unified-community-feed"]` ❌ |
+| `PostComposer.tsx` (새 글 작성) | `["unified-community-feed"]` ❌ |
+
+**결과**: 삭제/편집/작성 후 `["unified-community-feed"]`를 무효화하지만, 실제 뉴스피드는 `["community-newsfeed", ...]` 쿼리를 사용하므로 **캐시가 갱신되지 않아 UI가 업데이트되지 않음**
+
+### 영향 범위
+1. **게시물 삭제** - 삭제했는데 화면에 그대로 표시됨
+2. **게시물 편집** - 수정했는데 이전 내용이 표시됨
+3. **새 게시물 작성** - 작성했는데 바로 피드에 안 나타남 (새로고침 필요)
 
 ---
 
-## 해결 방안
+## 수정 계획
 
-### 1단계: 중복 데이터 정리 (즉시)
+### 수정 전략
 
-가장 최신 신청서 1개만 남기고 나머지 삭제:
-
-```sql
-DELETE FROM worship_leader_applications 
-WHERE user_id = 'f0dac984-2ffc-4dba-b4b7-a3bc48eacecd'
-  AND id != '9e3230c9-2a18-4fed-b8ef-23fb4f890e1e';  -- 최신 것만 유지
-```
-
-### 2단계: 데이터베이스 제약조건 추가 (근본 해결)
-
-동일 사용자가 pending 상태의 신청서를 중복으로 생성하지 못하도록 부분 유니크 제약조건 추가:
-
-```sql
--- pending 상태 신청서는 user_id당 1개만 허용
-CREATE UNIQUE INDEX IF NOT EXISTS idx_worship_leader_applications_pending_unique 
-ON worship_leader_applications (user_id) 
-WHERE status = 'pending';
-```
-
-### 3단계: 프론트엔드 중복 제출 방지
-
-**파일:** `src/pages/RequestWorshipLeader.tsx`
-
-신청 버튼에 `disabled` 상태를 mutation의 `isPending`과 연결:
+모든 mutation의 `onSuccess`에서 **두 쿼리 키 모두 무효화**:
+- `["unified-community-feed"]` - 기존 호환성 유지
+- `["community-newsfeed"]` - 커뮤니티별 뉴스피드 갱신
 
 ```typescript
-<Button 
-  type="submit" 
-  disabled={mutation.isPending}
-  className="w-full"
->
-  {mutation.isPending ? "제출 중..." : "신청하기"}
-</Button>
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] }); // 추가
+}
+```
+
+### 파일별 수정 내용
+
+#### 1. `src/components/dashboard/SocialFeedPost.tsx`
+
+**삭제 mutation (line 198-201):**
+```typescript
+// 변경 전
+onSuccess: () => {
+  toast.success(t("common.deleteSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+},
+
+// 변경 후
+onSuccess: () => {
+  toast.success(t("common.deleteSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+},
+```
+
+**편집 mutation (line 217-220):**
+```typescript
+// 변경 전
+onSuccess: () => {
+  toast.success(t("common.saveSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  setEditDialogOpen(false);
+},
+
+// 변경 후
+onSuccess: () => {
+  toast.success(t("common.saveSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+  setEditDialogOpen(false);
+},
+```
+
+#### 2. `src/components/dashboard/ChatBubble.tsx`
+
+**삭제 mutation (line 153-156):**
+```typescript
+// 변경 전
+onSuccess: () => {
+  toast.success(t("common.deleteSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+},
+
+// 변경 후
+onSuccess: () => {
+  toast.success(t("common.deleteSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+},
+```
+
+**편집 mutation (line 170-173):**
+```typescript
+// 변경 전
+onSuccess: () => {
+  toast.success(t("common.saveSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  setEditDialogOpen(false);
+},
+
+// 변경 후
+onSuccess: () => {
+  toast.success(t("common.saveSuccess"));
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+  setEditDialogOpen(false);
+},
+```
+
+#### 3. `src/components/dashboard/PostComposer.tsx`
+
+**작성 mutation (line 40-44):**
+```typescript
+// 변경 전
+onSuccess: async (communityId) => {
+  toast.success(t("socialFeed.postSuccess"));
+  setContent("");
+  setUploadedImages([]);
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  // ...
+
+// 변경 후
+onSuccess: async (communityId) => {
+  toast.success(t("socialFeed.postSuccess"));
+  setContent("");
+  setUploadedImages([]);
+  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+  // ...
 ```
 
 ---
 
 ## 파일 변경 요약
 
-| 작업 | 내용 |
-|------|------|
-| DB 정리 | 중복 신청서 2개 삭제 |
-| DB 마이그레이션 | 부분 유니크 인덱스 추가 |
-| `RequestWorshipLeader.tsx` | 버튼 중복 클릭 방지 강화 |
+| 파일 | 변경 라인 | 변경 내용 |
+|------|----------|----------|
+| `SocialFeedPost.tsx` | 200, 219 | `["community-newsfeed"]` 무효화 추가 |
+| `ChatBubble.tsx` | 155, 172 | `["community-newsfeed"]` 무효화 추가 |
+| `PostComposer.tsx` | 44 | `["community-newsfeed"]` 무효화 추가 |
+
+---
+
+## 예상 결과
+
+수정 후:
+1. **게시물 삭제 시** → 즉시 뉴스피드에서 사라짐
+2. **게시물 편집 시** → 즉시 수정된 내용 표시
+3. **새 게시물 작성 시** → 즉시 뉴스피드에 나타남
+4. **관리자/일반 유저 동일하게 작동**
 
