@@ -42,6 +42,7 @@ export function PostComposer() {
       setContent("");
       setUploadedImages([]);
       queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+      queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
       
       // Credit K-Seed rewards (fire-and-forget)
       if (user?.id && communityId) {
