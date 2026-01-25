@@ -43,7 +43,7 @@ export function FriendRequestButton({ targetUserId }: FriendRequestButtonProps) 
         disabled={sendRequest.isPending}
       >
         <UserPlus className="h-4 w-4 mr-2" />
-        {t("rooms.addFriend")}
+        {t("studio.addFriend")}
       </Button>
     );
   }
@@ -55,7 +55,7 @@ export function FriendRequestButton({ targetUserId }: FriendRequestButtonProps) 
     return (
       <Button variant="outline" size="sm" disabled>
         <Clock className="h-4 w-4 mr-2" />
-        {isSender ? t("rooms.requestPending") : t("rooms.respondToRequest")}
+        {isSender ? t("studio.requestPending") : t("studio.respondToRequest")}
       </Button>
     );
   }
@@ -67,7 +67,7 @@ export function FriendRequestButton({ targetUserId }: FriendRequestButtonProps) 
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
             <UserCheck className="h-4 w-4 mr-2" />
-            {t("rooms.friends")}
+            {t("studio.friends")}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -76,7 +76,7 @@ export function FriendRequestButton({ targetUserId }: FriendRequestButtonProps) 
             className="text-destructive"
           >
             <UserMinus className="h-4 w-4 mr-2" />
-            {t("rooms.removeFriend")}
+            {t("studio.removeFriend")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -92,7 +92,7 @@ export function FriendRequestButton({ targetUserId }: FriendRequestButtonProps) 
       disabled={sendRequest.isPending}
     >
       <UserPlus className="h-4 w-4 mr-2" />
-      {t("rooms.addFriend")}
+      {t("studio.addFriend")}
     </Button>
   );
 }

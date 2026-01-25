@@ -52,7 +52,7 @@ export function RoomPostComposer({ roomId }: RoomPostComposerProps) {
     <Card>
       <CardContent className="pt-4">
         <Textarea
-          placeholder={t("rooms.postPlaceholder")}
+          placeholder={t("studio.postPlaceholder")}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
@@ -67,7 +67,7 @@ export function RoomPostComposer({ roomId }: RoomPostComposerProps) {
           <SelectContent>
             {postTypes.map((type) => (
               <SelectItem key={type.value} value={type.value}>
-                {type.icon} {t(`rooms.postTypes.${type.value}`)}
+                {type.icon} {t(`studio.postTypes.${type.value}` as any)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -78,7 +78,7 @@ export function RoomPostComposer({ roomId }: RoomPostComposerProps) {
           disabled={!content.trim() || createPost.isPending}
         >
           <Send className="h-4 w-4 mr-2" />
-          {t("rooms.post")}
+          {t("studio.post")}
         </Button>
       </CardFooter>
     </Card>

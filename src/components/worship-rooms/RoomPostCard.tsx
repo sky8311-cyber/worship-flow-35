@@ -81,6 +81,8 @@ export function RoomPostCard({ post, roomId, isOwnRoom = false }: RoomPostCardPr
     addSuffix: true,
     locale: language === "ko" ? ko : enUS,
   });
+
+  const postTypeLabel = t(`studio.postTypes.${post.post_type}` as any);
   
   return (
     <Card className={post.is_pinned ? "border-primary/50 bg-primary/5" : ""}>
@@ -99,12 +101,12 @@ export function RoomPostCard({ post, roomId, isOwnRoom = false }: RoomPostCardPr
                   {post.author?.full_name || t("common.deletedUser")}
                 </span>
                 <Badge variant="outline" className={postTypeColors[post.post_type]}>
-                  {postTypeIcons[post.post_type]} {t(`rooms.postTypes.${post.post_type}`)}
+                  {postTypeIcons[post.post_type]} {postTypeLabel}
                 </Badge>
                 {post.is_pinned && (
                   <Badge variant="secondary" className="text-xs">
                     <Pin className="h-3 w-3 mr-1" />
-                    {t("rooms.pinned")}
+                    {t("studio.pinned")}
                   </Badge>
                 )}
               </div>
@@ -123,7 +125,7 @@ export function RoomPostCard({ post, roomId, isOwnRoom = false }: RoomPostCardPr
                 {isOwnRoom && (
                   <DropdownMenuItem onClick={handleTogglePin}>
                     <Pin className="h-4 w-4 mr-2" />
-                    {post.is_pinned ? t("rooms.unpin") : t("rooms.pin")}
+                    {post.is_pinned ? t("studio.unpin") : t("studio.pin")}
                   </DropdownMenuItem>
                 )}
                 {isAuthor && (
