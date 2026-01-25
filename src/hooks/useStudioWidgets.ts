@@ -14,7 +14,13 @@ export type WidgetType =
   | "todo" 
   | "numbered-list" 
   | "bullet-list" 
-  | "divider";
+  | "divider"
+  | "external-link"
+  | "song"
+  | "recent-drafts"
+  | "gallery"
+  | "bible-verse"
+  | "profile-card";
 
 export interface WidgetContent {
   text?: string;
@@ -27,6 +33,32 @@ export interface WidgetContent {
   backgroundColor?: string;
   items?: { id: string; text: string; checked?: boolean }[];
   listType?: "bullet" | "numbered" | "todo";
+  // External link widget
+  url?: string;
+  linkTitle?: string;
+  linkDescription?: string;
+  linkIcon?: string;
+  linkType?: "youtube-channel" | "book" | "ebook" | "website" | "social" | "other";
+  // Song widget
+  songTitle?: string;
+  songArtist?: string;
+  songUrl?: string;
+  isOriginal?: boolean;
+  // Recent drafts widget
+  draftCount?: number;
+  draftFilter?: string;
+  // Gallery widget
+  images?: { url: string; alt?: string }[];
+  galleryLayout?: "grid" | "carousel" | "masonry";
+  // Bible verse widget
+  verseReference?: string;
+  verseText?: string;
+  translation?: string;
+  // Profile card widget
+  bio?: string;
+  socialLinks?: { platform: string; url: string }[];
+  // Post embed
+  postId?: string;
 }
 
 export interface StudioWidget {

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { 
   DndContext, 
   closestCenter, 
@@ -20,11 +20,14 @@ import {
   useCreateWidget, 
   useDeleteWidget,
   useReorderWidgets,
+  useUpdateWidget,
   type WidgetType,
   type StudioWidget,
+  type WidgetContent,
 } from "@/hooks/useStudioWidgets";
 import { StudioWidget as WidgetComponent } from "./StudioWidget";
 import { WidgetPalette } from "./WidgetPalette";
+import { WidgetEditDialog } from "./WidgetEditDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +43,10 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
   const createWidget = useCreateWidget();
   const deleteWidget = useDeleteWidget();
   const reorderWidgets = useReorderWidgets();
+  const updateWidget = useUpdateWidget();
+  
+  const [editingWidget, setEditingWidget] = useState<StudioWidget | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -83,6 +90,15 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
     deleteWidget.mutate({ id: widgetId, roomId });
   };
   
+  const handleEditWidget = (widget: StudioWidget) => {
+    setEditingWidget(widget);
+    setEditDialogOpen(true);
+  };
+  
+  const handleSaveWidget = (widgetId: string, content: WidgetContent) => {
+    updateWidget.mutate({ id: widgetId, roomId, content });
+  };
+  
   if (isLoading) {
     return (
       <div className={cn(
@@ -101,7 +117,7 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
   const sortedWidgets = widgets?.slice().sort((a, b) => a.sort_order - b.sort_order) || [];
   
   return (
-    <div className="p-4">
+    <div className="p-4 pb-20">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -122,6 +138,7 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
                 key={widget.id}
                 widget={widget}
                 isOwner={isOwner}
+                onEdit={() => handleEditWidget(widget)}
                 onDelete={() => handleDeleteWidget(widget.id)}
               />
             ))}
@@ -136,12 +153,12 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
             <span className="text-3xl">✨</span>
           </div>
           <h3 className="font-medium text-lg mb-2">
-            {language === "ko" ? "나만의 공간을 꾸며보세요" : "Customize your space"}
+            {language === "ko" ? "예배는 일상에서 빚어집니다" : "Worship is shaped in daily life"}
           </h3>
           <p className="text-sm text-muted-foreground max-w-sm mb-6">
             {language === "ko" 
-              ? "텍스트, 이미지, 인용구 등 다양한 위젯을 추가하여 스튜디오를 꾸밀 수 있습니다."
-              : "Add text, images, quotes and more to personalize your studio."}
+              ? "하나님이 오늘 빚어가시는 것들을 이곳에 하나씩 모아보세요—기도, 묵상, 노래."
+              : "Collect what God is forming—one prayer, one thought, one song at a time."}
           </p>
         </div>
       )}
@@ -155,6 +172,15 @@ export function StudioGrid({ roomId, isOwner = false, gridColumns = 3 }: StudioG
           />
         </div>
       )}
+      
+      {/* Edit dialog */}
+      <WidgetEditDialog
+        widget={editingWidget}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleSaveWidget}
+        roomId={roomId}
+      />
     </div>
   );
 }
@@ -165,7 +191,6 @@ function getDefaultContent(type: WidgetType): Record<string, unknown> {
       return { text: "", level: 1 };
     case "quote":
     case "text":
-    case "callout":
       return { text: "" };
     case "callout":
       return { text: "", icon: "💡" };
@@ -177,6 +202,18 @@ function getDefaultContent(type: WidgetType): Record<string, unknown> {
     case "bullet-list":
     case "numbered-list":
       return { items: [] };
+    case "external-link":
+      return { url: "", linkTitle: "", linkIcon: "🔗" };
+    case "song":
+      return { songTitle: "", songArtist: "", isOriginal: true };
+    case "recent-drafts":
+      return { draftCount: 3 };
+    case "gallery":
+      return { images: [], galleryLayout: "grid" };
+    case "bible-verse":
+      return { verseReference: "", verseText: "" };
+    case "profile-card":
+      return { bio: "" };
     default:
       return {};
   }
