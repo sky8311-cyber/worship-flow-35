@@ -33,7 +33,7 @@ export function VisibilityBadge({ visibility, size = "default" }: VisibilityBadg
   return (
     <Badge variant="outline" className={config.color}>
       <Icon className={size === "sm" ? "h-3 w-3 mr-1" : "h-3.5 w-3.5 mr-1.5"} />
-      {t(`rooms.visibility.${visibility}`)}
+      {t(`studio.visibility.${visibility}` as any)}
     </Badge>
   );
 }

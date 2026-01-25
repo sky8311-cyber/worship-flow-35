@@ -41,15 +41,15 @@ const WorshipRooms = () => {
     return (
       <AppLayout>
         <SEOHead 
-          title={t("rooms.title")} 
-          description={t("rooms.description")}
+          title={t("studio.title")} 
+          description={t("studio.description")}
         />
         <div className="flex flex-col h-full">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="flex-1 flex flex-col">
             <TabsList className="grid grid-cols-3 mx-4 mt-4">
-              <TabsTrigger value="my-room">{t("rooms.myRoom")}</TabsTrigger>
-              <TabsTrigger value="discover">{t("rooms.discover")}</TabsTrigger>
-              <TabsTrigger value="ambassadors">{t("rooms.ambassadors")}</TabsTrigger>
+              <TabsTrigger value="my-room">{t("studio.myStudio")}</TabsTrigger>
+              <TabsTrigger value="discover">{t("studio.discover")}</TabsTrigger>
+              <TabsTrigger value="ambassadors">{t("studio.ambassadors")}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="my-room" className="flex-1 overflow-y-auto">
@@ -86,8 +86,8 @@ const WorshipRooms = () => {
   return (
     <AppLayout>
       <SEOHead 
-        title={t("rooms.title")} 
-        description={t("rooms.description")}
+        title={t("studio.title")} 
+        description={t("studio.description")}
       />
       <div className="flex h-full">
         {/* Left Sidebar */}
@@ -109,7 +109,7 @@ const WorshipRooms = () => {
             />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              {myRoomLoading ? t("common.loading") : t("rooms.selectRoom")}
+              {myRoomLoading ? t("common.loading") : t("studio.emptyFeed")}
             </div>
           )}
         </div>

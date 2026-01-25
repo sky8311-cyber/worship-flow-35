@@ -127,7 +127,7 @@ export function useCreatePost() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["room-posts", variables.room_id] });
-      toast.success(t("rooms.postCreated"));
+      toast.success(t("studio.postCreated"));
     },
     onError: () => {
       toast.error(t("common.error"));
