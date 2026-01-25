@@ -3836,6 +3836,20 @@ export type Database = {
           worship_leader: string
         }[]
       }
+      get_seed_leaderboard: {
+        Args: {
+          excluded_user_ids?: string[]
+          result_limit?: number
+          time_range?: string
+        }
+        Returns: {
+          avatar_url: string
+          current_level: number
+          total_seeds: number
+          user_id: string
+          user_name: string
+        }[]
+      }
       get_song_usage_sets: {
         Args: { p_song_id: string }
         Returns: {
