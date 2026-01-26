@@ -301,6 +301,20 @@ export const AutomatedEmailSettings = () => {
                           <p className="text-xs text-muted-foreground">
                             {language === "ko" ? "대상" : "Recipients"}
                           </p>
+                          <p className="text-xs text-primary">
+                            {(() => {
+                              const scheduleHour = getEditedValue(setting, "schedule_hour");
+                              const now = new Date();
+                              const next = new Date(now);
+                              next.setUTCHours(scheduleHour, 0, 0, 0);
+                              if (next <= now) next.setDate(next.getDate() + 1);
+                              const kstHour = (scheduleHour + 9) % 24;
+                              const isToday = next.toDateString() === now.toDateString();
+                              return language === "ko"
+                                ? `다음: ${isToday ? "오늘" : "내일"} ${kstHour.toString().padStart(2, "0")}:00`
+                                : `Next: ${isToday ? "Today" : "Tomorrow"} ${kstHour.toString().padStart(2, "0")}:00 KST`;
+                            })()}
+                          </p>
                         </div>
                         <Switch
                           checked={setting.enabled}
@@ -504,29 +518,35 @@ export const AutomatedEmailSettings = () => {
         }
       />
 
-      {/* Template Preview Dialog */}
-      {templatePreviewType && (
-        <AutomatedEmailTemplatePreviewDialog
-          open={!!templatePreviewType}
-          onOpenChange={() => setTemplatePreviewType(null)}
-          emailType={templatePreviewType}
-          subject={
-            editedSettings[templatePreviewType]?.subject_template 
-              ?? settings.find((s) => s.email_type === templatePreviewType)?.subject_template 
-              ?? ""
-          }
-          body={
-            editedSettings[templatePreviewType]?.body_template 
-              ?? settings.find((s) => s.email_type === templatePreviewType)?.body_template 
-              ?? ""
-          }
-          triggerDays={
-            editedSettings[templatePreviewType]?.trigger_days 
-              ?? settings.find((s) => s.email_type === templatePreviewType)?.trigger_days 
-              ?? 7
-          }
-        />
-      )}
+      {/* Template Preview Dialog - always render for proper close animation */}
+      <AutomatedEmailTemplatePreviewDialog
+        open={!!templatePreviewType}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setTemplatePreviewType(null);
+        }}
+        emailType={templatePreviewType || "inactive_user"}
+        subject={
+          templatePreviewType
+            ? (editedSettings[templatePreviewType]?.subject_template 
+                ?? settings.find((s) => s.email_type === templatePreviewType)?.subject_template 
+                ?? "")
+            : ""
+        }
+        body={
+          templatePreviewType
+            ? (editedSettings[templatePreviewType]?.body_template 
+                ?? settings.find((s) => s.email_type === templatePreviewType)?.body_template 
+                ?? "")
+            : ""
+        }
+        triggerDays={
+          templatePreviewType
+            ? (editedSettings[templatePreviewType]?.trigger_days 
+                ?? settings.find((s) => s.email_type === templatePreviewType)?.trigger_days 
+                ?? 7)
+            : 7
+        }
+      />
     </div>
   );
 };
