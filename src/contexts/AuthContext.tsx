@@ -275,12 +275,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Credit daily login reward on SIGNED_IN event (fire-and-forget)
           if (event === "SIGNED_IN") {
             creditDailyLoginReward(session.user.id);
-            
-            // Update last_active_at for automated email tracking (fire-and-forget)
+          }
+          
+          // Update last_active_at for ALL session events (SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION)
+          // This ensures activity is tracked even when users return to a tab or refresh the page
+          const shouldUpdateActivity = event === "SIGNED_IN" || 
+                                       event === "TOKEN_REFRESHED" || 
+                                       event === "INITIAL_SESSION";
+          if (shouldUpdateActivity) {
             supabase.from('profiles').update({ 
               last_active_at: new Date().toISOString() 
             }).eq('id', session.user.id).then(() => {
-              console.log('[AuthContext] Updated last_active_at');
+              console.log('[AuthContext] Updated last_active_at for event:', event);
             });
           }
           
