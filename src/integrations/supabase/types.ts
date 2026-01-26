@@ -104,29 +104,88 @@ export type Database = {
       automated_email_log: {
         Row: {
           email_type: string
+          error_message: string | null
           id: string
           metadata: Json | null
+          recipient_email: string | null
+          recipient_name: string | null
           sent_at: string | null
+          status: string | null
           user_id: string
         }
         Insert: {
           email_type: string
+          error_message?: string | null
           id?: string
           metadata?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           sent_at?: string | null
+          status?: string | null
           user_id: string
         }
         Update: {
           email_type?: string
+          error_message?: string | null
           id?: string
           metadata?: Json | null
+          recipient_email?: string | null
+          recipient_name?: string | null
           sent_at?: string | null
+          status?: string | null
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "automated_email_log_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automated_email_settings: {
+        Row: {
+          body_template: string
+          created_at: string | null
+          email_type: string
+          enabled: boolean | null
+          id: string
+          schedule_hour: number | null
+          subject_template: string
+          trigger_days: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          body_template: string
+          created_at?: string | null
+          email_type: string
+          enabled?: boolean | null
+          id?: string
+          schedule_hour?: number | null
+          subject_template: string
+          trigger_days: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          body_template?: string
+          created_at?: string | null
+          email_type?: string
+          enabled?: boolean | null
+          id?: string
+          schedule_hour?: number | null
+          subject_template?: string
+          trigger_days?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_email_settings_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -3927,6 +3986,17 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_automated_email_recipients: {
+        Args: { p_email_type: string; p_trigger_days: number }
+        Returns: {
+          community_name: string
+          days_inactive: number
+          email: string
+          full_name: string
+          id: string
+          last_active_at: string
+        }[]
+      }
       get_communities_with_single_owner: {
         Args: never
         Returns: {
