@@ -95,7 +95,7 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
   const gridColumns = (room as any).grid_columns || 3;
   
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="flex-1 overflow-y-auto">
       {/* Cover & Profile */}
       <StudioCoverEditor room={room} isOwner={isActuallyOwnRoom} />
       
