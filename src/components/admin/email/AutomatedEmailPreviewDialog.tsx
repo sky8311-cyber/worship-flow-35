@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 
 interface AutomatedEmailPreviewDialogProps {
   open: boolean;
@@ -126,72 +126,70 @@ export const AutomatedEmailPreviewDialog = ({
         </div>
 
         {/* Recipients Table with horizontal scroll */}
-        <ScrollArea className="flex-1 min-h-0 border rounded-lg">
-          <div className="overflow-x-auto">
-            {isLoading ? (
-              <div className="p-4 space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="space-y-1.5 flex-1">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-48" />
-                    </div>
-                    <Skeleton className="h-6 w-16" />
+        <div className="flex-1 min-h-0 max-h-[400px] overflow-auto border rounded-lg">
+          {isLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
                   </div>
-                ))}
-              </div>
-            ) : filteredRecipients.length === 0 ? (
-              <div className="p-8 text-center">
-                <Mail className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">
-                  {searchQuery
-                    ? (language === "ko" ? "검색 결과가 없습니다" : "No results found")
-                    : (language === "ko" ? "대상자가 없습니다" : "No recipients found")}
-                </p>
-              </div>
-            ) : (
-              <Table className="min-w-[600px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{language === "ko" ? "이름" : "Name"}</TableHead>
-                    <TableHead>{language === "ko" ? "이메일" : "Email"}</TableHead>
+                  <Skeleton className="h-6 w-16" />
+                </div>
+              ))}
+            </div>
+          ) : filteredRecipients.length === 0 ? (
+            <div className="p-8 text-center">
+              <Mail className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? (language === "ko" ? "검색 결과가 없습니다" : "No results found")
+                  : (language === "ko" ? "대상자가 없습니다" : "No recipients found")}
+              </p>
+            </div>
+          ) : (
+            <Table className="min-w-[600px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{language === "ko" ? "이름" : "Name"}</TableHead>
+                  <TableHead>{language === "ko" ? "이메일" : "Email"}</TableHead>
+                  {emailType === "no_team_invite" && (
+                    <TableHead>{language === "ko" ? "커뮤니티" : "Community"}</TableHead>
+                  )}
+                  <TableHead className="text-right">
+                    {language === "ko" ? "경과일" : "Days"}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRecipients.map((recipient) => (
+                  <TableRow key={recipient.id}>
+                    <TableCell className="font-medium whitespace-nowrap">
+                      {recipient.full_name || (language === "ko" ? "(이름 없음)" : "(No name)")}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs whitespace-nowrap">
+                      {recipient.email}
+                    </TableCell>
                     {emailType === "no_team_invite" && (
-                      <TableHead>{language === "ko" ? "커뮤니티" : "Community"}</TableHead>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {recipient.community_name}
+                      </TableCell>
                     )}
-                    <TableHead className="text-right">
-                      {language === "ko" ? "경과일" : "Days"}
-                    </TableHead>
+                    <TableCell className="text-right">
+                      <Badge variant="outline" className="gap-1">
+                        <Clock className="w-3 h-3" />
+                        {recipient.days_inactive}
+                        {language === "ko" ? "일" : "d"}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRecipients.map((recipient) => (
-                    <TableRow key={recipient.id}>
-                      <TableCell className="font-medium whitespace-nowrap">
-                        {recipient.full_name || (language === "ko" ? "(이름 없음)" : "(No name)")}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs whitespace-nowrap">
-                        {recipient.email}
-                      </TableCell>
-                      {emailType === "no_team_invite" && (
-                        <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                          {recipient.community_name}
-                        </TableCell>
-                      )}
-                      <TableCell className="text-right">
-                        <Badge variant="outline" className="gap-1">
-                          <Clock className="w-3 h-3" />
-                          {recipient.days_inactive}
-                          {language === "ko" ? "일" : "d"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-        </ScrollArea>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
 
         {/* Footer Info with fetch time */}
         <div className="flex flex-col gap-2 pt-2 text-sm text-muted-foreground">
