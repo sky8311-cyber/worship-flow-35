@@ -1,311 +1,392 @@
 
-# 자동 이메일 리마인더 시스템 구현 계획
 
-## 개요
+# 티어/역할 시스템 정립 및 CRM/이메일 수신자 재구성 계획
 
-Kworship 플랫폼에 3가지 자동 이메일 리마인더 기능을 추가합니다:
-1. **미접속자 알림** - X일간 로그인하지 않은 사용자에게 리마인더
-2. **팀원 초대 리마인더** - 커뮤니티 멤버 없는 워십리더에게 초대 권장 이메일
-3. **워십세트 생성 리마인더** - 2주간 세트 미생성 워십리더에게 독려 이메일
+## 현재 상황 분석
+
+### 데이터 현황
+| 분류 | 수치 | 설명 |
+|------|------|------|
+| 전체 가입자 | 196명 | 모두 `user` 역할 보유 |
+| 예배인도자 | 95명 | `worship_leader` 역할 추가 보유 |
+| 정회원 | 0명 | 프리미엄 구독자 없음 |
+| 공동체 어카운트 | 1개 | church_accounts |
+| 커뮤니티 참여자 | 78명 | community_members 테이블에 존재 |
+| 미참여자 | 118명 | 가입 후 커뮤니티 미가입 |
+
+### 문제점 발견
+1. **CRM "15명 일반 멤버"의 정체**: `community_members.role = 'member'`인 사용자 (커뮤니티 내 역할)
+   - 이 중 4명은 플랫폼 tier가 `worship_leader`
+   - 11명은 플랫폼 tier가 `user` (팀멤버)
+2. **용어 혼란**: "일반 멤버"가 플랫폼 티어인지 커뮤니티 역할인지 불명확
+3. **118명 미활동 사용자**: 가입만 하고 커뮤니티 미가입
 
 ---
 
-## 현재 인프라 분석
+## 1단계: 명확한 역할/티어 체계 정립
 
-### 기존 시스템
-- **이메일 전송**: `send-admin-email` Edge Function + Resend API
-- **자동화**: `pg_cron` + `pg_net`으로 Edge Function 호출
-- **템플릿**: `email_templates` 테이블 (변수 치환 지원: `{{user_name}}`, `{{app_url}}` 등)
-- **로깅**: `admin_email_logs`, `email_recipients` 테이블
+### 플랫폼 티어 (Primary Authorization - user_roles 테이블)
 
-### 참고할 기존 패턴
-- `process-event-reminders` - 이벤트 알림 처리 (중복 방지 로직 포함)
-- `process-recurring-schedules` - 반복 일정 처리 (매시간 cron 실행)
-
----
-
-## 구현 계획
-
-### 1단계: 데이터베이스 스키마 확장
-
-#### 1.1 자동 이메일 발송 추적 테이블 생성
-
-```sql
-CREATE TABLE automated_email_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  email_type TEXT NOT NULL,  -- 'inactive_user', 'no_team_invite', 'no_worship_set'
-  sent_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE (user_id, email_type)  -- 동일 유형 이메일 중복 발송 방지
-);
-
--- RLS 정책
-ALTER TABLE automated_email_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Admins can view all" ON automated_email_log FOR ALL
-  TO authenticated USING (
-    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
+```text
+┌────────────────────────────────────────────────────────────────────────────┐
+│                         플랫폼 티어 계층 구조                               │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  TIER 4: 공동체 어카운트 (Worship Community Account)                  │  │
+│  │  ─────────────────────────────────────────────────────────────────   │  │
+│  │  • DB: church_accounts + church_account_members 테이블               │  │
+│  │  • 모든 기능 사용 가능 (관리자 제외)                                  │  │
+│  │  • 팀멤버도 결제 시 바로 이용 가능                                    │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                               ▲                                            │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  TIER 3: 정회원 (Full Member)                                         │  │
+│  │  ─────────────────────────────────────────────────────────────────   │  │
+│  │  • DB: user_roles.role = 'worship_leader' + premium_subscriptions    │  │
+│  │  • 프리미엄 기능 사용 가능                                            │  │
+│  │  • 예배인도자 + 프리미엄 구독                                         │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                               ▲                                            │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  TIER 2: 예배인도자 (Basic Member / Worship Leader)                   │  │
+│  │  ─────────────────────────────────────────────────────────────────   │  │
+│  │  • DB: user_roles.role = 'worship_leader'                            │  │
+│  │  • 승급 신청 + 프로필 작성 후 자동 승인                               │  │
+│  │  • 커뮤니티 생성/관리, 팀원 초대 가능                                 │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                               ▲                                            │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  TIER 1: 팀멤버 (Team Member)                                         │  │
+│  │  ─────────────────────────────────────────────────────────────────   │  │
+│  │  • DB: user_roles.role = 'user'                                      │  │
+│  │  • 모든 신규 가입자의 기본 역할                                       │  │
+│  │  • 커뮤니티 초대/가입 가능, 예배 세트 열람                            │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 1.2 사용자 마지막 활동 추적 컬럼 추가
+### 커뮤니티 역할 (Secondary Authorization - community_members 테이블)
+
+```text
+┌────────────────────────────────────────────────────────────────────────────┐
+│                      커뮤니티 내 역할 (2차 권한)                            │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  community_members.role 값:                                                │
+│                                                                            │
+│  ┌─────────────┐   ┌─────────────────┐   ┌─────────────┐                  │
+│  │   owner     │ > │ community_leader │ > │   member    │                  │
+│  │  (오너)     │   │   (리더)         │   │  (멤버)     │                  │
+│  └─────────────┘   └─────────────────┘   └─────────────┘                  │
+│        │                   │                    │                          │
+│        ▼                   ▼                    ▼                          │
+│  • 커뮤니티 삭제   • 세트 편집/삭제     • 피드 글 작성                     │
+│  • 오너 권한 이전  • 멤버 관리          • 예배 세트 열람                   │
+│  • 리더 지정      • 피드 글 작성       • RSVP 참여                         │
+│  • 모든 리더 권한  • 일정 관리                                             │
+│                                                                            │
+│  ⚠️ 이 역할은 플랫폼 티어와 독립적!                                        │
+│     팀멤버도 커뮤니티 리더가 될 수 있음                                    │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2단계: 승급 워크플로우 도표 (새 관리자 페이지)
+
+### 새 페이지: `/admin/tier-workflow` (AdminTierWorkflow.tsx)
+
+```text
+┌────────────────────────────────────────────────────────────────────────────┐
+│  🎯 사용자 승급 워크플로우                                                  │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│                      ┌─────────────────┐                                   │
+│                      │   회원 가입     │                                   │
+│                      │  (모든 사용자)  │                                   │
+│                      └────────┬────────┘                                   │
+│                               │                                            │
+│                               ▼                                            │
+│                      ┌─────────────────┐                                   │
+│                      │    팀 멤버      │◄─────────────────┐                │
+│                      │  (user role)    │                   │                │
+│                      └────────┬────────┘                   │                │
+│                               │                             │                │
+│               ┌───────────────┼───────────────┐             │                │
+│               │               │               │             │                │
+│               ▼               │               ▼             │                │
+│     ┌─────────────────┐       │      ┌─────────────────┐    │                │
+│     │ 커뮤니티 초대    │       │      │  가입 신청      │    │                │
+│     │ 링크 클릭       │       │      │ (검색 → 신청)   │    │                │
+│     └────────┬────────┘       │      └────────┬────────┘    │                │
+│              │                │               │             │                │
+│              ▼                │               ▼             │                │
+│     ┌─────────────────┐       │      ┌─────────────────┐    │                │
+│     │   자동 가입      │       │      │  리더 승인 대기  │    │                │
+│     └────────┬────────┘       │      └────────┬────────┘    │                │
+│              │                │               │             │                │
+│              └───────────────►│◄──────────────┘             │                │
+│                               │                             │                │
+│                               ▼                             │                │
+│                      ┌─────────────────┐                    │                │
+│                      │ 커뮤니티 멤버   │                    │                │
+│                      │ (member 역할)   │                    │                │
+│                      └────────┬────────┘                    │                │
+│                               │                             │                │
+│            ┌──────────────────┴──────────────────┐          │                │
+│            │                                      │          │                │
+│            ▼                                      ▼          │                │
+│   ┌─────────────────┐                   ┌─────────────────┐  │                │
+│   │ 예배인도자 승급  │                   │ 공동체 어카운트 │  │                │
+│   │ 신청 (프로필 작성)│                   │ 결제           │  │                │
+│   └────────┬────────┘                   └────────┬────────┘  │                │
+│            │                                      │          │                │
+│            ▼                                      ▼          │                │
+│   ┌─────────────────┐                   ┌─────────────────┐  │                │
+│   │   자동 승인      │                   │   최상위 티어   │  │                │
+│   │ (worship_leader) │                   │   (church)      │──┘                │
+│   └────────┬────────┘                   └─────────────────┘                  │
+│            │                                                                 │
+│            ├─────────────────────────────┐                                   │
+│            │                             │                                   │
+│            ▼                             ▼                                   │
+│   ┌─────────────────┐           ┌─────────────────┐                          │
+│   │ 커뮤니티 생성    │           │ 프리미엄 결제   │                          │
+│   │ (오너 자동 부여) │           │ (정회원 전환)   │                          │
+│   └─────────────────┘           └─────────────────┘                          │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3단계: CRM 통계 수정
+
+### 현재 문제점
+- "Members (15명)"이 community_members.role='member'를 카운트
+- 플랫폼 티어 기반 통계가 아님
+
+### 수정 방안
+
+**AdminCRM.tsx Stats Cards 재구성:**
+
+| 기존 | 수정 후 | 설명 |
+|------|---------|------|
+| Worship Community Accounts | 공동체 어카운트 | 유지 (church_accounts) |
+| Basic Members (95) | 예배인도자 (95) | user_roles.worship_leader |
+| Communities | 커뮤니티 | 유지 |
+| Team Members (15) | 팀멤버 (101) | user_roles.user - worship_leader 제외 |
+
+**추가 통계:**
+- 활성 팀멤버: 커뮤니티 가입한 팀멤버 (11명)
+- 비활성 팀멤버: 커뮤니티 미가입 (90명)
+- 커뮤니티 오너: 63명
+- 커뮤니티 리더: 1명
+
+---
+
+## 4단계: 이메일 수신자 리스트 재구성
+
+### 새로운 수신자 그룹 체계
+
+```text
+📋 수신자 선택
+├── 👥 전체 사용자
+│   └── 모든 가입자 (196명)
+│
+├── 🎫 플랫폼 티어별
+│   ├── 팀멤버 (101명) - user role만 있는 사용자
+│   ├── 예배인도자 (95명) - worship_leader role
+│   ├── 정회원 (0명) - premium 구독 active
+│   └── 공동체 어카운트 (1명) - church_account 소속
+│
+├── 📈 활동 상태별
+│   ├── 활성 사용자 (7일 내 접속)
+│   ├── 준활성 (7-30일 미접속)
+│   ├── 비활성 (30일+ 미접속)
+│   └── 신규 가입자 (7일 내 가입)
+│
+├── 🏠 커뮤니티 참여 상태별
+│   ├── 커뮤니티 참여중 (78명)
+│   ├── 커뮤니티 미참여 (118명) ← 중요 타겟!
+│   ├── 커뮤니티 오너 (63명)
+│   ├── 커뮤니티 리더 (1명)
+│   └── 커뮤니티 일반 멤버 (15명)
+│
+├── 🎯 특정 활동별
+│   ├── 예배 세트 생성자 (44명)
+│   ├── 예배 세트 미생성자
+│   ├── 게시글 작성자
+│   └── 승급 신청 대기자 (6명)
+│
+└── 🏢 특정 커뮤니티
+    └── [커뮤니티 선택 드롭다운]
+```
+
+---
+
+## 5단계: 데이터베이스 변경
+
+### RPC 함수 생성
 
 ```sql
-ALTER TABLE profiles ADD COLUMN last_active_at TIMESTAMPTZ;
-
--- 로그인 시 자동 업데이트 트리거
-CREATE OR REPLACE FUNCTION update_last_active()
-RETURNS TRIGGER AS $$
+-- 플랫폼 티어별 사용자 조회 함수
+CREATE OR REPLACE FUNCTION get_users_by_platform_tier(tier_type TEXT)
+RETURNS TABLE (user_id UUID, email TEXT, full_name TEXT)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = 'public'
+AS $$
 BEGIN
-  UPDATE profiles SET last_active_at = now() WHERE id = NEW.id;
-  RETURN NEW;
+  CASE tier_type
+    -- 팀멤버: user role만 있고 worship_leader role이 없는 사용자
+    WHEN 'team_member' THEN
+      RETURN QUERY 
+      SELECT p.id, p.email, p.full_name FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'user'
+      WHERE NOT EXISTS (
+        SELECT 1 FROM user_roles ur2 
+        WHERE ur2.user_id = p.id AND ur2.role = 'worship_leader'
+      ) AND p.email IS NOT NULL;
+    
+    -- 예배인도자: worship_leader role 있는 사용자
+    WHEN 'worship_leader' THEN
+      RETURN QUERY 
+      SELECT p.id, p.email, p.full_name FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'worship_leader'
+      WHERE p.email IS NOT NULL;
+    
+    -- 정회원: worship_leader + premium subscription active
+    WHEN 'full_member' THEN
+      RETURN QUERY 
+      SELECT p.id, p.email, p.full_name FROM profiles p
+      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'worship_leader'
+      JOIN premium_subscriptions ps ON ps.user_id = p.id 
+        AND ps.subscription_status = 'active'
+      WHERE p.email IS NOT NULL;
+    
+    -- 공동체 어카운트 멤버
+    WHEN 'church_account' THEN
+      RETURN QUERY 
+      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
+      JOIN church_account_members cam ON cam.user_id = p.id
+      WHERE p.email IS NOT NULL;
+  END CASE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
+$$;
 
-#### 1.3 자동 이메일 템플릿 추가
-
-3개의 이메일 템플릿을 `email_templates` 테이블에 삽입:
-
-| slug | 제목 (한/영) | 용도 |
-|------|-------------|------|
-| `inactive-user-reminder` | "그동안 뵙지 못했네요!" | 미접속자 리마인더 |
-| `team-invite-reminder` | "팀원을 초대해 협업하세요" | 팀원 초대 독려 |
-| `worship-set-reminder` | "새로운 예배를 준비하세요" | 워십세트 생성 독려 |
-
----
-
-### 2단계: Edge Function 생성
-
-#### 2.1 `process-automated-emails` Edge Function
-
-```
-supabase/functions/process-automated-emails/index.ts
-```
-
-**기능 흐름:**
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                  process-automated-emails                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  1. 미접속자 체크 (inactive_user)                           │
-│     ├─ profiles WHERE last_active_at < NOW() - INTERVAL    │
-│     ├─ automated_email_log에 없는 사용자 필터               │
-│     └─ 이메일 발송 + 로그 기록                              │
-│                                                             │
-│  2. 팀원 미초대 워십리더 체크 (no_team_invite)              │
-│     ├─ worship_leader 역할 사용자                           │
-│     ├─ community_members에서 owner인 커뮤니티 조회          │
-│     ├─ 해당 커뮤니티 멤버 수 = 1 (본인만 있는 경우)         │
-│     ├─ 가입 후 7일 이상 경과                                │
-│     └─ 이메일 발송 + 로그 기록                              │
-│                                                             │
-│  3. 워십세트 미생성 워십리더 체크 (no_worship_set)          │
-│     ├─ worship_leader 역할 사용자                           │
-│     ├─ service_sets WHERE created_by = user.id             │
-│     ├─ 최근 14일간 생성 기록 없음                           │
-│     ├─ 최소 1개 이상 세트 생성 이력 있음 (신규 제외)        │
-│     └─ 이메일 발송 + 로그 기록                              │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**핵심 로직:**
-
-```typescript
-// 1. 미접속자 조회
-const inactiveUsers = await supabase
-  .from("profiles")
-  .select("id, email, full_name, last_active_at")
-  .lt("last_active_at", new Date(Date.now() - INACTIVE_DAYS * 24 * 60 * 60 * 1000).toISOString())
-  .not("id", "in", alreadyEmailed);
-
-// 2. 팀원 미초대 워십리더 조회
-const lonelyCommunities = await supabase.rpc("get_communities_with_single_owner");
-
-// 3. 워십세트 미생성 워십리더 조회  
-const inactiveLeaders = await supabase.rpc("get_inactive_worship_leaders", { 
-  days: 14 
-});
+-- 커뮤니티 참여 상태별 사용자 조회
+CREATE OR REPLACE FUNCTION get_users_by_community_status(status_type TEXT)
+RETURNS TABLE (user_id UUID, email TEXT, full_name TEXT)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = 'public'
+AS $$
+BEGIN
+  CASE status_type
+    -- 커뮤니티 참여중
+    WHEN 'in_community' THEN
+      RETURN QUERY 
+      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
+      JOIN community_members cm ON cm.user_id = p.id
+      WHERE p.email IS NOT NULL;
+    
+    -- 커뮤니티 미참여
+    WHEN 'not_in_community' THEN
+      RETURN QUERY 
+      SELECT p.id, p.email, p.full_name FROM profiles p
+      WHERE NOT EXISTS (
+        SELECT 1 FROM community_members cm WHERE cm.user_id = p.id
+      ) AND p.email IS NOT NULL;
+    
+    -- 커뮤니티 오너
+    WHEN 'community_owner' THEN
+      RETURN QUERY 
+      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
+      JOIN community_members cm ON cm.user_id = p.id AND cm.role = 'owner'
+      WHERE p.email IS NOT NULL;
+    
+    -- 커뮤니티 리더
+    WHEN 'community_leader' THEN
+      RETURN QUERY 
+      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
+      JOIN community_members cm ON cm.user_id = p.id AND cm.role = 'community_leader'
+      WHERE p.email IS NOT NULL;
+  END CASE;
+END;
+$$;
 ```
 
 ---
 
-### 3단계: Cron Job 설정
-
-매일 아침 9시(KST)에 실행하는 cron job 추가:
-
-```sql
-SELECT cron.schedule(
-  'process-automated-emails-daily',
-  '0 0 * * *',  -- UTC 00:00 = KST 09:00
-  $$
-    SELECT net.http_post(
-      url:='https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/process-automated-emails',
-      headers:='{"Content-Type": "application/json", "Authorization": "Bearer [ANON_KEY]"}'::jsonb,
-      body:='{}'::jsonb
-    ) AS request_id;
-  $$
-);
-```
-
----
-
-### 4단계: 헬퍼 RPC 함수 생성
-
-#### 4.1 팀원 없는 커뮤니티 조회
-
-```sql
-CREATE OR REPLACE FUNCTION get_communities_with_single_owner()
-RETURNS TABLE (
-  user_id UUID,
-  community_id UUID,
-  community_name TEXT,
-  created_at TIMESTAMPTZ
-) AS $$
-  SELECT 
-    cm.user_id,
-    cm.community_id,
-    wc.name AS community_name,
-    wc.created_at
-  FROM community_members cm
-  JOIN worship_communities wc ON wc.id = cm.community_id
-  WHERE cm.role = 'owner'
-  GROUP BY cm.user_id, cm.community_id, wc.name, wc.created_at
-  HAVING COUNT(*) = 1  -- 커뮤니티에 본인만 있음
-  AND wc.created_at < NOW() - INTERVAL '7 days';  -- 생성 후 7일 경과
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-```
-
-#### 4.2 워십세트 미생성 워십리더 조회
-
-```sql
-CREATE OR REPLACE FUNCTION get_inactive_worship_leaders(days INTEGER)
-RETURNS TABLE (
-  user_id UUID,
-  email TEXT,
-  full_name TEXT,
-  last_set_date DATE
-) AS $$
-  SELECT 
-    p.id AS user_id,
-    p.email,
-    p.full_name,
-    MAX(ss.created_at)::date AS last_set_date
-  FROM profiles p
-  JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'worship_leader'
-  LEFT JOIN service_sets ss ON ss.created_by = p.id
-  WHERE ss.id IS NOT NULL  -- 최소 1개 이상 생성 이력
-  GROUP BY p.id, p.email, p.full_name
-  HAVING MAX(ss.created_at) < NOW() - INTERVAL '1 day' * days
-     OR MAX(ss.created_at) IS NULL;
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-```
-
----
-
-### 5단계: 이메일 템플릿 디자인
-
-#### 5.1 미접속자 리마인더
-
-```html
-<h2>{{user_name}}님, 그동안 어떻게 지내셨나요?</h2>
-<p>{{days}}일 동안 Kworship에 방문하지 않으셨네요.</p>
-<p>새로운 곡과 예배 자료가 기다리고 있습니다!</p>
-<a href="{{app_url}}/dashboard">지금 바로 확인하기</a>
-```
-
-#### 5.2 팀원 초대 리마인더
-
-```html
-<h2>{{user_name}}님, 팀원과 함께 협업하세요!</h2>
-<p>"{{community_name}}" 커뮤니티에서 혼자 예배를 준비하고 계시네요.</p>
-<p>팀원을 초대하면 함께 예배 세트를 만들고, 일정을 공유할 수 있습니다.</p>
-<ul>
-  <li>🎵 함께 곡을 선정하고 편집</li>
-  <li>📅 연습 일정 공유</li>
-  <li>💬 실시간 소통</li>
-</ul>
-<a href="{{app_url}}/community/{{community_id}}">팀원 초대하기</a>
-<p><strong>지금 초대하면 30 K-Seed 보상!</strong></p>
-```
-
-#### 5.3 워십세트 생성 리마인더
-
-```html
-<h2>{{user_name}}님, 다음 예배를 준비하세요!</h2>
-<p>마지막 예배 세트를 만든 지 {{days}}일이 지났습니다.</p>
-<p>새로운 세트를 만들어 다가올 예배를 준비해보세요.</p>
-<a href="{{app_url}}/set-builder">예배 세트 만들기</a>
-```
-
----
-
-### 6단계: 관리자 설정 UI (선택사항)
-
-**Admin Dashboard에 자동 이메일 설정 탭 추가:**
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│  자동 이메일 설정                                        │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ☑ 미접속자 리마인더                                    │
-│     └─ [7] 일 이상 미접속 시 발송                       │
-│                                                         │
-│  ☑ 팀원 초대 리마인더                                   │
-│     └─ 커뮤니티 생성 후 [7] 일 경과 시                  │
-│                                                         │
-│  ☑ 워십세트 생성 리마인더                               │
-│     └─ 마지막 세트 생성 후 [14] 일 경과 시              │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
-
-설정값은 `platform_feature_flags` 또는 별도 `automated_email_settings` 테이블에 저장.
-
----
-
-## 파일 변경 요약
+## 6단계: 파일 변경 목록
 
 | 파일 | 변경 유형 | 설명 |
 |------|----------|------|
-| `supabase/functions/process-automated-emails/index.ts` | **새로 생성** | 자동 이메일 처리 메인 로직 |
-| `supabase/config.toml` | 수정 | 새 Edge Function 설정 추가 |
-| 데이터베이스 마이그레이션 | **새로 생성** | 테이블, 함수, cron job |
+| `src/pages/AdminTierWorkflow.tsx` | **새로 생성** | 티어/역할 워크플로우 시각화 페이지 |
+| `src/pages/AdminTierGuide.tsx` | 수정 | 워크플로우 페이지 링크 추가, 용어 정리 |
+| `src/pages/AdminCRM.tsx` | 수정 | 통계 카드 재구성 (플랫폼 티어 기반) |
+| `src/components/admin/email/EmailComposer.tsx` | 수정 | 수신자 그룹 계층 UI 재구성 |
+| `src/hooks/useTierFeature.ts` | 수정 | 명확한 tier 설명 추가 |
+| `src/lib/navigationConfig.ts` | 수정 | 관리자 메뉴에 워크플로우 페이지 추가 |
+| `src/App.tsx` | 수정 | 새 라우트 추가 |
+| DB 마이그레이션 | **새로 생성** | RPC 함수 + email_sender_settings 테이블 |
 
 ---
 
-## 보안 고려사항
+## 7단계: UI 개선 - 워크플로우 페이지 디자인
 
-1. **중복 발송 방지**: `automated_email_log` 테이블로 동일 유형 이메일 중복 차단
-2. **사용자 제외 옵션**: 향후 `notification_preferences`에 마케팅 이메일 수신 거부 옵션 추가 가능
-3. **관리자 권한**: Edge Function은 Service Role Key 사용, 외부 호출 불가
+### AdminTierWorkflow.tsx 구성
 
----
+1. **상단 개요 카드**: 현재 티어별 사용자 수 실시간 표시
+2. **인터랙티브 다이어그램**: 승급 흐름을 클릭 가능한 노드로 표현
+3. **권한 매트릭스 테이블**: 각 티어/역할별 사용 가능 기능 체크리스트
+4. **용어 사전**: 혼란스러운 용어에 대한 명확한 정의
 
-## 테스트 계획
-
-1. **단위 테스트**: 각 조회 쿼리 (미접속자, 팀원 없는 워십리더, 세트 미생성) 검증
-2. **통합 테스트**: Edge Function 수동 호출 후 이메일 발송 확인
-3. **Cron 테스트**: 로그 확인으로 일일 자동 실행 검증
-
----
-
-## 기술적 세부사항
-
-### 마지막 활동 추적 방법
-
-Supabase Auth에서 `last_sign_in_at`을 직접 조회할 수 없으므로, 두 가지 방법 중 선택:
-
-**방법 A (권장): 클라이언트에서 업데이트**
-```typescript
-// AuthContext.tsx에서 로그인 성공 시
-await supabase.from('profiles').update({ 
-  last_active_at: new Date().toISOString() 
-}).eq('id', user.id);
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  👑 티어 & 역할 워크플로우                                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │   팀멤버    │ │  예배인도자  │ │   정회원    │ │ 공동체계정  │           │
+│  │    101      │ │     95      │ │     0       │ │     1       │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                    [Interactive Workflow Diagram]                      │  │
+│  │                                                                        │  │
+│  │   회원가입 ──► 팀멤버 ──► 예배인도자 신청 ──► 자동승인               │  │
+│  │                 │              │                   │                   │  │
+│  │                 ▼              │                   ▼                   │  │
+│  │         커뮤니티 가입          │            커뮤니티 생성              │  │
+│  │                 │              │                   │                   │  │
+│  │                 ▼              │                   ▼                   │  │
+│  │           멤버 역할            │       오너 역할 (자동 부여)           │  │
+│  │                                │                                       │  │
+│  │                                ▼                                       │  │
+│  │                         프리미엄 결제 ──► 정회원                      │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  📊 권한 매트릭스                                                            │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │ 기능                   │ 팀멤버 │ 예배인도자 │ 정회원 │ 공동체계정     │  │
+│  ├───────────────────────────────────────────────────────────────────────┤  │
+│  │ 예배 세트 열람          │   ✓   │     ✓      │   ✓   │      ✓       │  │
+│  │ 커뮤니티 생성           │   ✗   │     ✓      │   ✓   │      ✓       │  │
+│  │ 곡 추가/편집            │   ✗   │     ✓      │   ✓   │      ✓       │  │
+│  │ AI 기능                │   ✗   │     ✗      │   ✓   │      ✓       │  │
+│  │ 팀 관리                │   ✗   │     ✗      │   ✗   │      ✓       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**방법 B: Auth Webhook 활용**
-`send-auth-email` 같은 Auth Hook에서 로그인 이벤트 시 `last_active_at` 업데이트
+---
+
+## 예상 결과
+
+1. **명확한 용어 체계**: 플랫폼 티어 vs 커뮤니티 역할 구분
+2. **정확한 CRM 통계**: 101명 팀멤버, 95명 예배인도자로 수정
+3. **타겟팅 이메일**: 118명 커뮤니티 미가입자에게 리마인더 가능
+4. **관리자 가이드**: 워크플로우 페이지로 온보딩 이해도 향상
+
