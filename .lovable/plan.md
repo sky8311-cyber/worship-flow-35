@@ -1,74 +1,96 @@
 
 
-# 자동 이메일 시스템 버그 수정 계획
+# 자동 이메일 발송 주기 설정 및 템플릿 미리보기 기능
 
 ## 현재 상황 분석
 
-### 발송 완료된 기록 (2026-01-26 06:49 UTC)
-"지금 실행" 버튼으로 **총 42명**에게 이메일이 발송되었습니다:
+### 발송 기록 현황
+- **no_team_invite**: 18건 기록됨
+- **no_worship_set**: 34건 기록됨
+- 총 52건 (일부 중복 수신자가 있어서 로그 함수 실행 2번에 누적됨)
 
-| 이메일 유형 | 발송 수 | 수신자 예시 |
-|------------|--------|------------|
-| 미접속자 리마인더 | 0명 | 조건 충족자 없음 |
-| 팀원 초대 리마인더 | 12명 | cs08sh@gmail.com, dornrrk9@gmail.com 등 |
-| 워십세트 생성 리마인더 | 30명 | iblty88@gmail.com, testworship@test.com 등 |
+### 현재 중복 방지 로직 문제
+현재 `get_automated_email_recipients` 함수는:
+- `inactive_user`: 마지막 접속 이후 이메일을 받았는지 확인
+- `no_team_invite`: 해당 커뮤니티에 대해 이메일을 받았는지 확인 (시간 제한 없음)
+- `no_worship_set`: 마지막 세트 생성 이후 이메일을 받았는지 확인
 
-### 발견된 버그 목록
-
-1. **UI 데이터 로딩 문제**
-   - DB에 설정 3개가 존재하지만 화면에 표시 안 됨
-   - RLS 정책 또는 쿼리 오류 가능성
-
-2. **"지금 실행" 결과 토스트 버그**
-   - 현재: `data.results?.inactive_users?.sent`
-   - 수정: `data.results?.inactive_user?.sent` (언더스코어 누락)
-
-3. **발송 기록 표시 문제**
-   - `automated_email_log` 테이블 구조와 쿼리 불일치
-   - 기록은 저장되었지만 UI에서 조회 불가
+**문제**: 조건 충족 상태가 유지되면 매일 이메일을 받을 수 있음
 
 ---
 
-## 수정 계획
+## 구현 계획
 
-### 1. AutomatedEmailSettings.tsx - "지금 실행" 결과 수정
+### 1. 발송 주기 설정 추가 (Cooldown Period)
 
-```typescript
-// 현재 (버그)
-onSuccess: (data) => {
-  toast.success(
-    `${data.results?.inactive_users?.sent || 0} + ${data.results?.no_team_invite?.sent || 0}...`
-  );
-}
+DB 테이블에 `cooldown_days` 컬럼 추가:
 
-// 수정
-onSuccess: (data) => {
-  toast.success(
-    `${data.results?.inactive_user?.sent || 0} + ${data.results?.no_team_invite?.sent || 0}...`
-  );
-}
+```sql
+ALTER TABLE automated_email_settings 
+ADD COLUMN cooldown_days INTEGER DEFAULT 7;
 ```
 
-### 2. RLS 정책 확인 및 수정
+이렇게 하면:
+- **7일 쿨다운**: 한 사용자가 같은 유형의 이메일을 7일 내 다시 받지 않음
+- 수신자 목록은 매일 갱신되지만, 최근 발송 기록이 있는 사용자는 제외
 
-`automated_email_settings` 테이블의 RLS 정책 검증:
-- 관리자만 조회 가능하도록 설정되어 있는지 확인
-- 필요시 정책 수정
+### 2. UI 업데이트
 
-### 3. EmailLogs.tsx - 자동 발송 기록 조회 수정
-
-```typescript
-// 현재
-.order("sent_at", { ascending: false })
-
-// 이 부분은 정상 - sent_at 컬럼 존재 확인됨
+```text
+┌───────────────────────────────────────────────────┐
+│  🎵 워십세트 생성 리마인더              [✓ 활성화]│
+├───────────────────────────────────────────────────│
+│  발송 조건: [14]일 이상 미생성 시                 │
+│  발송 주기: [7]일 마다 (쿨다운)          ← NEW!  │
+│  발송 시간: [09:00] KST                           │
+├───────────────────────────────────────────────────│
+│  제목: [새로운 예배를 준비하세요!...]             │
+│  [📝 본문 편집]   [👁️ 템플릿 미리보기]   ← NEW!  │
+├───────────────────────────────────────────────────│
+│  현재 대상: 8명  [👁️ 수신자 보기]                 │
+└───────────────────────────────────────────────────┘
 ```
 
-### 4. Edge Function 로깅 개선
+### 3. RPC 함수 수정
 
-`process-automated-emails/index.ts`에서 발송 결과 로깅 확인:
-- 현재 DB에 기록 저장 중
-- UI에서 조회할 수 있도록 필드 매핑 확인
+`get_automated_email_recipients` 함수에 쿨다운 로직 추가:
+
+```sql
+-- 기존: sent_at > p.last_active_at
+-- 변경: sent_at > now() - (cooldown_days || ' days')::INTERVAL
+```
+
+### 4. 템플릿 미리보기 다이얼로그
+
+```text
+┌──────────────────────────────────────────────────────┐
+│  👁️ 이메일 템플릿 미리보기                           │
+├──────────────────────────────────────────────────────┤
+│  ┌────────────────────────────────────────────────┐  │
+│  │  제목: 새로운 예배를 준비하세요! - Kworship    │  │
+│  └────────────────────────────────────────────────┘  │
+│                                                      │
+│  ┌────────────────────────────────────────────────┐  │
+│  │                                                │  │
+│  │  안녕하세요, [사용자 이름]님!                   │  │
+│  │                                                │  │
+│  │  마지막 워십세트를 만드신 지 [14]일이         │  │
+│  │  지났습니다.                                   │  │
+│  │                                                │  │
+│  │  ┌──────────────────────┐                      │  │
+│  │  │   워십세트 만들기    │                      │  │
+│  │  └──────────────────────┘                      │  │
+│  │                                                │  │
+│  │  감사합니다,                                   │  │
+│  │  Kworship 팀                                   │  │
+│  │                                                │  │
+│  └────────────────────────────────────────────────┘  │
+│                                                      │
+│  ⚠️ 변수는 실제 발송 시 각 수신자 정보로 치환됩니다  │
+│                                                      │
+│                              [닫기]                  │
+└──────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -76,39 +98,141 @@ onSuccess: (data) => {
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/admin/email/AutomatedEmailSettings.tsx` | "지금 실행" 결과 키 이름 수정 |
-| `supabase/migrations/` | RLS 정책 조회 권한 확인/수정 |
-| `src/components/admin/email/EmailLogs.tsx` | 자동 발송 기록 쿼리 검증 |
-
----
-
-## 예상 결과
-
-수정 후:
-1. **설정 UI 표시**: 3개의 자동 이메일 설정이 화면에 정상 표시
-2. **템플릿 편집**: 각 유형별 제목/본문 템플릿 편집 가능
-3. **"지금 실행" 결과**: 정확한 발송 수 표시 (0 + 12 + 30 = 42명)
-4. **발송 기록**: 자동 발송 탭에서 42건의 발송 기록 확인 가능
+| `supabase/migrations/` | `cooldown_days` 컬럼 추가 및 RPC 함수 수정 |
+| `src/components/admin/email/AutomatedEmailSettings.tsx` | 발송 주기 설정 UI 및 템플릿 미리보기 버튼 추가 |
+| `src/components/admin/email/AutomatedEmailPreviewDialog.tsx` | 템플릿 미리보기 기능 추가 (기존 수신자 미리보기와 통합 또는 별도 다이얼로그) |
 
 ---
 
 ## 기술 세부사항
 
-### DB 데이터 현황 확인됨
+### 1. DB 마이그레이션
 
-`automated_email_settings` 테이블에 3개 레코드 존재:
-- `inactive_user`: 7일, 활성화됨
-- `no_team_invite`: 7일, 활성화됨  
-- `no_worship_set`: 14일, 활성화됨
+```sql
+-- 쿨다운 컬럼 추가
+ALTER TABLE public.automated_email_settings 
+ADD COLUMN IF NOT EXISTS cooldown_days INTEGER DEFAULT 7;
 
-`automated_email_log` 테이블 컬럼:
-- `id`, `user_id`, `email_type`, `sent_at`, `metadata`, `status`, `error_message`, `recipient_email`, `recipient_name`
+-- 기존 데이터 업데이트
+UPDATE public.automated_email_settings 
+SET cooldown_days = 7;
+```
 
-### 발송된 이메일 전체 목록
+### 2. RPC 함수 업데이트
 
-**팀원 초대 리마인더 (12명)**:
-cs08sh@gmail.com, thecats_@naver.com, dsang3328@naver.com, shing92@naver.com, nsw715@naver.com, parkincheol@gmail.com, janice_o@naver.com, amor98@hanmail.net, idm01234@gmail.com, dornrrk9@gmail.com, pkym0528@gmail.com
+```sql
+CREATE OR REPLACE FUNCTION public.get_automated_email_recipients(
+  p_email_type TEXT,
+  p_trigger_days INTEGER,
+  p_cooldown_days INTEGER DEFAULT 7  -- NEW PARAMETER
+)
+...
+  -- 쿨다운 조건 추가
+  AND NOT EXISTS (
+    SELECT 1 FROM automated_email_log ael
+    WHERE ael.user_id = p.id
+      AND ael.email_type = p_email_type
+      AND ael.sent_at > now() - (p_cooldown_days || ' days')::INTERVAL
+  )
+```
 
-**워십세트 생성 리마인더 (30명)**:
-imssbb@gmail.com, testworship@test.com, kvision325@hotmail.com, heeeun0101@hotmail.com, taejinek@gmail.com, minheui0883@gmail.com, trustandwalk.2020@gmail.com, singingdiary@gmail.com, wangmoksa@gmail.com, admin@test.com, bjkim0864@gmail.com, shing92@naver.com, jea92@naver.com, g_park@kakao.com, leegyemy@gmail.com, jangchemy@naver.com, thecats_@naver.com, jinhc0207@hanmail.net, opwer1234@hanmail.net, dsang3328@naver.com, 0810002@naver.com, beeny81@naver.com, gsus4u@naver.com, rnflrh785@naver.com, kbb3927@naver.com, nsw715@naver.com, parkincheol@gmail.com, idm01234@gmail.com, dornrrk9@gmail.com, iblty88@gmail.com
+### 3. AutomatedEmailSettings UI 업데이트
+
+```typescript
+// 쿨다운 입력 필드 추가
+<div className="space-y-2">
+  <Label>{language === "ko" ? "발송 주기 (일)" : "Cooldown Period (days)"}</Label>
+  <Input
+    type="number"
+    min={1}
+    max={30}
+    value={getEditedValue(setting, "cooldown_days")}
+    onChange={(e) => updateEditedSetting(setting.email_type, "cooldown_days", parseInt(e.target.value) || 7)}
+  />
+  <p className="text-xs text-muted-foreground">
+    {language === "ko" 
+      ? `동일 사용자에게 ${getEditedValue(setting, "cooldown_days")}일 내 재발송하지 않음`
+      : `Won't re-send to same user within ${getEditedValue(setting, "cooldown_days")} days`}
+  </p>
+</div>
+
+// 템플릿 미리보기 버튼 추가
+<Button variant="outline" size="sm" onClick={() => setTemplatePreviewType(setting.email_type)}>
+  <Eye className="w-4 h-4 mr-2" />
+  {language === "ko" ? "템플릿 미리보기" : "Preview Template"}
+</Button>
+```
+
+### 4. 템플릿 미리보기 컴포넌트
+
+```typescript
+// AutomatedEmailTemplatePreviewDialog.tsx
+interface Props {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  subject: string;
+  body: string;
+  triggerDays: number;
+}
+
+// 변수를 샘플 값으로 치환하여 렌더링
+const sampleVariables = {
+  user_name: "홍길동",
+  days: triggerDays.toString(),
+  community_name: "샘플 교회",
+  app_url: "https://kworship.app",
+  cta_url: "https://kworship.app/set-builder",
+};
+
+// dangerouslySetInnerHTML로 HTML 렌더링
+<div dangerouslySetInnerHTML={{ __html: replaceVariables(body, sampleVariables) }} />
+```
+
+---
+
+## 예상 결과
+
+1. **발송 주기 설정**: 7일 쿨다운 설정 시, 한 사용자가 같은 유형의 이메일을 7일 내 다시 받지 않음
+2. **수신자 목록 자동 갱신**: 매일 새로운 조건 충족자가 추가되고, 쿨다운 기간 내 발송받은 사용자는 제외
+3. **템플릿 미리보기**: HTML 본문을 실제 렌더링하여 미리 확인 가능
+4. **발송 기록**: 모든 발송 기록이 자동 발송 탭에서 조회 가능
+
+---
+
+## 로직 흐름 요약
+
+```text
+[매일 09:00 KST 또는 "지금 실행" 클릭]
+          │
+          ▼
+┌─────────────────────────────────┐
+│ 1. 조건 충족자 조회              │
+│    (trigger_days 이상 미활동)    │
+└─────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────┐
+│ 2. 쿨다운 필터링                 │
+│    (cooldown_days 내 발송자 제외)│
+└─────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────┐
+│ 3. 최종 수신자 목록              │
+│    → 이들에게만 이메일 발송      │
+└─────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────┐
+│ 4. 발송 기록 저장                │
+│    (automated_email_log)         │
+└─────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────────────────┐
+│ 5. 다음 실행 시                  │
+│    쿨다운 기간 내 발송자 제외    │
+│    → 새로운 조건 충족자만 발송   │
+└─────────────────────────────────┘
+```
 
