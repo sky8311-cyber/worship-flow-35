@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Save, Eye, Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AutomatedEmailSettings } from "./AutomatedEmailSettings";
 import {
   Dialog,
   DialogContent,
@@ -273,6 +275,12 @@ ${language === "ko" ? "감사합니다" : "Thank you"},<br>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Separator */}
+      <Separator className="my-8" />
+
+      {/* Automated Email Settings Section */}
+      <AutomatedEmailSettings />
     </div>
   );
 };
