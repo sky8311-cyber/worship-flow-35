@@ -31,6 +31,7 @@ interface AutomatedEmailPreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   emailType: string;
   triggerDays: number;
+  cooldownDays?: number;
 }
 
 interface Recipient {
@@ -65,17 +66,19 @@ export const AutomatedEmailPreviewDialog = ({
   onOpenChange,
   emailType,
   triggerDays,
+  cooldownDays = 7,
 }: AutomatedEmailPreviewDialogProps) => {
   const { language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch recipients
   const { data: recipients = [], isLoading } = useQuery({
-    queryKey: ["automated-email-recipients", emailType, triggerDays],
+    queryKey: ["automated-email-recipients", emailType, triggerDays, cooldownDays],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_automated_email_recipients", {
         p_email_type: emailType,
         p_trigger_days: triggerDays,
+        p_cooldown_days: cooldownDays,
       });
       if (error) throw error;
       return (data || []) as Recipient[];

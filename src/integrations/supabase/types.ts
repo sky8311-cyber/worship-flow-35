@@ -148,6 +148,7 @@ export type Database = {
       automated_email_settings: {
         Row: {
           body_template: string
+          cooldown_days: number | null
           created_at: string | null
           email_type: string
           enabled: boolean | null
@@ -160,6 +161,7 @@ export type Database = {
         }
         Insert: {
           body_template: string
+          cooldown_days?: number | null
           created_at?: string | null
           email_type: string
           enabled?: boolean | null
@@ -172,6 +174,7 @@ export type Database = {
         }
         Update: {
           body_template?: string
+          cooldown_days?: number | null
           created_at?: string | null
           email_type?: string
           enabled?: boolean | null
@@ -3986,17 +3989,33 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
-      get_automated_email_recipients: {
-        Args: { p_email_type: string; p_trigger_days: number }
-        Returns: {
-          community_name: string
-          days_inactive: number
-          email: string
-          full_name: string
-          id: string
-          last_active_at: string
-        }[]
-      }
+      get_automated_email_recipients:
+        | {
+            Args: { p_email_type: string; p_trigger_days: number }
+            Returns: {
+              community_name: string
+              days_inactive: number
+              email: string
+              full_name: string
+              id: string
+              last_active_at: string
+            }[]
+          }
+        | {
+            Args: {
+              p_cooldown_days?: number
+              p_email_type: string
+              p_trigger_days: number
+            }
+            Returns: {
+              community_name: string
+              days_inactive: number
+              email: string
+              full_name: string
+              id: string
+              last_active_at: string
+            }[]
+          }
       get_communities_with_single_owner: {
         Args: never
         Returns: {

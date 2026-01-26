@@ -15,6 +15,7 @@ interface AutomatedEmailSetting {
   subject_template: string;
   body_template: string;
   trigger_days: number;
+  cooldown_days: number;
   schedule_hour: number;
 }
 
@@ -107,12 +108,13 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log(`Processing ${setting.email_type} with ${setting.trigger_days} trigger days...`);
 
-      // Get recipients using the RPC function
+      // Get recipients using the RPC function with cooldown
       const { data: recipients, error: recipientsError } = await supabase.rpc(
         "get_automated_email_recipients",
         {
           p_email_type: setting.email_type,
           p_trigger_days: setting.trigger_days,
+          p_cooldown_days: setting.cooldown_days || 7,
         }
       );
 
