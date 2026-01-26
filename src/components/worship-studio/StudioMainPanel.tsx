@@ -66,25 +66,25 @@ export function StudioMainPanel({
           </TabsList>
         </div>
         
-        <TabsContent value="studio" className="flex-1 h-0 overflow-hidden mt-0 p-0">
+        <TabsContent value="studio" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
           <StudioView 
             roomId={selectedStudioId || myStudioId || undefined} 
             isOwnRoom={isOwnStudio}
           />
         </TabsContent>
         
-        <TabsContent value="feed" className="flex-1 h-0 overflow-hidden mt-0 p-0">
+        <TabsContent value="feed" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
           <StudioFeed onStudioClick={onStudioSelect} />
         </TabsContent>
         
         {isOwnStudio && myStudioId && (
-          <TabsContent value="drafts" className="flex-1 h-0 overflow-hidden mt-0 p-0">
+          <TabsContent value="drafts" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
             <StudioDraftsTab roomId={myStudioId} />
           </TabsContent>
         )}
         
         {isMobile && (
-          <TabsContent value="discover" className="flex-1 h-0 overflow-hidden mt-0 p-0">
+          <TabsContent value="discover" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
             <StudioDiscover onStudioSelect={onStudioSelect} />
           </TabsContent>
         )}
