@@ -162,10 +162,14 @@ export const AutomatedEmailSettings = () => {
       return response.data;
     },
     onSuccess: (data) => {
+      const inactiveCount = data.results?.inactive_user?.sent || 0;
+      const teamInviteCount = data.results?.no_team_invite?.sent || 0;
+      const worshipSetCount = data.results?.no_worship_set?.sent || 0;
+      const total = inactiveCount + teamInviteCount + worshipSetCount;
       toast.success(
         language === "ko" 
-          ? `자동 이메일 발송 완료: ${data.results?.inactive_users?.sent || 0} + ${data.results?.no_team_invite?.sent || 0} + ${data.results?.no_worship_set?.sent || 0}명`
-          : `Automated emails sent: ${data.results?.inactive_users?.sent || 0} + ${data.results?.no_team_invite?.sent || 0} + ${data.results?.no_worship_set?.sent || 0} recipients`
+          ? `자동 이메일 발송 완료: 총 ${total}명 (미접속 ${inactiveCount} + 팀초대 ${teamInviteCount} + 워십세트 ${worshipSetCount})`
+          : `Automated emails sent: ${total} recipients (Inactive ${inactiveCount} + Team ${teamInviteCount} + Set ${worshipSetCount})`
       );
       queryClient.invalidateQueries({ queryKey: ["last-automated-email-execution"] });
       queryClient.invalidateQueries({ queryKey: ["automated-email-log"] });
