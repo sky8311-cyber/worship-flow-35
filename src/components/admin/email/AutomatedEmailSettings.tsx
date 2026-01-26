@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AutomatedEmailPreviewDialog } from "./AutomatedEmailPreviewDialog";
+import { AutomatedEmailTemplatePreviewDialog } from "./AutomatedEmailTemplatePreviewDialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -35,6 +36,7 @@ interface AutomatedEmailConfig {
   subject_template: string;
   body_template: string;
   trigger_days: number;
+  cooldown_days: number;
   schedule_hour: number;
   updated_at: string | null;
 }
@@ -85,6 +87,7 @@ export const AutomatedEmailSettings = () => {
   const queryClient = useQueryClient();
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [previewType, setPreviewType] = useState<string | null>(null);
+  const [templatePreviewType, setTemplatePreviewType] = useState<string | null>(null);
   const [editedSettings, setEditedSettings] = useState<Record<string, Partial<AutomatedEmailConfig>>>({});
 
   // Fetch automated email settings
@@ -116,13 +119,14 @@ export const AutomatedEmailSettings = () => {
 
   // Fetch recipient counts for each type
   const { data: recipientCounts = {} } = useQuery({
-    queryKey: ["automated-email-recipient-counts", settings],
+    queryKey: ["automated-email-recipient-counts", settings, editedSettings],
     queryFn: async () => {
       const counts: Record<string, number> = {};
       for (const setting of settings) {
         const { data, error } = await supabase.rpc("get_automated_email_recipients", {
           p_email_type: setting.email_type,
           p_trigger_days: editedSettings[setting.email_type]?.trigger_days ?? setting.trigger_days,
+          p_cooldown_days: editedSettings[setting.email_type]?.cooldown_days ?? setting.cooldown_days ?? 7,
         });
         counts[setting.email_type] = error ? 0 : (data?.length || 0);
       }
@@ -314,11 +318,11 @@ export const AutomatedEmailSettings = () => {
 
                   <CollapsibleContent>
                     <CardContent className="pt-0 space-y-4 border-t">
-                      <div className="grid gap-4 md:grid-cols-2 pt-4">
+                      <div className="grid gap-4 md:grid-cols-3 pt-4">
                         {/* Trigger Days */}
                         <div className="space-y-2">
                           <Label>
-                            {language === "ko" ? "발송 기준 (일)" : "Trigger Days"}
+                            {language === "ko" ? "발송 조건 (일)" : "Trigger Days"}
                           </Label>
                           <Input
                             type="number"
@@ -329,8 +333,27 @@ export const AutomatedEmailSettings = () => {
                           />
                           <p className="text-xs text-muted-foreground">
                             {language === "ko"
-                              ? `${getEditedValue(setting, "trigger_days")}일 이상 조건 충족 시 발송`
-                              : `Send after ${getEditedValue(setting, "trigger_days")} days of inactivity`}
+                              ? `${getEditedValue(setting, "trigger_days")}일 이상 조건 충족 시`
+                              : `After ${getEditedValue(setting, "trigger_days")} days`}
+                          </p>
+                        </div>
+
+                        {/* Cooldown Days */}
+                        <div className="space-y-2">
+                          <Label>
+                            {language === "ko" ? "발송 주기 (일)" : "Cooldown (days)"}
+                          </Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={90}
+                            value={getEditedValue(setting, "cooldown_days") || 7}
+                            onChange={(e) => updateEditedSetting(setting.email_type, "cooldown_days", parseInt(e.target.value) || 7)}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {language === "ko"
+                              ? `${getEditedValue(setting, "cooldown_days") || 7}일 내 재발송 안함`
+                              : `No re-send within ${getEditedValue(setting, "cooldown_days") || 7} days`}
                           </p>
                         </div>
 
@@ -355,7 +378,7 @@ export const AutomatedEmailSettings = () => {
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-muted-foreground">
-                            {language === "ko" ? "매일 이 시간에 발송됩니다" : "Sends daily at this time"}
+                            {language === "ko" ? "매일 이 시간에 체크" : "Daily check time"}
                           </p>
                         </div>
                       </div>
@@ -394,15 +417,25 @@ export const AutomatedEmailSettings = () => {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-between pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setPreviewType(setting.email_type)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {language === "ko" ? "수신자 보기" : "View Recipients"}
-                        </Button>
+                      <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPreviewType(setting.email_type)}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {language === "ko" ? "수신자 보기" : "View Recipients"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTemplatePreviewType(setting.email_type)}
+                          >
+                            <Edit3 className="w-4 h-4 mr-2" />
+                            {language === "ko" ? "템플릿 미리보기" : "Preview Template"}
+                          </Button>
+                        </div>
                         <Button
                           size="sm"
                           onClick={() => handleSaveSettings(setting)}
@@ -454,7 +487,7 @@ export const AutomatedEmailSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Preview Dialog */}
+      {/* Recipients Preview Dialog */}
       <AutomatedEmailPreviewDialog
         open={!!previewType}
         onOpenChange={() => setPreviewType(null)}
@@ -464,7 +497,36 @@ export const AutomatedEmailSettings = () => {
             ? (editedSettings[previewType]?.trigger_days ?? settings.find((s) => s.email_type === previewType)?.trigger_days ?? 7)
             : 7
         }
+        cooldownDays={
+          previewType
+            ? (editedSettings[previewType]?.cooldown_days ?? settings.find((s) => s.email_type === previewType)?.cooldown_days ?? 7)
+            : 7
+        }
       />
+
+      {/* Template Preview Dialog */}
+      {templatePreviewType && (
+        <AutomatedEmailTemplatePreviewDialog
+          open={!!templatePreviewType}
+          onOpenChange={() => setTemplatePreviewType(null)}
+          emailType={templatePreviewType}
+          subject={
+            editedSettings[templatePreviewType]?.subject_template 
+              ?? settings.find((s) => s.email_type === templatePreviewType)?.subject_template 
+              ?? ""
+          }
+          body={
+            editedSettings[templatePreviewType]?.body_template 
+              ?? settings.find((s) => s.email_type === templatePreviewType)?.body_template 
+              ?? ""
+          }
+          triggerDays={
+            editedSettings[templatePreviewType]?.trigger_days 
+              ?? settings.find((s) => s.email_type === templatePreviewType)?.trigger_days 
+              ?? 7
+          }
+        />
+      )}
     </div>
   );
 };
