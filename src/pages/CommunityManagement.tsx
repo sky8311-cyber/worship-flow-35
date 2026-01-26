@@ -706,7 +706,13 @@ export default function CommunityManagement() {
     onSuccess: () => {
       toast({ title: t("community.leaveSuccess") });
       navigate("/dashboard");
+      
+      // Invalidate all community-related queries
       queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+      queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
+      queryClient.invalidateQueries({ queryKey: ["joined-communities-sidebar"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-sets-sidebar"] });
     },
     onError: (error: any) => {
       console.error("Leave community mutation error:", error);
