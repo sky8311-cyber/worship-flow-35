@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { Search, Building2, Crown, Users, UserCheck, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Building2, Crown, Users, UserCheck, ChevronDown, ChevronRight, Shield } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -48,7 +48,8 @@ const AdminCRM = () => {
         communityMembersResult,
         premiumSubsResult,
         churchMembersResult,
-        authResult
+        authResult,
+        totalProfilesResult
       ] = await Promise.all([
         supabase.from("church_accounts").select("*").order("created_at", { ascending: false }),
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
@@ -60,6 +61,7 @@ const AdminCRM = () => {
         supabase.functions.invoke("admin-list-users", {
           headers: { Authorization: `Bearer ${session?.access_token}` },
         }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
       ]);
 
       const churchAccounts = churchAccountsResult.data || [];
@@ -174,6 +176,7 @@ const AdminCRM = () => {
         worshipLeaders,
         communities: enrichedCommunities,
         members: regularMembers,
+        totalProfileCount: totalProfilesResult.count || 0,
         // Keep raw data for hierarchy building
         raw: {
           communities: enrichedCommunities,
@@ -338,18 +341,28 @@ const AdminCRM = () => {
   }, []);
 
   const getStats = () => {
-    if (!crmData) return { church: 0, leaders: 0, communities: 0, teamMembers: 0 };
+    if (!crmData) return { teamMembers: 0, basicMembers: 0, fullMembers: 0, churchAccounts: 0, communities: 0 };
     
-    // Team Members: users with 'user' role but NOT 'worship_leader' role
-    // This correctly identifies users who are only team members
-    const worshipLeaderIds = new Set(crmData.worshipLeaders.map(wl => wl.id));
-    const teamMemberCount = crmData.members.filter(m => !worshipLeaderIds.has(m.id)).length;
+    // 팀멤버: 전체 프로필에서 worship_leader를 뺀 수 (승급하지 않은 모든 사용자)
+    const teamMemberCount = crmData.totalProfileCount - crmData.worshipLeaders.length;
+    
+    // 일반멤버 (예배인도자): worship_leader role 보유자
+    const basicMemberCount = crmData.worshipLeaders.length;
+    
+    // 정회원: active premium subscription
+    const fullMemberCount = crmData.worshipLeaders.filter(
+      wl => wl.subscription?.subscription_status === 'active'
+    ).length;
+    
+    // 공동체계정
+    const churchAccountCount = crmData.churchAccounts.length;
     
     return {
-      church: crmData.churchAccounts.length,
-      leaders: crmData.worshipLeaders.length,
-      communities: crmData.communities.length,
       teamMembers: teamMemberCount,
+      basicMembers: basicMemberCount,
+      fullMembers: fullMemberCount,
+      churchAccounts: churchAccountCount,
+      communities: crmData.communities.length,
     };
   };
 
@@ -377,22 +390,25 @@ const AdminCRM = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        {/* Stats Cards - 티어 순서대로 (AdminTierGuide와 동일) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {/* 1. 팀멤버 */}
           <Card 
-            className={`cursor-pointer transition-all ${typeFilter === "church_account" ? "ring-2 ring-blue-500" : "hover:shadow-md"}`}
-            onClick={() => setTypeFilter(typeFilter === "church_account" ? "all" : "church_account")}
+            className={`cursor-pointer transition-all ${typeFilter === "member" ? "ring-2 ring-muted-foreground" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "member" ? "all" : "member")}
           >
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 bg-muted rounded-lg">
+                <Users className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.church}</div>
-                <div className="text-xs text-muted-foreground">{language === "ko" ? "공동체 어카운트" : "Community Accounts"}</div>
+                <div className="text-2xl font-bold">{stats.teamMembers}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "팀멤버" : "Team Members"}</div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* 2. 일반멤버 (예배인도자) */}
           <Card 
             className={`cursor-pointer transition-all ${typeFilter === "worship_leader" ? "ring-2 ring-purple-500" : "hover:shadow-md"}`}
             onClick={() => setTypeFilter(typeFilter === "worship_leader" ? "all" : "worship_leader")}
@@ -402,39 +418,45 @@ const AdminCRM = () => {
                 <Crown className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.leaders}</div>
-                <div className="text-xs text-muted-foreground">{language === "ko" ? "예배인도자" : "Worship Leaders"}</div>
+                <div className="text-2xl font-bold">{stats.basicMembers}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "일반멤버" : "Basic Members"}</div>
               </div>
             </CardContent>
           </Card>
-          <Card 
-            className={`cursor-pointer transition-all ${typeFilter === "community" ? "ring-2 ring-green-500" : "hover:shadow-md"}`}
-            onClick={() => setTypeFilter(typeFilter === "community" ? "all" : "community")}
-          >
+          
+          {/* 3. 정회원 */}
+          <Card className="hover:shadow-md transition-all">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.communities}</div>
-                <div className="text-xs text-muted-foreground">Communities</div>
+                <div className="text-2xl font-bold">{stats.fullMembers}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "정회원" : "Full Members"}</div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* 4. 공동체계정 */}
           <Card 
-            className={`cursor-pointer transition-all ${typeFilter === "member" ? "ring-2 ring-orange-500" : "hover:shadow-md"}`}
-            onClick={() => setTypeFilter(typeFilter === "member" ? "all" : "member")}
+            className={`cursor-pointer transition-all ${typeFilter === "church_account" ? "ring-2 ring-blue-500" : "hover:shadow-md"}`}
+            onClick={() => setTypeFilter(typeFilter === "church_account" ? "all" : "church_account")}
           >
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <UserCheck className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.teamMembers}</div>
-                <div className="text-xs text-muted-foreground">{language === "ko" ? "팀멤버" : "Team Members"}</div>
+                <div className="text-2xl font-bold">{stats.churchAccounts}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "공동체계정" : "Community Accounts"}</div>
               </div>
             </CardContent>
           </Card>
+        </div>
+        
+        {/* 커뮤니티 수 별도 표시 */}
+        <div className="text-sm text-muted-foreground mb-6">
+          {language === "ko" ? `총 ${stats.communities}개 커뮤니티` : `${stats.communities} Communities total`}
         </div>
 
         {/* Toolbar: Search + View Controls */}
