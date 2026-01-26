@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle } from "lucide-react";
+
 
 interface AutomatedEmailTemplatePreviewDialogProps {
   open: boolean;
@@ -58,11 +58,11 @@ export const AutomatedEmailTemplatePreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
             👁️ {language === "ko" ? "템플릿 미리보기" : "Template Preview"}
-            <Badge variant="secondary" className="ml-2">
+            <Badge variant="secondary">
               {language === "ko" ? typeInfo?.labelKo : typeInfo?.label}
             </Badge>
           </DialogTitle>
@@ -74,47 +74,43 @@ export const AutomatedEmailTemplatePreviewDialog = ({
         </DialogHeader>
 
         {/* Subject Preview */}
-        <div className="space-y-1">
+        <div className="space-y-1 flex-shrink-0">
           <p className="text-xs font-medium text-muted-foreground">
             {language === "ko" ? "제목" : "Subject"}
           </p>
           <div className="p-3 bg-muted rounded-lg border">
-            <p className="font-medium">{previewSubject}</p>
+            <p className="font-medium break-words">{previewSubject}</p>
           </div>
         </div>
 
         {/* Body Preview */}
-        <div className="space-y-1 flex-1 min-h-0">
-          <p className="text-xs font-medium text-muted-foreground">
+        <div className="space-y-1 flex-1 min-h-0 overflow-hidden">
+          <p className="text-xs font-medium text-muted-foreground flex-shrink-0">
             {language === "ko" ? "본문" : "Body"}
           </p>
-          <ScrollArea className="flex-1 border rounded-lg bg-white dark:bg-zinc-950">
+          <ScrollArea className="h-[300px] border rounded-lg bg-white dark:bg-zinc-950">
             <div className="p-4">
               <div
-                className="prose prose-sm dark:prose-invert max-w-none"
+                className="prose prose-sm dark:prose-invert max-w-none break-words"
                 dangerouslySetInnerHTML={{ __html: sanitizedBody }}
               />
             </div>
           </ScrollArea>
         </div>
 
-        {/* Variable Info */}
-        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg text-amber-700 dark:text-amber-400 text-sm">
-          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium">
-              {language === "ko" ? "샘플 데이터 사용 중" : "Using Sample Data"}
-            </p>
-            <p className="text-xs mt-0.5 opacity-80">
-              {language === "ko" 
-                ? `{{user_name}} → ${sampleVariables.user_name}, {{days}} → ${sampleVariables.days}, {{community_name}} → ${sampleVariables.community_name}`
-                : `{{user_name}} → ${sampleVariables.user_name}, {{days}} → ${sampleVariables.days}, {{community_name}} → ${sampleVariables.community_name}`}
-            </p>
-          </div>
+        {/* Variable Info - Simplified */}
+        <div className="flex-shrink-0 p-2 bg-muted rounded-lg text-xs text-muted-foreground">
+          <span className="font-medium">
+            {language === "ko" ? "변수:" : "Variables:"}
+          </span>{" "}
+          <code className="bg-background px-1 rounded">{`{{user_name}}`}</code>,{" "}
+          <code className="bg-background px-1 rounded">{`{{days}}`}</code>,{" "}
+          <code className="bg-background px-1 rounded">{`{{community_name}}`}</code>{" "}
+          {language === "ko" ? "→ 실제 데이터로 치환됨" : "→ replaced with actual data"}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end flex-shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {language === "ko" ? "닫기" : "Close"}
           </Button>
