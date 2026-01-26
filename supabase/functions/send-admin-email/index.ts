@@ -9,9 +9,11 @@ const corsHeaders = {
 };
 
 interface RecipientFilter {
-  type: "all" | "role" | "community";
-  roleValue?: string;
+  type: "segment" | "specific_community" | "all" | "role" | "community";
+  rpcFunction?: string;
+  rpcParam?: string;
   communityId?: string;
+  roleValue?: string;
 }
 
 interface SendAdminEmailRequest {
@@ -23,9 +25,17 @@ interface SendAdminEmailRequest {
 }
 
 interface Recipient {
-  id: string;
+  user_id?: string;
+  id?: string;
   email: string;
   full_name: string | null;
+}
+
+interface SenderSettings {
+  sender_name: string;
+  sender_title: string | null;
+  signature_html: string | null;
+  auto_append_signature: boolean;
 }
 
 const BATCH_SIZE = 50;
@@ -39,7 +49,12 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<{ success: boolean; id?: string; error?: string }> {
+async function sendEmail(
+  to: string, 
+  subject: string, 
+  html: string, 
+  senderName: string = "KWorship"
+): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -48,7 +63,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<{ s
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "KWorship <noreply@kworship.app>",
+        from: `${senderName} <noreply@kworship.app>`,
         to: [to],
         subject,
         html,
@@ -119,12 +134,26 @@ const handler = async (req: Request): Promise<Response> => {
     const { templateId, subject, htmlContent, recipientFilter, testMode }: SendAdminEmailRequest = await req.json();
     console.log("Request params:", { templateId, subject, recipientFilter, testMode });
 
+    // Fetch sender settings
+    const { data: senderSettingsData } = await supabaseClient
+      .from("email_sender_settings")
+      .select("*")
+      .single();
+    
+    const senderSettings: SenderSettings = senderSettingsData || {
+      sender_name: "KWorship",
+      sender_title: null,
+      signature_html: null,
+      auto_append_signature: false,
+    };
+    console.log("Sender settings:", senderSettings.sender_name);
+
     // Get recipients based on filter
     let recipients: Recipient[] = [];
     let communityName = "";
 
     // Fetch community name if sending to a community
-    if (recipientFilter.type === "community" && recipientFilter.communityId) {
+    if ((recipientFilter.type === "community" || recipientFilter.type === "specific_community") && recipientFilter.communityId) {
       const { data: community } = await supabaseClient
         .from("worship_communities")
         .select("name")
@@ -143,30 +172,72 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
       
       if (adminProfile) {
-        recipients = [adminProfile];
+        recipients = [{
+          user_id: adminProfile.id,
+          id: adminProfile.id,
+          email: adminProfile.email,
+          full_name: adminProfile.full_name,
+        }];
       }
     } else {
-      // Get recipients based on filter type
-      if (recipientFilter.type === "all") {
+      // Handle new segment-based filtering using RPC functions
+      if (recipientFilter.type === "segment" && recipientFilter.rpcFunction && recipientFilter.rpcParam) {
+        const rpcFn = recipientFilter.rpcFunction;
+        const rpcParam = recipientFilter.rpcParam;
+        
+        console.log(`Calling RPC function: ${rpcFn} with param: ${rpcParam}`);
+        
+        let data: any[] = [];
+        if (rpcFn === "get_users_by_platform_tier") {
+          const result = await supabaseClient.rpc("get_users_by_platform_tier", { tier_type: rpcParam });
+          data = result.data || [];
+        } else if (rpcFn === "get_users_by_community_status") {
+          const result = await supabaseClient.rpc("get_users_by_community_status", { status_type: rpcParam });
+          data = result.data || [];
+        } else if (rpcFn === "get_users_by_activity_status") {
+          const result = await supabaseClient.rpc("get_users_by_activity_status", { activity_type: rpcParam });
+          data = result.data || [];
+        }
+        
+        recipients = data.map((r: any) => ({
+          user_id: r.user_id,
+          id: r.user_id,
+          email: r.email,
+          full_name: r.full_name,
+        }));
+      } else if (recipientFilter.type === "specific_community" && recipientFilter.communityId) {
+        const { data } = await supabaseClient.rpc("get_users_by_community_status", { 
+          status_type: "specific_community", 
+          community_id_param: recipientFilter.communityId 
+        });
+        recipients = (data || []).map((r: any) => ({
+          user_id: r.user_id,
+          id: r.user_id,
+          email: r.email,
+          full_name: r.full_name,
+        }));
+      }
+      // Legacy filter support
+      else if (recipientFilter.type === "all") {
         const { data } = await supabaseClient
           .from("profiles")
           .select("id, email, full_name")
           .not("email", "is", null);
-        recipients = data || [];
+        recipients = (data || []).map(r => ({ ...r, user_id: r.id }));
       } else if (recipientFilter.type === "role" && recipientFilter.roleValue) {
         const { data } = await supabaseClient
           .from("profiles")
           .select("id, email, full_name, user_roles!inner(role)")
           .eq("user_roles.role", recipientFilter.roleValue)
           .not("email", "is", null);
-        recipients = data || [];
+        recipients = (data || []).map(r => ({ ...r, user_id: r.id }));
       } else if (recipientFilter.type === "community" && recipientFilter.communityId) {
         const { data } = await supabaseClient
           .from("profiles")
           .select("id, email, full_name, community_members!inner(community_id)")
           .eq("community_members.community_id", recipientFilter.communityId)
           .not("email", "is", null);
-        recipients = data || [];
+        recipients = (data || []).map(r => ({ ...r, user_id: r.id }));
       }
     }
 
@@ -221,7 +292,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Insert all recipients with pending status
     const recipientRecords = recipients.map((r) => ({
       email_log_id: emailLog.id,
-      user_id: r.id,
+      user_id: r.user_id || r.id,
       email: r.email,
       status: "pending",
     }));
@@ -240,18 +311,28 @@ const handler = async (req: Request): Promise<Response> => {
       const sendPromises = batch.map(async (recipient) => {
         try {
           // Replace variables in content
-          const personalizedContent = replaceVariables(htmlContent, {
+          let personalizedContent = replaceVariables(htmlContent, {
             user_name: recipient.full_name || "User",
             app_url: appUrl,
             community_name: communityName,
           });
+
+          // Append signature if enabled
+          if (senderSettings.auto_append_signature && senderSettings.signature_html) {
+            personalizedContent += senderSettings.signature_html;
+          }
 
           const personalizedSubject = replaceVariables(subject, {
             user_name: recipient.full_name || "User",
             community_name: communityName,
           });
 
-          const result = await sendEmail(recipient.email, personalizedSubject, personalizedContent);
+          const result = await sendEmail(
+            recipient.email, 
+            personalizedSubject, 
+            personalizedContent, 
+            senderSettings.sender_name
+          );
 
           // Update recipient status
           await supabaseClient

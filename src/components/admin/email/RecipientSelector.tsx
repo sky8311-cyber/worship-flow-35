@@ -1,0 +1,250 @@
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Users, Shield, Building2, Activity, Zap, Home,
+  Crown, UserCheck, UserX, Clock, Plus, MessageSquare, FileText
+} from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+
+interface RecipientCategory {
+  id: string;
+  label: string;
+  labelKo: string;
+  icon: React.ElementType;
+  groups: RecipientGroup[];
+}
+
+interface RecipientGroup {
+  id: string;
+  label: string;
+  labelKo: string;
+  rpcFunction: string;
+  rpcParam: string;
+  icon?: React.ElementType;
+}
+
+interface Community {
+  id: string;
+  name: string;
+}
+
+const recipientCategories: RecipientCategory[] = [
+  {
+    id: "all",
+    label: "All Users",
+    labelKo: "전체 사용자",
+    icon: Users,
+    groups: [
+      { id: "all_users", label: "All Registered Users", labelKo: "모든 가입자", rpcFunction: "get_users_by_platform_tier", rpcParam: "all" },
+    ],
+  },
+  {
+    id: "platform_tier",
+    label: "Platform Tier",
+    labelKo: "플랫폼 티어별",
+    icon: Crown,
+    groups: [
+      { id: "team_member", label: "Team Members", labelKo: "팀멤버", rpcFunction: "get_users_by_platform_tier", rpcParam: "team_member", icon: UserCheck },
+      { id: "worship_leader", label: "Basic Members (Worship Leaders)", labelKo: "예배인도자 (일반멤버)", rpcFunction: "get_users_by_platform_tier", rpcParam: "worship_leader", icon: Crown },
+      { id: "full_member", label: "Full Members (Premium)", labelKo: "정회원 (프리미엄)", rpcFunction: "get_users_by_platform_tier", rpcParam: "full_member", icon: Shield },
+      { id: "church_account", label: "Community Account Members", labelKo: "공동체 어카운트 멤버", rpcFunction: "get_users_by_platform_tier", rpcParam: "church_account", icon: Building2 },
+    ],
+  },
+  {
+    id: "activity",
+    label: "Activity Status",
+    labelKo: "활동 상태별",
+    icon: Activity,
+    groups: [
+      { id: "active_7", label: "Active (7 days)", labelKo: "활성 (7일 내 접속)", rpcFunction: "get_users_by_activity_status", rpcParam: "active_7_days", icon: Clock },
+      { id: "semi_active", label: "Semi-active (7-30 days)", labelKo: "준활성 (7-30일 미접속)", rpcFunction: "get_users_by_activity_status", rpcParam: "semi_active", icon: Clock },
+      { id: "inactive_30", label: "Inactive (30+ days)", labelKo: "비활성 (30일+ 미접속)", rpcFunction: "get_users_by_activity_status", rpcParam: "inactive_30_plus", icon: UserX },
+      { id: "new_users", label: "New Users (7 days)", labelKo: "신규 가입자 (7일 내)", rpcFunction: "get_users_by_activity_status", rpcParam: "new_users_7_days", icon: Plus },
+    ],
+  },
+  {
+    id: "community_status",
+    label: "Community Status",
+    labelKo: "커뮤니티 참여 상태별",
+    icon: Home,
+    groups: [
+      { id: "in_community", label: "In a Community", labelKo: "커뮤니티 참여중", rpcFunction: "get_users_by_community_status", rpcParam: "in_community", icon: Home },
+      { id: "not_in_community", label: "Not in Community", labelKo: "커뮤니티 미참여", rpcFunction: "get_users_by_community_status", rpcParam: "not_in_community", icon: UserX },
+      { id: "community_owner", label: "Community Owners", labelKo: "커뮤니티 오너", rpcFunction: "get_users_by_community_status", rpcParam: "community_owner", icon: Crown },
+      { id: "community_leader", label: "Community Leaders", labelKo: "커뮤니티 리더", rpcFunction: "get_users_by_community_status", rpcParam: "community_leader", icon: Shield },
+      { id: "community_member", label: "Community Members", labelKo: "커뮤니티 일반 멤버", rpcFunction: "get_users_by_community_status", rpcParam: "community_member", icon: Users },
+    ],
+  },
+  {
+    id: "engagement",
+    label: "Engagement",
+    labelKo: "특정 활동별",
+    icon: Zap,
+    groups: [
+      { id: "has_sets", label: "Created Worship Sets", labelKo: "예배 세트 생성자", rpcFunction: "get_users_by_activity_status", rpcParam: "has_created_sets", icon: FileText },
+      { id: "no_sets", label: "No Worship Sets", labelKo: "예배 세트 미생성자", rpcFunction: "get_users_by_activity_status", rpcParam: "no_sets_created", icon: FileText },
+      { id: "has_posts", label: "Posted in Community", labelKo: "게시글 작성자", rpcFunction: "get_users_by_activity_status", rpcParam: "has_posts", icon: MessageSquare },
+      { id: "pending_wl", label: "Pending WL Applications", labelKo: "승급 신청 대기자", rpcFunction: "get_users_by_activity_status", rpcParam: "pending_wl_applications", icon: Clock },
+    ],
+  },
+];
+
+export interface RecipientFilter {
+  type: "segment" | "specific_community";
+  rpcFunction?: string;
+  rpcParam?: string;
+  communityId?: string;
+}
+
+interface RecipientSelectorProps {
+  value: RecipientFilter;
+  onChange: (filter: RecipientFilter) => void;
+  recipientCount: number;
+}
+
+export const RecipientSelector = ({ value, onChange, recipientCount }: RecipientSelectorProps) => {
+  const { language } = useTranslation();
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedGroup, setSelectedGroup] = useState<string>("all_users");
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string>("");
+
+  // Fetch communities for specific community selection
+  const { data: communities = [] } = useQuery({
+    queryKey: ["all-communities"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("worship_communities")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data as Community[];
+    },
+  });
+
+  // Update filter when selection changes
+  useEffect(() => {
+    if (selectedCategory === "specific_community") {
+      if (selectedCommunityId) {
+        onChange({
+          type: "specific_community",
+          communityId: selectedCommunityId,
+        });
+      }
+    } else {
+      const category = recipientCategories.find(c => c.id === selectedCategory);
+      const group = category?.groups.find(g => g.id === selectedGroup);
+      if (group) {
+        onChange({
+          type: "segment",
+          rpcFunction: group.rpcFunction,
+          rpcParam: group.rpcParam,
+        });
+      }
+    }
+  }, [selectedCategory, selectedGroup, selectedCommunityId, onChange]);
+
+  const currentCategory = recipientCategories.find(c => c.id === selectedCategory);
+  const CategoryIcon = currentCategory?.icon || Users;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <CategoryIcon className="w-4 h-4" />
+          {language === "ko" ? "수신자 선택" : "Select Recipients"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Category Selection */}
+        <div className="space-y-2">
+          <Label>{language === "ko" ? "카테고리" : "Category"}</Label>
+          <Select value={selectedCategory} onValueChange={(val) => {
+            setSelectedCategory(val);
+            if (val !== "specific_community") {
+              const cat = recipientCategories.find(c => c.id === val);
+              if (cat && cat.groups.length > 0) {
+                setSelectedGroup(cat.groups[0].id);
+              }
+            }
+          }}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {recipientCategories.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    <span className="flex items-center gap-2">
+                      <Icon className="w-4 h-4" />
+                      {language === "ko" ? cat.labelKo : cat.label}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+              <SelectItem value="specific_community">
+                <span className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4" />
+                  {language === "ko" ? "특정 커뮤니티" : "Specific Community"}
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Group Selection or Community Selection */}
+        {selectedCategory === "specific_community" ? (
+          <div className="space-y-2">
+            <Label>{language === "ko" ? "커뮤니티 선택" : "Select Community"}</Label>
+            <Select value={selectedCommunityId} onValueChange={setSelectedCommunityId}>
+              <SelectTrigger>
+                <SelectValue placeholder={language === "ko" ? "커뮤니티 선택..." : "Select community..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {communities.map((community) => (
+                  <SelectItem key={community.id} value={community.id}>
+                    {community.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : currentCategory && currentCategory.groups.length > 1 ? (
+          <div className="space-y-2">
+            <Label>{language === "ko" ? "세부 그룹" : "Sub-group"}</Label>
+            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currentCategory.groups.map((group) => {
+                  const GroupIcon = group.icon || Users;
+                  return (
+                    <SelectItem key={group.id} value={group.id}>
+                      <span className="flex items-center gap-2">
+                        <GroupIcon className="w-4 h-4" />
+                        {language === "ko" ? group.labelKo : group.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+
+        {/* Recipient Count Display */}
+        <div className="p-4 bg-muted rounded-lg text-center">
+          <p className="text-3xl font-bold">{recipientCount}</p>
+          <p className="text-sm text-muted-foreground">
+            {language === "ko" ? "수신자" : "Recipients"}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

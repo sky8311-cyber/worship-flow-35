@@ -338,12 +338,18 @@ const AdminCRM = () => {
   }, []);
 
   const getStats = () => {
-    if (!crmData) return { church: 0, leaders: 0, communities: 0, members: 0 };
+    if (!crmData) return { church: 0, leaders: 0, communities: 0, teamMembers: 0 };
+    
+    // Team Members: users with 'user' role but NOT 'worship_leader' role
+    // This correctly identifies users who are only team members
+    const worshipLeaderIds = new Set(crmData.worshipLeaders.map(wl => wl.id));
+    const teamMemberCount = crmData.members.filter(m => !worshipLeaderIds.has(m.id)).length;
+    
     return {
       church: crmData.churchAccounts.length,
       leaders: crmData.worshipLeaders.length,
       communities: crmData.communities.length,
-      members: crmData.members.length,
+      teamMembers: teamMemberCount,
     };
   };
 
@@ -383,7 +389,7 @@ const AdminCRM = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold">{stats.church}</div>
-                <div className="text-xs text-muted-foreground">Worship Community Accounts</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "공동체 어카운트" : "Community Accounts"}</div>
               </div>
             </CardContent>
           </Card>
@@ -397,7 +403,7 @@ const AdminCRM = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold">{stats.leaders}</div>
-                <div className="text-xs text-muted-foreground">Basic Members</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "예배인도자" : "Worship Leaders"}</div>
               </div>
             </CardContent>
           </Card>
@@ -424,8 +430,8 @@ const AdminCRM = () => {
                 <UserCheck className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div>
-                <div className="text-2xl font-bold">{stats.members}</div>
-                <div className="text-xs text-muted-foreground">Team Members</div>
+                <div className="text-2xl font-bold">{stats.teamMembers}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "팀멤버" : "Team Members"}</div>
               </div>
             </CardContent>
           </Card>

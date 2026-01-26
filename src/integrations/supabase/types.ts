@@ -663,6 +663,39 @@ export type Database = {
           },
         ]
       }
+      email_sender_settings: {
+        Row: {
+          auto_append_signature: boolean | null
+          created_at: string | null
+          id: string
+          sender_name: string
+          sender_title: string | null
+          signature_html: string | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          auto_append_signature?: boolean | null
+          created_at?: string | null
+          id?: string
+          sender_name?: string
+          sender_title?: string | null
+          signature_html?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          auto_append_signature?: boolean | null
+          created_at?: string | null
+          id?: string
+          sender_name?: string
+          sender_title?: string | null
+          signature_html?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           category: string
@@ -4042,6 +4075,30 @@ export type Database = {
           set_status: string
           song_position: number
           worship_leader: string
+        }[]
+      }
+      get_users_by_activity_status: {
+        Args: { activity_type: string }
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
+      }
+      get_users_by_community_status: {
+        Args: { community_id_param?: string; status_type: string }
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
+        }[]
+      }
+      get_users_by_platform_tier: {
+        Args: { tier_type: string }
+        Returns: {
+          email: string
+          full_name: string
+          user_id: string
         }[]
       }
       has_role: {
