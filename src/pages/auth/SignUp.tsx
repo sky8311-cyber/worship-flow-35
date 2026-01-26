@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateDropdownPicker } from "@/components/ui/date-dropdown-picker";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -298,12 +299,10 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="birthDate">{t("auth.birthDate")}</Label>
-              <Input
-                id="birthDate"
-                type="date"
-                required
+              <DateDropdownPicker
                 value={formData.birthDate}
-                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                onChange={(date) => setFormData({ ...formData, birthDate: date })}
+                required
               />
             </div>
             <div className="space-y-2">
