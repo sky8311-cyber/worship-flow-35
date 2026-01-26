@@ -1,156 +1,167 @@
 
-# 수동 이메일 주소 입력 기능 추가 계획
+# 이메일 발송 전 수신자 명단 확인 기능
 
 ## 현재 상황
-- 이메일 발송 시 세그먼트(티어별, 활동 상태별 등)를 선택해야만 수신자 지정 가능
-- 특정 이메일 주소(예: `sky@goodpapa.org`)를 직접 입력하는 방법이 없음
-- 데이터베이스에 등록되지 않은 사용자에게는 이메일 발송 불가
+- 수신자 선택 시 **숫자만** 표시됨 (예: "95 수신자")
+- 발송 확인 다이얼로그에서도 **명단 확인 불가**
+- 어떤 사용자에게 발송되는지 정확히 알 수 없음
 
 ## 구현 계획
 
-### 1. UI 변경 - RecipientSelector.tsx
+### 1. 수신자 명단 미리보기 버튼 추가
 
-**새로운 카테고리 추가: "수동 입력"**
+RecipientSelector 하단에 "수신자 명단 보기" 버튼을 추가합니다.
 
 ```text
-📋 수신자 선택
-├── 👥 전체 사용자
-├── 🎫 플랫폼 티어별
-├── 📈 활동 상태별
-├── 🏠 커뮤니티 참여 상태별
-├── ⚡ 특정 활동별
-├── 🏢 특정 커뮤니티
-└── ✍️ 수동 입력 (NEW!)
+┌─────────────────────────────────┐
+│  👤 수신자 선택                  │
+├─────────────────────────────────┤
+│  카테고리: [플랫폼 티어별 ▼]     │
+│  세부 그룹: [예배인도자 ▼]       │
+│                                 │
+│        ┌─────────┐              │
+│        │   95    │              │
+│        │  수신자  │              │
+│        └─────────┘              │
+│                                 │
+│  [👁️ 수신자 명단 보기]          │  ← NEW!
+└─────────────────────────────────┘
 ```
 
-**수동 입력 UI:**
-- 이메일 주소 입력 필드 (Textarea)
-- 콤마(,) 또는 줄바꿈으로 여러 이메일 구분
-- 입력된 이메일 수 실시간 표시
-- 잘못된 형식의 이메일 경고 표시
+### 2. 수신자 명단 다이얼로그
 
-### 2. 인터페이스 확장 - RecipientFilter 타입
+버튼 클릭 시 수신자 전체 목록을 표시하는 다이얼로그:
 
-```typescript
-// 기존
-interface RecipientFilter {
-  type: "segment" | "specific_community";
-  rpcFunction?: string;
-  rpcParam?: string;
-  communityId?: string;
-}
-
-// 확장
-interface RecipientFilter {
-  type: "segment" | "specific_community" | "manual";  // ← "manual" 추가
-  rpcFunction?: string;
-  rpcParam?: string;
-  communityId?: string;
-  manualEmails?: string[];  // ← 수동 입력 이메일 배열 추가
-}
+```text
+┌──────────────────────────────────────────┐
+│  📋 수신자 명단 (95명)                    │
+├──────────────────────────────────────────┤
+│  🔍 [검색...]                            │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ ☑ 전체 선택                        │  │
+│  ├────────────────────────────────────┤  │
+│  │ ☑ 김철수    kim@example.com       │  │
+│  │ ☑ 이영희    lee@example.com       │  │
+│  │ ☑ 박민수    park@example.com      │  │
+│  │ ☑ 최광은    sky@goodpapa.org      │  │
+│  │ ...                                │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  선택됨: 95/95                           │
+│                                          │
+│           [취소]    [확인]               │
+└──────────────────────────────────────────┘
 ```
 
-### 3. Edge Function 수정 - send-admin-email/index.ts
+### 3. 수신자 개별 제외 기능
 
-**수동 이메일 처리 로직 추가:**
+- 체크박스로 특정 수신자를 제외 가능
+- 검색 필터로 이름/이메일 검색
+- "전체 선택/해제" 기능
 
-```typescript
-// recipientFilter.type === "manual" 인 경우
-if (recipientFilter.type === "manual" && recipientFilter.manualEmails) {
-  // DB에서 해당 이메일의 프로필 정보 조회 (있으면 이름 사용)
-  const { data: existingProfiles } = await supabaseClient
-    .from("profiles")
-    .select("id, email, full_name")
-    .in("email", recipientFilter.manualEmails);
-  
-  const existingEmailMap = new Map(
-    (existingProfiles || []).map(p => [p.email, p])
-  );
-  
-  // 모든 수동 입력 이메일을 수신자로 추가
-  recipients = recipientFilter.manualEmails.map(email => {
-    const profile = existingEmailMap.get(email);
-    return {
-      user_id: profile?.id || null,
-      id: profile?.id || null,
-      email: email,
-      full_name: profile?.full_name || null,
-    };
-  });
-}
+### 4. 발송 확인 다이얼로그 개선
+
+기존 확인 다이얼로그에도 수신자 요약 추가:
+
+```text
+┌──────────────────────────────────────────┐
+│  ⚠️ 이메일 발송 확인                      │
+├──────────────────────────────────────────┤
+│  95명에게 이메일을 발송합니다.            │
+│                                          │
+│  ▼ 수신자 목록 미리보기                   │
+│  ┌────────────────────────────────────┐  │
+│  │ kim@example.com                    │  │
+│  │ lee@example.com                    │  │
+│  │ park@example.com                   │  │
+│  │ ... 외 92명                        │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  예상 소요 시간: 약 2초                  │
+│  ⚠️ 발송 후 취소할 수 없습니다.           │
+│                                          │
+│           [취소]    [발송]               │
+└──────────────────────────────────────────┘
 ```
 
-### 4. 파일 변경 목록
+---
+
+## 파일 변경 목록
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/admin/email/RecipientSelector.tsx` | 수동 입력 카테고리 및 Textarea UI 추가 |
-| `src/components/admin/email/EmailComposer.tsx` | 수동 이메일 수 계산 로직 추가 |
-| `supabase/functions/send-admin-email/index.ts` | `type: "manual"` 처리 로직 추가 |
+| `src/components/admin/email/RecipientSelector.tsx` | 수신자 명단 보기 버튼 및 다이얼로그 추가 |
+| `src/components/admin/email/EmailComposer.tsx` | 확인 다이얼로그에 수신자 미리보기 추가 |
+| `src/components/admin/email/RecipientListDialog.tsx` | 새 파일 - 수신자 명단 다이얼로그 컴포넌트 |
 
 ---
 
-## UI 디자인 (RecipientSelector)
+## 기술 구현 세부사항
 
-```text
-┌─────────────────────────────────────────────┐
-│  👤 수신자 선택                              │
-├─────────────────────────────────────────────┤
-│                                             │
-│  카테고리: [수동 입력 ▼]                     │
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │ 이메일 주소 입력                      │    │
-│  │ (콤마 또는 줄바꿈으로 구분)            │    │
-│  ├─────────────────────────────────────┤    │
-│  │ sky@goodpapa.org                    │    │
-│  │ user1@example.com                   │    │
-│  │ test@test.com                       │    │
-│  │                                     │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-│  ⚠️ 1개 형식 오류: "invalid-email"          │
-│                                             │
-│  ┌─────────────────────────────────────┐    │
-│  │               3                      │    │
-│  │            수신자                     │    │
-│  └─────────────────────────────────────┘    │
-│                                             │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## 이메일 유효성 검사
+### RecipientListDialog 컴포넌트
 
 ```typescript
-const validateEmails = (input: string): { valid: string[]; invalid: string[] } => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const emails = input
-    .split(/[,\n]/)
-    .map(e => e.trim())
-    .filter(e => e.length > 0);
-  
-  const valid = emails.filter(e => emailRegex.test(e));
-  const invalid = emails.filter(e => !emailRegex.test(e));
-  
-  return { valid, invalid };
-};
+interface Recipient {
+  id: string;
+  email: string;
+  full_name: string | null;
+}
+
+interface RecipientListDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  filter: RecipientFilter;
+  onConfirm?: (selectedEmails: string[]) => void;  // 선택적: 제외 기능 사용 시
+}
+```
+
+### 수신자 목록 조회 로직
+
+현재 `recipient-count` 쿼리를 확장하여 실제 수신자 데이터를 가져옵니다:
+
+```typescript
+// 세그먼트 타입별 수신자 조회
+if (filter.type === "segment") {
+  const result = await supabase.rpc(filter.rpcFunction, { 
+    tier_type: filter.rpcParam 
+  });
+  return result.data; // [{id, email, full_name}, ...]
+}
+
+// 특정 커뮤니티
+if (filter.type === "specific_community") {
+  const { data } = await supabase
+    .from("community_members")
+    .select("profiles(id, email, full_name)")
+    .eq("community_id", filter.communityId);
+  return data.map(m => m.profiles);
+}
+
+// 수동 입력
+if (filter.type === "manual") {
+  return filter.manualEmails.map(email => ({ 
+    id: null, 
+    email, 
+    full_name: null 
+  }));
+}
+```
+
+### 검색 및 필터링
+
+```typescript
+const filteredRecipients = recipients.filter(r => 
+  r.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  r.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+);
 ```
 
 ---
 
 ## 예상 결과
 
-1. **수동 이메일 발송 가능**: `sky@goodpapa.org` 같은 특정 이메일 직접 입력 가능
-2. **외부 이메일도 발송 가능**: DB에 등록되지 않은 이메일도 발송 가능
-3. **기존 기능 유지**: 세그먼트 기반 발송 기능은 그대로 유지
-4. **유효성 검사**: 잘못된 형식의 이메일은 경고 표시
-
----
-
-## 보안 고려사항
-
-- 관리자 권한 확인은 기존과 동일하게 유지
-- 수동 입력 이메일도 동일한 발송 로그에 기록
-- 이메일 형식 유효성 검사로 잘못된 입력 방지
+1. **수신자 명단 확인**: 발송 전 정확히 누구에게 발송되는지 확인 가능
+2. **개별 제외**: 특정 수신자를 발송 대상에서 제외 가능
+3. **검색 기능**: 대량 수신자 중 특정 사용자 검색 가능
+4. **발송 확인 개선**: 최종 확인 단계에서 요약 목록 표시
