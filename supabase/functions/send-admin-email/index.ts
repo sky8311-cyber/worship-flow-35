@@ -22,6 +22,7 @@ interface SendAdminEmailRequest {
   subject: string;
   htmlContent: string;
   recipientFilter: RecipientFilter;
+  excludedEmails?: string[];
   testMode?: boolean;
 }
 
@@ -132,8 +133,8 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    const { templateId, subject, htmlContent, recipientFilter, testMode }: SendAdminEmailRequest = await req.json();
-    console.log("Request params:", { templateId, subject, recipientFilter, testMode });
+    const { templateId, subject, htmlContent, recipientFilter, excludedEmails, testMode }: SendAdminEmailRequest = await req.json();
+    console.log("Request params:", { templateId, subject, recipientFilter, excludedEmails: excludedEmails?.length || 0, testMode });
 
     // Fetch sender settings
     const { data: senderSettingsData } = await supabaseClient
@@ -268,6 +269,14 @@ const handler = async (req: Request): Promise<Response> => {
           .not("email", "is", null);
         recipients = (data || []).map(r => ({ ...r, user_id: r.id }));
       }
+    }
+
+    // Filter out excluded emails
+    if (excludedEmails && excludedEmails.length > 0 && !testMode) {
+      const excludedSet = new Set(excludedEmails.map(e => e.toLowerCase()));
+      const originalCount = recipients.length;
+      recipients = recipients.filter(r => !excludedSet.has(r.email.toLowerCase()));
+      console.log(`Excluded ${originalCount - recipients.length} recipients, ${recipients.length} remaining`);
     }
 
     console.log(`Found ${recipients.length} recipients`);

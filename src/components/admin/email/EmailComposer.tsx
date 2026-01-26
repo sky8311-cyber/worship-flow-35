@@ -52,6 +52,7 @@ export const EmailComposer = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [recipientCount, setRecipientCount] = useState<number>(0);
+  const [excludedEmails, setExcludedEmails] = useState<string[]>([]);
 
   // Fetch templates
   const { data: templates = [] } = useQuery({
@@ -129,6 +130,9 @@ export const EmailComposer = () => {
     setRecipientFilter(filter);
   }, []);
 
+  // Effective recipient count after exclusions
+  const effectiveRecipientCount = recipientCount - excludedEmails.length;
+
   // Send email mutation
   const sendEmailMutation = useMutation({
     mutationFn: async (testMode: boolean) => {
@@ -141,6 +145,7 @@ export const EmailComposer = () => {
           subject,
           htmlContent,
           recipientFilter,
+          excludedEmails,
           testMode,
         },
       });
@@ -171,7 +176,7 @@ export const EmailComposer = () => {
       toast.error(t("adminEmail.composer.pleaseEnterContent"));
       return;
     }
-    if (recipientCount === 0) {
+    if (effectiveRecipientCount === 0) {
       toast.error(language === "ko" ? "수신자가 없습니다" : "No recipients selected");
       return;
     }
@@ -266,6 +271,8 @@ export const EmailComposer = () => {
           value={recipientFilter}
           onChange={handleFilterChange}
           recipientCount={recipientCount}
+          excludedEmails={excludedEmails}
+          onExcludedEmailsChange={setExcludedEmails}
         />
 
         {/* Actions */}
@@ -295,14 +302,14 @@ export const EmailComposer = () => {
             <Button
               className="w-full"
               onClick={handleSendClick}
-              disabled={sendEmailMutation.isPending || recipientCount === 0}
+              disabled={sendEmailMutation.isPending || effectiveRecipientCount === 0}
             >
               {sendEmailMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Send className="w-4 h-4 mr-2" />
               )}
-              {t("adminEmail.composer.sendToRecipients", { count: recipientCount })}
+              {t("adminEmail.composer.sendToRecipients", { count: effectiveRecipientCount })}
             </Button>
           </CardContent>
         </Card>
@@ -332,10 +339,17 @@ export const EmailComposer = () => {
               {t("adminEmail.composer.confirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-2">
-                <p>{t("adminEmail.composer.confirmMessage", { count: recipientCount })}</p>
+              <div className="space-y-3">
+                <p>{t("adminEmail.composer.confirmMessage", { count: effectiveRecipientCount })}</p>
+                {excludedEmails.length > 0 && (
+                  <p className="text-sm text-amber-600">
+                    {language === "ko" 
+                      ? `${excludedEmails.length}명이 발송 대상에서 제외되었습니다.`
+                      : `${excludedEmails.length} recipient(s) have been excluded.`}
+                  </p>
+                )}
                 <p className="text-sm">
-                  {t("adminEmail.composer.estimatedTime", { seconds: Math.ceil(recipientCount / 50) })}
+                  {t("adminEmail.composer.estimatedTime", { seconds: Math.ceil(effectiveRecipientCount / 50) })}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t("adminEmail.composer.cannotUndo")}
