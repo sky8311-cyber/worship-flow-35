@@ -8,7 +8,6 @@ import { StudioLockedState } from "./StudioLockedState";
 import { StudioCoverEditor } from "./StudioCoverEditor";
 import { StudioGrid } from "./grid/StudioGrid";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface StudioViewProps {
   roomId?: string;
@@ -96,7 +95,7 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
   const gridColumns = (room as any).grid_columns || 3;
   
   return (
-    <ScrollArea className="h-full">
+    <div className="h-full overflow-y-auto">
       {/* Cover & Profile */}
       <StudioCoverEditor room={room} isOwner={isActuallyOwnRoom} />
       
@@ -106,6 +105,6 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
         isOwner={isActuallyOwnRoom} 
         gridColumns={gridColumns}
       />
-    </ScrollArea>
+    </div>
   );
 }
