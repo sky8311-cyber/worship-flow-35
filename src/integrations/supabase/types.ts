@@ -101,6 +101,38 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_email_log: {
+        Row: {
+          email_type: string
+          id: string
+          metadata: Json | null
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          email_type: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          email_type?: string
+          id?: string
+          metadata?: Json | null
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automated_email_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           attendees: string[] | null
@@ -1220,6 +1252,7 @@ export type Database = {
           instrument: string | null
           invited_by_community_id: string | null
           is_ambassador: boolean | null
+          last_active_at: string | null
           location: string | null
           ministry_role: string | null
           needs_worship_leader_profile: boolean | null
@@ -1250,6 +1283,7 @@ export type Database = {
           instrument?: string | null
           invited_by_community_id?: string | null
           is_ambassador?: boolean | null
+          last_active_at?: string | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
@@ -1280,6 +1314,7 @@ export type Database = {
           instrument?: string | null
           invited_by_community_id?: string | null
           is_ambassador?: boolean | null
+          last_active_at?: string | null
           location?: string | null
           ministry_role?: string | null
           needs_worship_leader_profile?: boolean | null
@@ -3859,7 +3894,36 @@ export type Database = {
         Returns: number
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_communities_with_single_owner: {
+        Args: never
+        Returns: {
+          community_created_at: string
+          community_id: string
+          community_name: string
+          user_email: string
+          user_id: string
+          user_name: string
+        }[]
+      }
       get_feature_flag: { Args: { _key: string }; Returns: boolean }
+      get_inactive_users: {
+        Args: { days?: number }
+        Returns: {
+          email: string
+          full_name: string
+          last_active_at: string
+          user_id: string
+        }[]
+      }
+      get_inactive_worship_leaders: {
+        Args: { days?: number }
+        Returns: {
+          email: string
+          full_name: string
+          last_set_date: string
+          user_id: string
+        }[]
+      }
       get_invitation_by_id: {
         Args: { invitation_uuid: string }
         Returns: {
