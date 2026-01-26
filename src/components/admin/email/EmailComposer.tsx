@@ -71,6 +71,10 @@ export const EmailComposer = () => {
   const { data: countData, refetch: refetchCount } = useQuery({
     queryKey: ["recipient-count", recipientFilter],
     queryFn: async () => {
+      // Manual emails - count is handled directly from the filter
+      if (recipientFilter.type === "manual") {
+        return recipientFilter.manualEmails?.length || 0;
+      }
       if (recipientFilter.type === "segment" && recipientFilter.rpcFunction && recipientFilter.rpcParam) {
         let data: any[] = [];
         if (recipientFilter.rpcFunction === "get_users_by_platform_tier") {
@@ -94,6 +98,7 @@ export const EmailComposer = () => {
       return 0;
     },
     enabled: !!(
+      (recipientFilter.type === "manual" && recipientFilter.manualEmails?.length) ||
       (recipientFilter.type === "segment" && recipientFilter.rpcFunction) ||
       (recipientFilter.type === "specific_community" && recipientFilter.communityId)
     ),
