@@ -1,101 +1,66 @@
 
 
-# 자동 발송 기록 페이지네이션 및 전체 표시 개선
+# 자동 발송 로그 표시 문제 및 중복 발송 방지 수정
 
-## 현재 문제점
+## 발견된 문제들
 
-1. **데이터 조회 제한**: `automated_email_log` 쿼리에서 100개만 가져옴
-2. **날짜별 10개 제한**: 각 날짜 그룹에서 `dateLogs.slice(0, 10)`으로 10개만 표시
-3. **페이지네이션 없음**: 전체 기록을 볼 수 없음
+### 문제 1: 수신자 정보가 없는 로그 (12건)
+- **원인**: 이전 버전 Edge Function에서 `recipient_name`, `recipient_email` 필드를 저장하지 않았음
+- **현황**: 52건 중 12건이 NULL
+- **해결**: 기존 NULL 데이터를 profiles 테이블에서 조회하여 업데이트
+
+### 문제 2: 중복 유저 발송
+- **원인**: `no_team_invite`에서 한 유저가 여러 커뮤니티를 운영하면 각 커뮤니티별로 별도 발송
+- **현재 쿨다운**: `user_id` + `email_type` 기준
+- **해결**: 동일 유저에게 같은 유형의 이메일은 쿨다운 기간 내 1회만 발송
+
+---
 
 ## 수정 계획
 
-### 1. 페이지네이션 구현
+### 1. 기존 NULL 데이터 복구 (1회성 마이그레이션)
 
-| 항목 | 현재 | 변경 |
-|------|------|------|
-| 조회 제한 | `.limit(100)` | 페이지당 50개 + 페이지네이션 |
-| 날짜별 제한 | `slice(0, 10)` | 전체 표시 + "더보기" 버튼 |
-| 총 개수 표시 | 없음 | 상단에 총 발송 건수 표시 |
-
-### 2. UI 변경
-
-```text
-┌──────────────────────────────────────────────────────────┐
-│  자동 발송 기록                        [전체 ▼] 총 52건 │
-├──────────────────────────────────────────────────────────┤
-│  2026년 1월 26일 (42건)                                  │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │ 시간      유형         수신자              상태    │  │
-│  │ 06:49:52  워십세트     김양우              ✓       │  │
-│  │ 06:49:51  워십세트     신예지              ✓       │  │
-│  │ ...                                                │  │
-│  │ 06:49:23  워십세트     Sb                  ✓       │  │
-│  └────────────────────────────────────────────────────┘  │
-│                                                          │
-│              [ ◀ ] 1 / 2 [ ▶ ]                           │
-└──────────────────────────────────────────────────────────┘
+```sql
+-- 기존 로그에서 NULL인 recipient 정보를 profiles에서 가져와 업데이트
+UPDATE automated_email_log ael
+SET 
+  recipient_email = p.email,
+  recipient_name = p.full_name
+FROM profiles p
+WHERE ael.user_id = p.id
+  AND (ael.recipient_email IS NULL OR ael.recipient_name IS NULL);
 ```
 
-### 3. 코드 변경
+### 2. RPC 함수 수정 - 중복 발송 방지
 
-```typescript
-// 1. 페이지네이션 상태 추가
-const [automatedPage, setAutomatedPage] = useState(1);
-const ITEMS_PER_PAGE = 50;
+`no_team_invite`에서 커뮤니티별이 아닌 유저별로 중복 체크:
 
-// 2. 총 개수 조회 쿼리 추가
-const { data: automatedLogsCount } = useQuery({
-  queryKey: ["automated-email-log-count"],
-  queryFn: async () => {
-    const { count, error } = await supabase
-      .from("automated_email_log")
-      .select("*", { count: "exact", head: true });
-    if (error) throw error;
-    return count || 0;
-  },
-});
+| 현재 | 변경 |
+|------|------|
+| 커뮤니티별로 발송 (같은 유저에게 여러 번 가능) | 유저별 최초 1개 커뮤니티만 발송 |
 
-// 3. 페이지네이션 적용 쿼리
-const { data: automatedLogs = [] } = useQuery({
-  queryKey: ["automated-email-log", automatedPage],
-  queryFn: async () => {
-    const from = (automatedPage - 1) * ITEMS_PER_PAGE;
-    const to = from + ITEMS_PER_PAGE - 1;
-    
-    const { data, error } = await supabase
-      .from("automated_email_log")
-      .select("*")
-      .order("sent_at", { ascending: false })
-      .range(from, to);
-    if (error) throw error;
-    return data;
-  },
-});
-
-// 4. 날짜별 전체 표시 (slice 제거)
-{dateLogs.map((log) => { ... })}
-
-// 5. 페이지네이션 UI 추가
-<Pagination>
-  <PaginationContent>
-    <PaginationItem>
-      <PaginationPrevious 
-        onClick={() => setAutomatedPage(p => Math.max(1, p - 1))}
-        className={automatedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-      />
-    </PaginationItem>
-    <PaginationItem>
-      <span className="px-4">{automatedPage} / {totalPages}</span>
-    </PaginationItem>
-    <PaginationItem>
-      <PaginationNext 
-        onClick={() => setAutomatedPage(p => Math.min(totalPages, p + 1))}
-        className={automatedPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-      />
-    </PaginationItem>
-  </PaginationContent>
-</Pagination>
+```sql
+-- 수정: DISTINCT ON 사용하여 유저당 1개 커뮤니티만
+ELSIF p_email_type = 'no_team_invite' THEN
+  RETURN QUERY
+  SELECT DISTINCT ON (p.id)  -- 유저당 1건만
+    p.id,
+    p.email,
+    p.full_name,
+    wc.created_at as last_active_at,
+    EXTRACT(DAY FROM (now() - wc.created_at))::INTEGER as days_inactive,
+    wc.name as community_name
+  FROM worship_communities wc
+  JOIN profiles p ON p.id = wc.leader_id
+  WHERE wc.created_at < now() - (p_trigger_days || ' days')::INTERVAL
+    AND (SELECT COUNT(*) FROM community_members cm WHERE cm.community_id = wc.id) = 1
+    AND NOT EXISTS (
+      SELECT 1 FROM automated_email_log ael
+      WHERE ael.user_id = p.id
+        AND ael.email_type = 'no_team_invite'
+        AND ael.sent_at > now() - (p_cooldown_days || ' days')::INTERVAL
+    )
+  ORDER BY p.id, wc.created_at ASC;  -- 가장 오래된 커뮤니티 우선
 ```
 
 ---
@@ -104,14 +69,33 @@ const { data: automatedLogs = [] } = useQuery({
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/admin/email/EmailLogs.tsx` | 페이지네이션 상태/쿼리 추가, slice 제거, 총 개수 표시, 페이지 네비게이션 UI |
+| `supabase/migrations/` | NULL 데이터 복구 + RPC 함수 수정 (DISTINCT ON 추가) |
 
 ---
 
 ## 예상 결과
 
-1. **전체 기록 조회 가능**: 페이지 이동으로 모든 발송 기록 확인
-2. **날짜별 전체 표시**: 각 날짜의 모든 발송 내역 표시
-3. **총 개수 표시**: 상단에 "총 52건" 등 전체 발송 건수 확인
-4. **페이지당 50건**: 적절한 데이터 로딩으로 성능 유지
+1. **기존 12건 로그**: 수신자 이름/이메일이 표시됨
+2. **중복 발송 방지**: 한 유저가 여러 커뮤니티를 운영해도 쿨다운 기간 내 1회만 발송
+3. **UI 표시**: 모든 로그에 수신자 정보가 정상 표시됨
+
+---
+
+## 중복 발송 로직 요약
+
+```text
+유저 A가 3개 커뮤니티 운영 (모두 혼자)
+
+[현재 로직]
+- 커뮤니티1 → 이메일 발송
+- 커뮤니티2 → 이메일 발송  
+- 커뮤니티3 → 이메일 발송
+→ 동시에 3통 발송 가능
+
+[수정 후 로직]
+- DISTINCT ON (user_id) → 1개 커뮤니티만 선택
+- 커뮤니티1 → 이메일 발송 (가장 오래된 커뮤니티)
+- 커뮤니티2, 3 → 쿨다운 기간 후 순차 발송
+→ 쿨다운 기간 내 1통만 발송
+```
 
