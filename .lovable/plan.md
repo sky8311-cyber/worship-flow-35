@@ -1,392 +1,199 @@
 
+# 두 페이지 통계 통일 계획
 
-# 티어/역할 시스템 정립 및 CRM/이메일 수신자 재구성 계획
+## 문제 요약
 
-## 현재 상황 분석
-
-### 데이터 현황
-| 분류 | 수치 | 설명 |
-|------|------|------|
-| 전체 가입자 | 196명 | 모두 `user` 역할 보유 |
-| 예배인도자 | 95명 | `worship_leader` 역할 추가 보유 |
-| 정회원 | 0명 | 프리미엄 구독자 없음 |
-| 공동체 어카운트 | 1개 | church_accounts |
-| 커뮤니티 참여자 | 78명 | community_members 테이블에 존재 |
-| 미참여자 | 118명 | 가입 후 커뮤니티 미가입 |
-
-### 문제점 발견
-1. **CRM "15명 일반 멤버"의 정체**: `community_members.role = 'member'`인 사용자 (커뮤니티 내 역할)
-   - 이 중 4명은 플랫폼 tier가 `worship_leader`
-   - 11명은 플랫폼 tier가 `user` (팀멤버)
-2. **용어 혼란**: "일반 멤버"가 플랫폼 티어인지 커뮤니티 역할인지 불명확
-3. **118명 미활동 사용자**: 가입만 하고 커뮤니티 미가입
+| 항목 | AdminTierGuide | AdminCRM | 올바른 값 |
+|------|----------------|----------|-----------|
+| 팀멤버 | 101 ✅ | 11 ❌ | 101 (승급 안 한 모든 사용자) |
+| 예배인도자/일반멤버 | 95 (일반멤버) | 95 (예배인도자) | 95 (명칭 통일 필요) |
+| 카드 순서 | 팀멤버 → 일반멤버 → 정회원 → 공동체 | 공동체 → 예배인도자 → Communities → 팀멤버 | 통일 필요 |
 
 ---
 
-## 1단계: 명확한 역할/티어 체계 정립
+## 수정 계획
 
-### 플랫폼 티어 (Primary Authorization - user_roles 테이블)
+### 1. 명칭 통일 (UI 용어)
 
-```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│                         플랫폼 티어 계층 구조                               │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  TIER 4: 공동체 어카운트 (Worship Community Account)                  │  │
-│  │  ─────────────────────────────────────────────────────────────────   │  │
-│  │  • DB: church_accounts + church_account_members 테이블               │  │
-│  │  • 모든 기능 사용 가능 (관리자 제외)                                  │  │
-│  │  • 팀멤버도 결제 시 바로 이용 가능                                    │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                               ▲                                            │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  TIER 3: 정회원 (Full Member)                                         │  │
-│  │  ─────────────────────────────────────────────────────────────────   │  │
-│  │  • DB: user_roles.role = 'worship_leader' + premium_subscriptions    │  │
-│  │  • 프리미엄 기능 사용 가능                                            │  │
-│  │  • 예배인도자 + 프리미엄 구독                                         │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                               ▲                                            │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  TIER 2: 예배인도자 (Basic Member / Worship Leader)                   │  │
-│  │  ─────────────────────────────────────────────────────────────────   │  │
-│  │  • DB: user_roles.role = 'worship_leader'                            │  │
-│  │  • 승급 신청 + 프로필 작성 후 자동 승인                               │  │
-│  │  • 커뮤니티 생성/관리, 팀원 초대 가능                                 │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                               ▲                                            │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  TIER 1: 팀멤버 (Team Member)                                         │  │
-│  │  ─────────────────────────────────────────────────────────────────   │  │
-│  │  • DB: user_roles.role = 'user'                                      │  │
-│  │  • 모든 신규 가입자의 기본 역할                                       │  │
-│  │  • 커뮤니티 초대/가입 가능, 예배 세트 열람                            │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
+플랫폼 티어 체계에 맞춰 통일:
+
+| DB Role | 한국어 명칭 | 영어 명칭 |
+|---------|------------|-----------|
+| `user` only | **팀멤버** | Team Member |
+| `worship_leader` | **일반멤버** (예배인도자) | Basic Member |
+| premium subscription | **정회원** | Full Member |
+| church account | **공동체계정** | Community Account |
+
+### 2. AdminCRM.tsx 수정
+
+**수정 사항:**
+
+1. **팀멤버 계산 로직 수정**:
+   - 현재: 커뮤니티에 가입한 비-예배인도자만 카운트 (11명)
+   - 수정: 전체 사용자 중 `worship_leader` role이 없는 사용자 (101명)
+
+2. **카드 순서 통일** (티어 순서대로):
+   ```
+   1. 팀멤버 (101)
+   2. 일반멤버 (95) - "예배인도자" 대신
+   3. 정회원 (0) - 추가 필요
+   4. 공동체계정 (1)
+   ```
+
+3. **명칭 변경**:
+   - "예배인도자" → "일반멤버"
+
+4. **Communities 카드 제거 또는 별도 섹션**:
+   - 플랫폼 티어 통계와 커뮤니티 수는 별개
+   - 티어 통계 아래에 추가 정보로 표시
+
+### 3. 수정할 코드 위치
+
+#### AdminCRM.tsx - getStats 함수 수정
+
+```typescript
+const getStats = () => {
+  if (!crmData) return { teamMembers: 0, basicMembers: 0, fullMembers: 0, churchAccounts: 0 };
+  
+  // 전체 프로필 수
+  const totalProfiles = crmData.members.length + crmData.worshipLeaders.length;
+  
+  // 팀멤버: worship_leader role이 없는 모든 사용자
+  const worshipLeaderIds = new Set(crmData.worshipLeaders.map(wl => wl.id));
+  const teamMemberCount = /* 전체 profiles */ - worshipLeaderIds.size;
+  
+  // 일반멤버 (예배인도자): worship_leader role 보유자
+  const basicMemberCount = crmData.worshipLeaders.length;
+  
+  // 정회원: active premium subscription
+  const fullMemberCount = crmData.worshipLeaders.filter(
+    wl => wl.subscription?.subscription_status === 'active'
+  ).length;
+  
+  // 공동체계정
+  const churchAccountCount = crmData.churchAccounts.length;
+  
+  return {
+    teamMembers: teamMemberCount,
+    basicMembers: basicMemberCount,
+    fullMembers: fullMemberCount,
+    churchAccounts: churchAccountCount,
+  };
+};
 ```
 
-### 커뮤니티 역할 (Secondary Authorization - community_members 테이블)
+#### AdminCRM.tsx - 통계 카드 UI 수정
 
-```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│                      커뮤니티 내 역할 (2차 권한)                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│  community_members.role 값:                                                │
-│                                                                            │
-│  ┌─────────────┐   ┌─────────────────┐   ┌─────────────┐                  │
-│  │   owner     │ > │ community_leader │ > │   member    │                  │
-│  │  (오너)     │   │   (리더)         │   │  (멤버)     │                  │
-│  └─────────────┘   └─────────────────┘   └─────────────┘                  │
-│        │                   │                    │                          │
-│        ▼                   ▼                    ▼                          │
-│  • 커뮤니티 삭제   • 세트 편집/삭제     • 피드 글 작성                     │
-│  • 오너 권한 이전  • 멤버 관리          • 예배 세트 열람                   │
-│  • 리더 지정      • 피드 글 작성       • RSVP 참여                         │
-│  • 모든 리더 권한  • 일정 관리                                             │
-│                                                                            │
-│  ⚠️ 이 역할은 플랫폼 티어와 독립적!                                        │
-│     팀멤버도 커뮤니티 리더가 될 수 있음                                    │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
-```
+카드 순서와 스타일을 AdminTierGuide와 동일하게 변경:
 
----
+```tsx
+{/* Stats Cards - 티어 순서대로 */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  {/* 1. 팀멤버 */}
+  <Card>
+    <CardContent className="p-4 flex items-center gap-3">
+      <div className="p-2 bg-muted rounded-lg">
+        <Users className="w-5 h-5" />
+      </div>
+      <div>
+        <div className="text-2xl font-bold">{stats.teamMembers}</div>
+        <div className="text-xs text-muted-foreground">팀멤버</div>
+      </div>
+    </CardContent>
+  </Card>
+  
+  {/* 2. 일반멤버 */}
+  <Card>
+    <CardContent className="p-4 flex items-center gap-3">
+      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+        <Crown className="w-5 h-5 text-purple-600" />
+      </div>
+      <div>
+        <div className="text-2xl font-bold">{stats.basicMembers}</div>
+        <div className="text-xs text-muted-foreground">일반멤버</div>
+      </div>
+    </CardContent>
+  </Card>
+  
+  {/* 3. 정회원 */}
+  <Card>
+    <CardContent className="p-4 flex items-center gap-3">
+      <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+        <Shield className="w-5 h-5 text-yellow-600" />
+      </div>
+      <div>
+        <div className="text-2xl font-bold">{stats.fullMembers}</div>
+        <div className="text-xs text-muted-foreground">정회원</div>
+      </div>
+    </CardContent>
+  </Card>
+  
+  {/* 4. 공동체계정 */}
+  <Card>
+    <CardContent className="p-4 flex items-center gap-3">
+      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+        <Building2 className="w-5 h-5 text-blue-600" />
+      </div>
+      <div>
+        <div className="text-2xl font-bold">{stats.churchAccounts}</div>
+        <div className="text-xs text-muted-foreground">공동체계정</div>
+      </div>
+    </CardContent>
+  </Card>
+</div>
 
-## 2단계: 승급 워크플로우 도표 (새 관리자 페이지)
-
-### 새 페이지: `/admin/tier-workflow` (AdminTierWorkflow.tsx)
-
-```text
-┌────────────────────────────────────────────────────────────────────────────┐
-│  🎯 사용자 승급 워크플로우                                                  │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│                      ┌─────────────────┐                                   │
-│                      │   회원 가입     │                                   │
-│                      │  (모든 사용자)  │                                   │
-│                      └────────┬────────┘                                   │
-│                               │                                            │
-│                               ▼                                            │
-│                      ┌─────────────────┐                                   │
-│                      │    팀 멤버      │◄─────────────────┐                │
-│                      │  (user role)    │                   │                │
-│                      └────────┬────────┘                   │                │
-│                               │                             │                │
-│               ┌───────────────┼───────────────┐             │                │
-│               │               │               │             │                │
-│               ▼               │               ▼             │                │
-│     ┌─────────────────┐       │      ┌─────────────────┐    │                │
-│     │ 커뮤니티 초대    │       │      │  가입 신청      │    │                │
-│     │ 링크 클릭       │       │      │ (검색 → 신청)   │    │                │
-│     └────────┬────────┘       │      └────────┬────────┘    │                │
-│              │                │               │             │                │
-│              ▼                │               ▼             │                │
-│     ┌─────────────────┐       │      ┌─────────────────┐    │                │
-│     │   자동 가입      │       │      │  리더 승인 대기  │    │                │
-│     └────────┬────────┘       │      └────────┬────────┘    │                │
-│              │                │               │             │                │
-│              └───────────────►│◄──────────────┘             │                │
-│                               │                             │                │
-│                               ▼                             │                │
-│                      ┌─────────────────┐                    │                │
-│                      │ 커뮤니티 멤버   │                    │                │
-│                      │ (member 역할)   │                    │                │
-│                      └────────┬────────┘                    │                │
-│                               │                             │                │
-│            ┌──────────────────┴──────────────────┐          │                │
-│            │                                      │          │                │
-│            ▼                                      ▼          │                │
-│   ┌─────────────────┐                   ┌─────────────────┐  │                │
-│   │ 예배인도자 승급  │                   │ 공동체 어카운트 │  │                │
-│   │ 신청 (프로필 작성)│                   │ 결제           │  │                │
-│   └────────┬────────┘                   └────────┬────────┘  │                │
-│            │                                      │          │                │
-│            ▼                                      ▼          │                │
-│   ┌─────────────────┐                   ┌─────────────────┐  │                │
-│   │   자동 승인      │                   │   최상위 티어   │  │                │
-│   │ (worship_leader) │                   │   (church)      │──┘                │
-│   └────────┬────────┘                   └─────────────────┘                  │
-│            │                                                                 │
-│            ├─────────────────────────────┐                                   │
-│            │                             │                                   │
-│            ▼                             ▼                                   │
-│   ┌─────────────────┐           ┌─────────────────┐                          │
-│   │ 커뮤니티 생성    │           │ 프리미엄 결제   │                          │
-│   │ (오너 자동 부여) │           │ (정회원 전환)   │                          │
-│   └─────────────────┘           └─────────────────┘                          │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+{/* 커뮤니티 수는 별도 표시 */}
+<div className="text-sm text-muted-foreground mb-4">
+  총 {stats.communities}개 커뮤니티
+</div>
 ```
 
 ---
 
-## 3단계: CRM 통계 수정
+## 수정 후 예상 결과
 
-### 현재 문제점
-- "Members (15명)"이 community_members.role='member'를 카운트
-- 플랫폼 티어 기반 통계가 아님
+### 두 페이지 통일된 모습
 
-### 수정 방안
+| 카드 | AdminTierGuide | AdminCRM |
+|------|----------------|----------|
+| 1 | 101 팀멤버 | 101 팀멤버 |
+| 2 | 95 일반멤버 | 95 일반멤버 |
+| 3 | 0 정회원 | 0 정회원 |
+| 4 | 1 공동체계정 | 1 공동체계정 |
 
-**AdminCRM.tsx Stats Cards 재구성:**
-
-| 기존 | 수정 후 | 설명 |
-|------|---------|------|
-| Worship Community Accounts | 공동체 어카운트 | 유지 (church_accounts) |
-| Basic Members (95) | 예배인도자 (95) | user_roles.worship_leader |
-| Communities | 커뮤니티 | 유지 |
-| Team Members (15) | 팀멤버 (101) | user_roles.user - worship_leader 제외 |
-
-**추가 통계:**
-- 활성 팀멤버: 커뮤니티 가입한 팀멤버 (11명)
-- 비활성 팀멤버: 커뮤니티 미가입 (90명)
-- 커뮤니티 오너: 63명
-- 커뮤니티 리더: 1명
+### 추가: CRM에서 커뮤니티 정보
+- 커뮤니티 수(75)는 별도 라인으로 표시
+- 또는 두 번째 줄 카드로 "커뮤니티 75개" 추가
 
 ---
 
-## 4단계: 이메일 수신자 리스트 재구성
+## 파일 변경 목록
 
-### 새로운 수신자 그룹 체계
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/pages/AdminCRM.tsx` | getStats 로직 수정, 카드 순서/명칭 통일, 정회원 카드 추가 |
 
-```text
-📋 수신자 선택
-├── 👥 전체 사용자
-│   └── 모든 가입자 (196명)
-│
-├── 🎫 플랫폼 티어별
-│   ├── 팀멤버 (101명) - user role만 있는 사용자
-│   ├── 예배인도자 (95명) - worship_leader role
-│   ├── 정회원 (0명) - premium 구독 active
-│   └── 공동체 어카운트 (1명) - church_account 소속
-│
-├── 📈 활동 상태별
-│   ├── 활성 사용자 (7일 내 접속)
-│   ├── 준활성 (7-30일 미접속)
-│   ├── 비활성 (30일+ 미접속)
-│   └── 신규 가입자 (7일 내 가입)
-│
-├── 🏠 커뮤니티 참여 상태별
-│   ├── 커뮤니티 참여중 (78명)
-│   ├── 커뮤니티 미참여 (118명) ← 중요 타겟!
-│   ├── 커뮤니티 오너 (63명)
-│   ├── 커뮤니티 리더 (1명)
-│   └── 커뮤니티 일반 멤버 (15명)
-│
-├── 🎯 특정 활동별
-│   ├── 예배 세트 생성자 (44명)
-│   ├── 예배 세트 미생성자
-│   ├── 게시글 작성자
-│   └── 승급 신청 대기자 (6명)
-│
-└── 🏢 특정 커뮤니티
-    └── [커뮤니티 선택 드롭다운]
+---
+
+## 기술 세부사항
+
+### 팀멤버 정확한 계산을 위한 쿼리 추가
+
+현재 CRM 데이터에서 전체 프로필 수를 가져오지 않으므로, 쿼리 추가 필요:
+
+```typescript
+const [
+  // ... existing queries
+  allProfilesResult,
+] = await Promise.all([
+  // ... existing
+  supabase.from("profiles").select("id", { count: "exact", head: true }),
+]);
+
+const totalProfileCount = allProfilesResult.count || 0;
 ```
 
----
-
-## 5단계: 데이터베이스 변경
-
-### RPC 함수 생성
-
-```sql
--- 플랫폼 티어별 사용자 조회 함수
-CREATE OR REPLACE FUNCTION get_users_by_platform_tier(tier_type TEXT)
-RETURNS TABLE (user_id UUID, email TEXT, full_name TEXT)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = 'public'
-AS $$
-BEGIN
-  CASE tier_type
-    -- 팀멤버: user role만 있고 worship_leader role이 없는 사용자
-    WHEN 'team_member' THEN
-      RETURN QUERY 
-      SELECT p.id, p.email, p.full_name FROM profiles p
-      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'user'
-      WHERE NOT EXISTS (
-        SELECT 1 FROM user_roles ur2 
-        WHERE ur2.user_id = p.id AND ur2.role = 'worship_leader'
-      ) AND p.email IS NOT NULL;
-    
-    -- 예배인도자: worship_leader role 있는 사용자
-    WHEN 'worship_leader' THEN
-      RETURN QUERY 
-      SELECT p.id, p.email, p.full_name FROM profiles p
-      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'worship_leader'
-      WHERE p.email IS NOT NULL;
-    
-    -- 정회원: worship_leader + premium subscription active
-    WHEN 'full_member' THEN
-      RETURN QUERY 
-      SELECT p.id, p.email, p.full_name FROM profiles p
-      JOIN user_roles ur ON ur.user_id = p.id AND ur.role = 'worship_leader'
-      JOIN premium_subscriptions ps ON ps.user_id = p.id 
-        AND ps.subscription_status = 'active'
-      WHERE p.email IS NOT NULL;
-    
-    -- 공동체 어카운트 멤버
-    WHEN 'church_account' THEN
-      RETURN QUERY 
-      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
-      JOIN church_account_members cam ON cam.user_id = p.id
-      WHERE p.email IS NOT NULL;
-  END CASE;
-END;
-$$;
-
--- 커뮤니티 참여 상태별 사용자 조회
-CREATE OR REPLACE FUNCTION get_users_by_community_status(status_type TEXT)
-RETURNS TABLE (user_id UUID, email TEXT, full_name TEXT)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = 'public'
-AS $$
-BEGIN
-  CASE status_type
-    -- 커뮤니티 참여중
-    WHEN 'in_community' THEN
-      RETURN QUERY 
-      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
-      JOIN community_members cm ON cm.user_id = p.id
-      WHERE p.email IS NOT NULL;
-    
-    -- 커뮤니티 미참여
-    WHEN 'not_in_community' THEN
-      RETURN QUERY 
-      SELECT p.id, p.email, p.full_name FROM profiles p
-      WHERE NOT EXISTS (
-        SELECT 1 FROM community_members cm WHERE cm.user_id = p.id
-      ) AND p.email IS NOT NULL;
-    
-    -- 커뮤니티 오너
-    WHEN 'community_owner' THEN
-      RETURN QUERY 
-      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
-      JOIN community_members cm ON cm.user_id = p.id AND cm.role = 'owner'
-      WHERE p.email IS NOT NULL;
-    
-    -- 커뮤니티 리더
-    WHEN 'community_leader' THEN
-      RETURN QUERY 
-      SELECT DISTINCT p.id, p.email, p.full_name FROM profiles p
-      JOIN community_members cm ON cm.user_id = p.id AND cm.role = 'community_leader'
-      WHERE p.email IS NOT NULL;
-  END CASE;
-END;
-$$;
+그 후 `getStats`에서:
+```typescript
+const teamMemberCount = totalProfileCount - crmData.worshipLeaders.length;
 ```
-
----
-
-## 6단계: 파일 변경 목록
-
-| 파일 | 변경 유형 | 설명 |
-|------|----------|------|
-| `src/pages/AdminTierWorkflow.tsx` | **새로 생성** | 티어/역할 워크플로우 시각화 페이지 |
-| `src/pages/AdminTierGuide.tsx` | 수정 | 워크플로우 페이지 링크 추가, 용어 정리 |
-| `src/pages/AdminCRM.tsx` | 수정 | 통계 카드 재구성 (플랫폼 티어 기반) |
-| `src/components/admin/email/EmailComposer.tsx` | 수정 | 수신자 그룹 계층 UI 재구성 |
-| `src/hooks/useTierFeature.ts` | 수정 | 명확한 tier 설명 추가 |
-| `src/lib/navigationConfig.ts` | 수정 | 관리자 메뉴에 워크플로우 페이지 추가 |
-| `src/App.tsx` | 수정 | 새 라우트 추가 |
-| DB 마이그레이션 | **새로 생성** | RPC 함수 + email_sender_settings 테이블 |
-
----
-
-## 7단계: UI 개선 - 워크플로우 페이지 디자인
-
-### AdminTierWorkflow.tsx 구성
-
-1. **상단 개요 카드**: 현재 티어별 사용자 수 실시간 표시
-2. **인터랙티브 다이어그램**: 승급 흐름을 클릭 가능한 노드로 표현
-3. **권한 매트릭스 테이블**: 각 티어/역할별 사용 가능 기능 체크리스트
-4. **용어 사전**: 혼란스러운 용어에 대한 명확한 정의
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  👑 티어 & 역할 워크플로우                                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │   팀멤버    │ │  예배인도자  │ │   정회원    │ │ 공동체계정  │           │
-│  │    101      │ │     95      │ │     0       │ │     1       │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘           │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                    [Interactive Workflow Diagram]                      │  │
-│  │                                                                        │  │
-│  │   회원가입 ──► 팀멤버 ──► 예배인도자 신청 ──► 자동승인               │  │
-│  │                 │              │                   │                   │  │
-│  │                 ▼              │                   ▼                   │  │
-│  │         커뮤니티 가입          │            커뮤니티 생성              │  │
-│  │                 │              │                   │                   │  │
-│  │                 ▼              │                   ▼                   │  │
-│  │           멤버 역할            │       오너 역할 (자동 부여)           │  │
-│  │                                │                                       │  │
-│  │                                ▼                                       │  │
-│  │                         프리미엄 결제 ──► 정회원                      │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  📊 권한 매트릭스                                                            │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 기능                   │ 팀멤버 │ 예배인도자 │ 정회원 │ 공동체계정     │  │
-│  ├───────────────────────────────────────────────────────────────────────┤  │
-│  │ 예배 세트 열람          │   ✓   │     ✓      │   ✓   │      ✓       │  │
-│  │ 커뮤니티 생성           │   ✗   │     ✓      │   ✓   │      ✓       │  │
-│  │ 곡 추가/편집            │   ✗   │     ✓      │   ✓   │      ✓       │  │
-│  │ AI 기능                │   ✗   │     ✗      │   ✓   │      ✓       │  │
-│  │ 팀 관리                │   ✗   │     ✗      │   ✗   │      ✓       │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 예상 결과
-
-1. **명확한 용어 체계**: 플랫폼 티어 vs 커뮤니티 역할 구분
-2. **정확한 CRM 통계**: 101명 팀멤버, 95명 예배인도자로 수정
-3. **타겟팅 이메일**: 118명 커뮤니티 미가입자에게 리마인더 가능
-4. **관리자 가이드**: 워크플로우 페이지로 온보딩 이해도 향상
-
