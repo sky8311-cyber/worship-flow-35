@@ -275,6 +275,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Credit daily login reward on SIGNED_IN event (fire-and-forget)
           if (event === "SIGNED_IN") {
             creditDailyLoginReward(session.user.id);
+            
+            // Update last_active_at for automated email tracking (fire-and-forget)
+            supabase.from('profiles').update({ 
+              last_active_at: new Date().toISOString() 
+            }).eq('id', session.user.id).then(() => {
+              console.log('[AuthContext] Updated last_active_at');
+            });
           }
           
           // Sync worship leader role after profile is loaded

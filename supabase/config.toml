@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.get-vapid-key]
 verify_jwt = false
+
+[functions.process-automated-emails]
+verify_jwt = false
