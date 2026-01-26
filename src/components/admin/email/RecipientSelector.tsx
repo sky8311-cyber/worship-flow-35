@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Users, Shield, Building2, Activity, Zap, Home,
-  Crown, UserCheck, UserX, Clock, Plus, MessageSquare, FileText
+  Crown, UserCheck, UserX, Clock, Plus, MessageSquare, FileText, Edit3, AlertCircle
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -94,10 +95,11 @@ const recipientCategories: RecipientCategory[] = [
 ];
 
 export interface RecipientFilter {
-  type: "segment" | "specific_community";
+  type: "segment" | "specific_community" | "manual";
   rpcFunction?: string;
   rpcParam?: string;
   communityId?: string;
+  manualEmails?: string[];
 }
 
 interface RecipientSelectorProps {
@@ -106,11 +108,27 @@ interface RecipientSelectorProps {
   recipientCount: number;
 }
 
+// Email validation helper
+const validateEmails = (input: string): { valid: string[]; invalid: string[] } => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emails = input
+    .split(/[,\n]/)
+    .map(e => e.trim())
+    .filter(e => e.length > 0);
+  
+  const valid = emails.filter(e => emailRegex.test(e));
+  const invalid = emails.filter(e => !emailRegex.test(e));
+  
+  return { valid, invalid };
+};
+
 export const RecipientSelector = ({ value, onChange, recipientCount }: RecipientSelectorProps) => {
   const { language } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedGroup, setSelectedGroup] = useState<string>("all_users");
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>("");
+  const [manualEmailInput, setManualEmailInput] = useState<string>("");
+  const [emailValidation, setEmailValidation] = useState<{ valid: string[]; invalid: string[] }>({ valid: [], invalid: [] });
 
   // Fetch communities for specific community selection
   const { data: communities = [] } = useQuery({
@@ -125,9 +143,22 @@ export const RecipientSelector = ({ value, onChange, recipientCount }: Recipient
     },
   });
 
+  // Validate manual email input when it changes
+  useEffect(() => {
+    if (selectedCategory === "manual") {
+      const validation = validateEmails(manualEmailInput);
+      setEmailValidation(validation);
+    }
+  }, [manualEmailInput, selectedCategory]);
+
   // Update filter when selection changes
   useEffect(() => {
-    if (selectedCategory === "specific_community") {
+    if (selectedCategory === "manual") {
+      onChange({
+        type: "manual",
+        manualEmails: emailValidation.valid,
+      });
+    } else if (selectedCategory === "specific_community") {
       if (selectedCommunityId) {
         onChange({
           type: "specific_community",
@@ -145,7 +176,7 @@ export const RecipientSelector = ({ value, onChange, recipientCount }: Recipient
         });
       }
     }
-  }, [selectedCategory, selectedGroup, selectedCommunityId, onChange]);
+  }, [selectedCategory, selectedGroup, selectedCommunityId, emailValidation.valid, onChange]);
 
   const currentCategory = recipientCategories.find(c => c.id === selectedCategory);
   const CategoryIcon = currentCategory?.icon || Users;
@@ -192,12 +223,46 @@ export const RecipientSelector = ({ value, onChange, recipientCount }: Recipient
                   {language === "ko" ? "특정 커뮤니티" : "Specific Community"}
                 </span>
               </SelectItem>
+              <SelectItem value="manual">
+                <span className="flex items-center gap-2">
+                  <Edit3 className="w-4 h-4" />
+                  {language === "ko" ? "수동 입력" : "Manual Input"}
+                </span>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Group Selection or Community Selection */}
-        {selectedCategory === "specific_community" ? (
+        {/* Group Selection, Community Selection, or Manual Input */}
+        {selectedCategory === "manual" ? (
+          <div className="space-y-2">
+            <Label>{language === "ko" ? "이메일 주소 입력" : "Enter Email Addresses"}</Label>
+            <Textarea
+              value={manualEmailInput}
+              onChange={(e) => setManualEmailInput(e.target.value)}
+              placeholder={language === "ko" 
+                ? "이메일 주소를 입력하세요\n(콤마 또는 줄바꿈으로 구분)\n\n예:\nsky@goodpapa.org\nuser@example.com" 
+                : "Enter email addresses\n(separated by comma or newline)\n\nExample:\nsky@goodpapa.org\nuser@example.com"}
+              className="min-h-[150px] font-mono text-sm"
+            />
+            {emailValidation.invalid.length > 0 && (
+              <div className="flex items-start gap-2 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    {language === "ko" 
+                      ? `${emailValidation.invalid.length}개 형식 오류:` 
+                      : `${emailValidation.invalid.length} invalid format:`}
+                  </p>
+                  <p className="text-xs opacity-80">
+                    {emailValidation.invalid.slice(0, 3).join(", ")}
+                    {emailValidation.invalid.length > 3 && ` +${emailValidation.invalid.length - 3}`}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : selectedCategory === "specific_community" ? (
           <div className="space-y-2">
             <Label>{language === "ko" ? "커뮤니티 선택" : "Select Community"}</Label>
             <Select value={selectedCommunityId} onValueChange={setSelectedCommunityId}>
@@ -239,7 +304,9 @@ export const RecipientSelector = ({ value, onChange, recipientCount }: Recipient
 
         {/* Recipient Count Display */}
         <div className="p-4 bg-muted rounded-lg text-center">
-          <p className="text-3xl font-bold">{recipientCount}</p>
+          <p className="text-3xl font-bold">
+            {selectedCategory === "manual" ? emailValidation.valid.length : recipientCount}
+          </p>
           <p className="text-sm text-muted-foreground">
             {language === "ko" ? "수신자" : "Recipients"}
           </p>

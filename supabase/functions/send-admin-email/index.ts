@@ -9,11 +9,12 @@ const corsHeaders = {
 };
 
 interface RecipientFilter {
-  type: "segment" | "specific_community" | "all" | "role" | "community";
+  type: "segment" | "specific_community" | "all" | "role" | "community" | "manual";
   rpcFunction?: string;
   rpcParam?: string;
   communityId?: string;
   roleValue?: string;
+  manualEmails?: string[];
 }
 
 interface SendAdminEmailRequest {
@@ -180,8 +181,36 @@ const handler = async (req: Request): Promise<Response> => {
         }];
       }
     } else {
+      // Handle manual email input
+      if (recipientFilter.type === "manual" && recipientFilter.manualEmails && recipientFilter.manualEmails.length > 0) {
+        console.log(`Processing ${recipientFilter.manualEmails.length} manual email addresses`);
+        
+        // Look up profiles for manual emails (to get names if they exist)
+        const { data: existingProfiles } = await supabaseClient
+          .from("profiles")
+          .select("id, email, full_name")
+          .in("email", recipientFilter.manualEmails);
+        
+        const existingEmailMap = new Map(
+          (existingProfiles || []).map(p => [p.email.toLowerCase(), p])
+        );
+        
+        // Create recipients from manual emails
+        recipients = recipientFilter.manualEmails.map(email => {
+          const normalizedEmail = email.toLowerCase();
+          const profile = existingEmailMap.get(normalizedEmail);
+          return {
+            user_id: profile?.id || null,
+            id: profile?.id || null,
+            email: email,
+            full_name: profile?.full_name || null,
+          };
+        });
+        
+        console.log(`Found ${existingProfiles?.length || 0} existing profiles out of ${recipients.length} manual emails`);
+      }
       // Handle new segment-based filtering using RPC functions
-      if (recipientFilter.type === "segment" && recipientFilter.rpcFunction && recipientFilter.rpcParam) {
+      else if (recipientFilter.type === "segment" && recipientFilter.rpcFunction && recipientFilter.rpcParam) {
         const rpcFn = recipientFilter.rpcFunction;
         const rpcParam = recipientFilter.rpcParam;
         
