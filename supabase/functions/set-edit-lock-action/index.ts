@@ -22,21 +22,101 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+    // 1. Verify authentication
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('[set-edit-lock-action] Missing or invalid Authorization header')
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create client with user's auth token to validate
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    })
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getClaims(token)
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error('[set-edit-lock-action] Auth validation failed:', claimsError)
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const authenticatedUserId = claimsData.claims.sub as string
+    console.log(`[set-edit-lock-action] Authenticated user: ${authenticatedUserId}`)
+
+    // Admin client for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
 
     const body: LockActionRequest = await req.json()
-    const { action, set_id, session_id, user_id, user_name, device, accept } = body
+    const { action, set_id, session_id, user_name, device, accept } = body
 
-    console.log(`[set-edit-lock-action] Action: ${action}, Set: ${set_id}, Session: ${session_id}`)
+    console.log(`[set-edit-lock-action] Action: ${action}, Set: ${set_id}, Session: ${session_id}, User: ${authenticatedUserId}`)
 
     if (!set_id || !session_id) {
       return new Response(
         JSON.stringify({ error: 'Missing set_id or session_id' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // 2. Verify user has access to this set
+    const { data: setData, error: setError } = await supabaseAdmin
+      .from('service_sets')
+      .select('id, created_by, community_id, status')
+      .eq('id', set_id)
+      .single()
+
+    if (setError || !setData) {
+      console.error('[set-edit-lock-action] Set not found:', setError)
+      return new Response(
+        JSON.stringify({ error: 'Set not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Check if user has access to this set
+    const isCreator = setData.created_by === authenticatedUserId
+    
+    // Check collaborator access
+    const { data: collabData } = await supabaseAdmin
+      .from('set_collaborators')
+      .select('id')
+      .eq('service_set_id', set_id)
+      .eq('user_id', authenticatedUserId)
+      .maybeSingle()
+    const isCollaborator = !!collabData
+
+    // Check community membership
+    const { data: memberData } = await supabaseAdmin
+      .from('community_members')
+      .select('id, role')
+      .eq('community_id', setData.community_id)
+      .eq('user_id', authenticatedUserId)
+      .maybeSingle()
+    const isCommunityMember = !!memberData
+    const isCommunityLeader = memberData?.role === 'community_leader' || memberData?.role === 'owner'
+
+    const hasAccess = isCreator || isCollaborator || isCommunityLeader || 
+                      (isCommunityMember && setData.status === 'published')
+
+    if (!hasAccess) {
+      console.error('[set-edit-lock-action] Access denied for user:', authenticatedUserId)
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: No access to this set' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -55,6 +135,8 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Use authenticated user ID instead of trusting client-supplied user_id
+
     let result: { success: boolean; message: string; data?: any } = { success: false, message: 'Unknown action' }
 
     switch (action) {
@@ -68,7 +150,7 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabaseAdmin
           .from('set_edit_locks')
           .update({
-            takeover_requested_by: user_id,
+            takeover_requested_by: authenticatedUserId,
             takeover_requested_at: new Date().toISOString(),
             takeover_requester_name: user_name || 'Unknown'
           })
@@ -91,7 +173,7 @@ Deno.serve(async (req) => {
         }
 
         // Only the requester can cancel their own request
-        if (currentLock.takeover_requested_by !== user_id) {
+        if (currentLock.takeover_requested_by !== authenticatedUserId) {
           result = { success: false, message: 'Only the requester can cancel' }
           break
         }
@@ -192,7 +274,7 @@ Deno.serve(async (req) => {
         const { error: updateError } = await supabaseAdmin
           .from('set_edit_locks')
           .update({
-            holder_user_id: user_id,
+            holder_user_id: authenticatedUserId,
             holder_session_id: session_id,
             holder_name: user_name || 'Unknown',
             holder_device: device || null,
