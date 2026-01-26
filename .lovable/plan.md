@@ -1,98 +1,132 @@
 
-# 공동체 나가기 후 사이드바 갱신 안됨 수정 계획
 
-## 문제 분석
+# 생년월일 입력 방식 개선 계획
 
-### 확인된 현상
-- 관리자가 "카나다 광림교회" 공동체에서 **나가기** 클릭
-- 대시보드로 이동되었으나 **좌측 사이드바에 여전히 해당 공동체 표시**
-- 새로고침하면 정상적으로 제거됨
+## 문제
 
-### 근본 원인: 쿼리 키 불일치
+현재 생년월일 입력이 `<Input type="date" />` (네이티브 HTML date 인풋)으로 구현되어 있습니다.
 
-| 위치 | 사용하는 쿼리 키 | 무효화 여부 |
-|------|-----------------|------------|
-| `CommunityManagement.tsx` (나가기) | 무효화: `["joined-communities"]` | - |
-| `useUserCommunities.ts` (핵심 데이터) | `["user-communities-unified", user?.id]` | **아니오** |
-| `Dashboard.tsx` (사이드바) | `["joined-communities", user?.id, ...]` | 부분적 |
-| `MobileSidebarDrawer.tsx` | `["joined-communities-sidebar", user?.id, ...]` | **아니오** |
-| `Dashboard.tsx` (예정 세트) | `["upcoming-sets", ...]` | **아니오** |
-| `MobileSidebarDrawer.tsx` | `["upcoming-sets-sidebar", ...]` | **아니오** |
-
-**결과**: 나가기 성공 후 핵심 데이터 소스인 `["user-communities-unified"]`가 무효화되지 않아 사이드바 캐시가 갱신되지 않음
+**문제점:**
+- 모바일에서 달력/휠 UI가 표시됨
+- 1997년처럼 오래된 연도를 선택하려면 **수십 번 스크롤/탭** 필요
+- 사용자 경험이 매우 불편함
 
 ---
 
-## 수정 계획
+## 해결 방안: 연/월/일 드롭다운 선택기
 
-### 전략: 핵심 쿼리 + 파생 쿼리 모두 무효화
+달력 대신 **3개의 드롭다운**으로 변경:
 
-`leaveCommunityMutation`의 `onSuccess`에서 모든 관련 쿼리 무효화:
-
-```typescript
-onSuccess: () => {
-  toast({ title: t("community.leaveSuccess") });
-  navigate("/dashboard");
-  
-  // 기존 (유지)
-  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
-  
-  // 추가: 핵심 데이터 소스
-  queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
-  
-  // 추가: 모바일 사이드바
-  queryClient.invalidateQueries({ queryKey: ["joined-communities-sidebar"] });
-  
-  // 추가: 예정 세트 (communityIds에 의존)
-  queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-  queryClient.invalidateQueries({ queryKey: ["upcoming-sets-sidebar"] });
-},
 ```
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│  1997  ▼│  │   3월  ▼│  │   15  ▼│
+└─────────┘  └─────────┘  └─────────┘
+    연도          월           일
+```
+
+**장점:**
+- 연도를 바로 선택 가능 (1900~현재)
+- 모바일에서도 빠르고 쉬운 선택
+- 달력 스크롤 필요 없음
 
 ---
 
-## 파일 변경 내용
+## 구현 계획
 
-### `src/pages/CommunityManagement.tsx` (Line 706-710)
+### 1단계: 재사용 가능한 컴포넌트 생성
 
-**변경 전:**
+**새 파일:** `src/components/ui/date-dropdown-picker.tsx`
+
 ```typescript
-onSuccess: () => {
-  toast({ title: t("community.leaveSuccess") });
-  navigate("/dashboard");
-  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
-},
+interface DateDropdownPickerProps {
+  value: string;           // YYYY-MM-DD 형식
+  onChange: (date: string) => void;
+  minYear?: number;        // 기본값: 1900
+  maxYear?: number;        // 기본값: 현재 연도
+  required?: boolean;
+  disabled?: boolean;
+}
 ```
 
-**변경 후:**
+**기능:**
+- 연도: 현재 연도 ~ 1900년 (내림차순, 최신 연도 먼저)
+- 월: 1월 ~ 12월 (한국어/영어 지원)
+- 일: 선택된 월에 따라 28~31일 동적 표시
+- 윤년 자동 처리
+- 출력값: `YYYY-MM-DD` 문자열 (기존 호환성 유지)
+
+### 2단계: 회원가입 페이지 수정
+
+**파일:** `src/pages/auth/SignUp.tsx`
+
 ```typescript
-onSuccess: () => {
-  toast({ title: t("community.leaveSuccess") });
-  navigate("/dashboard");
-  
-  // Invalidate all community-related queries
-  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
-  queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
-  queryClient.invalidateQueries({ queryKey: ["joined-communities-sidebar"] });
-  queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-  queryClient.invalidateQueries({ queryKey: ["upcoming-sets-sidebar"] });
-},
+// 변경 전
+<Input
+  id="birthDate"
+  type="date"
+  required
+  value={formData.birthDate}
+  onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+/>
+
+// 변경 후
+<DateDropdownPicker
+  value={formData.birthDate}
+  onChange={(date) => setFormData({ ...formData, birthDate: date })}
+  required
+/>
 ```
+
+### 3단계: 초대 회원가입 페이지 수정
+
+**파일:** `src/pages/InvitedSignUp.tsx`
+
+동일한 방식으로 `<DateDropdownPicker />` 적용
+
+### 4단계: 프로필 편집 다이얼로그 수정
+
+**파일:** `src/components/profile/ProfileEditDialog.tsx`
+
+동일한 방식으로 `<DateDropdownPicker />` 적용
 
 ---
 
 ## 파일 변경 요약
 
-| 파일 | 라인 | 변경 내용 |
-|------|------|----------|
-| `CommunityManagement.tsx` | 709 | 5개 쿼리 키 무효화 추가 |
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/ui/date-dropdown-picker.tsx` | **새로 생성** - 연/월/일 드롭다운 컴포넌트 |
+| `src/pages/auth/SignUp.tsx` | `<Input type="date">` → `<DateDropdownPicker>` |
+| `src/pages/InvitedSignUp.tsx` | `<Input type="date">` → `<DateDropdownPicker>` |
+| `src/components/profile/ProfileEditDialog.tsx` | `<Input type="date">` → `<DateDropdownPicker>` |
+
+---
+
+## UI 디자인
+
+```text
+생년월일 *
+
+┌──────────────────────────────────────────────────┐
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐       │
+│  │   1997  ▼│  │   3월   ▼│  │   15일  ▼│       │
+│  └──────────┘  └──────────┘  └──────────┘       │
+│      연도          월            일              │
+└──────────────────────────────────────────────────┘
+```
+
+**특징:**
+- 각 드롭다운은 `<Select>` 컴포넌트 사용 (shadcn/ui)
+- 연도 목록: 최신 연도가 상단 (2026, 2025, 2024, ...)
+- 반응형: 모바일에서 세로 배치 가능
 
 ---
 
 ## 예상 결과
 
 수정 후:
-1. **나가기 클릭 시** → 대시보드로 이동
-2. **좌측 사이드바** → 즉시 해당 공동체 제거
-3. **모바일 사이드바** → 즉시 해당 공동체 제거
-4. **예정 세트 위젯** → 해당 공동체의 세트도 자동 제거
+1. **연도 선택** → 드롭다운에서 1997 바로 클릭
+2. **월 선택** → 드롭다운에서 원하는 월 선택
+3. **일 선택** → 드롭다운에서 원하는 일 선택
+4. **총 3번 탭**으로 생년월일 입력 완료 (기존 수십 번 스크롤 → 3번 클릭)
+
