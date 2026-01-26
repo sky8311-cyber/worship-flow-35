@@ -1,160 +1,98 @@
 
-
-# 뉴스피드 게시물 삭제/편집 후 UI 갱신 안됨 수정 계획
+# 공동체 나가기 후 사이드바 갱신 안됨 수정 계획
 
 ## 문제 분석
 
 ### 확인된 현상
-- 관리자가 뉴스피드에서 게시물 삭제 → **UI에서 사라지지 않음**
-- 새로고침하면 정상적으로 삭제됨 확인
-- 일반 유저도 동일한 문제 발생 예상
+- 관리자가 "카나다 광림교회" 공동체에서 **나가기** 클릭
+- 대시보드로 이동되었으나 **좌측 사이드바에 여전히 해당 공동체 표시**
+- 새로고침하면 정상적으로 제거됨
 
-### 근본 원인: **쿼리 키 불일치**
+### 근본 원인: 쿼리 키 불일치
 
-| 위치 | 사용하는 쿼리 키 |
-|------|-----------------|
-| `CommunityNewsfeed.tsx` (뉴스피드 데이터) | `["community-newsfeed", activeCommunityId]` |
-| `SocialFeedPost.tsx` (삭제/편집) | `["unified-community-feed"]` ❌ |
-| `ChatBubble.tsx` (삭제/편집) | `["unified-community-feed"]` ❌ |
-| `PostComposer.tsx` (새 글 작성) | `["unified-community-feed"]` ❌ |
+| 위치 | 사용하는 쿼리 키 | 무효화 여부 |
+|------|-----------------|------------|
+| `CommunityManagement.tsx` (나가기) | 무효화: `["joined-communities"]` | - |
+| `useUserCommunities.ts` (핵심 데이터) | `["user-communities-unified", user?.id]` | **아니오** |
+| `Dashboard.tsx` (사이드바) | `["joined-communities", user?.id, ...]` | 부분적 |
+| `MobileSidebarDrawer.tsx` | `["joined-communities-sidebar", user?.id, ...]` | **아니오** |
+| `Dashboard.tsx` (예정 세트) | `["upcoming-sets", ...]` | **아니오** |
+| `MobileSidebarDrawer.tsx` | `["upcoming-sets-sidebar", ...]` | **아니오** |
 
-**결과**: 삭제/편집/작성 후 `["unified-community-feed"]`를 무효화하지만, 실제 뉴스피드는 `["community-newsfeed", ...]` 쿼리를 사용하므로 **캐시가 갱신되지 않아 UI가 업데이트되지 않음**
-
-### 영향 범위
-1. **게시물 삭제** - 삭제했는데 화면에 그대로 표시됨
-2. **게시물 편집** - 수정했는데 이전 내용이 표시됨
-3. **새 게시물 작성** - 작성했는데 바로 피드에 안 나타남 (새로고침 필요)
+**결과**: 나가기 성공 후 핵심 데이터 소스인 `["user-communities-unified"]`가 무효화되지 않아 사이드바 캐시가 갱신되지 않음
 
 ---
 
 ## 수정 계획
 
-### 수정 전략
+### 전략: 핵심 쿼리 + 파생 쿼리 모두 무효화
 
-모든 mutation의 `onSuccess`에서 **두 쿼리 키 모두 무효화**:
-- `["unified-community-feed"]` - 기존 호환성 유지
-- `["community-newsfeed"]` - 커뮤니티별 뉴스피드 갱신
+`leaveCommunityMutation`의 `onSuccess`에서 모든 관련 쿼리 무효화:
 
 ```typescript
 onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] }); // 추가
-}
-```
-
-### 파일별 수정 내용
-
-#### 1. `src/components/dashboard/SocialFeedPost.tsx`
-
-**삭제 mutation (line 198-201):**
-```typescript
-// 변경 전
-onSuccess: () => {
-  toast.success(t("common.deleteSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-},
-
-// 변경 후
-onSuccess: () => {
-  toast.success(t("common.deleteSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
+  toast({ title: t("community.leaveSuccess") });
+  navigate("/dashboard");
+  
+  // 기존 (유지)
+  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+  
+  // 추가: 핵심 데이터 소스
+  queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
+  
+  // 추가: 모바일 사이드바
+  queryClient.invalidateQueries({ queryKey: ["joined-communities-sidebar"] });
+  
+  // 추가: 예정 세트 (communityIds에 의존)
+  queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+  queryClient.invalidateQueries({ queryKey: ["upcoming-sets-sidebar"] });
 },
 ```
 
-**편집 mutation (line 217-220):**
-```typescript
-// 변경 전
-onSuccess: () => {
-  toast.success(t("common.saveSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  setEditDialogOpen(false);
-},
+---
 
-// 변경 후
+## 파일 변경 내용
+
+### `src/pages/CommunityManagement.tsx` (Line 706-710)
+
+**변경 전:**
+```typescript
 onSuccess: () => {
-  toast.success(t("common.saveSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
-  setEditDialogOpen(false);
+  toast({ title: t("community.leaveSuccess") });
+  navigate("/dashboard");
+  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
 },
 ```
 
-#### 2. `src/components/dashboard/ChatBubble.tsx`
-
-**삭제 mutation (line 153-156):**
+**변경 후:**
 ```typescript
-// 변경 전
 onSuccess: () => {
-  toast.success(t("common.deleteSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
+  toast({ title: t("community.leaveSuccess") });
+  navigate("/dashboard");
+  
+  // Invalidate all community-related queries
+  queryClient.invalidateQueries({ queryKey: ["joined-communities"] });
+  queryClient.invalidateQueries({ queryKey: ["user-communities-unified"] });
+  queryClient.invalidateQueries({ queryKey: ["joined-communities-sidebar"] });
+  queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
+  queryClient.invalidateQueries({ queryKey: ["upcoming-sets-sidebar"] });
 },
-
-// 변경 후
-onSuccess: () => {
-  toast.success(t("common.deleteSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
-},
-```
-
-**편집 mutation (line 170-173):**
-```typescript
-// 변경 전
-onSuccess: () => {
-  toast.success(t("common.saveSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  setEditDialogOpen(false);
-},
-
-// 변경 후
-onSuccess: () => {
-  toast.success(t("common.saveSuccess"));
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
-  setEditDialogOpen(false);
-},
-```
-
-#### 3. `src/components/dashboard/PostComposer.tsx`
-
-**작성 mutation (line 40-44):**
-```typescript
-// 변경 전
-onSuccess: async (communityId) => {
-  toast.success(t("socialFeed.postSuccess"));
-  setContent("");
-  setUploadedImages([]);
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  // ...
-
-// 변경 후
-onSuccess: async (communityId) => {
-  toast.success(t("socialFeed.postSuccess"));
-  setContent("");
-  setUploadedImages([]);
-  queryClient.invalidateQueries({ queryKey: ["unified-community-feed"] });
-  queryClient.invalidateQueries({ queryKey: ["community-newsfeed"] });
-  // ...
 ```
 
 ---
 
 ## 파일 변경 요약
 
-| 파일 | 변경 라인 | 변경 내용 |
-|------|----------|----------|
-| `SocialFeedPost.tsx` | 200, 219 | `["community-newsfeed"]` 무효화 추가 |
-| `ChatBubble.tsx` | 155, 172 | `["community-newsfeed"]` 무효화 추가 |
-| `PostComposer.tsx` | 44 | `["community-newsfeed"]` 무효화 추가 |
+| 파일 | 라인 | 변경 내용 |
+|------|------|----------|
+| `CommunityManagement.tsx` | 709 | 5개 쿼리 키 무효화 추가 |
 
 ---
 
 ## 예상 결과
 
 수정 후:
-1. **게시물 삭제 시** → 즉시 뉴스피드에서 사라짐
-2. **게시물 편집 시** → 즉시 수정된 내용 표시
-3. **새 게시물 작성 시** → 즉시 뉴스피드에 나타남
-4. **관리자/일반 유저 동일하게 작동**
-
+1. **나가기 클릭 시** → 대시보드로 이동
+2. **좌측 사이드바** → 즉시 해당 공동체 제거
+3. **모바일 사이드바** → 즉시 해당 공동체 제거
+4. **예정 세트 위젯** → 해당 공동체의 세트도 자동 제거
