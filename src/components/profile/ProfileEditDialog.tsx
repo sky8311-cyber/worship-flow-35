@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateDropdownPicker } from "@/components/ui/date-dropdown-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -162,11 +163,9 @@ export function ProfileEditDialog({ open, onOpenChange }: ProfileEditDialogProps
 
             <div className="space-y-2">
               <Label htmlFor="birthDate">{t("profile.birthDate")}</Label>
-              <Input
-                id="birthDate"
-                type="date"
+              <DateDropdownPicker
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(date) => setBirthDate(date)}
               />
             </div>
 
