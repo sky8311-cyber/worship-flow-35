@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Users, Shield, Building2, Activity, Zap, Home,
-  Crown, UserCheck, UserX, Clock, Plus, MessageSquare, FileText, Edit3, AlertCircle
+  Crown, UserCheck, UserX, Clock, Plus, MessageSquare, FileText, Edit3, AlertCircle, Eye
 } from "lucide-react";
+import { RecipientListDialog } from "./RecipientListDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface RecipientCategory {
@@ -106,6 +108,8 @@ interface RecipientSelectorProps {
   value: RecipientFilter;
   onChange: (filter: RecipientFilter) => void;
   recipientCount: number;
+  excludedEmails?: string[];
+  onExcludedEmailsChange?: (emails: string[]) => void;
 }
 
 // Email validation helper
@@ -122,13 +126,20 @@ const validateEmails = (input: string): { valid: string[]; invalid: string[] } =
   return { valid, invalid };
 };
 
-export const RecipientSelector = ({ value, onChange, recipientCount }: RecipientSelectorProps) => {
+export const RecipientSelector = ({ 
+  value, 
+  onChange, 
+  recipientCount,
+  excludedEmails = [],
+  onExcludedEmailsChange,
+}: RecipientSelectorProps) => {
   const { language } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedGroup, setSelectedGroup] = useState<string>("all_users");
   const [selectedCommunityId, setSelectedCommunityId] = useState<string>("");
   const [manualEmailInput, setManualEmailInput] = useState<string>("");
   const [emailValidation, setEmailValidation] = useState<{ valid: string[]; invalid: string[] }>({ valid: [], invalid: [] });
+  const [showRecipientList, setShowRecipientList] = useState(false);
 
   // Fetch communities for specific community selection
   const { data: communities = [] } = useQuery({
@@ -303,14 +314,44 @@ export const RecipientSelector = ({ value, onChange, recipientCount }: Recipient
         ) : null}
 
         {/* Recipient Count Display */}
-        <div className="p-4 bg-muted rounded-lg text-center">
-          <p className="text-3xl font-bold">
-            {selectedCategory === "manual" ? emailValidation.valid.length : recipientCount}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {language === "ko" ? "수신자" : "Recipients"}
-          </p>
+        <div className="p-4 bg-muted rounded-lg text-center space-y-3">
+          <div>
+            <p className="text-3xl font-bold">
+              {selectedCategory === "manual" 
+                ? emailValidation.valid.length - excludedEmails.length
+                : recipientCount - excludedEmails.length}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {language === "ko" ? "수신자" : "Recipients"}
+              {excludedEmails.length > 0 && (
+                <span className="ml-1">
+                  ({language === "ko" ? `${excludedEmails.length}명 제외` : `${excludedEmails.length} excluded`})
+                </span>
+              )}
+            </p>
+          </div>
+          
+          {/* View Recipient List Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setShowRecipientList(true)}
+            disabled={(selectedCategory === "manual" ? emailValidation.valid.length : recipientCount) === 0}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            {language === "ko" ? "수신자 명단 보기" : "View Recipient List"}
+          </Button>
         </div>
+
+        {/* Recipient List Dialog */}
+        <RecipientListDialog
+          open={showRecipientList}
+          onOpenChange={setShowRecipientList}
+          filter={value}
+          excludedEmails={excludedEmails}
+          onExcludedEmailsChange={onExcludedEmailsChange}
+        />
       </CardContent>
     </Card>
   );
