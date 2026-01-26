@@ -10,6 +10,13 @@ import {
   ChevronDown, ChevronRight, Mail, Users, CheckCircle, XCircle, Clock, AlertCircle,
   UserX, Music, Bot
 } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
@@ -87,12 +94,15 @@ const emailTypeConfig: Record<string, { icon: React.ReactNode; label: string; la
   no_worship_set: { icon: <Music className="w-4 h-4" />, label: "Worship Set", labelKo: "워십세트" },
 };
 
+const ITEMS_PER_PAGE = 50;
+
 export const EmailLogs = () => {
   const { t, language } = useTranslation();
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState("manual");
   const [automatedTypeFilter, setAutomatedTypeFilter] = useState<string>("all");
+  const [automatedPage, setAutomatedPage] = useState(1);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["email-logs"],
@@ -107,18 +117,45 @@ export const EmailLogs = () => {
     },
   });
 
-  const { data: automatedLogs = [], isLoading: isLoadingAutomated } = useQuery({
-    queryKey: ["automated-email-log"],
+  const { data: automatedLogsCount = 0 } = useQuery({
+    queryKey: ["automated-email-log-count", automatedTypeFilter],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
+        .from("automated_email_log")
+        .select("*", { count: "exact", head: true });
+      
+      if (automatedTypeFilter !== "all") {
+        query = query.eq("email_type", automatedTypeFilter);
+      }
+      
+      const { count, error } = await query;
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: automatedLogs = [], isLoading: isLoadingAutomated } = useQuery({
+    queryKey: ["automated-email-log", automatedPage, automatedTypeFilter],
+    queryFn: async () => {
+      const from = (automatedPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
+      let query = supabase
         .from("automated_email_log")
         .select("*")
-        .order("sent_at", { ascending: false })
-        .limit(100);
+        .order("sent_at", { ascending: false });
+      
+      if (automatedTypeFilter !== "all") {
+        query = query.eq("email_type", automatedTypeFilter);
+      }
+      
+      const { data, error } = await query.range(from, to);
       if (error) throw error;
       return data as AutomatedEmailLog[];
     },
   });
+
+  const totalPages = Math.ceil(automatedLogsCount / ITEMS_PER_PAGE);
 
   const { data: recipients = [] } = useQuery({
     queryKey: ["email-recipients", selectedLogId],
@@ -153,11 +190,13 @@ export const EmailLogs = () => {
     }
   };
 
-  const filteredAutomatedLogs = automatedTypeFilter === "all"
-    ? automatedLogs
-    : automatedLogs.filter((log) => log.email_type === automatedTypeFilter);
+  // Reset page when filter changes
+  const handleFilterChange = (value: string) => {
+    setAutomatedTypeFilter(value);
+    setAutomatedPage(1);
+  };
 
-  const groupedAutomatedLogs = filteredAutomatedLogs.reduce((acc, log) => {
+  const groupedAutomatedLogs = automatedLogs.reduce((acc, log) => {
     const date = format(new Date(log.sent_at), "yyyy-MM-dd");
     if (!acc[date]) acc[date] = [];
     acc[date].push(log);
@@ -253,8 +292,13 @@ export const EmailLogs = () => {
 
         <TabsContent value="automated" className="mt-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{language === "ko" ? "자동 발송 기록" : "Automated Email History"}</h2>
-            <Select value={automatedTypeFilter} onValueChange={setAutomatedTypeFilter}>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold">{language === "ko" ? "자동 발송 기록" : "Automated Email History"}</h2>
+              <Badge variant="secondary">
+                {language === "ko" ? `총 ${automatedLogsCount}건` : `${automatedLogsCount} total`}
+              </Badge>
+            </div>
+            <Select value={automatedTypeFilter} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{language === "ko" ? "전체" : "All Types"}</SelectItem>
@@ -291,7 +335,7 @@ export const EmailLogs = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {dateLogs.slice(0, 10).map((log) => {
+                        {dateLogs.map((log) => {
                           const config = emailTypeConfig[log.email_type];
                           const status = statusConfig[log.status || "sent"] || statusConfig.sent;
                           return (
@@ -308,6 +352,31 @@ export const EmailLogs = () => {
                   </CardContent>
                 </Card>
               ))}
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Pagination className="mt-4">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setAutomatedPage(p => Math.max(1, p - 1))}
+                        className={automatedPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <span className="px-4 py-2 text-sm">
+                        {automatedPage} / {totalPages}
+                      </span>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setAutomatedPage(p => Math.min(totalPages, p + 1))}
+                        className={automatedPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           )}
         </TabsContent>
