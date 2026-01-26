@@ -4,11 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailComposer } from "@/components/admin/email/EmailComposer";
 import { TemplateLibrary } from "@/components/admin/email/TemplateLibrary";
 import { EmailLogs } from "@/components/admin/email/EmailLogs";
+import { EmailSettings } from "@/components/admin/email/EmailSettings";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Mail, FileText, History } from "lucide-react";
+import { Mail, FileText, History, Settings } from "lucide-react";
 
 const AdminEmail = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [activeTab, setActiveTab] = useState("compose");
 
   return (
@@ -38,6 +39,10 @@ const AdminEmail = () => {
               <History className="w-4 h-4" />
               {t("adminEmail.tabs.sendHistory")}
             </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              {language === "ko" ? "설정" : "Settings"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="compose">
@@ -50,6 +55,10 @@ const AdminEmail = () => {
 
           <TabsContent value="logs">
             <EmailLogs />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <EmailSettings />
           </TabsContent>
         </Tabs>
       </div>

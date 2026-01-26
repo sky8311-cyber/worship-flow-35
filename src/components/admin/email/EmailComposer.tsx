@@ -1,21 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { toast } from "sonner";
-import { Send, Eye, Users, Building2, Shield, Loader2, AlertTriangle } from "lucide-react";
+import { Send, Eye, Loader2, AlertTriangle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { RecipientSelector, RecipientFilter } from "./RecipientSelector";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -39,22 +38,17 @@ interface EmailTemplate {
   variables: unknown;
 }
 
-interface Community {
-  id: string;
-  name: string;
-}
-
-type RecipientType = "all" | "role" | "community";
-
 export const EmailComposer = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [subject, setSubject] = useState("");
   const [htmlContent, setHtmlContent] = useState("");
-  const [recipientType, setRecipientType] = useState<RecipientType>("all");
-  const [selectedRole, setSelectedRole] = useState<string>("");
-  const [selectedCommunityId, setSelectedCommunityId] = useState<string>("");
+  const [recipientFilter, setRecipientFilter] = useState<RecipientFilter>({
+    type: "segment",
+    rpcFunction: "get_users_by_platform_tier",
+    rpcParam: "all",
+  });
   const [showPreview, setShowPreview] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [recipientCount, setRecipientCount] = useState<number>(0);
@@ -73,43 +67,36 @@ export const EmailComposer = () => {
     },
   });
 
-  // Fetch communities
-  const { data: communities = [] } = useQuery({
-    queryKey: ["all-communities"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("worship_communities")
-        .select("id, name")
-        .order("name");
-      if (error) throw error;
-      return data as Community[];
-    },
-  });
-
   // Get recipient count based on filter
   const { data: countData, refetch: refetchCount } = useQuery({
-    queryKey: ["recipient-count", recipientType, selectedRole, selectedCommunityId],
+    queryKey: ["recipient-count", recipientFilter],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("id", { count: "exact", head: true });
-      
-      if (recipientType === "role" && selectedRole) {
-        const { count } = await supabase
-          .from("user_roles")
-          .select("*", { count: "exact", head: true })
-          .eq("role", selectedRole as "admin" | "user" | "worship_leader");
-        return count || 0;
-      } else if (recipientType === "community" && selectedCommunityId) {
+      if (recipientFilter.type === "segment" && recipientFilter.rpcFunction && recipientFilter.rpcParam) {
+        let data: any[] = [];
+        if (recipientFilter.rpcFunction === "get_users_by_platform_tier") {
+          const result = await supabase.rpc("get_users_by_platform_tier", { tier_type: recipientFilter.rpcParam });
+          data = result.data || [];
+        } else if (recipientFilter.rpcFunction === "get_users_by_community_status") {
+          const result = await supabase.rpc("get_users_by_community_status", { status_type: recipientFilter.rpcParam });
+          data = result.data || [];
+        } else if (recipientFilter.rpcFunction === "get_users_by_activity_status") {
+          const result = await supabase.rpc("get_users_by_activity_status", { activity_type: recipientFilter.rpcParam });
+          data = result.data || [];
+        }
+        return data.length;
+      } else if (recipientFilter.type === "specific_community" && recipientFilter.communityId) {
         const { count } = await supabase
           .from("community_members")
           .select("*", { count: "exact", head: true })
-          .eq("community_id", selectedCommunityId);
-        return count || 0;
-      } else {
-        const { count } = await query;
+          .eq("community_id", recipientFilter.communityId);
         return count || 0;
       }
+      return 0;
     },
-    enabled: recipientType === "all" || (recipientType === "role" && !!selectedRole) || (recipientType === "community" && !!selectedCommunityId),
+    enabled: !!(
+      (recipientFilter.type === "segment" && recipientFilter.rpcFunction) ||
+      (recipientFilter.type === "specific_community" && recipientFilter.communityId)
+    ),
   });
 
   useEffect(() => {
@@ -132,6 +119,11 @@ export const EmailComposer = () => {
     }
   }, [selectedTemplateId, templates]);
 
+  // Handle filter change with useCallback to prevent infinite loops
+  const handleFilterChange = useCallback((filter: RecipientFilter) => {
+    setRecipientFilter(filter);
+  }, []);
+
   // Send email mutation
   const sendEmailMutation = useMutation({
     mutationFn: async (testMode: boolean) => {
@@ -143,11 +135,7 @@ export const EmailComposer = () => {
           templateId: selectedTemplateId || undefined,
           subject,
           htmlContent,
-          recipientFilter: {
-            type: recipientType,
-            roleValue: recipientType === "role" ? selectedRole : undefined,
-            communityId: recipientType === "community" ? selectedCommunityId : undefined,
-          },
+          recipientFilter,
           testMode,
         },
       });
@@ -178,12 +166,8 @@ export const EmailComposer = () => {
       toast.error(t("adminEmail.composer.pleaseEnterContent"));
       return;
     }
-    if (recipientType === "role" && !selectedRole) {
-      toast.error(t("adminEmail.composer.pleaseSelectRole"));
-      return;
-    }
-    if (recipientType === "community" && !selectedCommunityId) {
-      toast.error(t("adminEmail.composer.pleaseSelectCommunity"));
+    if (recipientCount === 0) {
+      toast.error(language === "ko" ? "수신자가 없습니다" : "No recipients selected");
       return;
     }
     setShowConfirmDialog(true);
@@ -272,70 +256,12 @@ export const EmailComposer = () => {
 
       {/* Sidebar */}
       <div className="space-y-6">
-        {/* Recipients */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t("adminEmail.composer.recipients")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <RadioGroup value={recipientType} onValueChange={(v) => setRecipientType(v as RecipientType)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="all" />
-                <Label htmlFor="all" className="flex items-center gap-2 cursor-pointer">
-                  <Users className="w-4 h-4" />
-                  {t("adminEmail.composer.allUsers")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="role" id="role" />
-                <Label htmlFor="role" className="flex items-center gap-2 cursor-pointer">
-                  <Shield className="w-4 h-4" />
-                  {t("adminEmail.composer.byRole")}
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="community" id="community" />
-                <Label htmlFor="community" className="flex items-center gap-2 cursor-pointer">
-                  <Building2 className="w-4 h-4" />
-                  {t("adminEmail.composer.byCommunity")}
-                </Label>
-              </div>
-            </RadioGroup>
-
-            {recipientType === "role" && (
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("adminEmail.composer.selectRole")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">{t("adminEmail.composer.roleAdmin")}</SelectItem>
-                  <SelectItem value="worship_leader">{t("adminEmail.composer.roleWorshipLeader")}</SelectItem>
-                  <SelectItem value="user">{t("adminEmail.composer.roleUser")}</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-
-            {recipientType === "community" && (
-              <Select value={selectedCommunityId} onValueChange={setSelectedCommunityId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("adminEmail.composer.selectCommunity")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {communities.map((community) => (
-                    <SelectItem key={community.id} value={community.id}>
-                      {community.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            <div className="p-3 bg-muted rounded-lg text-center">
-              <p className="text-2xl font-bold">{recipientCount}</p>
-              <p className="text-sm text-muted-foreground">{t("adminEmail.composer.recipients")}</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Recipients - New Segment Selector */}
+        <RecipientSelector 
+          value={recipientFilter}
+          onChange={handleFilterChange}
+          recipientCount={recipientCount}
+        />
 
         {/* Actions */}
         <Card>
