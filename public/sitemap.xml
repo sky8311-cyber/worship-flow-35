@@ -56,6 +56,15 @@
     <priority>0.3</priority>
   </url>
   
+  <!-- News -->
+  <url>
+    <loc>https://kworship.app/news</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://kworship.app/news"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://kworship.app/news"/>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- Press -->
   <url>
     <loc>https://kworship.app/press</loc>

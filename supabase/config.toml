@@ -86,3 +86,9 @@ verify_jwt = false
 
 [functions.process-automated-emails]
 verify_jwt = false
+
+[functions.rss-feed]
+verify_jwt = false
+
+[functions.process-event-reminders]
+verify_jwt = false
