@@ -364,19 +364,25 @@ export function PrintOptionsDialog({
             }
             .score-page {
               page-break-after: always;
-              height: 100vh;
-              width: 100vw;
+              page-break-inside: avoid;
+              width: 100%;
+              min-height: 100vh;
               display: flex;
               align-items: center;
               justify-content: center;
-              background: black;
-              padding: 0;
+              background: white;
+              padding: 16px;
               margin: 0;
-              position: relative;
+              box-sizing: border-box;
+            }
+            .score-page:last-child {
+              page-break-after: avoid;
             }
             .score-page img {
-              width: 100%;
-              height: 100%;
+              max-width: 100%;
+              max-height: calc(100vh - 32px);
+              width: auto;
+              height: auto;
               object-fit: contain;
             }
             
@@ -484,23 +490,45 @@ export function PrintOptionsDialog({
             }
             
             @media print {
-              @page { margin: 0; size: auto; }
-              body { margin: 0; padding: 0; }
-              .score-page { 
-                page-break-inside: avoid;
-                height: 100vh !important;
-                width: 100vw !important;
-                background: black;
+              @page { 
+                margin: 10mm;
+                size: A4 portrait;
               }
-              .score-page:last-child { page-break-after: avoid; }
-              .score-page img {
+              html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+              }
+              .score-page { 
+                page-break-after: always;
+                page-break-inside: avoid;
                 width: 100% !important;
-                height: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+              }
+              .score-page:last-child { 
+                page-break-after: avoid; 
+              }
+              .score-page img {
+                max-width: 100% !important;
+                max-height: 260mm !important;
+                width: auto !important;
+                height: auto !important;
                 object-fit: contain !important;
               }
               .full-page {
                 page-break-inside: avoid;
-                height: 100vh !important;
+                height: auto !important;
+                min-height: 0 !important;
+              }
+              .full-page:last-child {
+                page-break-after: avoid;
               }
             }
           </style>

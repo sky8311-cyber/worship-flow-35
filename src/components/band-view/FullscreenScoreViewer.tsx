@@ -29,6 +29,10 @@ export function FullscreenScoreViewer({
   const [zoom, setZoom] = useState(1);
   const [isActualFullscreen, setIsActualFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // iOS/Fullscreen detection
+  const isFullscreenSupported = typeof document.fullscreenEnabled !== 'undefined' && document.fullscreenEnabled;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
@@ -118,13 +122,19 @@ export function FullscreenScoreViewer({
   // Request fullscreen and lock orientation to portrait on open
   useEffect(() => {
     if (open && containerRef.current) {
-      // Try to request fullscreen
-      containerRef.current.requestFullscreen?.()
-        .then(() => setIsActualFullscreen(true))
-        .catch(() => {
-          // Fullscreen not supported, continue anyway
-          setIsActualFullscreen(true); // Treat as fullscreen for UI purposes
-        });
+      // Try to request fullscreen - only on supported non-iOS devices
+      if (isFullscreenSupported && !isIOS) {
+        containerRef.current.requestFullscreen?.()
+          .then(() => setIsActualFullscreen(true))
+          .catch(() => {
+            // Fullscreen failed on desktop - keep false to show recovery overlay
+            console.log('[FullscreenViewer] Fullscreen request failed');
+          });
+      } else {
+        // iOS/unsupported: Skip fullscreen API entirely, use fixed overlay mode
+        // Mark as "operational" to hide recovery overlay
+        setIsActualFullscreen(true);
+      }
 
       // Lock orientation to portrait (for consistent iPad experience)
       if ('orientation' in screen && (screen.orientation as any)?.lock) {
@@ -477,8 +487,9 @@ export function FullscreenScoreViewer({
       </div>
 
       {/* Fullscreen Recovery Overlay - shows when fullscreen exited (e.g., iPad screen off/on) */}
-      {!isActualFullscreen && (
-        <div 
+      {/* Only show on devices that actually support fullscreen API and are not iOS */}
+      {!isActualFullscreen && isFullscreenSupported && !isIOS && (
+        <div
           className="absolute inset-0 z-20 bg-black/95 flex flex-col items-center justify-center gap-6"
           onClick={(e) => e.stopPropagation()}
         >
