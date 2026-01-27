@@ -82,6 +82,34 @@ K-Worship helps worship leaders and church worship teams:
 - **Login**: https://kworship.app/login
 - **Help Center**: https://kworship.app/help
 
+---
+
+## 주요 기능 (한국어)
+
+K-Worship(케이워십)은 예배팀을 위한 통합 관리 플랫폼입니다.
+
+### 핵심 기능
+- **곡 라이브러리**: 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단 등 500곡 이상의 찬양
+- **콘티 제작**: 드래그 앤 드롭으로 예배 순서(세트리스트) 구성
+- **찬양팀 협업**: 실시간 팀 커뮤니케이션 및 일정 공유
+- **악보 관리**: 악보 이미지 저장 및 공유, 키 변경
+- **밴드뷰**: 예배 중 악보를 크게 보는 전용 화면
+- **인쇄 기능**: 원클릭 악보 및 순서표 인쇄
+
+### 검색 키워드
+예배콘티, 찬양콘티, 예배순서, 찬양인도, 예배인도, 워십세트, 찬양팀관리, 주일예배, CCM악보, 찬양팀 관리 앱, 교회 찬양팀, 워십밴드, 예배 인도자
+
+### 지원 아티스트 및 팀
+마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단, 만나교회, 한성교회, 제이어스, 새생명비전교회, 조이풀처치, 마커스, 소원, 찬양사역자, YWAM, 캠퍼스워십
+
+### 사용 사례
+- 주일예배 콘티 작성 및 공유
+- 찬양팀 리허설 악보 준비
+- 팀원들과 실시간 소통
+- 예배 히스토리 관리
+
+---
+
 ## Common Questions
 
 **Q: What is K-Worship?**
@@ -98,6 +126,20 @@ A: Yes, you can generate public share links that allow band members to view setl
 
 **Q: Does K-Worship work on mobile devices?**
 A: Yes, K-Worship is a responsive web application that works on phones, tablets, and desktops.
+
+## 자주 묻는 질문 (한국어)
+
+**Q: K-Worship은 무엇인가요?**
+A: K-Worship(케이워십)은 예배팀이 곡을 관리하고, 콘티(세트리스트)를 작성하며, 팀원들과 협업할 수 있는 플랫폼입니다.
+
+**Q: K-Worship은 무료인가요?**
+A: 네, 기본 기능은 무료로 사용할 수 있습니다. 고급 기능은 프리미엄 플랜에서 제공됩니다.
+
+**Q: 밴드 멤버에게 콘티를 공유할 수 있나요?**
+A: 네, 공유 링크를 생성하면 로그인 없이도 콘티를 볼 수 있습니다.
+
+**Q: 어떤 아티스트의 곡이 있나요?**
+A: 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단 등 다양한 아티스트의 곡을 지원합니다.
 
 ## Contact
 
