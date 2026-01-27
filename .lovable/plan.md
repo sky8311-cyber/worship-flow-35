@@ -1,213 +1,250 @@
 
-# Settings About 섹션 확장 + Page Analytics 기능 구현
+# K-Worship 정보 페이지 신설 및 네비게이션 개편
 
-## 1부: Settings About 섹션에 약관/앱 히스토리 추가
+## 요약
 
-### 현재 상태
-About 카드에 뉴스, 주요 기능, 브랜드에셋 링크가 있음
+아바타 메뉴에 "K-Worship 정보" 메뉴를 새로 추가하고, 여기에 다음 페이지들을 통합합니다:
+- 뉴스 (News)
+- 주요 기능 (Features)
+- 브랜드에셋 (Brand Assets)
+- 약관 및 정책 (Legal)
+- 앱 히스토리 (App History)
+- 소셜미디어 링크
 
-### 추가할 항목
-| 항목 | 경로 | 아이콘 |
-|------|------|--------|
-| 약관 및 정책 | `/legal` | `FileText` |
-| 앱 히스토리 | `/app-history` | `History` |
-
-### 변경 파일
-| 파일 | 작업 |
-|------|------|
-| `src/pages/Settings.tsx` | About 카드에 2개 버튼 추가 |
+기존 아바타 메뉴의 "약관 및 정책", "앱 히스토리" 메뉴는 삭제하고, Settings 페이지의 About 카드도 제거합니다.
 
 ---
 
-## 2부: Page Analytics 기능 구현
-
-Lovable Cloud에 이미 기본 애널리틱스가 있지만, 다음과 같은 **커스텀 페이지 추적 시스템**을 구축하면 더 상세한 인사이트를 얻을 수 있습니다:
-
-### 기능 요구사항
-1. **페이지뷰 추적**: 어느 페이지에 가장 많이 방문하는지
-2. **체류 시간**: 각 페이지에서 얼마나 머무는지
-3. **드롭오프 분석**: 어디에서 이탈하는지
-4. **About 페이지 클릭 추적**: 새로 추가된 About 링크들의 사용률
-
-### 기술 아키텍처
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend                              │
-├─────────────────────────────────────────────────────────┤
-│  usePageAnalytics Hook                                   │
-│  - 페이지 진입 시 pageview 기록                           │
-│  - 페이지 이탈 시 duration 업데이트                       │
-│  - visibilitychange 이벤트로 정확한 체류시간 측정          │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Database                              │
-├─────────────────────────────────────────────────────────┤
-│  page_analytics 테이블                                   │
-│  - id, user_id (nullable), session_id                   │
-│  - page_path, page_title                                │
-│  - entered_at, exited_at, duration_seconds              │
-│  - referrer_path (이전 페이지)                           │
-│  - device_type, created_at                              │
-└─────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│              Admin Analytics Page                        │
-├─────────────────────────────────────────────────────────┤
-│  /admin/analytics                                        │
-│  - Top Pages (막대 차트)                                 │
-│  - Avg Duration per Page (차트)                          │
-│  - User Flow / Drop-off 분석                            │
-│  - 기간별 필터링                                          │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 구현 계획
-
-#### Phase 1: 데이터베이스 스키마
-
-```sql
--- 페이지 애널리틱스 테이블
-CREATE TABLE page_analytics (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  session_id TEXT NOT NULL,
-  page_path TEXT NOT NULL,
-  page_title TEXT,
-  referrer_path TEXT,
-  entered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  exited_at TIMESTAMPTZ,
-  duration_seconds INTEGER,
-  device_type TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
--- 인덱스
-CREATE INDEX idx_page_analytics_path ON page_analytics(page_path);
-CREATE INDEX idx_page_analytics_entered_at ON page_analytics(entered_at);
-
--- RLS 정책 (INSERT는 모든 사용자, SELECT/UPDATE는 본인만, Admin은 모두)
-ALTER TABLE page_analytics ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Anyone can insert analytics"
-  ON page_analytics FOR INSERT TO authenticated, anon
-  WITH CHECK (true);
-
-CREATE POLICY "Users can update own analytics"
-  ON page_analytics FOR UPDATE TO authenticated
-  USING (user_id = auth.uid());
-
-CREATE POLICY "Admins can view all analytics"
-  ON page_analytics FOR SELECT TO authenticated
-  USING (
-    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
-  );
-```
-
-#### Phase 2: Analytics Hook
-
-| 파일 | 설명 |
-|------|------|
-| `src/hooks/usePageAnalytics.ts` | 페이지뷰/체류시간 추적 훅 |
-
-핵심 로직:
-- 페이지 진입 시 `page_analytics`에 INSERT
-- `visibilitychange` 또는 route 변경 시 `exited_at`, `duration_seconds` UPDATE
-- 세션 ID는 `sessionStorage`로 관리 (브라우저 탭당 고유)
-
-#### Phase 3: App.tsx 통합
-
-라우터 레벨에서 `usePageAnalytics` 훅 호출하여 모든 페이지에 자동 적용
-
-#### Phase 4: Admin Analytics 페이지
-
-| 파일 | 설명 |
-|------|------|
-| `src/pages/AdminAnalytics.tsx` | 관리자 분석 대시보드 |
-| `src/components/admin/AdminNav.tsx` | 메뉴에 Analytics 추가 |
-| `src/App.tsx` | 라우트 추가 |
-
-#### Admin Analytics UI 구성
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ 📊 Page Analytics                    [7일 ▼] [새로고침] │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ┌─────────────────┐  ┌─────────────────┐               │
-│  │ Total Views     │  │ Unique Visitors │               │
-│  │     4,725       │  │     1,356       │               │
-│  └─────────────────┘  └─────────────────┘               │
-│                                                          │
-│  ┌─────────────────────────────────────────────────────┐│
-│  │ 📈 Top Pages by Views                               ││
-│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
-│  │ /                          ████████████████ 805     ││
-│  │ /app                       ██████████ 329           ││
-│  │ /dashboard                 ████████ 264             ││
-│  │ /signup                    ███████ 235              ││
-│  │ /songs                     █████ 158                ││
-│  │ /settings (About 클릭)     ██ 45                    ││
-│  └─────────────────────────────────────────────────────┘│
-│                                                          │
-│  ┌─────────────────────────────────────────────────────┐│
-│  │ ⏱️ Average Duration by Page                         ││
-│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
-│  │ /set-builder          4m 32s                        ││
-│  │ /band-view            3m 15s                        ││
-│  │ /songs                2m 48s                        ││
-│  │ /settings             1m 12s                        ││
-│  └─────────────────────────────────────────────────────┘│
-│                                                          │
-│  ┌─────────────────────────────────────────────────────┐│
-│  │ 🚪 Drop-off Analysis (Bounce Rate by Page)          ││
-│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
-│  │ / (Landing)           58% bounce                    ││
-│  │ /signup               45% bounce                    ││
-│  │ /login                32% bounce                    ││
-│  └─────────────────────────────────────────────────────┘│
-│                                                          │
-└─────────────────────────────────────────────────────────┘
-```
-
-### 전체 파일 변경 목록
+## 변경 파일 목록
 
 | 파일 | 작업 |
 |------|------|
-| `src/pages/Settings.tsx` | About 카드에 Legal, App History 버튼 추가 |
-| `src/hooks/usePageAnalytics.ts` | 새 파일 - 페이지 추적 훅 |
-| `src/App.tsx` | Analytics 훅 통합 + 라우트 추가 |
-| `src/pages/AdminAnalytics.tsx` | 새 파일 - 관리자 분석 페이지 |
-| `src/components/admin/AdminNav.tsx` | Analytics 메뉴 항목 추가 |
-| Migration | `page_analytics` 테이블 생성 |
+| `src/pages/KWorshipInfo.tsx` | **신규** - K-Worship 정보 페이지 |
+| `src/App.tsx` | 라우트 추가 (`/kworship-info`) |
+| `src/components/layout/AppHeader.tsx` | 아바타 메뉴 변경 (K-Worship 정보 추가, 약관/앱히스토리 제거) |
+| `src/pages/Settings.tsx` | About K-Worship 카드 섹션 제거 |
+| `src/pages/Help.tsx` | Breadcrumb 추가 |
+| `src/pages/Referral.tsx` | Breadcrumb 추가 |
 
-### 추가 고려사항
+---
 
-**프라이버시**: 
-- 로그인하지 않은 사용자도 익명으로 추적 (user_id NULL 허용)
-- 개인 식별 정보 최소화
+## 상세 구현
 
-**성능**:
-- INSERT는 비동기로 처리 (페이지 로딩 차단하지 않음)
-- 과도한 데이터 누적 방지를 위해 90일 이상 오래된 데이터 자동 삭제 정책 가능
+### 1. K-Worship 정보 페이지 (신규)
 
-### 기존 Lovable Analytics 활용
+경로: `/kworship-info`
 
-참고로 현재 Lovable Cloud에서 제공하는 기본 애널리틱스 데이터:
-- **방문자**: 1,356명 (최근 7일)
-- **페이지뷰**: 4,725
-- **Top 페이지**: /, /app, /dashboard, /signup, /songs
-- **트래픽 소스**: Threads (600), Direct (685)
-- **기기**: Mobile 87%, Desktop 11%
-- **국가**: KR 67%, CA 17%, US 7%
+```text
+┌─────────────────────────────────────────────────────────┐
+│ [AppHeader - 기존 Top Nav 유지]                          │
+├─────────────────────────────────────────────────────────┤
+│ 🏠 > K-Worship 정보                    (Breadcrumb)     │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│ K-Worship 정보                                          │
+│ K-Worship에 대해 알아보세요                              │
+│                                                          │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ 📰 뉴스                                  [바로가기 →] │ │
+│ │    최신 소식과 업데이트를 확인하세요                   │ │
+│ ├─────────────────────────────────────────────────────┤ │
+│ │ ✨ 주요 기능                             [바로가기 →] │ │
+│ │    K-Worship의 핵심 기능을 알아보세요                 │ │
+│ ├─────────────────────────────────────────────────────┤ │
+│ │ 🎨 브랜드에셋                            [바로가기 →] │ │
+│ │    로고, 컬러 등 브랜드 자료                          │ │
+│ ├─────────────────────────────────────────────────────┤ │
+│ │ 📄 약관 및 정책                          [바로가기 →] │ │
+│ │    이용약관, 개인정보처리방침                          │ │
+│ ├─────────────────────────────────────────────────────┤ │
+│ │ 📜 앱 히스토리                           [바로가기 →] │ │
+│ │    K-Worship의 발자취                                │ │
+│ └─────────────────────────────────────────────────────┘ │
+│                                                          │
+│ ─────────────────────────────────────────────────────── │
+│                                                          │
+│ 팔로우하기                                               │
+│ [Instagram] [Threads] [YouTube] [Email]                 │
+│                                                          │
+│ ─────────────────────────────────────────────────────── │
+│                                                          │
+│ © 2026 Goodpapa Inc. All rights reserved.               │
+│ K-Worship™ is a trademark of Goodpapa Inc.              │
+│                                                          │
+├─────────────────────────────────────────────────────────┤
+│ [BottomTabNavigation - 기존 Bottom Nav 유지]             │
+└─────────────────────────────────────────────────────────┘
+```
 
-커스텀 시스템은 이 데이터를 보완하여:
-- 페이지별 체류 시간
-- 사용자 흐름 (A→B 이동 패턴)
-- About 섹션 같은 특정 UI 요소 클릭 추적
+**구현 특징:**
+- `AppLayout` 사용하여 Top/Bottom Nav 유지
+- 각 링크는 `Link` 컴포넌트로 해당 페이지로 이동
+- Breadcrumb으로 현재 위치 표시
 
-을 추가로 제공합니다.
+### 2. 아바타 메뉴 변경
 
+**변경 전 (AppHeader.tsx):**
+```
+- 설정
+- 도움말
+- 친구 초대
+- 약관 및 정책  ← 제거
+- 앱 히스토리   ← 제거
+- 로그아웃
+```
+
+**변경 후:**
+```
+- 설정
+- 도움말
+- 친구 초대
+- K-Worship 정보  ← 신규 (Info 아이콘)
+- 로그아웃
+```
+
+### 3. 하위 페이지 Breadcrumb 추가
+
+각 하위 페이지에서 AppLayout의 `breadcrumb` prop을 활용하여 위치 표시:
+
+**News 페이지:**
+```
+🏠 > K-Worship 정보 > 뉴스
+```
+
+**Features 페이지:**
+```
+🏠 > K-Worship 정보 > 주요 기능
+```
+
+**Press (Brand Assets) 페이지:**
+```
+🏠 > K-Worship 정보 > 브랜드에셋
+```
+
+**Legal 페이지:**
+```
+🏠 > K-Worship 정보 > 약관 및 정책
+```
+
+**AppHistory 페이지:**
+```
+🏠 > K-Worship 정보 > 앱 히스토리
+```
+
+### 4. Help, Settings, Referral 페이지 Breadcrumb 추가
+
+현재 이 페이지들은 breadcrumb이 없으므로 추가:
+
+**Help 페이지:**
+```
+🏠 > 도움말
+```
+
+**Settings 페이지:**
+```
+🏠 > 설정
+```
+
+**Referral 페이지:**
+```
+🏠 > 친구 초대
+```
+
+### 5. Settings 페이지 About 카드 제거
+
+Settings.tsx 하단의 "K-Worship 정보" Card 섹션을 제거합니다.
+(약 660~742번째 줄)
+
+---
+
+## 기술 세부 사항
+
+### Breadcrumb 컴포넌트 사용
+
+```tsx
+import { 
+  Breadcrumb, 
+  BreadcrumbList, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbSeparator, 
+  BreadcrumbPage 
+} from "@/components/ui/breadcrumb";
+import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
+
+// 예시: K-Worship 정보 페이지
+<AppLayout 
+  breadcrumb={
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard"><Home className="h-4 w-4" /></Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>K-Worship 정보</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  }
+>
+```
+
+### K-Worship 정보 페이지 링크 목록
+
+```tsx
+const infoLinks = [
+  {
+    path: "/news",
+    icon: Newspaper,
+    titleKo: "뉴스",
+    titleEn: "News",
+    descriptionKo: "최신 소식과 업데이트를 확인하세요",
+    descriptionEn: "Check latest news and updates",
+  },
+  {
+    path: "/features",
+    icon: Sparkles,
+    titleKo: "주요 기능",
+    titleEn: "Key Features",
+    descriptionKo: "K-Worship의 핵심 기능을 알아보세요",
+    descriptionEn: "Discover K-Worship's core features",
+  },
+  {
+    path: "/press",
+    icon: Palette,
+    titleKo: "브랜드에셋",
+    titleEn: "Brand Assets",
+    descriptionKo: "로고, 컬러 등 브랜드 자료",
+    descriptionEn: "Logo, colors, and brand materials",
+  },
+  {
+    path: "/legal",
+    icon: FileText,
+    titleKo: "약관 및 정책",
+    titleEn: "Terms & Policies",
+    descriptionKo: "이용약관, 개인정보처리방침",
+    descriptionEn: "Terms of service, privacy policy",
+  },
+  {
+    path: "/app-history",
+    icon: History,
+    titleKo: "앱 히스토리",
+    titleEn: "App History",
+    descriptionKo: "K-Worship의 발자취",
+    descriptionEn: "K-Worship's journey",
+  },
+];
+```
+
+---
+
+## 예상 결과
+
+1. **아바타 메뉴 간소화**: 5개 항목에서 약관/앱히스토리 제거, K-Worship 정보 1개 추가
+2. **일관된 위치 표시**: 모든 서브페이지에 Breadcrumb으로 현재 위치 표시
+3. **정보 통합**: 앱 관련 정보를 한 곳에서 쉽게 접근
+4. **Settings 페이지 정리**: About 카드 제거로 페이지 간소화
