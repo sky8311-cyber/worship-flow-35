@@ -78,7 +78,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
       <header className="border-b border-border/50 bg-card/95 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-3">
-            {/* Left: Menu button + Logo (Mobile/Tablet) | Home Icon (Desktop) */}
+            {/* Left: Menu button + Logo (Mobile/Tablet) | Breadcrumb or Home Icon (Desktop) */}
             <div className="justify-self-start flex items-center gap-2">
               <Button 
                 variant="ghost" 
@@ -95,9 +95,16 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 <HeaderLogo />
               </Link>
               
-              <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Home className="h-4 w-4" />
-              </Link>
+              {/* Desktop: Show breadcrumb in place of Home icon, or Home icon if no breadcrumb */}
+              {breadcrumb ? (
+                <div className="hidden lg:block">
+                  {breadcrumb}
+                </div>
+              ) : (
+                <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Home className="h-4 w-4" />
+                </Link>
+              )}
             </div>
           
           {/* Center: Logo - Desktop only */}
@@ -249,9 +256,9 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
           </div>
         </div>
         
-        {/* Breadcrumb Row */}
+        {/* Breadcrumb Row - Mobile/Tablet only */}
         {breadcrumb && (
-          <div className="container mx-auto px-4 pb-2 pt-2">
+          <div className="container mx-auto px-4 pb-2 pt-4 lg:hidden">
             {breadcrumb}
           </div>
         )}
