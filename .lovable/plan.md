@@ -1,75 +1,93 @@
 
-# 예배공작소 (Worship Studio) 로딩 안됨 문제 수정
 
-## 문제 분석
+# `last_active_at` 세션 복원 시 업데이트 누락 수정
 
-### 현재 상태
-- **네트워크**: 정상 (room 데이터 + 4개 위젯 반환됨)
-- **콘솔 에러**: 없음
-- **증상**: 탭, 사이드바, BGM 바는 보이지만 그리드 콘텐츠가 안 보임
+## 문제 요약
 
-### 근본 원인: CSS Height Chain 끊김
+### 발견된 버그
+| 사용자 | profiles.last_active_at | auth.users.updated_at | 상태 |
+|--------|-------------------------|----------------------|------|
+| 권수현 (skyksh011@gmail.com) | 43일 전 | **2일 전** | ❌ 누락 |
+| Branden (brandenyoon@gmail.com) | 44일 전 | **2일 전** | ❌ 누락 |
+| Sb (imssbb@gmail.com) | 32일 전 | **어제** | ❌ 누락 |
 
-```text
-WorshipStudio.tsx (line 92)
-└── div.flex-1.h-0.flex ← 높이 OK ✅
-      └── StudioMainPanel.tsx
-            └── Tabs.flex-1.h-0.flex.flex-col ← 높이 OK ✅
-                  └── TabsContent.flex-1.h-0 ← 높이 OK ✅
-                        │
-                        │ ⚠️ TabsPrimitive.Content는 display: block
-                        │    flex-1은 부모가 flex일 때만 작동하지만,
-                        │    자식에게 높이를 전달하려면 자신도 flex이어야 함
-                        │
-                        └── StudioView div.h-full ← h-full의 기준이 0px!
-                              └── 콘텐츠가 보이지 않음 ❌
-```
-
-**핵심 문제**: `TabsContent`가 `flex-1`로 높이를 받지만, `display: block`이라 자식에게 높이를 전달하지 못함
+### 근본 원인
+1. **`handleVisibilityChange`에서 `last_active_at` 업데이트 누락**
+   - 탭이 다시 visible 될 때 `fetchProfile()`만 호출
+   - `last_active_at` 업데이트 코드가 없음
+   
+2. **세션 복원 시 이벤트 미발생**
+   - 브라우저 탭을 닫지 않고 배경에 두었다가 다시 열면
+   - 기존 세션이 유효하면 `INITIAL_SESSION`, `TOKEN_REFRESHED` 이벤트가 발생하지 않음
+   - 팀멤버들이 탭만 열어보고 워십히스토리를 확인하는 사용 패턴
 
 ---
 
 ## 해결 방법
 
-### 파일: `src/components/worship-studio/StudioMainPanel.tsx`
+### 파일: `src/contexts/AuthContext.tsx`
 
-`TabsContent`에 `flex flex-col`을 추가하여 자식에게 높이를 전달:
-
-```typescript
-// 변경 전 (line 69)
-<TabsContent value="studio" className="flex-1 h-0 overflow-hidden mt-0 p-0">
-
-// 변경 후
-<TabsContent value="studio" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
-```
-
-모든 `TabsContent`에 동일하게 적용:
-- line 69: studio 탭
-- line 76: feed 탭
-- line 81: drafts 탭
-- line 87: discover 탭
-
-### 파일: `src/components/worship-studio/StudioView.tsx`
-
-자식이 flex container의 높이를 채우도록 수정:
+`handleVisibilityChange` 함수에 `last_active_at` 업데이트 추가:
 
 ```typescript
-// 변경 전 (line 98)
-<div className="h-full overflow-y-auto">
+// 변경 전 (line 308-334)
+const handleVisibilityChange = async () => {
+  if (document.visibilityState === 'visible') {
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (now - lastRefreshRef.current < fiveMinutes) {
+      return;
+    }
+    
+    lastRefreshRef.current = now;
+    const startEpoch = authEpochRef.current;
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession && mounted && authEpochRef.current === startEpoch && prevUserIdRef.current === currentSession.user.id) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        await fetchProfile(currentSession.user.id);
+        await syncWorshipLeaderRole();
+      }
+    } catch (err) {
+      console.log('Session refresh error:', err);
+    }
+  }
+};
 
 // 변경 후
-<div className="flex-1 overflow-y-auto">
-```
-
----
-
-## Height Chain 수정 후 구조
-
-```text
-Tabs.flex.flex-col
-└── TabsContent.flex-1.flex.flex-col ← 이제 flex container ✅
-      └── StudioView div.flex-1 ← flex-1로 부모 높이 채움 ✅
-            └── 콘텐츠 정상 표시 ✅
+const handleVisibilityChange = async () => {
+  if (document.visibilityState === 'visible') {
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (now - lastRefreshRef.current < fiveMinutes) {
+      return;
+    }
+    
+    lastRefreshRef.current = now;
+    const startEpoch = authEpochRef.current;
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (currentSession && mounted && authEpochRef.current === startEpoch && prevUserIdRef.current === currentSession.user.id) {
+        setSession(currentSession);
+        setUser(currentSession.user);
+        await fetchProfile(currentSession.user.id);
+        await syncWorshipLeaderRole();
+        
+        // ✅ 추가: 탭 재활성화 시 last_active_at 업데이트
+        supabase.from('profiles').update({ 
+          last_active_at: new Date().toISOString() 
+        }).eq('id', currentSession.user.id).then(() => {
+          console.log('[AuthContext] Updated last_active_at on tab visibility');
+        });
+      }
+    } catch (err) {
+      console.log('Session refresh error:', err);
+    }
+  }
+};
 ```
 
 ---
@@ -78,13 +96,19 @@ Tabs.flex.flex-col
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/worship-studio/StudioMainPanel.tsx` | 모든 TabsContent에 `flex flex-col` 추가 |
-| `src/components/worship-studio/StudioView.tsx` | `h-full` → `flex-1`로 변경 |
+| `src/contexts/AuthContext.tsx` | `handleVisibilityChange`에 `last_active_at` 업데이트 추가 |
 
 ---
 
 ## 예상 결과
 
-1. **즉시 콘텐츠 표시**: 커버 이미지와 위젯 그리드가 정상 렌더링
-2. **스크롤 정상 작동**: 세로 스크롤 가능
-3. **모든 탭 정상 작동**: Feed, Drafts, Discover 탭도 동일하게 수정됨
+1. **세션 복원 활동 추적**: 탭을 다시 열 때 (5분 debounce 이후) `last_active_at` 업데이트
+2. **팀멤버 활동 기록**: 로그인 없이 탭만 열어서 워십히스토리 확인해도 활동 기록
+3. **자동 이메일 정확도 향상**: 실제로 최근에 접속한 사용자가 "미접속자" 명단에서 제외
+
+---
+
+## 참고: 기존 사용자 데이터 수정
+
+이미 잘못된 `last_active_at`을 가진 사용자들의 경우, `auth.users.updated_at`을 기반으로 백필하는 것은 어렵습니다 (`updated_at`은 패스워드 변경 등 다른 업데이트도 포함하기 때문). 다만, 이 수정 후 사용자들이 다시 접속하면 자동으로 올바른 값이 기록됩니다.
+
