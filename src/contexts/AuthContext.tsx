@@ -177,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
 
-      const response = await supabase.functions.invoke('sync-worship-leader-role', {
+      const response = await supabase.functions.invoke('sync-worship-leader-role-v2', {
         headers: {
           Authorization: `Bearer ${currentSession.access_token}`,
         },
