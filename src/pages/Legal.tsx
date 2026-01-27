@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,10 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Shield, Copyright, Award, Loader2 } from "lucide-react";
+import { FileText, Shield, Copyright, Award, Loader2, Home } from "lucide-react";
 import { format } from "date-fns";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 type LegalDocumentType = 'terms' | 'privacy' | 'copyright' | 'trademark';
 
@@ -161,10 +170,38 @@ const Legal = () => {
     </>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/kworship-info">
+              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            {language === "ko" ? "약관 및 정책" : "Terms & Policies"}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   // Authenticated users get the full app layout with navigation
   if (user) {
     return (
-      <AppLayout>
+      <AppLayout breadcrumb={breadcrumb}>
         <main className="container mx-auto px-4 py-8 max-w-4xl">
           <LegalContent />
         </main>

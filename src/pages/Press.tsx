@@ -6,11 +6,19 @@ import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
-import { Download, Palette, Mail, FileImage, ExternalLink } from "lucide-react";
+import { Download, Palette, Mail, FileImage, ExternalLink, Home } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import kworshipLogoDesktop from "@/assets/kworship-logo-desktop.png";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 const Press = () => {
   const { language } = useTranslation();
@@ -269,9 +277,37 @@ const Press = () => {
     </div>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/kworship-info">
+              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            {language === "ko" ? "브랜드에셋" : "Brand Assets"}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   // For authenticated users, wrap in AppLayout
   if (user) {
-    return <AppLayout>{content}</AppLayout>;
+    return <AppLayout breadcrumb={breadcrumb}>{content}</AppLayout>;
   }
 
   return content;
