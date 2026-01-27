@@ -21,48 +21,50 @@ export default function CommunitySearch() {
   const { data: communities, isLoading } = useQuery({
     queryKey: ["communities-search", searchQuery],
     queryFn: async () => {
-      let query = supabase
+      // Fetch all active communities (no server-side search filter)
+      const { data: communities, error } = await supabase
         .from("worship_communities")
         .select("*")
         .eq("is_active", true);
 
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
-      }
-
-      const { data: communities, error } = await query;
       if (error) throw error;
-      
       if (!communities || communities.length === 0) return [];
       
-      // Fetch leader profiles - gracefully handle RLS restrictions
+      // Fetch leader profiles
       const leaderIds = communities.map(c => c.leader_id);
       const { data: profiles } = await supabase
         .from("profiles")
         .select("id, full_name")
         .in("id", leaderIds);
-      // Don't throw on profile errors - just use what we can get
       
-      // Fetch member counts - gracefully handle RLS restrictions
+      // Fetch member counts
       const communityIds = communities.map(c => c.id);
       const { data: memberCounts } = await supabase
         .from("community_members")
         .select("community_id")
         .in("community_id", communityIds);
-      // Don't throw on count errors - just use what we can get
       
-      // Count members per community
       const counts = memberCounts?.reduce((acc, m) => {
         acc[m.community_id] = (acc[m.community_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
       
       // Merge all data
-      return communities.map(c => ({
+      const enrichedCommunities = communities.map(c => ({
         ...c,
         profiles: profiles?.find(p => p.id === c.leader_id),
         member_count: counts?.[c.id] || 0
       }));
+      
+      // Client-side filtering (name, description, owner name)
+      if (!searchQuery) return enrichedCommunities;
+      
+      const lowerQuery = searchQuery.toLowerCase();
+      return enrichedCommunities.filter(c => 
+        c.name?.toLowerCase().includes(lowerQuery) ||
+        c.description?.toLowerCase().includes(lowerQuery) ||
+        c.profiles?.full_name?.toLowerCase().includes(lowerQuery)
+      );
     },
   });
 
