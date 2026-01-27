@@ -222,7 +222,7 @@ export const LandingFooter = () => {
                 <AtSign className="w-5 h-5" />
               </a>
               <a 
-                href="https://youtube.com/@kworship.app" 
+                href="https://www.youtube.com/@kworship_app" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary-foreground/70 hover:text-primary-foreground transition-colors"
