@@ -6,7 +6,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { NewsCard } from "@/components/news/NewsCard";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Rss } from "lucide-react";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const categories = [
   { value: "all", labelKo: "전체", labelEn: "All" },
@@ -74,17 +72,7 @@ const News = () => {
       />
 
       {/* Header for non-authenticated users */}
-      {!user && (
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/">
-              <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
-              <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-12" />
-            </Link>
-            <LanguageToggle />
-          </div>
-        </header>
-      )}
+      {!user && <PublicPageHeader />}
 
       <main className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Page Header */}

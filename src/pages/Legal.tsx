@@ -3,17 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
-import { LanguageToggle } from "@/components/LanguageToggle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { FileText, Shield, Copyright, Award, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { format } from "date-fns";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 
 type LegalDocumentType = 'terms' | 'privacy' | 'copyright' | 'trademark';
 
@@ -178,21 +175,7 @@ const Legal = () => {
   // Public users get minimal header
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="hidden md:block">
-              <img src={logoDesktop} alt="K-Worship" className="h-16 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
-            </Link>
-            <Link to="/" className="md:hidden">
-              <img src={logoMobile} alt="K-Worship" className="h-12 w-auto cursor-pointer hover:opacity-80 transition-opacity object-contain" />
-            </Link>
-            <div className="flex items-center gap-4">
-              <LanguageToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicPageHeader />
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <LegalContent />

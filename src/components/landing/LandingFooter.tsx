@@ -20,7 +20,7 @@ export const LandingFooter = () => {
   const companyLinks = [
     { to: "/news", label: language === "ko" ? "뉴스" : "News" },
     { to: "/app-history", label: language === "ko" ? "앱 히스토리" : "App History" },
-    { to: "/press", label: language === "ko" ? "보도자료" : "Press Kit" },
+    { to: "/press", label: language === "ko" ? "브랜드에셋" : "Brand Assets" },
   ];
 
   const supportLinks = [
