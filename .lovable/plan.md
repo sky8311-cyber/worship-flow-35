@@ -1,198 +1,141 @@
 
 
-# 모바일 전체화면 & 인쇄 기능 개선
+# 모바일 전용 인쇄 수정 (데스크톱 유지)
 
-## 문제 1: 모바일 전체화면이 축소된 상태로 유지됨
+## 현재 상황
 
-### 근본 원인
-1. **iOS Safari에서 Fullscreen API 미지원**: iPhone은 `requestFullscreen()` API를 지원하지 않음
-2. **잘못된 상태 처리**: API 실패 시 `isActualFullscreen = true`로 설정하지만, 실제로는 fullscreen이 아님
-3. **Recovery overlay가 잘못 표시됨**: `!isActualFullscreen` 조건으로 overlay가 표시되면서 콘텐츠가 가려짐
+### 이미 잘 작동하는 것
+- **데스크톱 인쇄**: 현재 완벽하게 작동 중 ✅
+- **iframe 방식**: 데스크톱에서 잘 작동
+
+### 문제가 있는 것
+- **모바일 인쇄**: iOS Safari에서 12페이지로 분할됨
+
+## 해결 전략: 모바일 전용 CSS 분리
+
+기존 `@media print` 규칙은 그대로 유지하고, 모바일 전용 규칙을 **별도의 @media 쿼리**로 추가합니다.
 
 ```text
-현재 로직:
-requestFullscreen()
-  ├── 성공 → isActualFullscreen = true ✅
-  └── 실패 → isActualFullscreen = true ← 문제! overlay 조건과 충돌
-                                          모바일에서 true로 설정했지만
-                                          실제 fullscreen 아님
-```
-
-### 해결 방법
-
-**파일: `src/components/band-view/FullscreenScoreViewer.tsx`**
-
-1. **iOS 감지 및 다른 처리**: iOS에서는 fullscreen API 대신 전체화면 UI만 제공
-2. **Recovery overlay 조건 수정**: 실제 fullscreen을 지원하는 기기에서만 표시
-3. **상태 분리**: `isFullscreenSupported`와 `isActualFullscreen` 분리
-
-```typescript
-// 변경 전 (line 30)
-const [isActualFullscreen, setIsActualFullscreen] = useState(false);
-
-// 변경 후
-const [isActualFullscreen, setIsActualFullscreen] = useState(false);
-const isFullscreenSupported = typeof document.fullscreenEnabled !== 'undefined' 
-  && document.fullscreenEnabled;
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-```
-
-```typescript
-// 변경 전 (line 119-127)
-containerRef.current.requestFullscreen?.()
-  .then(() => setIsActualFullscreen(true))
-  .catch(() => {
-    setIsActualFullscreen(true); // ← 문제: 실패해도 true 설정
-  });
-
-// 변경 후
-if (isFullscreenSupported && !isIOS) {
-  containerRef.current.requestFullscreen?.()
-    .then(() => setIsActualFullscreen(true))
-    .catch(() => {
-      // Fullscreen failed, but we're still in pseudo-fullscreen mode
-      // Don't set isActualFullscreen to true - this will skip the recovery overlay
-    });
-} else {
-  // iOS/unsupported: Skip fullscreen API entirely, use fixed overlay mode
-  // No recovery overlay needed since we never requested fullscreen
-  setIsActualFullscreen(true); // Mark as "operational" to hide recovery overlay
-}
-```
-
-```typescript
-// 변경 전 (line 480)
-{!isActualFullscreen && (
-
-// 변경 후 - iOS와 fullscreen 미지원 기기에서는 recovery overlay 표시하지 않음
-{!isActualFullscreen && isFullscreenSupported && !isIOS && (
+@media print                    ← 기존 (데스크톱 포함 모든 기기)
+@media print and (max-width: 768px)  ← 새로 추가 (모바일 전용)
 ```
 
 ---
 
-## 문제 2: 모바일 인쇄 시 페이지 수 과다 (3-4곡 → 12페이지)
+## 변경 내용
 
-### 근본 원인
-1. **`100vh` 계산 문제**: 모바일 Safari에서 `100vh`가 주소창을 포함한 높이로 계산되어 실제 화면보다 큼
-2. **이미지 overflow**: `height: 100%`가 컨테이너를 초과하면 페이지 분할 발생
-3. **`page-break-after: always`**: 모든 score-page에 적용되어 빈 페이지 추가
+### 파일: `src/components/band-view/PrintOptionsDialog.tsx`
 
-### 해결 방법
+#### 기존 `@media print` 유지 (line 492-533)
+데스크톱에서 잘 작동하는 기존 규칙을 **그대로 유지**합니다.
 
-**파일: `src/components/band-view/PrintOptionsDialog.tsx`**
-
-1. **`100vh` 대신 고정 A4 크기 사용**: 프린트 시 일관된 페이지 크기
-2. **이미지 max-height 제한**: 페이지 내에 완전히 포함되도록
-3. **마지막 페이지 page-break 제거**: 불필요한 빈 페이지 방지
+#### 모바일 전용 `@media print` 추가
+`@media print` 블록 바로 뒤에 모바일 전용 규칙을 추가:
 
 ```css
-/* 변경 전 (line 365-381) */
-.score-page {
-  page-break-after: always;
-  height: 100vh;
-  width: 100vw;
-  display: flex;
-  ...
-}
-.score-page img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* 변경 후 */
-.score-page {
-  page-break-after: always;
-  page-break-inside: avoid;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white; /* 검정 배경은 인쇄 시 잉크 낭비 */
-  padding: 16px;
-  box-sizing: border-box;
-}
-.score-page:last-child {
-  page-break-after: avoid;
-}
-.score-page img {
-  max-width: 100%;
-  max-height: calc(100vh - 32px); /* padding 고려 */
-  width: auto;
-  height: auto;
-  object-fit: contain;
-}
-```
-
-```css
-/* 변경 전 @media print (line 486-505) */
-@media print {
-  @page { margin: 0; size: auto; }
-  body { margin: 0; padding: 0; }
-  .score-page { 
-    height: 100vh !important;
-    width: 100vw !important;
-    ...
-  }
-}
-
-/* 변경 후 */
+/* 기존 @media print 그대로 유지 */
 @media print {
   @page { 
     margin: 10mm;
     size: A4 portrait;
   }
+  /* ... 기존 규칙 유지 ... */
+}
+
+/* 새로 추가: 모바일 전용 인쇄 규칙 */
+@media print and (max-width: 768px) {
+  @page { 
+    margin: 8mm;
+    size: A4 portrait;
+  }
   html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body {
+    padding: 0 !important;
   }
   .score-page { 
-    page-break-after: always;
-    page-break-inside: avoid;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    break-after: page !important;
+    break-inside: avoid !important;
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    max-height: none !important;
+    display: block !important;
     padding: 0 !important;
     margin: 0 !important;
+    background: white !important;
+    overflow: visible !important;
   }
   .score-page:last-child { 
-    page-break-after: avoid; 
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
   .score-page img {
     max-width: 100% !important;
-    max-height: 260mm !important; /* A4 높이(297mm) - margin(37mm) */
+    max-height: 270mm !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
   }
 }
+```
+
+### 파일: `src/components/band-view/FullscreenScoreViewer.tsx`
+
+z-index 변경은 모바일/데스크톱 모두에 적용해도 문제 없음 (더 높은 z-index일 뿐):
+
+```typescript
+// line 329
+className="fixed inset-0 z-[100] bg-black flex flex-col"
 ```
 
 ---
 
 ## 변경 파일
 
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/components/band-view/FullscreenScoreViewer.tsx` | iOS 감지 추가, recovery overlay 조건 수정, fullscreen 요청 로직 개선 |
-| `src/components/band-view/PrintOptionsDialog.tsx` | `100vh` → 고정 A4 크기, 이미지 max-height 제한, @media print 규칙 개선 |
+| 파일 | 변경 내용 | 영향 범위 |
+|------|----------|----------|
+| `src/components/band-view/FullscreenScoreViewer.tsx` | z-index `z-50` → `z-[100]` | 모든 기기 (무해함) |
+| `src/components/band-view/PrintOptionsDialog.tsx` | `@media print and (max-width: 768px)` 추가 | **모바일 전용** |
+
+---
+
+## 미디어 쿼리 동작 원리
+
+```text
+데스크톱 (width > 768px):
+  @media print              ✅ 적용
+  @media print and (max-width: 768px)  ❌ 무시
+
+모바일 (width <= 768px):
+  @media print              ✅ 적용 (기본 규칙)
+  @media print and (max-width: 768px)  ✅ 적용 (덮어쓰기)
+```
+
+모바일에서는 두 규칙이 모두 적용되지만, 뒤에 오는 모바일 전용 규칙이 `!important`와 더 구체적인 선택자로 덮어씁니다.
 
 ---
 
 ## 예상 결과
 
-### 전체화면
-1. **iPhone**: 검정 배경 전체화면 UI로 악보 표시 (recovery overlay 없음)
-2. **iPad**: 실제 Fullscreen API 사용, 화면 꺼짐 후 recovery overlay 표시
-3. **Android**: 실제 Fullscreen API 사용
+### 데스크톱 인쇄
+- **변경 없음** - 기존 규칙 그대로 유지
+- 기존처럼 완벽하게 작동
 
-### 인쇄
-1. **3-4곡 → 3-4페이지**: 악보당 정확히 1페이지
-2. **A4 크기에 맞춤**: 악보가 페이지 중앙에 꽉 차게 표시
-3. **모바일/데스크톱 동일**: 일관된 인쇄 결과
+### 모바일 인쇄
+- 악보당 1페이지로 수정
+- `max-height: 270mm`으로 A4에 맞춤
+- `display: block`으로 flex 레이아웃 문제 해결
+
+### 전체화면
+- z-index 증가로 하단 네비게이션 완전히 숨김
 
