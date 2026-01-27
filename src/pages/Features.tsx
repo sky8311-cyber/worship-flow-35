@@ -2,7 +2,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
@@ -20,8 +20,6 @@ import {
   Building2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const Features = () => {
   const { language } = useTranslation();
@@ -127,17 +125,7 @@ const Features = () => {
         jsonLd={featuresJsonLd}
       />
       {/* Header for non-authenticated users */}
-      {!user && (
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/">
-              <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
-              <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-12" />
-            </Link>
-            <LanguageToggle />
-          </div>
-        </header>
-      )}
+      {!user && <PublicPageHeader />}
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 max-w-6xl">

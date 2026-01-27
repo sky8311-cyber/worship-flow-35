@@ -1,14 +1,18 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mail, HelpCircle, ChevronRight, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer } from "lucide-react";
+import { Mail, HelpCircle, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/seo/SEOHead";
 
 const Help = () => {
   const { language } = useTranslation();
+  const { user } = useAuth();
   const [showEmail, setShowEmail] = useState(false);
 
   const faqItems = language === "ko" ? [
@@ -811,8 +815,8 @@ Method 2 - Share Link:
     }))
   };
 
-  return (
-    <AppLayout>
+  const helpContent = (
+    <>
       <SEOHead
         title="Help Center - K-Worship"
         titleKo="도움말 센터 - K-Worship"
@@ -910,7 +914,21 @@ Method 2 - Share Link:
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </>
+  );
+
+  // For authenticated users, wrap in AppLayout
+  if (user) {
+    return <AppLayout>{helpContent}</AppLayout>;
+  }
+
+  // For public users, show header and footer
+  return (
+    <div className="min-h-screen bg-background">
+      <PublicPageHeader />
+      <main>{helpContent}</main>
+      <LandingFooter />
+    </div>
   );
 };
 

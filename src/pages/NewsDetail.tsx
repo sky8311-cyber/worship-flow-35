@@ -6,7 +6,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { NewsShareButtons } from "@/components/news/NewsShareButtons";
 import { NewsCard } from "@/components/news/NewsCard";
@@ -17,8 +17,6 @@ import { ArrowLeft, Calendar, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import DOMPurify from "dompurify";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const categoryConfig: Record<string, { label: string; labelKo: string; color: string }> = {
   news: { label: "News", labelKo: "뉴스", color: "bg-blue-100 text-blue-700" },
@@ -131,17 +129,7 @@ const NewsDetail = () => {
       )}
 
       {/* Header for non-authenticated users */}
-      {!user && (
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/">
-              <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
-              <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-12" />
-            </Link>
-            <LanguageToggle />
-          </div>
-        </header>
-      )}
+      {!user && <PublicPageHeader />}
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Back Button */}

@@ -2,29 +2,19 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
-import { Download, Palette, Mail, FileImage, ExternalLink, Newspaper, Share2, Copy, Check } from "lucide-react";
+import { staggerContainer, staggerItem } from "@/lib/animations";
+import { Download, Palette, Mail, FileImage, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import { useState } from "react";
 import kworshipLogoDesktop from "@/assets/kworship-logo-desktop.png";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
 
 const Press = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
-  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   // Actual brand colors from the app's design system (index.css)
   const brandColors = [
@@ -35,65 +25,10 @@ const Press = () => {
     { name: "Foreground", hex: "#232529", hsl: "240 10% 15%", description: language === "ko" ? "짙은 회색" : "Dark Gray" },
   ];
 
-  // Media coverage articles
-  const mediaCoverage: Array<{
-    title: string;
-    titleEn: string;
-    publisher: string;
-    publisherEn: string;
-    date: string;
-    url: string;
-  }> = [
-    {
-      title: "찬양 준비의 영성, 데이터로 남다… 예배 인도자 플랫폼 'K-Worship' 공식 런칭",
-      titleEn: "K-Worship Platform Officially Launches for Worship Leaders",
-      publisher: "크리스찬타임스 (USA)",
-      publisherEn: "The Korean Christian Times (USA)",
-      date: "2026-01-15",
-      url: "https://www.kctusa.org/news/articleView.html?idxno=79074"
-    },
-    {
-      title: "찬양을 준비하는 시간, 그 수고는 어디에 남는가?",
-      titleEn: "Where Does the Labor of Worship Preparation Go?",
-      publisher: "크리스천신문 (Canada)",
-      publisherEn: "The Christian Times (Canada)",
-      date: "2026-01-16",
-      url: "https://christiantimes.ca/christian-news/canada/20657/"
-    },
-  ];
-
-  // Social sharing functions
-  const copyToClipboard = async (url: string) => {
-    await navigator.clipboard.writeText(url);
-    setCopiedUrl(url);
-    toast.success(language === "ko" ? "링크가 복사되었습니다" : "Link copied to clipboard");
-    setTimeout(() => setCopiedUrl(null), 2000);
-  };
-
-  const shareToTwitter = (article: typeof mediaCoverage[0]) => {
-    const text = language === "ko" ? article.title : article.titleEn;
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(article.url)}`;
-    window.open(url, '_blank');
-  };
-
-  const shareToFacebook = (url: string) => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-  };
-
   const content = (
     <div className="min-h-screen bg-background relative z-10">
       {/* Header for non-authenticated users */}
-      {!user && (
-        <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/">
-              <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
-              <img src={kworshipLogoDesktop} alt="K-Worship" className="hidden md:block h-12" />
-            </Link>
-            <LanguageToggle />
-          </div>
-        </header>
-      )}
+      {!user && <PublicPageHeader />}
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-12 max-w-5xl">
@@ -105,12 +40,12 @@ const Press = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            {language === "ko" ? "보도자료" : "Press Kit"}
+            {language === "ko" ? "브랜드에셋" : "Brand Assets"}
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             {language === "ko" 
-              ? "K-Worship 브랜드 자료 및 미디어 리소스"
-              : "K-Worship brand assets and media resources"
+              ? "K-Worship 브랜드 자료"
+              : "K-Worship brand resources"
             }
           </p>
         </motion.div>
@@ -221,87 +156,6 @@ const Press = () => {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </motion.section>
-
-          {/* Media Coverage Section */}
-          <motion.section variants={staggerItem}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Newspaper className="h-5 w-5" />
-                  {language === "ko" ? "미디어 보도" : "Media Coverage"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {mediaCoverage.length > 0 ? (
-                  <div className="space-y-4">
-                    {mediaCoverage.map((article, index) => (
-                      <div
-                        key={index}
-                        className="p-4 rounded-lg border hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-start gap-4">
-                          <Newspaper className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium leading-snug">
-                              {language === "ko" ? article.title : article.titleEn}
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {language === "ko" ? article.publisher : article.publisherEn} • {article.date}
-                            </p>
-                            <div className="flex items-center gap-2 mt-3">
-                              <Button variant="outline" size="sm" asChild>
-                                <a
-                                  href={article.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {language === "ko" ? "기사 보기" : "Read Article"}
-                                  <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-                                </a>
-                              </Button>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <Share2 className="h-4 w-4 mr-1.5" />
-                                    {language === "ko" ? "공유" : "Share"}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => copyToClipboard(article.url)}>
-                                    {copiedUrl === article.url ? (
-                                      <Check className="h-4 w-4 mr-2 text-green-500" />
-                                    ) : (
-                                      <Copy className="h-4 w-4 mr-2" />
-                                    )}
-                                    {language === "ko" ? "링크 복사" : "Copy Link"}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => shareToTwitter(article)}>
-                                    <span className="mr-2 font-bold">𝕏</span>
-                                    Twitter / X
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => shareToFacebook(article.url)}>
-                                    <span className="mr-2 font-bold text-blue-600">f</span>
-                                    Facebook
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    {language === "ko" 
-                      ? "보도 자료가 준비 중입니다."
-                      : "Media coverage coming soon."
-                    }
-                  </p>
-                )}
               </CardContent>
             </Card>
           </motion.section>

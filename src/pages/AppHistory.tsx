@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Rocket, Sparkles, Flag, ArrowUpCircle, Wrench } from "lucide-react";
 import { format } from "date-fns";
@@ -12,9 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
-import { Link } from "react-router-dom";
-import logoMobile from "@/assets/kworship-logo-mobile.png";
-import logoDesktop from "@/assets/kworship-logo-desktop.png";
 
 const AppHistory = () => {
   const { language } = useTranslation();
@@ -256,15 +253,7 @@ const AppHistory = () => {
   return (
     <div className="min-h-screen bg-background relative z-10">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/">
-            <img src={logoMobile} alt="K-Worship" className="h-10 md:hidden" />
-            <img src={logoDesktop} alt="K-Worship" className="hidden md:block h-12" />
-          </Link>
-          <LanguageToggle />
-        </div>
-      </header>
+      <PublicPageHeader />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-3xl">
