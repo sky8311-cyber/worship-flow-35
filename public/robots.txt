@@ -59,3 +59,6 @@ Disallow: /band-view
 
 # Sitemap location
 Sitemap: https://kworship.app/sitemap.xml
+
+# RSS Feed location
+RSS-Feed: https://kworship.app/rss.xml
