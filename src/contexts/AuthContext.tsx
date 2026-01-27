@@ -326,6 +326,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(currentSession.user);
             await fetchProfile(currentSession.user.id);
             await syncWorshipLeaderRole();
+            
+            // Update last_active_at on tab reactivation (fire-and-forget)
+            supabase.from('profiles').update({ 
+              last_active_at: new Date().toISOString() 
+            }).eq('id', currentSession.user.id).then(() => {
+              console.log('[AuthContext] Updated last_active_at on tab visibility');
+            });
           }
         } catch (err) {
           console.log('Session refresh error:', err);
