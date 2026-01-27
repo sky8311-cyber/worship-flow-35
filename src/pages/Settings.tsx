@@ -20,7 +20,7 @@ import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/l
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Info, Newspaper, Sparkles, Palette, Instagram, Youtube, AtSign } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Info, Newspaper, Sparkles, Palette, Instagram, Youtube, AtSign, FileText, History } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Settings = () => {
@@ -674,6 +674,18 @@ const Settings = () => {
                 <Link to="/press">
                   <Palette className="mr-2 h-4 w-4" />
                   {language === "ko" ? "브랜드에셋" : "Brand Assets"}
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/legal">
+                  <FileText className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "약관 및 정책" : "Terms & Policies"}
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/app-history">
+                  <History className="mr-2 h-4 w-4" />
+                  {language === "ko" ? "앱 히스토리" : "App History"}
                 </Link>
               </Button>
             </div>

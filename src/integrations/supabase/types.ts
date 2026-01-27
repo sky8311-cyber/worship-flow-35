@@ -1221,6 +1221,48 @@ export type Database = {
           },
         ]
       }
+      page_analytics: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          entered_at: string
+          exited_at: string | null
+          id: string
+          page_path: string
+          page_title: string | null
+          referrer_path: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          entered_at?: string
+          exited_at?: string | null
+          id?: string
+          page_path: string
+          page_title?: string | null
+          referrer_path?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          entered_at?: string
+          exited_at?: string | null
+          id?: string
+          page_path?: string
+          page_title?: string | null
+          referrer_path?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       platform_feature_flags: {
         Row: {
           created_at: string | null

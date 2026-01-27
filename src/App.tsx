@@ -15,6 +15,7 @@ import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LegalConsentModal } from "@/components/legal/LegalConsentModal";
 import { useLegalConsent } from "@/hooks/useLegalConsent";
 import { GlobalMusicPlayer } from "@/components/music-player/GlobalMusicPlayer";
+import { PageAnalyticsProvider } from "@/components/analytics/PageAnalyticsProvider";
 // Critical path - keep synchronous for fast initial load
 import MobileAppLanding from "./pages/MobileAppLanding";
 import Login from "./pages/auth/Login";
@@ -65,6 +66,7 @@ const AdminTopics = lazy(() => import("./pages/AdminTopics"));
 const AdminSongEnrichment = lazy(() => import("./pages/AdminSongEnrichment"));
 const AdminStudio = lazy(() => import("./pages/AdminStudio"));
 const AdminNews = lazy(() => import("./pages/AdminNews"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -149,6 +151,7 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
             <ScrollToTop />
+            <PageAnalyticsProvider />
             <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Landing Pages */}
@@ -212,6 +215,7 @@ const App = () => {
               <Route path="/admin/song-enrichment" element={<AdminRoute><AdminSongEnrichment /></AdminRoute>} />
               <Route path="/admin/studio" element={<AdminRoute><AdminStudio /></AdminRoute>} />
               <Route path="/admin/news" element={<AdminRoute><AdminNews /></AdminRoute>} />
+              <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
