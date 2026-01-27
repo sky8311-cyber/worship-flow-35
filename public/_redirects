@@ -1,0 +1,5 @@
+# RSS Feed Proxy
+/rss.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed 200
+
+# RSS Feed with query parameters (category filter)
+/rss.xml?category=:category https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed?category=:category 200
