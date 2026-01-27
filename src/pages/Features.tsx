@@ -18,8 +18,17 @@ import {
   MessageCircle,
   Users,
   Building2,
+  Home,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 const Features = () => {
   const { language } = useTranslation();
@@ -214,9 +223,37 @@ const Features = () => {
     </div>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/kworship-info">
+              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            {language === "ko" ? "주요 기능" : "Key Features"}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   // For authenticated users, wrap in AppLayout
   if (user) {
-    return <AppLayout>{content}</AppLayout>;
+    return <AppLayout breadcrumb={breadcrumb}>{content}</AppLayout>;
   }
 
   return content;

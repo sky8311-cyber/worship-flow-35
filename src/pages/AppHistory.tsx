@@ -1,17 +1,26 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Rocket, Sparkles, Flag, ArrowUpCircle, Wrench } from "lucide-react";
+import { Rocket, Sparkles, Flag, ArrowUpCircle, Wrench, Home } from "lucide-react";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem, revealViewportOptions } from "@/lib/animations";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 const AppHistory = () => {
   const { language } = useTranslation();
@@ -238,10 +247,38 @@ const AppHistory = () => {
     </>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/kworship-info">
+              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            {language === "ko" ? "앱 히스토리" : "App History"}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   // For authenticated users, use AppLayout
   if (user) {
     return (
-      <AppLayout>
+      <AppLayout breadcrumb={breadcrumb}>
         <div className="container mx-auto px-4 py-8 max-w-3xl">
           {timelineContent}
         </div>

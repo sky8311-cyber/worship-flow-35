@@ -12,9 +12,17 @@ import { NewsCard } from "@/components/news/NewsCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Rss } from "lucide-react";
+import { Rss, Home } from "lucide-react";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 
 const categories = [
   { value: "all", labelKo: "전체", labelEn: "All" },
@@ -154,7 +162,35 @@ const News = () => {
     </div>
   );
 
-  return user ? <AppLayout>{content}</AppLayout> : content;
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">
+              <Home className="h-4 w-4" />
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/kworship-info">
+              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
+            </Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            {language === "ko" ? "뉴스" : "News"}
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
+  return user ? <AppLayout breadcrumb={breadcrumb}>{content}</AppLayout> : content;
 };
 
 export default News;
