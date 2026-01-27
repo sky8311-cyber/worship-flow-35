@@ -531,6 +531,52 @@ export function PrintOptionsDialog({
                 page-break-after: avoid;
               }
             }
+            
+            /* Mobile-specific print rules - does not affect desktop */
+            @media print and (max-width: 768px) {
+              @page { 
+                margin: 8mm;
+                size: A4 portrait;
+              }
+              html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+              }
+              body {
+                padding: 0 !important;
+              }
+              .score-page { 
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+                break-after: page !important;
+                break-inside: avoid !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                max-height: none !important;
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
+                overflow: visible !important;
+              }
+              .score-page:last-child { 
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+              }
+              .score-page img {
+                max-width: 100% !important;
+                max-height: 270mm !important;
+                width: auto !important;
+                height: auto !important;
+                object-fit: contain !important;
+                display: block !important;
+                margin: 0 auto !important;
+              }
+            }
           </style>
         </head>
         <body>
