@@ -1,43 +1,70 @@
 
-# 공개 페이지 통합 헤더 네비게이션 - 구현 완료 ✅
+# RSS 피드 URL을 kworship.app/rss.xml로 변경
 
-## 개요
+## 현재 상황
 
-모든 공개 서브페이지에 일관된 상단 네비게이션 바를 적용했습니다. 앱스토어/플레이스토어 버튼(Coming Soon), 웹앱 접근, 언어 토글을 포함합니다.
+- RSS Edge Function: `https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed`
+- News.tsx에서 `/rss.xml` 링크 사용 중 (현재 작동 안함)
+- 네이버/구글 RSS 등록 시 깔끔한 URL 필요
 
----
+## 해결 방안
 
-## 구현 완료 사항
+Lovable 프로젝트는 정적 호스팅을 사용하므로, `/rss.xml` 경로에서 Edge Function으로 리다이렉트하는 방식이 필요합니다.
 
-### 1. 공용 헤더 컴포넌트 생성 ✅
-- `src/components/landing/PublicPageHeader.tsx` 생성
-- 앱스토어 URL 중앙 관리 (한 곳에서 수정하면 모든 페이지 반영)
-- 플로팅 아이콘 바 스타일 적용
+### 구현 방법: Netlify Redirects 설정
 
-### 2. 각 페이지 헤더 교체 ✅
-| 페이지 | 상태 |
-|--------|------|
-| `Features.tsx` | ✅ 완료 |
-| `News.tsx` | ✅ 완료 |
-| `NewsDetail.tsx` | ✅ 완료 |
-| `AppHistory.tsx` | ✅ 완료 |
-| `Press.tsx` | ✅ 완료 |
-| `Legal.tsx` | ✅ 완료 |
-| `Help.tsx` | ✅ 완료 |
+`public/_redirects` 파일을 생성하여 `/rss.xml` 요청을 Edge Function으로 프록시합니다.
 
-### 3. Press.tsx → Brand Assets 변경 ✅
-- 페이지 제목: "보도자료" → "브랜드에셋" / "Press Kit" → "Brand Assets"
-- "미디어 보도" 섹션 삭제 (이제 `/news`에서 press 카테고리로 관리)
-- Footer 링크 업데이트 완료
-
----
-
-## 향후 앱스토어 링크 추가 시
-
-`src/components/landing/PublicPageHeader.tsx` 상단의 상수만 수정:
-```typescript
-const APP_STORE_URL = "https://apps.apple.com/app/kworship/id123456789";
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=app.kworship";
+```text
+/rss.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed 200
+/rss.xml?* https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed?:splat 200
 ```
 
-모든 페이지에 자동으로 반영됩니다.
+`200` 상태 코드는 "rewrite" (프록시)를 의미하여, URL은 `kworship.app/rss.xml`로 유지되면서 실제 콘텐츠는 Edge Function에서 가져옵니다.
+
+---
+
+## 변경 사항
+
+| 파일 | 작업 |
+|------|------|
+| `public/_redirects` | 새 파일 - RSS 프록시 설정 |
+| `public/robots.txt` | RSS 피드 URL 추가 |
+
+---
+
+## 파일 내용
+
+### public/_redirects (새 파일)
+```text
+# RSS Feed Proxy
+/rss.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed 200
+
+# RSS Feed with query parameters (category filter)
+/rss.xml?category=:category https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed?category=:category 200
+```
+
+### public/robots.txt 추가
+```text
+# RSS Feed location
+RSS-Feed: https://kworship.app/rss.xml
+```
+
+---
+
+## 최종 RSS 피드 URL
+
+| 용도 | URL |
+|------|-----|
+| 전체 피드 | `https://kworship.app/rss.xml` |
+| 업데이트만 | `https://kworship.app/rss.xml?category=update` |
+| 뉴스만 | `https://kworship.app/rss.xml?category=news` |
+| 블로그만 | `https://kworship.app/rss.xml?category=blog` |
+| 보도자료만 | `https://kworship.app/rss.xml?category=press` |
+
+## 네이버 서치어드바이저 등록
+
+위 URL로 네이버 서치어드바이저에서 RSS 등록:
+1. 네이버 서치어드바이저 → 사이트 관리 → RSS 제출
+2. URL 입력: `https://kworship.app/rss.xml`
+3. 제출 완료
