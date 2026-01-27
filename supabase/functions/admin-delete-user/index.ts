@@ -176,6 +176,16 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error deleting worship_leader_applications:", applicationsError);
     }
 
+    // Delete from community_join_requests
+    const { error: joinRequestsError } = await supabaseAdmin
+      .from("community_join_requests")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (joinRequestsError) {
+      console.error("Error deleting community_join_requests:", joinRequestsError);
+    }
+
     // worship_leader_profiles table is deprecated - worship leader info is now in profiles table
     // No need to delete from worship_leader_profiles
 
