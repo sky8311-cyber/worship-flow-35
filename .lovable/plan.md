@@ -1,191 +1,213 @@
 
-# Logged-in 사용자를 위한 Footer/About 정보 접근성 개선
+# Settings About 섹션 확장 + Page Analytics 기능 구현
 
-## 현재 상황
+## 1부: Settings About 섹션에 약관/앱 히스토리 추가
 
-로그인한 사용자는 랜딩 페이지에 접근하지 않으므로, Footer에 있는 다음 정보에 접근할 수 없습니다:
+### 현재 상태
+About 카드에 뉴스, 주요 기능, 브랜드에셋 링크가 있음
 
-| 항목 | 현재 접근 가능? |
-|------|----------------|
-| 법적 문서 (Legal) | ✅ 프로필 메뉴에 있음 |
-| 앱 히스토리 | ✅ 프로필 메뉴에 있음 |
-| **주요 기능 (Features)** | ❌ 접근 불가 |
-| **뉴스 (News)** | ❌ 접근 불가 |
-| **브랜드에셋 (Brand Assets)** | ❌ 접근 불가 |
-| **소셜 미디어 아이콘** | ❌ 접근 불가 |
-
----
-
-## 권장 해결 방안: Settings 페이지에 "About / 정보" 섹션 추가
-
-Help 페이지나 별도 페이지보다 **Settings 페이지** 하단에 "About" 카드를 추가하는 것을 권장합니다.
-
-### 이유
-1. 사용자가 앱 정보를 찾을 때 자연스럽게 Settings를 먼저 확인
-2. 메뉴 항목을 과도하게 늘리지 않음
-3. iOS/Android 앱 패턴과 일치 (Settings 하단에 About 섹션)
-
----
-
-## 구현 계획
+### 추가할 항목
+| 항목 | 경로 | 아이콘 |
+|------|------|--------|
+| 약관 및 정책 | `/legal` | `FileText` |
+| 앱 히스토리 | `/app-history` | `History` |
 
 ### 변경 파일
 | 파일 | 작업 |
 |------|------|
-| `src/pages/Settings.tsx` | "About K-Worship" 카드 섹션 추가 |
+| `src/pages/Settings.tsx` | About 카드에 2개 버튼 추가 |
 
-### 추가할 내용
+---
 
-Settings 페이지 하단에 새로운 카드 추가:
+## 2부: Page Analytics 기능 구현
+
+Lovable Cloud에 이미 기본 애널리틱스가 있지만, 다음과 같은 **커스텀 페이지 추적 시스템**을 구축하면 더 상세한 인사이트를 얻을 수 있습니다:
+
+### 기능 요구사항
+1. **페이지뷰 추적**: 어느 페이지에 가장 많이 방문하는지
+2. **체류 시간**: 각 페이지에서 얼마나 머무는지
+3. **드롭오프 분석**: 어디에서 이탈하는지
+4. **About 페이지 클릭 추적**: 새로 추가된 About 링크들의 사용률
+
+### 기술 아키텍처
 
 ```text
-┌─────────────────────────────────────────────┐
-│ ℹ️ About K-Worship                          │
-├─────────────────────────────────────────────┤
-│                                             │
-│  📰 뉴스           🎯 주요 기능              │
-│  🎨 브랜드에셋                               │
-│                                             │
-│  ─────────────────────────────────────────  │
-│                                             │
-│  팔로우하기                                  │
-│  [Instagram] [Threads] [YouTube] [Email]   │
-│                                             │
-│  ─────────────────────────────────────────  │
-│                                             │
-│  © 2026 Goodpapa Inc.                       │
-│  K-Worship™ is a trademark of Goodpapa Inc. │
-│                                             │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend                              │
+├─────────────────────────────────────────────────────────┤
+│  usePageAnalytics Hook                                   │
+│  - 페이지 진입 시 pageview 기록                           │
+│  - 페이지 이탈 시 duration 업데이트                       │
+│  - visibilitychange 이벤트로 정확한 체류시간 측정          │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                    Database                              │
+├─────────────────────────────────────────────────────────┤
+│  page_analytics 테이블                                   │
+│  - id, user_id (nullable), session_id                   │
+│  - page_path, page_title                                │
+│  - entered_at, exited_at, duration_seconds              │
+│  - referrer_path (이전 페이지)                           │
+│  - device_type, created_at                              │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│              Admin Analytics Page                        │
+├─────────────────────────────────────────────────────────┤
+│  /admin/analytics                                        │
+│  - Top Pages (막대 차트)                                 │
+│  - Avg Duration per Page (차트)                          │
+│  - User Flow / Drop-off 분석                            │
+│  - 기간별 필터링                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
----
+### 구현 계획
 
-## 세부 구현
+#### Phase 1: 데이터베이스 스키마
 
-### 1. About Card 컴포넌트 추가 (Settings.tsx 하단)
+```sql
+-- 페이지 애널리틱스 테이블
+CREATE TABLE page_analytics (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  session_id TEXT NOT NULL,
+  page_path TEXT NOT NULL,
+  page_title TEXT,
+  referrer_path TEXT,
+  entered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  exited_at TIMESTAMPTZ,
+  duration_seconds INTEGER,
+  device_type TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-다음 링크들을 포함:
-- **뉴스** → `/news`
-- **주요 기능** → `/features`  
-- **브랜드에셋** → `/press`
+-- 인덱스
+CREATE INDEX idx_page_analytics_path ON page_analytics(page_path);
+CREATE INDEX idx_page_analytics_entered_at ON page_analytics(entered_at);
 
-소셜 미디어 아이콘:
-- Instagram → `https://www.instagram.com/kworship.app`
-- Threads → `https://www.threads.net/@kworship.app`
-- YouTube → `https://youtube.com/@kworship.app`
-- Email → `mailto:hello@kworship.app`
+-- RLS 정책 (INSERT는 모든 사용자, SELECT/UPDATE는 본인만, Admin은 모두)
+ALTER TABLE page_analytics ENABLE ROW LEVEL SECURITY;
 
-Copyright 정보:
-- `© 2026 Goodpapa Inc. All rights reserved.`
-- `K-Worship™ is a trademark of Goodpapa Inc.`
+CREATE POLICY "Anyone can insert analytics"
+  ON page_analytics FOR INSERT TO authenticated, anon
+  WITH CHECK (true);
 
-### 2. 아이콘 사용
-- `Newspaper` (뉴스)
-- `Sparkles` 또는 `ListChecks` (주요 기능)
-- `Palette` (브랜드에셋)
-- `Instagram`, `AtSign` (Threads), `Youtube`, `Mail` (소셜)
+CREATE POLICY "Users can update own analytics"
+  ON page_analytics FOR UPDATE TO authenticated
+  USING (user_id = auth.uid());
 
----
-
-## 대안 고려사항
-
-### 대안 1: Help 페이지에 추가
-- 장점: 기존 정보 페이지와 통합
-- 단점: Help는 FAQ 중심이라 About 정보와 맥락이 다름
-
-### 대안 2: 프로필 드롭다운에 링크 추가
-- 장점: 빠른 접근
-- 단점: 메뉴가 이미 8개 항목으로 복잡함, 소셜 아이콘 표시 어려움
-
-### 대안 3: 별도 About 페이지 생성
-- 장점: 깔끔한 분리
-- 단점: 또 다른 페이지 추가, 메뉴 항목 증가
-
-**권장**: Settings 하단에 About 카드 추가 (대안 1보다 자연스럽고, 대안 2/3보다 단순함)
-
----
-
-## 기술 구현 상세
-
-### Settings.tsx 수정 위치
-Premium Subscription 카드 아래 (파일 마지막 부분)에 About 카드 추가
-
-### 코드 구조
-
-```tsx
-{/* About K-Worship */}
-<Card>
-  <CardHeader>
-    <CardTitle className="flex items-center gap-2">
-      <Info className="h-5 w-5" />
-      {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
-    </CardTitle>
-  </CardHeader>
-  <CardContent className="space-y-4">
-    {/* Quick Links */}
-    <div className="flex flex-wrap gap-2">
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/news">
-          <Newspaper className="mr-2 h-4 w-4" />
-          {language === "ko" ? "뉴스" : "News"}
-        </Link>
-      </Button>
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/features">
-          <Sparkles className="mr-2 h-4 w-4" />
-          {language === "ko" ? "주요 기능" : "Features"}
-        </Link>
-      </Button>
-      <Button variant="outline" size="sm" asChild>
-        <Link to="/press">
-          <Palette className="mr-2 h-4 w-4" />
-          {language === "ko" ? "브랜드에셋" : "Brand Assets"}
-        </Link>
-      </Button>
-    </div>
-    
-    <Separator />
-    
-    {/* Social Links */}
-    <div>
-      <p className="text-sm text-muted-foreground mb-3">
-        {language === "ko" ? "팔로우하기" : "Follow Us"}
-      </p>
-      <div className="flex items-center gap-4">
-        <a href="https://www.instagram.com/kworship.app" target="_blank">
-          <Instagram className="h-5 w-5" />
-        </a>
-        <a href="https://www.threads.net/@kworship.app" target="_blank">
-          <AtSign className="h-5 w-5" />
-        </a>
-        <a href="https://youtube.com/@kworship.app" target="_blank">
-          <Youtube className="h-5 w-5" />
-        </a>
-        <a href="mailto:hello@kworship.app">
-          <Mail className="h-5 w-5" />
-        </a>
-      </div>
-    </div>
-    
-    <Separator />
-    
-    {/* Copyright */}
-    <div className="text-xs text-muted-foreground">
-      <p>© {currentYear} Goodpapa Inc. All rights reserved.</p>
-      <p>K-Worship™ is a trademark of Goodpapa Inc.</p>
-    </div>
-  </CardContent>
-</Card>
+CREATE POLICY "Admins can view all analytics"
+  ON page_analytics FOR SELECT TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
 ```
 
----
+#### Phase 2: Analytics Hook
 
-## 예상 결과
+| 파일 | 설명 |
+|------|------|
+| `src/hooks/usePageAnalytics.ts` | 페이지뷰/체류시간 추적 훅 |
 
-로그인한 사용자가 Settings 페이지에서:
-1. 뉴스, 주요 기능, 브랜드에셋 페이지에 쉽게 접근
-2. 소셜 미디어 계정 팔로우 가능
-3. 회사 정보 및 저작권 확인 가능
+핵심 로직:
+- 페이지 진입 시 `page_analytics`에 INSERT
+- `visibilitychange` 또는 route 변경 시 `exited_at`, `duration_seconds` UPDATE
+- 세션 ID는 `sessionStorage`로 관리 (브라우저 탭당 고유)
 
-이 방식은 앱의 "정보" 섹션을 하나의 자연스러운 위치에 통합합니다.
+#### Phase 3: App.tsx 통합
+
+라우터 레벨에서 `usePageAnalytics` 훅 호출하여 모든 페이지에 자동 적용
+
+#### Phase 4: Admin Analytics 페이지
+
+| 파일 | 설명 |
+|------|------|
+| `src/pages/AdminAnalytics.tsx` | 관리자 분석 대시보드 |
+| `src/components/admin/AdminNav.tsx` | 메뉴에 Analytics 추가 |
+| `src/App.tsx` | 라우트 추가 |
+
+#### Admin Analytics UI 구성
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ 📊 Page Analytics                    [7일 ▼] [새로고침] │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌─────────────────┐  ┌─────────────────┐               │
+│  │ Total Views     │  │ Unique Visitors │               │
+│  │     4,725       │  │     1,356       │               │
+│  └─────────────────┘  └─────────────────┘               │
+│                                                          │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │ 📈 Top Pages by Views                               ││
+│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
+│  │ /                          ████████████████ 805     ││
+│  │ /app                       ██████████ 329           ││
+│  │ /dashboard                 ████████ 264             ││
+│  │ /signup                    ███████ 235              ││
+│  │ /songs                     █████ 158                ││
+│  │ /settings (About 클릭)     ██ 45                    ││
+│  └─────────────────────────────────────────────────────┘│
+│                                                          │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │ ⏱️ Average Duration by Page                         ││
+│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
+│  │ /set-builder          4m 32s                        ││
+│  │ /band-view            3m 15s                        ││
+│  │ /songs                2m 48s                        ││
+│  │ /settings             1m 12s                        ││
+│  └─────────────────────────────────────────────────────┘│
+│                                                          │
+│  ┌─────────────────────────────────────────────────────┐│
+│  │ 🚪 Drop-off Analysis (Bounce Rate by Page)          ││
+│  │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ││
+│  │ / (Landing)           58% bounce                    ││
+│  │ /signup               45% bounce                    ││
+│  │ /login                32% bounce                    ││
+│  └─────────────────────────────────────────────────────┘│
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 전체 파일 변경 목록
+
+| 파일 | 작업 |
+|------|------|
+| `src/pages/Settings.tsx` | About 카드에 Legal, App History 버튼 추가 |
+| `src/hooks/usePageAnalytics.ts` | 새 파일 - 페이지 추적 훅 |
+| `src/App.tsx` | Analytics 훅 통합 + 라우트 추가 |
+| `src/pages/AdminAnalytics.tsx` | 새 파일 - 관리자 분석 페이지 |
+| `src/components/admin/AdminNav.tsx` | Analytics 메뉴 항목 추가 |
+| Migration | `page_analytics` 테이블 생성 |
+
+### 추가 고려사항
+
+**프라이버시**: 
+- 로그인하지 않은 사용자도 익명으로 추적 (user_id NULL 허용)
+- 개인 식별 정보 최소화
+
+**성능**:
+- INSERT는 비동기로 처리 (페이지 로딩 차단하지 않음)
+- 과도한 데이터 누적 방지를 위해 90일 이상 오래된 데이터 자동 삭제 정책 가능
+
+### 기존 Lovable Analytics 활용
+
+참고로 현재 Lovable Cloud에서 제공하는 기본 애널리틱스 데이터:
+- **방문자**: 1,356명 (최근 7일)
+- **페이지뷰**: 4,725
+- **Top 페이지**: /, /app, /dashboard, /signup, /songs
+- **트래픽 소스**: Threads (600), Direct (685)
+- **기기**: Mobile 87%, Desktop 11%
+- **국가**: KR 67%, CA 17%, US 7%
+
+커스텀 시스템은 이 데이터를 보완하여:
+- 페이지별 체류 시간
+- 사용자 흐름 (A→B 이동 패턴)
+- About 섹션 같은 특정 UI 요소 클릭 추적
+
+을 추가로 제공합니다.
+
