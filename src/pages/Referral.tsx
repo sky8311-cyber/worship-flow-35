@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Check, Share2, Mail, Gift, Users, Coins, Send, Clock } from "lucide-react";
+import { Copy, Check, Share2, Mail, Gift, Users, Coins, Send, Clock, Home } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -166,8 +168,24 @@ const Referral = () => {
     }
   };
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard"><Home className="h-4 w-4" /></Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? "친구 초대" : "Invite Friends"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <AppLayout>
+    <AppLayout breadcrumb={breadcrumb}>
       <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">

@@ -5,7 +5,9 @@ import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Mail, HelpCircle, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer } from "lucide-react";
+import { Mail, HelpCircle, Rocket, Users, Music, Share2, UserCheck, Globe, Maximize2, LayoutList, Heart, Eye, RefreshCw, Printer, Home } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/seo/SEOHead";
@@ -917,9 +919,25 @@ Method 2 - Share Link:
     </>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard"><Home className="h-4 w-4" /></Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? "도움말" : "Help"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   // For authenticated users, wrap in AppLayout
   if (user) {
-    return <AppLayout>{helpContent}</AppLayout>;
+    return <AppLayout breadcrumb={breadcrumb}>{helpContent}</AppLayout>;
   }
 
   // For public users, show header and footer
