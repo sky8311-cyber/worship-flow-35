@@ -48,6 +48,7 @@ const Features = lazy(() => import("./pages/Features"));
 const Press = lazy(() => import("./pages/Press"));
 const News = lazy(() => import("./pages/News"));
 const NewsDetail = lazy(() => import("./pages/NewsDetail"));
+const KWorshipInfo = lazy(() => import("./pages/KWorshipInfo"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -186,6 +187,7 @@ const App = () => {
               <Route path="/referral" element={<ProtectedRoute><Referral /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+              <Route path="/kworship-info" element={<ProtectedRoute><KWorshipInfo /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />

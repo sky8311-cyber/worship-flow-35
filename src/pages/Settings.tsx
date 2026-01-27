@@ -20,8 +20,9 @@ import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/l
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Info, Newspaper, Sparkles, Palette, Instagram, Youtube, AtSign, FileText, History } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Home } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -325,8 +326,24 @@ const Settings = () => {
     </Card>
   );
 
+  const breadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard"><Home className="h-4 w-4" /></Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? "설정" : "Settings"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <AppLayout>
+    <AppLayout breadcrumb={breadcrumb}>
       <div className="container max-w-2xl mx-auto py-6 px-4 space-y-6">
         <h1 className="text-2xl font-bold">{language === "ko" ? "설정" : "Settings"}</h1>
 
@@ -647,99 +664,6 @@ const Settings = () => {
           <PremiumBillingCard />
         )}
 
-        {/* About K-Worship */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              {language === "ko" ? "K-Worship 정보" : "About K-Worship"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Quick Links */}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/news">
-                  <Newspaper className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "뉴스" : "News"}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/features">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "주요 기능" : "Features"}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/press">
-                  <Palette className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "브랜드에셋" : "Brand Assets"}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/legal">
-                  <FileText className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "약관 및 정책" : "Terms & Policies"}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/app-history">
-                  <History className="mr-2 h-4 w-4" />
-                  {language === "ko" ? "앱 히스토리" : "App History"}
-                </Link>
-              </Button>
-            </div>
-            
-            <Separator />
-            
-            {/* Social Links */}
-            <div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {language === "ko" ? "팔로우하기" : "Follow Us"}
-              </p>
-              <div className="flex items-center gap-4">
-                <a 
-                  href="https://www.instagram.com/kworship.app" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-                <a 
-                  href="https://www.threads.net/@kworship.app" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <AtSign className="h-5 w-5" />
-                </a>
-                <a 
-                  href="https://youtube.com/@kworship.app" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Youtube className="h-5 w-5" />
-                </a>
-                <a 
-                  href="mailto:hello@kworship.app"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Mail className="h-5 w-5" />
-                </a>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            {/* Copyright */}
-            <div className="text-xs text-muted-foreground">
-              <p>© {new Date().getFullYear()} Goodpapa Inc. All rights reserved.</p>
-              <p>K-Worship™ is a trademark of Goodpapa Inc.</p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Dialog */}
         <ProfileEditDialog open={profileEditOpen} onOpenChange={setProfileEditOpen} />
