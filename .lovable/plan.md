@@ -1,120 +1,140 @@
 
-# 커뮤니티 오너 이름 검색 기능 추가
 
-## 현재 상황
+# K-Worship 한국어 SEO 최적화 구현 계획
 
-### 검색 로직 (Line 29-31)
+## 개요
+
+네이버 검색엔진 등록을 포함한 한국어 SEO 최적화를 진행합니다.
+
+---
+
+## Phase 1: 즉시 적용 (핵심 변경)
+
+### 1-1. 네이버 사이트 인증 메타태그 추가
+
+**파일: `index.html`** (Line 11 이후)
+
+```html
+<!-- Search Engine Verification -->
+<meta name="naver-site-verification" content="b67f89c17fdb4d23872bab1eac72749038feaacb" />
+```
+
+### 1-2. 키워드 강화
+
+**파일: `index.html`** (Line 8)
+
+현재:
+```html
+<meta name="keywords" content="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 찬양팀, 예배 인도자, 교회, worship, church, setlist, worship leader, praise, CCM, 악보, sheet music">
+```
+
+변경:
+```html
+<meta name="keywords" content="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 예배콘티, 예배순서, 찬양팀, 예배 인도자, 찬양인도자, 찬양인도, 예배인도, 교회, worship, church, setlist, worship leader, praise, CCM, 악보, sheet music, 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단, 찬양콘티, 주일예배, 찬양팀관리, 워십밴드, 찬양팀 관리 앱">
+```
+
+### 1-3. Landing 페이지 SEOHead 추가
+
+**파일: `src/pages/Landing.tsx`**
+
+SEOHead 컴포넌트 import 및 추가:
+
 ```typescript
-query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+import { SEOHead } from "@/components/seo/SEOHead";
+
+// return 문 내부 최상단에 추가
+<SEOHead
+  title="K-Worship - 예배팀을 위한 통합 플랫폼"
+  titleKo="K-Worship - 예배팀을 위한 콘티 제작 및 찬양팀 관리 플랫폼"
+  description="K-Worship is an all-in-one worship team management platform for song library, setlist creation, and team collaboration."
+  descriptionKo="K-Worship은 예배 인도자와 찬양팀을 위한 콘티 제작, 곡 라이브러리, 악보 관리, 팀 협업 플랫폼입니다. 마커스워십, 어노인팅, 피아워십 등 다양한 찬양을 관리하세요."
+  keywords="K-Worship, 케이워십, 예배콘티, 찬양팀관리, 워십세트, worship setlist, CCM"
+  keywordsKo="K-Worship, 케이워십, 예배콘티, 찬양인도, 예배인도, 마커스워십, 어노인팅, 피아워십, 찬양팀관리, 워십세트, 주일예배, CCM악보"
+  canonicalPath="/"
+/>
 ```
-- ✅ 커뮤니티 이름 검색
-- ✅ 커뮤니티 설명 검색
-- ❌ 오너(리더) 이름 검색 불가
 
-### 데이터 구조
-```
-worship_communities (leader_id) → profiles (id, full_name)
-```
+### 1-4. Help 페이지 FAQPage 스키마 추가
 
----
+**파일: `src/pages/Help.tsx`**
 
-## 해결 방법: 클라이언트 사이드 필터링
-
-Supabase의 `.or()` 필터는 같은 테이블만 지원하므로, 다음 전략을 사용합니다:
-
-1. **검색어가 있을 때**: 모든 활성 커뮤니티와 프로필을 가져온 후 클라이언트에서 필터링
-2. **검색 대상**: 커뮤니티 이름 + 설명 + 오너 이름
-
----
-
-## 변경 내용
-
-### 파일: `src/pages/CommunitySearch.tsx`
-
-#### 수정할 쿼리 로직 (Line 21-66)
+FAQ JSON-LD 스키마를 SEOHead에 전달:
 
 ```typescript
-const { data: communities, isLoading } = useQuery({
-  queryKey: ["communities-search", searchQuery],
-  queryFn: async () => {
-    // 1. 모든 활성 커뮤니티 가져오기 (검색어 필터 없이)
-    const { data: communities, error } = await supabase
-      .from("worship_communities")
-      .select("*")
-      .eq("is_active", true);
-      
-    if (error) throw error;
-    if (!communities || communities.length === 0) return [];
-    
-    // 2. 리더 프로필 가져오기
-    const leaderIds = communities.map(c => c.leader_id);
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", leaderIds);
-    
-    // 3. 멤버 수 가져오기
-    const communityIds = communities.map(c => c.id);
-    const { data: memberCounts } = await supabase
-      .from("community_members")
-      .select("community_id")
-      .in("community_id", communityIds);
-    
-    const counts = memberCounts?.reduce((acc, m) => {
-      acc[m.community_id] = (acc[m.community_id] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    // 4. 데이터 병합
-    const enrichedCommunities = communities.map(c => ({
-      ...c,
-      profiles: profiles?.find(p => p.id === c.leader_id),
-      member_count: counts?.[c.id] || 0
-    }));
-    
-    // 5. 클라이언트 사이드 필터링 (이름, 설명, 오너 이름)
-    if (!searchQuery) return enrichedCommunities;
-    
-    const lowerQuery = searchQuery.toLowerCase();
-    return enrichedCommunities.filter(c => 
-      c.name?.toLowerCase().includes(lowerQuery) ||
-      c.description?.toLowerCase().includes(lowerQuery) ||
-      c.profiles?.full_name?.toLowerCase().includes(lowerQuery)
-    );
-  },
-});
+// faqItems 정의 후 스키마 생성
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.slice(0, 10).map(item => ({
+    "@type": "Question",
+    "name": item.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": item.answer.substring(0, 500)
+    }
+  }))
+};
+
+// SEOHead에 jsonLd prop 추가
+<SEOHead
+  title="Help Center"
+  titleKo="도움말 센터"
+  description="..."
+  jsonLd={faqSchema}
+  ...
+/>
 ```
 
 ---
 
-## 변경 요약
+## Phase 2: llms.txt 한국어 강화
+
+**파일: `public/llms.txt`**
+
+한국어 섹션 추가:
+
+```markdown
+## 주요 기능 (한국어)
+
+K-Worship(케이워십)은 예배팀을 위한 통합 관리 플랫폼입니다.
+
+### 핵심 기능
+- **곡 라이브러리**: 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단 등 500곡 이상의 찬양
+- **콘티 제작**: 드래그 앤 드롭으로 예배 순서(세트리스트) 구성
+- **찬양팀 협업**: 실시간 팀 커뮤니케이션 및 일정 공유
+- **악보 관리**: 악보 이미지 저장 및 공유, 키 변경
+
+### 검색 키워드
+예배콘티, 찬양콘티, 예배순서, 찬양인도, 예배인도, 워십세트, 찬양팀관리, 주일예배, CCM악보
+
+### 지원 아티스트
+마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단, 만나교회, 한성교회, 제이어스, 새생명비전교회, 조이풀처치
+```
+
+---
+
+## 변경 파일 요약
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/pages/CommunitySearch.tsx` | 검색 로직을 클라이언트 사이드 필터링으로 변경하여 오너 이름 검색 지원 |
+| `index.html` | 네이버 인증 메타태그 + 키워드 강화 |
+| `src/pages/Landing.tsx` | SEOHead 컴포넌트 추가 |
+| `src/pages/Help.tsx` | FAQPage JSON-LD 스키마 추가 |
+| `public/llms.txt` | 한국어 섹션 추가 |
 
 ---
 
-## 검색 예시
+## 예상 효과
 
-| 검색어 | 매칭 대상 |
-|--------|----------|
-| "샤우트" | 커뮤니티 이름 |
-| "예배" | 커뮤니티 설명 |
-| "임채현" | 오너 이름 ← **새로 추가** |
-
----
-
-## 성능 고려사항
-
-- **현재 방식**: 활성 커뮤니티 전체를 가져온 후 필터링
-- **적합성**: 커뮤니티 수가 수백 개 이하면 문제 없음
-- **대안**: 커뮤니티가 수천 개 이상이면 DB 함수(RPC) 사용 고려
+1. **네이버 검색엔진**: 사이트 인증 완료 → 네이버 검색 결과 노출
+2. **키워드 노출**: "예배콘티", "찬양인도", "마커스워십" 검색 시 K-Worship 노출
+3. **Google Rich Results**: FAQ 스키마로 검색 결과에 FAQ 표시
+4. **AI 검색**: llms.txt 한국어 강화로 AI 검색 최적화
 
 ---
 
-## 예상 결과
+## 보안 영향
 
-- 커뮤니티 이름, 설명, **오너 이름** 모두 검색 가능
-- 기존 UI 변경 없음
-- 검색 결과에서 오너 이름이 매칭되면 해당 커뮤니티 표시
+- 없음 (메타데이터 및 정적 파일만 변경)
+- 사용자 데이터나 인증에 영향 없음
+
