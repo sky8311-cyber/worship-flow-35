@@ -1,125 +1,178 @@
 
 
-# Breadcrumb 위치 조정
+# 소셜 미디어 섹션 업데이트
 
-## 문제점
+## 변경 사항
 
-1. **Desktop**: Home 아이콘과 Breadcrumb이 중복됨 (Home 아이콘 + 별도 행의 Breadcrumb)
-2. **Mobile/Tablet**: Breadcrumb과 로고 사이 간격이 부족함
-
-## 해결 방안
-
-### Desktop (lg 이상)
-- 기존 Home 아이콘 위치에 Breadcrumb을 배치
-- Home 아이콘 제거 (Breadcrumb의 첫 번째 항목이 이미 Home 역할)
-- 별도 행의 Breadcrumb은 숨김
-
-### Mobile/Tablet (lg 미만)
-- 현재 위치 유지 (별도 행)
-- 로고와 Breadcrumb 사이 간격 추가 (pt-2 → pt-4)
+1. **YouTube 주소 변경**: `@kworship.app` → `@kworship_app`
+2. **소셜 아이콘 애니메이션 추가**: 정적인 아이콘을 생동감 있는 애니메이션 버전으로 개선
 
 ---
 
-## 변경 파일
+## 수정 파일
 
 | 파일 | 작업 |
 |------|------|
-| `src/components/layout/AppHeader.tsx` | Breadcrumb 위치 조정 |
+| `src/pages/KWorshipInfo.tsx` | YouTube URL 변경 + 애니메이션 소셜 아이콘 |
+| `src/components/landing/LandingFooter.tsx` | YouTube URL 변경 |
 
 ---
 
-## 상세 변경 내용
+## 상세 구현
 
-### AppHeader.tsx 수정
+### 1. YouTube URL 업데이트
 
+**변경 전:**
+```
+https://youtube.com/@kworship.app
+```
+
+**변경 후:**
+```
+https://www.youtube.com/@kworship_app
+```
+
+### 2. 소셜 미디어 섹션 디자인 개선
+
+**현재 (지루함):**
+- 단순한 회색 원형 배경
+- 호버 시 배경색만 살짝 변경
+- 정적인 아이콘
+
+**개선안 (생동감):**
+- 각 플랫폼별 브랜드 컬러 적용 (호버 시)
+- 스케일 + 회전 애니메이션
+- 그라데이션 배경 효과
+- 스태거 입장 애니메이션 (framer-motion)
+
+### 3. 애니메이션 소셜 아이콘 구현
+
+```tsx
+import { motion } from "framer-motion";
+
+const socialLinks = [
+  {
+    href: "https://www.instagram.com/kworship.app",
+    icon: Instagram,
+    label: "Instagram",
+    color: "hover:bg-gradient-to-br hover:from-purple-500 hover:via-pink-500 hover:to-orange-400",
+  },
+  {
+    href: "https://www.threads.net/@kworship.app",
+    icon: AtSign,
+    label: "Threads",
+    color: "hover:bg-black dark:hover:bg-white",
+  },
+  {
+    href: "https://www.youtube.com/@kworship_app",  // 업데이트된 URL
+    icon: Youtube,
+    label: "YouTube",
+    color: "hover:bg-red-600",
+  },
+  {
+    href: "mailto:hello@kworship.app",
+    icon: Mail,
+    label: "Email",
+    color: "hover:bg-blue-500",
+  },
+];
+
+// 렌더링
+<motion.div 
+  className="flex items-center gap-4"
+  initial="hidden"
+  animate="visible"
+  variants={{
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+    }
+  }}
+>
+  {socialLinks.map((social, index) => {
+    const Icon = social.icon;
+    return (
+      <motion.a
+        key={social.label}
+        href={social.href}
+        target={social.href.startsWith("mailto:") ? undefined : "_blank"}
+        rel={social.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+        className={`
+          flex items-center justify-center w-12 h-12 rounded-full 
+          bg-muted transition-all duration-300
+          hover:text-white hover:scale-110 hover:-rotate-6
+          hover:shadow-lg
+          ${social.color}
+        `}
+        aria-label={social.label}
+        variants={{
+          hidden: { opacity: 0, y: 20, scale: 0.8 },
+          visible: { 
+            opacity: 1, 
+            y: 0, 
+            scale: 1,
+            transition: { type: "spring", stiffness: 200, damping: 15 }
+          }
+        }}
+        whileHover={{ 
+          scale: 1.15, 
+          rotate: -8,
+          transition: { type: "spring", stiffness: 400, damping: 10 }
+        }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Icon className="h-5 w-5" />
+      </motion.a>
+    );
+  })}
+</motion.div>
+```
+
+---
+
+## 시각적 비교
+
+### 변경 전
 ```text
-현재 구조:
-┌─────────────────────────────────────────────────────────┐
-│ [Menu] [Logo]          [Logo(Desktop)]     [Icons...]   │  ← Main Row
-├─────────────────────────────────────────────────────────┤
-│ 🏠 > K-Worship 정보 > 도움말                            │  ← Breadcrumb Row (모든 화면)
-└─────────────────────────────────────────────────────────┘
-
-변경 후:
-┌─────────────────────────────────────────────────────────┐
-│ [Menu] [Logo]          [Logo(Desktop)]     [Icons...]   │  ← Mobile/Tablet
-│ [Breadcrumb]           [Logo(Desktop)]     [Icons...]   │  ← Desktop (Home 아이콘 대체)
-├─────────────────────────────────────────────────────────┤
-│ 🏠 > K-Worship 정보 > 도움말                            │  ← Mobile/Tablet Only (간격 추가)
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ 팔로우하기                           │
+│ [○] [○] [○] [○]  ← 모두 회색, 정적   │
+└─────────────────────────────────────┘
 ```
 
-### 구체적 코드 변경
-
-**1. Left Section 수정 (Lines 82-101)**
-
-Desktop에서는 Home 아이콘 대신 Breadcrumb 표시:
-
-```tsx
-{/* Left: Menu button + Logo (Mobile/Tablet) | Breadcrumb (Desktop) */}
-<div className="justify-self-start flex items-center gap-2">
-  <Button 
-    variant="ghost" 
-    size="icon" 
-    className="lg:hidden" 
-    onClick={() => setSidebarOpen(true)}
-  >
-    <Menu className="h-5 w-5" />
-  </Button>
-  
-  {/* Logo - Left aligned on mobile/tablet */}
-  <Link to="/dashboard" className="md:hidden">
-    <HeaderLogo />
-  </Link>
-  
-  {/* Desktop: Show breadcrumb in place of Home icon */}
-  {breadcrumb ? (
-    <div className="hidden lg:block">
-      {breadcrumb}
-    </div>
-  ) : (
-    <Link to="/dashboard" className="hidden lg:flex items-center gap-2">
-      <Home className="h-4 w-4" />
-    </Link>
-  )}
-</div>
+### 변경 후
+```text
+┌─────────────────────────────────────┐
+│ 팔로우하기                           │
+│ [🟣] [⚫] [🔴] [🔵]  ← 입장 애니메이션  │
+│                                     │
+│ 호버 시:                             │
+│ - 스케일 업 (1.15x)                  │
+│ - 살짝 회전 (-8도)                   │
+│ - 브랜드 컬러 배경                    │
+│ - 그림자 효과                        │
+│ - 아이콘 흰색 전환                    │
+└─────────────────────────────────────┘
 ```
 
-**2. Breadcrumb Row 수정 (Lines 252-257)**
+---
 
-Mobile/Tablet에서만 표시 + 간격 추가:
+## 플랫폼별 호버 컬러
 
-```tsx
-{/* Breadcrumb Row - Mobile/Tablet only */}
-{breadcrumb && (
-  <div className="container mx-auto px-4 pb-2 pt-4 lg:hidden">
-    {breadcrumb}
-  </div>
-)}
-```
+| 플랫폼 | 호버 배경색 |
+|--------|------------|
+| Instagram | 그라데이션 (보라→핑크→오렌지) |
+| Threads | 블랙 (다크모드: 화이트) |
+| YouTube | 빨강 (#DC2626) |
+| Email | 파랑 (#3B82F6) |
 
 ---
 
 ## 예상 결과
 
-### Desktop (lg 이상)
-```text
-┌─────────────────────────────────────────────────────────┐
-│ 🏠 > K-Worship 정보 > 도움말    [Logo]    [Icons...]    │
-└─────────────────────────────────────────────────────────┘
-```
-- Breadcrumb이 왼쪽 Home 아이콘 자리에 배치
-- 별도 행 없음 → 더 깔끔한 레이아웃
-
-### Mobile/Tablet
-```text
-┌─────────────────────────────────────────────────────────┐
-│ [Menu] [Logo]                             [Icons...]    │
-├─────────────────────────────────────────────────────────┤
-│                    (간격 추가)                           │
-│ 🏠 > K-Worship 정보 > 도움말                            │
-└─────────────────────────────────────────────────────────┘
-```
-- 기존 위치 유지
-- 로고와 Breadcrumb 사이 간격 증가 (pt-2 → pt-4)
+- 페이지 로드 시 소셜 아이콘이 순차적으로 튀어오르며 등장
+- 각 아이콘에 마우스를 올리면 해당 플랫폼 브랜드 컬러로 변환
+- 약간의 회전과 스케일 효과로 인터랙티브한 느낌 제공
+- 전체적으로 더 현대적이고 생동감 있는 UI
 
