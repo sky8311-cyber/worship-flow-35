@@ -45,6 +45,8 @@ const Legal = lazy(() => import("./pages/Legal"));
 const AppHistory = lazy(() => import("./pages/AppHistory"));
 const Features = lazy(() => import("./pages/Features"));
 const Press = lazy(() => import("./pages/Press"));
+const News = lazy(() => import("./pages/News"));
+const NewsDetail = lazy(() => import("./pages/NewsDetail"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -62,6 +64,7 @@ const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const AdminTopics = lazy(() => import("./pages/AdminTopics"));
 const AdminSongEnrichment = lazy(() => import("./pages/AdminSongEnrichment"));
 const AdminStudio = lazy(() => import("./pages/AdminStudio"));
+const AdminNews = lazy(() => import("./pages/AdminNews"));
 
 // Public/invitation pages
 const PublicBandView = lazy(() => import("./pages/PublicBandView"));
@@ -162,6 +165,8 @@ const App = () => {
               <Route path="/app-history" element={<AppHistory />} />
               <Route path="/features" element={<Features />} />
               <Route path="/press" element={<Press />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/news/:slug" element={<NewsDetail />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -206,6 +211,7 @@ const App = () => {
               <Route path="/admin/topics" element={<AdminRoute><AdminTopics /></AdminRoute>} />
               <Route path="/admin/song-enrichment" element={<AdminRoute><AdminSongEnrichment /></AdminRoute>} />
               <Route path="/admin/studio" element={<AdminRoute><AdminStudio /></AdminRoute>} />
+              <Route path="/admin/news" element={<AdminRoute><AdminNews /></AdminRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

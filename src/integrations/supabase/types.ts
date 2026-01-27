@@ -1084,6 +1084,96 @@ export type Database = {
         }
         Relationships: []
       }
+      news_newsletter_subscribers: {
+        Row: {
+          email: string
+          id: string
+          is_active: boolean | null
+          subscribed_at: string | null
+          unsubscribed_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          email: string
+          id?: string
+          is_active?: boolean | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      news_posts: {
+        Row: {
+          author_id: string | null
+          category: string
+          content: string
+          content_ko: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          excerpt: string | null
+          excerpt_ko: string | null
+          external_url: string | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          published_at: string | null
+          slug: string
+          title: string
+          title_ko: string | null
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string
+          content: string
+          content_ko?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          excerpt_ko?: string | null
+          external_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          slug: string
+          title: string
+          title_ko?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          content?: string
+          content_ko?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          excerpt_ko?: string | null
+          external_url?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          published_at?: string | null
+          slug?: string
+          title?: string
+          title_ko?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -4196,6 +4286,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_news_view_count: {
+        Args: { post_id: string }
+        Returns: undefined
       }
       increment_set_view_count: { Args: { set_id: string }; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
