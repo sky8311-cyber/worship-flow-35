@@ -677,6 +677,42 @@ export type Database = {
           },
         ]
       }
+      email_preferences: {
+        Row: {
+          automated_reminders: boolean | null
+          community_updates: boolean | null
+          created_at: string | null
+          id: string
+          marketing_emails: boolean | null
+          product_updates: boolean | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          automated_reminders?: boolean | null
+          community_updates?: boolean | null
+          created_at?: string | null
+          id?: string
+          marketing_emails?: boolean | null
+          product_updates?: boolean | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          automated_reminders?: boolean | null
+          community_updates?: boolean | null
+          created_at?: string | null
+          id?: string
+          marketing_emails?: boolean | null
+          product_updates?: boolean | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_recipients: {
         Row: {
           email: string
