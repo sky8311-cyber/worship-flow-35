@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset, Sparkles, Palette, Newspaper, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset, Sparkles, Palette, Newspaper, BarChart3, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -69,6 +69,11 @@ export const AdminNav = () => {
       to: "/admin/analytics",
       label: language === "ko" ? "분석" : "Analytics",
       icon: BarChart3,
+    },
+    {
+      to: "/admin/membership-products",
+      label: language === "ko" ? "멤버십 상품" : "Membership",
+      icon: CreditCard,
     },
     {
       to: "/admin/song-enrichment",

@@ -7,8 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const CHURCH_ACCOUNT_PRICE_ID = "price_1SZEgWD3OASKwHF09K8qTBaf";
-
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-CHURCH-CHECKOUT] ${step}${detailsStr}`);
@@ -46,6 +44,27 @@ serve(async (req) => {
     if (!churchAccountId) throw new Error("Church account ID is required");
     logStep("Church account ID received", { churchAccountId });
 
+    // Fetch membership product settings from DB
+    const { data: productData, error: productError } = await supabaseClient
+      .from("membership_products")
+      .select("stripe_price_id_usd, trial_days")
+      .eq("product_key", "community_account")
+      .eq("is_active", true)
+      .single();
+
+    if (productError) {
+      logStep("Product fetch error", { error: productError.message });
+    }
+
+    const stripePriceId = productData?.stripe_price_id_usd;
+    const trialDays = productData?.trial_days ?? 30;
+
+    if (!stripePriceId) {
+      throw new Error("Stripe Price ID not configured for Community Account. Please set it in Admin > Membership Products.");
+    }
+
+    logStep("Product config loaded", { stripePriceId, trialDays });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Check if customer exists
@@ -56,19 +75,19 @@ serve(async (req) => {
       logStep("Existing customer found", { customerId });
     }
 
-    // Create checkout session with 30-day trial
+    // Create checkout session with trial period from DB
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: CHURCH_ACCOUNT_PRICE_ID,
+          price: stripePriceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
       subscription_data: {
-        trial_period_days: 30,
+        trial_period_days: trialDays,
         metadata: {
           church_account_id: churchAccountId,
         },

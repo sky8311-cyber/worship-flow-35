@@ -7,9 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// TODO: Replace with actual Stripe price ID for premium subscription
-const PREMIUM_PRICE_ID = "price_premium_monthly";
-
 const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CREATE-PREMIUM-CHECKOUT] ${step}${detailsStr}`);
@@ -43,6 +40,27 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Fetch membership product settings from DB
+    const { data: productData, error: productError } = await supabaseClient
+      .from("membership_products")
+      .select("stripe_price_id_usd, trial_days")
+      .eq("product_key", "full_membership")
+      .eq("is_active", true)
+      .single();
+
+    if (productError) {
+      logStep("Product fetch error, using fallback", { error: productError.message });
+    }
+
+    const stripePriceId = productData?.stripe_price_id_usd;
+    const trialDays = productData?.trial_days ?? 7;
+
+    if (!stripePriceId) {
+      throw new Error("Stripe Price ID not configured for Full Membership. Please set it in Admin > Membership Products.");
+    }
+
+    logStep("Product config loaded", { stripePriceId, trialDays });
+
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Check if customer exists
@@ -53,19 +71,19 @@ serve(async (req) => {
       logStep("Existing customer found", { customerId });
     }
 
-    // Create checkout session with 14-day trial for premium
+    // Create checkout session with trial period from DB
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price: PREMIUM_PRICE_ID,
+          price: stripePriceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
       subscription_data: {
-        trial_period_days: 14,
+        trial_period_days: trialDays,
         metadata: {
           user_id: user.id,
           type: "premium",

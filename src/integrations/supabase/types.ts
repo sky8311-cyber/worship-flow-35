@@ -1072,6 +1072,72 @@ export type Database = {
         }
         Relationships: []
       }
+      membership_products: {
+        Row: {
+          billing_cycle: string
+          billing_cycle_label_en: string | null
+          billing_cycle_label_ko: string | null
+          created_at: string | null
+          description_en: string | null
+          description_ko: string | null
+          display_name_en: string
+          display_name_ko: string
+          id: string
+          is_active: boolean | null
+          price_krw: number
+          price_usd: number
+          product_key: string
+          stripe_price_id_krw: string | null
+          stripe_price_id_usd: string | null
+          stripe_product_id: string | null
+          toss_plan_id: string | null
+          trial_days: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle: string
+          billing_cycle_label_en?: string | null
+          billing_cycle_label_ko?: string | null
+          created_at?: string | null
+          description_en?: string | null
+          description_ko?: string | null
+          display_name_en: string
+          display_name_ko: string
+          id?: string
+          is_active?: boolean | null
+          price_krw: number
+          price_usd: number
+          product_key: string
+          stripe_price_id_krw?: string | null
+          stripe_price_id_usd?: string | null
+          stripe_product_id?: string | null
+          toss_plan_id?: string | null
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle?: string
+          billing_cycle_label_en?: string | null
+          billing_cycle_label_ko?: string | null
+          created_at?: string | null
+          description_en?: string | null
+          description_ko?: string | null
+          display_name_en?: string
+          display_name_ko?: string
+          id?: string
+          is_active?: boolean | null
+          price_krw?: number
+          price_usd?: number
+          product_key?: string
+          stripe_price_id_krw?: string | null
+          stripe_price_id_usd?: string | null
+          stripe_product_id?: string | null
+          toss_plan_id?: string | null
+          trial_days?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       navigation_items: {
         Row: {
           created_at: string
