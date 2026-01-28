@@ -183,7 +183,7 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
       icon: Music,
       name: t("churchAccount.planWorshipLeader"),
       price: t("churchAccount.planWorshipLeaderPrice"),
-      priceNote: t("churchAccount.betaFree"),
+      priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planWorshipLeaderDescription"),
       features: [
         t("churchAccount.featureCreateCommunity"),
