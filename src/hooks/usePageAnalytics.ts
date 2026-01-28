@@ -28,13 +28,14 @@ export const usePageAnalytics = () => {
   const enteredAtRef = useRef<Date | null>(null);
   const previousPathRef = useRef<string | null>(null);
 
-  // Record page view
+  // Record page view and update last_active_at
   const recordPageView = useCallback(async () => {
     const sessionId = getSessionId();
     const deviceType = getDeviceType();
     const referrerPath = previousPathRef.current;
     
     try {
+      // Record page analytics
       const { data, error } = await supabase
         .from("page_analytics")
         .insert({
@@ -51,6 +52,14 @@ export const usePageAnalytics = () => {
       if (!error && data) {
         currentRecordIdRef.current = data.id;
         enteredAtRef.current = new Date();
+      }
+      
+      // Update last_active_at on every page navigation (if user is logged in)
+      if (user?.id) {
+        await supabase
+          .from("profiles")
+          .update({ last_active_at: new Date().toISOString() })
+          .eq("id", user.id);
       }
     } catch (err) {
       // Silently fail - analytics should not break the app
