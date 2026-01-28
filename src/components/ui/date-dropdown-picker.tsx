@@ -121,7 +121,7 @@ export function DateDropdownPicker({
         <SelectTrigger className="flex-1 min-w-[90px]">
           <SelectValue placeholder={language === "ko" ? "연도" : "Year"} />
         </SelectTrigger>
-        <SelectContent className="max-h-[200px]">
+        <SelectContent className="max-h-[280px] overflow-y-auto">
           {yearOptions.map((y) => (
             <SelectItem key={y} value={String(y)}>
               {language === "ko" ? `${y}년` : y}
@@ -159,7 +159,7 @@ export function DateDropdownPicker({
         <SelectTrigger className="flex-1 min-w-[70px]">
           <SelectValue placeholder={language === "ko" ? "일" : "Day"} />
         </SelectTrigger>
-        <SelectContent className="max-h-[200px]">
+        <SelectContent className="max-h-[280px] overflow-y-auto">
           {dayOptions.map((d) => (
             <SelectItem key={d.value} value={d.value}>
               {d.label}
