@@ -30,7 +30,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
 };
 
 export function useAppSettings() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: flags, isLoading } = useQuery({
@@ -56,6 +56,27 @@ export function useAppSettings() {
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
+
+  // Sandbox tester access - allows specific users to override feature flags
+  const { data: sandboxAccess } = useQuery({
+    queryKey: ["sandbox-tester-access", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("sandbox_testers")
+        .select("features, enabled")
+        .eq("user_id", user.id)
+        .eq("enabled", true)
+        .maybeSingle();
+      return data?.features || [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Check if user has sandbox access for a specific feature
+  const hasSandboxAccess = (feature: string) =>
+    sandboxAccess?.includes(feature) || sandboxAccess?.includes("all");
 
   const updateFlagMutation = useMutation({
     mutationFn: async ({ key, enabled }: { key: string; enabled: boolean }) => {
@@ -83,11 +104,12 @@ export function useAppSettings() {
   };
 
   return {
+    // Feature flags with sandbox override support
     isLeaderboardEnabled: !isLoading && (flags?.seed_leaderboard_enabled ?? false),
-    isChurchSubscriptionEnabled: !isLoading && (flags?.church_subscription_enabled ?? false),
-    isChurchMenuVisible: !isLoading && (flags?.church_menu_visible ?? false),
-    isPremiumEnabled: !isLoading && (flags?.premium_enabled ?? false),
-    isPremiumMenuVisible: !isLoading && (flags?.premium_menu_visible ?? false),
+    isChurchSubscriptionEnabled: !isLoading && ((flags?.church_subscription_enabled ?? false) || hasSandboxAccess("church_subscription_enabled")),
+    isChurchMenuVisible: !isLoading && ((flags?.church_menu_visible ?? false) || hasSandboxAccess("church_menu_visible")),
+    isPremiumEnabled: !isLoading && ((flags?.premium_enabled ?? false) || hasSandboxAccess("premium_enabled")),
+    isPremiumMenuVisible: !isLoading && ((flags?.premium_menu_visible ?? false) || hasSandboxAccess("premium_menu_visible")),
     isSchedulerEnabled: !isLoading && (flags?.scheduler_enabled ?? false),
     isCrossCommunityEnabled: !isLoading && (flags?.cross_community_enabled ?? false),
     isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
@@ -107,5 +129,7 @@ export function useAppSettings() {
     toggleWorshipLeaderAutoApprove: () => toggleFlag("worship_leader_auto_approve"),
     toggleGoogleLogin: () => toggleFlag("google_login_enabled"),
     toggleTeamRotation: () => toggleFlag("team_rotation_enabled"),
+    // Sandbox access info
+    isSandboxTester: sandboxAccess && sandboxAccess.length > 0,
   };
 }

@@ -2391,6 +2391,36 @@ export type Database = {
           },
         ]
       }
+      sandbox_testers: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          enabled: boolean | null
+          features: string[]
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          enabled?: boolean | null
+          features?: string[]
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          enabled?: boolean | null
+          features?: string[]
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       seed_achievements: {
         Row: {
           achievement_type: Database["public"]["Enums"]["seed_activity_type"]
