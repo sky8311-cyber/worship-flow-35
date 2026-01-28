@@ -1,234 +1,119 @@
 
+# 생년월일 년도 선택 버그 긴급 수정
 
-# 이메일 수신 동의 및 구독 관리 시스템 구현
+## 문제 분석
 
-## 개요
+사용자가 회원가입 시 생년월일 년도를 선택할 수 없다는 긴급 버그입니다.
 
-승인된 최종 플랜에 따라 이메일 수신 동의 시스템을 구현합니다:
-1. 신규 유저: 기존 약관 동의창에 커뮤니케이션 동의 체크박스 추가
-2. 기존 유저: 커뮤니케이션 동의만 별도 요청 (기존 약관 재동의 불필요)
-3. 수신 거부 시 실제로 이메일 발송 안 함
-4. 모든 이메일에 수신 거부 링크 삽입
+### 근본 원인
+
+`SelectContent` 컴포넌트의 Viewport 설정 문제:
+
+```tsx
+// 현재 코드 (select.tsx 라인 78-85)
+<SelectPrimitive.Viewport
+  className={cn(
+    "p-1",
+    position === "popper" &&
+      "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+  )}
+>
+```
+
+`h-[var(--radix-select-trigger-height)]`가 Viewport 높이를 트리거 높이(약 40px)로 제한해버려서, 126개 년도 옵션이 있는 드롭다운에서 스크롤이 불가능합니다.
+
+### 추가 문제
+
+1. **모바일 터치 스크롤**: Radix Select는 모바일에서 터치 스크롤이 원활하지 않을 수 있음
+2. **Viewport overflow**: 높이 제한과 overflow 설정 충돌
 
 ---
 
-## 구현 순서
+## 해결 방안
 
-### 1단계: 데이터베이스 마이그레이션
+### 1단계: SelectContent Viewport 높이 수정
 
-**테이블 생성:**
-- `email_preferences` 테이블 (수신 설정 저장)
-- RLS 정책 추가
-- `communications` 법적 문서 삽입 (한국어/영어)
+```tsx
+// 수정 전
+h-[var(--radix-select-trigger-height)]
 
-```sql
--- email_preferences 테이블
-CREATE TABLE public.email_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
-  automated_reminders BOOLEAN DEFAULT true,
-  community_updates BOOLEAN DEFAULT true,
-  product_updates BOOLEAN DEFAULT true,
-  marketing_emails BOOLEAN DEFAULT true,
-  unsubscribe_token UUID DEFAULT gen_random_uuid() UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+// 수정 후 - 높이 제한 제거, max-height만 유지
+// Viewport에서 height 제한 제거
+```
 
--- RLS 활성화 및 정책
-ALTER TABLE email_preferences ENABLE ROW LEVEL SECURITY;
--- 사용자 본인 데이터만 접근 가능
+### 2단계: DateDropdownPicker 모바일 최적화
+
+년도 드롭다운의 `max-h-[200px]`를 유지하되, 모바일에서 더 큰 높이 허용:
+
+```tsx
+// max-h-[200px] → max-h-[280px] 또는 max-h-[60vh]
+// 모바일에서도 충분한 스크롤 영역 확보
+```
+
+### 3단계: overflow-y-auto 명시적 추가
+
+SelectContent에 스크롤 가능하도록 명시:
+
+```tsx
+className={cn(
+  "relative z-50 max-h-96 min-w-[8rem] overflow-hidden ...",
+  // overflow-y-auto 추가 고려
+)}
 ```
 
 ---
 
-### 2단계: useLegalConsent.ts 수정
+## 파일 변경
 
-**변경 사항:**
-- `communications` 타입 추가
-- 분기 처리: terms/privacy 동의 완료 + communications만 미동의 → 별도 플래그 반환
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/ui/select.tsx` | Viewport height 제한 제거 |
+| `src/components/ui/date-dropdown-picker.tsx` | 모바일 최적화, max-height 조정 |
 
-```typescript
-// 반환 타입 확장
-return {
-  needsConsent: boolean,
-  pendingDocuments: [...],
-  needsCommunicationConsentOnly: boolean, // 신규 플래그
-}
+---
+
+## 기술 세부사항
+
+### SelectContent 수정 (라인 78-85)
+
+```tsx
+// 변경 전
+<SelectPrimitive.Viewport
+  className={cn(
+    "p-1",
+    position === "popper" &&
+      "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+  )}
+>
+
+// 변경 후
+<SelectPrimitive.Viewport
+  className={cn(
+    "p-1 max-h-[inherit] overflow-y-auto",
+    position === "popper" &&
+      "w-full min-w-[var(--radix-select-trigger-width)]",
+  )}
+>
+```
+
+핵심: `h-[var(--radix-select-trigger-height)]` 제거
+
+### DateDropdownPicker 수정 (라인 124, 162)
+
+```tsx
+// 변경 전
+<SelectContent className="max-h-[200px]">
+
+// 변경 후 - 모바일에서 더 많은 공간 확보
+<SelectContent className="max-h-[280px] overflow-y-auto">
 ```
 
 ---
 
-### 3단계: LegalConsentModal.tsx 수정 (신규 유저용)
+## 테스트 체크리스트
 
-**변경 사항:**
-- terms/privacy 동의 체크박스 (필수)
-- 커뮤니케이션 동의 체크박스 추가 (선택, 기본 체크됨)
-- 저장 시 `email_preferences` 테이블에도 설정 저장
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ 📄 이용약관                                  [보기]     │
-│ 🔒 개인정보처리방침                          [보기]     │
-├─────────────────────────────────────────────────────────┤
-│ ☑ 위 약관에 동의합니다 (필수)                          │
-│ ☑ 서비스 관련 이메일 수신에 동의합니다 (선택)          │
-├─────────────────────────────────────────────────────────┤
-│              [동의하고 계속하기]                        │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-### 4단계: CommunicationConsentModal.tsx 생성 (기존 유저용)
-
-**새 컴포넌트:**
-- 기존 유저에게 커뮤니케이션 동의만 요청
-- "수신 동의" 또는 "수신 안함" 선택 가능
-- 선택 후 `email_preferences` 및 `legal_acceptances` 저장
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ 📧 이메일 수신 설정                                      │
-├─────────────────────────────────────────────────────────┤
-│ K-Worship에서 서비스 관련 이메일을 보내드립니다.         │
-│                                                         │
-│ • 자동 리마인더                                         │
-│ • 커뮤니티/서비스 업데이트                              │
-│ • 마케팅 이메일                                         │
-│                                                         │
-│ 설정에서 언제든지 변경 가능합니다.                       │
-├─────────────────────────────────────────────────────────┤
-│   [수신 안함]                    [수신 동의하기]        │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-### 5단계: App.tsx 수정
-
-**변경 사항:**
-- `LegalConsentGate`에서 `needsCommunicationConsentOnly` 분기 처리
-- `CommunicationConsentModal` 조건부 렌더링
-- `/email-preferences` 라우트 추가
-
----
-
-### 6단계: Settings.tsx - 이메일 수신 설정 카드 추가
-
-**위치:** 푸시 알림 설정 카드 아래
-
-```text
-┌─────────────────────────────────────────────────────────┐
-│ 📧 이메일 수신 설정                                      │
-├─────────────────────────────────────────────────────────┤
-│ 📬 자동 리마인더                         [ON/OFF]       │
-│ 👥 커뮤니티 업데이트                     [ON/OFF]       │
-│ 📢 서비스 업데이트                       [ON/OFF]       │
-│ 🎯 마케팅 이메일                         [ON/OFF]       │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-### 7단계: EmailPreferences.tsx 페이지 생성 (토큰 기반)
-
-**경로:** `/email-preferences?token=xxx`
-
-**기능:**
-- 이메일 링크에서 로그인 없이 접근 가능
-- 토큰으로 사용자 식별
-- 개별 카테고리별 수신 설정 변경
-- "모든 이메일 수신 거부" 옵션
-
----
-
-### 8단계: manage-email-preferences Edge Function 생성
-
-**기능:**
-- GET: 토큰으로 현재 설정 조회
-- POST: 토큰으로 설정 업데이트
-- 인증 불필요 (토큰이 인증 역할)
-
----
-
-### 9단계: process-automated-emails 수정
-
-**변경 사항:**
-1. 수신 거부 사용자 필터링:
-```typescript
-const { data: optedOut } = await supabase
-  .from("email_preferences")
-  .select("user_id")
-  .eq("automated_reminders", false);
-
-const filteredRecipients = recipients.filter(r => !optedOutIds.has(r.id));
-```
-
-2. 수신 거부 링크 변수 추가:
-```typescript
-variables.unsubscribe_url = `${APP_URL}/email-preferences?token=${token}`;
-variables.preferences_url = `${APP_URL}/email-preferences?token=${token}`;
-```
-
----
-
-### 10단계: send-admin-email 수정
-
-**변경 사항:**
-- 카테고리별 수신 거부 필터링 (marketing_emails, product_updates 등)
-- 수신 거부 링크 변수 추가
-
----
-
-### 11단계: 자동 이메일 템플릿 업데이트
-
-**DB 업데이트 (automated_email_settings):**
-- 모든 템플릿에 수신 거부 푸터 추가:
-
-```html
-<p style="font-size: 11px;">
-  <a href="{{preferences_url}}">이메일 수신 설정 변경</a> | 
-  <a href="{{unsubscribe_url}}">수신 거부</a>
-</p>
-```
-
----
-
-## 파일 변경 목록
-
-| 파일 | 작업 |
-|------|------|
-| **Database Migration** | `email_preferences` 테이블 + RLS + communications 문서 |
-| `src/hooks/useLegalConsent.ts` | communications 타입 추가, 분기 처리 |
-| `src/components/legal/LegalConsentModal.tsx` | 커뮤니케이션 체크박스 추가 |
-| `src/components/legal/CommunicationConsentModal.tsx` | **신규** - 기존 유저용 모달 |
-| `src/App.tsx` | CommunicationConsentModal 연동, 라우트 추가 |
-| `src/pages/Settings.tsx` | 이메일 수신 설정 카드 추가 |
-| `src/pages/EmailPreferences.tsx` | **신규** - 토큰 기반 수신 거부 페이지 |
-| `supabase/functions/manage-email-preferences/index.ts` | **신규** |
-| `supabase/functions/process-automated-emails/index.ts` | 수신 거부 필터링 |
-| `supabase/functions/send-admin-email/index.ts` | 수신 거부 필터링 |
-| `supabase/config.toml` | 새 함수 등록 |
-
----
-
-## 기술 세부 사항
-
-### 보안
-- `unsubscribe_token`: UUID로 생성, 추측 불가능
-- RLS: 사용자 본인 데이터만 접근 가능
-- 토큰 API: service_role_key로 필터링 수행
-
-### 기존 유저 처리 흐름
-1. 로그인 시 `useLegalConsent` 훅이 communications 미동의 감지
-2. `needsCommunicationConsentOnly = true` 반환
-3. `App.tsx`에서 `CommunicationConsentModal` 표시
-4. 사용자가 "수신 동의" 또는 "수신 안함" 선택
-5. 선택에 따라 `email_preferences` 생성 + `legal_acceptances` 기록
-
-### 신규 유저 처리 흐름
-1. 회원가입 후 `LegalConsentModal` 표시
-2. terms + privacy 동의 (필수) + communications 동의 (선택)
-3. 저장 시 `email_preferences` 자동 생성
-
+- [ ] 모바일에서 년도 드롭다운 열림
+- [ ] 년도 목록 스크롤 가능 (1900년까지)
+- [ ] 년도 선택 시 정상 반영
+- [ ] 월/일 드롭다운도 정상 작동
+- [ ] 데스크톱에서도 동일하게 작동
