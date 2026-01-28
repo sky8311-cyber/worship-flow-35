@@ -23,6 +23,16 @@ const getDaysInMonth = (year: number, month: number): number => {
   return new Date(year, month, 0).getDate();
 };
 
+const parseInitialValue = (value: string): { year: string; month: string; day: string } => {
+  if (!value) return { year: "", month: "", day: "" };
+  const parts = value.split("-");
+  return {
+    year: parts[0] || "",
+    month: parts[1] || "",
+    day: parts[2] || "",
+  };
+};
+
 export function DateDropdownPicker({
   value,
   onChange,
@@ -34,11 +44,17 @@ export function DateDropdownPicker({
 }: DateDropdownPickerProps) {
   const { language } = useTranslation();
 
-  // Parse the current value
-  const [year, month, day] = React.useMemo(() => {
-    if (!value) return ["", "", ""];
-    const parts = value.split("-");
-    return [parts[0] || "", parts[1] || "", parts[2] || ""];
+  // Local state for partial selections
+  const [selectedYear, setSelectedYear] = React.useState<string>("");
+  const [selectedMonth, setSelectedMonth] = React.useState<string>("");
+  const [selectedDay, setSelectedDay] = React.useState<string>("");
+
+  // Initialize local state from value prop on mount or when value changes externally
+  React.useEffect(() => {
+    const parsed = parseInitialValue(value);
+    setSelectedYear(parsed.year);
+    setSelectedMonth(parsed.month);
+    setSelectedDay(parsed.day);
   }, [value]);
 
   // Generate year options (descending order - newest first)
@@ -63,9 +79,9 @@ export function DateDropdownPicker({
 
   // Day options based on selected year and month
   const dayOptions = React.useMemo(() => {
-    const selectedYear = year ? parseInt(year) : new Date().getFullYear();
-    const selectedMonth = month ? parseInt(month) : 1;
-    const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+    const yearNum = selectedYear ? parseInt(selectedYear) : new Date().getFullYear();
+    const monthNum = selectedMonth ? parseInt(selectedMonth) : 1;
+    const daysInMonth = getDaysInMonth(yearNum, monthNum);
     
     const days: { value: string; label: string }[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
@@ -75,48 +91,71 @@ export function DateDropdownPicker({
       });
     }
     return days;
-  }, [year, month, language]);
+  }, [selectedYear, selectedMonth, language]);
 
-  // Update the combined date when any part changes
-  const handleYearChange = (newYear: string) => {
-    const newDay = validateDay(newYear, month, day);
-    onChange(buildDateString(newYear, month, newDay));
-  };
-
-  const handleMonthChange = (newMonth: string) => {
-    const newDay = validateDay(year, newMonth, day);
-    onChange(buildDateString(year, newMonth, newDay));
-  };
-
-  const handleDayChange = (newDay: string) => {
-    onChange(buildDateString(year, month, newDay));
-  };
-
-  // Validate day when year/month changes (e.g., Feb 30 -> Feb 28)
-  const validateDay = (y: string, m: string, d: string): string => {
-    if (!y || !m || !d) return d;
-    const maxDays = getDaysInMonth(parseInt(y), parseInt(m));
-    const currentDay = parseInt(d);
+  // Validate and adjust day when year/month changes
+  const validateDay = (year: string, month: string, day: string): string => {
+    if (!year || !month || !day) return day;
+    const maxDays = getDaysInMonth(parseInt(year), parseInt(month));
+    const currentDay = parseInt(day);
     if (currentDay > maxDays) {
       return String(maxDays).padStart(2, "0");
     }
-    return d;
+    return day;
   };
 
-  // Build YYYY-MM-DD string
-  const buildDateString = (y: string, m: string, d: string): string => {
-    if (!y || !m || !d) return "";
-    return `${y}-${m}-${d}`;
+  // Build YYYY-MM-DD string and call onChange only when complete
+  const notifyIfComplete = (year: string, month: string, day: string) => {
+    if (year && month && day) {
+      onChange(`${year}-${month}-${day}`);
+    }
   };
+
+  const handleYearChange = (newYear: string) => {
+    setSelectedYear(newYear);
+    const adjustedDay = validateDay(newYear, selectedMonth, selectedDay);
+    if (adjustedDay !== selectedDay) {
+      setSelectedDay(adjustedDay);
+    }
+    notifyIfComplete(newYear, selectedMonth, adjustedDay || selectedDay);
+  };
+
+  const handleMonthChange = (newMonth: string) => {
+    setSelectedMonth(newMonth);
+    const adjustedDay = validateDay(selectedYear, newMonth, selectedDay);
+    if (adjustedDay !== selectedDay) {
+      setSelectedDay(adjustedDay);
+    }
+    notifyIfComplete(selectedYear, newMonth, adjustedDay || selectedDay);
+  };
+
+  const handleDayChange = (newDay: string) => {
+    setSelectedDay(newDay);
+    notifyIfComplete(selectedYear, selectedMonth, newDay);
+  };
+
+  // Complete date string for hidden input
+  const completeDate = selectedYear && selectedMonth && selectedDay
+    ? `${selectedYear}-${selectedMonth}-${selectedDay}`
+    : "";
 
   return (
     <div className={cn("flex gap-2", className)}>
+      {/* Hidden input for form validation */}
+      {required && (
+        <input
+          type="hidden"
+          name="birthDate"
+          value={completeDate}
+          required
+        />
+      )}
+
       {/* Year */}
       <Select
-        value={year}
+        value={selectedYear}
         onValueChange={handleYearChange}
         disabled={disabled}
-        required={required}
       >
         <SelectTrigger className="flex-1 min-w-[90px]">
           <SelectValue placeholder={language === "ko" ? "연도" : "Year"} />
@@ -132,15 +171,14 @@ export function DateDropdownPicker({
 
       {/* Month */}
       <Select
-        value={month}
+        value={selectedMonth}
         onValueChange={handleMonthChange}
-        disabled={disabled || !year}
-        required={required}
+        disabled={disabled || !selectedYear}
       >
         <SelectTrigger className="flex-1 min-w-[80px]">
           <SelectValue placeholder={language === "ko" ? "월" : "Month"} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="max-h-[280px] overflow-y-auto">
           {monthOptions.map((m) => (
             <SelectItem key={m.value} value={m.value}>
               {m.label}
@@ -151,10 +189,9 @@ export function DateDropdownPicker({
 
       {/* Day */}
       <Select
-        value={day}
+        value={selectedDay}
         onValueChange={handleDayChange}
-        disabled={disabled || !year || !month}
-        required={required}
+        disabled={disabled || !selectedYear || !selectedMonth}
       >
         <SelectTrigger className="flex-1 min-w-[70px]">
           <SelectValue placeholder={language === "ko" ? "일" : "Day"} />
