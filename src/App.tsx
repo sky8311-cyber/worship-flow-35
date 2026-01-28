@@ -34,6 +34,7 @@ const CommunitySearch = lazy(() => import("./pages/CommunitySearch"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Help = lazy(() => import("./pages/Help"));
 const ChurchAccount = lazy(() => import("./pages/ChurchAccount"));
+const Membership = lazy(() => import("./pages/Membership"));
 const TemplateManager = lazy(() => import("./pages/TemplateManager"));
 // FavoritesList removed - now uses /songs?filter=favorites
 const SeedHistory = lazy(() => import("./pages/SeedHistory"));
@@ -213,6 +214,7 @@ const App = () => {
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/kworship-info" element={<ProtectedRoute><KWorshipInfo /></ProtectedRoute>} />
               <Route path="/church-account" element={<ProtectedRoute><ChurchAccount /></ProtectedRoute>} />
+              <Route path="/membership" element={<ProtectedRoute><Membership /></ProtectedRoute>} />
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />

@@ -207,17 +207,16 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {!settingsLoading && isChurchMenuVisible && (isWorshipLeader || isAdmin) && (
+                {!settingsLoading && isChurchMenuVisible && (
                   <DropdownMenuItem asChild>
-                    <Link to="/church-account" className="flex items-center justify-between w-full">
+                    <Link to="/membership" className="flex items-center justify-between w-full">
                       <span className="flex items-center">
-                        <Building2 className="mr-2 h-4 w-4" />
-                        {t("churchAccount.title")}
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {language === "ko" ? "멤버십" : "Membership"}
                       </span>
                       {showUpgradeBadge && (
                         <Badge variant="destructive" className="text-xs ml-2 gap-1">
-                          <Sparkles className="w-3 h-3" />
-                          {t("churchAccount.upgrade")}
+                          {language === "ko" ? "업그레이드" : "Upgrade"}
                         </Badge>
                       )}
                     </Link>
