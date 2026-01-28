@@ -62,7 +62,7 @@ const AdminUsers = () => {
       const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, email, full_name, created_at")
+          .select("id, email, full_name, created_at, last_active_at")
           .order("created_at", { ascending: false }),
         supabase
           .from("user_roles")
@@ -148,11 +148,15 @@ const AdminUsers = () => {
         const seedData = seedsMap.get(profile.id);
         const levelInfo = seedData ? levelsMap.get(seedData.current_level) : null;
         
+        // Use last_active_at from profiles (more accurate), fallback to last_sign_in_at from auth
+        const lastActivity = profile.last_active_at || authUser?.last_sign_in_at || null;
+        
         return {
           ...profile,
           user_roles: roles?.filter(r => r.user_id === profile.id) || [],
           email_confirmed_at: authUser?.email_confirmed_at || null,
           last_sign_in_at: authUser?.last_sign_in_at || null,
+          last_active_at: lastActivity,
           songCount: songCountMap.get(profile.id) || 0,
           communities: userCommunitiesMap.get(profile.id) || [],
           seedData: seedData ? {
@@ -637,7 +641,7 @@ const AdminUsers = () => {
                     <TableHead className="text-center">{language === "ko" ? "레벨/씨앗" : "Level/Seeds"}</TableHead>
                     <TableHead className="text-center">{language === "ko" ? "곡" : "Songs"}</TableHead>
                     <TableHead>{language === "ko" ? "커뮤니티" : "Community"}</TableHead>
-                    <TableHead>{language === "ko" ? "마지막 로그인" : "Last Login"}</TableHead>
+                    <TableHead>{language === "ko" ? "마지막 활동" : "Last Active"}</TableHead>
                     <TableHead>{t("admin.users.joined")}</TableHead>
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
@@ -720,8 +724,8 @@ const AdminUsers = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {user.last_sign_in_at ? (
-                            formatDistanceToNow(new Date(user.last_sign_in_at), { 
+                          {user.last_active_at ? (
+                            formatDistanceToNow(new Date(user.last_active_at), { 
                               addSuffix: true, 
                               locale: dateLocale 
                             })

@@ -17,6 +17,7 @@ import { CommunicationConsentModal } from "@/components/legal/CommunicationConse
 import { useLegalConsent } from "@/hooks/useLegalConsent";
 import { GlobalMusicPlayer } from "@/components/music-player/GlobalMusicPlayer";
 import { PageAnalyticsProvider } from "@/components/analytics/PageAnalyticsProvider";
+import { GlobalRsvpPrompt } from "@/components/global/GlobalRsvpPrompt";
 // Critical path - keep synchronous for fast initial load
 import MobileAppLanding from "./pages/MobileAppLanding";
 import Login from "./pages/auth/Login";
@@ -153,7 +154,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <PageLoader />;
   }
   
-  return <LegalConsentGate>{children}</LegalConsentGate>;
+  return (
+    <LegalConsentGate>
+      <GlobalRsvpPrompt />
+      {children}
+    </LegalConsentGate>
+  );
 };
 
 const App = () => {
