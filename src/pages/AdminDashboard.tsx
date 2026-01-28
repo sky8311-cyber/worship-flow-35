@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation, Sparkles } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation, Sparkles, CreditCard } from "lucide-react";
 import { NavigationManager } from "@/components/admin/NavigationManager";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -600,6 +600,28 @@ const AdminDashboard = () => {
                       onCheckedChange={toggleChurchMenu}
                       disabled={isUpdating}
                     />
+                  </div>
+
+                  <Separator />
+
+                  {/* Membership Products Management Link */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        {language === "ko" ? "멤버십 상품 관리" : "Membership Products"}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "가격, 체험 기간, 결제 주기 등을 설정합니다"
+                          : "Configure pricing, trial periods, and billing cycles"}
+                      </p>
+                    </div>
+                    <Link to="/admin/membership-products">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        {language === "ko" ? "관리" : "Manage"}
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

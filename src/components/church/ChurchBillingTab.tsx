@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
 import {
   Carousel,
   CarouselContent,
@@ -52,6 +53,9 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isTrialLoading, setIsTrialLoading] = useState(false);
+
+  // Fetch product info from DB
+  const { product } = useMembershipProduct("community_account");
 
   // Check if subscription is active or in valid trial
   const isTrialValid = churchAccount.subscription_status === "trial" && 
@@ -89,8 +93,9 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
   const handleStartTrial = async () => {
     setIsTrialLoading(true);
     try {
+      const trialDays = product?.trial_days || 30;
       const trialEndDate = new Date();
-      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      trialEndDate.setDate(trialEndDate.getDate() + trialDays);
       
       const { error } = await supabase
         .from("church_accounts")
@@ -149,6 +154,15 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
     }
   };
 
+  // Get dynamic pricing from DB or fallback
+  const churchPriceDisplay = product 
+    ? (language === "ko" 
+        ? `${formatPrice(product.price_krw, "krw")}/${product.billing_cycle_label_ko || "월간"}`
+        : `${formatPrice(product.price_usd, "usd")}/${product.billing_cycle_label_en || "month"}`)
+    : (language === "ko" ? "₩39,900/월간" : "$39.99/month");
+
+  const trialDays = product?.trial_days || 30;
+
   // Plan data
   const plans = [
     {
@@ -181,10 +195,12 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
     {
       id: "church" as PlanType,
       icon: Building2,
-      name: t("churchAccount.planChurch"),
-      price: t("churchAccount.planChurchPrice"),
-      priceNote: t("churchAccount.trialNote"),
-      description: t("churchAccount.planChurchDescription"),
+      name: product ? (language === "ko" ? product.display_name_ko : product.display_name_en) : t("churchAccount.planChurch"),
+      price: churchPriceDisplay,
+      priceNote: language === "ko" ? `${trialDays}일 무료 체험` : `${trialDays}-day free trial`,
+      description: product 
+        ? (language === "ko" ? product.description_ko : product.description_en) 
+        : t("churchAccount.planChurchDescription"),
       features: [
         t("churchAccount.featureCustomRoles"),
         t("churchAccount.featureTeamRotation"),

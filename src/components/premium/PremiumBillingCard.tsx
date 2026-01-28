@@ -17,6 +17,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { usePremiumSubscription } from "@/hooks/usePremiumSubscription";
+import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function PremiumBillingCard() {
   const { t, language } = useTranslation();
@@ -30,6 +32,8 @@ export function PremiumBillingCard() {
     canStartTrial,
     refetch 
   } = usePremiumSubscription();
+  
+  const { product, isLoading: isProductLoading } = useMembershipProduct("full_membership");
   
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
@@ -93,15 +97,33 @@ export function PremiumBillingCard() {
     language === "ko" ? "API 액세스" : "API access",
   ];
 
+  // Get pricing from DB or fallback
+  const priceDisplay = product 
+    ? (language === "ko" 
+        ? `${formatPrice(product.price_krw, "krw")}/${product.billing_cycle_label_ko || "연간"}`
+        : `${formatPrice(product.price_usd, "usd")}/${product.billing_cycle_label_en || "year"}`)
+    : (language === "ko" ? "₩59,000/연간" : "$49.99/year");
+
+  const trialDays = product?.trial_days || 7;
+  const displayName = product 
+    ? (language === "ko" ? product.display_name_ko : product.display_name_en)
+    : (language === "ko" ? "정식 멤버십" : "Full Membership");
+
+  const billingCycleLabel = product
+    ? (language === "ko" ? product.billing_cycle_label_ko : product.billing_cycle_label_en)
+    : (language === "ko" ? "연간" : "Annual");
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-yellow-500" />
-          {language === "ko" ? "정식 멤버십(연간)" : "Full Membership (Annual)"}
+          {displayName} ({billingCycleLabel})
         </CardTitle>
         <CardDescription>
-          {language === "ko" ? "정식 멤버 기능으로 더 많은 것을 누리세요" : "Unlock full member features for more"}
+          {product 
+            ? (language === "ko" ? product.description_ko : product.description_en) 
+            : (language === "ko" ? "정식 멤버 기능으로 더 많은 것을 누리세요" : "Unlock full member features for more")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -119,7 +141,7 @@ export function PremiumBillingCard() {
               </p>
               {subscriptionEnd && isSubscribed && (
                 <p className="text-sm text-muted-foreground">
-                  {language === "ko" ? "다음 결제일: " : "Next billing: "}{formatDate(subscriptionEnd)}
+                  {language === "ko" ? "구독 종료일: " : "Membership ends: "}{formatDate(subscriptionEnd)}
                 </p>
               )}
             </div>
@@ -137,8 +159,8 @@ export function PremiumBillingCard() {
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {language === "ko" 
-                ? "체험 기간이 끝나면 연간 멤버십으로 전환됩니다"
-                : "You'll be charged when your trial ends"}
+                ? "체험 기간이 끝나면 멤버십으로 전환됩니다"
+                : "Your membership will start when your trial ends"}
             </p>
           </div>
         )}
@@ -173,8 +195,8 @@ export function PremiumBillingCard() {
                 <Sparkles className="w-4 h-4" />
               )}
               {canStartTrial 
-                ? (language === "ko" ? "14일 무료 체험 시작" : "Start 14-Day Free Trial")
-                : (language === "ko" ? "정식 멤버로 전환" : "Become a Full Member")}
+                ? (language === "ko" ? `${trialDays}일 무료 체험 시작` : `Start ${trialDays}-Day Free Trial`)
+                : (language === "ko" ? "정식 멤버 가입" : "Join as Full Member")}
             </Button>
           ) : (
             <Button 
@@ -195,9 +217,11 @@ export function PremiumBillingCard() {
 
         {/* Price Info */}
         <div className="text-center pt-2 border-t">
-          <p className="text-lg font-bold">
-            {language === "ko" ? "₩99,000/년" : "$99/year"}
-          </p>
+          {isProductLoading ? (
+            <Skeleton className="h-6 w-24 mx-auto mb-1" />
+          ) : (
+            <p className="text-lg font-bold">{priceDisplay}</p>
+          )}
           <p className="text-xs text-muted-foreground">
             {language === "ko" ? "언제든 취소 가능" : "Cancel anytime"}
           </p>
