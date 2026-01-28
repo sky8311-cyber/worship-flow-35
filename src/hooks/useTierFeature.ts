@@ -32,25 +32,25 @@ export interface TierFeature {
 export const TIER_CONFIG = {
   member: {
     label: "Team Member",
-    labelKo: "팀 멤버",
+    labelKo: "팀멤버",
     color: "bg-muted text-muted-foreground",
     borderColor: "border-muted-foreground/30",
   },
   worship_leader: {
     label: "Basic Member",
-    labelKo: "기본 멤버",
+    labelKo: "기본멤버",
     color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
     borderColor: "border-purple-300 dark:border-purple-700",
   },
   premium: {
     label: "Full Member",
-    labelKo: "정식 멤버",
+    labelKo: "정식멤버",
     color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
     borderColor: "border-yellow-300 dark:border-yellow-700",
   },
   church: {
-    label: "Worship Community Account",
-    labelKo: "예배 공동체 계정",
+    label: "Community Account",
+    labelKo: "공동체계정",
     color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
     borderColor: "border-blue-300 dark:border-blue-700",
   },

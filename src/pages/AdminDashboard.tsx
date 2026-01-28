@@ -210,17 +210,17 @@ const AdminDashboard = () => {
       color: "text-blue-500",
     },
     {
-      title: language === "ko" ? "기본 멤버 (워십리더)" : "Basic Members",
+      title: language === "ko" ? "기본멤버" : "Basic Members",
       value: stats?.worshipLeaders || 0,
       icon: Music,
-      description: language === "ko" ? "승인된 기본 멤버 수" : "Approved basic members",
+      description: language === "ko" ? "승인된 기본멤버 수" : "Approved basic members",
       color: "text-indigo-500",
     },
     {
-      title: language === "ko" ? "정식 멤버 (프리미엄)" : "Premium Members",
+      title: language === "ko" ? "정식멤버" : "Full Members",
       value: stats?.premiumSubscribers || 0,
       icon: Crown,
-      description: language === "ko" ? "활성 프리미엄 계정" : "Active premium accounts",
+      description: language === "ko" ? "활성 정식멤버 계정" : "Active full member accounts",
       color: "text-amber-500",
     },
     {
