@@ -279,6 +279,28 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Excluded ${originalCount - recipients.length} recipients, ${recipients.length} remaining`);
     }
 
+    // Filter out users who opted out of marketing/admin emails (based on marketing_emails preference)
+    if (!testMode) {
+      const userIds = recipients.filter(r => r.user_id || r.id).map(r => r.user_id || r.id);
+      if (userIds.length > 0) {
+        const { data: optedOutUsers } = await supabaseClient
+          .from("email_preferences")
+          .select("user_id")
+          .in("user_id", userIds)
+          .eq("marketing_emails", false);
+        
+        if (optedOutUsers && optedOutUsers.length > 0) {
+          const optedOutIds = new Set(optedOutUsers.map(u => u.user_id));
+          const beforeOptOut = recipients.length;
+          recipients = recipients.filter(r => {
+            const id = r.user_id || r.id;
+            return !id || !optedOutIds.has(id);
+          });
+          console.log(`Filtered out ${beforeOptOut - recipients.length} opted-out users`);
+        }
+      }
+    }
+
     console.log(`Found ${recipients.length} recipients`);
 
     if (recipients.length === 0) {
@@ -348,11 +370,32 @@ const handler = async (req: Request): Promise<Response> => {
 
       const sendPromises = batch.map(async (recipient) => {
         try {
+          // Get unsubscribe token for this user
+          let unsubscribeToken = "";
+          let unsubscribeUrl = appUrl;
+          let preferencesUrl = appUrl;
+          
+          if (recipient.user_id || recipient.id) {
+            const { data: prefData } = await supabaseClient
+              .from("email_preferences")
+              .select("unsubscribe_token")
+              .eq("user_id", recipient.user_id || recipient.id)
+              .maybeSingle();
+            
+            if (prefData?.unsubscribe_token) {
+              unsubscribeToken = prefData.unsubscribe_token;
+              unsubscribeUrl = `${appUrl}/email-preferences?token=${unsubscribeToken}`;
+              preferencesUrl = unsubscribeUrl;
+            }
+          }
+
           // Replace variables in content
           let personalizedContent = replaceVariables(htmlContent, {
             user_name: recipient.full_name || "User",
             app_url: appUrl,
             community_name: communityName,
+            unsubscribe_url: unsubscribeUrl,
+            preferences_url: preferencesUrl,
           });
 
           // Append signature if enabled
