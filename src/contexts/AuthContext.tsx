@@ -183,7 +183,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       });
 
+      // Gracefully handle 401/Unauthorized - this is normal when session hasn't propagated yet
       if (response.error) {
+        const errorMsg = response.error.message || '';
+        if (errorMsg.includes('401') || errorMsg.includes('Unauthorized') || errorMsg.includes('unauthorized')) {
+          // Silently ignore - session not yet propagated after login
+          syncInProgress.current = false;
+          setRoleSyncComplete(true);
+          return false;
+        }
         console.log('Role sync error:', response.error);
         syncInProgress.current = false;
         setRoleSyncComplete(true);
