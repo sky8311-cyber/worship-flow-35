@@ -14,13 +14,13 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
-import { PremiumBillingCard } from "@/components/premium/PremiumBillingCard";
+
 import { RoleBadge } from "@/components/RoleBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Home } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Home, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
@@ -759,10 +759,23 @@ const Settings = () => {
           </Card>
         )}
 
-        {/* Premium Subscription - only show if feature flag enabled */}
-        {isPremiumMenuVisible && (
-          <PremiumBillingCard />
-        )}
+        {/* Membership Link Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              {language === "ko" ? "멤버십" : "Membership"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko" ? "멤버십 상태 확인 및 업그레이드" : "View membership status and upgrade options"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/membership")} className="w-full">
+              {language === "ko" ? "멤버십 관리" : "Manage Membership"}
+            </Button>
+          </CardContent>
+        </Card>
 
 
         {/* Dialog */}

@@ -65,7 +65,8 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   });
 
   // Show upgrade badge if user is worship leader/admin but doesn't have active church subscription
-  const showUpgradeBadge = (isWorshipLeader || isAdmin) && !isSubscriptionActive;
+  // Show upgrade badge if user can upgrade to either Premium or Church Account
+  const showUpgradeBadge = !isSubscriptionActive;
 
   const handleLogout = async () => {
     await signOut();
@@ -207,7 +208,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {!settingsLoading && isChurchMenuVisible && (
+                {!settingsLoading && (
                   <DropdownMenuItem asChild>
                     <Link to="/membership" className="flex items-center justify-between w-full">
                       <span className="flex items-center">
@@ -220,7 +221,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                         </Badge>
                       )}
                     </Link>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
                 )}
                 
                 

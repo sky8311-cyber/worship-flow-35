@@ -346,7 +346,7 @@ const AdminCRM = () => {
     // 팀멤버: 전체 프로필에서 worship_leader를 뺀 수 (승급하지 않은 모든 사용자)
     const teamMemberCount = crmData.totalProfileCount - crmData.worshipLeaders.length;
     
-    // 일반멤버 (예배인도자): worship_leader role 보유자
+    // 기본멤버 (예배인도자): worship_leader role 보유자
     const basicMemberCount = crmData.worshipLeaders.length;
     
     // 정회원: active premium subscription
@@ -408,7 +408,7 @@ const AdminCRM = () => {
             </CardContent>
           </Card>
           
-          {/* 2. 일반멤버 (예배인도자) */}
+          {/* 2. 기본멤버 (예배인도자) */}
           <Card 
             className={`cursor-pointer transition-all ${typeFilter === "worship_leader" ? "ring-2 ring-purple-500" : "hover:shadow-md"}`}
             onClick={() => setTypeFilter(typeFilter === "worship_leader" ? "all" : "worship_leader")}
@@ -419,7 +419,7 @@ const AdminCRM = () => {
               </div>
               <div>
                 <div className="text-2xl font-bold">{stats.basicMembers}</div>
-                <div className="text-xs text-muted-foreground">{language === "ko" ? "일반멤버" : "Basic Members"}</div>
+                <div className="text-xs text-muted-foreground">{language === "ko" ? "기본멤버" : "Basic Members"}</div>
               </div>
             </CardContent>
           </Card>
