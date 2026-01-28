@@ -25,23 +25,26 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Client scoped to the caller (RLS applies)
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // Use service role client to validate token (more reliable than getClaims)
+    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user }, error: userError } = await adminSupabase.auth.getUser(token);
 
-    // Validate JWT without relying on persisted sessions
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-      console.log("Failed to validate token:", claimsError);
+    if (userError || !user) {
+      console.log("Failed to validate token:", userError?.message || "No user");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const userId = user.id;
+
+    // Client scoped to the caller (RLS applies) for subsequent queries
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     console.log(`Syncing worship leader role for user: ${userId}`);
 
@@ -93,9 +96,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
-
+    // Use existing adminSupabase client (already initialized with service role)
     const { error: insertError } = await adminSupabase.from("user_roles").insert({
       user_id: userId,
       role: "worship_leader",
