@@ -1,191 +1,148 @@
 
-# 멤버십 상품 관리 시스템 계획 (Admin Dashboard)
+# Sandbox 테스터 시스템 구현 계획
 
 ## 개요
 
-Admin Dashboard에서 **Full Membership**과 **Community Account**의 상품 세부 정보를 쉽게 변경할 수 있는 관리 시스템을 구축합니다.
+Toss 결제 감사를 위해 특정 테스트 계정(`testworship@test.com`)이 글로벌 토글 상태와 관계없이 Full Membership 및 Community Account 결제 화면을 볼 수 있도록 "샌드박스 테스터" 시스템을 구현합니다.
 
-### 관리 가능한 항목
-- 가격 (USD 및 KRW)
-- 결제 주기 (월간/연간)
-- 체험 기간 (7일, 14일, 30일 등)
-- 표시 문구 (멤버십 친화적 용어)
+### 작동 방식
 
-### 용어 정책 (한국 교회 문화 고려)
-| 사용 금지 | 사용 권장 |
-|-----------|-----------|
-| Subscription (구독) | Membership (멤버십) |
-| Purchase (구매) | Join (가입) |
-| Subscribe (구독하다) | Become a Member (멤버 되기) |
-| Payment (결제) | Contribution (후원) / 참여비 |
+```text
+일반 사용자 (isPremiumMenuVisible = OFF)
+  → Settings 페이지에서 PremiumBillingCard 보이지 않음
 
----
-
-## 현재 상태 분석
-
-### 기존 인프라
-- `platform_feature_flags` 테이블: 토글 스위치 설정 (ON/OFF만 지원)
-- Admin Dashboard: 토글만 있고 숫자/텍스트 입력 필드 없음
-- `PremiumBillingCard.tsx`: 가격이 하드코딩됨 (`$99/year`, `₩99,000/년`)
-- Edge Functions: 가격 ID가 하드코딩됨 (`price_premium_monthly`)
-
-### 해결해야 할 문제
-1. 가격 변경 시 코드 수정 필요 → **DB 기반 설정**으로 전환
-2. 체험 기간 변경 불가 → **설정 테이블**에서 관리
-3. 용어가 곳곳에 하드코딩 → **번역 키 통일** + 설정 가능
+샌드박스 테스터 (testworship@test.com)
+  → 글로벌 토글이 OFF여도 PremiumBillingCard 표시됨
+  → 일반 사용자에게는 영향 없음
+```
 
 ---
 
 ## 기술 아키텍처
 
-### 새 데이터베이스 테이블: `membership_products`
+### 1단계: 데이터베이스 스키마
+
+새 테이블 `sandbox_testers`를 생성하여 테스트 권한을 가진 사용자를 관리합니다:
 
 ```sql
-CREATE TABLE public.membership_products (
+CREATE TABLE public.sandbox_testers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_key TEXT UNIQUE NOT NULL,  -- 'full_membership' | 'community_account'
-  
-  -- Display Info
-  display_name_en TEXT NOT NULL,
-  display_name_ko TEXT NOT NULL,
-  description_en TEXT,
-  description_ko TEXT,
-  
-  -- Pricing (stored in cents/won)
-  price_usd INTEGER NOT NULL,        -- e.g., 4999 = $49.99
-  price_krw INTEGER NOT NULL,        -- e.g., 59000 = ₩59,000
-  
-  -- Billing Cycle
-  billing_cycle TEXT NOT NULL,       -- 'monthly' | 'yearly'
-  billing_cycle_label_en TEXT,       -- "per year" | "per month"
-  billing_cycle_label_ko TEXT,       -- "연간" | "월간"
-  
-  -- Trial Period
-  trial_days INTEGER DEFAULT 7,
-  
-  -- Stripe Integration
-  stripe_price_id_usd TEXT,
-  stripe_price_id_krw TEXT,
-  stripe_product_id TEXT,
-  
-  -- Toss Integration (Future)
-  toss_plan_id TEXT,
-  
-  -- Feature Gating
-  is_active BOOLEAN DEFAULT true,
-  
-  -- Timestamps
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  features TEXT[] NOT NULL DEFAULT '{}',  -- 접근 가능한 기능 목록
+  note TEXT,                               -- 관리용 메모 (예: "Toss 감사용 계정")
+  enabled BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  created_by UUID REFERENCES auth.users(id),
+  UNIQUE(user_id)
 );
 
--- Initial Data
-INSERT INTO membership_products (product_key, display_name_en, display_name_ko, price_usd, price_krw, billing_cycle, trial_days)
-VALUES 
-  ('full_membership', 'Full Membership', '정식 멤버십', 4999, 59000, 'yearly', 7),
-  ('community_account', 'Community Account', '공동체 계정', 3999, 39900, 'monthly', 30);
+-- RLS: Admin만 관리 가능
+ALTER TABLE public.sandbox_testers ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin can manage sandbox testers" ON public.sandbox_testers
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  );
+
+-- 현재 사용자는 자신이 테스터인지 확인 가능
+CREATE POLICY "Users can check own tester status" ON public.sandbox_testers
+  FOR SELECT USING (user_id = auth.uid());
 ```
 
-### Admin UI 구조
+### 2단계: useAppSettings Hook 수정
+
+현재 사용자가 샌드박스 테스터인지 확인하고, 해당 기능에 대해 토글을 오버라이드합니다:
+
+```typescript
+// src/hooks/useAppSettings.ts
+
+export function useAppSettings() {
+  const { user, isAdmin } = useAuth();
+  
+  // 글로벌 플래그 조회 (기존)
+  const { data: flags, isLoading } = useQuery({...});
+  
+  // 샌드박스 테스터 상태 조회 (신규)
+  const { data: sandboxAccess } = useQuery({
+    queryKey: ["sandbox-tester-access", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from("sandbox_testers")
+        .select("features, enabled")
+        .eq("user_id", user.id)
+        .eq("enabled", true)
+        .single();
+      return data?.features || [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+  
+  // 오버라이드 로직
+  const hasSandboxAccess = (feature: string) => 
+    sandboxAccess?.includes(feature) || sandboxAccess?.includes("all");
+  
+  return {
+    // 기존 값 OR 샌드박스 오버라이드
+    isPremiumMenuVisible: !isLoading && (
+      flags?.premium_menu_visible || hasSandboxAccess("premium_menu_visible")
+    ),
+    isChurchSubscriptionEnabled: !isLoading && (
+      flags?.church_subscription_enabled || hasSandboxAccess("church_subscription_enabled")
+    ),
+    // ... 기타 플래그도 동일 패턴
+  };
+}
+```
+
+### 3단계: Admin UI - 테스터 관리
+
+Admin Dashboard에 샌드박스 테스터 관리 섹션을 추가합니다:
 
 ```text
-┌────────────────────────────────────────────────────────────────────┐
-│  Admin Dashboard                                                   │
-│  └── Membership Account Settings 카드 (기존)                       │
-│       └── [멤버십 상품 관리] 버튼 → AdminMembershipProducts 페이지  │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Admin Dashboard > Feature Toggles 카드                        │
+├─────────────────────────────────────────────────────────────────┤
+│  ...기존 토글들...                                              │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  🧪 Sandbox Testers                        [관리] 버튼    │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-┌────────────────────────────────────────────────────────────────────┐
-│  /admin/membership-products (새 페이지)                            │
-├────────────────────────────────────────────────────────────────────┤
-│                                                                    │
-│  ┌─────────────────────────────────────────────────────────┐      │
-│  │  Full Membership (정식 멤버십)                          │      │
-│  │  ─────────────────────────────────────────────────────  │      │
-│  │  가격 (USD):     [$49.99     ]  per year ▼              │      │
-│  │  가격 (KRW):     [₩59,000    ]  연간     ▼              │      │
-│  │  체험 기간:      [7] 일                                 │      │
-│  │  Stripe Price ID: [price_xxx...]                        │      │
-│  │  ───────────────────────────────────────────────────── │      │
-│  │  [저장] [미리보기]                      [활성] ON       │      │
-│  └─────────────────────────────────────────────────────────┘      │
-│                                                                    │
-│  ┌─────────────────────────────────────────────────────────┐      │
-│  │  Community Account (공동체 계정)                        │      │
-│  │  ─────────────────────────────────────────────────────  │      │
-│  │  가격 (USD):     [$39.99     ]  per month ▼             │      │
-│  │  가격 (KRW):     [₩39,900    ]  월간      ▼             │      │
-│  │  체험 기간:      [30] 일                                │      │
-│  │  Stripe Price ID: [price_1SZ...]                        │      │
-│  │  ───────────────────────────────────────────────────── │      │
-│  │  [저장] [미리보기]                      [활성] ON       │      │
-│  └─────────────────────────────────────────────────────────┘      │
-│                                                                    │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Sandbox Testers 관리 다이얼로그                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  testworship@test.com                                    │  │
+│  │  Features: premium_menu_visible, church_subscription     │  │
+│  │  Note: Toss 감사용 계정                                   │  │
+│  │                                         [수정] [삭제]    │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  [+ 새 테스터 추가]                                             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 구현 단계
 
-### Phase 1: 데이터베이스 설정
+### Phase 1: 데이터베이스
+1. `sandbox_testers` 테이블 생성
+2. RLS 정책 설정
+3. `testworship@test.com` 계정에 초기 데이터 삽입
 
-1. **`membership_products` 테이블 생성**
-   - 위 스키마 적용
-   - RLS 정책: Admin만 수정 가능, 읽기는 public
+### Phase 2: Hook 수정
+1. `useAppSettings.ts`에 샌드박스 조회 로직 추가
+2. 각 플래그 반환값에 오버라이드 조건 추가
 
-2. **초기 데이터 삽입**
-   - Full Membership: $49.99/년, 7일 체험
-   - Community Account: $39.99/월, 30일 체험
-
-### Phase 2: Admin UI 구현
-
-1. **새 페이지: `src/pages/AdminMembershipProducts.tsx`**
-   - 상품 목록 표시
-   - 인라인 편집 또는 다이얼로그 편집
-   - 저장 시 DB 업데이트
-
-2. **Admin 네비게이션에 추가**
-   - `AdminNav.tsx`의 More 메뉴에 "Membership Products" 링크 추가
-
-3. **AdminDashboard에 바로가기 추가**
-   - Membership Account Settings 카드에 "상품 관리" 버튼
-
-### Phase 3: 프론트엔드 연동
-
-1. **새 Hook: `src/hooks/useMembershipProducts.ts`**
-   ```typescript
-   export function useMembershipProducts() {
-     return useQuery({
-       queryKey: ["membership-products"],
-       queryFn: async () => {
-         const { data } = await supabase
-           .from("membership_products")
-           .select("*")
-           .eq("is_active", true);
-         return data;
-       },
-       staleTime: 5 * 60 * 1000, // 5분 캐시
-     });
-   }
-   ```
-
-2. **PremiumBillingCard 수정**
-   - 하드코딩된 가격 제거
-   - `useMembershipProducts`에서 동적으로 가져오기
-
-3. **ChurchBillingTab 수정**
-   - 동일하게 DB에서 가격 정보 가져오기
-
-### Phase 4: Edge Functions 연동
-
-1. **create-premium-checkout 수정**
-   - DB에서 `stripe_price_id_usd` 조회
-   - DB에서 `trial_days` 조회
-
-2. **create-church-checkout 수정**
-   - 동일하게 DB 기반으로 변경
+### Phase 3: Admin UI (선택사항)
+1. AdminDashboard에 테스터 관리 버튼 추가
+2. 테스터 추가/수정/삭제 다이얼로그
 
 ---
 
@@ -193,87 +150,44 @@ VALUES
 
 | 파일 | 변경 내용 |
 |------|----------|
-| **Phase 1: Database** | |
-| `supabase/migrations/...` | `membership_products` 테이블 생성 |
-| **Phase 2: Admin UI** | |
-| `src/pages/AdminMembershipProducts.tsx` | **새 파일** - 상품 관리 페이지 |
-| `src/components/admin/MembershipProductCard.tsx` | **새 파일** - 상품 편집 카드 |
-| `src/components/admin/AdminNav.tsx` | More 메뉴에 링크 추가 |
-| `src/pages/AdminDashboard.tsx` | 상품 관리 바로가기 추가 |
-| `src/App.tsx` | 새 라우트 추가 |
-| **Phase 3: Frontend** | |
-| `src/hooks/useMembershipProducts.ts` | **새 파일** - 상품 정보 조회 Hook |
-| `src/components/premium/PremiumBillingCard.tsx` | DB 기반 가격 표시 |
-| `src/components/church/ChurchBillingTab.tsx` | DB 기반 가격 표시 |
-| **Phase 4: Edge Functions** | |
-| `supabase/functions/create-premium-checkout/index.ts` | DB에서 설정 조회 |
-| `supabase/functions/create-church-checkout/index.ts` | DB에서 설정 조회 |
+| `supabase/migrations/...` | sandbox_testers 테이블 생성 |
+| `src/hooks/useAppSettings.ts` | 샌드박스 오버라이드 로직 추가 |
+| `src/pages/AdminDashboard.tsx` | 테스터 관리 UI 추가 (선택) |
 
 ---
 
-## 용어 정책 적용
+## 즉시 적용 방법 (SQL 직접 실행)
 
-### 번역 키 업데이트 (`translations.ts`)
+계획 승인 후 바로 테스트가 필요하면, 아래 SQL로 즉시 설정할 수 있습니다:
 
-```typescript
-// 변경 전
-"subscribeNow": "Subscribe Now",
-"subscription": "Subscription",
+```sql
+-- 1. 테이블 생성
+CREATE TABLE public.sandbox_testers (...);
 
-// 변경 후
-"joinMembership": "Join Membership",
-"membership": "Membership",
-"becomeFullMember": "Become a Full Member",
-"joinCommunity": "Join Community",
+-- 2. testworship@test.com 추가
+INSERT INTO public.sandbox_testers (user_id, features, note, enabled)
+VALUES (
+  '3a7a5fcf-dd70-4d14-8a5a-bb19b11cb241',  -- testworship@test.com의 user_id
+  ARRAY['premium_menu_visible', 'premium_enabled', 'church_subscription_enabled', 'church_menu_visible'],
+  'Toss 결제 감사용 계정',
+  true
+);
 ```
-
-### UI 텍스트 변경 예시
-
-| 위치 | 변경 전 | 변경 후 (EN) | 변경 후 (KO) |
-|------|---------|--------------|--------------|
-| Button | Subscribe Now | Join Membership | 멤버 가입하기 |
-| Title | Subscription & Billing | Membership | 멤버십 |
-| Trial | Start Free Trial | Start Free Membership | 무료 체험 시작 |
-| Badge | Subscriber | Full Member | 정식 멤버 |
 
 ---
 
 ## 보안 고려사항
 
-1. **RLS 정책**
-   ```sql
-   -- Admin만 수정 가능
-   CREATE POLICY "Admin can manage products" ON membership_products
-     FOR ALL USING (
-       EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
-     );
-   
-   -- 모든 사용자 읽기 가능 (가격 표시용)
-   CREATE POLICY "Anyone can read active products" ON membership_products
-     FOR SELECT USING (is_active = true);
-   ```
-
-2. **Edge Function 검증**
-   - DB에서 조회한 가격과 Stripe 가격 일치 검증
-   - 잘못된 price_id 방지
+1. **RLS 정책**: Admin만 테스터 관리 가능
+2. **자가 확인**: 사용자는 자신이 테스터인지만 조회 가능
+3. **비활성화 옵션**: `enabled` 플래그로 언제든 비활성화 가능
+4. **감사 추적**: `created_by`로 누가 추가했는지 기록
 
 ---
 
 ## 테스트 체크리스트
 
-- [ ] Admin 페이지에서 가격 변경 → 저장 확인
-- [ ] 가격 변경 후 PremiumBillingCard에 반영 확인
-- [ ] 체험 기간 7일 → 14일 변경 후 Checkout에서 확인
-- [ ] Community Account 가격 변경 후 ChurchBillingTab 반영 확인
-- [ ] Stripe Price ID 변경 후 결제 정상 작동 확인
-- [ ] "멤버십" 용어가 일관되게 적용되었는지 확인
-
----
-
-## 사전 확인 사항
-
-승인 전 결정이 필요합니다:
-
-1. **Stripe 상품**: Full Membership ($49.99/년) 상품을 새로 생성해야 할까요?
-2. **한국 원화 가격**: $49.99 = 약 ₩59,000로 설정해도 될까요?
-3. **Monthly 옵션**: Full Membership은 연간만 지원하므로 월간 옵션을 비활성화하면 될까요?
+- [ ] 글로벌 토글 OFF 상태에서 일반 사용자 → PremiumBillingCard 안 보임
+- [ ] 글로벌 토글 OFF 상태에서 testworship@test.com 로그인 → PremiumBillingCard 표시됨
+- [ ] 글로벌 토글 ON 상태에서 모든 사용자 → PremiumBillingCard 표시됨
+- [ ] Admin에서 테스터 비활성화 → 해당 사용자 오버라이드 해제됨
