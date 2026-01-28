@@ -126,10 +126,32 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log(`Found ${recipients?.length || 0} recipients for ${setting.email_type}`);
 
-      for (const recipient of (recipients as Recipient[]) || []) {
+      // Filter out users who opted out of automated reminders
+      const { data: optedOutUsers } = await supabase
+        .from("email_preferences")
+        .select("user_id")
+        .eq("automated_reminders", false);
+      
+      const optedOutIds = new Set((optedOutUsers || []).map((u: any) => u.user_id));
+      const filteredRecipients = (recipients || []).filter((r: Recipient) => !optedOutIds.has(r.id));
+      
+      console.log(`After opt-out filtering: ${filteredRecipients.length} recipients (${(recipients?.length || 0) - filteredRecipients.length} opted out)`);
+
+      for (const recipient of filteredRecipients) {
         results[setting.email_type].processed++;
 
         try {
+          // Get unsubscribe token for this user
+          const { data: prefData } = await supabase
+            .from("email_preferences")
+            .select("unsubscribe_token")
+            .eq("user_id", recipient.id)
+            .single();
+          
+          const unsubscribeToken = prefData?.unsubscribe_token || "";
+          const unsubscribeUrl = unsubscribeToken ? `${APP_URL}/email-preferences?token=${unsubscribeToken}` : APP_URL;
+          const preferencesUrl = unsubscribeUrl;
+
           // Prepare CTA URL based on email type
           let ctaUrl = APP_URL;
           if (setting.email_type === "inactive_user") {
@@ -147,6 +169,8 @@ const handler = async (req: Request): Promise<Response> => {
             community_name: recipient.community_name || "",
             app_url: APP_URL,
             cta_url: ctaUrl,
+            unsubscribe_url: unsubscribeUrl,
+            preferences_url: preferencesUrl,
           };
 
           const personalizedSubject = replaceVariables(setting.subject_template, variables);

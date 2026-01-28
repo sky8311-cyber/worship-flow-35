@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface PendingDocument {
-  type: "terms" | "privacy";
+  type: "terms" | "privacy" | "communications";
   version: string;
   title: string;
   content: string;
@@ -18,22 +18,22 @@ export const useLegalConsent = () => {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["legal-consent-check", user?.id, language],
     queryFn: async () => {
-      if (!user) return { needsConsent: false, pendingDocuments: [] };
+      if (!user) return { needsConsent: false, pendingDocuments: [], needsCommunicationConsentOnly: false };
 
       // 세션 유효성 검증 - 실제 토큰이 있는지 확인
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         console.warn("[useLegalConsent] No active session, skipping consent check");
-        return { needsConsent: false, pendingDocuments: [] };
+        return { needsConsent: false, pendingDocuments: [], needsCommunicationConsentOnly: false };
       }
 
-      // Get active terms and privacy documents
+      // Get active terms, privacy, and communications documents
       const { data: activeDocuments, error: docsError } = await supabase
         .from("legal_documents")
         .select("*")
         .eq("language", language)
         .eq("is_active", true)
-        .in("type", ["terms", "privacy"]);
+        .in("type", ["terms", "privacy", "communications"]);
 
       if (docsError) throw docsError;
 
@@ -43,12 +43,15 @@ export const useLegalConsent = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("language", language)
-        .in("document_type", ["terms", "privacy"]);
+        .in("document_type", ["terms", "privacy", "communications"]);
 
       if (accError) throw accError;
 
       // Find documents that need consent
       const pendingDocuments: PendingDocument[] = [];
+      let hasPendingTerms = false;
+      let hasPendingPrivacy = false;
+      let hasPendingCommunications = false;
       
       for (const doc of activeDocuments || []) {
         const latestAcceptance = acceptances?.find(
@@ -57,18 +60,29 @@ export const useLegalConsent = () => {
         
         if (!latestAcceptance) {
           pendingDocuments.push({
-            type: doc.type as "terms" | "privacy",
+            type: doc.type as "terms" | "privacy" | "communications",
             version: doc.version,
             title: doc.title,
             content: doc.content,
             effective_date: doc.effective_date,
           });
+          
+          if (doc.type === "terms") hasPendingTerms = true;
+          if (doc.type === "privacy") hasPendingPrivacy = true;
+          if (doc.type === "communications") hasPendingCommunications = true;
         }
       }
+
+      // Determine if only communication consent is needed (for existing users)
+      const needsCommunicationConsentOnly = 
+        !hasPendingTerms && 
+        !hasPendingPrivacy && 
+        hasPendingCommunications;
 
       return {
         needsConsent: pendingDocuments.length > 0,
         pendingDocuments,
+        needsCommunicationConsentOnly,
       };
     },
     enabled: !!user && !authLoading,
@@ -78,6 +92,7 @@ export const useLegalConsent = () => {
   return {
     needsConsent: data?.needsConsent ?? false,
     pendingDocuments: data?.pendingDocuments ?? [],
+    needsCommunicationConsentOnly: data?.needsCommunicationConsentOnly ?? false,
     isLoading: authLoading || isLoading,
     refetch,
   };
