@@ -16,12 +16,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, Shield, ExternalLink } from "lucide-react";
+import { Loader2, FileText, Shield, ExternalLink, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 
 interface PendingDocument {
-  type: "terms" | "privacy";
+  type: "terms" | "privacy" | "communications";
   version: string;
   title: string;
   content: string;
@@ -43,8 +42,13 @@ export const LegalConsentModal = ({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [agreed, setAgreed] = useState(false);
+  const [communicationConsent, setCommunicationConsent] = useState(true); // Default checked
   const [loading, setLoading] = useState(false);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+
+  // Filter documents: terms and privacy are mandatory, communications is optional
+  const mandatoryDocs = pendingDocuments.filter(d => d.type === "terms" || d.type === "privacy");
+  const communicationsDoc = pendingDocuments.find(d => d.type === "communications");
 
   const handleAccept = async () => {
     if (!user || !agreed) return;
@@ -63,23 +67,49 @@ export const LegalConsentModal = ({
         return;
       }
 
-      // Record acceptance for each pending document
-      for (const doc of pendingDocuments) {
+      // Record acceptance for mandatory documents (terms, privacy)
+      for (const doc of mandatoryDocs) {
         const { error } = await supabase.from("legal_acceptances").insert({
           user_id: user.id,
           document_type: doc.type,
           version: doc.version,
           language: language as "ko" | "en",
-          ip_address: null, // Could be captured server-side
+          ip_address: null,
         });
         
         if (error) throw error;
+      }
+
+      // Record acceptance for communications (if present)
+      if (communicationsDoc) {
+        const { error } = await supabase.from("legal_acceptances").insert({
+          user_id: user.id,
+          document_type: "communications" as any,
+          version: communicationsDoc.version,
+          language: language as "ko" | "en",
+          ip_address: null,
+        });
+        
+        if (error) throw error;
+
+        // Create email preferences based on communication consent
+        const { error: prefError } = await (supabase
+          .from("email_preferences" as any)
+          .upsert({
+            user_id: user.id,
+            automated_reminders: communicationConsent,
+            community_updates: communicationConsent,
+            product_updates: communicationConsent,
+            marketing_emails: communicationConsent,
+          }, { onConflict: "user_id" }) as any);
+
+        if (prefError) throw prefError;
       }
       
       // Optimistically update the cache to prevent modal from re-appearing on back navigation
       queryClient.setQueryData(
         ["legal-consent-check", user.id, language],
-        { needsConsent: false, pendingDocuments: [] }
+        { needsConsent: false, pendingDocuments: [], needsCommunicationConsentOnly: false }
       );
       
       toast.success(language === "ko" ? "약관에 동의하셨습니다" : "Terms accepted");
@@ -101,7 +131,9 @@ export const LegalConsentModal = ({
   };
 
   const getIcon = (type: string) => {
-    return type === "terms" ? FileText : Shield;
+    if (type === "terms") return FileText;
+    if (type === "privacy") return Shield;
+    return Mail;
   };
 
   return (
@@ -125,7 +157,8 @@ export const LegalConsentModal = ({
         </DialogHeader>
 
         <div className="space-y-3 py-4">
-          {pendingDocuments.map((doc) => {
+          {/* Show only mandatory documents (terms, privacy) in expandable list */}
+          {mandatoryDocs.map((doc) => {
             const Icon = getIcon(doc.type);
             const isExpanded = expandedDoc === doc.type;
             
@@ -164,6 +197,7 @@ export const LegalConsentModal = ({
           })}
         </div>
 
+        {/* Mandatory terms checkbox */}
         <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg">
           <Checkbox
             id="consent"
@@ -172,10 +206,33 @@ export const LegalConsentModal = ({
           />
           <Label htmlFor="consent" className="text-sm cursor-pointer leading-relaxed">
             {language === "ko" 
-              ? "위 약관에 동의합니다"
-              : "I agree to the above terms and policies"}
+              ? "위 약관에 동의합니다 (필수)"
+              : "I agree to the above terms and policies (required)"}
           </Label>
         </div>
+
+        {/* Optional communication consent checkbox */}
+        {communicationsDoc && (
+          <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+            <Checkbox
+              id="communication-consent"
+              checked={communicationConsent}
+              onCheckedChange={(checked) => setCommunicationConsent(checked as boolean)}
+            />
+            <div>
+              <Label htmlFor="communication-consent" className="text-sm cursor-pointer leading-relaxed">
+                {language === "ko" 
+                  ? "서비스 관련 이메일 수신에 동의합니다 (선택)"
+                  : "I agree to receive service-related emails (optional)"}
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                {language === "ko"
+                  ? "리마인더, 커뮤니티 업데이트, 마케팅 이메일 등"
+                  : "Reminders, community updates, marketing emails, etc."}
+              </p>
+            </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button 

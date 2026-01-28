@@ -4370,7 +4370,12 @@ export type Database = {
       app_role: "admin" | "worship_leader" | "user"
       collaborator_role: "editor" | "viewer"
       friend_status: "pending" | "accepted" | "declined"
-      legal_document_type: "terms" | "privacy" | "copyright" | "trademark"
+      legal_document_type:
+        | "terms"
+        | "privacy"
+        | "copyright"
+        | "trademark"
+        | "communications"
       legal_language: "ko" | "en"
       room_post_type: "prayer" | "concern" | "note" | "testimony" | "general"
       room_reaction_type: "amen" | "praying" | "like"
@@ -4534,7 +4539,13 @@ export const Constants = {
       app_role: ["admin", "worship_leader", "user"],
       collaborator_role: ["editor", "viewer"],
       friend_status: ["pending", "accepted", "declined"],
-      legal_document_type: ["terms", "privacy", "copyright", "trademark"],
+      legal_document_type: [
+        "terms",
+        "privacy",
+        "copyright",
+        "trademark",
+        "communications",
+      ],
       legal_language: ["ko", "en"],
       room_post_type: ["prayer", "concern", "note", "testimony", "general"],
       room_reaction_type: ["amen", "praying", "like"],

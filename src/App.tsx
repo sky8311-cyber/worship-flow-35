@@ -13,6 +13,7 @@ import { AdminRoute } from "@/components/AdminRoute";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { LegalConsentModal } from "@/components/legal/LegalConsentModal";
+import { CommunicationConsentModal } from "@/components/legal/CommunicationConsentModal";
 import { useLegalConsent } from "@/hooks/useLegalConsent";
 import { GlobalMusicPlayer } from "@/components/music-player/GlobalMusicPlayer";
 import { PageAnalyticsProvider } from "@/components/analytics/PageAnalyticsProvider";
@@ -77,6 +78,7 @@ const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
 const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
 const WorshipStudio = lazy(() => import("./pages/WorshipStudio"));
+const EmailPreferencesPage = lazy(() => import("./pages/EmailPreferences"));
 
 // Page loader component for Suspense fallback
 const PageLoader = () => <FullScreenLoader />;
@@ -94,7 +96,7 @@ const queryClient = new QueryClient({
 
 // Legal Consent Gate - shows modal if user needs to accept updated terms
 const LegalConsentGate = ({ children }: { children: React.ReactNode }) => {
-  const { needsConsent, pendingDocuments, isLoading, refetch } = useLegalConsent();
+  const { needsConsent, pendingDocuments, needsCommunicationConsentOnly, isLoading, refetch } = useLegalConsent();
   const { session } = useAuth();
   
   if (isLoading) {
@@ -102,14 +104,29 @@ const LegalConsentGate = ({ children }: { children: React.ReactNode }) => {
   }
   
   // 세션이 없으면 모달 표시 안 함 (ProtectedRoute가 처리)
-  const shouldShowModal = needsConsent && !!session;
+  const hasSession = !!session;
+  
+  // Separate documents for different modals
+  const termsAndPrivacyDocs = pendingDocuments.filter(d => d.type === "terms" || d.type === "privacy");
+  const communicationsDoc = pendingDocuments.find(d => d.type === "communications") || null;
+  
+  // Show full legal modal if terms/privacy need consent
+  const showFullLegalModal = hasSession && termsAndPrivacyDocs.length > 0;
+  
+  // Show communication-only modal if only communications needs consent
+  const showCommunicationModal = hasSession && needsCommunicationConsentOnly && communicationsDoc;
   
   return (
     <>
       {children}
       <LegalConsentModal
-        open={shouldShowModal}
+        open={showFullLegalModal}
         pendingDocuments={pendingDocuments}
+        onConsentComplete={() => refetch()}
+      />
+      <CommunicationConsentModal
+        open={!!showCommunicationModal}
+        communicationsDoc={communicationsDoc}
         onConsentComplete={() => refetch()}
       />
     </>
@@ -199,6 +216,7 @@ const App = () => {
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
               <Route path="/public-view/:token" element={<PublicBandView />} /> {/* Public share link */}
               <Route path="/link/:token" element={<PublicLinkProxy />} /> {/* Short public link with OG tags */}
+              <Route path="/email-preferences" element={<EmailPreferencesPage />} /> {/* Token-based email unsubscribe */}
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

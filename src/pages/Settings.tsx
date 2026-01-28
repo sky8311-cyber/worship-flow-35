@@ -24,6 +24,103 @@ import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTr
 import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
+// Email Preferences Card Component
+const EmailPreferencesCard = () => {
+  const { user } = useAuth();
+  const { language } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const { data: emailPrefs, isLoading } = useQuery({
+    queryKey: ["email-preferences", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await (supabase
+        .from("email_preferences" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .single() as any);
+      if (error && error.code !== "PGRST116") throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const updatePreference = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: boolean }) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase
+        .from("email_preferences" as any)
+        .upsert({ user_id: user.id, [key]: value }, { onConflict: "user_id" }) as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["email-preferences"] });
+      toast.success(language === "ko" ? "설정이 저장되었습니다" : "Preference saved");
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  if (isLoading) return null;
+
+  const prefs = emailPrefs || { automated_reminders: true, community_updates: true, product_updates: true, marketing_emails: true };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="h-5 w-5" />
+          {language === "ko" ? "이메일 수신 설정" : "Email Preferences"}
+        </CardTitle>
+        <CardDescription>
+          {language === "ko" ? "K-Worship에서 보내는 이메일 수신 여부를 설정합니다" : "Manage emails you receive from K-Worship"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2">
+            <span>📬</span>
+            <span className="text-sm">{language === "ko" ? "자동 리마인더" : "Automated Reminders"}</span>
+          </div>
+          <Switch
+            checked={prefs.automated_reminders}
+            onCheckedChange={(v) => updatePreference.mutate({ key: "automated_reminders", value: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2">
+            <span>👥</span>
+            <span className="text-sm">{language === "ko" ? "커뮤니티 업데이트" : "Community Updates"}</span>
+          </div>
+          <Switch
+            checked={prefs.community_updates}
+            onCheckedChange={(v) => updatePreference.mutate({ key: "community_updates", value: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2">
+            <span>📢</span>
+            <span className="text-sm">{language === "ko" ? "서비스 업데이트" : "Service Updates"}</span>
+          </div>
+          <Switch
+            checked={prefs.product_updates}
+            onCheckedChange={(v) => updatePreference.mutate({ key: "product_updates", value: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between py-2">
+          <div className="flex items-center gap-2">
+            <span>🎯</span>
+            <span className="text-sm">{language === "ko" ? "마케팅 이메일" : "Marketing Emails"}</span>
+          </div>
+          <Switch
+            checked={prefs.marketing_emails}
+            onCheckedChange={(v) => updatePreference.mutate({ key: "marketing_emails", value: v })}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const Settings = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
@@ -469,6 +566,9 @@ const Settings = () => {
 
         {/* Push Notification Settings */}
         <PushNotificationSettingsCard />
+
+        {/* Email Preferences Settings */}
+        <EmailPreferencesCard />
 
         <Card>
           <CardHeader>
