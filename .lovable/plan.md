@@ -1,72 +1,77 @@
 
 
-# 긴급 수정: email_preferences 테이블 생성
+# 오늘 변경사항 안정화 계획
 
-## 문제
+## 발견된 문제
 
-에러 메시지: `Could not find the table 'public.email_preferences' in the schema cache`
+### 1. page_analytics RLS 오류 (중요)
+- **현상**: 익명 사용자가 `/signup` 등 페이지 방문 시 analytics 삽입 실패
+- **영향**: 페이지 분석 데이터 수집 누락 (사용자 경험에는 영향 없음)
+- **원인**: INSERT 정책이 `WITH CHECK (true)`이지만, Supabase RLS가 anon 유저를 제대로 처리하지 못함
 
-이메일 수신 동의 모달에서 `email_preferences` 테이블에 접근하려 하지만, 해당 테이블이 데이터베이스에 존재하지 않습니다.
+### 2. sync-worship-leader-role-v2 에러 로그 (낮음)
+- **현상**: 세션 만료 시 콘솔에 에러 표시
+- **영향**: 기능적으로는 정상 (승인된 worship leader가 아니면 역할 동기화 안 함)
+- **원인**: 클라이언트에서 401 응답을 에러로 간주
 
-## 원인
+---
 
-이전 마이그레이션 (`20260128025559_f14f4792-ae7b-4c02-9fe3-094738425350.sql`)에 enum 타입 추가만 포함되어 있고, `email_preferences` 테이블 생성 SQL이 누락되었습니다.
+## 수정 계획
 
-## 해결 방안
+### 1단계: page_analytics RLS 정책 수정
 
-### 새 마이그레이션 실행
-
-`email_preferences` 테이블 생성 + RLS 정책 + communications 법적 문서 삽입:
+기존 INSERT 정책을 삭제하고, 익명/인증 사용자 모두 허용하는 새 정책 생성:
 
 ```sql
--- email_preferences 테이블 생성
-CREATE TABLE public.email_preferences (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
-  automated_reminders BOOLEAN DEFAULT true,
-  community_updates BOOLEAN DEFAULT true,
-  product_updates BOOLEAN DEFAULT true,
-  marketing_emails BOOLEAN DEFAULT true,
-  unsubscribe_token UUID DEFAULT gen_random_uuid() UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+-- 기존 정책 삭제
+DROP POLICY IF EXISTS "Anyone can insert analytics" ON public.page_analytics;
 
--- RLS 활성화
-ALTER TABLE public.email_preferences ENABLE ROW LEVEL SECURITY;
-
--- 본인만 조회/수정 가능
-CREATE POLICY "Users can view own email preferences" 
-  ON public.email_preferences FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own email preferences" 
-  ON public.email_preferences FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own email preferences" 
-  ON public.email_preferences FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- communications 문서 삽입 (한국어/영어)
-INSERT INTO public.legal_documents (type, version, language, title, content, effective_date, is_active)
-VALUES 
-  ('communications', '1.0', 'ko', '마케팅 및 정보 수신 동의', 
-   '서비스 관련 이메일(자동 리마인더, 커뮤니티 업데이트, 마케팅 이메일)을 수신하는 데 동의합니다.', 
-   NOW(), true),
-  ('communications', '1.0', 'en', 'Marketing and Communication Consent',
-   'I consent to receiving service-related emails including automated reminders, community updates, and marketing emails.',
-   NOW(), true)
-ON CONFLICT DO NOTHING;
+-- 새 정책: 익명 사용자도 삽입 가능하도록 명시적 설정
+CREATE POLICY "Anyone can insert page analytics"
+  ON public.page_analytics
+  FOR INSERT
+  TO public, anon, authenticated
+  WITH CHECK (true);
 ```
 
-## 영향
+### 2단계: AuthContext에서 sync 함수 호출 개선
 
-- `/signup` 페이지에서 동의 완료 시 정상 작동
-- `/dashboard` 등 로그인 후 페이지에서 기존 유저 동의 모달 정상 작동
-- Settings 페이지에서 이메일 수신 설정 관리 가능
+`sync-worship-leader-role-v2` 호출 시 401 응답을 정상 케이스로 처리하도록 수정:
+
+```typescript
+// AuthContext.tsx 내 syncWorshipLeaderRole 호출 부분
+const { data, error } = await supabase.functions.invoke(...)
+
+// 401은 "세션 없음" = 정상 케이스로 처리
+if (error?.message?.includes("401") || error?.message?.includes("Unauthorized")) {
+  // 조용히 무시 (로그인 직후 세션이 아직 전파 안 된 경우)
+  return;
+}
+```
+
+---
+
+## 파일 변경 목록
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `supabase/migrations/...` | page_analytics RLS 정책 수정 |
+| `src/contexts/AuthContext.tsx` | sync 함수 401 응답 처리 개선 |
+
+---
 
 ## 예상 결과
 
-테이블 생성 후 이메일 수신 동의 모달이 정상적으로 작동하여 사용자가 회원가입/로그인을 완료할 수 있습니다.
+1. **page_analytics**: 익명 사용자도 페이지 분석 데이터 정상 삽입
+2. **Edge Function 에러**: 콘솔에 불필요한 에러 메시지 제거
+3. **전체적인 안정성**: 사용자 가입/로그인 흐름 완전히 정상 작동
+
+---
+
+## 테스트 체크리스트
+
+- [ ] `/signup` 페이지에서 page_analytics INSERT 성공 (DB 로그 확인)
+- [ ] 로그인 후 dashboard 진입 시 에러 없음
+- [ ] 콘솔에 Role sync error 표시 안 됨
+- [ ] 기존 사용자 email_preferences 동의 모달 정상 작동
 
