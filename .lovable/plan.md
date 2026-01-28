@@ -1,53 +1,95 @@
 
+# 수정 계획: 로그인 기록 추적 개선 + 글로벌 RSVP 알림 + 관리자 활동 기록 표시
 
-# 오늘 변경사항 안정화 계획
+## 요약
 
-## 발견된 문제
-
-### 1. page_analytics RLS 오류 (중요)
-- **현상**: 익명 사용자가 `/signup` 등 페이지 방문 시 analytics 삽입 실패
-- **영향**: 페이지 분석 데이터 수집 누락 (사용자 경험에는 영향 없음)
-- **원인**: INSERT 정책이 `WITH CHECK (true)`이지만, Supabase RLS가 anon 유저를 제대로 처리하지 못함
-
-### 2. sync-worship-leader-role-v2 에러 로그 (낮음)
-- **현상**: 세션 만료 시 콘솔에 에러 표시
-- **영향**: 기능적으로는 정상 (승인된 worship leader가 아니면 역할 동기화 안 함)
-- **원인**: 클라이언트에서 401 응답을 에러로 간주
+3가지 핵심 개선:
+1. **활동 추적 강화**: 페이지 이동마다 `last_active_at` 업데이트
+2. **글로벌 RSVP 알림**: 어느 페이지에서든 미응답 이벤트 모달 표시
+3. **관리자 UI 개선**: "마지막 로그인" → "마지막 활동"으로 변경
 
 ---
 
-## 수정 계획
+## 문제 1: `last_active_at` 기록이 부정확함
 
-### 1단계: page_analytics RLS 정책 수정
+### 현재 상황
+- `last_active_at`는 다음 시점에만 업데이트됨:
+  - `SIGNED_IN`, `TOKEN_REFRESHED`, `INITIAL_SESSION` 이벤트
+  - 탭 visibility 변경 시
+- **문제**: 사용자가 디바이스에서 페이지를 열어두고 계속 사용하면, 실제 활동 시점이 추적되지 않음
 
-기존 INSERT 정책을 삭제하고, 익명/인증 사용자 모두 허용하는 새 정책 생성:
-
-```sql
--- 기존 정책 삭제
-DROP POLICY IF EXISTS "Anyone can insert analytics" ON public.page_analytics;
-
--- 새 정책: 익명 사용자도 삽입 가능하도록 명시적 설정
-CREATE POLICY "Anyone can insert page analytics"
-  ON public.page_analytics
-  FOR INSERT
-  TO public, anon, authenticated
-  WITH CHECK (true);
-```
-
-### 2단계: AuthContext에서 sync 함수 호출 개선
-
-`sync-worship-leader-role-v2` 호출 시 401 응답을 정상 케이스로 처리하도록 수정:
+### 해결 방안
+`usePageAnalytics.ts`에서 **페이지 이동(라우트 변경)마다** `last_active_at`를 업데이트:
 
 ```typescript
-// AuthContext.tsx 내 syncWorshipLeaderRole 호출 부분
-const { data, error } = await supabase.functions.invoke(...)
-
-// 401은 "세션 없음" = 정상 케이스로 처리
-if (error?.message?.includes("401") || error?.message?.includes("Unauthorized")) {
-  // 조용히 무시 (로그인 직후 세션이 아직 전파 안 된 경우)
-  return;
+// src/hooks/usePageAnalytics.ts - recordPageView 함수 내
+if (user?.id) {
+  supabase.from('profiles').update({ 
+    last_active_at: new Date().toISOString() 
+  }).eq('id', user.id);
 }
 ```
+
+---
+
+## 문제 2: RSVP 알림이 대시보드에서만 표시됨
+
+### 현재 상황
+- `RsvpPromptDialog`가 `Dashboard.tsx`에서만 렌더링됨
+- 다른 페이지에서는 RSVP 프롬프트가 표시되지 않음
+
+### 해결 방안
+
+#### 새 컴포넌트: `src/components/global/GlobalRsvpPrompt.tsx`
+- 어느 페이지에서든 RSVP 미응답 이벤트가 있으면 화면 중앙에 모달로 표시
+- "오늘 하루 숨기기" 옵션 (localStorage에 날짜 저장)
+- 다음 날 또는 다른 세션에서 다시 표시
+
+#### App.tsx 수정
+```typescript
+// ProtectedRoute 안에서:
+<LegalConsentGate>
+  <GlobalRsvpPrompt />  // 추가
+  {children}
+</LegalConsentGate>
+```
+
+---
+
+## 문제 3: 관리자 페이지에서 "마지막 로그인" 표시가 부정확함 (추가)
+
+### 현재 상황
+- `AdminUsers.tsx`에서 `auth.users.last_sign_in_at`를 표시
+- 이 값은 **로그인 시점**만 기록하므로, 세션을 유지한 채 계속 사용하는 사용자의 실제 활동을 반영하지 않음
+- 열 제목: "마지막 로그인" / "Last Login"
+
+### 해결 방안
+
+#### 1단계: AdminUsers 쿼리 수정
+`profiles` 테이블에서 `last_active_at` 필드도 함께 조회:
+
+```typescript
+// AdminUsers.tsx 쿼리 수정
+supabase
+  .from("profiles")
+  .select("id, email, full_name, created_at, last_active_at")  // last_active_at 추가
+```
+
+#### 2단계: 열 제목 변경
+```text
+현재: "마지막 로그인" / "Last Login"
+변경: "마지막 활동" / "Last Active"
+```
+
+#### 3단계: 표시 우선순위 로직
+```typescript
+// last_active_at가 있으면 우선 표시, 없으면 last_sign_in_at 폴백
+const lastActivity = user.last_active_at || user.last_sign_in_at;
+```
+
+#### 4단계: UserCard 컴포넌트 수정
+- `last_sign_in_at` → `last_active_at` 표시로 변경
+- 인터페이스에 `last_active_at` 필드 추가
 
 ---
 
@@ -55,23 +97,94 @@ if (error?.message?.includes("401") || error?.message?.includes("Unauthorized"))
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `supabase/migrations/...` | page_analytics RLS 정책 수정 |
-| `src/contexts/AuthContext.tsx` | sync 함수 401 응답 처리 개선 |
+| `src/hooks/usePageAnalytics.ts` | 페이지 이동 시 `last_active_at` 업데이트 추가 |
+| `src/components/global/GlobalRsvpPrompt.tsx` | **새 파일** - 글로벌 RSVP 프롬프트 컴포넌트 |
+| `src/App.tsx` | `ProtectedRoute` 내에 `GlobalRsvpPrompt` 추가 |
+| `src/pages/Dashboard.tsx` | 기존 `RsvpPromptDialog` 관련 코드 제거 |
+| `src/pages/AdminUsers.tsx` | `last_active_at` 조회 및 표시, 열 제목 변경 |
+| `src/components/admin/UserCard.tsx` | `last_active_at` 표시로 변경 |
+
+---
+
+## 기술적 세부사항
+
+### 활동 추적 흐름 (개선 후)
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ last_active_at 업데이트 시점 (기존 + 추가)                  │
+├─────────────────────────────────────────────────────────────┤
+│ ✓ 로그인 시 (SIGNED_IN)                     [기존]         │
+│ ✓ 토큰 갱신 시 (TOKEN_REFRESHED)            [기존]         │
+│ ✓ 초기 세션 로드 (INITIAL_SESSION)          [기존]         │
+│ ✓ 탭 visibility 변경                        [기존]         │
+│ ★ 페이지 이동(라우트 변경)마다              [추가]         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 관리자 페이지 UI 변경
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ 현재                                                        │
+│ ┌───────────┬─────────────┬───────────────┬─────────┐      │
+│ │ 이름      │ 역할        │ 마지막 로그인 │ 가입일  │      │
+│ ├───────────┼─────────────┼───────────────┼─────────┤      │
+│ │ 강두레    │ WL          │ 4일 전        │ 24.01.01│      │
+│ └───────────┴─────────────┴───────────────┴─────────┘      │
+├─────────────────────────────────────────────────────────────┤
+│ 변경 후                                                     │
+│ ┌───────────┬─────────────┬───────────────┬─────────┐      │
+│ │ 이름      │ 역할        │ 마지막 활동   │ 가입일  │      │
+│ ├───────────┼─────────────┼───────────────┼─────────┤      │
+│ │ 강두레    │ WL          │ 2시간 전      │ 24.01.01│      │
+│ └───────────┴─────────────┴───────────────┴─────────┘      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### GlobalRsvpPrompt 동작 흐름
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│  사용자가 어느 Protected 페이지든 접속                     │
+└────────────────────────────────────────────────────────────┘
+                         ↓
+┌────────────────────────────────────────────────────────────┐
+│  GlobalRsvpPrompt 체크:                                    │
+│  1. localStorage에서 오늘 숨김 여부 확인                   │
+│  2. 숨김 상태면 → 렌더링 안 함                             │
+│  3. 아니면 → 미응답 RSVP 이벤트 조회                       │
+└────────────────────────────────────────────────────────────┘
+                         ↓
+┌────────────────────────────────────────────────────────────┐
+│  미응답 이벤트 있음?                                       │
+│  Yes → 화면 중앙에 모달 표시                               │
+│  No → 렌더링 안 함                                         │
+└────────────────────────────────────────────────────────────┘
+                         ↓
+┌────────────────────────────────────────────────────────────┐
+│  사용자 선택:                                              │
+│  - "참석" / "불참" → 응답 저장, 모달 닫기                  │
+│  - "오늘 하루 숨기기" → localStorage에 날짜 저장           │
+└────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 예상 결과
 
-1. **page_analytics**: 익명 사용자도 페이지 분석 데이터 정상 삽입
-2. **Edge Function 에러**: 콘솔에 불필요한 에러 메시지 제거
-3. **전체적인 안정성**: 사용자 가입/로그인 흐름 완전히 정상 작동
+1. **활동 기록**: 사용자가 페이지를 이동할 때마다 `last_active_at`가 업데이트되어, 실제 활동 시점을 정확히 추적
+2. **관리자 UI**: "마지막 활동" 열에서 실제 사용자 활동을 확인 가능 (세션 유지 중에도 정확한 활동 시점 표시)
+3. **RSVP 알림**: 어느 페이지에서든 미응답 이벤트가 있으면 화면 중앙에 모달로 표시
+4. **"오늘 하루 숨기기"**: 사용자가 선택하면 해당 날짜 동안 더 이상 표시되지 않음
 
 ---
 
 ## 테스트 체크리스트
 
-- [ ] `/signup` 페이지에서 page_analytics INSERT 성공 (DB 로그 확인)
-- [ ] 로그인 후 dashboard 진입 시 에러 없음
-- [ ] 콘솔에 Role sync error 표시 안 됨
-- [ ] 기존 사용자 email_preferences 동의 모달 정상 작동
-
+- [ ] `/dashboard` → `/songs`로 이동 시 `last_active_at` 업데이트 확인
+- [ ] 관리자 페이지에서 "마지막 활동" 열 표시 확인
+- [ ] `last_active_at` 값이 실제 페이지 이동 시점과 일치하는지 확인
+- [ ] `/songs` 페이지에서 RSVP 미응답 이벤트 모달 표시 확인
+- [ ] "오늘 하루 숨기기" 클릭 후 다른 페이지로 이동해도 모달 안 뜸
+- [ ] 다음 날(또는 localStorage 삭제 후) 다시 모달 표시됨
