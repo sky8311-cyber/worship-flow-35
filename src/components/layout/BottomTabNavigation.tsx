@@ -26,7 +26,15 @@ export const BottomTabNavigation = () => {
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-        setKeyboardVisible(true);
+        // Check if input is inside a drawer, dialog, or overlay
+        // In these cases, navigation is already covered, so no need to hide it
+        const isInsideOverlay = target.closest('[role="dialog"]') || 
+                                target.closest('[data-vaul-drawer]') ||
+                                target.closest('[data-radix-portal]');
+        
+        if (!isInsideOverlay) {
+          setKeyboardVisible(true);
+        }
       }
     };
     
