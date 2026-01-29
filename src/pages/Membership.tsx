@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +32,7 @@ import { usePremiumSubscription } from "@/hooks/usePremiumSubscription";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
 import { useTierFeature, TIER_HIERARCHY, type TierLevel } from "@/hooks/useTierFeature";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -63,11 +64,17 @@ const Membership = () => {
     churchAccountId 
   } = useChurchSubscription();
   const { tier } = useTierFeature();
+  const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   
   const { product: premiumProduct } = useMembershipProduct("full_membership");
   const { product: churchProduct } = useMembershipProduct("community_account");
 
   const [isLoading, setIsLoading] = useState<PlanId | null>(null);
+
+  // Access control: Only Admin or Sandbox Tester can access this page
+  if (!settingsLoading && !isAdmin && !isSandboxTester) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   // Determine user's current tier
   const getUserTier = (): TierLevel => {

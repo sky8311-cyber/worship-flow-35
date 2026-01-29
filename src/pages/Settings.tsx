@@ -125,7 +125,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
-  const { isPremiumMenuVisible } = useAppSettings();
+  const { isSandboxTester } = useAppSettings();
   const queryClient = useQueryClient();
 
   // Email change state
@@ -759,23 +759,25 @@ const Settings = () => {
           </Card>
         )}
 
-        {/* Membership Link Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              {language === "ko" ? "멤버십" : "Membership"}
-            </CardTitle>
-            <CardDescription>
-              {language === "ko" ? "멤버십 상태 확인 및 업그레이드" : "View membership status and upgrade options"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate("/membership")} className="w-full">
-              {language === "ko" ? "멤버십 관리" : "Manage Membership"}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Membership Link Card - Only visible to Admin or Sandbox Tester */}
+        {(isAdmin || isSandboxTester) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                {language === "ko" ? "멤버십" : "Membership"}
+              </CardTitle>
+              <CardDescription>
+                {language === "ko" ? "멤버십 상태 확인 및 업그레이드" : "View membership status and upgrade options"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/membership")} className="w-full">
+                {language === "ko" ? "멤버십 관리" : "Manage Membership"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
 
         {/* Dialog */}
