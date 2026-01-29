@@ -40,7 +40,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const { isSubscriptionActive } = useChurchSubscription();
-  const { isChurchMenuVisible, isLoading: settingsLoading } = useAppSettings();
+  const { isChurchMenuVisible, isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -208,7 +208,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {!settingsLoading && (
+                {!settingsLoading && (isAdmin || isSandboxTester) && (
                   <DropdownMenuItem asChild>
                     <Link to="/membership" className="flex items-center justify-between w-full">
                       <span className="flex items-center">
