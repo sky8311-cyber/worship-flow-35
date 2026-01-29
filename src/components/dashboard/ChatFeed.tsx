@@ -318,7 +318,7 @@ export function ChatFeed({ userStats }: ChatFeedProps) {
         {/* Messages area (scrollable) */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto px-2 sm:px-4 py-4"
+          className="flex-1 overflow-y-auto px-2 sm:px-4 py-4 overscroll-contain"
         >
           {(!feedItems || feedItems.length === 0) ? (
             <div className="flex items-center justify-center h-full">

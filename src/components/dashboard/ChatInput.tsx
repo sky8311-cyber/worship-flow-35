@@ -221,6 +221,12 @@ export function ChatInput({ selectedCommunityId }: ChatInputProps) {
           onPaste={handlePaste}
           className="w-full rounded-full h-10"
           disabled={postMutation.isPending}
+          enterKeyHint="send"
+          onFocus={(e) => {
+            setTimeout(() => {
+              e.target.scrollIntoView({ block: "end", behavior: "smooth" });
+            }, 300);
+          }}
         />
       </div>
     </div>
