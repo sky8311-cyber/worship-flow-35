@@ -1,60 +1,74 @@
 
+# 채팅 드로어 내 입력 필드 포커스 시 하단 네비게이션 사라지는 버그 수정
 
-# 모바일 멤버십 카드 잘림 문제 수정 계획
+## 문제 원인
 
-## 문제 원인 분석
-
-`carousel.tsx` 파일 139번 라인을 보면:
+`BottomTabNavigation.tsx`에서 키보드 감지를 위해 document 레벨에서 `focusin`/`focusout` 이벤트를 감지합니다:
 
 ```typescript
-<div ref={carouselRef} className="overflow-hidden">
+const handleFocusIn = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+    setKeyboardVisible(true);  // ← 모든 입력 필드에서 발생
+  }
+};
 ```
 
-CarouselContent 내부에 `overflow-hidden`이 하드코딩되어 있어서, 외부에서 `overflow-visible`을 적용해도 이 내부 div에서 카드 상단/하단이 잘립니다.
+그리고 `keyboardVisible`이 `true`가 되면 네비게이션을 완전히 언마운트합니다:
 
-**문제 구조:**
-```text
-Carousel (overflow-visible 적용됨) ✓
-└── CarouselContent (overflow-visible 적용됨) ✓
-    └── 내부 div (overflow-hidden 하드코딩) ✗ ← 여기서 잘림!
-        └── CarouselItem
-            └── Card
-                └── Badge (absolute -top-3) ← 잘림
+```typescript
+if (keyboardVisible) {
+  return null;  // ← 네비게이션 완전 제거
+}
 ```
+
+**문제점:** 드로어(Drawer) 내부의 입력 필드에 포커스가 가도 이 이벤트가 발생합니다. 드로어가 이미 네비게이션을 덮고 있으므로 숨길 필요가 없는데 숨겨버립니다.
 
 ---
 
 ## 해결 방안
 
-`CarouselContent` 컴포넌트를 수정하여 외부에서 전달된 className에 `overflow-visible`이 있을 때 내부 div도 overflow를 제어할 수 있도록 변경합니다.
+입력 필드가 드로어/다이얼로그/오버레이 **내부**에 있는지 확인하여, 해당 경우에는 네비게이션을 숨기지 않도록 합니다.
 
-### 변경 내용: `src/components/ui/carousel.tsx`
+### 수정 파일: `src/components/layout/BottomTabNavigation.tsx`
+
+**변경 내용:**
 
 ```typescript
-// 변경 전 (line 138-146)
-return (
-  <div ref={carouselRef} className="overflow-hidden">
-    <div
-      ref={ref}
-      className={cn("flex", orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col", className)}
-      {...props}
-    />
-  </div>
-);
+// 변경 전
+const handleFocusIn = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+    setKeyboardVisible(true);
+  }
+};
 
 // 변경 후
-const hasOverflowVisible = className?.includes("overflow-visible");
-
-return (
-  <div ref={carouselRef} className={hasOverflowVisible ? "overflow-visible" : "overflow-hidden"}>
-    <div
-      ref={ref}
-      className={cn("flex", orientation === "horizontal" ? "-ml-4" : "-mt-4 flex-col", className)}
-      {...props}
-    />
-  </div>
-);
+const handleFocusIn = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+    // 드로어, 다이얼로그, 또는 오버레이 내부의 입력 필드인지 확인
+    // 이런 경우 네비게이션은 이미 덮여 있으므로 숨길 필요 없음
+    const isInsideOverlay = target.closest('[role="dialog"]') || 
+                            target.closest('[data-vaul-drawer]') ||
+                            target.closest('[data-radix-portal]');
+    
+    if (!isInsideOverlay) {
+      setKeyboardVisible(true);
+    }
+  }
+};
 ```
+
+---
+
+## 동작 방식
+
+| 상황 | 현재 동작 | 수정 후 동작 |
+|------|----------|-------------|
+| 일반 페이지의 입력 필드 클릭 | 네비게이션 숨김 ✓ | 네비게이션 숨김 ✓ |
+| 드로어 내 입력 필드 클릭 | 네비게이션 숨김 (버그) | 네비게이션 유지 ✓ |
+| 다이얼로그 내 입력 필드 클릭 | 네비게이션 숨김 (버그) | 네비게이션 유지 ✓ |
 
 ---
 
@@ -62,7 +76,7 @@ return (
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/ui/carousel.tsx` | CarouselContent 내부 div의 overflow를 className에 따라 동적으로 설정 |
+| `src/components/layout/BottomTabNavigation.tsx` | `handleFocusIn` 함수에서 드로어/다이얼로그 내부 입력 필드 감지 로직 추가 |
 
 ---
 
@@ -70,23 +84,12 @@ return (
 
 ```text
 수정 후:
-┌─────────────────────────────────────┐
-│  [현재 플랜] ← 뱃지 완전히 보임     │
-│  ┌─────────────────────────────┐    │
-│  │       기본멤버              │    │
-│  │         무료                │    │
-│  │        영구 무료            │    │
-│  │                             │    │
-│  │  ✓ 예배공동체 생성          │    │
-│  │  ✓ 워십세트 생성 및 관리    │    │
-│  │  ✓ 곡 라이브러리 관리       │    │
-│  │                             │    │
-│  │    [현재 멤버십]            │    │
-│  └─────────────────────────────┘    │
-│      ← 스와이프하여 비교 →         │
-└─────────────────────────────────────┘
-            ↑ 카드 하단도 잘리지 않음
+
+1. 채팅 버튼 클릭 → 드로어 열림
+2. 고객지원 탭 클릭 → 지원 채팅 표시
+3. 입력 필드 클릭 → 키보드 열림
+4. 하단 네비게이션 → 드로어 뒤에 그대로 유지됨 ✓
+5. 드로어 닫기 → 네비게이션 정상 표시 ✓
 ```
 
-이 수정은 기존 캐러셀 동작에 영향을 주지 않습니다. `overflow-visible` 클래스를 명시적으로 전달한 경우에만 적용됩니다.
-
+이 수정은 기존 키보드 감지 동작을 유지하면서, 오버레이 내부 입력 시에만 숨기지 않도록 제한합니다.
