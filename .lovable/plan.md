@@ -1,67 +1,105 @@
 
 
-# Membership 기능 Sandbox/Admin 전용 제한 계획
+# 멤버십 카드 UI 수정 계획
 
-## 목표
-멤버십 페이지 (`/membership`)와 관련 UI 요소를 **Sandbox 테스터**와 **Admin** 사용자에게만 표시하고 기능하도록 제한합니다.
+## 문제 분석
 
----
+### 1. 카드 잘림 현상
+스크린샷에서 확인된 문제:
+- **원인**: 카드 상단의 뱃지가 `absolute -top-3` 위치로 카드 영역 밖으로 확장됨
+- Carousel 컴포넌트의 `overflow-hidden` 설정이 이 확장된 뱃지를 잘라냄
+- 모바일 카드 기본 너비(`basis-[85%]`)로 인해 양쪽 여백이 좁음
 
-## 현재 상태
-
-현재 `/membership` 페이지와 아바타 메뉴의 "멤버십" 항목은 **모든 로그인 사용자**에게 표시됩니다.
-
-**Sandbox 테스터 시스템**은 이미 구현되어 있습니다:
-- `sandbox_testers` 테이블에 사용자 ID와 허용 기능 목록 저장
-- `useAppSettings` 훅에서 `hasSandboxAccess(feature)` 함수 제공
-- `isSandboxTester` 플래그로 테스터 여부 확인 가능
+### 2. "신용카드 필요 없음" 메시지
+삭제 대상 번역 키:
+- `churchAccount.trialNote` - Membership.tsx와 UpgradePlanDialog.tsx에서 사용
+- `churchAccount.trialDescription` - CreateChurchAccountDialog.tsx에서 사용  
+- `churchAccount.noPaymentRequired` - 미사용으로 보임
 
 ---
 
 ## 구현 계획
 
-### 1. AppHeader.tsx - 멤버십 메뉴 가시성 제한
+### 1. Membership.tsx - 카드 및 캐러셀 레이아웃 수정
 
 **변경 내용:**
-- `useAppSettings`에서 `isSandboxTester` 또는 `hasSandboxAccess("membership")` 가져오기
-- 멤버십 메뉴 항목을 `isAdmin || isSandboxTester` 조건으로 감싸기
+- 캐러셀 컨테이너에 `overflow-visible` 클래스 추가하여 상단 뱃지가 보이도록 함
+- 캐러셀 전체에 상단 패딩(`pt-4`) 추가하여 뱃지 공간 확보
+- 하단 Footer Note (trialNote) 부분 제거
 
 ```typescript
 // 변경 전
-{!settingsLoading && (
-  <DropdownMenuItem asChild>
-    <Link to="/membership">멤버십</Link>
-  </DropdownMenuItem>
-)}
-
+<div className="md:hidden mb-8">
+  <Carousel ...>
+    <CarouselContent className="-ml-2">
+    
 // 변경 후
-{!settingsLoading && (isAdmin || isSandboxTester) && (
-  <DropdownMenuItem asChild>
-    <Link to="/membership">멤버십</Link>
-  </DropdownMenuItem>
-)}
+<div className="md:hidden mb-8 pt-4">
+  <Carousel className="overflow-visible" ...>
+    <CarouselContent className="-ml-2 overflow-visible">
 ```
-
-### 2. Membership.tsx - 페이지 접근 제한
-
-**변경 내용:**
-- `useAppSettings`에서 `isSandboxTester` 가져오기
-- Admin 또는 Sandbox 테스터가 아닌 경우 다른 페이지로 리다이렉트
 
 ```typescript
-// 추가할 코드
-const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
-
-// 접근 권한 체크
-if (!settingsLoading && !isAdmin && !isSandboxTester) {
-  return <Navigate to="/dashboard" replace />;
-}
+// 제거할 부분 (line 537-542)
+{/* Footer Note */}
+<div className="text-center">
+  <p className="text-sm text-muted-foreground">
+    {t("churchAccount.trialNote")}
+  </p>
+</div>
 ```
 
-### 3. Settings.tsx - 멤버십 링크 카드 제한
+### 2. UpgradePlanDialog.tsx - Footer Note 제거
 
 **변경 내용:**
-- Settings 페이지의 "멤버십 관리" 카드도 동일한 조건으로 제한
+```typescript
+// 제거할 부분 (line 167-169)
+<p className="text-xs text-muted-foreground text-center mt-4">
+  {t("churchAccount.trialNote")}
+</p>
+```
+
+### 3. CreateChurchAccountDialog.tsx - trialDescription 수정
+
+**변경 내용:**
+- `trialDescription` 대신 신용카드 언급 없는 간단한 설명으로 대체
+
+```typescript
+// 변경 전
+<DialogDescription>
+  {t("churchAccount.trialDescription")}
+</DialogDescription>
+
+// 변경 후 - 새 번역 키 사용 또는 다른 설명 사용
+<DialogDescription>
+  {t("churchAccount.createDialogDescription")}
+</DialogDescription>
+```
+
+### 4. translations.ts - 번역 정리
+
+**변경 내용:**
+- `trialNote` 값 수정: "신용카드 필요 없음" 부분 제거
+- `trialDescription` 값 수정: "신용카드 없이" 부분 제거
+- 또는 해당 키들의 사용처를 모두 제거
+
+```typescript
+// 변경 전 (English)
+trialDescription: "30-day free trial - Start now without a credit card!",
+trialNote: "30-day free trial - No credit card required",
+
+// 변경 후
+trialDescription: "Start your 30-day free trial now!",
+trialNote: "30-day free trial included",
+
+// 변경 전 (Korean)
+trialDescription: "30일 무료 체험 - 신용카드 없이 지금 바로 시작하세요!",
+trialNote: "30일 무료 체험 - 신용카드 필요 없음",
+
+// 변경 후
+trialDescription: "지금 바로 30일 무료 체험을 시작하세요!",
+trialNote: "30일 무료 체험 포함",
+```
 
 ---
 
@@ -69,42 +107,35 @@ if (!settingsLoading && !isAdmin && !isSandboxTester) {
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/layout/AppHeader.tsx` | 멤버십 메뉴를 `isAdmin \|\| isSandboxTester` 조건으로 제한 |
-| `src/pages/Membership.tsx` | 페이지 상단에 접근 권한 체크 추가, 비인가자는 대시보드로 리다이렉트 |
-| `src/pages/Settings.tsx` | 멤버십 링크 카드도 동일 조건 적용 |
+| `src/pages/Membership.tsx` | 캐러셀 상단 패딩 추가, overflow-visible 적용, Footer Note 제거 |
+| `src/components/church/UpgradePlanDialog.tsx` | 하단 trialNote 텍스트 제거 |
+| `src/components/church/CreateChurchAccountDialog.tsx` | trialDescription 대체 |
+| `src/lib/translations.ts` | 신용카드 관련 문구 제거/수정 (EN & KO) |
 
 ---
 
-## 결과
+## 예상 결과
 
+**모바일 멤버십 페이지:**
 ```text
-일반 사용자:
 ┌─────────────────────────────────┐
-│ 아바타 메뉴                     │
-│ ├─ 설정                         │
-│ ├─ 도움말                       │
-│ └─ ... (멤버십 메뉴 숨김)       │
+│    [현재 플랜] ← 뱃지 보임      │
+│  ┌─────────────────────────┐    │
+│  │       기본멤버          │    │
+│  │         무료            │    │
+│  │        영구 무료         │    │
+│  │  예배공동체를 만들고...   │    │
+│  │                         │    │
+│  │  ✓ 예배공동체 생성       │    │
+│  │  ✓ 워십세트 생성 및 관리  │    │
+│  │  ✓ 곡 라이브러리 관리     │    │
+│  │  ✓ 템플릿 및 반복 예배    │    │
+│  │                         │    │
+│  │    [현재 멤버십]         │    │
+│  └─────────────────────────┘    │
+│      ← 스와이프하여 비교 →      │
 └─────────────────────────────────┘
-
-Admin 또는 Sandbox 테스터:
-┌─────────────────────────────────┐
-│ 아바타 메뉴                     │
-│ ├─ 관리자 페이지 (Admin만)      │
-│ ├─ ✨ 멤버십 [업그레이드]  ←    │
-│ ├─ 설정                         │
-│ └─ ...                          │
-└─────────────────────────────────┘
+                ↓
+        (신용카드 언급 없음)
 ```
-
----
-
-## 추가 고려사항
-
-**Sandbox 테스터 추가 방법:**
-- Admin이 `sandbox_testers` 테이블에 사용자 추가
-- `features` 컬럼에 `["membership"]` 또는 `["all"]` 설정
-- 해당 사용자는 멤버십 기능에 접근 가능
-
-**나중에 전체 공개 시:**
-- AppHeader와 Membership 페이지에서 조건문만 제거하면 됨
 
