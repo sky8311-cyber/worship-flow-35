@@ -34,8 +34,8 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[85vh] max-h-[85vh]">
-        <DrawerHeader className="border-b py-0 px-0">
+      <DrawerContent className="h-[85dvh] max-h-[85dvh] flex flex-col">
+        <DrawerHeader className="border-b py-0 px-0 shrink-0">
           <div className="flex items-center justify-between px-4 py-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "community" | "support")} className="flex-1">
               <TabsList className="h-10 bg-transparent p-0 gap-1">
@@ -74,7 +74,7 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
             </Button>
           </div>
         </DrawerHeader>
-        <div className="flex-1 overflow-hidden min-h-0">
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
           {activeTab === "community" ? <ChatFeed /> : <SupportChatFeed />}
         </div>
       </DrawerContent>

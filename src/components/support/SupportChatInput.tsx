@@ -137,6 +137,12 @@ export function SupportChatInput({ onSend, isLoading }: SupportChatInputProps) {
           onKeyDown={handleKeyDown}
           className="flex-1"
           disabled={isLoading}
+          enterKeyHint="send"
+          onFocus={(e) => {
+            setTimeout(() => {
+              e.target.scrollIntoView({ block: "end", behavior: "smooth" });
+            }, 300);
+          }}
         />
 
         <Button
