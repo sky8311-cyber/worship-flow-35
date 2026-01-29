@@ -509,15 +509,15 @@ const Membership = () => {
         </div>
 
         {/* Mobile: Carousel */}
-        <div className="md:hidden mb-8">
+        <div className="md:hidden mb-8 pt-4">
           <Carousel
             opts={{
               align: "center",
               startIndex: currentPlanIndex >= 0 ? currentPlanIndex : 0,
             }}
-            className="w-full"
+            className="w-full overflow-visible"
           >
-            <CarouselContent className="-ml-2">
+            <CarouselContent className="-ml-2 overflow-visible">
               {plans.map((plan) => (
                 <CarouselItem key={plan.id} className="pl-2 basis-[85%]">
                   {renderPlanCard(plan, true)}
@@ -532,13 +532,6 @@ const Membership = () => {
               <CarouselNext className="static translate-y-0" />
             </div>
           </Carousel>
-        </div>
-
-        {/* Footer Note */}
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("churchAccount.trialNote")}
-          </p>
         </div>
 
         {/* Quick Links for existing subscribers */}

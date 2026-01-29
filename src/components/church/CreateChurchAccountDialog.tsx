@@ -85,7 +85,7 @@ export function CreateChurchAccountDialog({ open, onOpenChange, onSuccess }: Cre
             {t("churchAccount.create")}
           </DialogTitle>
           <DialogDescription>
-            {t("churchAccount.trialDescription")}
+            {t("churchAccount.startTrialDialogDescription")}
           </DialogDescription>
         </DialogHeader>
 

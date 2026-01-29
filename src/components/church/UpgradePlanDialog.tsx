@@ -164,9 +164,6 @@ export function UpgradePlanDialog({ open, onOpenChange, onStartTrial, onSubscrib
           })}
         </div>
 
-        <p className="text-xs text-muted-foreground text-center mt-4">
-          {t("churchAccount.trialNote")}
-        </p>
       </DialogContent>
     </Dialog>
   );
