@@ -46,6 +46,7 @@ import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents
 import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard";
 import { parseLocalDate } from "@/lib/countdownHelper";
 import { creditBandViewOpenedReward } from "@/lib/rewardsHelper";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -551,8 +552,22 @@ const BandView = () => {
     </Breadcrumb>
   );
 
+  // Dynamic page title for browser tab
+  const pageTitle = serviceSet?.service_name 
+    || (language === "ko" ? "예배 세트" : "Worship Set");
+  const pageDescription = serviceSet?.date 
+    ? `${serviceSet.service_name || ""} - ${format(parseLocalDate(serviceSet.date), language === "ko" ? "yyyy년 M월 d일" : "MMMM d, yyyy", { locale: language === "ko" ? ko : undefined })}`
+    : (language === "ko" ? "예배 세트 상세 보기" : "Worship set details");
+
   return (
     <>
+    <SEOHead 
+      title={pageTitle}
+      titleKo={serviceSet?.service_name || "예배 세트"}
+      description={pageDescription}
+      descriptionKo={pageDescription}
+      noIndex={true}
+    />
     <AppLayout breadcrumb={breadcrumbNav}>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Cross-community read-only banner */}

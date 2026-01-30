@@ -39,6 +39,7 @@ import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type 
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 import { useSetEditLock } from "@/hooks/useSetEditLock";
 import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
+import { SEOHead } from "@/components/seo/SEOHead";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -1485,7 +1486,22 @@ const SetBuilder = () => {
     );
   }
 
+  // Dynamic page title for browser tab
+  const pageTitle = id && existingSet
+    ? (language === "ko" 
+        ? `${formData.service_name || existingSet.service_name || "워십세트"} 편집`
+        : `Edit ${formData.service_name || existingSet.service_name || "Worship Set"}`)
+    : (language === "ko" ? "새 워십세트" : "New Worship Set");
+
   return (
+    <>
+    <SEOHead 
+      title={pageTitle}
+      titleKo={id ? `${formData.service_name || "워십세트"} 편집` : "새 워십세트"}
+      description={language === "ko" ? "워십세트 편집" : "Edit worship set"}
+      descriptionKo="워십세트 편집"
+      noIndex={true}
+    />
     <AppLayout>
       <div className="container mx-auto px-4 py-6">
         {/* Action Bar */}
@@ -2220,6 +2236,7 @@ const SetBuilder = () => {
         />
       )}
     </AppLayout>
+    </>
   );
 };
 
