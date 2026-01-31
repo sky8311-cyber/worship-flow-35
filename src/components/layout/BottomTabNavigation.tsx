@@ -246,7 +246,9 @@ export const BottomTabNavigation = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-medium">{t(chatItem.label_key as TranslationPath)}</span>
+                <span className="text-[10px] font-medium">
+                  {isAdmin ? t("navigation.customerSupport") : t(chatItem.label_key as TranslationPath)}
+                </span>
               </div>
             </button>
           )}
