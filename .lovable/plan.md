@@ -1,96 +1,159 @@
 
-## Goals
-1) Admin 계정에서 하단 네비게이션 “채팅” 라벨을 “고객상담”으로 변경  
-2) 모바일 `/admin/support` 고객상담 화면에서 **채팅 입력창이 하단 네비게이션에 가려지는 문제**를 확실히 해결 (현재 스크린샷처럼 BottomNav가 위에 떠서 입력창이 가려짐)
+# 모바일 키보드 동작 개선 - 채팅 콘텐츠 고정
+
+## 문제 분석
+
+현재 동작:
+- 모바일에서 채팅 입력창 포커스 시 키보드가 **화면 전체를 위로 밀어올림**
+- 이로 인해 채팅 콘텐츠가 위로 튀어오르는 현상 발생
+
+원하는 동작:
+- 채팅 콘텐츠는 **고정된 상태로 유지**
+- 키보드만 화면 하단에서 올라옴
+
+## 원인
+
+iOS Safari와 일부 Android 브라우저에서는 기본적으로 input 포커스 시:
+1. 뷰포트 전체가 키보드 높이만큼 축소됨
+2. `scrollIntoView`가 호출되면 추가로 화면이 이동함
+
+현재 코드 문제점:
+```tsx
+// ChatInput.tsx (라인 225-229)
+onFocus={(e) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, 300);
+}}
+
+// SupportChatInput.tsx (라인 117-123)
+onFocus={(e) => {
+  const isInsideOverlay = e.target.closest('[data-support-overlay]');
+  if (!isInsideOverlay) {
+    setTimeout(() => {
+      e.target.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 300);
+  }
+}}
+```
+
+## 해결 방안
+
+### 1. `scrollIntoView` 제거/조건부 적용
+
+채팅 UI에서는 입력창이 이미 하단에 고정되어 있으므로 `scrollIntoView`가 불필요합니다.
+- 채팅/고객상담 화면에서는 `scrollIntoView` 비활성화
+- 일반 페이지에서만 필요시 활성화
+
+### 2. CSS `position: fixed` + `bottom: 0` 활용
+
+입력창이 키보드 위에 자연스럽게 위치하도록:
+- 입력 영역에 `position: sticky` 또는 `fixed` 사용
+- iOS에서는 `visualViewport` API를 활용하여 키보드 높이에 맞춤
+
+### 3. 채팅 영역 레이아웃 개선
+
+```text
+┌─────────────────────────────┐
+│ 헤더                        │ ← shrink-0
+├─────────────────────────────┤
+│                             │
+│   채팅 메시지들             │ ← flex-1 overflow-y-auto
+│   (스크롤 가능)             │
+│                             │
+├─────────────────────────────┤
+│ 입력창                      │ ← shrink-0, 하단 고정
+└─────────────────────────────┘
+     ↑
+     키보드가 이 아래에서 올라옴
+     (콘텐츠는 움직이지 않음)
+```
 
 ---
 
-## What’s happening (root cause)
-### A) 라벨 문제
-- `BottomTabNavigation.tsx`의 채팅 탭 라벨이 항상 `chatItem.label_key`(= `navigation.chat` → “채팅”)를 사용하고 있음.
-- Admin일 때만 라벨을 override 해야 함.
+## 수정 파일
 
-### B) 입력창이 가려지는 문제 (중요)
-- `AdminSupport.tsx` 모바일 전체화면 오버레이가 `z-50`이고,
-- `BottomTabNavigation`도 `z-50`인데, **DOM 상 BottomNav가 뒤에서 렌더링되어(레이아웃에서 children 다음에 BottomNav 렌더)** 동일 z-index일 경우 BottomNav가 오버레이 위로 올라와 입력창을 덮을 수 있음.
-- 스크린샷 상황이 정확히 이 케이스로 보임.
-
----
-
-## Implementation Plan
-
-### 1) Admin 하단 탭 라벨을 “고객상담”으로 표시 (Admin only)
-**파일:** `src/components/layout/BottomTabNavigation.tsx`
-
-- 채팅 탭 라벨 렌더링 부분을 아래처럼 변경:
-  - `isAdmin === true` → `t("navigation.customerSupport")`
-  - 그 외 → 기존대로 `t(chatItem.label_key)`
-
-이렇게 하면 “채팅” UI는 일반 유저 유지, 어드민만 “고객상담” 표시.
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/dashboard/ChatInput.tsx` | `scrollIntoView` 제거, 채팅 drawer 내부에서는 스크롤 트리거 비활성화 |
+| `src/components/support/SupportChatInput.tsx` | 고객상담 오버레이 내부에서도 동일하게 처리 (이미 일부 적용됨, 추가 보완) |
+| `src/components/chat/ChatFullScreenOverlay.tsx` | DrawerContent에 data attribute 추가하여 내부 입력창 감지 가능하게 함 |
+| `src/components/dashboard/ChatFeed.tsx` | 스크롤 컨테이너에 overscroll-behavior 추가로 전파 방지 |
+| `src/pages/AdminSupport.tsx` | 모바일 오버레이 입력 영역 레이아웃 최적화 |
 
 ---
 
-### 2) 번역 키 추가 (KOR/ENG)
-**파일:** `src/lib/translations.ts`
+## 구현 세부 사항
 
-- `navigation.customerSupport` 키를 추가:
-  - ko: `"고객상담"`
-  - en: `"Support"` (또는 원하시면 `"Customer Support"`)
+### ChatInput.tsx 수정
 
-이렇게 하면 다국어 구조/타이핑(`TranslationPath`)도 깔끔하게 유지됩니다.
+```tsx
+<Input
+  // ...
+  onFocus={(e) => {
+    // 채팅 drawer/overlay 내부에서는 scrollIntoView 스킵
+    const isInsideChatOverlay = e.target.closest('[data-chat-overlay]');
+    if (isInsideChatOverlay) return;
+    
+    // 일반 페이지에서만 필요시 적용 (선택적)
+    // setTimeout(() => {
+    //   e.target.scrollIntoView({ block: "center", behavior: "smooth" });
+    // }, 300);
+  }}
+/>
+```
 
----
+### ChatFullScreenOverlay.tsx 수정
 
-### 3) AdminSupport 모바일 전체화면 오버레이가 BottomNav보다 항상 위에 오도록 보장
-**파일:** `src/pages/AdminSupport.tsx`
+```tsx
+<DrawerContent 
+  className="h-[85dvh] max-h-[85dvh] flex flex-col"
+  data-chat-overlay  // ← 추가
+>
+```
 
-- 모바일 오버레이 컨테이너:
-  ```tsx
-  <div className="fixed inset-0 z-50 ...">
-  ```
-  를 **z-index를 더 높게** 바꿉니다. 예:
-  - `z-[60]` 또는 `z-[100]`
+### SupportChatInput.tsx 수정
 
-이 변경으로:
-- 오버레이가 BottomNav를 완전히 덮어서 입력창이 가려지지 않음
-- 고객상담 대화에 들어가면 “채팅 앱”처럼 자연스럽게 전체화면 경험이 됨
-
----
-
-### 4) (권장) 입력 포커스 시 화면이 튀는 문제 완화 (iOS Safari 대응)
-**파일:** `src/components/support/SupportChatInput.tsx` (+ `AdminSupport.tsx`에 data attribute 1줄 추가)
-
-현재 `SupportChatInput`은 `onFocus`에서 `scrollIntoView({ block: "end" })`를 호출하고 있어, 고정 오버레이 UI에서는 오히려 “화면이 위로 튀는” 느낌을 만들 수 있습니다.
-
-- `AdminSupport` 모바일 오버레이 최상단에 `data-support-overlay` 같은 attribute를 추가
-- `SupportChatInput`의 `onFocus`에서:
-  - 입력창이 `data-support-overlay` 내부면 `scrollIntoView`를 **스킵**
-  - 그 외 일반 페이지에서는 `block: "center"` 정도로 완화하거나(필요시) 유지
-
-이렇게 하면:
-- 고객상담 오버레이 내부에서는 불필요한 스크롤 트리거가 사라져 안정적
-- 다른 화면에서 “입력창이 화면 아래로 숨어서 안 보이는” 케이스에는 기존 동작을 일부 유지 가능
-
----
-
-## Files to change
-1) `src/components/layout/BottomTabNavigation.tsx`
-2) `src/lib/translations.ts`
-3) `src/pages/AdminSupport.tsx`
-4) `src/components/support/SupportChatInput.tsx` (권장 안정화)
+```tsx
+onFocus={(e) => {
+  // 고객상담 오버레이 내부면 스킵 (기존 로직 유지)
+  const isInsideOverlay = e.target.closest('[data-support-overlay]');
+  if (isInsideOverlay) return;
+  
+  // 채팅 drawer 내부도 스킵
+  const isInsideChatOverlay = e.target.closest('[data-chat-overlay]');
+  if (isInsideChatOverlay) return;
+  
+  // 그 외에는 스크롤 (필요시)
+}}
+```
 
 ---
 
-## Acceptance checklist (what you should verify after implementation)
-1) Admin 계정: BottomNav 채팅 아이콘 텍스트가 “고객상담”으로 보임  
-2) 일반 계정: 기존처럼 “채팅” 유지  
-3) 모바일 `/admin/support`에서 대화 선택 시:
-   - 입력창이 **절대** BottomNav에 가려지지 않음
-   - (가능하면) 키보드 올릴 때 화면이 불필요하게 위로 “튐”이 줄어듦  
-4) 뱃지(unread) 스타일/위치는 지금과 동일하게 유지되며 숫자만 정상 표시
+## 예상 결과
 
----
+```text
+수정 전:
+┌──────────────────┐
+│ 헤더            │
+│                 │  ← 키보드가 올라오면 전체가 위로 튐
+│ 메시지들        │
+│                 │
+│ 입력창          │
+├──────────────────┤
+│    키보드       │
+└──────────────────┘
 
-## Technical notes (why this is the safest fix)
-- z-index 충돌은 “가끔”이 아니라 **환경/브라우저/렌더 순서에 따라 항상 재현 가능한 구조적 문제**라서, 오버레이 z-index를 확실히 높이는 게 가장 안정적입니다.
-- 라벨 변경은 DB 네비게이션 구조를 건드리지 않고, UI에서만 Admin 조건으로 override 하므로 리스크가 낮습니다.
+수정 후:
+┌──────────────────┐
+│ 헤더            │  ← 고정
+│                 │
+│ 메시지들        │  ← 고정 (필요시 스크롤만)
+│                 │
+│ 입력창          │  ← 고정
+├──────────────────┤
+│    키보드       │  ← 키보드만 올라옴
+└──────────────────┘
+```
+
+이 수정으로 채팅/고객상담 화면에서 키보드가 올라와도 콘텐츠가 위로 튀지 않고 안정적으로 유지됩니다.
