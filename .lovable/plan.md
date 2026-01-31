@@ -1,141 +1,77 @@
 
-# 사용자 계정 삭제 기능 구현 계획
+# Edge Function 버그 수정 - 커뮤니티 소유권 이전 쿼리
 
-## 요구사항 정리
+## 문제 발견
 
-사용자(특히 예배인도자)가 설정 페이지에서 본인 계정을 삭제할 수 있어야 합니다.
+계정 삭제 테스트 중 Edge Function 로그에서 다음 오류 발견:
 
-### 데이터 처리 정책
-
-| 데이터 유형 | 처리 방식 |
-|------------|----------|
-| **커뮤니티** | 다른 멤버가 있으면 가장 오래된 멤버에게 소유권 자동 이전 → 멤버가 없으면 커뮤니티 삭제 |
-| **워십세트** | 유지 (created_by를 null로 변경) |
-| **곡 라이브러리** | is_private=true인 곡만 삭제, 공개 곡은 created_by를 null로 변경하여 유지 |
-| **커뮤니티 포스트** | 유지 (author_id를 null로 변경) |
-| **기타 개인 데이터** | 삭제 (알림, 좋아요, 즐겨찾기, 멤버십 등) |
-
----
-
-## 구현 계획
-
-### 1. Edge Function 생성 (`self-delete-user`)
-
-기존 `admin-delete-user`를 참고하되, **본인만 삭제 가능**하도록 수정한 새 Edge Function 생성
-
-**주요 로직:**
-
-```text
-1. 인증 확인 - 본인 세션인지 검증
-2. 커뮤니티 소유권 처리
-   a. 본인이 owner인 커뮤니티 조회
-   b. 각 커뮤니티에 대해:
-      - 다른 멤버가 있으면 → 가장 오래된 멤버를 owner로 승격
-      - 다른 멤버가 없으면 → 커뮤니티 삭제 (CASCADE로 관련 데이터 자동 삭제)
-3. 곡 처리
-   a. is_private=true인 곡 삭제
-   b. 공개 곡은 created_by=null로 업데이트
-4. 콘텐츠 attribution 정리 (created_by/author_id → null)
-   - service_sets, calendar_events, community_posts, post_comments 등
-5. 개인 데이터 삭제
-   - community_members, notifications, post_likes, user_favorite_songs 등
-6. auth.users에서 사용자 삭제 (CASCADE로 profiles, user_roles 자동 삭제)
+```
+Error fetching members for community e142a699-3d28-4d01-b47c-f87d6d32fead: {
+  code: "PGRST200",
+  message: "Could not find a relationship between 'community_members' and 'profiles'"
+}
 ```
 
-### 2. Settings 페이지 UI 추가
+## 근본 원인
 
-설정 페이지에 **"계정 삭제"** 섹션 추가
+`community_members.user_id`는 `auth.users`를 참조하는 FK가 있지만, `profiles`를 참조하는 FK가 없음.
 
-**UI 요소:**
-- 삭제 확인 다이얼로그 (AlertDialog)
-- 삭제 전 확인 문구 입력 (예: "삭제합니다" 또는 이메일 입력)
-- 처리 중 로딩 상태 표시
-- 커뮤니티 소유권 이전 또는 삭제 예정 알림 표시
+**현재 코드 (문제):**
+```typescript
+const { data: otherMembers } = await supabaseAdmin
+  .from("community_members")
+  .select("user_id, joined_at, profiles(full_name)")  // ❌ FK 관계 없음
+  .eq("community_id", communityId)
+```
 
-### 3. config.toml 설정
+## 해결 방법
 
-Edge Function 인증 설정 추가
+2단계 쿼리로 분리:
+1. `community_members`에서 멤버 정보 조회
+2. 가장 오래된 멤버의 `profiles` 정보 별도 조회
 
----
+## 수정 내용
 
-## 수정 파일 목록
+**파일:** `supabase/functions/self-delete-user/index.ts`
+
+```typescript
+// 1. 다른 멤버 조회 (profiles 조인 제거)
+const { data: otherMembers, error: membersError } = await supabaseAdmin
+  .from("community_members")
+  .select("user_id, joined_at")
+  .eq("community_id", communityId)
+  .neq("user_id", userId)
+  .order("joined_at", { ascending: true })
+  .limit(1);
+
+if (otherMembers && otherMembers.length > 0) {
+  const newOwnerId = otherMembers[0].user_id;
+  
+  // 2. 새 소유자 프로필 정보 별도 조회
+  const { data: profileData } = await supabaseAdmin
+    .from("profiles")
+    .select("full_name")
+    .eq("id", newOwnerId)
+    .single();
+  
+  const newOwnerName = profileData?.full_name || "Unknown Member";
+  // ... rest of logic
+}
+```
+
+## 테스트 결과 요약
+
+| 항목 | 결과 |
+|------|------|
+| 사용자 인증 삭제 | ✅ 성공 |
+| 프로필 삭제 | ✅ 성공 |
+| 개인 데이터 정리 | ✅ 성공 |
+| 비공개 곡 삭제 | ✅ 성공 |
+| 공개 곡 created_by → null | ✅ 성공 |
+| 커뮤니티 소유권 이전 | ⚠️ 쿼리 오류 (수정 필요) |
+
+## 수정 파일
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `supabase/functions/self-delete-user/index.ts` | 신규 생성 - 사용자 자가 삭제 로직 |
-| `supabase/config.toml` | Edge Function 설정 추가 |
-| `src/pages/Settings.tsx` | 계정 삭제 UI 섹션 추가 |
-
----
-
-## 세부 구현 사항
-
-### Edge Function: `self-delete-user`
-
-```typescript
-// 핵심 흐름
-1. 본인 인증 확인
-2. 커뮤니티 소유권 이전/삭제 처리
-   - community_members에서 owner 역할인 커뮤니티 조회
-   - 각 커뮤니티의 다른 멤버 중 가장 오래된 멤버 찾기
-   - 있으면: 해당 멤버를 owner로 업데이트 + worship_communities.leader_id 업데이트
-   - 없으면: worship_communities 삭제 (FK CASCADE로 관련 테이블 정리)
-3. 비공개 곡 삭제
-4. 공개 곡 created_by → null
-5. 콘텐츠 attribution 정리
-6. 개인 데이터 삭제
-7. auth.admin.deleteUser 호출
-```
-
-### Settings 페이지 UI
-
-```text
-┌───────────────────────────────────────────┐
-│ ⚠️ 계정 삭제                              │
-├───────────────────────────────────────────┤
-│ 계정을 삭제하면 되돌릴 수 없습니다.       │
-│                                           │
-│ • 워십세트와 공개 곡은 유지됩니다         │
-│ • 비공개 곡은 삭제됩니다                  │
-│ • 커뮤니티 소유권은 자동 이전됩니다       │
-│                                           │
-│           [🗑️ 계정 삭제]                  │
-└───────────────────────────────────────────┘
-```
-
-**삭제 확인 다이얼로그:**
-```text
-┌───────────────────────────────────────────┐
-│ 정말 삭제하시겠습니까?                    │
-├───────────────────────────────────────────┤
-│ 이 작업은 되돌릴 수 없습니다.             │
-│                                           │
-│ 소유한 커뮤니티:                          │
-│ • "찬양팀" → 김철수님에게 이전 예정       │
-│ • "새벽기도팀" → 멤버 없음, 삭제 예정     │
-│                                           │
-│ 확인을 위해 "삭제합니다"를 입력하세요:    │
-│ ┌─────────────────────────────────────┐   │
-│ │                                     │   │
-│ └─────────────────────────────────────┘   │
-│                                           │
-│          [취소]    [삭제하기]             │
-└───────────────────────────────────────────┘
-```
-
----
-
-## 주요 고려사항
-
-### 데이터 무결성
-- 삭제 전 소유권 이전 시 `worship_communities.leader_id`와 `community_members.role` 모두 업데이트
-- FK CASCADE 활용하여 커뮤니티 삭제 시 관련 데이터(posts, events, invitations) 자동 정리
-
-### 보안
-- Edge Function에서 요청자 본인만 삭제 가능하도록 검증
-- 관리자 권한 불필요 (본인 계정만 삭제)
-
-### 사용자 경험
-- 삭제 전 영향 받는 데이터 목록 표시
-- 삭제 확인 입력 필수
-- 처리 완료 후 로그인 페이지로 리다이렉트
+| `supabase/functions/self-delete-user/index.ts` | profiles 조인을 2단계 쿼리로 분리 |
