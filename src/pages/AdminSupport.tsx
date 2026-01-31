@@ -565,164 +565,286 @@ export default function AdminSupport() {
           </ScrollArea>
         </div>
 
-        {/* Right Panel - Chat Window */}
-        <div className={cn(
-          "flex-1 flex flex-col border rounded-lg bg-card",
-          // Hide on mobile when no conversation is selected
-          isMobile && !selectedConversation && "hidden"
-        )}>
-          {selectedConversation ? (
-            <>
-              {/* Chat header */}
-              <div className="p-4 border-b flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {/* Mobile back button */}
-                  {isMobile && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSelectedConversation(null)}
-                      className="mr-1 -ml-2"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                  )}
-                  <Avatar>
-                    <AvatarImage src={selectedConversation.profiles?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {(selectedConversation.profiles?.full_name || "U").charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">
-                      {selectedConversation.profiles?.full_name || "Unknown"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedConversation.profiles?.email}
-                    </p>
+        {/* Right Panel - Chat Window (Desktop only) */}
+        {!isMobile && (
+          <div className="flex-1 flex flex-col border rounded-lg bg-card">
+            {selectedConversation ? (
+              <>
+                {/* Chat header */}
+                <div className="p-4 border-b flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src={selectedConversation.profiles?.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {(selectedConversation.profiles?.full_name || "U").charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">
+                        {selectedConversation.profiles?.full_name || "Unknown"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {selectedConversation.profiles?.email}
+                      </p>
+                    </div>
+                    {selectedConversation.is_flagged && (
+                      <Badge variant="destructive" className="text-xs">
+                        <Flag className="h-3 w-3 mr-1" />
+                        {language === "ko" ? "플래그" : "Flagged"}
+                      </Badge>
+                    )}
+                    {selectedConversation.status === "archived" && (
+                      <Badge variant="secondary" className="text-xs">
+                        <Archive className="h-3 w-3 mr-1" />
+                        {language === "ko" ? "보관됨" : "Archived"}
+                      </Badge>
+                    )}
                   </div>
-                  {selectedConversation.is_flagged && (
-                    <Badge variant="destructive" className="text-xs">
-                      <Flag className="h-3 w-3 mr-1" />
-                      {language === "ko" ? "플래그" : "Flagged"}
-                    </Badge>
-                  )}
-                  {selectedConversation.status === "archived" && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Archive className="h-3 w-3 mr-1" />
-                      {language === "ko" ? "보관됨" : "Archived"}
-                    </Badge>
-                  )}
+
+                  {/* Actions */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          toggleReadStatus.mutate({
+                            conversationId: selectedConversation.id,
+                            isRead: !selectedConversation.is_read_by_admin,
+                          })
+                        }
+                      >
+                        {selectedConversation.is_read_by_admin ? (
+                          <>
+                            <Mail className="h-4 w-4 mr-2" />
+                            {language === "ko" ? "안읽음으로 표시" : "Mark Unread"}
+                          </>
+                        ) : (
+                          <>
+                            <MailOpen className="h-4 w-4 mr-2" />
+                            {language === "ko" ? "읽음으로 표시" : "Mark Read"}
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          toggleFlag.mutate({
+                            conversationId: selectedConversation.id,
+                            isFlagged: !selectedConversation.is_flagged,
+                          })
+                        }
+                      >
+                        <Flag className="h-4 w-4 mr-2" />
+                        {selectedConversation.is_flagged
+                          ? language === "ko"
+                            ? "플래그 해제"
+                            : "Unflag"
+                          : language === "ko"
+                          ? "플래그"
+                          : "Flag"}
+                      </DropdownMenuItem>
+                      {selectedConversation.status !== "archived" && (
+                        <DropdownMenuItem
+                          onClick={() => archiveConversation.mutate(selectedConversation.id)}
+                        >
+                          <Archive className="h-4 w-4 mr-2" />
+                          {language === "ko" ? "보관" : "Archive"}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {language === "ko" ? "삭제" : "Delete"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                {/* Actions */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-5 w-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        toggleReadStatus.mutate({
-                          conversationId: selectedConversation.id,
-                          isRead: !selectedConversation.is_read_by_admin,
-                        })
-                      }
-                    >
-                      {selectedConversation.is_read_by_admin ? (
-                        <>
-                          <Mail className="h-4 w-4 mr-2" />
-                          {language === "ko" ? "안읽음으로 표시" : "Mark Unread"}
-                        </>
-                      ) : (
-                        <>
-                          <MailOpen className="h-4 w-4 mr-2" />
-                          {language === "ko" ? "읽음으로 표시" : "Mark Read"}
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        toggleFlag.mutate({
-                          conversationId: selectedConversation.id,
-                          isFlagged: !selectedConversation.is_flagged,
-                        })
-                      }
-                    >
-                      <Flag className="h-4 w-4 mr-2" />
-                      {selectedConversation.is_flagged
-                        ? language === "ko"
-                          ? "플래그 해제"
-                          : "Unflag"
-                        : language === "ko"
-                        ? "플래그"
-                        : "Flag"}
-                    </DropdownMenuItem>
-                    {selectedConversation.status !== "archived" && (
-                      <DropdownMenuItem
-                        onClick={() => archiveConversation.mutate(selectedConversation.id)}
-                      >
-                        <Archive className="h-4 w-4 mr-2" />
-                        {language === "ko" ? "보관" : "Archive"}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => setDeleteDialogOpen(true)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {language === "ko" ? "삭제" : "Delete"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                {/* Messages */}
+                <ScrollArea className="flex-1 p-4">
+                  {messagesLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                      <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
+                      <p>{language === "ko" ? "메시지가 없습니다" : "No messages yet"}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {messages.map((msg) => (
+                        <SupportChatBubble
+                          key={msg.id}
+                          message={msg}
+                          isOwn={msg.sender_type === "admin"}
+                        />
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </ScrollArea>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
-                {messagesLoading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                    <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
-                    <p>{language === "ko" ? "메시지가 없습니다" : "No messages yet"}</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <SupportChatBubble
-                        key={msg.id}
-                        message={msg}
-                        isOwn={msg.sender_type === "admin"}
-                      />
-                    ))}
-                    <div ref={messagesEndRef} />
+                {/* Input */}
+                {selectedConversation.status !== "archived" && (
+                  <div className="border-t">
+                    <SupportChatInput
+                      onSend={handleSendMessage}
+                      isLoading={sendAdminMessage.isPending}
+                    />
                   </div>
                 )}
-              </ScrollArea>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <Headset className="h-12 w-12 mb-4 opacity-50" />
+                <p>{language === "ko" ? "대화를 선택하세요" : "Select a conversation"}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-              {/* Input */}
-              {selectedConversation.status !== "archived" && (
-                <div className="border-t">
-                  <SupportChatInput
-                    onSend={handleSendMessage}
-                    isLoading={sendAdminMessage.isPending}
+      {/* Mobile Fullscreen Chat Overlay */}
+      {isMobile && selectedConversation && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col h-[100dvh]">
+          {/* Chat header */}
+          <div className="p-3 border-b flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedConversation(null)}
+                className="-ml-2"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={selectedConversation.profiles?.avatar_url || undefined} />
+                <AvatarFallback>
+                  {(selectedConversation.profiles?.full_name || "U").charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">
+                  {selectedConversation.profiles?.full_name || "Unknown"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {selectedConversation.profiles?.email}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    toggleReadStatus.mutate({
+                      conversationId: selectedConversation.id,
+                      isRead: !selectedConversation.is_read_by_admin,
+                    })
+                  }
+                >
+                  {selectedConversation.is_read_by_admin ? (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      {language === "ko" ? "안읽음으로 표시" : "Mark Unread"}
+                    </>
+                  ) : (
+                    <>
+                      <MailOpen className="h-4 w-4 mr-2" />
+                      {language === "ko" ? "읽음으로 표시" : "Mark Read"}
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toggleFlag.mutate({
+                      conversationId: selectedConversation.id,
+                      isFlagged: !selectedConversation.is_flagged,
+                    })
+                  }
+                >
+                  <Flag className="h-4 w-4 mr-2" />
+                  {selectedConversation.is_flagged
+                    ? language === "ko"
+                      ? "플래그 해제"
+                      : "Unflag"
+                    : language === "ko"
+                    ? "플래그"
+                    : "Flag"}
+                </DropdownMenuItem>
+                {selectedConversation.status !== "archived" && (
+                  <DropdownMenuItem
+                    onClick={() => archiveConversation.mutate(selectedConversation.id)}
+                  >
+                    <Archive className="h-4 w-4 mr-2" />
+                    {language === "ko" ? "보관" : "Archive"}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {language === "ko" ? "삭제" : "Delete"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Messages area */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0 overscroll-contain">
+            {messagesLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
+                <p>{language === "ko" ? "메시지가 없습니다" : "No messages yet"}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map((msg) => (
+                  <SupportChatBubble
+                    key={msg.id}
+                    message={msg}
+                    isOwn={msg.sender_type === "admin"}
                   />
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <Headset className="h-12 w-12 mb-4 opacity-50" />
-              <p>{language === "ko" ? "대화를 선택하세요" : "Select a conversation"}</p>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
+
+          {/* Input area - fixed at bottom */}
+          {selectedConversation.status !== "archived" && (
+            <div 
+              className="border-t bg-background shrink-0"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
+              <SupportChatInput
+                onSend={handleSendMessage}
+                isLoading={sendAdminMessage.isPending}
+              />
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* Floating bulk action bar */}
       {selectedIds.size > 0 && (
