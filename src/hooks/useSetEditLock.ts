@@ -100,10 +100,19 @@ interface LockActionParams {
 
 async function invokeLockAction(params: LockActionParams): Promise<{ success: boolean; message: string }> {
   try {
+    // Get current session for Authorization header
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.access_token) {
+      console.error('[EditLock] No active session for lock action');
+      return { success: false, message: 'No active session' };
+    }
+    
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(params),
     });
