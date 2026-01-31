@@ -1,101 +1,141 @@
 
-# 멀티 디바이스 편집 요청 실패 수정
+# 사용자 계정 삭제 기능 구현 계획
 
-## 문제 분석
+## 요구사항 정리
 
-### 근본 원인
-`useSetEditLock.ts`의 `invokeLockAction` 함수가 Edge function 호출 시 **Authorization 헤더를 포함하지 않음**
+사용자(특히 예배인도자)가 설정 페이지에서 본인 계정을 삭제할 수 있어야 합니다.
 
-**Edge function 로그:**
-```
-[set-edit-lock-action] Missing or invalid Authorization header
-```
+### 데이터 처리 정책
 
-**현재 코드 (문제):**
-```tsx
-async function invokeLockAction(params: LockActionParams) {
-  const response = await fetch(EDGE_FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // ❌ Authorization 헤더 없음!
-    },
-    body: JSON.stringify(params),
-  });
-  ...
-}
-```
-
-### 결과
-- 아이패드에서 "편집 요청" → Edge function 401 오류 → 실패
-- 핸드폰에서 takeover 요청 알림을 받지 못함
-- 세션 타임아웃으로 인해 핸드폰 세션도 종료됨
+| 데이터 유형 | 처리 방식 |
+|------------|----------|
+| **커뮤니티** | 다른 멤버가 있으면 가장 오래된 멤버에게 소유권 자동 이전 → 멤버가 없으면 커뮤니티 삭제 |
+| **워십세트** | 유지 (created_by를 null로 변경) |
+| **곡 라이브러리** | is_private=true인 곡만 삭제, 공개 곡은 created_by를 null로 변경하여 유지 |
+| **커뮤니티 포스트** | 유지 (author_id를 null로 변경) |
+| **기타 개인 데이터** | 삭제 (알림, 좋아요, 즐겨찾기, 멤버십 등) |
 
 ---
 
-## 수정 계획
+## 구현 계획
 
-### 1. `invokeLockAction` 함수에 Authorization 헤더 추가
+### 1. Edge Function 생성 (`self-delete-user`)
 
-**파일:** `src/hooks/useSetEditLock.ts`
+기존 `admin-delete-user`를 참고하되, **본인만 삭제 가능**하도록 수정한 새 Edge Function 생성
 
-현재 세션의 access_token을 가져와서 Authorization 헤더에 포함:
+**주요 로직:**
 
-```tsx
-async function invokeLockAction(params: LockActionParams): Promise<{ success: boolean; message: string }> {
-  try {
-    // 현재 세션에서 access_token 가져오기
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.access_token) {
-      console.error('[EditLock] No active session');
-      return { success: false, message: 'No active session' };
-    }
-    
-    const response = await fetch(EDGE_FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,  // ← 추가!
-      },
-      body: JSON.stringify(params),
-    });
-    return await response.json();
-  } catch (error) {
-    console.error('[EditLock] Edge function error:', error);
-    return { success: false, message: 'Network error' };
-  }
-}
+```text
+1. 인증 확인 - 본인 세션인지 검증
+2. 커뮤니티 소유권 처리
+   a. 본인이 owner인 커뮤니티 조회
+   b. 각 커뮤니티에 대해:
+      - 다른 멤버가 있으면 → 가장 오래된 멤버를 owner로 승격
+      - 다른 멤버가 없으면 → 커뮤니티 삭제 (CASCADE로 관련 데이터 자동 삭제)
+3. 곡 처리
+   a. is_private=true인 곡 삭제
+   b. 공개 곡은 created_by=null로 업데이트
+4. 콘텐츠 attribution 정리 (created_by/author_id → null)
+   - service_sets, calendar_events, community_posts, post_comments 등
+5. 개인 데이터 삭제
+   - community_members, notifications, post_likes, user_favorite_songs 등
+6. auth.users에서 사용자 삭제 (CASCADE로 profiles, user_roles 자동 삭제)
 ```
 
-### 2. (선택) 세션 만료 시 재인증 안내
+### 2. Settings 페이지 UI 추가
 
-편집 잠금 요청 실패 시 세션이 만료되었는지 확인하고, 만료된 경우 재로그인 안내 토스트 표시.
+설정 페이지에 **"계정 삭제"** 섹션 추가
+
+**UI 요소:**
+- 삭제 확인 다이얼로그 (AlertDialog)
+- 삭제 전 확인 문구 입력 (예: "삭제합니다" 또는 이메일 입력)
+- 처리 중 로딩 상태 표시
+- 커뮤니티 소유권 이전 또는 삭제 예정 알림 표시
+
+### 3. config.toml 설정
+
+Edge Function 인증 설정 추가
 
 ---
 
-## 수정 파일
+## 수정 파일 목록
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/hooks/useSetEditLock.ts` | `invokeLockAction` 함수에 Authorization 헤더 추가 |
+| `supabase/functions/self-delete-user/index.ts` | 신규 생성 - 사용자 자가 삭제 로직 |
+| `supabase/config.toml` | Edge Function 설정 추가 |
+| `src/pages/Settings.tsx` | 계정 삭제 UI 섹션 추가 |
 
 ---
 
-## 예상 결과
+## 세부 구현 사항
 
-수정 후:
-1. 핸드폰에서 워십세트 편집 중
-2. 아이패드에서 "편집 요청" 버튼 클릭
-3. Edge function이 Authorization 헤더를 받아 요청 처리
-4. 핸드폰에서 takeover 요청 알림 수신
-5. 사용자가 양보/거절 선택 가능
-6. 정상적인 멀티 디바이스 편집 전환 완료
+### Edge Function: `self-delete-user`
+
+```typescript
+// 핵심 흐름
+1. 본인 인증 확인
+2. 커뮤니티 소유권 이전/삭제 처리
+   - community_members에서 owner 역할인 커뮤니티 조회
+   - 각 커뮤니티의 다른 멤버 중 가장 오래된 멤버 찾기
+   - 있으면: 해당 멤버를 owner로 업데이트 + worship_communities.leader_id 업데이트
+   - 없으면: worship_communities 삭제 (FK CASCADE로 관련 테이블 정리)
+3. 비공개 곡 삭제
+4. 공개 곡 created_by → null
+5. 콘텐츠 attribution 정리
+6. 개인 데이터 삭제
+7. auth.admin.deleteUser 호출
+```
+
+### Settings 페이지 UI
+
+```text
+┌───────────────────────────────────────────┐
+│ ⚠️ 계정 삭제                              │
+├───────────────────────────────────────────┤
+│ 계정을 삭제하면 되돌릴 수 없습니다.       │
+│                                           │
+│ • 워십세트와 공개 곡은 유지됩니다         │
+│ • 비공개 곡은 삭제됩니다                  │
+│ • 커뮤니티 소유권은 자동 이전됩니다       │
+│                                           │
+│           [🗑️ 계정 삭제]                  │
+└───────────────────────────────────────────┘
+```
+
+**삭제 확인 다이얼로그:**
+```text
+┌───────────────────────────────────────────┐
+│ 정말 삭제하시겠습니까?                    │
+├───────────────────────────────────────────┤
+│ 이 작업은 되돌릴 수 없습니다.             │
+│                                           │
+│ 소유한 커뮤니티:                          │
+│ • "찬양팀" → 김철수님에게 이전 예정       │
+│ • "새벽기도팀" → 멤버 없음, 삭제 예정     │
+│                                           │
+│ 확인을 위해 "삭제합니다"를 입력하세요:    │
+│ ┌─────────────────────────────────────┐   │
+│ │                                     │   │
+│ └─────────────────────────────────────┘   │
+│                                           │
+│          [취소]    [삭제하기]             │
+└───────────────────────────────────────────┘
+```
 
 ---
 
-## 기술 참고사항
+## 주요 고려사항
 
-- Edge function `set-edit-lock-action`은 이미 올바르게 Authorization 헤더 검증을 수행함
-- 클라이언트 측에서만 헤더 추가가 누락됨
-- 이 수정으로 모든 편집 잠금 관련 기능(takeover request, force takeover, release lock 등)이 정상 작동하게 됨
+### 데이터 무결성
+- 삭제 전 소유권 이전 시 `worship_communities.leader_id`와 `community_members.role` 모두 업데이트
+- FK CASCADE 활용하여 커뮤니티 삭제 시 관련 데이터(posts, events, invitations) 자동 정리
+
+### 보안
+- Edge Function에서 요청자 본인만 삭제 가능하도록 검증
+- 관리자 권한 불필요 (본인 계정만 삭제)
+
+### 사용자 경험
+- 삭제 전 영향 받는 데이터 목록 표시
+- 삭제 확인 입력 필수
+- 처리 완료 후 로그인 페이지로 리다이렉트
