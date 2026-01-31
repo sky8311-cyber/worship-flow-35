@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.manage-email-preferences]
 verify_jwt = false
+
+[functions.self-delete-user]
+verify_jwt = false
