@@ -139,13 +139,10 @@ export function SupportChatInput({ onSend, isLoading }: SupportChatInputProps) {
           disabled={isLoading}
           enterKeyHint="send"
           onFocus={(e) => {
-            // Skip scrollIntoView inside fixed overlay (e.g., AdminSupport mobile)
-            const isInsideOverlay = e.target.closest('[data-support-overlay]');
-            if (!isInsideOverlay) {
-              setTimeout(() => {
-                e.target.scrollIntoView({ block: "center", behavior: "smooth" });
-              }, 300);
-            }
+            // Skip scrollIntoView inside fixed overlay to prevent content jumping
+            const isInsideSupportOverlay = e.target.closest('[data-support-overlay]');
+            const isInsideChatOverlay = e.target.closest('[data-chat-overlay]');
+            if (isInsideSupportOverlay || isInsideChatOverlay) return;
           }}
         />
 
