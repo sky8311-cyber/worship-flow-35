@@ -34,7 +34,7 @@ export function ChatFullScreenOverlay({ isOpen, onClose }: ChatFullScreenOverlay
 
   return (
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="h-[85dvh] max-h-[85dvh] flex flex-col">
+      <DrawerContent className="h-[85dvh] max-h-[85dvh] flex flex-col" data-chat-overlay>
         <DrawerHeader className="border-b py-0 px-0 shrink-0">
           <div className="flex items-center justify-between px-4 py-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "community" | "support")} className="flex-1">

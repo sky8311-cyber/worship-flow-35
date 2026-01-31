@@ -223,9 +223,10 @@ export function ChatInput({ selectedCommunityId }: ChatInputProps) {
           disabled={postMutation.isPending}
           enterKeyHint="send"
           onFocus={(e) => {
-            setTimeout(() => {
-              e.target.scrollIntoView({ block: "end", behavior: "smooth" });
-            }, 300);
+            // Skip scrollIntoView inside chat drawer/overlay to prevent content jumping
+            const isInsideChatOverlay = e.target.closest('[data-chat-overlay]');
+            const isInsideSupportOverlay = e.target.closest('[data-support-overlay]');
+            if (isInsideChatOverlay || isInsideSupportOverlay) return;
           }}
         />
       </div>
