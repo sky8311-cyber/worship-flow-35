@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
-
+import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 import { RoleBadge } from "@/components/RoleBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -779,6 +779,8 @@ const Settings = () => {
           </Card>
         )}
 
+        {/* Delete Account Section */}
+        <DeleteAccountSection />
 
         {/* Dialog */}
         <ProfileEditDialog open={profileEditOpen} onOpenChange={setProfileEditOpen} />
