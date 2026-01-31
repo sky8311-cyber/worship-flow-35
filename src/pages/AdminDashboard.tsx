@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, UserPlus, CalendarDays, History, Navigation, Sparkles, CreditCard } from "lucide-react";
+import { Users, Building2, Music, FileText, Church, Settings, Crown, Calendar, CheckCircle, XCircle, History, Navigation, Sparkles, CreditCard } from "lucide-react";
 import { NavigationManager } from "@/components/admin/NavigationManager";
+import { ActivityMetricsSection } from "@/components/admin/ActivityMetricsSection";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -200,63 +201,43 @@ const AdminDashboard = () => {
     },
   });
   
-  // Unified 8-card stats array for 4-column grid
-  const statCards = [
+  // Summary stats for quick overview (totals, not period-based)
+  const summaryStats = [
     {
       title: t("admin.stats.totalUsers"),
       value: stats?.users || 0,
       icon: Users,
-      description: t("admin.stats.registeredUsers"),
       color: "text-blue-500",
     },
     {
       title: language === "ko" ? "기본멤버" : "Basic Members",
       value: stats?.worshipLeaders || 0,
       icon: Music,
-      description: language === "ko" ? "승인된 기본멤버 수" : "Approved basic members",
       color: "text-indigo-500",
     },
     {
       title: language === "ko" ? "정식멤버" : "Full Members",
       value: stats?.premiumSubscribers || 0,
       icon: Crown,
-      description: language === "ko" ? "활성 정식멤버 계정" : "Active full member accounts",
       color: "text-amber-500",
     },
     {
       title: t("admin.stats.churchAccounts"),
       value: stats?.churchAccounts || 0,
       icon: Church,
-      description: t("admin.stats.totalChurchAccounts"),
       color: "text-orange-500",
     },
     {
       title: t("admin.stats.serviceSets"),
       value: stats?.sets || 0,
       icon: FileText,
-      description: t("admin.stats.totalSets"),
       color: "text-purple-500",
     },
     {
       title: t("admin.stats.songs"),
       value: stats?.songs || 0,
       icon: Music,
-      description: t("admin.stats.totalSongs"),
       color: "text-pink-500",
-    },
-    {
-      title: language === "ko" ? "이번 주 신규 가입" : "Weekly Sign-ups",
-      value: stats?.weeklySignups || 0,
-      icon: UserPlus,
-      description: language === "ko" ? "최근 7일간 가입자" : "New users in last 7 days",
-      color: "text-cyan-500",
-    },
-    {
-      title: language === "ko" ? "이번 달 예배세트" : "Monthly Sets",
-      value: stats?.monthlySets || 0,
-      icon: CalendarDays,
-      description: language === "ko" ? "이번 달 생성된 세트" : "Sets created this month",
-      color: "text-emerald-500",
     },
   ];
   
@@ -377,13 +358,16 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
-            {/* Activity Metrics - 4-column grid with 8 cards */}
+            {/* Dynamic Activity Metrics with Period Filter */}
+            <ActivityMetricsSection />
+
+            {/* Summary Stats - Total counts */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-4 text-muted-foreground">
-                {language === "ko" ? "📊 활동 지표" : "📊 Activity Metrics"}
+                {language === "ko" ? "📈 총계" : "📈 Totals"}
               </h2>
-              <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-                {statCards.map((card) => {
+              <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                {summaryStats.map((card) => {
                   const Icon = card.icon;
                   return (
                     <Card key={card.title} className="shadow-sm border-dashed">
