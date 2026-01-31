@@ -79,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
         // Find the oldest member who is not the current user
         const { data: otherMembers, error: membersError } = await supabaseAdmin
           .from("community_members")
-          .select("user_id, joined_at, profiles(full_name)")
+          .select("user_id, joined_at")
           .eq("community_id", communityId)
           .neq("user_id", userId)
           .order("joined_at", { ascending: true })
@@ -92,9 +92,16 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (otherMembers && otherMembers.length > 0) {
           // Transfer ownership to oldest member
-          const newOwner = otherMembers[0];
-          const newOwnerId = newOwner.user_id;
-          const newOwnerName = (newOwner.profiles as any)?.full_name || "Unknown Member";
+          const newOwnerId = otherMembers[0].user_id;
+          
+          // Fetch profile info separately (no FK relationship between community_members and profiles)
+          const { data: profileData } = await supabaseAdmin
+            .from("profiles")
+            .select("full_name")
+            .eq("id", newOwnerId)
+            .single();
+          
+          const newOwnerName = profileData?.full_name || "Unknown Member";
 
           communityResults.push({
             communityId,
