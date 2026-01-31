@@ -137,6 +137,7 @@ export const translations = {
       menu: "Menu",
       feed: "Feed",
       chat: "Chat",
+      customerSupport: "Support",
       communitySearch: "Communities",
     },
     studio: {
@@ -2282,6 +2283,7 @@ songCard: {
       menu: "메뉴",
       feed: "피드",
       chat: "채팅",
+      customerSupport: "고객상담",
       communitySearch: "공동체 찾기",
     },
     studio: {

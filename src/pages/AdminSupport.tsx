@@ -713,7 +713,7 @@ export default function AdminSupport() {
 
       {/* Mobile Fullscreen Chat Overlay */}
       {isMobile && selectedConversation && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col h-[100dvh]">
+        <div className="fixed inset-0 z-[60] bg-background flex flex-col h-[100dvh]" data-support-overlay>
           {/* Chat header */}
           <div className="p-3 border-b flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
