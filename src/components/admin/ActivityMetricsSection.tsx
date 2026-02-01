@@ -92,17 +92,15 @@ export function ActivityMetricsSection() {
           .gte("created_at", previousStart)
           .lt("created_at", previousEnd),
         
-        // Active users (from page_analytics)
-        supabase.from("page_analytics")
-          .select("user_id", { count: "exact", head: false })
-          .gte("entered_at", currentStart)
-          .lt("entered_at", currentEnd)
-          .not("user_id", "is", null),
-        supabase.from("page_analytics")
-          .select("user_id", { count: "exact", head: false })
-          .gte("entered_at", previousStart)
-          .lt("entered_at", previousEnd)
-          .not("user_id", "is", null),
+        // Active users (from profiles.last_active_at)
+        supabase.from("profiles")
+          .select("*", { count: "exact", head: true })
+          .gte("last_active_at", currentStart)
+          .lt("last_active_at", currentEnd),
+        supabase.from("profiles")
+          .select("*", { count: "exact", head: true })
+          .gte("last_active_at", previousStart)
+          .lt("last_active_at", previousEnd),
         
         // Likes
         supabase.from("post_likes")
@@ -125,9 +123,9 @@ export function ActivityMetricsSection() {
           .lt("created_at", previousEnd),
       ]);
 
-      // Calculate unique active users
-      const currentUniqueUsers = new Set(currentActiveUsers.data?.map(d => d.user_id) || []).size;
-      const previousUniqueUsers = new Set(previousActiveUsers.data?.map(d => d.user_id) || []).size;
+      // Get active users count directly from profiles
+      const currentUniqueUsers = currentActiveUsers.count || 0;
+      const previousUniqueUsers = previousActiveUsers.count || 0;
 
       return {
         newUsers: { 
