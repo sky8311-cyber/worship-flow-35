@@ -1,158 +1,137 @@
 
-# Fix: Multiple Frame Rendering Issue in Worship Studio
 
-## Problem Analysis
+# Fix: Private Song Visibility & Notifications
 
-From a senior designer perspective, the current UX is broken:
+## Problem Statement
 
-1. **스튜디오 tab**: Content only appears in top portion - works but unclear if this is a container issue
-2. **새 글 tab**: Massive empty space above, editor pushed to bottom - there appear to be 3 stacked "frames"
-
-### Root Cause
-
-Radix Tabs renders ALL TabsContent elements in the DOM but uses CSS (`data-[state=inactive]:hidden`) to hide inactive ones. The problem:
-
-1. **Current**: Each TabsContent has `flex-1` which makes ALL tabs compete for flex space
-2. **Result**: Even "hidden" tabs take up layout space, creating stacked frames
-3. **The "3 frames"**: Tab header + inactive tabs (taking space) + active tab content at bottom
-
-### Why This Happened
-
-The `flex-1` class on TabsContent tells each to grow equally. When combined with Radix's rendering model, inactive tabs still occupy flex space even though they're visually hidden.
+1. **Song Library**: Private songs are currently only visible to their creator. But **admins should also see them** (with the "Private" badge already implemented in `SongCard.tsx`)
+2. **Notifications**: When a private song is added, all admins AND worship leaders get notified. Only **admins** should be notified for private songs.
 
 ---
 
-## Solution: Single Frame Architecture
+## Current Behavior
 
-### Design Principle (Meta Approach)
-> "One viewport, one content area. Tab content should replace, not stack."
-
-### File Changes
-
-#### 1. `src/components/worship-studio/StudioMainPanel.tsx`
-
-**Change**: Remove `flex-1` from TabsContent - only the active tab should expand. Use `data-[state=active]:flex-1` pattern instead.
-
+### Song Library (Frontend)
 ```tsx
-// BEFORE: All tabs fight for flex space
-<TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
-
-// AFTER: Only active tab takes space
-<TabsContent value="studio" className="flex flex-col min-h-0 overflow-hidden mt-0 p-0 data-[state=active]:flex-1 data-[state=inactive]:hidden">
+// src/pages/SongLibrary.tsx line 240
+if (song.is_private && song.created_by !== user?.id) {
+  return false; // Hides from everyone except creator
+}
 ```
 
-Apply this pattern to ALL TabsContent elements.
-
-**Alternative approach** (simpler): Add `forceMount={false}` isn't available in Radix, but we can use the hiding approach:
-
-```tsx
-<TabsContent 
-  value="studio" 
-  className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:flex-1 data-[state=active]:min-h-0 data-[state=active]:overflow-hidden"
->
+### Notification Trigger (Database)
+```sql
+-- notify_leaders_new_song()
+FROM user_roles ur
+WHERE ur.role IN ('admin', 'worship_leader')
+  AND ur.user_id != NEW.created_by;
 ```
 
-This ensures flex properties ONLY apply when the tab is active.
+---
 
-#### 2. Fix inner content components
+## Solution
 
-Each content component needs proper height chain:
+### Change 1: Song Library - Allow Admins to See Private Songs
 
-**StudioView.tsx** (already correct)
-```tsx
-<div className="flex-1 flex flex-col h-full overflow-hidden">
-  <div className="flex-1 overflow-y-auto">
-```
+**File**: `src/pages/SongLibrary.tsx`
 
-**StudioPostEditor.tsx** (needs fix)
+Update the filter logic to include admins:
+
 ```tsx
 // BEFORE
-<div className="flex flex-col h-full">
+if (song.is_private && song.created_by !== user?.id) {
+  return false;
+}
 
-// AFTER  
-<div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+// AFTER
+if (song.is_private && song.created_by !== user?.id && !isAdmin) {
+  return false;
+}
 ```
 
-**StudioFeed.tsx** (already correct with `h-full`)
+This allows:
+- Song creator → sees their private songs
+- Admins → sees all private songs (with "Private" badge)
+- Everyone else → cannot see private songs
+
+The "Private" badge is already implemented in `SongCard.tsx` (line 172-177) and `SongTable.tsx` (line 290-292).
 
 ---
 
-## Implementation Details
+### Change 2: Notification Trigger - Restrict Private Song Notifications
 
-### File 1: `src/components/worship-studio/StudioMainPanel.tsx`
+**File**: New database migration
 
-Lines 73, 80, 85, 94 - Update all TabsContent:
+Update `notify_leaders_new_song()` function:
 
-```tsx
-<TabsContent 
-  value="studio" 
-  className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden"
->
-```
-
-### File 2: `src/components/worship-studio/StudioPostEditor.tsx`
-
-Line 74 - Fix root container:
-
-```tsx
-<div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-```
-
-Line 110 - ScrollArea needs proper sizing:
-
-```tsx
-<ScrollArea className="flex-1 min-h-0">
-```
-
----
-
-## Expected Result
-
-```
-┌─────────────────────────────────────┐
-│  Header: 예배공작소                   │
-├─────────────────────────────────────┤
-│  Tabs: [스튜디오] [피드] [새 글]       │
-├─────────────────────────────────────┤
-│                                     │
-│  ← Single unified content area      │
-│                                     │
-│  (Only active tab visible)          │
-│                                     │
-│                                     │
-└─────────────────────────────────────┘
-```
-
-Instead of the current:
-```
-┌─────────────────────────────────────┐
-│  Header                             │
-├─────────────────────────────────────┤
-│  Tabs                               │
-├─────────────────────────────────────┤
-│  Frame 1 (empty - inactive tab)     │
-├─────────────────────────────────────┤
-│  Frame 2 (empty - inactive tab)     │
-├─────────────────────────────────────┤
-│  Frame 3 (actual content)           │
-└─────────────────────────────────────┘
+```sql
+CREATE OR REPLACE FUNCTION public.notify_leaders_new_song()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  actor_profile RECORD;
+BEGIN
+  IF NEW.created_by IS NOT NULL THEN
+    SELECT full_name, avatar_url INTO actor_profile
+    FROM profiles WHERE id = NEW.created_by;
+  END IF;
+  
+  INSERT INTO notifications (user_id, type, title, message, related_id, related_type, metadata)
+  SELECT DISTINCT ON (ur.user_id)
+    ur.user_id,
+    'new_song',
+    'New Song Added',
+    'added a new song to the library',
+    NEW.id,
+    'song',
+    jsonb_build_object(
+      'song_title', NEW.title,
+      'song_artist', NEW.artist,
+      'actor_name', COALESCE(actor_profile.full_name, 'A user'),
+      'actor_avatar', actor_profile.avatar_url,
+      'is_private', COALESCE(NEW.is_private, false)
+    )
+  FROM user_roles ur
+  WHERE (
+    -- Private songs: only notify admins
+    (NEW.is_private = true AND ur.role = 'admin')
+    OR
+    -- Public songs: notify admins and worship leaders
+    (COALESCE(NEW.is_private, false) = false AND ur.role IN ('admin', 'worship_leader'))
+  )
+  AND ur.user_id != NEW.created_by;
+  
+  RETURN NEW;
+END;
+$function$;
 ```
 
 ---
 
-## Files Modified
+## Summary of Visibility Rules
+
+| User Role | Private Songs Visibility | Notification for Private Song |
+|-----------|-------------------------|-------------------------------|
+| Song Creator | ✅ Visible (in Song Library) | ❌ No (they created it) |
+| Admin | ✅ Visible (with "Private" badge) | ✅ Yes |
+| Worship Leader | ❌ Hidden | ❌ No |
+| Team Member | ❌ Hidden | ❌ No |
+
+---
+
+## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/worship-studio/StudioMainPanel.tsx` | Conditional flex via `data-[state=active]` |
-| `src/components/worship-studio/StudioPostEditor.tsx` | Fix root container flex chain |
+| `src/pages/SongLibrary.tsx` | Add `&& !isAdmin` to private song filter |
+| New migration | Update `notify_leaders_new_song()` function |
 
-## Testing Checklist
+---
 
-After implementation, verify:
-- [ ] 스튜디오 tab shows cover + posts filling viewport
-- [ ] 피드 tab shows feed content from top
-- [ ] 새 글 tab shows editor from top, not pushed to bottom
-- [ ] No empty "frames" or gaps between tabs
-- [ ] Mobile view works correctly
+## Privacy Toggle
+
+The existing UI (in `SongDialog.tsx` lines 1071-1086) already allows users to toggle privacy on/off. This change doesn't affect that functionality - users can still change their song's privacy setting at any time.
 
