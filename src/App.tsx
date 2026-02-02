@@ -220,6 +220,8 @@ const App = () => {
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
               <Route path="/rooms" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
               <Route path="/rooms/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
+              <Route path="/studio" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
+              <Route path="/studio/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
               <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
