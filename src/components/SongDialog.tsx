@@ -1027,31 +1027,31 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="artist">{t("songDialog.artist")}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t("songDialog.artistTooltip")}
-              </p>
-              <ArtistSelector
-                value={formData.artist}
-                onValueChange={(artist) => setFormData({ ...formData, artist })}
-              />
-            </div>
+          {/* Artist - Full width with tooltip below label */}
+          <div className="space-y-1.5">
+            <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t("songDialog.artistTooltip")}
+            </p>
+            <ArtistSelector
+              value={formData.artist}
+              onValueChange={(artist) => setFormData({ ...formData, artist })}
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="language">{t("songDialog.language")}</Label>
-              <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                  <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                  <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Language - Full width on next row */}
+          <div>
+            <Label htmlFor="language">{t("songDialog.language")}</Label>
+            <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+                <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+                <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Topics (주제) - replaces category and tags */}
