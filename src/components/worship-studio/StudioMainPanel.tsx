@@ -70,19 +70,19 @@ export function StudioMainPanel({
           </TabsList>
         </div>
         
-        <TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+        <TabsContent value="studio" className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden">
           <StudioView 
             roomId={selectedStudioId || myStudioId || undefined} 
             isOwnRoom={isOwnStudio}
           />
         </TabsContent>
         
-        <TabsContent value="feed" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+        <TabsContent value="feed" className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden">
           <StudioFeed onStudioClick={onStudioSelect} />
         </TabsContent>
         
         {isOwnStudio && myStudioId && (
-          <TabsContent value="newpost" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+          <TabsContent value="newpost" className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden">
             <StudioPostEditor 
               onBack={() => setActiveTab("studio")}
               onSuccess={handleEditorSuccess}
@@ -91,7 +91,7 @@ export function StudioMainPanel({
         )}
         
         {isMobile && (
-          <TabsContent value="discover" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+          <TabsContent value="discover" className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden">
             <StudioDiscover onStudioSelect={onStudioSelect} />
           </TabsContent>
         )}
