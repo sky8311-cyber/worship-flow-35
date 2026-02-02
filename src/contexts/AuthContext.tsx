@@ -170,8 +170,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     syncInProgress.current = true;
     
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) {
+      // Use refreshSession to get a fresh token and ensure session validity
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !currentSession) {
+        // Session is invalid or expired - this is normal, just skip sync
         syncInProgress.current = false;
         setRoleSyncComplete(true);
         return false;
