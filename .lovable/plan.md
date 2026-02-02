@@ -1,90 +1,80 @@
 
 
-# Route Consolidation: `/rooms` → `/studio` + Blank Page Fix
+# Fix: Studio Page Blank Screen & Missing Tabs
 
-## Current Problems
+## Problem Summary
 
-### 1. Duplicate Routes
-Both `/rooms` and `/studio` exist and point to the same component - confusing and inconsistent.
+The `/studio` page is showing a blank screen where the tabs (Studio, Feed, New Post) and content area should appear. The issue is a combination of CSS height chain problems and a missing translation key.
 
-### 2. URL References Still Use `/rooms`
-```typescript
-// WorshipStudio.tsx line 69
-window.history.replaceState(null, '', `/rooms/${studioId}`);
+---
 
-// WorshipStudio.tsx line 74  
-window.history.replaceState(null, '', '/rooms');
-```
+## Root Causes
 
-### 3. Navigation Config Uses `/rooms`
-```typescript
-// navigationConfig.ts
-to: "/rooms",
-match: (path: string) => path.includes("/rooms"),
-```
+### 1. Height Chain Break in `StudioMainPanel.tsx`
+The `TabsContent` elements are not properly configured for the flex height chain pattern. They use classes like `flex-1 h-0` but without `flex flex-col`, causing the inner content to collapse to zero height.
 
-### 4. Blank Page Issue
-The flex height chain uses `h-0 flex-1` pattern which is documented in project memory as potentially causing "zero-height" rendering bugs. The `StudioView` wrapper uses `flex-1 overflow-y-auto` but may not be getting proper height from parent chain.
+### 2. Missing `min-h-0` Constraint
+Flexbox requires `min-h-0` on flex children to allow them to shrink below their content size. Without this, the overflow chain breaks.
+
+### 3. Missing Translation Key
+`navigation.studio` is referenced in `navigationConfig.ts` but doesn't exist in `translations.ts`. This causes a console warning and may affect navigation rendering.
 
 ---
 
 ## Solution
 
-### Part 1: Consolidate to `/studio`
+### File 1: `src/components/worship-studio/StudioMainPanel.tsx`
 
-**File: `src/App.tsx`**
-- Remove `/rooms` routes (lines 221-222)
-- Keep only `/studio` routes (lines 223-224)
+**Changes:**
+- Add `min-h-0` to the root container for proper flexbox shrinking
+- Update all `TabsContent` elements to include full flex chain: `flex-1 flex flex-col min-h-0`
+- Keep existing `h-0 overflow-hidden mt-0 p-0` overrides
 
-**File: `src/pages/WorshipStudio.tsx`**
-- Update `handleStudioSelect` to use `/studio/${studioId}` (line 69)
-- Update `handleMyStudioSelect` to use `/studio` (line 74)
+**Current (broken):**
+```tsx
+<TabsContent value="studio" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+```
 
-**File: `src/lib/navigationConfig.ts`**
-- Change `to: "/rooms"` → `to: "/studio"`
-- Change `match` function to check for `/studio`
-- Update `labelKey` to `"navigation.studio"` (more semantic)
+**Fixed:**
+```tsx
+<TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+```
 
----
+Apply this pattern to all `TabsContent` elements (studio, feed, newpost, discover).
 
-### Part 2: Fix Blank Page
+### File 2: `src/lib/translations.ts`
 
-The issue is the height chain for `StudioView`. According to the memory pattern documented in `layout-height-chain-pattern`, the container must maintain proper flex chain.
-
-**File: `src/components/worship-studio/StudioView.tsx`**
-- Wrap the return content in a div with proper height chain classes
-- Ensure the outer div has `flex-1 flex flex-col h-full overflow-hidden`
-- Inner scrollable area keeps `flex-1 overflow-y-auto`
-
-**File: `src/components/worship-studio/StudioMainPanel.tsx`**
-- Verify TabsContent has proper flex structure
-- TabsContent default has `mt-2` - confirm override is working
+**Changes:**
+- Add `studio: "Studio"` under `navigation` in English translations (around line 134)
+- Add `studio: "스튜디오"` under `navigation` in Korean translations
 
 ---
 
 ## Technical Details
 
-### Route Changes
+### Height Chain Pattern (from project memory)
 
-| Before | After |
-|--------|-------|
-| `/rooms` | `/studio` |
-| `/rooms/:roomId` | `/studio/:roomId` |
+For proper rendering, the flex chain must be:
+```
+Parent: flex flex-col h-full overflow-hidden
+  └─ Child: flex-1 flex flex-col min-h-0 overflow-hidden
+       └─ Scrollable: flex-1 overflow-y-auto
+```
 
-### File Modifications
+The `min-h-0` is critical for preventing flex items from overflowing their container.
 
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Remove `/rooms` routes, keep `/studio` |
-| `src/pages/WorshipStudio.tsx` | Update history.replaceState URLs |
-| `src/lib/navigationConfig.ts` | Update to `/studio`, update match logic |
-| `src/components/worship-studio/StudioView.tsx` | Fix height chain for content rendering |
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/components/worship-studio/StudioMainPanel.tsx` | Add `min-h-0` to root, fix all TabsContent flex chains |
+| `src/lib/translations.ts` | Add `navigation.studio` key in both languages |
 
 ---
 
 ## Expected Result
 
-1. Navigation uses `/studio` consistently
-2. Old `/rooms` URLs return 404 (clean break - no legacy support needed)
-3. Studio page renders properly with contract prompt for new users or post list for existing users
+1. Studio page tabs appear correctly
+2. Content area renders (either Studio view with cover/posts or Contract prompt for new users)
+3. Navigation menu shows correct "Studio" label instead of the key fallback
 
