@@ -1,137 +1,55 @@
 
-# Fix: Song Title Click to Edit & Form Layout Improvements
 
-## Problem Summary
+# Add 세계투데이 Press Article to News Page
 
-1. **Table View**: Clicking the song title does nothing - it should open the edit dialog
-2. **Edit Dialog Layout**: Artist and Language fields are side-by-side in a 2-column grid, which causes:
-   - Artist tooltip text gets cramped
-   - Language field is squeezed next to artist
-   - Poor visual hierarchy
+## Article Details
 
----
-
-## Solution
-
-### Change 1: Make Song Title Clickable in Table View
-
-**File**: `src/components/SongTable.tsx`
-
-Add `onClick` handler to the song title `<span>` to trigger `onEdit(song)`:
-
-```tsx
-// BEFORE (lines 282-284)
-<div>
-  <div className="flex items-baseline gap-1.5">
-    <span>{song.title}</span>
-
-// AFTER
-<div>
-  <div className="flex items-baseline gap-1.5">
-    <span 
-      onClick={() => onEdit?.(song)}
-      className="cursor-pointer hover:underline hover:text-primary transition-colors"
-    >
-      {song.title}
-    </span>
-```
-
-This makes the title:
-- Visually indicate it's clickable (cursor + hover underline)
-- Trigger the existing `onEdit` callback when clicked
+**Source**: 세계투데이 (Segye Today)
+**URL**: https://segyetoday.com/news/newsview.php?ncode=1065585660860632
+**Published**: January 15, 2026
+**Author**: 노승빈 기자
 
 ---
 
-### Change 2: Artist & Language Layout - Single Column Each
+## Content Summary
 
-**File**: `src/components/SongDialog.tsx`
+**Korean Title**: 찬양 준비의 영성, 데이터로 남다… 예배 인도자 플랫폼 'K-Worship' 공식 런칭
 
-Change from 2-column grid to stacked single-column layout:
+**English Title**: K-Worship Platform Officially Launches: Preserving the Spirituality of Worship Preparation Through Data
 
-```tsx
-// BEFORE (lines 1030-1055)
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div className="space-y-1.5">
-    <Label htmlFor="artist">...</Label>
-    <p className="text-xs text-muted-foreground">...</p>
-    <ArtistSelector ... />
-  </div>
-  <div>
-    <Label htmlFor="language">...</Label>
-    <Select>...</Select>
-  </div>
-</div>
-
-// AFTER - Separate single-column sections
-{/* Artist - Full width with tooltip below label */}
-<div className="space-y-1.5">
-  <Label htmlFor="artist">{t("songDialog.artist")}</Label>
-  <p className="text-xs text-muted-foreground">
-    {t("songDialog.artistTooltip")}
-  </p>
-  <ArtistSelector
-    value={formData.artist}
-    onValueChange={(artist) => setFormData({ ...formData, artist })}
-  />
-</div>
-
-{/* Language - Full width on next row */}
-<div>
-  <Label htmlFor="language">{t("songDialog.language")}</Label>
-  <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-    <SelectTrigger>
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-      <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-      <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-```
+**Key Points**:
+- Transforms worship preparation into lasting ministry assets
+- Preserves Korean church's unique worship flow and spirituality
+- Korean-English bilingual support optimized for Korean diaspora and multicultural ministry
+- Web service officially open, mobile app coming soon
 
 ---
 
-## Visual Comparison
+## Implementation
 
-### Before (Current Layout)
-```
-┌─────────────────────────────────────────────────┐
-│ 아티스트                      │ 언어            │
-│ 아래 YouTube 링크의...        │ [한국어    ▼]  │
-│ [어노인팅 찬송가         ▼]   │                │
-└─────────────────────────────────────────────────┘
-```
+Insert a new record into the `news_posts` table with:
 
-### After (Proposed Layout)
-```
-┌─────────────────────────────────────────────────┐
-│ 아티스트                                        │
-│ 아래 YouTube 링크의 레퍼런스 음악을 연주한      │
-│ 아티스트(또는 그룹)를 입력하세요. 작곡가/작사가 │
-│ 가 아닌, 실제 연주/녹음 아티스트입니다.         │
-│ [어노인팅 찬송가                            ▼]  │
-├─────────────────────────────────────────────────┤
-│ 언어                                            │
-│ [한국어                                     ▼]  │
-└─────────────────────────────────────────────────┘
-```
+| Field | Value |
+|-------|-------|
+| `title` | K-Worship Platform Officially Launches |
+| `title_ko` | 찬양 준비의 영성, 데이터로 남다… 예배 인도자 플랫폼 'K-Worship' 공식 런칭 |
+| `slug` | kworship-launch-segye-today |
+| `content` | Full article summary (for RSS feed) |
+| `content_ko` | Full Korean article text |
+| `excerpt` | Worship leader platform K-Worship launches, preserving the spirituality of worship preparation through data |
+| `excerpt_ko` | 흩어지는 예배 고민을 사역의 자산으로, 한국 교회 특유의 예배 흐름과 영성 보존 |
+| `category` | press |
+| `external_url` | https://segyetoday.com/news/newsview.php?ncode=1065585660860632 |
+| `is_published` | true |
+| `published_at` | 2026-01-15 13:01:21 |
 
 ---
 
-## Files Modified
+## Database Action
 
-| File | Change |
-|------|--------|
-| `src/components/SongTable.tsx` | Add onClick to title span + hover styles |
-| `src/components/SongDialog.tsx` | Remove 2-column grid, stack artist and language vertically |
+Execute an INSERT statement to add this press article to the news system. The article will:
+- Appear on the /news page with "보도자료" (Press) badge
+- Link externally to the original 세계투데이 article when clicked
+- Be included in the RSS feed
+- Display in the LandingNews section if among the latest 3 posts
 
----
-
-## UX Improvements
-
-1. **Discoverability**: Title in table view becomes obviously clickable (underline on hover)
-2. **Readability**: Artist tooltip text has full width to display properly
-3. **Consistency**: Both fields follow same pattern - label → helper text → input
-4. **Mobile-friendly**: Single column works better on all screen sizes
