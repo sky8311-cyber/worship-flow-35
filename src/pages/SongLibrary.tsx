@@ -236,8 +236,8 @@ const SongLibrary = () => {
 
   // Apply client-side column filters + key filter + tag filter + my songs filter + favorites filter + private songs filter
   const filteredSongs = (songs || []).filter(song => {
-    // Private song filter - only show private songs to their creator
-    if (song.is_private && song.created_by !== user?.id) {
+    // Private song filter - only show private songs to their creator or admins
+    if (song.is_private && song.created_by !== user?.id && !isAdmin) {
       return false;
     }
     
