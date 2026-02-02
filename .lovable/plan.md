@@ -1,80 +1,158 @@
 
+# Fix: Multiple Frame Rendering Issue in Worship Studio
 
-# Fix: Studio Page Blank Screen & Missing Tabs
+## Problem Analysis
 
-## Problem Summary
+From a senior designer perspective, the current UX is broken:
 
-The `/studio` page is showing a blank screen where the tabs (Studio, Feed, New Post) and content area should appear. The issue is a combination of CSS height chain problems and a missing translation key.
+1. **스튜디오 tab**: Content only appears in top portion - works but unclear if this is a container issue
+2. **새 글 tab**: Massive empty space above, editor pushed to bottom - there appear to be 3 stacked "frames"
+
+### Root Cause
+
+Radix Tabs renders ALL TabsContent elements in the DOM but uses CSS (`data-[state=inactive]:hidden`) to hide inactive ones. The problem:
+
+1. **Current**: Each TabsContent has `flex-1` which makes ALL tabs compete for flex space
+2. **Result**: Even "hidden" tabs take up layout space, creating stacked frames
+3. **The "3 frames"**: Tab header + inactive tabs (taking space) + active tab content at bottom
+
+### Why This Happened
+
+The `flex-1` class on TabsContent tells each to grow equally. When combined with Radix's rendering model, inactive tabs still occupy flex space even though they're visually hidden.
 
 ---
 
-## Root Causes
+## Solution: Single Frame Architecture
 
-### 1. Height Chain Break in `StudioMainPanel.tsx`
-The `TabsContent` elements are not properly configured for the flex height chain pattern. They use classes like `flex-1 h-0` but without `flex flex-col`, causing the inner content to collapse to zero height.
+### Design Principle (Meta Approach)
+> "One viewport, one content area. Tab content should replace, not stack."
 
-### 2. Missing `min-h-0` Constraint
-Flexbox requires `min-h-0` on flex children to allow them to shrink below their content size. Without this, the overflow chain breaks.
+### File Changes
 
-### 3. Missing Translation Key
-`navigation.studio` is referenced in `navigationConfig.ts` but doesn't exist in `translations.ts`. This causes a console warning and may affect navigation rendering.
+#### 1. `src/components/worship-studio/StudioMainPanel.tsx`
+
+**Change**: Remove `flex-1` from TabsContent - only the active tab should expand. Use `data-[state=active]:flex-1` pattern instead.
+
+```tsx
+// BEFORE: All tabs fight for flex space
+<TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+
+// AFTER: Only active tab takes space
+<TabsContent value="studio" className="flex flex-col min-h-0 overflow-hidden mt-0 p-0 data-[state=active]:flex-1 data-[state=inactive]:hidden">
+```
+
+Apply this pattern to ALL TabsContent elements.
+
+**Alternative approach** (simpler): Add `forceMount={false}` isn't available in Radix, but we can use the hiding approach:
+
+```tsx
+<TabsContent 
+  value="studio" 
+  className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-col data-[state=active]:flex-1 data-[state=active]:min-h-0 data-[state=active]:overflow-hidden"
+>
+```
+
+This ensures flex properties ONLY apply when the tab is active.
+
+#### 2. Fix inner content components
+
+Each content component needs proper height chain:
+
+**StudioView.tsx** (already correct)
+```tsx
+<div className="flex-1 flex flex-col h-full overflow-hidden">
+  <div className="flex-1 overflow-y-auto">
+```
+
+**StudioPostEditor.tsx** (needs fix)
+```tsx
+// BEFORE
+<div className="flex flex-col h-full">
+
+// AFTER  
+<div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+```
+
+**StudioFeed.tsx** (already correct with `h-full`)
 
 ---
 
-## Solution
+## Implementation Details
 
 ### File 1: `src/components/worship-studio/StudioMainPanel.tsx`
 
-**Changes:**
-- Add `min-h-0` to the root container for proper flexbox shrinking
-- Update all `TabsContent` elements to include full flex chain: `flex-1 flex flex-col min-h-0`
-- Keep existing `h-0 overflow-hidden mt-0 p-0` overrides
+Lines 73, 80, 85, 94 - Update all TabsContent:
 
-**Current (broken):**
 ```tsx
-<TabsContent value="studio" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+<TabsContent 
+  value="studio" 
+  className="mt-0 p-0 data-[state=active]:flex data-[state=active]:flex-1 data-[state=active]:flex-col data-[state=active]:min-h-0 data-[state=active]:overflow-hidden"
+>
 ```
 
-**Fixed:**
+### File 2: `src/components/worship-studio/StudioPostEditor.tsx`
+
+Line 74 - Fix root container:
+
 ```tsx
-<TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
+<div className="flex-1 flex flex-col min-h-0 overflow-hidden">
 ```
 
-Apply this pattern to all `TabsContent` elements (studio, feed, newpost, discover).
+Line 110 - ScrollArea needs proper sizing:
 
-### File 2: `src/lib/translations.ts`
-
-**Changes:**
-- Add `studio: "Studio"` under `navigation` in English translations (around line 134)
-- Add `studio: "스튜디오"` under `navigation` in Korean translations
-
----
-
-## Technical Details
-
-### Height Chain Pattern (from project memory)
-
-For proper rendering, the flex chain must be:
+```tsx
+<ScrollArea className="flex-1 min-h-0">
 ```
-Parent: flex flex-col h-full overflow-hidden
-  └─ Child: flex-1 flex flex-col min-h-0 overflow-hidden
-       └─ Scrollable: flex-1 overflow-y-auto
-```
-
-The `min-h-0` is critical for preventing flex items from overflowing their container.
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `src/components/worship-studio/StudioMainPanel.tsx` | Add `min-h-0` to root, fix all TabsContent flex chains |
-| `src/lib/translations.ts` | Add `navigation.studio` key in both languages |
 
 ---
 
 ## Expected Result
 
-1. Studio page tabs appear correctly
-2. Content area renders (either Studio view with cover/posts or Contract prompt for new users)
-3. Navigation menu shows correct "Studio" label instead of the key fallback
+```
+┌─────────────────────────────────────┐
+│  Header: 예배공작소                   │
+├─────────────────────────────────────┤
+│  Tabs: [스튜디오] [피드] [새 글]       │
+├─────────────────────────────────────┤
+│                                     │
+│  ← Single unified content area      │
+│                                     │
+│  (Only active tab visible)          │
+│                                     │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+Instead of the current:
+```
+┌─────────────────────────────────────┐
+│  Header                             │
+├─────────────────────────────────────┤
+│  Tabs                               │
+├─────────────────────────────────────┤
+│  Frame 1 (empty - inactive tab)     │
+├─────────────────────────────────────┤
+│  Frame 2 (empty - inactive tab)     │
+├─────────────────────────────────────┤
+│  Frame 3 (actual content)           │
+└─────────────────────────────────────┘
+```
+
+---
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `src/components/worship-studio/StudioMainPanel.tsx` | Conditional flex via `data-[state=active]` |
+| `src/components/worship-studio/StudioPostEditor.tsx` | Fix root container flex chain |
+
+## Testing Checklist
+
+After implementation, verify:
+- [ ] 스튜디오 tab shows cover + posts filling viewport
+- [ ] 피드 tab shows feed content from top
+- [ ] 새 글 tab shows editor from top, not pushed to bottom
+- [ ] No empty "frames" or gaps between tabs
+- [ ] Mobile view works correctly
 
