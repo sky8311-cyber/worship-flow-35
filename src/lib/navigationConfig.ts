@@ -27,10 +27,10 @@ export const navigationTabs: NavigationTab[] = [
     match: (path: string) => path === "/songs" || path === "/favorites",
   },
   {
-    to: "/rooms",
+    to: "/studio",
     icon: Palette,
-    labelKey: "navigation.rooms",
-    match: (path: string) => path.includes("/rooms"),
+    labelKey: "navigation.studio",
+    match: (path: string) => path.includes("/studio"),
   },
 ];
 

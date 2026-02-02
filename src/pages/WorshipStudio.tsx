@@ -66,12 +66,12 @@ export default function WorshipStudio() {
   
   const handleStudioSelect = (studioId: string) => {
     setSelectedStudioId(studioId);
-    window.history.replaceState(null, '', `/rooms/${studioId}`);
+    window.history.replaceState(null, '', `/studio/${studioId}`);
   };
   
   const handleMyStudioSelect = () => {
     setSelectedStudioId(null);
-    window.history.replaceState(null, '', '/rooms');
+    window.history.replaceState(null, '', '/studio');
   };
 
   return (

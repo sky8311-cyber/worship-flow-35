@@ -102,16 +102,18 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
   }
   
   return (
-    <div className="flex-1 overflow-y-auto">
-      {/* Cover & Profile */}
-      <StudioCoverEditor room={room} isOwner={isActuallyOwnRoom} />
-      
-      {/* Post List (replaces widget grid) */}
-      <StudioPostList 
-        roomId={room.id} 
-        includeDrafts={isActuallyOwnRoom}
-        onPostClick={handlePostClick}
-      />
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        {/* Cover & Profile */}
+        <StudioCoverEditor room={room} isOwner={isActuallyOwnRoom} />
+        
+        {/* Post List (replaces widget grid) */}
+        <StudioPostList 
+          roomId={room.id} 
+          includeDrafts={isActuallyOwnRoom}
+          onPostClick={handlePostClick}
+        />
+      </div>
       
       {/* Post Detail Dialog */}
       <PostDetailDialog
