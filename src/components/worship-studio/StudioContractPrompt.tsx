@@ -2,7 +2,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useCreateStudio } from "@/hooks/useCreateStudio";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Palette, BookOpen, Users, Music } from "lucide-react";
+import { PenLine, BookOpen, Users, Music } from "lucide-react";
 
 interface StudioContractPromptProps {
   onLater?: () => void;
@@ -10,7 +10,7 @@ interface StudioContractPromptProps {
 }
 
 export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromptProps) {
-  const { t, language } = useTranslation();
+  const { language } = useTranslation();
   const createStudio = useCreateStudio();
   
   const handleCreate = () => {
@@ -22,9 +22,9 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
   };
   
   const features = [
-    { icon: BookOpen, text: language === "ko" ? "기도, 묵상, 간증 기록하기" : "Record prayers, reflections, and testimonies" },
+    { icon: PenLine, text: language === "ko" ? "블록 에디터로 글 작성하기" : "Write posts with a block editor" },
+    { icon: Music, text: language === "ko" ? "찬양곡과 예배셋 삽입하기" : "Embed songs and worship sets" },
     { icon: Users, text: language === "ko" ? "친구들과 나눔하기" : "Share with friends" },
-    { icon: Music, text: language === "ko" ? "BGM으로 분위기 만들기" : "Set the mood with BGM" },
   ];
   
   return (
@@ -32,18 +32,28 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
       <Card className="w-full max-w-md text-center">
         <CardHeader className="pb-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Palette className="h-8 w-8 text-primary" />
+            <BookOpen className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-2xl font-bold">
             {language === "ko" 
               ? "나만의 예배공작소를 열어보세요" 
               : "Open your own Worship Studio"}
           </h2>
-          <p className="text-muted-foreground mt-2">
-            {language === "ko"
-              ? "예배는 삶입니다. 공작소는 그 삶이 쌓이는 곳입니다."
-              : "Worship is a life. The Studio is where it accumulates."}
-          </p>
+          <div className="text-muted-foreground mt-4 text-sm italic leading-relaxed">
+            {language === "ko" ? (
+              <>
+                "예배는 무대가 아닌, 삶입니다.<br />
+                삶이 예배가 될 때, 사역이 빚어집니다.<br />
+                이 스튜디오는 그 여정이 기록되고 나눠지는 곳입니다."
+              </>
+            ) : (
+              <>
+                "Worship is not a stage, it is life.<br />
+                As life becomes worship, ministry takes shape.<br />
+                This Studio is where that journey is written and shared."
+              </>
+            )}
+          </div>
         </CardHeader>
         
         <CardContent className="space-y-3">

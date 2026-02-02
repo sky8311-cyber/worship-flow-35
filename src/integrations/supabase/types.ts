@@ -2304,34 +2304,49 @@ export type Database = {
       room_posts: {
         Row: {
           author_user_id: string
+          blocks: Json | null
           content: string
+          cover_image_url: string | null
           created_at: string | null
+          display_type: string | null
           id: string
+          is_draft: boolean | null
           is_pinned: boolean | null
           post_type: Database["public"]["Enums"]["room_post_type"]
           room_id: string
+          title: string | null
           updated_at: string | null
           visibility: Database["public"]["Enums"]["room_visibility"] | null
         }
         Insert: {
           author_user_id: string
+          blocks?: Json | null
           content: string
+          cover_image_url?: string | null
           created_at?: string | null
+          display_type?: string | null
           id?: string
+          is_draft?: boolean | null
           is_pinned?: boolean | null
           post_type?: Database["public"]["Enums"]["room_post_type"]
           room_id: string
+          title?: string | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"] | null
         }
         Update: {
           author_user_id?: string
+          blocks?: Json | null
           content?: string
+          cover_image_url?: string | null
           created_at?: string | null
+          display_type?: string | null
           id?: string
+          is_draft?: boolean | null
           is_pinned?: boolean | null
           post_type?: Database["public"]["Enums"]["room_post_type"]
           room_id?: string
+          title?: string | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"] | null
         }

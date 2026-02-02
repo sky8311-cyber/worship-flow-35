@@ -5,8 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudioFeed } from "./StudioFeed";
 import { StudioView } from "./StudioView";
 import { StudioDiscover } from "./StudioDiscover";
-import { StudioDraftsTab } from "./StudioDraftsTab";
-import { Newspaper, User, Compass, FileEdit } from "lucide-react";
+import { StudioPostEditor } from "./StudioPostEditor";
+import { Newspaper, User, Compass, PenLine } from "lucide-react";
 
 interface StudioMainPanelProps {
   myStudioId?: string | null;
@@ -25,6 +25,10 @@ export function StudioMainPanel({
   
   // Determine if viewing own studio
   const isOwnStudio = !selectedStudioId || selectedStudioId === myStudioId;
+  
+  const handleEditorSuccess = () => {
+    setActiveTab("studio");
+  };
   
   return (
     <div className="flex-1 h-0 flex flex-col overflow-hidden">
@@ -45,13 +49,13 @@ export function StudioMainPanel({
               <Newspaper className="h-4 w-4 mr-1.5" />
               {language === "ko" ? "피드" : "Feed"}
             </TabsTrigger>
-            {isOwnStudio && (
+            {isOwnStudio && myStudioId && (
               <TabsTrigger 
-                value="drafts"
+                value="newpost"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
               >
-                <FileEdit className="h-4 w-4 mr-1.5" />
-                {language === "ko" ? "초안함" : "Drafts"}
+                <PenLine className="h-4 w-4 mr-1.5" />
+                {language === "ko" ? "새 글" : "New Post"}
               </TabsTrigger>
             )}
             {isMobile && (
@@ -78,8 +82,11 @@ export function StudioMainPanel({
         </TabsContent>
         
         {isOwnStudio && myStudioId && (
-          <TabsContent value="drafts" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
-            <StudioDraftsTab roomId={myStudioId} />
+          <TabsContent value="newpost" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+            <StudioPostEditor 
+              onBack={() => setActiveTab("studio")}
+              onSuccess={handleEditorSuccess}
+            />
           </TabsContent>
         )}
         
