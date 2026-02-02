@@ -1,137 +1,137 @@
 
+# Fix: Song Title Click to Edit & Form Layout Improvements
 
-# Fix: Private Song Visibility & Notifications
+## Problem Summary
 
-## Problem Statement
-
-1. **Song Library**: Private songs are currently only visible to their creator. But **admins should also see them** (with the "Private" badge already implemented in `SongCard.tsx`)
-2. **Notifications**: When a private song is added, all admins AND worship leaders get notified. Only **admins** should be notified for private songs.
-
----
-
-## Current Behavior
-
-### Song Library (Frontend)
-```tsx
-// src/pages/SongLibrary.tsx line 240
-if (song.is_private && song.created_by !== user?.id) {
-  return false; // Hides from everyone except creator
-}
-```
-
-### Notification Trigger (Database)
-```sql
--- notify_leaders_new_song()
-FROM user_roles ur
-WHERE ur.role IN ('admin', 'worship_leader')
-  AND ur.user_id != NEW.created_by;
-```
+1. **Table View**: Clicking the song title does nothing - it should open the edit dialog
+2. **Edit Dialog Layout**: Artist and Language fields are side-by-side in a 2-column grid, which causes:
+   - Artist tooltip text gets cramped
+   - Language field is squeezed next to artist
+   - Poor visual hierarchy
 
 ---
 
 ## Solution
 
-### Change 1: Song Library - Allow Admins to See Private Songs
+### Change 1: Make Song Title Clickable in Table View
 
-**File**: `src/pages/SongLibrary.tsx`
+**File**: `src/components/SongTable.tsx`
 
-Update the filter logic to include admins:
+Add `onClick` handler to the song title `<span>` to trigger `onEdit(song)`:
 
 ```tsx
-// BEFORE
-if (song.is_private && song.created_by !== user?.id) {
-  return false;
-}
+// BEFORE (lines 282-284)
+<div>
+  <div className="flex items-baseline gap-1.5">
+    <span>{song.title}</span>
 
 // AFTER
-if (song.is_private && song.created_by !== user?.id && !isAdmin) {
-  return false;
-}
+<div>
+  <div className="flex items-baseline gap-1.5">
+    <span 
+      onClick={() => onEdit?.(song)}
+      className="cursor-pointer hover:underline hover:text-primary transition-colors"
+    >
+      {song.title}
+    </span>
 ```
 
-This allows:
-- Song creator → sees their private songs
-- Admins → sees all private songs (with "Private" badge)
-- Everyone else → cannot see private songs
-
-The "Private" badge is already implemented in `SongCard.tsx` (line 172-177) and `SongTable.tsx` (line 290-292).
+This makes the title:
+- Visually indicate it's clickable (cursor + hover underline)
+- Trigger the existing `onEdit` callback when clicked
 
 ---
 
-### Change 2: Notification Trigger - Restrict Private Song Notifications
+### Change 2: Artist & Language Layout - Single Column Each
 
-**File**: New database migration
+**File**: `src/components/SongDialog.tsx`
 
-Update `notify_leaders_new_song()` function:
+Change from 2-column grid to stacked single-column layout:
 
-```sql
-CREATE OR REPLACE FUNCTION public.notify_leaders_new_song()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-DECLARE
-  actor_profile RECORD;
-BEGIN
-  IF NEW.created_by IS NOT NULL THEN
-    SELECT full_name, avatar_url INTO actor_profile
-    FROM profiles WHERE id = NEW.created_by;
-  END IF;
-  
-  INSERT INTO notifications (user_id, type, title, message, related_id, related_type, metadata)
-  SELECT DISTINCT ON (ur.user_id)
-    ur.user_id,
-    'new_song',
-    'New Song Added',
-    'added a new song to the library',
-    NEW.id,
-    'song',
-    jsonb_build_object(
-      'song_title', NEW.title,
-      'song_artist', NEW.artist,
-      'actor_name', COALESCE(actor_profile.full_name, 'A user'),
-      'actor_avatar', actor_profile.avatar_url,
-      'is_private', COALESCE(NEW.is_private, false)
-    )
-  FROM user_roles ur
-  WHERE (
-    -- Private songs: only notify admins
-    (NEW.is_private = true AND ur.role = 'admin')
-    OR
-    -- Public songs: notify admins and worship leaders
-    (COALESCE(NEW.is_private, false) = false AND ur.role IN ('admin', 'worship_leader'))
-  )
-  AND ur.user_id != NEW.created_by;
-  
-  RETURN NEW;
-END;
-$function$;
+```tsx
+// BEFORE (lines 1030-1055)
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div className="space-y-1.5">
+    <Label htmlFor="artist">...</Label>
+    <p className="text-xs text-muted-foreground">...</p>
+    <ArtistSelector ... />
+  </div>
+  <div>
+    <Label htmlFor="language">...</Label>
+    <Select>...</Select>
+  </div>
+</div>
+
+// AFTER - Separate single-column sections
+{/* Artist - Full width with tooltip below label */}
+<div className="space-y-1.5">
+  <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+  <p className="text-xs text-muted-foreground">
+    {t("songDialog.artistTooltip")}
+  </p>
+  <ArtistSelector
+    value={formData.artist}
+    onValueChange={(artist) => setFormData({ ...formData, artist })}
+  />
+</div>
+
+{/* Language - Full width on next row */}
+<div>
+  <Label htmlFor="language">{t("songDialog.language")}</Label>
+  <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+    <SelectTrigger>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+      <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+      <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
+    </SelectContent>
+  </Select>
+</div>
 ```
 
 ---
 
-## Summary of Visibility Rules
+## Visual Comparison
 
-| User Role | Private Songs Visibility | Notification for Private Song |
-|-----------|-------------------------|-------------------------------|
-| Song Creator | ✅ Visible (in Song Library) | ❌ No (they created it) |
-| Admin | ✅ Visible (with "Private" badge) | ✅ Yes |
-| Worship Leader | ❌ Hidden | ❌ No |
-| Team Member | ❌ Hidden | ❌ No |
+### Before (Current Layout)
+```
+┌─────────────────────────────────────────────────┐
+│ 아티스트                      │ 언어            │
+│ 아래 YouTube 링크의...        │ [한국어    ▼]  │
+│ [어노인팅 찬송가         ▼]   │                │
+└─────────────────────────────────────────────────┘
+```
+
+### After (Proposed Layout)
+```
+┌─────────────────────────────────────────────────┐
+│ 아티스트                                        │
+│ 아래 YouTube 링크의 레퍼런스 음악을 연주한      │
+│ 아티스트(또는 그룹)를 입력하세요. 작곡가/작사가 │
+│ 가 아닌, 실제 연주/녹음 아티스트입니다.         │
+│ [어노인팅 찬송가                            ▼]  │
+├─────────────────────────────────────────────────┤
+│ 언어                                            │
+│ [한국어                                     ▼]  │
+└─────────────────────────────────────────────────┘
+```
 
 ---
 
-## Files to Modify
+## Files Modified
 
 | File | Change |
 |------|--------|
-| `src/pages/SongLibrary.tsx` | Add `&& !isAdmin` to private song filter |
-| New migration | Update `notify_leaders_new_song()` function |
+| `src/components/SongTable.tsx` | Add onClick to title span + hover styles |
+| `src/components/SongDialog.tsx` | Remove 2-column grid, stack artist and language vertically |
 
 ---
 
-## Privacy Toggle
+## UX Improvements
 
-The existing UI (in `SongDialog.tsx` lines 1071-1086) already allows users to toggle privacy on/off. This change doesn't affect that functionality - users can still change their song's privacy setting at any time.
-
+1. **Discoverability**: Title in table view becomes obviously clickable (underline on hover)
+2. **Readability**: Artist tooltip text has full width to display properly
+3. **Consistency**: Both fields follow same pattern - label → helper text → input
+4. **Mobile-friendly**: Single column works better on all screen sizes
