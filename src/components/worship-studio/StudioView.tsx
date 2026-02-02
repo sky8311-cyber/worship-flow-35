@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useWorshipRoomById, useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -6,8 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { StudioContractPrompt } from "./StudioContractPrompt";
 import { StudioLockedState } from "./StudioLockedState";
 import { StudioCoverEditor } from "./StudioCoverEditor";
-import { StudioGrid } from "./grid/StudioGrid";
+import { StudioPostList } from "./PostDisplayCard";
+import { PostDetailDialog } from "./PostDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { StudioPost } from "@/hooks/useStudioPosts";
 
 interface StudioViewProps {
   roomId?: string;
@@ -16,6 +18,8 @@ interface StudioViewProps {
 
 export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
   const { user } = useAuth();
+  const [selectedPost, setSelectedPost] = useState<StudioPost | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   
   // Fetch own room if no roomId provided
   const { room: ownRoom, isLoading: ownRoomLoading } = useWorshipRoom(user?.id);
@@ -48,13 +52,18 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
     f.requester_user_id === user?.id ? f.addressee_user_id : f.requester_user_id
   ) || [];
   
+  const handlePostClick = (post: StudioPost) => {
+    setSelectedPost(post);
+    setDetailOpen(true);
+  };
+  
   // Loading state
   if (isLoading) {
     return (
       <div className="p-4 space-y-4">
         <Skeleton className="h-40 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map(i => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map(i => (
             <Skeleton key={i} className="h-32 w-full rounded-xl" />
           ))}
         </div>
@@ -92,18 +101,23 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
     }
   }
   
-  const gridColumns = (room as any).grid_columns || 3;
-  
   return (
     <div className="flex-1 overflow-y-auto">
       {/* Cover & Profile */}
       <StudioCoverEditor room={room} isOwner={isActuallyOwnRoom} />
       
-      {/* Grid */}
-      <StudioGrid 
+      {/* Post List (replaces widget grid) */}
+      <StudioPostList 
         roomId={room.id} 
-        isOwner={isActuallyOwnRoom} 
-        gridColumns={gridColumns}
+        includeDrafts={isActuallyOwnRoom}
+        onPostClick={handlePostClick}
+      />
+      
+      {/* Post Detail Dialog */}
+      <PostDetailDialog
+        post={selectedPost}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
       />
     </div>
   );

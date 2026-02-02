@@ -20,3 +20,7 @@ export { StudioDraftsTab } from "./StudioDraftsTab";
 export { StudioCoverEditor } from "./StudioCoverEditor";
 export { ProfileDropdownMenu } from "./ProfileDropdownMenu";
 export { FriendStudioList } from "./FriendStudioList";
+// New block editor exports
+export { StudioPostEditor } from "./StudioPostEditor";
+export { PostDisplayCard, StudioPostList } from "./PostDisplayCard";
+export { PostDetailDialog } from "./PostDetailDialog";
