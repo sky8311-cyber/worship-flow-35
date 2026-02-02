@@ -31,8 +31,8 @@ export function StudioMainPanel({
   };
   
   return (
-    <div className="flex-1 h-0 flex flex-col overflow-hidden">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 h-0 flex flex-col overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="border-b border-border px-4">
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger 
@@ -70,19 +70,19 @@ export function StudioMainPanel({
           </TabsList>
         </div>
         
-        <TabsContent value="studio" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+        <TabsContent value="studio" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
           <StudioView 
             roomId={selectedStudioId || myStudioId || undefined} 
             isOwnRoom={isOwnStudio}
           />
         </TabsContent>
         
-        <TabsContent value="feed" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+        <TabsContent value="feed" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
           <StudioFeed onStudioClick={onStudioSelect} />
         </TabsContent>
         
         {isOwnStudio && myStudioId && (
-          <TabsContent value="newpost" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+          <TabsContent value="newpost" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
             <StudioPostEditor 
               onBack={() => setActiveTab("studio")}
               onSuccess={handleEditorSuccess}
@@ -91,7 +91,7 @@ export function StudioMainPanel({
         )}
         
         {isMobile && (
-          <TabsContent value="discover" className="flex-1 h-0 flex flex-col overflow-hidden mt-0 p-0">
+          <TabsContent value="discover" className="flex-1 flex flex-col min-h-0 overflow-hidden mt-0 p-0">
             <StudioDiscover onStudioSelect={onStudioSelect} />
           </TabsContent>
         )}
