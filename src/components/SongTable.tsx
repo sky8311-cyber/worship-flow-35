@@ -279,9 +279,14 @@ const handleDelete = async (song: any) => {
                         className="h-8 text-sm"
                       />
                     ) : (
-                      <div>
+                    <div>
                         <div className="flex items-baseline gap-1.5">
-                          <span>{song.title}</span>
+                          <span 
+                            onClick={() => onEdit?.(song)}
+                            className="cursor-pointer hover:underline hover:text-primary transition-colors"
+                          >
+                            {song.title}
+                          </span>
                           {isNewSong(song.created_at) && (
                             <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
                               N
