@@ -1,56 +1,103 @@
 
 
-# Fix: News Card Cover Images - Show Full Logo
+# 자동 이메일 전역 쿨다운 및 일일 제한 구현
 
-## Problem
+## 현재 문제점
 
-The cover images on news cards are cropped because they use `object-cover`, which fills the entire container and cuts off parts of the logos (as seen in the screenshot with 크리스천, 투데이 logos being cut off).
+현재 시스템은 **이메일 타입별 쿨다운**만 적용:
+- `inactive_user` 7일 쿨다운 체크
+- `no_worship_set` 7일 쿨다운 체크 (별도)
+- → 같은 사용자가 두 조건 모두 충족 시 **같은 날 2개 이메일 수신**
 
-## Solution
+## 해결 방안
 
-Change the CSS `object-fit` property from `cover` to `contain` so the full image is visible within the image box.
+### 1. 전역 쿨다운 (7일)
+모든 자동 이메일 타입에 대해 **통합 쿨다운** 적용
+- 어떤 타입이든 발송되면 7일간 다른 타입도 발송 안함
+
+### 2. 일일 1개 제한
+같은 날 여러 타입 조건 충족해도 **하루에 1개만** 발송
+
+### 3. 쿨다운 중 수신자 리스트 유지
+- 쿨다운 중인 수신자도 미리보기에 표시 (발송 예정)
+- 쿨다운 끝나면 순차 발송
 
 ---
 
-## Change Details
+## 구현 세부사항
 
-**File**: `src/components/news/NewsCard.tsx`
+### 데이터베이스 변경
 
-**Line 53**: Change `object-cover` to `object-contain`
+**RPC 함수 수정**: `get_automated_email_recipients`
 
-```tsx
-// BEFORE
-<img 
-  src={post.cover_image_url} 
-  alt={title}
-  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-/>
+```sql
+-- 전역 쿨다운 조건 추가
+AND NOT EXISTS (
+  SELECT 1 FROM automated_email_log ael
+  WHERE ael.user_id = p.id
+    AND ael.status = 'sent'
+    AND ael.sent_at > now() - (p_cooldown_days || ' days')::INTERVAL
+    -- 모든 타입에 대해 체크 (타입 조건 제거)
+)
+```
 
-// AFTER
-<img 
-  src={post.cover_image_url} 
-  alt={title}
-  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-/>
+### Edge Function 수정
+
+**파일**: `supabase/functions/process-automated-emails/index.ts`
+
+```text
+변경 로직:
+1. 모든 이메일 타입의 수신자 먼저 수집
+2. 오늘 이미 발송된 사용자 ID 목록 조회
+3. 각 사용자당 하루 1개만 발송
+4. 우선순위: inactive_user → no_team_invite → no_worship_set
+```
+
+**핵심 수정**:
+- 모든 타입 수신자를 먼저 모은 뒤, 사용자별로 중복 제거
+- 오늘 발송된 사용자 제외
+- 전역 쿨다운 7일 적용
+
+### 미리보기 다이얼로그 업데이트
+
+수신자 목록에 쿨다운 상태 표시 (선택적):
+- "발송 대기 (쿨다운 종료: X일 후)" 뱃지 추가 가능
+
+---
+
+## 처리 흐름
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                   매일 예정 시간                         │
+├─────────────────────────────────────────────────────────┤
+│  1. 모든 이메일 타입 수신자 조회 (조건 충족자)            │
+│  2. 전역 쿨다운 7일 필터링                               │
+│     → 최근 7일 내 어떤 자동 이메일이든 받은 사용자 제외    │
+│  3. 오늘 발송 목록 체크                                  │
+│     → 이번 실행에서 이미 발송한 사용자 제외               │
+│  4. 우선순위대로 1명당 1개 발송                          │
+│     inactive_user → no_team_invite → no_worship_set    │
+│  5. 발송 후 로그 기록                                    │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Visual Comparison
+## 수정 파일 목록
 
-| Before (`object-cover`) | After (`object-contain`) |
-|------------------------|-------------------------|
-| Image fills container, crops edges | Full image visible, may have letterboxing |
-| Logos get cut off | Full logos displayed |
-| No empty space | May show background on sides/top-bottom |
+| 파일 | 변경 내용 |
+|------|----------|
+| `supabase/migrations/xxx.sql` | RPC 함수 수정 (전역 쿨다운) |
+| `supabase/functions/process-automated-emails/index.ts` | 일일 1개 제한 로직 추가 |
 
 ---
 
-## Result
+## 예상 결과
 
-All article cover images will:
-- Display the complete logo/image without cropping
-- Fit proportionally within the aspect-video container
-- Maintain hover zoom effect
-- Show the muted background color on any empty space (already set with `bg-muted`)
+| 시나리오 | 변경 전 | 변경 후 |
+|---------|--------|--------|
+| 사용자가 inactive_user + no_worship_set 동시 충족 | 같은 날 2개 수신 | 1개만 수신 (우선순위 적용) |
+| 월요일 inactive_user 수신 후 화요일 | no_worship_set 발송됨 | 7일간 어떤 이메일도 발송 안함 |
+| 쿨다운 종료 후 | 모든 조건 재발송 | 우선순위 높은 1개만 발송 |
 
