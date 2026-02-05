@@ -115,7 +115,15 @@ export const BottomTabNavigation = () => {
 
   // Calculate grid columns based on items count + chat
   const totalItems = regularItems.length + (chatItem ? 1 : 0);
-  const gridCols = totalItems <= 4 ? `grid-cols-${totalItems}` : "grid-cols-5";
+  
+  // Static mapping for Tailwind JIT - dynamic classes don't work
+  const gridColsClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    3: "grid-cols-3",
+    4: "grid-cols-4",
+    5: "grid-cols-5",
+  }[totalItems] || "grid-cols-5";
   
   // Hide navigation when keyboard is visible
   if (keyboardVisible) {
@@ -153,7 +161,7 @@ export const BottomTabNavigation = () => {
           WebkitTransform: 'translateZ(0)',
         }}
       >
-        <div className={cn("grid h-14", `grid-cols-${totalItems}`)}>
+        <div className={cn("grid h-14", gridColsClass)}>
           {regularItems.map((item, index) => {
             const isActive = isPathActive(item.match_pattern, item.path);
             const Icon = iconMap[item.icon] || iconMap.Home;

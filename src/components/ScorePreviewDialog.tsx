@@ -2,10 +2,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { FileMusic } from "lucide-react";
+import { FileMusic, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface ScorePreviewDialogProps {
   open: boolean;
@@ -28,6 +30,7 @@ export const ScorePreviewDialog = ({
   songId,
 }: ScorePreviewDialogProps) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const [scoreVariations, setScoreVariations] = useState<ScoreVariation[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -114,20 +117,41 @@ export const ScorePreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {t("songLibrary.previewScore")} - {songTitle}
-          </DialogTitle>
+      <DialogContent 
+        hideCloseButton={isMobile}
+        className={cn(
+          "flex flex-col",
+          // Mobile: fullscreen
+          "w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none p-4",
+          // Desktop: centered modal
+          "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
+        )}
+      >
+        <DialogHeader className="flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-base sm:text-lg pr-8">
+              {t("songLibrary.previewScore")} - {songTitle}
+            </DialogTitle>
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-2"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
         ) : shouldShowOldScore ? (
           // Old single score file display
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto min-h-0">
             {scoreUrl ? (
               <img
                 src={scoreUrl}
@@ -144,14 +168,14 @@ export const ScorePreviewDialog = ({
         ) : scoreVariations.length > 0 ? (
           // New multi-key variation display
           <>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 flex-shrink-0">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <label className="text-sm font-medium">{t("songDialog.key")}:</label>
                 <Select value={selectedKey} onValueChange={(key) => {
                   setSelectedKey(key);
                   setCurrentPage(0);
                 }}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-24 sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,7 +192,7 @@ export const ScorePreviewDialog = ({
               </div>
 
               {hasMultiplePages && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -178,7 +202,7 @@ export const ScorePreviewDialog = ({
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    {t("songDialog.page")} {currentPage + 1} / {currentFiles.length}
+                    {currentPage + 1} / {currentFiles.length}
                   </span>
                   <Button
                     variant="outline"
@@ -192,7 +216,7 @@ export const ScorePreviewDialog = ({
               )}
             </div>
 
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto min-h-0">
               {currentFiles[currentPage] ? (
                 <img
                   src={currentFiles[currentPage].url}
@@ -208,7 +232,7 @@ export const ScorePreviewDialog = ({
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <FileMusic className="w-16 h-16 mb-4 opacity-50" />
             <p>{t("songLibrary.noScoreAvailable")}</p>
           </div>
