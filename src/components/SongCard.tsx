@@ -162,18 +162,21 @@ const handleDelete = async () => {
         )}
         <CardContent className="p-5">
           <div className="mb-3">
+           {/* Private badge: independent row, right-aligned */}
+           {song.is_private && (
+             <div className="flex justify-end mb-1">
+               <Badge variant="secondary" className="text-xs gap-1">
+                 <Lock className="w-3 h-3" />
+                 {t("songDialog.private")}
+               </Badge>
+             </div>
+           )}
             <div className="flex items-baseline gap-1.5 mb-1">
               <h3 className="font-semibold text-base sm:text-lg text-foreground truncate">{song.title}</h3>
               {isNewSong(song.created_at) && (
                 <sup className="ml-0.5 bg-green-500 text-white text-[8px] font-bold px-1 py-0 rounded leading-none">
                   N
                 </sup>
-              )}
-              {song.is_private && (
-                <Badge variant="secondary" className="text-xs gap-1 shrink-0">
-                  <Lock className="w-3 h-3" />
-                  {t("songDialog.private")}
-                </Badge>
               )}
             </div>
             {song.artist && (

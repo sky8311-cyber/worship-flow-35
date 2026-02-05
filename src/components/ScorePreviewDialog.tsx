@@ -175,7 +175,7 @@ export const ScorePreviewDialog = ({
                   setSelectedKey(key);
                   setCurrentPage(0);
                 }}>
-                  <SelectTrigger className="w-24 sm:w-32">
+                 <SelectTrigger className="w-36 sm:w-44">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
