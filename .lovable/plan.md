@@ -1,150 +1,160 @@
 
 
-# 하단 네비게이션 위치 이탈 + 악보 미리보기 X 버튼 안보임 수정
+# 자동 이메일 스팸 + iOS 하단 네비게이션 문제 수정
 
-## 문제 분석
+## 문제 1: 자동 이메일 스팸 발송
 
-### 스크린샷에서 확인된 문제
-1. **BottomTabNavigation이 화면 바닥에서 떨어짐**: iOS Safari에서 스크롤 시 주소창이 나타났다 사라지면서 `fixed bottom-0`가 실제 화면 바닥이 아닌 곳에 위치
-2. **ScorePreviewDialog가 전체화면을 덮지 못함**: 요약 바와 하단 네비게이션이 악보 미리보기 뒤에 보이며, X 버튼이 화면 밖으로 밀려남
+### 원인 분석
+스크린샷에서 동일 사용자에게 4:01 PM에 3개의 다른 자동 이메일이 동시에 발송됨:
+- "32 days of new songs..."
+- "60 days of new songs..."
+- "32 days of new songs were added..."
 
-### 근본 원인
+**근본 원인:**
+1. Admin UI의 "지금 실행" 버튼이 Edge Function을 즉시 호출하여 모든 활성화된 이메일 타입을 한번에 발송
+2. 쿨다운 로직이 "발송 후" 체크하므로, 같은 실행에서 여러 이메일 타입이 동시에 발송됨
+3. 중복 제거 로직이 "실행 내"에서만 작동하고, 각 이메일 타입별로 독립적으로 체크
 
-**Dialog.tsx 기본 스타일 충돌:**
-```tsx
-// 기본 스타일 (line 43)
-"fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]"
+### 해결책: 수동 전용 모드로 전환
 
-// ScorePreviewDialog에서 오버라이드 시도
-"inset-0 translate-x-0 translate-y-0"
+**1. 모든 자동 이메일 비활성화 (즉시)**
+```sql
+UPDATE automated_email_settings SET enabled = false;
 ```
 
-Tailwind에서 `inset-0`과 `left-[50%]`가 동시에 적용되면, 마지막에 정의된 값이 우선하지만 **클래스 순서**에 따라 예측 불가능한 결과 발생.
+**2. Edge Function 수정: 보호 장치 추가**
+`supabase/functions/process-automated-emails/index.ts` 수정:
 
-**BottomTabNavigation iOS 문제:**
-- `fixed bottom-0`는 iOS Safari의 동적 뷰포트(주소창 표시/숨김)에서 불안정
-- `env(safe-area-inset-bottom)`만으로는 해결되지 않음
+```typescript
+// 함수 시작 부분에 추가
+const MANUAL_MODE_ONLY = true; // 수동 실행만 허용
+
+const handler = async (req: Request): Promise<Response> => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  // 수동 모드가 아닌 경우 (예: cron에서 호출) 거부
+  const authHeader = req.headers.get("authorization");
+  const isManualTrigger = authHeader?.includes("Bearer"); // Admin UI에서만 Bearer 토큰 전송
+  
+  if (MANUAL_MODE_ONLY && !isManualTrigger) {
+    console.log("Automated emails disabled - manual mode only");
+    return new Response(
+      JSON.stringify({ 
+        success: false, 
+        message: "Automated emails are in manual-only mode",
+        results: {} 
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+  // ... 기존 코드
+};
+```
+
+**3. Admin UI에서 명시적 경고 추가**
+`AutomatedEmailSettings.tsx` 수정:
+- "지금 실행" 버튼에 확인 다이얼로그 추가
+- 발송 대상 수 미리 표시 후 확인 요청
 
 ---
 
-## 해결 방안
+## 문제 2: iOS 하단 네비게이션 위치 이탈
 
-### 1. ScorePreviewDialog - 명시적 CSS 속성으로 재정의
+### 원인 분석
+iOS Safari에서 스크롤 시:
+1. 주소창이 동적으로 표시/숨김 → 뷰포트 높이 변경
+2. `backdrop-blur-sm` (backdrop-filter: blur())가 GPU 레이어 생성
+3. `fixed bottom-0` 요소가 레이어 재계산 중 일시적으로 위치 이탈
 
-`inset-0`이 아닌 **명시적인 `top-0 left-0 right-0 bottom-0`**를 사용하고, 중요도를 높이기 위해 인라인 스타일 병행:
+### 해결책: iOS에서 블러 효과 제거
 
-```tsx
-// ScorePreviewDialog.tsx
-<DialogContent 
-  hideCloseButton={isMobile}
-  className={cn(
-    "flex flex-col",
-    // Mobile: 명시적 fullscreen 
-    "!fixed !top-0 !left-0 !right-0 !bottom-0",
-    "!translate-x-0 !translate-y-0",
-    "w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none p-4",
-    // Desktop
-    "sm:!left-[50%] sm:!top-[50%] sm:!right-auto sm:!bottom-auto",
-    "sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
-    "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
-  )}
->
+**`BottomTabNavigation.tsx` 수정:**
+
+```typescript
+import { useState, useEffect, useMemo } from "react";
+
+// iOS 감지 함수
+const isIOS = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+export const BottomTabNavigation = () => {
+  // ... 기존 코드
+  
+  const isiOSDevice = useMemo(() => isIOS(), []);
+
+  // iOS에서는 backdrop-blur 제거하여 안정성 확보
+  const navClassName = cn(
+    "fixed inset-x-0 bottom-0 z-50 border-t border-border/50",
+    isiOSDevice 
+      ? "bg-card" // iOS: 블러 없이 불투명 배경
+      : "bg-card/95 backdrop-blur-sm" // 기타: 블러 효과 유지
+  );
+
+  return (
+    <nav 
+      className={navClassName}
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+      }}
+    >
+      {/* ... 기존 콘텐츠 */}
+    </nav>
+  );
+};
 ```
 
-**`!important` 사용 이유**: 기본 DialogContent의 `left-[50%] top-[50%]`를 확실히 재정의하기 위함.
-
-### 2. BottomTabNavigation - iOS Safari 안정화
-
-`position: fixed`와 `bottom: 0`를 유지하면서 iOS의 동적 뷰포트 문제를 해결:
-
-```tsx
-// BottomTabNavigation.tsx
-<nav 
-  className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
-  style={{
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    // iOS Safari 안정화: GPU 가속 + 위치 고정
-    transform: 'translate3d(0, 0, 0)',
-    WebkitTransform: 'translate3d(0, 0, 0)',
-    // 동적 뷰포트에서 항상 바닥에 고정
-    position: 'fixed',
-    bottom: 0,
-  }}
->
-```
-
-추가로 `100dvh` 사용 고려 (Dynamic Viewport Height - iOS Safari에서 주소창 상태에 따라 자동 조정).
-
-### 3. AppLayout - 하단 여백 조정
-
-현재 AppLayout에서 main의 `paddingBottom`이 고정값을 사용 중:
-
-```tsx
-// 현재
-return 'max(9rem, calc(6rem + env(safe-area-inset-bottom, 0px)))';
-```
-
-이 값이 BottomTabNavigation의 실제 높이와 동기화되어야 함. 네비게이션 높이(h-14 = 3.5rem)와 safe area를 반영:
-
-```tsx
-// 개선
-return 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 1rem)'; // nav + safe area + margin
+**로딩 상태 skeleton도 동일하게 적용:**
+```typescript
+if (navLoading) {
+  return (
+    <nav 
+      className={navClassName}
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+      }}
+    >
+      {/* skeleton */}
+    </nav>
+  );
+}
 ```
 
 ---
 
-## 수정 파일
+## 수정 파일 요약
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/ScorePreviewDialog.tsx` | `!important` prefix로 모바일 전체화면 스타일 강제 적용 |
-| `src/components/layout/BottomTabNavigation.tsx` | `translate3d` 사용 및 인라인 스타일 강화 |
-| `src/components/ui/dialog.tsx` | 모바일 전체화면 케이스를 위한 조건부 스타일 지원 (선택적) |
+| `supabase/functions/process-automated-emails/index.ts` | MANUAL_MODE_ONLY 플래그 + Bearer 토큰 체크 |
+| `src/components/admin/email/AutomatedEmailSettings.tsx` | 실행 전 확인 다이얼로그 추가 |
+| `src/components/layout/BottomTabNavigation.tsx` | iOS 기기에서 backdrop-blur 제거 |
 
 ---
 
-## 기대 결과
+## 데이터베이스 변경
+
+```sql
+-- 모든 자동 이메일 즉시 비활성화
+UPDATE automated_email_settings SET enabled = false;
+```
+
+---
+
+## 예상 결과
 
 | 항목 | 수정 전 | 수정 후 |
 |-----|--------|--------|
-| BottomNav 위치 | 스크롤 시 화면에서 떨어짐 | 항상 화면 바닥에 고정 |
-| 악보 미리보기 | 하단 요약바/네비게이션이 보임 | 전체화면으로 모든 요소 가림 |
-| X 닫기 버튼 | 화면 밖으로 밀려남 | 항상 우측 상단에 표시 |
-
----
-
-## 코드 변경 상세
-
-### ScorePreviewDialog.tsx (lines 118-131)
-
-```tsx
-<DialogContent 
-  hideCloseButton={isMobile}
-  className={cn(
-    "flex flex-col",
-    // Mobile: force fullscreen with !important to override base dialog styles
-    "!fixed !top-0 !left-0 !right-0 !bottom-0",
-    "!translate-x-0 !translate-y-0",
-    "w-full h-[100dvh] max-w-full max-h-full rounded-none p-4",
-    // Desktop: restore centered modal positioning
-    "sm:!left-[50%] sm:!top-[50%] sm:!right-auto sm:!bottom-auto",
-    "sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
-    "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
-  )}
->
-```
-
-### BottomTabNavigation.tsx (lines 156-162)
-
-```tsx
-<nav 
-  className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
-  style={{
-    paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-    transform: 'translate3d(0, 0, 0)',
-    WebkitTransform: 'translate3d(0, 0, 0)',
-    willChange: 'transform',
-  }}
->
-```
+| 자동 이메일 | 여러 이메일 동시 발송 가능 | Admin이 수동으로만 실행 가능 |
+| 이메일 확인 | 즉시 발송 | 발송 전 확인 다이얼로그 |
+| iOS 네비게이션 | 스크롤 시 위치 이탈 | 항상 화면 바닥에 고정 |
+| iOS 시각 효과 | 블러 + 불안정 | 불투명 배경 + 안정 |
 
