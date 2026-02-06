@@ -1,54 +1,67 @@
 
 
-# 곡 추가 다이얼로그 내 드롭다운 메뉴 z-index 수정
+# 곡 추가 드롭다운 & AI 보강 수정 계획
 
 ## 문제 분석
 
-사용자가 곡 추가/편집 다이얼로그(SongDialog) 내에서 아티스트, 언어, 키 등의 드롭다운 메뉴를 클릭하면, 해당 메뉴가 다이얼로그 **뒤편**에서 열려 선택이 불가능합니다.
+### 문제 1: 키/언어 선택 드롭다운이 다이얼로그 뒤에 숨김
 
-### 근본 원인: Z-Index 레이어 충돌
+**원인:**
+- SongDialog는 `z-[60]` 사용
+- `Popover`와 `Drawer`는 이미 `z-[70]`으로 수정됨 (아티스트 선택기 등)
+- 하지만 **언어/키 선택에 사용되는 `<Select>`(Radix UI Select)** 는 별도 컴포넌트이며 여전히 `z-50` 사용
 
-| 컴포넌트 | 현재 z-index | 위치 |
-|---------|-------------|------|
-| SongDialog (DialogContent) | `z-[60]` | 최상위 |
-| Popover (데스크톱 드롭다운) | `z-50` | Dialog 뒤 |
-| Drawer (모바일 드롭다운) | `z-50` | Dialog 뒤 |
+```
+// src/components/ui/select.tsx (현재)
+"relative z-50 max-h-96..."  // ← Dialog(z-[60])보다 낮음!
+```
 
-Dialog가 `z-[60]`을 사용하므로, 기본 `z-50`인 Popover/Drawer 콘텐츠가 Dialog 뒤에 렌더링됩니다.
+**해결책:**
+`select.tsx`의 `SelectContent` z-index를 `z-[70]`으로 수정
 
 ---
 
-## 해결책
+### 문제 2: AI 곡 정보 보강 실패 (enrich-song 404)
 
-**Popover와 Drawer의 z-index를 Dialog보다 높게 설정**
+**원인:**
+Edge Functions가 라이브(Published) 환경에 배포되지 않았습니다. 로그 확인 결과:
 
-### 1. Popover 컴포넌트 수정
+| Function | Status |
+|----------|--------|
+| enrich-song | 404 NOT FOUND |
+| rewards-credit | 404 NOT FOUND |
+| sync-worship-leader-role-v2 | 404 NOT FOUND |
+| process-automated-emails | 404 NOT FOUND |
 
-`src/components/ui/popover.tsx`:
+코드는 `supabase/functions/` 폴더에 존재하지만, 실제 Supabase 프로젝트에 배포되어 있지 않습니다.
+
+**해결책:**
+모든 Edge Functions를 재배포합니다.
+
+---
+
+## 수정 내용
+
+### 1. Select 컴포넌트 z-index 수정
+
+**파일:** `src/components/ui/select.tsx`
+
 ```tsx
-<PopoverPrimitive.Content
-  className={cn(
-    "z-[70] ...", // z-50 → z-[70]
-    className,
-  )}
+// 변경 전 (line 68-69)
+"relative z-50 max-h-96 min-w-[8rem]..."
+
+// 변경 후
+"relative z-[70] max-h-96 min-w-[8rem]..."
 ```
 
-### 2. Drawer 컴포넌트 수정
+### 2. Edge Functions 배포
 
-`src/components/ui/drawer.tsx`:
-```tsx
-// DrawerOverlay
-<DrawerPrimitive.Overlay 
-  className={cn("fixed inset-0 z-[70] bg-black/80", className)} 
-/>
-
-// DrawerContent
-<DrawerPrimitive.Content
-  className={cn(
-    "fixed inset-x-0 bottom-0 z-[70] ...", // z-50 → z-[70]
-    className,
-  )}
-```
+다음 핵심 함수들을 즉시 배포:
+- `enrich-song` (AI 곡 정보 보강)
+- `scrape-lyrics` (가사 스크래핑 - enrich-song의 의존성)
+- `rewards-credit` (보상 시스템)
+- `sync-worship-leader-role-v2` (역할 동기화)
+- 기타 404 반환 중인 함수들
 
 ---
 
@@ -58,38 +71,26 @@ Dialog가 `z-[60]`을 사용하므로, 기본 `z-50`인 Popover/Drawer 콘텐츠
 |--------|---------|---------|
 | 1 | BottomTabNavigation | `z-50` |
 | 2 | Dialog / Sheet | `z-[60]` |
-| 3 | **Popover / Drawer (드롭다운)** | `z-[70]` ← 수정 |
-| 4 | Toast 알림 | `z-[100]` (sonner 기본값) |
-
----
-
-## 영향받는 컴포넌트
-
-이 수정은 다음 드롭다운들을 자동으로 수정합니다:
-
-- **ArtistSelector** (아티스트 선택)
-- **TopicSelector** (주제/태그 선택)  
-- **MobileSelect** (언어, 키 선택)
-- **Select** (radix-ui 기본 셀렉트)
-- 모든 Popover 기반 UI
+| 3 | **Select / Popover / Drawer** | `z-[70]` ← 통일 |
+| 4 | Toast 알림 | `z-[100]` |
 
 ---
 
 ## 수정 파일
 
-| 파일 | 변경 |
-|------|------|
-| `src/components/ui/popover.tsx` | `z-50` → `z-[70]` |
-| `src/components/ui/drawer.tsx` | Overlay & Content `z-50` → `z-[70]` |
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/components/ui/select.tsx` | `z-50` → `z-[70]` |
+| Edge Functions | 모두 재배포 |
 
 ---
 
 ## 기대 결과
 
-| 상황 | 수정 전 | 수정 후 |
+| 기능 | 수정 전 | 수정 후 |
 |-----|--------|--------|
-| 아티스트 드롭다운 | 다이얼로그 뒤에 숨김 | 다이얼로그 위에 표시 |
-| 언어 선택 | 클릭해도 안 보임 | 정상 표시 및 선택 가능 |
-| 키 선택 | 선택 불가 | 정상 동작 |
-| 주제 선택 | 태그 목록 안 보임 | 정상 표시 |
+| 언어 선택 드롭다운 | 다이얼로그 뒤에 숨김 | 정상 표시 |
+| 키 선택 드롭다운 | 다이얼로그 뒤에 숨김 | 정상 표시 |
+| AI 곡 정보 보강 | 404 에러 실패 | 정상 동작 |
+| 보상 시스템 | 404 에러 | 정상 동작 |
 
