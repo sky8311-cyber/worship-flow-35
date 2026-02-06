@@ -134,10 +134,10 @@ export const BottomTabNavigation = () => {
     return (
       <nav 
         className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
-        style={{ 
+        style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          transform: 'translateZ(0)',
-          WebkitTransform: 'translateZ(0)',
+          transform: 'translate3d(0, 0, 0)',
+          WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
         <div className="grid grid-cols-5 h-14">
@@ -157,8 +157,8 @@ export const BottomTabNavigation = () => {
         className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          transform: 'translateZ(0)',
-          WebkitTransform: 'translateZ(0)',
+          transform: 'translate3d(0, 0, 0)',
+          WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
         <div className={cn("grid h-14", gridColsClass)}>

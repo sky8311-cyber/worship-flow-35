@@ -121,12 +121,13 @@ export const ScorePreviewDialog = ({
         hideCloseButton={isMobile}
         className={cn(
           "flex flex-col",
-          // Mobile: true fullscreen with inset-0 (no transform)
-          "inset-0 w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none p-4",
-          "translate-x-0 translate-y-0",
-          // Desktop: centered modal with transform
-          "sm:inset-auto sm:left-[50%] sm:top-[50%]",
-          "sm:translate-x-[-50%] sm:translate-y-[-50%]",
+          // Mobile: force fullscreen with !important to override base dialog styles
+          "!fixed !top-0 !left-0 !right-0 !bottom-0",
+          "!translate-x-0 !translate-y-0",
+          "w-full h-[100dvh] max-w-full max-h-full rounded-none p-4",
+          // Desktop: restore centered modal positioning
+          "sm:!left-[50%] sm:!top-[50%] sm:!right-auto sm:!bottom-auto",
+          "sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
           "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
         )}
       >
