@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,13 @@ import { useEnabledNavigationItems, iconMap } from "@/hooks/useNavigationItems";
 import { useAdminSupportUnreadCount } from "@/hooks/useSupportChat";
 import type { TranslationPath } from "@/hooks/useTranslation";
 
+// Detect iOS devices for stability fixes
+const isIOS = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
 export const BottomTabNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -22,6 +29,17 @@ export const BottomTabNavigation = () => {
   const adminSupportUnread = useAdminSupportUnreadCount();
   const [chatOpen, setChatOpen] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  
+  // Memoize iOS detection to avoid recalculating
+  const isiOSDevice = useMemo(() => isIOS(), []);
+  
+  // iOS: disable backdrop-blur for stability during scroll (address bar toggle)
+  const navClassName = cn(
+    "fixed inset-x-0 bottom-0 z-50 border-t border-border/50",
+    isiOSDevice 
+      ? "bg-card" // iOS: solid background, no blur
+      : "bg-card/95 backdrop-blur-sm" // Other: blur effect
+  );
 
   // Detect keyboard visibility using focus events (more reliable than viewport changes)
   useEffect(() => {
@@ -133,7 +151,7 @@ export const BottomTabNavigation = () => {
   if (navLoading) {
     return (
       <nav 
-        className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
+        className={navClassName}
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           transform: 'translate3d(0, 0, 0)',
@@ -154,7 +172,7 @@ export const BottomTabNavigation = () => {
   return (
     <>
       <nav 
-        className="fixed inset-x-0 bottom-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border/50"
+        className={navClassName}
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           transform: 'translate3d(0, 0, 0)',
