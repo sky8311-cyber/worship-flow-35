@@ -11,9 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
-  UserX, Users, Music, Save, Eye, Loader2, Clock, RefreshCw, ChevronDown, ChevronUp, Edit3
+  UserX, Users, Music, Save, Eye, Loader2, Clock, RefreshCw, ChevronDown, ChevronUp, Edit3, AlertTriangle
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AutomatedEmailPreviewDialog } from "./AutomatedEmailPreviewDialog";
 import { AutomatedEmailTemplatePreviewDialog } from "./AutomatedEmailTemplatePreviewDialog";
 import {
@@ -89,6 +99,7 @@ export const AutomatedEmailSettings = () => {
   const [previewType, setPreviewType] = useState<string | null>(null);
   const [templatePreviewType, setTemplatePreviewType] = useState<string | null>(null);
   const [editedSettings, setEditedSettings] = useState<Record<string, Partial<AutomatedEmailConfig>>>({});
+  const [showRunConfirm, setShowRunConfirm] = useState(false);
 
   // Fetch automated email settings
   const { data: settings = [], isLoading } = useQuery({
@@ -473,8 +484,16 @@ export const AutomatedEmailSettings = () => {
       </Card>
 
       {/* Last Execution & Run Now */}
-      <Card>
+      <Card className="border-amber-500/50">
         <CardContent className="pt-6">
+          <div className="flex items-center gap-2 mb-4 p-3 bg-amber-500/10 rounded-lg border border-amber-500/30">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              {language === "ko" 
+                ? "자동 발송이 비활성화되었습니다. 수동으로만 실행할 수 있습니다."
+                : "Automated sending is disabled. Manual execution only."}
+            </p>
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">
@@ -487,19 +506,70 @@ export const AutomatedEmailSettings = () => {
               </p>
             </div>
             <Button
-              onClick={() => runNowMutation.mutate()}
+              onClick={() => setShowRunConfirm(true)}
               disabled={runNowMutation.isPending}
+              variant="outline"
             >
               {runNowMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <RefreshCw className="w-4 h-4 mr-2" />
               )}
-              {language === "ko" ? "지금 실행" : "Run Now"}
+              {language === "ko" ? "수동 실행" : "Run Manually"}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Run Confirmation Dialog */}
+      <AlertDialog open={showRunConfirm} onOpenChange={setShowRunConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              {language === "ko" ? "이메일 발송 확인" : "Confirm Email Sending"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                {language === "ko"
+                  ? "활성화된 자동 이메일 타입에 대해 조건을 충족하는 모든 사용자에게 이메일을 발송합니다."
+                  : "This will send emails to all users matching the criteria for enabled email types."}
+              </p>
+              <div className="bg-muted p-3 rounded-lg space-y-1">
+                {settings.filter(s => s.enabled).map(s => {
+                  const info = emailTypeInfo[s.email_type];
+                  const count = recipientCounts[s.email_type] || 0;
+                  return (
+                    <div key={s.email_type} className="flex justify-between text-sm">
+                      <span>{language === "ko" ? info?.titleKo : info?.title}</span>
+                      <span className="font-medium">{count}명</span>
+                    </div>
+                  );
+                })}
+                {settings.filter(s => s.enabled).length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ko" ? "활성화된 이메일 타입이 없습니다" : "No enabled email types"}
+                  </p>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "취소" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowRunConfirm(false);
+                runNowMutation.mutate();
+              }}
+              disabled={settings.filter(s => s.enabled).length === 0}
+            >
+              {language === "ko" ? "발송 실행" : "Send Emails"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Recipients Preview Dialog */}
       <AutomatedEmailPreviewDialog

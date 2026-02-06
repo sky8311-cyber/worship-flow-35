@@ -8,6 +8,9 @@ const corsHeaders = {
 
 const APP_URL = Deno.env.get("APP_URL") || "https://kworship.app";
 
+// MANUAL MODE ONLY: Block all automated/cron triggers - only allow admin manual execution
+const MANUAL_MODE_ONLY = true;
+
 // Priority order: higher priority emails get sent first
 const EMAIL_TYPE_PRIORITY: Record<string, number> = {
   inactive_user: 1,
@@ -74,6 +77,27 @@ async function sendEmail(apiKey: string, to: string, subject: string, html: stri
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // MANUAL MODE: Only allow execution with Bearer token (admin UI)
+  // Block cron/scheduled triggers that don't include proper authorization
+  if (MANUAL_MODE_ONLY) {
+    const authHeader = req.headers.get("authorization");
+    const hasValidAuth = authHeader?.toLowerCase().startsWith("bearer ");
+    
+    if (!hasValidAuth) {
+      console.log("Automated emails blocked - manual mode only. No Bearer token found.");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Automated emails are in manual-only mode. Use admin UI to trigger.",
+          results: {},
+          timestamp: new Date().toISOString(),
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log("Manual trigger detected - proceeding with execution");
   }
 
   try {
