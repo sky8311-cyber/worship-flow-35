@@ -1,100 +1,152 @@
 
 
-# SongCard 비공개 뱃지 + 악보 미리보기 드롭다운 수정
+# 모바일 악보 미리보기 닫기 버튼 수정
 
-## 문제 1: 비공개 뱃지가 제목을 가림
+## 문제 분석
 
-### 현재 상태 (스크린샷 참조)
-```
-┌─────────────────────────────────┐
-│ [악보 이미지]                    │
-├─────────────────────────────────┤
-│ 주님... (N) 🔒 비공개            │  ← 뱃지가 같은 줄에 있어 제목 잘림
-│ Gifted                          │
-```
+스크린샷에서 닫기 버튼(X)이 화면 밖으로 밀려나 보이지 않음:
 
-### 수정 후
-```
-┌─────────────────────────────────┐
-│ [악보 이미지]                    │
-├─────────────────────────────────┤
-│                    🔒 비공개     │  ← 독립된 줄, 오른쪽 정렬
-│ 주님의 임재 앞에서 (N)           │  ← 제목이 온전히 표시
-│ Gifted                          │
-```
-
-### 코드 변경
-```text
-파일: src/components/SongCard.tsx (164-182번 줄)
-
-변경 전:
-<div className="mb-3">
-  <div className="flex items-baseline gap-1.5 mb-1">
-    <h3>...</h3>
-    {isNewSong && <sup>N</sup>}
-    {song.is_private && <Badge>비공개</Badge>}  ← 제목과 같은 줄
-  </div>
-  <p>{artist}</p>
-</div>
-
-변경 후:
-<div className="mb-3">
-  {/* 비공개 뱃지: 독립 행, 오른쪽 정렬 */}
-  {song.is_private && (
-    <div className="flex justify-end mb-1">
-      <Badge>🔒 비공개</Badge>
+### 현재 코드 구조
+```tsx
+<DialogContent hideCloseButton={isMobile} className="p-4 ...">
+  <DialogHeader>
+    <div className="flex items-center justify-between">
+      <DialogTitle>...</DialogTitle>
+      {isMobile && (
+        <Button className="absolute right-2 top-2">  ← 문제: DialogHeader 기준 absolute
+          <X />
+        </Button>
+      )}
     </div>
-  )}
-  <div className="flex items-baseline gap-1.5 mb-1">
-    <h3>...</h3>
-    {isNewSong && <sup>N</sup>}
-    {/* 비공개 뱃지 제거됨 */}
+  </DialogHeader>
+</DialogContent>
+```
+
+### 문제 원인
+1. `DialogHeader`는 `position: relative`가 없어서 `absolute` 위치가 `DialogContent` 기준으로 계산됨
+2. `DialogContent`의 `translate-x-[-50%] translate-y-[-50%]` 변환과 충돌
+3. 모바일 전체화면 모드에서 `left-[50%] top-[50%]` 설정이 여전히 적용되어 혼란 발생
+
+---
+
+## 해결 방안
+
+### 방법 1: 닫기 버튼을 flex 레이아웃으로 변경 (추천)
+
+`absolute` 대신 `flex`로 제목과 버튼을 배치:
+
+```tsx
+<DialogHeader className="flex-shrink-0 relative">
+  <div className="flex items-center justify-between gap-4">
+    <DialogTitle className="text-base sm:text-lg flex-1 min-w-0">
+      {t("songLibrary.previewScore")} - {songTitle}
+    </DialogTitle>
+    {isMobile && (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="shrink-0"  // absolute 제거, shrink-0으로 변경
+        onClick={() => onOpenChange(false)}
+      >
+        <X className="h-5 w-5" />
+      </Button>
+    )}
   </div>
-  <p>{artist}</p>
-</div>
+</DialogHeader>
+```
+
+### 방법 2: DialogContent에서 모바일 위치 초기화
+
+모바일 전체화면일 때 `left-0 top-0 translate-x-0 translate-y-0` 추가:
+
+```tsx
+<DialogContent 
+  hideCloseButton={isMobile}
+  className={cn(
+    "flex flex-col",
+    // Mobile: fullscreen - 위치 변환 초기화
+    "w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none p-4",
+    "left-0 top-0 translate-x-0 translate-y-0",  // 새로 추가
+    // Desktop: centered modal
+    "sm:left-[50%] sm:top-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%]",
+    "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
+  )}
+>
 ```
 
 ---
 
-## 문제 2: 키 드롭다운 너비 부족 + 작동 안함
+## 선택한 해결책: 방법 1 + 방법 2 결합
 
-### 현재 상태
-- 드롭다운 너비: `w-24 sm:w-32` (96px / 128px)
-- 내용 예시: `A (1페이지)` → 잘려서 `A (1...` 로 표시
-- 모바일에서 터치 영역이 좁아 클릭 어려움
+가장 안정적인 해결책:
 
-### 수정 내용
-```text
-파일: src/components/ScorePreviewDialog.tsx (178번 줄)
-
-변경 전:
-<SelectTrigger className="w-24 sm:w-32">
-
-변경 후:
-<SelectTrigger className="w-36 sm:w-44">
-```
-
-- 모바일: 96px → 144px (w-36)
-- 데스크톱: 128px → 176px (w-44)
-- 이렇게 하면 `A (1페이지)`가 온전히 표시됨
+1. **DialogContent**: 모바일에서 `inset-0`으로 전체화면 설정하고 transform 제거
+2. **닫기 버튼**: `absolute` 대신 `flex` 레이아웃 사용
 
 ---
 
-## 수정 파일 요약
+## 수정 파일
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/SongCard.tsx` | 비공개 뱃지를 제목 위 별도 줄로 이동, 오른쪽 정렬 |
-| `src/components/ScorePreviewDialog.tsx` | SelectTrigger 너비 확대 (w-36 sm:w-44) |
+| `src/components/ScorePreviewDialog.tsx` | 1. DialogContent 모바일 위치 속성 수정 (inset-0)<br>2. 닫기 버튼을 flex 레이아웃으로 변경 |
 
 ---
 
-## 예상 결과
+## 수정 후 레이아웃
 
-| 항목 | 수정 전 | 수정 후 |
-|-----|--------|--------|
-| 제목 표시 | `주님...` (3글자만 보임) | `주님의 임재 앞에서` (전체 표시) |
-| 비공개 뱃지 위치 | 제목과 같은 줄 | 독립 줄, 우측 정렬 |
-| 키 드롭다운 | `A (1...` | `A (1페이지)` |
-| 드롭다운 조작 | 터치 어려움 | 충분한 터치 영역 |
+```
+┌────────────────────────────────────────┐
+│ 악보 미리보기 - 다시 일어나      [X]   │  ← 닫기 버튼 항상 보임
+├────────────────────────────────────────┤
+│ 키: [F (1 페이지) ▼]                   │
+│                                        │
+│ ┌────────────────────────────────────┐ │
+│ │                                    │ │
+│ │           악보 이미지              │ │
+│ │                                    │ │
+│ └────────────────────────────────────┘ │
+└────────────────────────────────────────┘
+```
+
+---
+
+## 코드 변경 상세
+
+```tsx
+// ScorePreviewDialog.tsx
+
+<DialogContent 
+  hideCloseButton={isMobile}
+  className={cn(
+    "flex flex-col",
+    // Mobile: true fullscreen with inset-0 (no transform)
+    "inset-0 w-full h-[100dvh] max-w-full max-h-[100dvh] rounded-none p-4",
+    "translate-x-0 translate-y-0",
+    // Desktop: centered modal with transform
+    "sm:inset-auto sm:left-[50%] sm:top-[50%]",
+    "sm:translate-x-[-50%] sm:translate-y-[-50%]",
+    "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
+  )}
+>
+  <DialogHeader className="flex-shrink-0">
+    <div className="flex items-center justify-between gap-4">
+      <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 truncate">
+        {t("songLibrary.previewScore")} - {songTitle}
+      </DialogTitle>
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 -mr-2 -mt-2"
+          onClick={() => onOpenChange(false)}
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
+    </div>
+  </DialogHeader>
+  ...
+</DialogContent>
+```
 
