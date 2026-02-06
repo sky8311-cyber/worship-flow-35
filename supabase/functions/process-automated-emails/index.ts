@@ -100,6 +100,15 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Manual trigger detected - proceeding with execution");
   }
 
+  // Parse request body for optional emailType filter
+  let targetEmailType: string | null = null;
+  try {
+    const body = await req.json();
+    targetEmailType = body.emailType || null;
+  } catch {
+    // No body or invalid JSON - process all enabled types
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -124,18 +133,26 @@ const handler = async (req: Request): Promise<Response> => {
     const senderName = senderSettingsData?.sender_name || "Kworship";
     const signature = senderSettingsData?.auto_append_signature ? senderSettingsData.signature_html : "";
 
-    // Fetch enabled automated email settings
-    const { data: settings, error: settingsError } = await supabase
+    // Fetch automated email settings (filter by specific type if provided)
+    let settingsQuery = supabase
       .from("automated_email_settings")
       .select("*")
       .eq("enabled", true);
+    
+    // If specific email type is requested, filter to only that type
+    if (targetEmailType) {
+      settingsQuery = settingsQuery.eq("email_type", targetEmailType);
+      console.log(`Single type mode: processing only ${targetEmailType}`);
+    }
+
+    const { data: settings, error: settingsError } = await settingsQuery;
 
     if (settingsError) {
       console.error("Error fetching settings:", settingsError);
       throw settingsError;
     }
 
-    console.log(`Found ${settings?.length || 0} enabled automated email settings`);
+    console.log(`Found ${settings?.length || 0} enabled automated email settings${targetEmailType ? ` for type: ${targetEmailType}` : ""}`);
 
     // Filter out users who opted out of automated reminders
     const { data: optedOutUsers } = await supabase

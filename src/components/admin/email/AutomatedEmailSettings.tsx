@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { 
-  UserX, Users, Music, Save, Eye, Loader2, Clock, RefreshCw, ChevronDown, ChevronUp, Edit3, AlertTriangle
+  UserX, Users, Music, Save, Eye, Loader2, Clock, RefreshCw, ChevronDown, ChevronUp, Edit3, AlertTriangle, Send
 } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -100,6 +100,7 @@ export const AutomatedEmailSettings = () => {
   const [templatePreviewType, setTemplatePreviewType] = useState<string | null>(null);
   const [editedSettings, setEditedSettings] = useState<Record<string, Partial<AutomatedEmailConfig>>>({});
   const [showRunConfirm, setShowRunConfirm] = useState(false);
+  const [singleRunType, setSingleRunType] = useState<string | null>(null);
 
   // Fetch automated email settings
   const { data: settings = [], isLoading } = useQuery({
@@ -169,7 +170,7 @@ export const AutomatedEmailSettings = () => {
     },
   });
 
-  // Run now mutation
+  // Run now mutation (all enabled types)
   const runNowMutation = useMutation({
     mutationFn: async () => {
       const response = await supabase.functions.invoke("process-automated-emails");
@@ -191,6 +192,36 @@ export const AutomatedEmailSettings = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to run automated emails");
+    },
+  });
+
+  // Single type run mutation
+  const singleRunMutation = useMutation({
+    mutationFn: async (emailType: string) => {
+      const response = await supabase.functions.invoke("process-automated-emails", {
+        body: { emailType },
+      });
+      if (response.error) throw response.error;
+      return response.data;
+    },
+    onSuccess: (data) => {
+      const emailType = singleRunType;
+      if (emailType) {
+        const count = data.results?.[emailType]?.sent || 0;
+        const info = emailTypeInfo[emailType];
+        toast.success(
+          language === "ko" 
+            ? `${info?.titleKo} 발송 완료: ${count}명`
+            : `${info?.title} sent: ${count} recipients`
+        );
+      }
+      setSingleRunType(null);
+      queryClient.invalidateQueries({ queryKey: ["last-automated-email-execution"] });
+      queryClient.invalidateQueries({ queryKey: ["automated-email-log"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to send emails");
+      setSingleRunType(null);
     },
   });
 
@@ -443,7 +474,7 @@ export const AutomatedEmailSettings = () => {
 
                       {/* Actions */}
                       <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Button
                             variant="outline"
                             size="sm"
@@ -459,6 +490,15 @@ export const AutomatedEmailSettings = () => {
                           >
                             <Edit3 className="w-4 h-4 mr-2" />
                             {language === "ko" ? "템플릿 미리보기" : "Preview Template"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSingleRunType(setting.email_type)}
+                            disabled={!setting.enabled || singleRunMutation.isPending}
+                          >
+                            <Send className="w-4 h-4 mr-2" />
+                            {language === "ko" ? "지금 발송" : "Send Now"}
                           </Button>
                         </div>
                         <Button
@@ -521,7 +561,7 @@ export const AutomatedEmailSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Run Confirmation Dialog */}
+      {/* Run Confirmation Dialog (All Types) */}
       <AlertDialog open={showRunConfirm} onOpenChange={setShowRunConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -565,6 +605,52 @@ export const AutomatedEmailSettings = () => {
               }}
               disabled={settings.filter(s => s.enabled).length === 0}
             >
+              {language === "ko" ? "발송 실행" : "Send Emails"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Single Type Run Confirmation Dialog */}
+      <AlertDialog open={!!singleRunType} onOpenChange={(open) => !open && setSingleRunType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Send className="w-5 h-5 text-primary" />
+              {language === "ko" ? "이메일 발송 확인" : "Confirm Email Sending"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                {language === "ko"
+                  ? `"${singleRunType ? emailTypeInfo[singleRunType]?.titleKo : ""}" 이메일을 발송합니다.`
+                  : `Send "${singleRunType ? emailTypeInfo[singleRunType]?.title : ""}" emails.`}
+              </p>
+              <div className="bg-muted p-3 rounded-lg">
+                <div className="flex justify-between text-sm">
+                  <span>{language === "ko" ? "발송 대상" : "Recipients"}</span>
+                  <span className="font-medium">
+                    {singleRunType ? (recipientCounts[singleRunType] || 0) : 0}
+                    {language === "ko" ? "명" : " users"}
+                  </span>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "ko" ? "취소" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (singleRunType) {
+                  singleRunMutation.mutate(singleRunType);
+                }
+              }}
+              disabled={singleRunMutation.isPending || (singleRunType ? (recipientCounts[singleRunType] || 0) === 0 : true)}
+            >
+              {singleRunMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
               {language === "ko" ? "발송 실행" : "Send Emails"}
             </AlertDialogAction>
           </AlertDialogFooter>
