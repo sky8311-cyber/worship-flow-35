@@ -156,9 +156,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Sync worship leader role from approved application
+  // OPTIMIZED: 24-hour cooldown to reduce unnecessary network calls
   const syncWorshipLeaderRole = async (): Promise<boolean> => {
     // Skip if already a worship leader - no need to call edge function
     if (roles.includes('worship_leader')) {
+      setRoleSyncComplete(true);
+      return false;
+    }
+    
+    // Skip if already tried within 24 hours (reduces redundant calls)
+    const lastSyncKey = `wl_sync_${prevUserIdRef.current}`;
+    const lastSync = localStorage.getItem(lastSyncKey);
+    if (lastSync && Date.now() - parseInt(lastSync) < 24 * 60 * 60 * 1000) {
+      console.log('[AuthContext] Skipping WL sync - tried within 24h');
       setRoleSyncComplete(true);
       return false;
     }
@@ -184,6 +194,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
+
+      // Save timestamp after attempt (successful or not) to prevent repeated calls
+      localStorage.setItem(lastSyncKey, Date.now().toString());
 
       // Gracefully handle 401/Unauthorized - this is normal when session hasn't propagated yet
       if (response.error) {

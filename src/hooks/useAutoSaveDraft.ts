@@ -123,11 +123,15 @@ export const useAutoSaveDraft = ({
   const prevFormSignatureRef = useRef<string>("");
   const prevItemsSignatureRef = useRef<string>("");
   
-  // Loop detection refs
+  // Loop detection refs with recovery mechanism
   const prevItemsCountRef = useRef<number>(0);
   const loopDetectedRef = useRef<boolean>(false);
+  const loopDetectedAtRef = useRef<number>(0);
   const saveCountRef = useRef<number>(0);
   const lastSaveTimeRef = useRef<number>(0);
+  
+  // Cooldown period after loop detection (30 seconds)
+  const LOOP_COOLDOWN = 30 * 1000;
 
   useEffect(() => {
     formDataRef.current = formData;
@@ -145,22 +149,29 @@ export const useAutoSaveDraft = ({
         return null;
       }
 
-      // Loop detection: If loop was detected, skip all saves
+      // Loop detection with recovery: After cooldown, allow saves again
       if (loopDetectedRef.current) {
-        console.warn('[AutoSave] Loop detected previously, skipping save');
-        return null;
+        if (Date.now() - loopDetectedAtRef.current > LOOP_COOLDOWN) {
+          console.log('[AutoSave] Resetting loop detection after cooldown');
+          loopDetectedRef.current = false;
+          saveCountRef.current = 0;
+        } else {
+          console.warn('[AutoSave] Still in cooldown period, skipping save');
+          return null;
+        }
       }
 
       const currentForm = formDataRef.current;
       const currentItems = itemsRef.current;
       
-      // Loop detection: Check for abnormal item growth
+      // Loop detection: Check for abnormal save frequency
       const now = Date.now();
       if (now - lastSaveTimeRef.current < 5000) {
         saveCountRef.current++;
         if (saveCountRef.current > 5) {
-          console.error('[AutoSave] Loop detected! Too many saves in short period. Blocking further saves.');
+          console.error('[AutoSave] Loop detected! Too many saves in short period. Entering cooldown.');
           loopDetectedRef.current = true;
+          loopDetectedAtRef.current = now;
           return null;
         }
       } else {
@@ -175,6 +186,7 @@ export const useAutoSaveDraft = ({
       ) {
         console.error('[AutoSave] Loop detected! Items count doubled:', prevItemsCountRef.current, '->', currentItems.length);
         loopDetectedRef.current = true;
+        loopDetectedAtRef.current = now;
         return null;
       }
       prevItemsCountRef.current = currentItems.length;
