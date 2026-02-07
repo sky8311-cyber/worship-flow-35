@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight, UserPlus, Gift } from "lucide-react";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ export function WLOnboardingChecklist() {
     return false;
   });
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleDismiss = () => {
     setDismissed(true);
@@ -222,14 +224,31 @@ export function WLOnboardingChecklist() {
                 
                 {/* Action Button */}
                 {isCurrent && step.action && (
-                  <Button
-                    size="sm"
-                    onClick={step.action}
-                    className="shrink-0 gap-1"
-                  >
-                    {t("onboarding.start")}
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={step.action}
+                      className="gap-1"
+                    >
+                      {t("onboarding.start")}
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <Checkbox 
+                        checked={dontShowAgain}
+                        onCheckedChange={(checked) => {
+                          setDontShowAgain(checked === true);
+                          if (checked === true) {
+                            handleDismiss();
+                          }
+                        }}
+                        className="h-3.5 w-3.5"
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {language === "ko" ? "더이상 보지 않기" : "Don't show again"}
+                      </span>
+                    </label>
+                  </div>
                 )}
                 
                 {/* Pending indicator */}
