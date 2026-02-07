@@ -1,136 +1,113 @@
 
+# 신규회원 리더보드 데이터 불일치 & 레벨명 번역 누락 수정
 
-# 온보딩 체크리스트 "더이상 보지 않기" 옵션 추가
+## 발견된 문제
 
-## 현재 상태
+### 문제 1: 관리자와 일반 사용자가 보는 "신규회원" 데이터가 다름
 
-현재 `WLOnboardingChecklist` 컴포넌트는:
-- 우측 상단 X 버튼으로 닫기 가능 (영구 dismiss)
-- "시작하기" 버튼만 표시
+**원인**: `profiles` 테이블의 RLS 정책 문제
 
-## 변경 사항
+현재 일반 사용자는 아래 조건을 충족하는 프로필만 볼 수 있음:
+- 본인 프로필
+- 같은 커뮤니티에 속한 멤버
+- 커뮤니티 리더
+- **씨앗(seeds) > 0인 사용자만** (리더보드용 정책)
 
-### UI 변경
-
-현재 단계의 "시작하기" 버튼 영역에 "더이상 보지 않기" 체크박스 추가:
-
-```
-┌─────────────────────────────────────────────────────┐
-│  [현재 단계]                                         │
-│  ○ 공동체 만들기                                     │
-│    예배팀 또는 교회를 위한 공동체 생성                  │
-│                                                     │
-│    ☐ 더이상 보지 않기     [시작하기 →]                │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+```sql
+-- 문제가 되는 RLS 정책
+"Can view leaderboard user profiles"
+WHERE user_seeds.total_seeds > 0
 ```
 
-### 구현 세부사항
+**결과**: 가입 후 아직 활동을 하지 않은 신규회원(total_seeds = 0)은 일반 사용자에게 보이지 않음. 관리자는 `Admins can view all profiles` 정책으로 모든 사용자를 볼 수 있어서 데이터가 다르게 표시됨.
 
-1. **체크박스 상태 추가**
-   ```typescript
-   const [dontShowAgain, setDontShowAgain] = useState(false);
-   ```
+### 문제 2: 레벨명 번역 누락 (가지 등)
 
-2. **체크박스 + 시작하기 버튼 레이아웃**
-   - 현재 단계 아이템 하단에 체크박스와 버튼을 나란히 배치
-   - 체크박스 체크 시 상태 저장
-   - X 버튼 또는 다른 곳 클릭으로 닫을 때 체크 상태 반영
+**원인**: `SeedWidget.tsx`에서 언어 설정과 관계없이 `name_ko`만 하드코딩으로 표시
 
-3. **dismiss 로직 수정**
-   - 체크박스가 체크된 상태에서 X 버튼 클릭 시 영구 dismiss
-   - 체크박스가 체크된 상태에서 외부 클릭/닫기 시에도 영구 dismiss
+```typescript
+// 현재 코드 (라인 85)
+{t('seeds.currentLevel')}: {displayData.currentLevel.name_ko}
+
+// 올바른 코드
+{t('seeds.currentLevel')}: {language === "ko" 
+  ? displayData.currentLevel.name_ko 
+  : displayData.currentLevel.name_en}
+```
 
 ---
 
-## 수정 파일
+## 수정 계획
+
+### 1. RLS 정책 수정 - 신규회원도 리더보드에 표시
+
+**파일**: SQL 마이그레이션
+
+기존 정책을 수정하여 신규회원(total_seeds >= 0 또는 user_seeds 레코드가 없어도)도 볼 수 있도록 변경:
+
+```sql
+-- 기존 정책 삭제
+DROP POLICY IF EXISTS "Can view leaderboard user profiles" ON profiles;
+
+-- 새 정책 생성: 인증된 사용자는 모든 프로필의 기본 정보 조회 가능
+-- (신규회원 포함)
+CREATE POLICY "Authenticated users can view basic profiles for leaderboard"
+  ON profiles
+  FOR SELECT
+  TO authenticated
+  USING (true);
+```
+
+또는 더 제한적인 접근:
+
+```sql
+-- 신규회원도 포함하도록 조건 완화
+CREATE POLICY "Can view leaderboard user profiles"
+  ON profiles
+  FOR SELECT
+  TO public
+  USING (
+    auth.uid() IS NOT NULL
+  );
+```
+
+### 2. SeedWidget 언어 설정 반영
+
+**파일**: `src/components/seeds/SeedWidget.tsx`
+
+```typescript
+// 라인 85 수정
+<p className="text-sm font-medium">
+  {t('seeds.currentLevel')}: {language === "ko" 
+    ? displayData.currentLevel.name_ko 
+    : displayData.currentLevel.name_en}
+</p>
+```
+
+---
+
+## 수정 대상 파일
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/dashboard/WLOnboardingChecklist.tsx` | 체크박스 상태 및 UI 추가 |
+| SQL 마이그레이션 | `profiles` 테이블 RLS 정책 수정 - 신규회원 조회 허용 |
+| `src/components/seeds/SeedWidget.tsx` | 레벨명 표시 시 언어 설정 반영 |
 
 ---
 
-## 코드 변경 상세
+## 기대 효과
 
-### 1. Import 추가
-```typescript
-import { Checkbox } from "@/components/ui/checkbox";
-```
-
-### 2. 상태 추가
-```typescript
-const [dontShowAgain, setDontShowAgain] = useState(false);
-```
-
-### 3. Action 버튼 영역 수정 (라인 223-232)
-
-**Before:**
-```tsx
-{isCurrent && step.action && (
-  <Button
-    size="sm"
-    onClick={step.action}
-    className="shrink-0 gap-1"
-  >
-    {t("onboarding.start")}
-    <ChevronRight className="w-4 h-4" />
-  </Button>
-)}
-```
-
-**After:**
-```tsx
-{isCurrent && step.action && (
-  <div className="flex flex-col items-end gap-2 shrink-0">
-    <Button
-      size="sm"
-      onClick={step.action}
-      className="gap-1"
-    >
-      {t("onboarding.start")}
-      <ChevronRight className="w-4 h-4" />
-    </Button>
-    <label className="flex items-center gap-1.5 cursor-pointer">
-      <Checkbox 
-        checked={dontShowAgain}
-        onCheckedChange={(checked) => {
-          setDontShowAgain(checked === true);
-          if (checked === true) {
-            handleDismiss();
-          }
-        }}
-        className="h-3.5 w-3.5"
-      />
-      <span className="text-xs text-muted-foreground">
-        {language === "ko" ? "더이상 보지 않기" : "Don't show again"}
-      </span>
-    </label>
-  </div>
-)}
-```
+| 항목 | Before | After |
+|------|--------|-------|
+| 신규회원 리더보드 | 관리자만 전체 표시 | 모든 사용자 동일하게 표시 |
+| 레벨명 표시 | 항상 한국어 | 언어 설정에 따라 한/영 표시 |
 
 ---
 
-## 동작 방식
+## 보안 고려사항
 
-| 액션 | 결과 |
-|------|------|
-| "시작하기" 클릭 | 해당 단계 액션 실행 (기존과 동일) |
-| 체크박스 체크 | 즉시 영구 dismiss (localStorage 저장 + 컴포넌트 숨김) |
-| X 버튼 클릭 | 영구 dismiss (기존과 동일) |
+프로필 조회 정책 완화 시, 노출되는 데이터 범위 확인 필요:
+- `SeedLeaderboard`에서는 `id, full_name, avatar_url, created_at`만 조회
+- 민감 정보(email, phone 등)는 별도 정책으로 보호 필요
 
----
-
-## 번역 키 (선택적)
-
-필요시 `translations.ts`에 추가:
-```typescript
-"onboarding.dontShowAgain": {
-  ko: "더이상 보지 않기",
-  en: "Don't show again"
-}
-```
-
-현재는 인라인으로 처리하여 간단하게 구현합니다.
-
+현재 다른 정책들이 email 등 민감 정보를 이미 보호하고 있으므로, SELECT 정책 완화는 기본 정보만 노출됨.
