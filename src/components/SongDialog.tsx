@@ -136,9 +136,13 @@ const [loading, setLoading] = useState(false);
   // Sync formData.youtube_url with first youtubeLink for backward compatibility
   useEffect(() => {
     const firstUrl = youtubeLinks[0]?.url || "";
-    if (formData.youtube_url !== firstUrl) {
-      setFormData(prev => ({ ...prev, youtube_url: firstUrl }));
-    }
+    // Use functional update to avoid infinite render loop
+    setFormData(prev => {
+      if (prev.youtube_url === firstUrl) {
+        return prev; // No change → prevent re-render
+      }
+      return { ...prev, youtube_url: firstUrl };
+    });
   }, [youtubeLinks]);
 
   const loadYoutubeLinks = async (songId: string) => {
@@ -527,9 +531,10 @@ const [loading, setLoading] = useState(false);
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
   const removeYoutubeLink = (index: number) => setYoutubeLinks(youtubeLinks.filter((_, i) => i !== index));
   const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
-    const updated = [...youtubeLinks];
-    updated[index][field] = value;
-    setYoutubeLinks(updated);
+    // Use immutable update pattern to prevent mutation issues
+    setYoutubeLinks(prev => prev.map((link, i) => 
+      i === index ? { ...link, [field]: value } : link
+    ));
   };
 
   const addVariation = () => {
