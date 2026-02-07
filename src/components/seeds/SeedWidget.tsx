@@ -14,7 +14,7 @@ interface SeedWidgetProps {
 export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const { data: seedData } = useQuery({
     queryKey: ['user-seeds-widget', user?.id],
@@ -82,7 +82,9 @@ export const SeedWidget = ({ onNavigate }: SeedWidgetProps) => {
           <span className="text-2xl">{displayData.currentLevel.emoji}</span>
           <div>
             <p className="text-sm font-medium">
-              {t('seeds.currentLevel')}: {displayData.currentLevel.name_ko}
+              {t('seeds.currentLevel')}: {language === "ko" 
+                ? displayData.currentLevel.name_ko 
+                : displayData.currentLevel.name_en}
             </p>
             <p className="text-xs text-muted-foreground">
               {displayData.totalSeeds} K-Seeds
