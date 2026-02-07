@@ -1,245 +1,144 @@
 
 
-# K-Worship 일일 사용 기능 종합 감사 및 성능 점검
+# 곡 추가시 프리즈 현상 수정 계획
 
-## 감사 결과 요약
+## 문제 분석
 
-### 1. 발견된 문제점
+### 근본 원인: 무한 렌더 루프 (Infinite Render Loop)
 
-#### 문제 #1: Edge Function 배포 누락 (Critical)
-
-**증상**: AI 곡 정보 보강 실패, 보상 시스템 동작 안 함
-
-**근본 원인**: `sync-worship-leader-role-v2` 함수가 `supabase/config.toml`에 등록되지 않아 배포되지 않음
-
-```
-// config.toml에 등록된 함수
-[functions.sync-worship-leader-role]  // v1만 등록됨
-verify_jwt = true
-
-// 누락된 함수
-[functions.sync-worship-leader-role-v2]  // ← 등록 안 됨!
-```
-
-**영향받는 기능**:
-- 예배인도자 역할 동기화 (로그인 시 호출)
-- 로그에서 계속 `sync-worship-leader-role-v2` 호출 중이나 v2가 별도 등록 없이 배포됨
-
-**수정 방법**: config.toml에 v2 함수 등록 추가
-
----
-
-#### 문제 #2: 중복 Edge Function 호출 (Performance)
-
-**현재 상황**: AuthContext에서 `syncWorshipLeaderRole`이 불필요하게 호출됨
+`SongDialog.tsx`의 136-142 라인에서 **두 상태 간의 순환 동기화**가 발생합니다:
 
 ```typescript
-// AuthContext.tsx line 159-223
-const syncWorshipLeaderRole = async (): Promise<boolean> => {
-  // 이미 worship_leader 역할이 있으면 스킵 (최적화됨)
-  if (roles.includes('worship_leader')) {
-    setRoleSyncComplete(true);
-    return false;
+// Line 137-142 - 문제의 useEffect
+useEffect(() => {
+  const firstUrl = youtubeLinks[0]?.url || "";
+  if (formData.youtube_url !== firstUrl) {
+    setFormData(prev => ({ ...prev, youtube_url: firstUrl }));  // ← formData 변경
   }
-  // ... edge function 호출
-}
+}, [youtubeLinks]);  // ← youtubeLinks 의존
 ```
 
-**발견**: 로그에서 대부분의 사용자에게 "No approved application found" 반환 → 불필요한 네트워크 요청
+### 프리즈 발생 시나리오
 
-**최적화 제안**:
-- 프로필에 `is_worship_leader_synced` 플래그 추가하여 한 번 체크 후 재호출 방지
-- 또는 24시간마다 한 번만 동기화 시도
+```text
+1. 사용자가 YouTube URL 입력 필드에 텍스트 입력
+   ↓
+2. updateYoutubeLink() 호출 → setYoutubeLinks() 실행
+   ↓
+3. youtubeLinks 변경 → useEffect 트리거
+   ↓
+4. formData.youtube_url !== firstUrl 조건 충족
+   ↓
+5. setFormData() 실행 → 컴포넌트 리렌더
+   ↓
+6. 리렌더 중 youtubeLinks[0]?.url 참조 재계산
+   ↓
+7. 새 객체 참조로 인해 조건 재충족 → 반복
+```
+
+### 추가 문제: ESLint 의존성 경고 무시
+
+```typescript
+useEffect(() => {
+  ...
+}, [youtubeLinks]);  // formData도 읽지만 의존성에 없음
+```
+
+`formData.youtube_url`을 읽지만 의존성 배열에 포함하지 않아 React가 정상적인 클로저 동작을 하지 못합니다.
 
 ---
 
-#### 문제 #3: N+1 쿼리 패턴 잔존 (Performance)
+## 해결 방안
 
-**위치**: `Dashboard.tsx` 사용자 통계 조회
+### 수정 1: useEffect 내 비교 로직 안정화
 
+**Before (문제):**
 ```typescript
-// Dashboard.tsx line 405-450
-const userStats = useQuery({
-  queryFn: async () => {
-    // 5개의 별도 쿼리 실행
-    const { data: setsData } = await supabase.from("service_sets")...
-    const { data: communitiesData } = await supabase.from("community_members")...
-    const { data: postsData } = await supabase.from("community_posts")...
-    // ...
+useEffect(() => {
+  const firstUrl = youtubeLinks[0]?.url || "";
+  if (formData.youtube_url !== firstUrl) {
+    setFormData(prev => ({ ...prev, youtube_url: firstUrl }));
   }
-});
+}, [youtubeLinks]);
 ```
 
-**문제점**: 5개의 순차 쿼리 → 총 대기 시간 = 쿼리1 + 쿼리2 + ... + 쿼리5
-
-**최적화 제안**: `Promise.all`로 병렬 실행
-
----
-
-#### 문제 #4: staleTime 불일치 (Reliability)
-
-| Hook/Query | 현재 staleTime | 권장 값 |
-|------------|---------------|---------|
-| `useUserCommunities` | 5분 | OK |
-| `songs` 목록 | 30초 | 1분 |
-| `upcoming-sets` | 30초 | 1분 |
-| `user-stats` | 없음(0) | 30초 |
-| `push-subscription` | 없음 | 5분 |
-
----
-
-#### 문제 #5: 자동저장 루프 감지 후 영구 차단 (Reliability)
-
+**After (해결):**
 ```typescript
-// useAutoSaveDraft.ts line 149-178
-if (loopDetectedRef.current) {
-  console.warn('[AutoSave] Loop detected previously, skipping save');
-  return null;  // 영구 차단 - 복구 방법 없음!
-}
+useEffect(() => {
+  const firstUrl = youtubeLinks[0]?.url || "";
+  // 함수형 업데이트 + 조건 확인을 setter 내부로 이동
+  setFormData(prev => {
+    if (prev.youtube_url === firstUrl) {
+      return prev;  // 변경 없음 → 리렌더 방지
+    }
+    return { ...prev, youtube_url: firstUrl };
+  });
+}, [youtubeLinks]);
 ```
 
-**문제점**: 루프가 한 번 감지되면 페이지 새로고침 전까지 저장 불가
-
-**수정 제안**: 쿨다운 후 복구 메커니즘 추가
-
----
-
-### 2. 정상 동작 확인된 기능
-
-| 기능 | 상태 | 비고 |
-|------|------|------|
-| 로그인/로그아웃 | ✅ 정상 | epoch 기반 세션 관리 적용 |
-| 프로필 조회 | ✅ 정상 | 3개 쿼리 병렬 실행 |
-| 곡 라이브러리 | ✅ 정상 | 일괄 즐겨찾기/사용량 조회 최적화됨 |
-| 예배세트 생성 | ✅ 정상 | 자동저장 + UPSERT 패턴 |
-| 커뮤니티 피드 | ✅ 정상 | FeedSocialDataContext로 일괄 조회 |
-| 푸시 알림 | ✅ 정상 | VAPID 키 동적 로드 |
+**왜 이렇게 수정하는가:**
+- `setFormData` 내부에서 `prev`를 비교하면 React가 상태 변경 여부를 정확히 판단
+- 동일한 값이면 **동일 객체 반환** → 리렌더 없음
+- 외부에서 `formData`를 읽지 않으므로 의존성 문제 해결
 
 ---
 
-### 3. Z-Index 계층 (이전 수정 반영)
+### 수정 2: updateYoutubeLink 함수 최적화
 
-| 레이어 | 컴포넌트 | z-index |
-|--------|---------|---------|
-| 1 | BottomTabNavigation | `z-50` |
-| 2 | Dialog / Sheet | `z-[60]` |
-| 3 | Popover / Drawer / Select | `z-[70]` ✅ |
-| 4 | Toast | `z-[100]` |
-
----
-
-## 상세 수정 계획
-
-### Phase 1: Critical Fixes
-
-#### 1.1 config.toml에 sync-worship-leader-role-v2 등록
-
-```toml
-[functions.sync-worship-leader-role-v2]
-verify_jwt = true
-```
-
-#### 1.2 Dashboard userStats 쿼리 병렬화
-
+현재 문제:
 ```typescript
-// Before: 순차 실행
-const { data: setsData } = await supabase...
-const { data: communitiesData } = await supabase...
-
-// After: 병렬 실행
-const [setsResult, communitiesResult, postsResult, songsResult, usageResult] = 
-  await Promise.all([
-    supabase.from("service_sets").select("id, view_count").eq("created_by", user.id),
-    supabase.from("community_members").select("id").eq("user_id", user.id),
-    supabase.from("community_posts").select("id").eq("author_id", user.id),
-    supabase.from("songs").select("id").eq("created_by", user.id),
-    supabase.from("set_songs").select("id, service_sets!inner(created_by)")
-      .eq("service_sets.created_by", user.id)
-  ]);
-```
-
----
-
-### Phase 2: Performance Optimizations
-
-#### 2.1 syncWorshipLeaderRole 호출 빈도 제한
-
-```typescript
-// AuthContext.tsx
-const syncWorshipLeaderRole = async (): Promise<boolean> => {
-  // 기존 역할 체크 (유지)
-  if (roles.includes('worship_leader')) {
-    setRoleSyncComplete(true);
-    return false;
-  }
-  
-  // 추가: 24시간 내 이미 시도했으면 스킵
-  const lastSyncKey = `wl_sync_${user?.id}`;
-  const lastSync = localStorage.getItem(lastSyncKey);
-  if (lastSync && Date.now() - parseInt(lastSync) < 24 * 60 * 60 * 1000) {
-    console.log('[AuthContext] Skipping WL sync - tried within 24h');
-    setRoleSyncComplete(true);
-    return false;
-  }
-  
-  // Edge function 호출 후 타임스탬프 저장
-  // ...existing code...
-  localStorage.setItem(lastSyncKey, Date.now().toString());
+const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
+  const updated = [...youtubeLinks];  // 새 배열 생성
+  updated[index][field] = value;       // 원본 객체 직접 변경 (mutation!)
+  setYoutubeLinks(updated);
 };
 ```
 
-#### 2.2 staleTime 통일
+**문제점:**
+1. 스프레드 연산자로 새 배열 생성
+2. 그러나 내부 객체는 동일 참조 유지
+3. 객체 직접 변경(mutation)으로 React 비교 로직 혼란
 
+**After (해결):**
 ```typescript
-// 권장 패턴
-const CACHE_TIMES = {
-  SHORT: 30 * 1000,    // 30초 - 자주 변경되는 데이터
-  MEDIUM: 60 * 1000,   // 1분 - 일반 데이터
-  LONG: 5 * 60 * 1000, // 5분 - 거의 변경 안 되는 데이터
+const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
+  setYoutubeLinks(prev => prev.map((link, i) => 
+    i === index ? { ...link, [field]: value } : link
+  ));
 };
 ```
 
----
-
-### Phase 3: Reliability Improvements
-
-#### 3.1 자동저장 루프 복구 메커니즘
-
-```typescript
-// useAutoSaveDraft.ts
-// 루프 감지 후 30초 쿨다운 후 복구
-const LOOP_COOLDOWN = 30 * 1000;
-
-if (loopDetectedRef.current) {
-  if (Date.now() - loopDetectedAtRef.current > LOOP_COOLDOWN) {
-    console.log('[AutoSave] Resetting loop detection after cooldown');
-    loopDetectedRef.current = false;
-    saveCountRef.current = 0;
-  } else {
-    console.warn('[AutoSave] Still in cooldown period');
-    return null;
-  }
-}
-```
+**왜 이렇게 수정하는가:**
+- 함수형 업데이트 패턴 사용
+- 변경되는 객체만 새로 생성 (불변성 유지)
+- 나머지 객체는 참조 유지 → 최소한의 리렌더
 
 ---
 
-## 수정 대상 파일 요약
+## 수정 파일
 
-| 파일 | 변경 유형 | 우선순위 |
-|------|----------|---------|
-| `supabase/config.toml` | v2 함수 등록 | Critical |
-| `src/pages/Dashboard.tsx` | userStats 병렬화 | High |
-| `src/contexts/AuthContext.tsx` | sync 빈도 제한 | Medium |
-| `src/hooks/useAutoSaveDraft.ts` | 루프 복구 | Medium |
+| 파일 | 라인 | 변경 내용 |
+|------|------|----------|
+| `src/components/SongDialog.tsx` | 137-142 | useEffect 로직 안정화 |
+| `src/components/SongDialog.tsx` | 529-533 | updateYoutubeLink 불변성 패턴 적용 |
 
 ---
 
-## 성능 개선 예상 효과
+## 기대 결과
 
-| 측정 항목 | Before | After | 개선율 |
-|----------|--------|-------|--------|
-| Dashboard 로딩 | ~800ms | ~400ms | 50% |
-| 로그인 후 동기화 | 매번 호출 | 24시간당 1회 | 95% 감소 |
-| 네트워크 요청 (일일) | ~150회/user | ~80회/user | 47% 감소 |
+| 증상 | Before | After |
+|-----|--------|-------|
+| YouTube URL 입력 시 프리즈 | 발생 | 해결 |
+| 다이얼로그 응답성 | 느림/멈춤 | 즉각 반응 |
+| 입력 후 나갔다 다시 들어와야 함 | 필요함 | 불필요 |
+
+---
+
+## 테스트 체크리스트
+
+1. 새 곡 추가 다이얼로그 열기
+2. YouTube URL 입력 필드에 직접 URL 붙여넣기
+3. YouTube 검색 후 영상 선택
+4. 라벨 입력 후 저장 버튼 클릭
+5. 위 모든 단계에서 프리즈 없이 동작 확인
 
