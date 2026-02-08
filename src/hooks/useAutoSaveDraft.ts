@@ -82,6 +82,7 @@ const getItemsSignature = (items: SetItem[]) =>
           bpm: item.data.bpm ?? null,
           time_signature: item.data.time_signature ?? null,
           energy_level: item.data.energy_level ?? null,
+          score_key: item.data.score_key ?? null,
         };
       }
 
@@ -403,6 +404,7 @@ export async function upsertSongsAndComponents(
         bpm: item.data.bpm || null,
         time_signature: item.data.time_signature || null,
         energy_level: item.data.energy_level || null,
+        score_key: item.data.score_key || null,
       };
 
       if (item.dbId) {
