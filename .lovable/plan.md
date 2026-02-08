@@ -1,87 +1,61 @@
 
-# 신규회원 리더보드 데이터 불일치 & 레벨명 번역 누락 수정
+# 온보딩 체크리스트 플래시 현상 수정 및 조건 완화
 
 ## 발견된 문제
 
-### 문제 1: 관리자와 일반 사용자가 보는 "신규회원" 데이터가 다름
+### 문제 1: 화면 플래시 현상 ("잠깐 보였다가 사라짐")
 
-**원인**: `profiles` 테이블의 RLS 정책 문제
+**원인**: React Query 데이터 로딩 중 `undefined` 상태에서 체크리스트가 렌더링됨
 
-현재 일반 사용자는 아래 조건을 충족하는 프로필만 볼 수 있음:
-- 본인 프로필
-- 같은 커뮤니티에 속한 멤버
-- 커뮤니티 리더
-- **씨앗(seeds) > 0인 사용자만** (리더보드용 정책)
-
-```sql
--- 문제가 되는 RLS 정책
-"Can view leaderboard user profiles"
-WHERE user_seeds.total_seeds > 0
+```
+초기 상태: hasCommunity=undefined → 조건 false → 체크리스트 표시 ⚠️
+로딩 완료: hasCommunity=true → 조건 true → 체크리스트 숨김 ✅
 ```
 
-**결과**: 가입 후 아직 활동을 하지 않은 신규회원(total_seeds = 0)은 일반 사용자에게 보이지 않음. 관리자는 `Admins can view all profiles` 정책으로 모든 사용자를 볼 수 있어서 데이터가 다르게 표시됨.
+**결과**: 완료된 사용자에게도 0.5~1초간 체크리스트가 번쩍였다가 사라짐
 
-### 문제 2: 레벨명 번역 누락 (가지 등)
+### 문제 2: 조건이 너무 엄격함
 
-**원인**: `SeedWidget.tsx`에서 언어 설정과 관계없이 `name_ko`만 하드코딩으로 표시
-
-```typescript
-// 현재 코드 (라인 85)
-{t('seeds.currentLevel')}: {displayData.currentLevel.name_ko}
-
-// 올바른 코드
-{t('seeds.currentLevel')}: {language === "ko" 
-  ? displayData.currentLevel.name_ko 
-  : displayData.currentLevel.name_en}
-```
+현재: `role='owner'`인 커뮤니티만 체크
+요청: 어떤 역할이든 커뮤니티에 속해있으면 완료 처리
 
 ---
 
 ## 수정 계획
 
-### 1. RLS 정책 수정 - 신규회원도 리더보드에 표시
-
-**파일**: SQL 마이그레이션
-
-기존 정책을 수정하여 신규회원(total_seeds >= 0 또는 user_seeds 레코드가 없어도)도 볼 수 있도록 변경:
-
-```sql
--- 기존 정책 삭제
-DROP POLICY IF EXISTS "Can view leaderboard user profiles" ON profiles;
-
--- 새 정책 생성: 인증된 사용자는 모든 프로필의 기본 정보 조회 가능
--- (신규회원 포함)
-CREATE POLICY "Authenticated users can view basic profiles for leaderboard"
-  ON profiles
-  FOR SELECT
-  TO authenticated
-  USING (true);
-```
-
-또는 더 제한적인 접근:
-
-```sql
--- 신규회원도 포함하도록 조건 완화
-CREATE POLICY "Can view leaderboard user profiles"
-  ON profiles
-  FOR SELECT
-  TO public
-  USING (
-    auth.uid() IS NOT NULL
-  );
-```
-
-### 2. SeedWidget 언어 설정 반영
-
-**파일**: `src/components/seeds/SeedWidget.tsx`
+### 1. 로딩 상태 체크 추가 (플래시 방지)
 
 ```typescript
-// 라인 85 수정
-<p className="text-sm font-medium">
-  {t('seeds.currentLevel')}: {language === "ko" 
-    ? displayData.currentLevel.name_ko 
-    : displayData.currentLevel.name_en}
-</p>
+// 데이터 로딩 중에는 아무것도 표시하지 않음
+const { data: communityData, isLoading: communityLoading } = useQuery(...);
+const { data: hasInvitedMembers, isLoading: invitedLoading } = useQuery(...);
+const { data: hasSet, isLoading: setLoading } = useQuery(...);
+
+const isDataLoading = communityLoading || invitedLoading || setLoading;
+
+// 로딩 중이면 렌더링하지 않음 (플래시 방지)
+if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
+  return null;
+}
+
+// 모든 단계 완료 시 숨김
+if (hasCommunity && hasInvitedMembers && hasSet) {
+  return null;
+}
+```
+
+### 2. 조건 완화: 어떤 역할이든 커뮤니티 소속이면 완료
+
+**Before:**
+```typescript
+.eq("role", "owner")  // 오너만 체크
+```
+
+**After:**
+```typescript
+// role 필터 제거 - 어떤 역할이든 커뮤니티 멤버면 OK
+.eq("user_id", user.id)
+.limit(1)
 ```
 
 ---
@@ -90,24 +64,88 @@ CREATE POLICY "Can view leaderboard user profiles"
 
 | 파일 | 변경 내용 |
 |------|----------|
-| SQL 마이그레이션 | `profiles` 테이블 RLS 정책 수정 - 신규회원 조회 허용 |
-| `src/components/seeds/SeedWidget.tsx` | 레벨명 표시 시 언어 설정 반영 |
+| `src/components/dashboard/WLOnboardingChecklist.tsx` | 로딩 상태 체크 추가 + role 필터 완화 |
 
 ---
 
-## 기대 효과
+## 상세 코드 변경
 
-| 항목 | Before | After |
+### 라인 35-49: 커뮤니티 쿼리 수정
+
+```typescript
+const { data: communityData, isLoading: communityLoading } = useQuery({
+  queryKey: ["wl-onboarding-community", user?.id],
+  queryFn: async () => {
+    if (!user) return null;
+    const { data, error } = await supabase
+      .from("community_members")
+      .select("community_id")
+      .eq("user_id", user.id)
+      // role 필터 제거 - 어떤 역할이든 OK
+      .limit(1);
+    if (error) throw error;
+    return data?.[0] || null;
+  },
+  enabled: !!user && !!profile && isWorshipLeader,
+  staleTime: 60 * 1000,
+});
+```
+
+### 라인 56-69: 초대 멤버 쿼리에 isLoading 추가
+
+```typescript
+const { data: hasInvitedMembers, isLoading: invitedLoading } = useQuery({
+  // ... 기존 로직 유지
+});
+```
+
+### 라인 72-86: 세트 쿼리에 isLoading 추가
+
+```typescript
+const { data: hasSet, isLoading: setLoading } = useQuery({
+  // ... 기존 로직 유지
+});
+```
+
+### 라인 88-91: 조건문 수정 (플래시 방지)
+
+```typescript
+// 데이터 로딩 중이면 아무것도 표시하지 않음 (플래시 방지)
+const isDataLoading = communityLoading || invitedLoading || setLoading;
+
+if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
+  return null;
+}
+
+// 모든 단계 완료 시 숨김
+if (hasCommunity && hasInvitedMembers && hasSet) {
+  return null;
+}
+```
+
+---
+
+## 결과 비교
+
+| 상황 | Before | After |
 |------|--------|-------|
-| 신규회원 리더보드 | 관리자만 전체 표시 | 모든 사용자 동일하게 표시 |
-| 레벨명 표시 | 항상 한국어 | 언어 설정에 따라 한/영 표시 |
+| sky 계정 (완료 상태) | 잠깐 번쩍 후 숨김 | 처음부터 안 보임 ✅ |
+| 새 예배인도자 | 표시됨 | 표시됨 ✅ |
+| 멤버로 가입한 WL | ❌ 체크리스트 표시 | ✅ 완료로 처리 |
+| 데이터 로딩 중 | ⚠️ 플래시 발생 | 아무것도 안 보임 ✅ |
 
 ---
 
-## 보안 고려사항
+## 참고: 번역 문제
 
-프로필 조회 정책 완화 시, 노출되는 데이터 범위 확인 필요:
-- `SeedLeaderboard`에서는 `id, full_name, avatar_url, created_at`만 조회
-- 민감 정보(email, phone 등)는 별도 정책으로 보호 필요
+사용자가 언급한 "seed level: 가지" 번역 누락 문제는 이미 이전 수정에서 해결되었습니다:
 
-현재 다른 정책들이 email 등 민감 정보를 이미 보호하고 있으므로, SELECT 정책 완화는 기본 정보만 노출됨.
+```typescript
+// SeedWidget.tsx - 이미 수정 완료
+{language === "ko" 
+  ? displayData.currentLevel.name_ko  // "가지"
+  : displayData.currentLevel.name_en  // "Branch"
+}
+```
+
+데이터베이스에도 "가지" 레벨이 정상적으로 존재합니다 (Level 4).
