@@ -1,61 +1,73 @@
 
-# 온보딩 체크리스트 플래시 현상 수정 및 조건 완화
+# 인도자 선택 악보가 인쇄/전체화면에 반영되도록 수정
 
 ## 발견된 문제
 
-### 문제 1: 화면 플래시 현상 ("잠깐 보였다가 사라짐")
+### 문제: 악보 키 선택 UI와 저장 로직 불일치
 
-**원인**: React Query 데이터 로딩 중 `undefined` 상태에서 체크리스트가 렌더링됨
+**SetSongItem.tsx (인도자 악보 선택 화면):**
 
+```typescript
+// 현재 코드 - 문제
+value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
 ```
-초기 상태: hasCommunity=undefined → 조건 false → 체크리스트 표시 ⚠️
-로딩 완료: hasCommunity=true → 조건 true → 체크리스트 숨김 ✅
-```
 
-**결과**: 완료된 사용자에게도 0.5~1초간 체크리스트가 번쩍였다가 사라짐
+- `override_score_file_url`을 기준으로 현재 선택된 키를 표시
+- 하지만 저장할 때는 `score_key`를 저장함
+- 결과: UI 표시와 저장 값이 불일치할 수 있음
 
-### 문제 2: 조건이 너무 엄격함
-
-현재: `role='owner'`인 커뮤니티만 체크
-요청: 어떤 역할이든 커뮤니티에 속해있으면 완료 처리
+**BandView/PrintOptionsDialog:**
+- `score_key || key`를 우선 사용하도록 되어 있어서 이 부분은 정상
+- 하지만 `score_key`가 null인 레코드가 많아서 `key` (실제 연주키)가 사용됨
 
 ---
 
 ## 수정 계획
 
-### 1. 로딩 상태 체크 추가 (플래시 방지)
+### 1. SetSongItem.tsx - Select value 수정
+
+**파일**: `src/components/SetSongItem.tsx`
+
+현재 선택된 악보 키를 `score_key`를 우선 사용하여 표시:
 
 ```typescript
-// 데이터 로딩 중에는 아무것도 표시하지 않음
-const { data: communityData, isLoading: communityLoading } = useQuery(...);
-const { data: hasInvitedMembers, isLoading: invitedLoading } = useQuery(...);
-const { data: hasSet, isLoading: setLoading } = useQuery(...);
+// Before (라인 196)
+value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
 
-const isDataLoading = communityLoading || invitedLoading || setLoading;
-
-// 로딩 중이면 렌더링하지 않음 (플래시 방지)
-if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
-  return null;
-}
-
-// 모든 단계 완료 시 숨김
-if (hasCommunity && hasInvitedMembers && hasSet) {
-  return null;
-}
+// After
+value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
 ```
 
-### 2. 조건 완화: 어떤 역할이든 커뮤니티 소속이면 완료
+### 2. 악보가 없는 키도 악보 선택에서 제외
 
-**Before:**
-```typescript
-.eq("role", "owner")  // 오너만 체크
-```
+현재 `keyVariations`에 악보가 없는 키(`scoreUrl: null`)도 포함될 수 있음.
+실제로 악보가 있는 키만 선택 가능하도록 필터링:
 
-**After:**
 ```typescript
-// role 필터 제거 - 어떤 역할이든 커뮤니티 멤버면 OK
-.eq("user_id", user.id)
-.limit(1)
+// keyVariations 생성 로직 수정
+const keyVariations = useMemo(() => {
+  const variations: { key: string; scoreUrl: string | null }[] = [];
+  
+  // song_scores에서 키별 악보 추가
+  if (song?.song_scores && song.song_scores.length > 0) {
+    const uniqueKeys = new Map<string, string>();
+    song.song_scores.forEach((score: any) => {
+      if (score.key && !uniqueKeys.has(score.key)) {
+        uniqueKeys.set(score.key, score.file_url);
+      }
+    });
+    uniqueKeys.forEach((url, key) => {
+      variations.push({ key, scoreUrl: url });
+    });
+  }
+  
+  // 레거시 score_file_url이 있는 default_key 추가
+  if (song?.default_key && song?.score_file_url && !variations.find(v => v.key === song.default_key)) {
+    variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url });
+  }
+  
+  return variations;
+}, [song]);
 ```
 
 ---
@@ -64,88 +76,75 @@ if (hasCommunity && hasInvitedMembers && hasSet) {
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/dashboard/WLOnboardingChecklist.tsx` | 로딩 상태 체크 추가 + role 필터 완화 |
+| `src/components/SetSongItem.tsx` | Select value에 `score_key` 우선 사용 + 악보 없는 키 필터링 |
 
 ---
 
 ## 상세 코드 변경
 
-### 라인 35-49: 커뮤니티 쿼리 수정
+### SetSongItem.tsx
+
+**라인 55-74: keyVariations useMemo 수정**
 
 ```typescript
-const { data: communityData, isLoading: communityLoading } = useQuery({
-  queryKey: ["wl-onboarding-community", user?.id],
-  queryFn: async () => {
-    if (!user) return null;
-    const { data, error } = await supabase
-      .from("community_members")
-      .select("community_id")
-      .eq("user_id", user.id)
-      // role 필터 제거 - 어떤 역할이든 OK
-      .limit(1);
-    if (error) throw error;
-    return data?.[0] || null;
-  },
-  enabled: !!user && !!profile && isWorshipLeader,
-  staleTime: 60 * 1000,
-});
+const keyVariations = useMemo(() => {
+  const variations: { key: string; scoreUrl: string }[] = [];
+  
+  // song_scores에서 악보가 있는 키만 추가
+  if (song?.song_scores && song.song_scores.length > 0) {
+    const uniqueKeys = new Map<string, string>();
+    song.song_scores.forEach((score: any) => {
+      if (score.key && score.file_url && !uniqueKeys.has(score.key)) {
+        uniqueKeys.set(score.key, score.file_url);
+      }
+    });
+    uniqueKeys.forEach((url, key) => {
+      variations.push({ key, scoreUrl: url });
+    });
+  }
+  
+  // 레거시 score_file_url이 있는 경우에만 default_key 추가
+  if (song?.default_key && song?.score_file_url && !variations.find(v => v.key === song.default_key)) {
+    variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url });
+  }
+  
+  return variations;
+}, [song]);
 ```
 
-### 라인 56-69: 초대 멤버 쿼리에 isLoading 추가
+**라인 196: Select value 수정**
 
 ```typescript
-const { data: hasInvitedMembers, isLoading: invitedLoading } = useQuery({
-  // ... 기존 로직 유지
-});
-```
-
-### 라인 72-86: 세트 쿼리에 isLoading 추가
-
-```typescript
-const { data: hasSet, isLoading: setLoading } = useQuery({
-  // ... 기존 로직 유지
-});
-```
-
-### 라인 88-91: 조건문 수정 (플래시 방지)
-
-```typescript
-// 데이터 로딩 중이면 아무것도 표시하지 않음 (플래시 방지)
-const isDataLoading = communityLoading || invitedLoading || setLoading;
-
-if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
-  return null;
-}
-
-// 모든 단계 완료 시 숨김
-if (hasCommunity && hasInvitedMembers && hasSet) {
-  return null;
-}
+// score_key 우선 사용
+value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
 ```
 
 ---
 
 ## 결과 비교
 
-| 상황 | Before | After |
-|------|--------|-------|
-| sky 계정 (완료 상태) | 잠깐 번쩍 후 숨김 | 처음부터 안 보임 ✅ |
-| 새 예배인도자 | 표시됨 | 표시됨 ✅ |
-| 멤버로 가입한 WL | ❌ 체크리스트 표시 | ✅ 완료로 처리 |
-| 데이터 로딩 중 | ⚠️ 플래시 발생 | 아무것도 안 보임 ✅ |
+| 시나리오 | Before | After |
+|---------|--------|-------|
+| 인도자가 G키 악보 선택 | score_key=G 저장, UI는 URL 기준 표시 | score_key=G 저장, UI도 G 표시 ✅ |
+| 인쇄 시 | score_key가 null이면 key 사용 | score_key 우선 사용 ✅ |
+| 전체화면 시 | score_key가 null이면 key 사용 | score_key 우선 사용 ✅ |
+| 악보 없는 키 | 선택 가능 (문제) | 선택 불가 ✅ |
 
 ---
 
-## 참고: 번역 문제
+## 참고: 이미 올바르게 구현된 부분
 
-사용자가 언급한 "seed level: 가지" 번역 누락 문제는 이미 이전 수정에서 해결되었습니다:
-
+**BandView.tsx (라인 423-425):**
 ```typescript
-// SeedWidget.tsx - 이미 수정 완료
-{language === "ko" 
-  ? displayData.currentLevel.name_ko  // "가지"
-  : displayData.currentLevel.name_en  // "Branch"
-}
+// Priority: score_key (leader's chosen score key) > key (performance key)
+const leaderScoreKey = setSong.score_key || setSong.key;
+const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
 ```
 
-데이터베이스에도 "가지" 레벨이 정상적으로 존재합니다 (Level 4).
+**PrintOptionsDialog.tsx (라인 188, 297):**
+```typescript
+// Priority: score_key (leader's chosen score key) > key (performance key)
+const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
+```
+
+이 부분은 이미 `score_key`를 우선 사용하도록 구현되어 있어서 수정 불필요.
