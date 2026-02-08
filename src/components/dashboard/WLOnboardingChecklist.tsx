@@ -31,8 +31,8 @@ export function WLOnboardingChecklist() {
     localStorage.setItem('wl-onboarding-dismissed', 'true');
   };
 
-  // Check if user has communities and get the first one
-  const { data: communityData } = useQuery({
+  // Check if user has communities and get the first one (any role counts)
+  const { data: communityData, isLoading: communityLoading } = useQuery({
     queryKey: ["wl-onboarding-community", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -40,7 +40,7 @@ export function WLOnboardingChecklist() {
         .from("community_members")
         .select("community_id")
         .eq("user_id", user.id)
-        .eq("role", "owner")
+        // role 필터 제거 - 어떤 역할이든 커뮤니티 소속이면 OK
         .limit(1);
       if (error) throw error;
       return data?.[0] || null;
@@ -53,7 +53,7 @@ export function WLOnboardingChecklist() {
   const firstCommunityId = communityData?.community_id;
 
   // Check if user has invited team members (community has more than 1 member)
-  const { data: hasInvitedMembers } = useQuery({
+  const { data: hasInvitedMembers, isLoading: invitedLoading } = useQuery({
     queryKey: ["wl-onboarding-invited", firstCommunityId],
     queryFn: async () => {
       if (!firstCommunityId) return false;
@@ -69,7 +69,7 @@ export function WLOnboardingChecklist() {
   });
 
   // Check if user has created any worship sets
-  const { data: hasSet } = useQuery({
+  const { data: hasSet, isLoading: setLoading } = useQuery({
     queryKey: ["wl-onboarding-set", user?.id],
     queryFn: async () => {
       if (!user) return false;
@@ -85,8 +85,15 @@ export function WLOnboardingChecklist() {
     staleTime: 60 * 1000,
   });
 
-  // Don't show if profile not loaded, not worship leader, dismissed, or already completed all steps
-  if (!profile || !isWorshipLeader || dismissed || (hasCommunity && hasInvitedMembers && hasSet)) {
+  // 데이터 로딩 중이면 아무것도 표시하지 않음 (플래시 방지)
+  const isDataLoading = communityLoading || invitedLoading || setLoading;
+
+  if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
+    return null;
+  }
+
+  // 모든 단계 완료 시 숨김
+  if (hasCommunity && hasInvitedMembers && hasSet) {
     return null;
   }
 
