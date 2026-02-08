@@ -48,15 +48,15 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   const hasImportedLyrics = Boolean(setSong.lyrics && setSong.lyrics.trim());
   const songHasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
 
-  // Get available key variations from song_scores
+  // Get available key variations from song_scores (only keys with actual score files)
   const keyVariations = useMemo(() => {
-    const variations: { key: string; scoreUrl: string | null }[] = [];
+    const variations: { key: string; scoreUrl: string }[] = [];
     
-    // Add variations from song_scores
+    // Add variations from song_scores - only include keys with actual file_url
     if (song?.song_scores && song.song_scores.length > 0) {
       const uniqueKeys = new Map<string, string>();
       song.song_scores.forEach((score: any) => {
-        if (score.key && !uniqueKeys.has(score.key)) {
+        if (score.key && score.file_url && !uniqueKeys.has(score.key)) {
           uniqueKeys.set(score.key, score.file_url);
         }
       });
@@ -65,9 +65,9 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
       });
     }
     
-    // Add default key if not already in variations and has legacy score_file_url
-    if (song?.default_key && !variations.find(v => v.key === song.default_key)) {
-      variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url || null });
+    // Add default key only if it has a legacy score_file_url
+    if (song?.default_key && song?.score_file_url && !variations.find(v => v.key === song.default_key)) {
+      variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url });
     }
     
     return variations;
@@ -193,7 +193,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   <label className="text-xs text-muted-foreground">악보 키</label>
                   {keyVariations.length > 0 ? (
                     <Select 
-                      value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""} 
+                      value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""} 
                       onValueChange={handleKeyVariationChange}
                     >
                       <SelectTrigger className="mt-1">
