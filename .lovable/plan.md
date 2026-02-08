@@ -1,73 +1,108 @@
 
-# 인도자 선택 악보가 인쇄/전체화면에 반영되도록 수정
+# 인도자 선택 악보 키(`score_key`)가 DB에 저장되지 않는 문제 수정
 
 ## 발견된 문제
 
-### 문제: 악보 키 선택 UI와 저장 로직 불일치
+### 핵심 버그: `score_key`가 DB에 저장되지 않음
 
-**SetSongItem.tsx (인도자 악보 선택 화면):**
+**현재 상황:**
+- "내 영혼은 안전합니다" 곡에 A, E, F, G 키 악보가 모두 있음
+- 인도자가 SetBuilder에서 악보 키를 선택함
+- 하지만 DB 레코드: `score_key = NULL`
 
-```typescript
-// 현재 코드 - 문제
-value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
+**원인 분석:**
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ SetSongItem.tsx                                                     │
+│ handleKeyVariationChange() → { score_key: selectedKey }             │
+│                              ✅ 로컬 상태에 저장                     │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ SetBuilder.tsx                                                      │
+│ handleUpdateItem() → items 상태 업데이트                             │
+│                      ✅ score_key 포함                               │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ useAutoSaveDraft.ts                                                 │
+│ upsertSongsAndComponents()                                          │
+│                                                                     │
+│ const songData = {                                                  │
+│   key: item.data.key,                                               │
+│   override_score_file_url: item.data.override_score_file_url,       │
+│   // score_key: ❌ 누락됨!                                           │
+│ };                                                                  │
+└───────────────────────────────┬─────────────────────────────────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│ set_songs 테이블                                                     │
+│ score_key = NULL  ❌                                                 │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-- `override_score_file_url`을 기준으로 현재 선택된 키를 표시
-- 하지만 저장할 때는 `score_key`를 저장함
-- 결과: UI 표시와 저장 값이 불일치할 수 있음
-
-**BandView/PrintOptionsDialog:**
-- `score_key || key`를 우선 사용하도록 되어 있어서 이 부분은 정상
-- 하지만 `score_key`가 null인 레코드가 많아서 `key` (실제 연주키)가 사용됨
+**데이터베이스 증거:**
+```sql
+-- "내 영혼은 안전합니다" 세트 곡 레코드
+score_key: NULL       ❌ (저장 안됨)
+performance_key: E    ✅ (저장됨)
+override_score_file_url: NULL
+```
 
 ---
 
 ## 수정 계획
 
-### 1. SetSongItem.tsx - Select value 수정
+### 1. `upsertSongsAndComponents`에 `score_key` 추가
 
-**파일**: `src/components/SetSongItem.tsx`
+**파일**: `src/hooks/useAutoSaveDraft.ts`
 
-현재 선택된 악보 키를 `score_key`를 우선 사용하여 표시:
+**라인 393-406 수정:**
 
 ```typescript
-// Before (라인 196)
-value={keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
-
-// After
-value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
+const songData = {
+  service_set_id: setId,
+  song_id: item.data.song_id || item.data.song?.id,
+  position,
+  key: item.data.key || item.data.song?.default_key,
+  key_change_to: item.data.key_change_to || null,
+  custom_notes: item.data.custom_notes || "",
+  override_score_file_url: item.data.override_score_file_url || null,
+  override_youtube_url: item.data.override_youtube_url || null,
+  lyrics: item.data.lyrics || null,
+  bpm: item.data.bpm || null,
+  time_signature: item.data.time_signature || null,
+  energy_level: item.data.energy_level || null,
+  score_key: item.data.score_key || null,  // ✅ 추가!
+};
 ```
 
-### 2. 악보가 없는 키도 악보 선택에서 제외
+### 2. `getItemsSignature`에 `score_key` 추가 (변경 감지용)
 
-현재 `keyVariations`에 악보가 없는 키(`scoreUrl: null`)도 포함될 수 있음.
-실제로 악보가 있는 키만 선택 가능하도록 필터링:
+**파일**: `src/hooks/useAutoSaveDraft.ts`
+
+**라인 69-85 수정:**
+
+`score_key`가 변경되었을 때 자동 저장이 트리거되도록 시그니처에 포함:
 
 ```typescript
-// keyVariations 생성 로직 수정
-const keyVariations = useMemo(() => {
-  const variations: { key: string; scoreUrl: string | null }[] = [];
-  
-  // song_scores에서 키별 악보 추가
-  if (song?.song_scores && song.song_scores.length > 0) {
-    const uniqueKeys = new Map<string, string>();
-    song.song_scores.forEach((score: any) => {
-      if (score.key && !uniqueKeys.has(score.key)) {
-        uniqueKeys.set(score.key, score.file_url);
-      }
-    });
-    uniqueKeys.forEach((url, key) => {
-      variations.push({ key, scoreUrl: url });
-    });
-  }
-  
-  // 레거시 score_file_url이 있는 default_key 추가
-  if (song?.default_key && song?.score_file_url && !variations.find(v => v.key === song.default_key)) {
-    variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url });
-  }
-  
-  return variations;
-}, [song]);
+return {
+  type: "song" as const,
+  localId: item.id,
+  position,
+  song_id: songId,
+  key: item.data.key ?? item.data.song?.default_key ?? null,
+  key_change_to: item.data.key_change_to ?? null,
+  custom_notes: item.data.custom_notes ?? "",
+  override_score_file_url: item.data.override_score_file_url ?? null,
+  override_youtube_url: item.data.override_youtube_url ?? null,
+  lyrics: item.data.lyrics ?? null,
+  bpm: item.data.bpm ?? null,
+  time_signature: item.data.time_signature ?? null,
+  energy_level: item.data.energy_level ?? null,
+  score_key: item.data.score_key ?? null,  // ✅ 추가!
+};
 ```
 
 ---
@@ -76,48 +111,7 @@ const keyVariations = useMemo(() => {
 
 | 파일 | 변경 내용 |
 |------|----------|
-| `src/components/SetSongItem.tsx` | Select value에 `score_key` 우선 사용 + 악보 없는 키 필터링 |
-
----
-
-## 상세 코드 변경
-
-### SetSongItem.tsx
-
-**라인 55-74: keyVariations useMemo 수정**
-
-```typescript
-const keyVariations = useMemo(() => {
-  const variations: { key: string; scoreUrl: string }[] = [];
-  
-  // song_scores에서 악보가 있는 키만 추가
-  if (song?.song_scores && song.song_scores.length > 0) {
-    const uniqueKeys = new Map<string, string>();
-    song.song_scores.forEach((score: any) => {
-      if (score.key && score.file_url && !uniqueKeys.has(score.key)) {
-        uniqueKeys.set(score.key, score.file_url);
-      }
-    });
-    uniqueKeys.forEach((url, key) => {
-      variations.push({ key, scoreUrl: url });
-    });
-  }
-  
-  // 레거시 score_file_url이 있는 경우에만 default_key 추가
-  if (song?.default_key && song?.score_file_url && !variations.find(v => v.key === song.default_key)) {
-    variations.unshift({ key: song.default_key, scoreUrl: song.score_file_url });
-  }
-  
-  return variations;
-}, [song]);
-```
-
-**라인 196: Select value 수정**
-
-```typescript
-// score_key 우선 사용
-value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""}
-```
+| `src/hooks/useAutoSaveDraft.ts` | `score_key` 저장 및 변경 감지 로직 추가 |
 
 ---
 
@@ -125,26 +119,59 @@ value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.overr
 
 | 시나리오 | Before | After |
 |---------|--------|-------|
-| 인도자가 G키 악보 선택 | score_key=G 저장, UI는 URL 기준 표시 | score_key=G 저장, UI도 G 표시 ✅ |
-| 인쇄 시 | score_key가 null이면 key 사용 | score_key 우선 사용 ✅ |
-| 전체화면 시 | score_key가 null이면 key 사용 | score_key 우선 사용 ✅ |
-| 악보 없는 키 | 선택 가능 (문제) | 선택 불가 ✅ |
+| 인도자가 G키 악보 선택 | `score_key=NULL`, DB 저장 안됨 | `score_key=G`, DB에 저장됨 ✅ |
+| 악보만 인쇄 | E키 악보 출력 (key fallback) | G키 악보 출력 ✅ |
+| 전체화면 보기 | E키 악보 표시 (key fallback) | G키 악보 표시 ✅ |
+| 기존 레코드 수정 | `score_key` 유지 안됨 | `score_key` 정상 업데이트 ✅ |
 
 ---
 
 ## 참고: 이미 올바르게 구현된 부분
 
-**BandView.tsx (라인 423-425):**
+다음 파일들은 이미 `score_key`를 올바르게 사용하도록 구현됨:
+
+- **SetSongItem.tsx**: `handleKeyVariationChange`에서 `score_key` 저장 ✅
+- **BandView.tsx**: `score_key || key` 우선순위 사용 ✅
+- **PrintOptionsDialog.tsx**: `score_key || key || default_key` 우선순위 사용 ✅
+
+**유일한 문제**: 저장 함수에서 `score_key`가 누락되어 DB에 저장되지 않음
+
+---
+
+## 기술적 세부 사항
+
+### 변경 1: getItemsSignature (라인 69-86)
+
 ```typescript
-// Priority: score_key (leader's chosen score key) > key (performance key)
-const leaderScoreKey = setSong.score_key || setSong.key;
-const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
+// Before
+return {
+  type: "song" as const,
+  // ... 기존 필드들
+  energy_level: item.data.energy_level ?? null,
+};
+
+// After  
+return {
+  type: "song" as const,
+  // ... 기존 필드들
+  energy_level: item.data.energy_level ?? null,
+  score_key: item.data.score_key ?? null,  // 추가
+};
 ```
 
-**PrintOptionsDialog.tsx (라인 188, 297):**
-```typescript
-// Priority: score_key (leader's chosen score key) > key (performance key)
-const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
-```
+### 변경 2: upsertSongsAndComponents songData (라인 393-406)
 
-이 부분은 이미 `score_key`를 우선 사용하도록 구현되어 있어서 수정 불필요.
+```typescript
+// Before
+const songData = {
+  // ... 기존 필드들
+  energy_level: item.data.energy_level || null,
+};
+
+// After
+const songData = {
+  // ... 기존 필드들
+  energy_level: item.data.energy_level || null,
+  score_key: item.data.score_key || null,  // 추가
+};
+```
