@@ -2084,6 +2084,8 @@ const SetBuilder = () => {
                                 onUpdate={handleUpdateItem}
                                 onMoveUp={handleMoveUp}
                                 onMoveDown={handleMoveDown}
+                                dbId={item.dbId}
+                                status={status}
                               />
                             ) : (
                               <SetComponentItem
