@@ -18,6 +18,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SetSongItemProps {
   setSong: any;
@@ -27,9 +28,11 @@ interface SetSongItemProps {
   onUpdate: (index: number, updates: any) => void;
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
+  dbId?: string;
+  status?: "draft" | "published";
 }
 
-export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetSongItemProps) => {
+export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown, dbId, status }: SetSongItemProps) => {
   // Use the setSong's id if available, otherwise fallback to index-based id
   const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
@@ -78,12 +81,33 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"
   ];
 
-  const handleKeyVariationChange = (selectedKey: string) => {
+  const handleKeyVariationChange = async (selectedKey: string) => {
     const variation = keyVariations.find(v => v.key === selectedKey);
+    
+    // Update local state
     onUpdate(index, { 
       override_score_file_url: variation?.scoreUrl || null,
       score_key: selectedKey  // Save the selected score key for BandView
     });
+    
+    // For published sets, save directly to DB since auto-save is disabled
+    if (dbId && status === "published") {
+      const { error } = await supabase
+        .from("set_songs")
+        .update({ 
+          score_key: selectedKey,
+          override_score_file_url: variation?.scoreUrl || null
+        })
+        .eq("id", dbId);
+      
+      if (!error) {
+        toast.success("악보 키가 저장되었습니다");
+        queryClient.invalidateQueries({ queryKey: ["band-view-songs"] });
+      } else {
+        console.error("Failed to save score_key:", error);
+        toast.error("악보 키 저장에 실패했습니다");
+      }
+    }
   };
 
   const handlePerformanceKeyChange = (performanceKey: string) => {

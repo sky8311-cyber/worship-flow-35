@@ -30,6 +30,7 @@ interface PrintOptionsDialogProps {
   setSongs: any[];
   setComponents: any[];
   allSongScores?: SongScore[];
+  browsingKeyIndex?: Record<string, number>;
 }
 
 type PrintMode = "order" | "scores" | "full";
@@ -50,6 +51,7 @@ export function PrintOptionsDialog({
   setSongs,
   setComponents,
   allSongScores = [],
+  browsingKeyIndex = {},
 }: PrintOptionsDialogProps) {
   const { t, language } = useTranslation();
   const [printMode, setPrintMode] = useState<PrintMode>("order");
@@ -184,11 +186,19 @@ export function PrintOptionsDialog({
       const printScores: { title: string; key: string; url: string }[] = [];
       setSongs.forEach((setSong) => {
         const song = setSong.songs;
-        // Priority: score_key (leader's chosen score key) > key (performance key)
-        const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
         
-        // Get scores for this song from allSongScores prop
+        // Get available keys for this song
         const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
+        const availableKeys = [...new Set(songScores.map(s => s.key).filter(Boolean))];
+        const currentBrowsingIdx = browsingKeyIndex[setSong.id];
+        
+        // Priority: browsing key > saved score_key > performance key
+        const selectedKey = 
+          (currentBrowsingIdx !== undefined && availableKeys[currentBrowsingIdx])
+          || setSong.score_key 
+          || setSong.key 
+          || song?.default_key 
+          || "";
         
         // First try exact key match
         let scoreFiles = songScores
@@ -293,11 +303,21 @@ export function PrintOptionsDialog({
       // Full mode - one page per song with all info + score
       content = setSongs.map((setSong, index) => {
         const song = setSong.songs;
-        // Priority: score_key (leader's chosen score key) > key (performance key)
-        const selectedKey = setSong.score_key || setSong.key || song?.default_key || "";
+        
+        // Get available keys for this song
+        const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
+        const availableKeys = [...new Set(songScores.map(s => s.key).filter(Boolean))];
+        const currentBrowsingIdx = browsingKeyIndex[setSong.id];
+        
+        // Priority: browsing key > saved score_key > performance key
+        const selectedKey = 
+          (currentBrowsingIdx !== undefined && availableKeys[currentBrowsingIdx])
+          || setSong.score_key 
+          || setSong.key 
+          || song?.default_key 
+          || "";
         
         // Get score URL
-        const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
         let scoreUrl = "";
         
         const keyScores = songScores

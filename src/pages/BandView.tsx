@@ -409,6 +409,7 @@ const BandView = () => {
   };
 
   // Collect all scores for fullscreen viewer
+  // Priority: browsingKeyIndex (currently viewed key) > score_key (leader's saved choice) > key (performance key)
   const allScores = useMemo(() => {
     const scores: Array<{
       songTitle: string;
@@ -420,8 +421,17 @@ const BandView = () => {
 
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
-      // Priority: score_key (leader's chosen score key) > key (performance key)
-      const leaderScoreKey = setSong.score_key || setSong.key;
+      
+      // Get available keys for this song
+      const availableKeys = getAvailableKeysForSong(setSong.song_id);
+      const currentBrowsingIdx = browsingKeyIndex[setSong.id];
+      
+      // Priority: browsing key > saved score_key > performance key
+      const leaderScoreKey = 
+        (currentBrowsingIdx !== undefined && availableKeys[currentBrowsingIdx])
+        || setSong.score_key 
+        || setSong.key;
+      
       const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
 
       if (scoreFiles.length > 0) {
@@ -449,7 +459,7 @@ const BandView = () => {
     });
 
     return scores;
-  }, [setSongs, allSongScores]);
+  }, [setSongs, allSongScores, browsingKeyIndex]);
 
   // Build music playlist from songs with YouTube links
   const musicPlaylist: PlaylistItem[] = useMemo(() => {
@@ -1114,6 +1124,7 @@ const BandView = () => {
           setSongs={setSongs || []}
           setComponents={setComponents || []}
           allSongScores={allSongScores || []}
+          browsingKeyIndex={browsingKeyIndex}
         />
 
         {/* Fullscreen Score Viewer */}
