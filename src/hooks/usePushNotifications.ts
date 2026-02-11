@@ -115,7 +115,7 @@ export function usePushNotifications() {
       await navigator.serviceWorker.ready;
 
       // Subscribe to push
-      const pushSubscription = await registration.pushManager.subscribe({
+      const pushSubscription = await (registration as any).pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       });
@@ -171,7 +171,7 @@ export function usePushNotifications() {
 
       // Get current service worker registration
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const subscription = await (registration as any).pushManager.getSubscription();
 
       // Unsubscribe from push
       if (subscription) {
