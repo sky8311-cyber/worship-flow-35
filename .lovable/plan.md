@@ -1,76 +1,54 @@
 
+# 곡 삭제 시 알림 자동 정리
 
-# 환영 이메일 중복 발송 문제 수정
+## 현재 상황
 
-## 문제 원인
+- **중복곡 찾기 기능**: 이미 곡 라이브러리에 "중복 찾기" 버튼이 있고, `DuplicateReviewDialog`가 구현되어 있습니다. 추가 작업 불필요합니다.
+- **중복곡 등록 경고**: 말씀하신 대로 중복곡은 악보/레퍼런스가 다를 수 있으므로 경고 없이 등록을 허용합니다 (현재 동작 그대로 유지).
+- **곡 삭제 시 알림 잔존 문제**: 곡이 삭제되어도 해당 곡의 "새 곡 추가" 알림(`related_type = 'song'`)이 남아 있어 "유령 알림"이 발생합니다.
 
-환영 이메일(`send-welcome-email`)이 회원가입 시 **2곳에서 동시에 호출**되고 있습니다:
+## 해결 방안
 
-```text
-사용자 회원가입 클릭
-       │
-       ▼
- SignUp.tsx → AuthContext.signUp() 호출
-       │              │
-       │              └──► send-welcome-email 호출 (1번째) ✉️
-       │
-       └──► send-welcome-email 호출 (2번째) ✉️
+데이터베이스 트리거를 추가하여, 곡이 삭제될 때 해당 곡과 연관된 알림을 자동으로 함께 삭제합니다.
+
+## 수정 내용
+
+### DB 마이그레이션 (1건)
+
+곡 삭제 시 관련 알림을 정리하는 트리거 함수 생성:
+
+```sql
+-- 곡 삭제 시 관련 알림 정리
+CREATE OR REPLACE FUNCTION public.cleanup_song_notifications()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  DELETE FROM public.notifications
+  WHERE related_id = OLD.id
+    AND related_type = 'song';
+  RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER on_song_deleted_cleanup_notifications
+  BEFORE DELETE ON public.songs
+  FOR EACH ROW
+  EXECUTE FUNCTION public.cleanup_song_notifications();
 ```
 
-| 호출 위치 | 파일 | 라인 |
-|----------|------|------|
-| 1번째 | `src/contexts/AuthContext.tsx` | 390-399 |
-| 2번째 | `src/pages/auth/SignUp.tsx` | 175-182 |
-| 3번째 (초대 가입) | `src/pages/InvitedSignUp.tsx` | 185-189 |
+### 코드 변경: 없음
 
-## 해결 방법
-
-**`AuthContext.tsx`에서 환영 이메일 호출을 제거**합니다.
-
-이유:
-- `AuthContext.signUp()`은 범용 함수이므로, 이메일 발송 같은 부수효과는 호출하는 쪽(페이지)에서 관리하는 것이 적절
-- `SignUp.tsx`와 `InvitedSignUp.tsx`에서 이미 각각 호출하고 있으므로 중복 제거만 하면 됨
-
-## 수정 대상 파일
-
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/contexts/AuthContext.tsx` | `signUp` 함수에서 `send-welcome-email` 호출 코드 제거 (라인 390-399) |
-
-## 상세 변경
-
-### AuthContext.tsx (라인 390-399 제거)
-
-```typescript
-// Before
-const signUp = async (email, password, fullName, phone, birthDate) => {
-  const { error } = await supabase.auth.signUp({ ... });
-
-  // 이 부분 제거 ↓
-  if (!error) {
-    try {
-      await supabase.functions.invoke('send-welcome-email', {
-        body: { email, name: fullName }
-      });
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-    }
-  }
-
-  return { error };
-};
-
-// After
-const signUp = async (email, password, fullName, phone, birthDate) => {
-  const { error } = await supabase.auth.signUp({ ... });
-  return { error };
-};
-```
+- 중복곡 찾기: 이미 구현 완료 (곡 라이브러리 > 중복 찾기 버튼)
+- 중복곡 등록 경고: 추가하지 않음 (의도적 중복 허용)
+- 프론트엔드 코드 수정 없음
 
 ## 결과
 
 | 시나리오 | Before | After |
 |---------|--------|-------|
-| 일반 회원가입 | 이메일 2통 | 이메일 1통 |
-| 초대 회원가입 | 이메일 2통 | 이메일 1통 |
-
+| 곡 삭제 후 알림 | 알림이 남아있음 ("유령 알림") | 알림도 자동 삭제 |
+| 곡 등록 시 중복 경고 | 없음 | 없음 (유지) |
+| 중복곡 찾기 | 곡 라이브러리에서 가능 | 그대로 유지 |
