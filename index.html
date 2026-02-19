@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>K-Worship - 예배팀을 위한 통합 플랫폼 | Worship Team Management</title>
     <meta name="description" content="K-Worship은 예배 인도자와 찬양팀을 위한 통합 관리 플랫폼입니다. 곡 라이브러리, 콘티 제작, 팀 협업, 악보 공유를 한곳에서. K-Worship is an all-in-one worship team management platform for song library, setlist creation, and team collaboration.">
-    <meta name="keywords" content="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 예배콘티, 예배순서, 찬양팀, 예배 인도자, 찬양인도자, 찬양인도, 예배인도, 교회, worship, church, setlist, worship leader, praise, CCM, 악보, sheet music, 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단, 찬양콘티, 주일예배, 찬양팀관리, 워십밴드, 찬양팀 관리 앱">
+    <meta name="keywords" content="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 예배콘티, 예배순서, 찬양팀, 예배 인도자, 찬양인도자, 찬양인도, 예배인도, 교회, worship, church, setlist, worship leader, praise, CCM, 악보, sheet music, 마커스워십, 어노인팅, 피아워십, 아이자야씩스티원, 예수전도단, 찬양콘티, 주일예배, 찬양팀관리, 워십밴드, 찬양팀 관리 앱, 교회 찬양팀 앱, 예배 순서 프로그램, 콘티 앱, 찬양팀 소통 앱, 예배 계획 도구, 콘티 만드는 법, 예배 순서 만들기, 찬양 악보 관리, 예배팀 커뮤니케이션 앱, 교회 워십밴드 관리, 찬양인도자 도구">
     <meta name="author" content="K-Worship" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
@@ -18,6 +18,14 @@
     <link rel="alternate" hreflang="ko" href="https://kworship.app/" />
     <link rel="alternate" hreflang="en" href="https://kworship.app/" />
     <link rel="alternate" hreflang="x-default" href="https://kworship.app/" />
+
+    <!-- Preconnect & DNS Prefetch for performance -->
+    <link rel="preconnect" href="https://jihozsqrrmzzrqvwilyy.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://jihozsqrrmzzrqvwilyy.supabase.co" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://www.youtube.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.youtube.com" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/kworship-icon.png">
@@ -61,7 +69,27 @@
     <meta name="twitter:title" content="K-Worship - 예배팀을 위한 통합 플랫폼">
     <meta name="twitter:description" content="곡 라이브러리 관리, 콘티 제작, 실시간 팀 협업. 예배 준비의 모든 것을 한곳에서.">
 
-    <!-- JSON-LD Structured Data -->
+    <!-- JSON-LD: WebSite + SearchAction (Google Sitelinks Searchbox) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "K-Worship",
+      "alternateName": "케이워십",
+      "url": "https://kworship.app",
+      "inLanguage": ["ko", "en"],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://kworship.app/songs?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: SoftwareApplication -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -72,6 +100,7 @@
       "operatingSystem": "Web",
       "description": "예배팀을 위한 통합 관리 플랫폼. 곡 라이브러리, 콘티 제작, 팀 협업 기능 제공.",
       "url": "https://kworship.app",
+      "inLanguage": ["ko", "en"],
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -84,11 +113,14 @@
       }
     }
     </script>
+
+    <!-- JSON-LD: Organization -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "K-Worship",
+      "alternateName": "케이워십",
       "url": "https://kworship.app",
       "logo": "https://kworship.app/kworship-icon.png",
       "description": "예배팀을 위한 통합 관리 플랫폼",

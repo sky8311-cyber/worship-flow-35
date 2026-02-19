@@ -3,3 +3,6 @@
 
 # RSS Feed with query parameters (category filter)
 /rss.xml?category=:category https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed?category=:category 200
+
+# Dynamic Sitemap Proxy
+/sitemap.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/sitemap 200

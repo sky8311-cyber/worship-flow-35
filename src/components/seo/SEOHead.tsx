@@ -1,6 +1,12 @@
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "@/hooks/useTranslation";
 
+interface BreadcrumbItem {
+  name: string;
+  nameKo?: string;
+  url: string;
+}
+
 interface SEOHeadProps {
   title: string;
   titleKo?: string;
@@ -13,6 +19,7 @@ interface SEOHeadProps {
   image?: string;
   noIndex?: boolean;
   jsonLd?: object | object[];
+  breadcrumbs?: BreadcrumbItem[];
 }
 
 const BASE_URL = "https://kworship.app";
@@ -30,6 +37,7 @@ export const SEOHead = ({
   image = DEFAULT_IMAGE,
   noIndex = false,
   jsonLd,
+  breadcrumbs,
 }: SEOHeadProps) => {
   const { language } = useTranslation();
   
@@ -78,12 +86,28 @@ export const SEOHead = ({
     }
   };
 
+  // BreadcrumbList schema
+  const breadcrumbSchema = breadcrumbs && breadcrumbs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbs.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": language === "ko" && item.nameKo ? item.nameKo : item.name,
+      "item": item.url.startsWith("http") ? item.url : `${BASE_URL}${item.url}`
+    }))
+  } : null;
+
   // Combine schemas
-  const allSchemas = jsonLd 
-    ? Array.isArray(jsonLd) 
-      ? [organizationSchema, softwareSchema, ...jsonLd]
-      : [organizationSchema, softwareSchema, jsonLd]
-    : [organizationSchema, softwareSchema];
+  const allSchemas: object[] = [organizationSchema, softwareSchema];
+  if (breadcrumbSchema) allSchemas.push(breadcrumbSchema);
+  if (jsonLd) {
+    if (Array.isArray(jsonLd)) {
+      allSchemas.push(...jsonLd);
+    } else {
+      allSchemas.push(jsonLd);
+    }
+  }
 
   return (
     <Helmet>

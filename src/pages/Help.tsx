@@ -825,9 +825,13 @@ Method 2 - Share Link:
         description="Get help with K-Worship. Find answers to frequently asked questions about song library, setlist creation, team collaboration, and more."
         descriptionKo="K-Worship 도움말 센터입니다. 곡 라이브러리, 콘티 제작, 팀 협업 등에 관한 자주 묻는 질문의 답변을 확인하세요."
         keywords="K-Worship help, FAQ, support, worship software help, church software support"
-        keywordsKo="K-Worship 도움말, FAQ, 지원, 예배 소프트웨어 도움말, 교회 소프트웨어 지원"
+        keywordsKo="K-Worship 도움말, FAQ, 지원, 예배 소프트웨어 도움말, 교회 소프트웨어 지원, 콘티 만드는 법, 예배 순서 만들기"
         canonicalPath="/help"
         jsonLd={faqJsonLd}
+        breadcrumbs={[
+          { name: "Home", nameKo: "홈", url: "/" },
+          { name: "Help Center", nameKo: "도움말", url: "/help" },
+        ]}
       />
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* Header */}

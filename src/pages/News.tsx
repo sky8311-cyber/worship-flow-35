@@ -77,6 +77,10 @@ const News = () => {
         keywordsKo="K-Worship 뉴스, 케이워십 업데이트, 블로그, 보도자료"
         canonicalPath="/news"
         jsonLd={newsListSchema}
+        breadcrumbs={[
+          { name: "Home", nameKo: "홈", url: "/" },
+          { name: "News", nameKo: "뉴스", url: "/news" },
+        ]}
       />
 
       {/* Header for non-authenticated users */}
