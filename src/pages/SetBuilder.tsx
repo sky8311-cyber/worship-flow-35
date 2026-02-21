@@ -1809,7 +1809,7 @@ const SetBuilder = () => {
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
-                      className="text-sm"
+                      className="text-sm pr-10"
                       disabled={isBlocked}
                     />
                   </div>
@@ -1821,7 +1821,7 @@ const SetBuilder = () => {
                       type="time"
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
-                      className="text-sm"
+                      className="text-sm pr-10"
                       required
                       disabled={isBlocked}
                     />
