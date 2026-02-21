@@ -1809,19 +1809,19 @@ const SetBuilder = () => {
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       required
-                      className="text-sm h-9"
+                      className="text-sm"
                       disabled={isBlocked}
                     />
                   </div>
-
-                  <div className="space-y-1.5 min-w-0">
-                    <Label htmlFor="service_time" className="text-sm text-destructive">시간 *</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">
+                      {language === 'ko' ? '시간' : 'Time'} *
+                    </Label>
                     <Input
-                      id="service_time"
                       type="time"
                       value={formData.service_time}
                       onChange={(e) => setFormData({ ...formData, service_time: e.target.value })}
-                      className="text-sm h-9"
+                      className="text-sm"
                       required
                       disabled={isBlocked}
                     />
