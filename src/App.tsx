@@ -1,4 +1,24 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, ComponentType } from "react";
+
+// Retry wrapper for dynamic imports to handle stale chunk errors after deployments
+function lazyWithRetry<T extends ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    factory().catch((err) => {
+      // If chunk fails to load, reload the page once
+      const key = "chunk_reload";
+      const hasReloaded = sessionStorage.getItem(key);
+      if (!hasReloaded) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return new Promise(() => {}); // never resolves, page will reload
+      }
+      sessionStorage.removeItem(key);
+      throw err;
+    })
+  );
+}
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -24,64 +44,64 @@ import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
 // Lazy load all other pages for code splitting
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const SongLibrary = lazy(() => import("./pages/SongLibrary"));
-const SetBuilder = lazy(() => import("./pages/SetBuilder"));
-const BandView = lazy(() => import("./pages/BandView"));
-const WorshipSets = lazy(() => import("./pages/WorshipSets"));
-const CommunityManagement = lazy(() => import("./pages/CommunityManagement"));
-const CommunitySearch = lazy(() => import("./pages/CommunitySearch"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Help = lazy(() => import("./pages/Help"));
-const ChurchAccount = lazy(() => import("./pages/ChurchAccount"));
-const Membership = lazy(() => import("./pages/Membership"));
-const TemplateManager = lazy(() => import("./pages/TemplateManager"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const SongLibrary = lazyWithRetry(() => import("./pages/SongLibrary"));
+const SetBuilder = lazyWithRetry(() => import("./pages/SetBuilder"));
+const BandView = lazyWithRetry(() => import("./pages/BandView"));
+const WorshipSets = lazyWithRetry(() => import("./pages/WorshipSets"));
+const CommunityManagement = lazyWithRetry(() => import("./pages/CommunityManagement"));
+const CommunitySearch = lazyWithRetry(() => import("./pages/CommunitySearch"));
+const Settings = lazyWithRetry(() => import("./pages/Settings"));
+const Help = lazyWithRetry(() => import("./pages/Help"));
+const ChurchAccount = lazyWithRetry(() => import("./pages/ChurchAccount"));
+const Membership = lazyWithRetry(() => import("./pages/Membership"));
+const TemplateManager = lazyWithRetry(() => import("./pages/TemplateManager"));
 // FavoritesList removed - now uses /songs?filter=favorites
-const SeedHistory = lazy(() => import("./pages/SeedHistory"));
-const Rewards = lazy(() => import("./pages/Rewards"));
-const Referral = lazy(() => import("./pages/Referral"));
-const ReferralRedirect = lazy(() => import("./pages/ReferralRedirect"));
-const RewardsStore = lazy(() => import("./pages/RewardsStore"));
-const RequestWorshipLeader = lazy(() => import("./pages/RequestWorshipLeader"));
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-const Legal = lazy(() => import("./pages/Legal"));
-const AppHistory = lazy(() => import("./pages/AppHistory"));
-const Features = lazy(() => import("./pages/Features"));
-const Press = lazy(() => import("./pages/Press"));
-const News = lazy(() => import("./pages/News"));
-const NewsDetail = lazy(() => import("./pages/NewsDetail"));
-const KWorshipInfo = lazy(() => import("./pages/KWorshipInfo"));
+const SeedHistory = lazyWithRetry(() => import("./pages/SeedHistory"));
+const Rewards = lazyWithRetry(() => import("./pages/Rewards"));
+const Referral = lazyWithRetry(() => import("./pages/Referral"));
+const ReferralRedirect = lazyWithRetry(() => import("./pages/ReferralRedirect"));
+const RewardsStore = lazyWithRetry(() => import("./pages/RewardsStore"));
+const RequestWorshipLeader = lazyWithRetry(() => import("./pages/RequestWorshipLeader"));
+const ForgotPassword = lazyWithRetry(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
+const Legal = lazyWithRetry(() => import("./pages/Legal"));
+const AppHistory = lazyWithRetry(() => import("./pages/AppHistory"));
+const Features = lazyWithRetry(() => import("./pages/Features"));
+const Press = lazyWithRetry(() => import("./pages/Press"));
+const News = lazyWithRetry(() => import("./pages/News"));
+const NewsDetail = lazyWithRetry(() => import("./pages/NewsDetail"));
+const KWorshipInfo = lazyWithRetry(() => import("./pages/KWorshipInfo"));
 
 // Admin pages - lazy loaded (only admins use these)
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminUsers = lazy(() => import("./pages/AdminUsers"));
-const AdminCommunities = lazy(() => import("./pages/AdminCommunities"));
-const AdminChurchAccounts = lazy(() => import("./pages/AdminChurchAccounts"));
-const AdminWorshipLeaderApplications = lazy(() => import("./pages/AdminWorshipLeaderApplications"));
-const AdminCRM = lazy(() => import("./pages/AdminCRM"));
-const AdminRewards = lazy(() => import("./pages/AdminRewards"));
-const AdminEmail = lazy(() => import("./pages/AdminEmail"));
-const AdminFeatures = lazy(() => import("./pages/AdminFeatures"));
-const AdminHistory = lazy(() => import("./pages/AdminHistory"));
-const AdminTierGuide = lazy(() => import("./pages/AdminTierGuide"));
-const AdminSupport = lazy(() => import("./pages/AdminSupport"));
-const AdminTopics = lazy(() => import("./pages/AdminTopics"));
-const AdminSongEnrichment = lazy(() => import("./pages/AdminSongEnrichment"));
-const AdminStudio = lazy(() => import("./pages/AdminStudio"));
-const AdminNews = lazy(() => import("./pages/AdminNews"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
-const AdminMembershipProducts = lazy(() => import("./pages/AdminMembershipProducts"));
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
+const AdminUsers = lazyWithRetry(() => import("./pages/AdminUsers"));
+const AdminCommunities = lazyWithRetry(() => import("./pages/AdminCommunities"));
+const AdminChurchAccounts = lazyWithRetry(() => import("./pages/AdminChurchAccounts"));
+const AdminWorshipLeaderApplications = lazyWithRetry(() => import("./pages/AdminWorshipLeaderApplications"));
+const AdminCRM = lazyWithRetry(() => import("./pages/AdminCRM"));
+const AdminRewards = lazyWithRetry(() => import("./pages/AdminRewards"));
+const AdminEmail = lazyWithRetry(() => import("./pages/AdminEmail"));
+const AdminFeatures = lazyWithRetry(() => import("./pages/AdminFeatures"));
+const AdminHistory = lazyWithRetry(() => import("./pages/AdminHistory"));
+const AdminTierGuide = lazyWithRetry(() => import("./pages/AdminTierGuide"));
+const AdminSupport = lazyWithRetry(() => import("./pages/AdminSupport"));
+const AdminTopics = lazyWithRetry(() => import("./pages/AdminTopics"));
+const AdminSongEnrichment = lazyWithRetry(() => import("./pages/AdminSongEnrichment"));
+const AdminStudio = lazyWithRetry(() => import("./pages/AdminStudio"));
+const AdminNews = lazyWithRetry(() => import("./pages/AdminNews"));
+const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
+const AdminMembershipProducts = lazyWithRetry(() => import("./pages/AdminMembershipProducts"));
 
 // Public/invitation pages
-const PublicBandView = lazy(() => import("./pages/PublicBandView"));
-const PublicLinkProxy = lazy(() => import("./pages/PublicLinkProxy"));
-const Landing = lazy(() => import("./pages/Landing"));
-const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
-const InvitedSignUp = lazy(() => import("./pages/InvitedSignUp"));
-const JoinCommunity = lazy(() => import("./pages/JoinCommunity"));
-const WorshipStudio = lazy(() => import("./pages/WorshipStudio"));
-const EmailPreferencesPage = lazy(() => import("./pages/EmailPreferences"));
+const PublicBandView = lazyWithRetry(() => import("./pages/PublicBandView"));
+const PublicLinkProxy = lazyWithRetry(() => import("./pages/PublicLinkProxy"));
+const Landing = lazyWithRetry(() => import("./pages/Landing"));
+const AcceptInvitation = lazyWithRetry(() => import("./pages/AcceptInvitation"));
+const InvitedSignUp = lazyWithRetry(() => import("./pages/InvitedSignUp"));
+const JoinCommunity = lazyWithRetry(() => import("./pages/JoinCommunity"));
+const WorshipStudio = lazyWithRetry(() => import("./pages/WorshipStudio"));
+const EmailPreferencesPage = lazyWithRetry(() => import("./pages/EmailPreferences"));
 
 // Page loader component for Suspense fallback
 const PageLoader = () => <FullScreenLoader />;
