@@ -220,9 +220,11 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       sessionStorage.removeItem('currentEditingSetId');
       sessionStorage.removeItem('currentEditingSetName');
       
-      onSuccess?.();
       onOpenChange(false);
-      navigate(`/set-builder/${setId}`);
+      onSuccess?.();
+      setTimeout(() => {
+        navigate(`/set-builder/${setId}`);
+      }, 100);
     },
     onError: (error: any) => {
       console.error("Add to set mutation error:", error);
