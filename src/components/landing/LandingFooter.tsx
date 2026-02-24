@@ -216,6 +216,10 @@ export const LandingFooter = () => {
                   <a href="mailto:hello@goodpapa.org" className="underline hover:text-primary-foreground transition-colors">
                     hello@goodpapa.org
                   </a>
+                  {" | "}
+                  <a href="tel:+16042451007" className="underline hover:text-primary-foreground transition-colors">
+                    1-604-245-1007
+                  </a>
                 </p>
               </div>
             </div>
