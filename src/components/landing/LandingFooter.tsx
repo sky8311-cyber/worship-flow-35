@@ -196,9 +196,28 @@ export const LandingFooter = () => {
           
           {/* Bottom bar */}
           <div className="border-t border-primary-foreground/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="text-sm text-primary-foreground/60 text-center md:text-left">
-              <p>© {currentYear} Goodpapa Inc. All rights reserved.</p>
-              <p className="mt-1">K-Worship™ is a trademark of Goodpapa Inc.</p>
+            <div className="text-sm text-primary-foreground/60 text-center md:text-left space-y-2">
+              <div>
+                <p>© {currentYear} Goodpapa Inc. All rights reserved.</p>
+                <p className="mt-1">K-Worship™ is a trademark of Goodpapa Inc.</p>
+              </div>
+              <div className="text-xs leading-relaxed">
+                <p>
+                  {language === "ko" ? "법인명" : "Company"}: Goodpapa Inc. | {language === "ko" ? "대표" : "CEO"}: Kwang Choi
+                </p>
+                <p>
+                  {language === "ko" ? "사업자등록번호" : "Business Registration No."}: 743833147
+                </p>
+                <p>
+                  {language === "ko" ? "소재지" : "Address"}: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
+                </p>
+                <p>
+                  {language === "ko" ? "연락처" : "Contact"}:{" "}
+                  <a href="mailto:hello@goodpapa.org" className="underline hover:text-primary-foreground transition-colors">
+                    hello@goodpapa.org
+                  </a>
+                </p>
+              </div>
             </div>
             
             {/* Social links */}
