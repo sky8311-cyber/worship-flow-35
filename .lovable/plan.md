@@ -1,42 +1,44 @@
 
-# 푸터 사업자 정보 추가
+
+# 히어로 섹션에 접속 버튼 3개 추가
 
 ## 목표
-전자상거래법 준수를 위해 사이트 하단 푸터에 사업자 정보를 표시합니다.
+"스크롤하여 더 보기" 아래에 3개의 접속 버튼을 추가하여 방문자 이탈을 방지합니다.
 
-## 변경 내용
+## 버튼 구성
 
-### 파일: `src/components/landing/LandingFooter.tsx`
+| 버튼 | 아이콘 | 뱃지 | 동작 |
+|------|--------|------|------|
+| Apple iOS App | Apple 아이콘 | Coming Soon | 비활성 (toast 안내) |
+| Android App | Play Store 아이콘 | Coming Soon | 비활성 (toast 안내) |
+| Web App | Globe 아이콘 | 없음 | `/login` 페이지로 이동 |
 
-Bottom bar 영역(copyright 섹션)에 사업자 정보 블록을 추가합니다. 한국어/영어 양쪽 모두 표시:
+## 디자인
+- 스크롤 인디케이터 바로 아래에 배치
+- 3개 버튼 가로 배열 (모바일: 세로 스택)
+- iOS/Android 버튼은 `outline` variant + `opacity-70` + "Coming Soon" 뱃지 (작은 텍스트)
+- Web App 버튼은 `default` variant (primary 색상)으로 강조
+- framer-motion stagger 애니메이션 적용
 
-**추가될 정보:**
-- 법인명(상호): Goodpapa Inc.
-- 대표자: Kwang Choi
-- 사업자등록번호: 743833147
-- 연락처: hello@goodpapa.org
-- 소재지: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
+## 기술 변경
 
-**위치**: 기존 copyright 텍스트와 소셜 아이콘 사이, 또는 copyright 바로 아래에 사업자 정보 섹션을 추가합니다.
+### 파일: `src/pages/MobileAppLanding.tsx`
 
-**레이아웃**:
+스크롤 인디케이터(`</motion.div>` 라인 130) 아래에 버튼 그룹 추가:
+
 ```text
-──────────────────────────────────────────
-(c) 2026 Goodpapa Inc. All rights reserved.
-K-Worship(TM) is a trademark of Goodpapa Inc.
+[스크롤 인디케이터]
 
-법인명: Goodpapa Inc. | 대표: Kwang Choi
-사업자등록번호: 743833147
-소재지: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
-연락처: hello@goodpapa.org
-──────────────────────────────────────────
+[Apple iOS App]  [Android App]  [Web App 시작하기]
+ Coming Soon      Coming Soon
 ```
 
-- 한국어 모드: 라벨을 한국어로 표시 (법인명, 대표자, 사업자등록번호, 소재지, 연락처)
-- 영어 모드: 영어 라벨 (Company, CEO, Business Registration No., Address, Contact)
-- 텍스트 스타일: 기존 copyright와 동일한 `text-sm text-primary-foreground/60`
-- 연락처 이메일은 `mailto:` 링크로 처리
+- lucide-react 아이콘 사용: `Smartphone`, `Globe` + 커스텀 Apple/Play 아이콘 (SVG inline)
+- Web App 버튼 클릭 시 `navigate("/login")`
+- iOS/Android 클릭 시 `toast` ("준비 중입니다")
+- 한/영 라벨 지원
 
 ## 변경 범위
-- 파일 1개 수정 (`LandingFooter.tsx`)
-- 순수 UI 추가, 기존 기능에 영향 없음
+- 파일 1개 수정 (`MobileAppLanding.tsx`)
+- 기존 기능에 영향 없음
+
