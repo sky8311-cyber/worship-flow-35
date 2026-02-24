@@ -1,45 +1,42 @@
 
-
-# 기본멤버 워십세트 수 표시
+# 푸터 사업자 정보 추가
 
 ## 목표
-CRM 테이블에서 각 기본멤버(worship_leader)가 만든 워십세트 수를 "Published (Draft)" 형식으로 Stats 컬럼에 표시.
+전자상거래법 준수를 위해 사이트 하단 푸터에 사업자 정보를 표시합니다.
 
-## 변경 사항
+## 변경 내용
 
-### 파일 1: `src/pages/AdminCRM.tsx`
+### 파일: `src/components/landing/LandingFooter.tsx`
 
-데이터 fetch 시 `service_sets` 테이블도 함께 조회하여 각 worship leader의 세트 수를 계산:
+Bottom bar 영역(copyright 섹션)에 사업자 정보 블록을 추가합니다. 한국어/영어 양쪽 모두 표시:
 
-1. `Promise.all`에 `service_sets` 쿼리 추가:
-   ```
-   supabase.from("service_sets").select("id, created_by, status")
-   ```
+**추가될 정보:**
+- 법인명(상호): Goodpapa Inc.
+- 대표자: Kwang Choi
+- 사업자등록번호: 743833147
+- 연락처: hello@goodpapa.org
+- 소재지: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
 
-2. worship leader 처리 시 해당 유저의 published/draft 세트 수를 계산하여 데이터에 포함:
-   ```
-   publishedSetCount: serviceSets.filter(s => s.created_by === role.user_id && s.status === 'published').length
-   draftSetCount: serviceSets.filter(s => s.created_by === role.user_id && s.status === 'draft').length
-   ```
+**위치**: 기존 copyright 텍스트와 소셜 아이콘 사이, 또는 copyright 바로 아래에 사업자 정보 섹션을 추가합니다.
 
-### 파일 2: `src/components/admin/crm/HierarchyRow.tsx`
+**레이아웃**:
+```text
+──────────────────────────────────────────
+(c) 2026 Goodpapa Inc. All rights reserved.
+K-Worship(TM) is a trademark of Goodpapa Inc.
 
-`worship_leader` 케이스의 `stats` 값을 변경:
-
-현재:
-```
-stats: `${data.communityCount || 0} communities`
-```
-
-변경 후:
-```
-stats: `${data.publishedSetCount || 0} Published (${data.draftSetCount || 0} Draft) · ${data.communityCount || 0} communities`
+법인명: Goodpapa Inc. | 대표: Kwang Choi
+사업자등록번호: 743833147
+소재지: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
+연락처: hello@goodpapa.org
+──────────────────────────────────────────
 ```
 
-예시 표시: **3 Published (2 Draft) · 1 communities**
+- 한국어 모드: 라벨을 한국어로 표시 (법인명, 대표자, 사업자등록번호, 소재지, 연락처)
+- 영어 모드: 영어 라벨 (Company, CEO, Business Registration No., Address, Contact)
+- 텍스트 스타일: 기존 copyright와 동일한 `text-sm text-primary-foreground/60`
+- 연락처 이메일은 `mailto:` 링크로 처리
 
 ## 변경 범위
-- 파일 2개 수정
-- 새로운 DB 쿼리 1개 추가 (`service_sets`의 `id, created_by, status`만 조회)
-- 기존 기능에 영향 없음
-
+- 파일 1개 수정 (`LandingFooter.tsx`)
+- 순수 UI 추가, 기존 기능에 영향 없음
