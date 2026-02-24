@@ -368,14 +368,15 @@ const AdminCRM = () => {
 
   const stats = getStats();
 
-  const detailPanelContent = selectedEntity && (
+  const renderDetailPanel = (showCloseButton: boolean) => selectedEntity ? (
     <DetailPanel
       entity={selectedEntity}
       onClose={() => setSelectedEntity(null)}
       onCrossReference={handleCrossReference}
       language={language}
+      showCloseButton={showCloseButton}
     />
-  );
+  ) : null;
 
   return (
     <AdminLayout>
@@ -532,7 +533,7 @@ const AdminCRM = () => {
             </Card>
             <Sheet open={!!selectedEntity} onOpenChange={() => setSelectedEntity(null)}>
               <SheetContent side="bottom" className="h-[60vh] overflow-y-auto">
-                {detailPanelContent}
+                {renderDetailPanel(false)}
               </SheetContent>
             </Sheet>
           </>
@@ -555,7 +556,7 @@ const AdminCRM = () => {
                 <PanelResizeHandle className="w-2 bg-border hover:bg-primary/20 transition-colors" />
                 <Panel defaultSize={35} minSize={25} maxSize={50}>
                   <div className="h-full overflow-auto bg-muted/30 p-4">
-                    {detailPanelContent}
+                    {renderDetailPanel(true)}
                   </div>
                 </Panel>
               </>

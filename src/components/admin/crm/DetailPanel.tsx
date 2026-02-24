@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { X, Building2, Crown, Users, User, ExternalLink, Mail, Globe, Calendar, Star, Pencil, Trash2, UserCog, Send } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import type { CRMEntity, CRMTab } from "@/pages/AdminCRM";
 import { TierBadge } from "@/components/admin/TierBadge";
 import { TierLevel, TIER_CONFIG } from "@/hooks/useTierFeature";
@@ -13,9 +14,12 @@ interface DetailPanelProps {
   onClose: () => void;
   onCrossReference: (type: CRMTab, id: string, filterType?: string) => void;
   language: string;
+  showCloseButton?: boolean;
 }
 
-export const DetailPanel = ({ entity, onClose, onCrossReference, language }: DetailPanelProps) => {
+const comingSoon = () => toast.info("준비 중", { description: "이 기능은 준비 중입니다." });
+
+export const DetailPanel = ({ entity, onClose, onCrossReference, language, showCloseButton = true }: DetailPanelProps) => {
   const renderChurchAccountDetails = () => {
     const account = entity.data;
     return (
@@ -50,11 +54,11 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Pencil className="h-3.5 w-3.5" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <UserCog className="h-3.5 w-3.5" />
             Manage
           </Button>
@@ -175,19 +179,19 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Pencil className="h-3.5 w-3.5" />
             Edit Profile
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Send className="h-3.5 w-3.5" />
             Message
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <UserCog className="h-3.5 w-3.5" />
             Change Role
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={comingSoon}>
             <Trash2 className="h-3.5 w-3.5" />
             Remove
           </Button>
@@ -312,19 +316,19 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Pencil className="h-3.5 w-3.5" />
             Edit
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Send className="h-3.5 w-3.5" />
             Announce
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => window.open(`/community/${community.id}`, '_blank')}>
             <ExternalLink className="h-3.5 w-3.5" />
             View Page
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={comingSoon}>
             <Trash2 className="h-3.5 w-3.5" />
             Delete
           </Button>
@@ -419,19 +423,19 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Pencil className="h-3.5 w-3.5" />
             Edit Profile
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <Send className="h-3.5 w-3.5" />
             Message
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={comingSoon}>
             <UserCog className="h-3.5 w-3.5" />
             Change Role
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive">
+          <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={comingSoon}>
             <Trash2 className="h-3.5 w-3.5" />
             Remove
           </Button>
@@ -558,9 +562,11 @@ export const DetailPanel = ({ entity, onClose, onCrossReference, language }: Det
     <div className={`border-l-4 ${getAccentColor()}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-lg">{getTitle()}</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
+        {showCloseButton && (
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       {renderContent()}
     </div>
