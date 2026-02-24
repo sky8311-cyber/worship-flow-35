@@ -48,6 +48,7 @@ const AdminCRM = () => {
         communityMembersResult,
         premiumSubsResult,
         churchMembersResult,
+        serviceSetsResult,
         authResult,
         totalProfilesResult
       ] = await Promise.all([
@@ -58,6 +59,7 @@ const AdminCRM = () => {
         supabase.from("community_members").select("*"),
         supabase.from("premium_subscriptions").select("*"),
         supabase.from("church_account_members").select("*"),
+        supabase.from("service_sets").select("id, created_by, status"),
         supabase.functions.invoke("admin-list-users", {
           headers: { Authorization: `Bearer ${session?.access_token}` },
         }),
@@ -71,6 +73,7 @@ const AdminCRM = () => {
       const communityMembers = communityMembersResult.data || [];
       const premiumSubs = premiumSubsResult.data || [];
       const churchMembers = churchMembersResult.data || [];
+      const serviceSets = serviceSetsResult.data || [];
       const authUsers = authResult.data?.users || [];
 
       // Create lookup maps
@@ -118,6 +121,8 @@ const AdminCRM = () => {
           isPremium: subscription?.subscription_status === "active" || !!churchAccount,
           communities: leaderCommunities,
           communityCount: leaderCommunities.length,
+          publishedSetCount: serviceSets.filter(s => s.created_by === role.user_id && s.status === 'published').length,
+          draftSetCount: serviceSets.filter(s => s.created_by === role.user_id && s.status === 'draft').length,
           churchAccount,
           createdAt: role.created_at,
         };
