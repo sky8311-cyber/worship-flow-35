@@ -1,84 +1,48 @@
 
+# "Coming Soon" 뱃지 위치 변경 -- 버튼 내부 텍스트로 전환
 
-# K-Worship iOS App Build Plan (Mac)
+## 문제
+absolute 포지션 뱃지가 버튼 위에 겹쳐서 버튼 텍스트를 가림. overflow-visible / top 조정만으로는 근본적으로 해결이 안 됨.
 
-Your project already has Capacitor configured. Here is the step-by-step plan to get the app running on your iPhone or iOS Simulator.
+## 해결 방안
+뱃지를 버튼 **외부 absolute** 방식에서 버튼 **내부 inline** 방식으로 변경:
 
-## Current Status
-- Capacitor is installed and configured (`appId: app.kworship.main`)
-- iOS and Android packages are in `package.json`
-- No native `ios/` folder exists yet (needs to be generated locally)
-
-## Your Steps (on your Mac)
-
-### Prerequisites
-- **Xcode 15+** installed from the Mac App Store
-- **Node.js** installed (via nvm or Homebrew)
-- An **Apple Developer account** (free for Simulator testing; paid $99/year for device deployment and App Store)
-
-### Step-by-step
-
-1. **Export to GitHub** -- In Lovable, go to Settings and connect/export to your GitHub repository
-
-2. **Clone and install**
-```bash
-git clone <YOUR_GITHUB_REPO_URL>
-cd <PROJECT_FOLDER>
-npm install
+```
+[Apple iOS App · Coming Soon]   [Android · Coming Soon]   [Web App 시작하기]
 ```
 
-3. **Add the iOS platform**
-```bash
-npx cap add ios
+- "Coming Soon" 텍스트를 버튼 안에 작은 인라인 뱃지(`text-[9px]` + `bg-amber-500` + `rounded-full` + `px-1.5`)로 배치
+- `absolute` 포지셔닝 제거 -- 더 이상 잘리거나 겹치지 않음
+- 버튼 높이가 자연스럽게 콘텐츠에 맞춰짐
+
+## 기술 변경
+
+### 파일: `src/pages/MobileAppLanding.tsx`
+
+iOS 버튼과 Android 버튼 2곳에서:
+
+**Before:**
+```tsx
+<Button variant="outline" className="relative gap-2 opacity-70 ...">
+  <span className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full">
+    Coming Soon
+  </span>
+  <svg .../>
+  iOS App
+</Button>
 ```
-This creates the `ios/` folder with the Xcode project.
 
-4. **Build the web app and sync**
-```bash
-npm run build
-npx cap sync ios
+**After:**
+```tsx
+<Button variant="outline" className="gap-2 opacity-70 ...">
+  <svg .../>
+  iOS App
+  <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-500 text-white rounded-full leading-none">
+    Coming Soon
+  </span>
+</Button>
 ```
 
-5. **Open in Xcode**
-```bash
-npx cap open ios
-```
-
-6. **In Xcode**:
-   - Select a Simulator (e.g. iPhone 16) or your connected device
-   - For a real device: sign with your Apple Developer team under Signing & Capabilities
-   - Press the Play button to build and run
-
-7. **Test the app** on your Simulator or device
-
-### Development Hot-Reload (Optional)
-To see live changes from Lovable while developing, temporarily add a server block to `capacitor.config.ts`:
-```typescript
-const config: CapacitorConfig = {
-  appId: 'app.kworship.main',
-  appName: 'K-Worship',
-  webDir: 'dist',
-  server: {
-    url: 'https://2ed7309e-d6b0-4f05-9642-be9265249510.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  }
-};
-```
-Then run `npx cap sync ios` again. **Remove this server block before publishing to the App Store.**
-
-### Publishing to the App Store
-When ready to publish:
-1. Enroll in the **Apple Developer Program** ($99/year)
-2. Remove the `server` block from `capacitor.config.ts`
-3. Run `npm run build && npx cap sync ios`
-4. In Xcode: set version/build numbers, configure app icons and splash screen
-5. Archive the app (Product -> Archive) and upload to App Store Connect
-6. Submit for Apple review
-
-## No Code Changes Needed from Lovable
-Everything is already configured. All steps happen locally on your Mac.
-
-## Useful Reference
-- [Capacitor iOS docs](https://capacitorjs.com/docs/ios)
-- [Lovable native app guide](https://docs.lovable.dev/tips-tricks/native-mobile-apps)
-
+## 변경 범위
+- 파일 1개 수정, 2곳 (iOS / Android 버튼)
+- 순수 CSS/레이아웃 변경, 기능 변경 없음
