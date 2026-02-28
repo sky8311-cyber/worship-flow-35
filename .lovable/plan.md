@@ -1,44 +1,84 @@
 
 
-# 히어로 섹션에 접속 버튼 3개 추가
+# K-Worship iOS App Build Plan (Mac)
 
-## 목표
-"스크롤하여 더 보기" 아래에 3개의 접속 버튼을 추가하여 방문자 이탈을 방지합니다.
+Your project already has Capacitor configured. Here is the step-by-step plan to get the app running on your iPhone or iOS Simulator.
 
-## 버튼 구성
+## Current Status
+- Capacitor is installed and configured (`appId: app.kworship.main`)
+- iOS and Android packages are in `package.json`
+- No native `ios/` folder exists yet (needs to be generated locally)
 
-| 버튼 | 아이콘 | 뱃지 | 동작 |
-|------|--------|------|------|
-| Apple iOS App | Apple 아이콘 | Coming Soon | 비활성 (toast 안내) |
-| Android App | Play Store 아이콘 | Coming Soon | 비활성 (toast 안내) |
-| Web App | Globe 아이콘 | 없음 | `/login` 페이지로 이동 |
+## Your Steps (on your Mac)
 
-## 디자인
-- 스크롤 인디케이터 바로 아래에 배치
-- 3개 버튼 가로 배열 (모바일: 세로 스택)
-- iOS/Android 버튼은 `outline` variant + `opacity-70` + "Coming Soon" 뱃지 (작은 텍스트)
-- Web App 버튼은 `default` variant (primary 색상)으로 강조
-- framer-motion stagger 애니메이션 적용
+### Prerequisites
+- **Xcode 15+** installed from the Mac App Store
+- **Node.js** installed (via nvm or Homebrew)
+- An **Apple Developer account** (free for Simulator testing; paid $99/year for device deployment and App Store)
 
-## 기술 변경
+### Step-by-step
 
-### 파일: `src/pages/MobileAppLanding.tsx`
+1. **Export to GitHub** -- In Lovable, go to Settings and connect/export to your GitHub repository
 
-스크롤 인디케이터(`</motion.div>` 라인 130) 아래에 버튼 그룹 추가:
-
-```text
-[스크롤 인디케이터]
-
-[Apple iOS App]  [Android App]  [Web App 시작하기]
- Coming Soon      Coming Soon
+2. **Clone and install**
+```bash
+git clone <YOUR_GITHUB_REPO_URL>
+cd <PROJECT_FOLDER>
+npm install
 ```
 
-- lucide-react 아이콘 사용: `Smartphone`, `Globe` + 커스텀 Apple/Play 아이콘 (SVG inline)
-- Web App 버튼 클릭 시 `navigate("/login")`
-- iOS/Android 클릭 시 `toast` ("준비 중입니다")
-- 한/영 라벨 지원
+3. **Add the iOS platform**
+```bash
+npx cap add ios
+```
+This creates the `ios/` folder with the Xcode project.
 
-## 변경 범위
-- 파일 1개 수정 (`MobileAppLanding.tsx`)
-- 기존 기능에 영향 없음
+4. **Build the web app and sync**
+```bash
+npm run build
+npx cap sync ios
+```
+
+5. **Open in Xcode**
+```bash
+npx cap open ios
+```
+
+6. **In Xcode**:
+   - Select a Simulator (e.g. iPhone 16) or your connected device
+   - For a real device: sign with your Apple Developer team under Signing & Capabilities
+   - Press the Play button to build and run
+
+7. **Test the app** on your Simulator or device
+
+### Development Hot-Reload (Optional)
+To see live changes from Lovable while developing, temporarily add a server block to `capacitor.config.ts`:
+```typescript
+const config: CapacitorConfig = {
+  appId: 'app.kworship.main',
+  appName: 'K-Worship',
+  webDir: 'dist',
+  server: {
+    url: 'https://2ed7309e-d6b0-4f05-9642-be9265249510.lovableproject.com?forceHideBadge=true',
+    cleartext: true
+  }
+};
+```
+Then run `npx cap sync ios` again. **Remove this server block before publishing to the App Store.**
+
+### Publishing to the App Store
+When ready to publish:
+1. Enroll in the **Apple Developer Program** ($99/year)
+2. Remove the `server` block from `capacitor.config.ts`
+3. Run `npm run build && npx cap sync ios`
+4. In Xcode: set version/build numbers, configure app icons and splash screen
+5. Archive the app (Product -> Archive) and upload to App Store Connect
+6. Submit for Apple review
+
+## No Code Changes Needed from Lovable
+Everything is already configured. All steps happen locally on your Mac.
+
+## Useful Reference
+- [Capacitor iOS docs](https://capacitorjs.com/docs/ios)
+- [Lovable native app guide](https://docs.lovable.dev/tips-tricks/native-mobile-apps)
 
