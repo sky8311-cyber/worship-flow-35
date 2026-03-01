@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 import { useAuth } from "@/contexts/AuthContext";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { motion } from "framer-motion";
@@ -21,6 +22,12 @@ const MobileAppLanding = () => {
 
   useEffect(() => {
     if (loading) return;
+
+    // Native app (iOS/Android via Capacitor) → skip landing, go straight to login or dashboard
+    if (Capacitor.isNativePlatform()) {
+      navigate(user ? "/dashboard" : "/login", { replace: true });
+      return;
+    }
     
     // If logged in, go to dashboard
     if (user) {
