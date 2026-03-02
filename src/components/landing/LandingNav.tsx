@@ -19,7 +19,7 @@ export const LandingNav = () => {
   // Full header with logo and enhanced buttons for /app page
   if (isAppPage) {
     return (
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky safe-top-offset z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 safe-top">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Left side - Home + Logo */}
@@ -70,7 +70,7 @@ export const LandingNav = () => {
   // Minimal floating header for landing page (/)
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <header className="fixed safe-top-offset left-0 right-0 z-50 pointer-events-none safe-top">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-end h-16 md:h-20 gap-1.5">
             
