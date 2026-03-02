@@ -552,9 +552,31 @@ export function useSetEditLock(
     }
   }, [setId, lockStatus, releaseLock, user?.id]);
 
+  // Heartbeat error backoff
+  const heartbeatErrorBackoffRef = useRef(false);
+  const heartbeatErrorBackoffAtRef = useRef(0);
+  const HEARTBEAT_ERROR_BACKOFF_MS = 30 * 1000;
+
   // Send heartbeat
   const sendHeartbeat = useCallback(async () => {
     if (!setId || lockStatus !== "locked_by_me") return;
+
+    // Skip heartbeat during error backoff
+    if (heartbeatErrorBackoffRef.current) {
+      const elapsed = Date.now() - heartbeatErrorBackoffAtRef.current;
+      if (elapsed < HEARTBEAT_ERROR_BACKOFF_MS) {
+        console.warn('[EditLock] Heartbeat in backoff, skipping');
+        return;
+      }
+      // Try session refresh before retrying
+      try {
+        await supabase.auth.refreshSession();
+        console.log('[EditLock] Session refreshed after heartbeat backoff');
+      } catch (e) {
+        console.warn('[EditLock] Session refresh failed:', e);
+      }
+      heartbeatErrorBackoffRef.current = false;
+    }
 
     const { error } = await supabase
       .from("set_edit_locks")
@@ -567,8 +589,18 @@ export function useSetEditLock(
 
     if (error) {
       console.error("[EditLock] Heartbeat failed:", error);
-      // Lost the lock somehow
-      await checkLockStatus();
+      const code = (error as any)?.code;
+      const isAuthError = code === '401' || code === '403' || code === '406' 
+        || error.message?.includes('JWT') || error.message?.includes('row-level security');
+      
+      if (isAuthError) {
+        heartbeatErrorBackoffRef.current = true;
+        heartbeatErrorBackoffAtRef.current = Date.now();
+        console.warn('[EditLock] Auth error on heartbeat, entering 30s backoff');
+      } else {
+        // Lost the lock somehow
+        await checkLockStatus();
+      }
     }
   }, [setId, lockStatus, checkLockStatus]);
 
