@@ -22,27 +22,8 @@ const MobileAppLanding = () => {
 
   useEffect(() => {
     if (loading) return;
-
-    // Native app (iOS/Android via Capacitor) → skip landing, go straight to login or dashboard
-    if (Capacitor.isNativePlatform()) {
-      navigate(user ? "/dashboard" : "/login", { replace: true });
-      return;
-    }
-    
-    // If logged in, go to dashboard
-    if (user) {
-      navigate("/dashboard");
-      return;
-    }
-    
-    // If returning visitor (has visited dashboard before), go to login
-    const hasVisited = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('kworship_visited='));
-    
-    if (hasVisited) {
-      navigate("/login");
-    }
+    if (user) navigate("/dashboard", { replace: true });
+    else navigate("/login", { replace: true });
   }, [user, loading, navigate]);
 
   if (loading) {
