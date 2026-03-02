@@ -1,24 +1,22 @@
 
 
-## Always Redirect "/" to Login
+## Fix: Reduce Excessive Top Spacing on iOS
 
-Currently, the "/" route (MobileAppLanding) only redirects to `/login` for native apps or returning visitors. New web visitors see the full marketing landing page. You want all platforms to go straight to login.
+### Problem
+The header currently applies **both** `safe-top-offset` (top: env(safe-area-inset-top)) **and** `safe-top` (padding-top: env(safe-area-inset-top)) on the same element. This creates double the spacing -- the element is pushed down AND padded, resulting in the oversized gap you see in the simulator.
 
-### Change
+### Solution
+Remove `safe-top-offset` from all sticky headers and keep only `safe-top`. For sticky elements, `top: 0` with internal safe-area padding is the correct approach -- the padding ensures content clears the status bar, while the element itself sticks to the top of the viewport.
 
-**`src/pages/MobileAppLanding.tsx`** -- Simplify the `useEffect` to always redirect:
-- If user is logged in -> `/dashboard`
-- If not logged in -> `/login`
-- Remove the native-only check and the returning-visitor cookie check since the behavior is now universal
+### Files to Update (5 files, same one-line change each)
 
-The marketing landing page remains accessible at `/app` for anyone who navigates there directly.
+1. **`src/components/layout/AppHeader.tsx`** -- Remove `safe-top-offset` from header class
+2. **`src/pages/auth/Login.tsx`** -- Remove `safe-top-offset` from header class
+3. **`src/components/landing/LandingNav.tsx`** -- Remove `safe-top-offset` from both header elements
+4. **`src/components/landing/PublicPageHeader.tsx`** -- Remove `safe-top-offset` from header class
+5. **`src/components/admin/AdminNav.tsx`** -- Remove `safe-top-offset` from nav class
 
-### Technical Detail
+Each change is simply removing the word `safe-top-offset` from the className string, keeping `safe-top` in place.
 
-The redirect logic in `useEffect` (lines 23-46) will be replaced with:
-```
-if (user) navigate("/dashboard", { replace: true });
-else navigate("/login", { replace: true });
-```
-
-Only one file changes. After this, run `git pull` + `npm run build` + `npx cap sync ios` and rebuild in Xcode.
+### After Changes
+Run `git pull`, `npm run build`, `npx cap sync ios`, then rebuild in Xcode to verify the spacing is correct.
