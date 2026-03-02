@@ -102,7 +102,7 @@ const Login = () => {
         noIndex={true}
       />
       {/* Simple Header */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky safe-top-offset z-50 safe-top">
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky z-50 safe-top">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/">
