@@ -46,7 +46,7 @@ export const PublicPageHeader = ({ showLogo = true }: PublicPageHeaderProps) => 
 
   return (
     <TooltipProvider delayDuration={300}>
-      <header className="sticky safe-top-offset z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b safe-top">
+      <header className="sticky z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b safe-top">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo */}

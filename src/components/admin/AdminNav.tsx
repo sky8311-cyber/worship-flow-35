@@ -146,7 +146,7 @@ export const AdminNav = () => {
   const isSecondaryActive = secondaryLinks.some(link => isActive(link.to));
   
   return (
-    <nav className="border-b bg-card/80 backdrop-blur-sm sticky safe-top-offset z-10 safe-top">
+    <nav className="border-b bg-card/80 backdrop-blur-sm sticky z-10 safe-top">
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex items-center justify-between gap-2 py-3">
           {/* Primary Navigation Links */}
