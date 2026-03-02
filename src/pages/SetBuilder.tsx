@@ -357,7 +357,9 @@ const SetBuilder = () => {
     isSaving: autoSaveIsSaving, 
     lastSavedAt,
     forceSave,
-    newSetId
+    newSetId,
+    consecutiveErrors: autoSaveConsecutiveErrors,
+    autoSaveError,
   } = useAutoSaveDraft({
     id,
     formData,
@@ -369,6 +371,24 @@ const SetBuilder = () => {
     externalAddedIdsRef,
     onDbIdsUpdated: handleDbIdsUpdated,
   });
+
+  // Show user-facing toast when auto-save has consecutive auth errors
+  const autoSaveErrorShownRef = useRef(false);
+  useEffect(() => {
+    if (autoSaveError && autoSaveConsecutiveErrors >= 3 && !autoSaveErrorShownRef.current) {
+      autoSaveErrorShownRef.current = true;
+      toast.error(
+        language === "ko" 
+          ? "자동저장에 문제가 발생했습니다. 페이지를 새로고침하거나 다시 로그인해주세요." 
+          : "Auto-save is failing. Please refresh the page or re-login.",
+        { duration: 10000 }
+      );
+    }
+    // Reset the flag when errors clear
+    if (autoSaveConsecutiveErrors === 0) {
+      autoSaveErrorShownRef.current = false;
+    }
+  }, [autoSaveError, autoSaveConsecutiveErrors, language]);
 
   // Realtime sync - receive changes from other tabs/users
   const { handleSongRealtimeChange, handleComponentRealtimeChange } = useRealtimeHandlers(

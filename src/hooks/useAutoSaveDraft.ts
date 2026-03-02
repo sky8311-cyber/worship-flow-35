@@ -131,6 +131,13 @@ export const useAutoSaveDraft = ({
   const saveCountRef = useRef<number>(0);
   const lastSaveTimeRef = useRef<number>(0);
   
+  // Error backoff refs for 401/403/406 errors
+  const errorBackoffRef = useRef<boolean>(false);
+  const errorBackoffAtRef = useRef<number>(0);
+  const consecutiveErrorCountRef = useRef<number>(0);
+  const ERROR_BACKOFF_MS = 30 * 1000; // 30 seconds initial backoff
+  const ERROR_BACKOFF_EXTENDED_MS = 2 * 60 * 1000; // 2 minutes extended backoff
+  
   // Cooldown period after loop detection (30 seconds)
   const LOOP_COOLDOWN = 30 * 1000;
 
@@ -148,6 +155,18 @@ export const useAutoSaveDraft = ({
       if (!user?.id) {
         console.log('AutoSave: Skipping - no user id');
         return null;
+      }
+
+      // Error backoff: Skip saves during backoff period
+      if (errorBackoffRef.current) {
+        const elapsed = Date.now() - errorBackoffAtRef.current;
+        const backoffMs = consecutiveErrorCountRef.current >= 2 ? ERROR_BACKOFF_EXTENDED_MS : ERROR_BACKOFF_MS;
+        if (elapsed < backoffMs) {
+          console.warn('[AutoSave] In error backoff, skipping save (' + Math.round((backoffMs - elapsed) / 1000) + 's remaining)');
+          return null;
+        }
+        console.log('[AutoSave] Error backoff expired, retrying...');
+        errorBackoffRef.current = false;
       }
 
       // Loop detection with recovery: After cooldown, allow saves again
@@ -275,6 +294,23 @@ export const useAutoSaveDraft = ({
         setLastSavedAt(new Date());
         localStorage.setItem(LAST_EDITED_DRAFT_KEY, setId);
         queryClient.invalidateQueries({ queryKey: ["user-draft-count"] });
+        // Reset error count on successful save
+        consecutiveErrorCountRef.current = 0;
+      }
+    },
+    onError: (error: any) => {
+      // Detect auth/permission errors and enter backoff
+      const statusCode = error?.status || error?.code;
+      const message = error?.message || '';
+      const isAuthError = statusCode === 401 || statusCode === 403 || statusCode === 406 
+        || message.includes('JWT') || message.includes('row-level security');
+      
+      if (isAuthError) {
+        consecutiveErrorCountRef.current++;
+        errorBackoffRef.current = true;
+        errorBackoffAtRef.current = Date.now();
+        const backoffSec = consecutiveErrorCountRef.current >= 2 ? 120 : 30;
+        console.warn(`[AutoSave] Auth/permission error (${statusCode}), entering ${backoffSec}s backoff:`, message);
       }
     },
     onSettled: () => {
@@ -366,6 +402,8 @@ export const useAutoSaveDraft = ({
     lastSavedAt,
     forceSave,
     newSetId: autoSaveMutation.data,
+    consecutiveErrors: consecutiveErrorCountRef.current,
+    autoSaveError: autoSaveMutation.error,
   };
 };
 
