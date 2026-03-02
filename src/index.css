@@ -119,8 +119,16 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     word-break: keep-all;
     overflow-wrap: break-word;
-    padding-top: env(safe-area-inset-top, 0px);
   }
+}
+
+/* Safe-area utilities for iOS notch / status bar */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-top-offset {
+  top: env(safe-area-inset-top, 0px);
 }
 
 /* Hide scrollbar for horizontal scroll containers */
