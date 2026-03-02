@@ -22,7 +22,7 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
   };
 
   return (
-    <div className="min-h-screen bg-gradient-soft">
+    <div className="min-h-[100dvh] bg-gradient-soft">
       <AppHeader showBackButton={showBackButton} backPath={backPath} breadcrumb={breadcrumb} />
       
       {/* Main content with bottom padding for mobile nav + safe area + mini player */}
