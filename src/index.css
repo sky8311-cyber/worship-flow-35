@@ -119,6 +119,7 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     word-break: keep-all;
     overflow-wrap: break-word;
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
