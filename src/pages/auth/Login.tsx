@@ -15,6 +15,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { Eye, EyeOff } from "lucide-react";
 import logoMobile from "@/assets/kworship-logo-mobile.png";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -92,7 +93,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/20">
       <SEOHead
         title="Login - K-Worship"
         titleKo="로그인 - K-Worship"
@@ -114,7 +115,7 @@ const Login = () => {
       </header>
 
       {/* Centered Login Card */}
-      <div className="container mx-auto px-4 py-12 flex items-center justify-center min-h-[calc(100vh-80px)]">
+      <div className="container mx-auto px-4 py-6 flex flex-1 items-center justify-center">
         <Card className="w-full max-w-md shadow-lg border-border/50">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl font-bold">{t("auth.loginPage.cardTitle")}</CardTitle>
@@ -279,6 +280,8 @@ const Login = () => {
           </CardContent>
         </Card>
       </div>
+
+      <LandingFooter />
     </div>
   );
 };
