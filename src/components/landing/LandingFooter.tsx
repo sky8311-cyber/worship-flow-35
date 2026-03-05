@@ -206,7 +206,7 @@ export const LandingFooter = () => {
                   {language === "ko" ? "법인명" : "Company"}: Goodpapa Inc. | {language === "ko" ? "대표" : "CEO"}: Kwang Choi
                 </p>
                 <p>
-                  {language === "ko" ? "사업자등록번호" : "Business Registration No."}: 743833147
+                  {language === "ko" ? "사업자등록번호" : "Business Registration No."}: 1453846-3
                 </p>
                 <p>
                   {language === "ko" ? "소재지" : "Address"}: #1250-329 Howe Street, Vancouver, BC V6C 3N2 Canada
