@@ -843,6 +843,8 @@ const [loading, setLoading] = useState(false);
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             className="flex-1"
+            onPointerDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
           />
           <Button
             type="button"
