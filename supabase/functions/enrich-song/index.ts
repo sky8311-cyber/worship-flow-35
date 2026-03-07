@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Allowed topics from song_topics table - these are the only valid options
 const ALLOWED_TOPICS = [
   { ko: '감사', en: 'Thanksgiving' },
   { ko: '결단', en: 'Decision' },
@@ -43,18 +42,20 @@ const TOPIC_NAMES_KO = ALLOWED_TOPICS.map(t => t.ko);
 
 interface ScrapeResult {
   lyrics: string | null;
-  source: 'bugs' | 'melon' | 'none';
+  source: 'gasazip' | 'bugs' | 'melon' | 'none';
   error?: string;
+  trackInfo?: { title: string; artist: string };
+  youtube_title?: string;
+  verified?: boolean;
 }
 
-// Call the scrape-lyrics function
-async function scrapeLyrics(title: string, artist: string): Promise<ScrapeResult> {
+// Call the scrape-lyrics function with extra context
+async function scrapeLyrics(title: string, artist: string, subtitle: string, youtubeUrl: string): Promise<ScrapeResult> {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!supabaseUrl || !supabaseKey) {
-      console.log('Missing Supabase config, skipping scrape');
       return { lyrics: null, source: 'none', error: 'Missing config' };
     }
     
@@ -64,7 +65,7 @@ async function scrapeLyrics(title: string, artist: string): Promise<ScrapeResult
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify({ title, artist }),
+      body: JSON.stringify({ title, artist, subtitle, youtube_url: youtubeUrl }),
     });
     
     if (!response.ok) {
@@ -85,7 +86,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, artist, language } = await req.json();
+    const { title, artist, language, subtitle, youtube_url, notes } = await req.json();
     
     if (!title) {
       return new Response(
@@ -99,33 +100,42 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    console.log('Enriching song:', { title, artist, language });
+    console.log('Enriching song:', { title, artist, language, subtitle, youtube_url });
 
-    // Step 1: Try to scrape actual lyrics
+    // Step 1: Scrape lyrics with extra context
     console.log('Step 1: Scraping lyrics...');
-    const scrapeResult = await scrapeLyrics(title, artist || '');
+    const scrapeResult = await scrapeLyrics(title, artist || '', subtitle || '', youtube_url || '');
     
     const hasScrapedLyrics = scrapeResult.lyrics && scrapeResult.lyrics.length > 50;
     console.log('Scrape result:', { 
       hasLyrics: hasScrapedLyrics, 
       source: scrapeResult.source,
-      lyricsLength: scrapeResult.lyrics?.length || 0 
+      lyricsLength: scrapeResult.lyrics?.length || 0,
+      verified: scrapeResult.verified,
+      youtube_title: scrapeResult.youtube_title
     });
 
-    // Step 2: AI analysis with lyrics context (if available)
+    // Step 2: AI analysis
     console.log('Step 2: AI analysis...');
     
-    // Build the analysis prompt based on whether we have lyrics
+    // Build extra context string
+    let extraContext = '';
+    if (subtitle) extraContext += `\n- 부제: ${subtitle}`;
+    if (notes) extraContext += `\n- 메모/참고: ${notes}`;
+    if (scrapeResult.youtube_title) extraContext += `\n- YouTube 영상 제목: ${scrapeResult.youtube_title}`;
+    if (scrapeResult.trackInfo) {
+      extraContext += `\n- 스크래핑된 곡 정보: "${scrapeResult.trackInfo.title}" by ${scrapeResult.trackInfo.artist}`;
+    }
+    
     let analysisPrompt: string;
     
     if (hasScrapedLyrics) {
-      // We have real lyrics - analyze them for key and topics
       analysisPrompt = `다음 찬양/예배곡의 실제 가사를 분석하여 음악적 정보를 추천해주세요.
 
 곡 정보:
 - 제목: ${title}
 - 아티스트: ${artist || '미상'}
-- 언어: ${language || '한국어'}
+- 언어: ${language || '한국어'}${extraContext}
 
 [가사 내용]
 ${scrapeResult.lyrics}
@@ -137,13 +147,12 @@ ${scrapeResult.lyrics}
 주의: 주제는 반드시 아래 목록에서만 선택하세요:
 ${TOPIC_NAMES_KO.join(', ')}`;
     } else {
-      // No lyrics available - do best-effort analysis based on title/artist
       analysisPrompt = `다음 찬양/예배곡의 정보를 기반으로 음악적 메타데이터를 추천해주세요.
 
 곡 정보:
 - 제목: ${title}
 - 아티스트: ${artist || '미상'}
-- 언어: ${language || '한국어'}
+- 언어: ${language || '한국어'}${extraContext}
 
 주의: 가사를 직접 찾을 수 없었습니다. 곡 제목과 아티스트 정보만으로 최선의 추측을 해주세요.
 
@@ -172,7 +181,8 @@ ${TOPIC_NAMES_KO.join(', ')}`;
 1. 주제(topics)는 반드시 지정된 목록에서만 선택하세요.
 2. 가사가 제공된 경우, 가사 내용을 깊이 분석하여 주제를 선택하세요.
 3. 키는 실제 곡의 일반적인 연주 키를 추천하세요.
-4. 확신이 없으면 confidence를 낮게 설정하세요.`
+4. 확신이 없으면 confidence를 낮게 설정하세요.
+5. 부제(subtitle)나 YouTube 제목이 제공된 경우, 정확한 곡 식별에 활용하세요.`
           },
           { role: 'user', content: analysisPrompt }
         ],
@@ -192,10 +202,7 @@ ${TOPIC_NAMES_KO.join(', ')}`;
                 topics: {
                   type: 'array',
                   description: '가사 내용에서 분석된 주제들 (2-3개)',
-                  items: {
-                    type: 'string',
-                    enum: TOPIC_NAMES_KO
-                  },
+                  items: { type: 'string', enum: TOPIC_NAMES_KO },
                   minItems: 2,
                   maxItems: 3
                 },
@@ -240,9 +247,6 @@ ${TOPIC_NAMES_KO.join(', ')}`;
     }
 
     const data = await response.json();
-    console.log('AI response received');
-
-    // Extract tool call result
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
       return new Response(
@@ -253,7 +257,6 @@ ${TOPIC_NAMES_KO.join(', ')}`;
 
     const aiAnalysis = JSON.parse(toolCall.function.arguments);
     
-    // Map topic names to bilingual format
     const bilingualTopics = aiAnalysis.topics
       .map((topicKo: string) => {
         const found = ALLOWED_TOPICS.find(t => t.ko === topicKo);
@@ -261,7 +264,6 @@ ${TOPIC_NAMES_KO.join(', ')}`;
       })
       .filter(Boolean);
 
-    // Build final suggestions
     const suggestions = {
       lyrics: hasScrapedLyrics ? scrapeResult.lyrics : null,
       lyrics_source: scrapeResult.source,
@@ -269,10 +271,10 @@ ${TOPIC_NAMES_KO.join(', ')}`;
       tags: bilingualTopics,
       confidence: hasScrapedLyrics ? 
         (aiAnalysis.confidence === 'low' ? 'medium' : aiAnalysis.confidence) : 
-        'low', // Lower confidence if no lyrics
+        'low',
       notes: aiAnalysis.analysis_notes || (
         hasScrapedLyrics 
-          ? `${scrapeResult.source === 'bugs' ? 'Bugs Music' : 'Melon'}에서 가사를 가져왔습니다.`
+          ? `${scrapeResult.source}에서 가사를 가져왔습니다.${scrapeResult.verified === false ? ' (유사도 검증 미통과 - 정확도 주의)' : ''}`
           : '가사를 찾을 수 없어 곡 제목 기반으로 분석했습니다. 정확도가 낮을 수 있습니다.'
       )
     };
@@ -286,26 +288,15 @@ ${TOPIC_NAMES_KO.join(', ')}`;
     });
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        suggestions 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      JSON.stringify({ success: true, suggestions }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
   } catch (error) {
     console.error('Error in enrich-song function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error' 
-      }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
