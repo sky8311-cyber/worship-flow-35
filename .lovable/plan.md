@@ -1,27 +1,17 @@
 
 
-## 모바일 URL 입력 필드 포커스 문제 수정
+## 악보 편집 영역 버튼 너비 정렬
 
-### 원인 분석
-`ScoreVariationItem` 컴포넌트가 `useSortable` (dnd-kit)로 감싸져 있고, 컨테이너 div에 `{...attributes}`가 spread되어 있음. 이 attributes에는 터치 이벤트 핸들러가 포함되어 있어, 모바일에서 URL Input을 탭할 때 sortable 컨테이너가 터치 이벤트를 가로채면서 키보드가 열렸다가 포커스를 잃고 닫히는 현상 발생.
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
 ### 변경 사항
 
 **파일: `src/components/SongDialog.tsx`**
 
-URL Input (line 840-846)에 `onPointerDown` 및 `onTouchStart` 이벤트 전파 차단 추가:
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-```tsx
-<Input
-  type="url"
-  placeholder={...}
-  value={urlInput}
-  onChange={(e) => setUrlInput(e.target.value)}
-  className="flex-1"
-  onPointerDown={(e) => e.stopPropagation()}
-  onTouchStart={(e) => e.stopPropagation()}
-/>
-```
-
-이렇게 하면 dnd-kit의 PointerSensor가 Input 터치를 드래그로 인식하지 않아 모바일에서 정상적으로 포커스 유지 및 붙여넣기가 가능해짐.
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
