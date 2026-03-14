@@ -1,17 +1,21 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## 악보 버튼 색상을 Primary Navy Blue로 통일
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### 변경 내용
+`blue-500` 하드코딩 → `primary` 디자인 토큰으로 교체. 브랜드 컬러 팔레트와 일관성 유지.
 
-### 변경 사항
+### 수정 파일: `src/components/SongCard.tsx`
 
-**파일: `src/components/SongDialog.tsx`**
+```tsx
+// Before
+className="... hover:bg-blue-500 hover:text-white hover:border-blue-500"
+<FileMusic className="... text-blue-500 group-hover:text-white" />
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+// After
+className="... hover:bg-primary hover:text-white hover:border-primary"
+<FileMusic className="... text-primary group-hover:text-white" />
+```
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+변경 파일: 1개
 
