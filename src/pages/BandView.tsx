@@ -487,6 +487,7 @@ const BandView = () => {
           title: song?.title || t("bandView.noTitle"),
           artist: song?.artist || "",
           position: setSong.position,
+          lyrics: setSong.lyrics || song?.lyrics || undefined,
         };
       })
       .filter((item: PlaylistItem | null): item is PlaylistItem => item !== null)
