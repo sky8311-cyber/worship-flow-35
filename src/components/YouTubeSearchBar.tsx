@@ -81,9 +81,9 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
     setQuery("");
   };
 
-  const handlePreview = (videoId: string) => {
+  const getPreviewProps = (videoId: string) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
-    openYouTubeUrl(url);
+    return getYouTubeAnchorProps(url);
   };
 
   return (
