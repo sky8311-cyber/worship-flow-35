@@ -218,9 +218,9 @@ const handleDelete = async () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setScorePreviewOpen(true)}
-                className="flex-1 w-full"
+                className="flex-1 w-full group hover:bg-blue-500 hover:text-white hover:border-blue-500"
               >
-                <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
+                <FileMusic className="w-4 h-4 mr-1 text-blue-500 group-hover:text-white" />
                 <span className="truncate">{t("songCard.viewScore")}</span>
               </Button>
             )}
