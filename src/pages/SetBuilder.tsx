@@ -1490,10 +1490,21 @@ const SetBuilder = () => {
       </TooltipProvider>
 
       {id && (
-        <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
-          <Share2 className="w-4 h-4 shrink-0" />
-          <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
-        </Button>
+        <>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 gap-1 px-2 sm:px-3" 
+            onClick={() => window.open(`/band-view/${id}?preview=true`, '_blank')}
+          >
+            <Eye className="w-4 h-4 shrink-0" />
+            <span className="text-xs sm:text-sm">{language === "ko" ? "미리보기" : "Preview"}</span>
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
+            <Share2 className="w-4 h-4 shrink-0" />
+            <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
+          </Button>
+        </>
       )}
     </div>
   );
