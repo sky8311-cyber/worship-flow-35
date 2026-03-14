@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 // Helper function to check if song is new (within 14 days)
 const isNewSong = (createdAt: string | null) => {
@@ -229,7 +230,7 @@ const handleDelete = async (song: any) => {
 
   const handleYoutubeClick = (url: string | null) => {
     if (url) {
-      window.open(url, '_blank');
+      openYouTubeUrl(url);
     }
   };
 

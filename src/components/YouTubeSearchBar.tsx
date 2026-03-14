@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Youtube, Loader2, ExternalLink, Check } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 interface YouTubeVideo {
   id: string;
@@ -82,7 +83,7 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
 
   const handlePreview = (videoId: string) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
-    window.open(url, '_blank');
+    openYouTubeUrl(url);
   };
 
   return (
