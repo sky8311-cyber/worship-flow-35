@@ -206,23 +206,7 @@ const handleDelete = async () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  const url = song.youtube_url;
-                  // Mobile: try native YouTube app first
-                  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                    const videoId = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
-                    if (videoId) {
-                      // Try YouTube app scheme
-                      window.location.href = `vnd.youtube://${videoId}`;
-                      // Fallback to browser after short delay
-                      setTimeout(() => {
-                        window.open(url, "_blank");
-                      }, 500);
-                      return;
-                    }
-                  }
-                  window.open(url, "_blank");
-                }}
+              onClick={() => openYouTubeUrl(song.youtube_url)}
                 className="flex-1 w-full"
               >
                 <Youtube className="w-4 h-4 mr-1 text-red-500" />

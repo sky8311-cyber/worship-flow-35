@@ -391,7 +391,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(song.youtube_url, "_blank")}
+                    onClick={() => openYouTubeUrl(song.youtube_url)}
                   >
                     <Youtube className="w-4 h-4 mr-1" />
                     유튜브

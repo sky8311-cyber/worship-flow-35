@@ -230,7 +230,7 @@ const handleDelete = async (song: any) => {
 
   const handleYoutubeClick = (url: string | null) => {
     if (url) {
-      window.open(url, '_blank');
+      openYouTubeUrl(url);
     }
   };
 
