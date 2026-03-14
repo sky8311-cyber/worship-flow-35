@@ -48,7 +48,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
