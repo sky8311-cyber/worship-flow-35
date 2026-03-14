@@ -24,6 +24,7 @@ export interface PlaylistItem {
   title: string;
   artist: string;
   position: number;
+  lyrics?: string;
 }
 
 interface MusicPlayerModeProps {
