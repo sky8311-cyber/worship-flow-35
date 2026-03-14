@@ -29,7 +29,7 @@ import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
