@@ -1,27 +1,17 @@
 
 
-## 문제: iOS에서 Universal Link가 앱을 열지 못함
+## 악보 편집 영역 버튼 너비 정렬
 
-현재 iOS 경로에서 `document.createElement("a")` + `.click()`을 사용하고 있지만, **프로그래밍 방식으로 생성된 앵커 클릭은 Universal Link를 트리거하지 않습니다.** iOS는 실제 사용자 탭 이벤트가 있는 앵커만 Universal Link로 처리합니다. 그래서 항상 새 탭(웹 YouTube)으로 열립니다.
-
-이전에 작동했던 `vnd.youtube://` 스킴 방식으로 되돌리되, `visibilitychange` 대신 더 간단한 타이머 fallback을 사용합니다.
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
 ### 변경 사항
 
-**`src/lib/youtubeHelper.ts`** — iOS 경로 수정
+**파일: `src/components/SongDialog.tsx`**
 
-```text
-iOS 분기 (line 45-55):
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-현재: createElement("a") + click() → 항상 새 탭
-변경: window.location.href = vnd.youtube://VIDEO_ID
-      + 2초 후 fallback으로 window.open(url, "_blank")
-```
-
-로직:
-1. `window.location.href = "vnd.youtube://VIDEO_ID"` — YouTube 앱 열기 시도
-2. 앱이 열리면 페이지가 백그라운드로 → setTimeout 실행 안 됨
-3. 앱이 없으면 2초 후 `window.open(url, "_blank")`로 웹 fallback
-
-이 방식이 원래 작동했던 패턴과 동일합니다.
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
