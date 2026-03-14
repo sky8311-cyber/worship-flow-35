@@ -9,16 +9,20 @@ export function openYouTubeUrl(url: string) {
   if (isMobile) {
     const videoId = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?\s]+)/)?.[1];
     if (videoId) {
-      let appOpened = false;
-      const onVisChange = () => { if (document.hidden) appOpened = true; };
+      const fallbackTimer = setTimeout(() => {
+        document.removeEventListener("visibilitychange", onVisChange);
+        window.open(url, "_blank");
+      }, 1500);
+
+      const onVisChange = () => {
+        if (document.hidden) {
+          clearTimeout(fallbackTimer);
+          document.removeEventListener("visibilitychange", onVisChange);
+        }
+      };
       document.addEventListener("visibilitychange", onVisChange);
 
       window.location.href = `vnd.youtube://${videoId}`;
-
-      setTimeout(() => {
-        document.removeEventListener("visibilitychange", onVisChange);
-        if (!appOpened) window.open(url, "_blank");
-      }, 1500);
       return;
     }
   }

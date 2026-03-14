@@ -1,50 +1,17 @@
 
 
-## 문제 분석
+## 악보 편집 영역 버튼 너비 정렬
 
-모바일 브라우저는 백그라운드 상태에서 `setTimeout`을 **일시 중지**합니다. 흐름:
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-1. 딥링크 → YouTube 앱 열림 → `appOpened = true` ✓
-2. 사용자가 YouTube에서 시간을 보냄 (타이머 일시 중지됨)
-3. 크롬으로 복귀 → 타이머 재개 → 하지만 `visibilitychange`로 `hidden=false` 이벤트가 먼저 발생할 수 있어 race condition 발생
+### 변경 사항
 
-### 해결: 앱이 열리면 타이머 자체를 취소
+**파일: `src/components/SongDialog.tsx`**
 
-**파일: `src/lib/youtubeHelper.ts`**
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-`clearTimeout`으로 앱이 성공적으로 열렸을 때 fallback 타이머를 즉시 제거:
-
-```ts
-export function openYouTubeUrl(url: string) {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  if (isMobile) {
-    const videoId = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?\s]+)/)?.[1];
-    if (videoId) {
-      const fallbackTimer = setTimeout(() => {
-        document.removeEventListener("visibilitychange", onVisChange);
-        window.open(url, "_blank");
-      }, 1500);
-
-      const onVisChange = () => {
-        if (document.hidden) {
-          // 앱이 열렸으므로 fallback 취소
-          clearTimeout(fallbackTimer);
-          document.removeEventListener("visibilitychange", onVisChange);
-        }
-      };
-      document.addEventListener("visibilitychange", onVisChange);
-
-      window.location.href = `vnd.youtube://${videoId}`;
-      return;
-    }
-  }
-
-  window.open(url, "_blank");
-}
-```
-
-핵심 변경: `document.hidden`이 감지되는 즉시 `clearTimeout`으로 fallback을 **완전히 제거**. 크롬으로 돌아와도 새 탭이 열리지 않음.
-
-**변경 파일: 1개**
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
