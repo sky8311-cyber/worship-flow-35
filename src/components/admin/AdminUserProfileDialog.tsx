@@ -11,6 +11,7 @@ import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/dateUtils";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 interface AdminUserProfileDialogProps {
   userId: string | null;
@@ -273,7 +274,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(profile.youtube_url!, "_blank")}
+                        onClick={() => openYouTubeUrl(profile.youtube_url!)}
                       >
                         <Youtube className="h-4 w-4 mr-2" />
                         YouTube

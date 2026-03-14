@@ -29,6 +29,7 @@ import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
@@ -1187,7 +1188,7 @@ const [loading, setLoading] = useState(false);
                       <div className="flex justify-center">
                         <div 
                           className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
-                          onClick={() => window.open(link.url, "_blank")}
+                          onClick={() => openYouTubeUrl(link.url)}
                         >
                           <img 
                             src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}

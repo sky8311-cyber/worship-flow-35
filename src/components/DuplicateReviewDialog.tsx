@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
@@ -643,16 +644,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     switch (field) {
       case "youtube_url":
         return value ? (
-          <a
-            href={value}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={(e) => { e.stopPropagation(); openYouTubeUrl(value); }}
             className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline"
-            onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-4 w-4" />
             <span className="text-xs">Watch</span>
-          </a>
+          </button>
         ) : (
           <XCircle className="h-4 w-4 text-destructive" />
         );
@@ -958,15 +956,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                             </div>
                                             <div className="flex items-center gap-2 text-xs flex-wrap">
                                               {song.youtube_url && (
-                                                <a
-                                                  href={song.youtube_url}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
+                                                <button
+                                                  onClick={() => openYouTubeUrl(song.youtube_url)}
                                                   className="inline-flex items-center gap-1 hover:underline"
                                                 >
                                                   <Youtube className="h-3 w-3" />
                                                   보기
-                                                </a>
+                                                </button>
                                               )}
                                               {song.score_file_url && (
                                                 <button
