@@ -1052,6 +1052,8 @@ const SetBuilder = () => {
     },
     onError: (error: any) => {
       toast.error("저장 실패: " + error.message);
+      // Restore auto-save if publish failed
+      suppressAutoSaveRef.current = false;
     },
     onSettled: () => {
       setIsSaving(false);
