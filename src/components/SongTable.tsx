@@ -228,11 +228,6 @@ const handleDelete = async (song: any) => {
     setScorePreviewOpen(true);
   };
 
-  const handleYoutubeClick = (url: string | null) => {
-    if (url) {
-      openYouTubeUrl(url);
-    }
-  };
 
   return (
     <>
