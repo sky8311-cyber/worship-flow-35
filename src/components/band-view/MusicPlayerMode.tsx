@@ -3,6 +3,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
   Music, Volume2, RotateCcw, RotateCw 
@@ -23,6 +24,7 @@ export interface PlaylistItem {
   title: string;
   artist: string;
   position: number;
+  lyrics?: string;
 }
 
 interface MusicPlayerModeProps {
@@ -420,51 +422,77 @@ export const MusicPlayerMode = ({
           </div>
         </div>
 
-        {/* Playlist */}
+        {/* Lyrics / Playlist */}
         <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
-          <div className="px-3 sm:px-4 py-2 border-b bg-muted/30 flex-shrink-0">
-            <span className="text-xs sm:text-sm font-medium">
-              {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
-            </span>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-2">
-              {playlist.map((item, index) => (
-                <button
-                  key={`${item.videoId}-${index}`}
-                  onClick={() => playTrack(index)}
-                  className={cn(
-                    "w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg text-left transition-colors",
-                    index === currentIndex 
-                      ? "bg-primary/10 text-primary" 
-                      : "hover:bg-muted"
-                  )}
-                >
-                  <span className={cn(
-                    "w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium rounded flex-shrink-0",
-                    index === currentIndex ? "bg-primary text-primary-foreground" : "bg-muted"
-                  )}>
-                    {index === currentIndex && isPlaying ? (
-                      <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
-                    ) : (
-                      item.position
-                    )}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "truncate font-medium text-sm",
-                      index === currentIndex ? "text-primary" : "text-foreground"
-                    )}>
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {item.artist}
-                    </p>
+          <Tabs
+            value={currentTrack?.lyrics ? "lyrics" : "playlist"}
+            key={currentIndex}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            <TabsList className="w-full rounded-none border-b bg-muted/30 h-9 flex-shrink-0">
+              {currentTrack?.lyrics && (
+                <TabsTrigger value="lyrics" className="flex-1 text-xs">
+                  {language === "ko" ? "가사" : "Lyrics"}
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="playlist" className="flex-1 text-xs">
+                {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
+              </TabsTrigger>
+            </TabsList>
+
+            {currentTrack?.lyrics && (
+              <TabsContent value="lyrics" className="mt-0 flex-1 min-h-0">
+                <ScrollArea className="flex-1 h-full">
+                  <div className="p-4">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
+                      {currentTrack.lyrics}
+                    </pre>
                   </div>
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
+                </ScrollArea>
+              </TabsContent>
+            )}
+
+            <TabsContent value="playlist" className="mt-0 flex-1 min-h-0">
+              <ScrollArea className="flex-1 h-full">
+                <div className="p-2">
+                  {playlist.map((item, index) => (
+                    <button
+                      key={`${item.videoId}-${index}`}
+                      onClick={() => playTrack(index)}
+                      className={cn(
+                        "w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg text-left transition-colors",
+                        index === currentIndex 
+                          ? "bg-primary/10 text-primary" 
+                          : "hover:bg-muted"
+                      )}
+                    >
+                      <span className={cn(
+                        "w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm font-medium rounded flex-shrink-0",
+                        index === currentIndex ? "bg-primary text-primary-foreground" : "bg-muted"
+                      )}>
+                        {index === currentIndex && isPlaying ? (
+                          <Volume2 className="w-3 h-3 sm:w-4 sm:h-4 animate-pulse" />
+                        ) : (
+                          item.position
+                        )}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "truncate font-medium text-sm",
+                          index === currentIndex ? "text-primary" : "text-foreground"
+                        )}>
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.artist}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>

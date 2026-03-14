@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   X, ChevronDown, Play, Pause, SkipBack, SkipForward, 
   Music, Volume2, RotateCcw, RotateCw 
@@ -348,51 +349,77 @@ export const GlobalMusicPlayerDialog = () => {
         </div>
         </div>
 
-        {/* Playlist - NOT in swipeable area (needs its own scroll) */}
-        <div className="border-t">
-          <div className="p-3 bg-muted/30">
-            <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              {t("bandView.musicPlayer.playlist")}
-            </h5>
-          </div>
-          <ScrollArea className="h-48 sm:h-56">
-            <div className="divide-y">
-              {playlist.map((item, index) => (
-                <button
-                  key={`${item.videoId}-${index}`}
-                  onClick={() => playTrack(index)}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-3 text-left transition-colors hover:bg-accent/50",
-                    index === currentIndex && "bg-primary/10"
-                  )}
-                >
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold",
-                    index === currentIndex 
-                      ? "bg-primary text-primary-foreground" 
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {index === currentIndex && isPlaying ? (
-                      <Volume2 className="w-4 h-4 animate-pulse" />
-                    ) : (
-                      item.position
-                    )}
+        {/* Lyrics / Playlist tabs */}
+        <div className="border-t flex-1 min-h-0 flex flex-col">
+          <Tabs 
+            value={currentTrack?.lyrics ? "lyrics" : "playlist"}
+            key={currentIndex}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            <TabsList className="w-full rounded-none border-b bg-muted/30 h-9">
+              {currentTrack?.lyrics && (
+                <TabsTrigger value="lyrics" className="flex-1 text-xs">
+                  {language === "ko" ? "가사" : "Lyrics"}
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="playlist" className="flex-1 text-xs">
+                {t("bandView.musicPlayer.playlist")}
+              </TabsTrigger>
+            </TabsList>
+
+            {currentTrack?.lyrics && (
+              <TabsContent value="lyrics" className="mt-0 flex-1 min-h-0">
+                <ScrollArea className="h-48 sm:h-56">
+                  <div className="p-4">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
+                      {currentTrack.lyrics}
+                    </pre>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "font-medium truncate text-sm",
-                      index === currentIndex ? "text-primary" : "text-foreground"
-                    )}>
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {item.artist}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </ScrollArea>
+                </ScrollArea>
+              </TabsContent>
+            )}
+
+            <TabsContent value="playlist" className="mt-0 flex-1 min-h-0">
+              <ScrollArea className="h-48 sm:h-56">
+                <div className="divide-y">
+                  {playlist.map((item, index) => (
+                    <button
+                      key={`${item.videoId}-${index}`}
+                      onClick={() => playTrack(index)}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 text-left transition-colors hover:bg-accent/50",
+                        index === currentIndex && "bg-primary/10"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold",
+                        index === currentIndex 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {index === currentIndex && isPlaying ? (
+                          <Volume2 className="w-4 h-4 animate-pulse" />
+                        ) : (
+                          item.position
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          "font-medium truncate text-sm",
+                          index === currentIndex ? "text-primary" : "text-foreground"
+                        )}>
+                          {item.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.artist}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>
