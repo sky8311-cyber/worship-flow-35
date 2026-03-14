@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
