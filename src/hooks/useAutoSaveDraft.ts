@@ -216,7 +216,11 @@ export const useAutoSaveDraft = ({
       }
       prevItemsCountRef.current = currentItems.length;
 
-      if (status !== "draft") return null;
+      // Use ref to always check latest status (prevents stale closure after publish)
+      if (statusRef.current !== "draft") {
+        console.log('[AutoSave] Skipping - status is', statusRef.current);
+        return null;
+      }
       if (!currentForm.date || !currentForm.service_time || !currentForm.service_name?.trim() || !currentForm.community_id || !currentForm.worship_leader?.trim()) return null;
 
       // Safety check: If editing existing set with empty items, check DB first
