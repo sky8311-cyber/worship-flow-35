@@ -447,6 +447,7 @@ const [loading, setLoading] = useState(false);
       if (isNewSong) {
         setShowAddToSetPrompt(true);
       } else {
+        setJustSaved(true);
         onClose();
       }
     } catch (error: any) {
