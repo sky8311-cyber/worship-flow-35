@@ -43,16 +43,16 @@ export async function openYouTubeUrl(url: string) {
       window.location.href =
         `intent://watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(url)};end`;
     } else {
-      console.log('[YT] iOS: attempting vnd.youtube://' + videoId);
-      let appOpened = false;
-      const onHidden = () => { if (document.hidden) appOpened = true; };
-      document.addEventListener("visibilitychange", onHidden);
-      window.location.href = `vnd.youtube://${videoId}`;
-      setTimeout(() => {
-        document.removeEventListener("visibilitychange", onHidden);
-        console.log('[YT] iOS timeout fired, appOpened:', appOpened);
-        if (!appOpened) window.open(url, "_blank");
-      }, 500);
+      // iOS (Safari & Chrome): use a real <a> tap to trigger Universal Links
+      console.log('[YT] iOS: using universal link via anchor click');
+      const a = document.createElement("a");
+      a.href = `https://youtu.be/${videoId}`;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      // Universal links only fire from trusted user-gesture anchors
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
     return;
   }
