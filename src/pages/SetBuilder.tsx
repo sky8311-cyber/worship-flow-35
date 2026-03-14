@@ -357,6 +357,7 @@ const SetBuilder = () => {
     isSaving: autoSaveIsSaving, 
     lastSavedAt,
     forceSave,
+    cancelPendingAutoSave,
     newSetId,
     consecutiveErrors: autoSaveConsecutiveErrors,
     autoSaveError,
