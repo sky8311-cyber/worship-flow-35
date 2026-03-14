@@ -957,9 +957,20 @@ const BandView = () => {
                           const videoId = getYouTubeVideoId(youtubeLinks[0].url);
                           return videoId ? (
                             <div>
-                              {youtubeLinks[0].label && (
-                                <p className="text-sm font-semibold text-foreground mb-2">{youtubeLinks[0].label}</p>
-                              )}
+                              <div className="flex items-center justify-between mb-2">
+                                {youtubeLinks[0].label && (
+                                  <p className="text-sm font-semibold text-foreground">{youtubeLinks[0].label}</p>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs ml-auto"
+                                  onClick={() => openYouTubeUrl(youtubeLinks[0].url)}
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                                </Button>
+                              </div>
                               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                 <iframe
                                   className="absolute top-0 left-0 w-full h-full rounded-lg"
