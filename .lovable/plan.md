@@ -1,17 +1,32 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## YouTube 버튼 색상을 브랜드 Coral/Pink으로 변경
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### 문제
+현재 YouTube 버튼이 hover 시 명시적인 빨간색(`red-600`)을 사용하고 있으나, 사용자는 브랜드의 primary coral/pink 색상(#d16265, `--accent`)을 사용하길 원함.
 
-### 변경 사항
+### 수정 파일 (3개)
 
-**파일: `src/components/SongDialog.tsx`**
+**1. `src/components/SongTable.tsx` (라인 441, 444)**
+- `hover:bg-red-600` → `hover:bg-accent`
+- `hover:border-red-600` → `hover:border-accent`
+- `text-red-500` → `text-accent`
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+**2. `src/components/SongCard.tsx` (라인 210, 212)**
+- 동일하게 `red-600` → `accent`, `red-500` → `accent`
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+**3. `src/components/SetSongItem.tsx` (라인 395, 397)**
+- 동일 패턴 적용
+
+### 구현
+```tsx
+<Button
+  className="group hover:bg-accent hover:text-white hover:border-accent"
+>
+  <Youtube className="text-accent group-hover:text-white" />
+  유튜브
+</Button>
+```
+
+브랜드의 Accent Coral (#d16265) 색상을 Tailwind의 `accent` 토큰으로 일관되게 적용.
 
