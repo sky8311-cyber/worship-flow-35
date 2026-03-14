@@ -11,16 +11,22 @@ import { AppLauncher } from '@capacitor/app-launcher';
 export async function openYouTubeUrl(url: string) {
   const videoId = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?\s]+)/)?.[1];
 
+  console.log('[YT] openYouTubeUrl called', { url, videoId });
+  console.log('[YT] isNative:', Capacitor.isNativePlatform());
+  console.log('[YT] userAgent:', navigator.userAgent);
+
   // Capacitor native app — use AppLauncher plugin
   if (Capacitor.isNativePlatform() && videoId) {
+    console.log('[YT] Taking Capacitor native path');
     try {
       const { value } = await AppLauncher.canOpenUrl({ url: 'vnd.youtube://' });
+      console.log('[YT] canOpenUrl result:', value);
       if (value) {
         await AppLauncher.openUrl({ url: `vnd.youtube://${videoId}` });
         return;
       }
-    } catch {
-      // plugin unavailable or error — fall through
+    } catch (e) {
+      console.log('[YT] AppLauncher error:', e);
     }
     window.open(url, "_blank");
     return;
@@ -30,22 +36,27 @@ export async function openYouTubeUrl(url: string) {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   if (isMobile && videoId) {
     const isAndroid = /Android/i.test(navigator.userAgent);
+    console.log('[YT] Taking mobile browser path', { isAndroid, isMobile });
 
     if (isAndroid) {
+      console.log('[YT] Android: using intent://');
       window.location.href =
         `intent://watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(url)};end`;
     } else {
+      console.log('[YT] iOS: attempting vnd.youtube://' + videoId);
       let appOpened = false;
       const onHidden = () => { if (document.hidden) appOpened = true; };
       document.addEventListener("visibilitychange", onHidden);
       window.location.href = `vnd.youtube://${videoId}`;
       setTimeout(() => {
         document.removeEventListener("visibilitychange", onHidden);
+        console.log('[YT] iOS timeout fired, appOpened:', appOpened);
         if (!appOpened) window.open(url, "_blank");
       }, 500);
     }
     return;
   }
 
+  console.log('[YT] Desktop fallback: window.open');
   window.open(url, "_blank");
 }

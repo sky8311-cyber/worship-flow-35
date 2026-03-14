@@ -1,45 +1,17 @@
 
 
-## 디버그: 모바일 브라우저 YouTube 딥링크 문제
+## 악보 편집 영역 버튼 너비 정렬
 
-### 문제 분석
-
-모바일 브라우저에서 테스트 중이므로 `Capacitor.isNativePlatform()`은 `false`를 반환하고, 모바일 브라우저 경로를 탑니다:
-- **Android**: `intent://` 스킴 → 앱이 열려야 함
-- **iOS**: `vnd.youtube://` → `visibilitychange` 감지 → 앱 안 열리면 새 탭
-
-가능한 원인:
-1. Lovable 프리뷰가 iframe 안에서 실행되어 `window.location.href`로 커스텀 URL 스킴 접근이 차단됨
-2. `visibilitychange` 이벤트가 제대로 감지되지 않아 항상 fallback (새 탭)이 실행됨
-3. iPhone인지 Android인지에 따라 다른 경로
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
 ### 변경 사항
 
-**`src/lib/youtubeHelper.ts`** — console.log 추가로 어떤 경로를 타는지 확인
+**파일: `src/components/SongDialog.tsx`**
 
-```ts
-export async function openYouTubeUrl(url: string) {
-  const videoId = ...;
-  
-  console.log('[YT] openYouTubeUrl called', { url, videoId });
-  console.log('[YT] isNative:', Capacitor.isNativePlatform());
-  console.log('[YT] userAgent:', navigator.userAgent);
-  
-  // ... Capacitor native 경로
-  console.log('[YT] Taking Capacitor native path');
-  
-  // ... Mobile browser 경로
-  console.log('[YT] Taking mobile browser path', { isAndroid });
-  
-  // ... iOS visibilitychange
-  console.log('[YT] iOS: attempting vnd.youtube://' + videoId);
-  // setTimeout 안에서:
-  console.log('[YT] iOS timeout fired, appOpened:', appOpened);
-  
-  // ... Desktop fallback
-  console.log('[YT] Desktop fallback: window.open');
-}
-```
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-다음 메시지에서 콘솔 로그를 확인하여 정확한 원인을 파악하겠습니다.
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
