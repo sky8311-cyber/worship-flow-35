@@ -445,14 +445,14 @@ const handleDelete = async (song: any) => {
                            </Button>
                          )}
                          {song.score_file_url && (
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => handlePreviewScore(song)}
-                             className="h-8 w-8"
-                             title={t("songCard.viewScore")}
-                           >
-                             <FileMusic className="h-4 w-4 text-blue-500" />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handlePreviewScore(song)}
+                              className="group h-8 w-8 hover:bg-primary hover:text-white"
+                              title={t("songCard.viewScore")}
+                            >
+                              <FileMusic className="h-4 w-4 text-primary group-hover:text-white" />
                            </Button>
                          )}
                          {onEdit && (
