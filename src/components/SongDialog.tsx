@@ -1201,7 +1201,7 @@ const [loading, setLoading] = useState(false);
                               <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-red-600 border-b-[6px] border-b-transparent ml-1" />
                             </div>
                           </div>
-                        </div>
+                        </a>
                       </div>
                     )}
                     
