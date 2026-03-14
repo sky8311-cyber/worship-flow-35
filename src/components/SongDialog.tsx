@@ -267,12 +267,13 @@ const [loading, setLoading] = useState(false);
   // Handle dialog close with confirmation
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && open) {
-      // User is trying to close the dialog
-      if (hasUnsavedChanges()) {
+      // Skip unsaved changes check if we just saved
+      if (!justSaved && hasUnsavedChanges()) {
         setShowCloseConfirm(true);
         return; // Don't close yet
       }
     }
+    setJustSaved(false);
     onOpenChange(newOpen);
   };
   
