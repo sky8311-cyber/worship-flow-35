@@ -477,7 +477,7 @@ const handleDelete = async (song: any) => {
                              }}
                              title={t("common.delete")}
                            >
-                             <Trash2 className="h-4 w-4" />
+                             <Trash2 className="h-4 w-4 group-hover:text-white" />
                            </Button>
                          )}
                        </div>
