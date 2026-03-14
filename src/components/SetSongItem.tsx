@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -391,10 +391,12 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => openYouTubeUrl(song.youtube_url)}
+                    asChild
                   >
-                    <Youtube className="w-4 h-4 mr-1" />
-                    유튜브
+                    <a {...getYouTubeAnchorProps(song.youtube_url)}>
+                      <Youtube className="w-4 h-4 mr-1" />
+                      유튜브
+                    </a>
                   </Button>
                 )}
                 {(currentScoreUrl || song?.id) && (

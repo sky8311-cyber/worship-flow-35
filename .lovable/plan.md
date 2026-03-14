@@ -1,55 +1,17 @@
 
-Goal: stop iPhone Chrome from opening YouTube in web tab by making link handling deterministic across the whole app (single architecture change, not repeated tweaks).
 
-What I found (deep review)
-1) Current `src/lib/youtubeHelper.ts` still uses JavaScript-driven navigation (`window.location.assign(...)`, timers, visibility guards).  
-2) Even after partial refactors, YouTube opens are still a mix of UI patterns (buttons/div clicks), not true native link taps everywhere.  
-3) External behavior evidence:
-   - YouTube’s own docs say `youtube.com / m.youtube.com / youtu.be` links should open app on iOS.
-   - iOS browser behavior is inconsistent when Universal Links are triggered programmatically (JS redirect) vs actual user-tapped anchor links.
-   - `_blank` strongly biases web-tab behavior on mobile and should be avoided for app-launch paths.
+## 악보 편집 영역 버튼 너비 정렬
 
-One-time fix design (structural)
-A) Replace “JS-redirect-first” with “real anchor-first” for iOS/Android mobile taps.
-- Build a single utility in `src/lib/youtubeHelper.ts`:
-  - `extractYouTubeVideoId(url)`
-  - `buildYouTubeLaunchHref(url, ua)`:
-    - iOS + videoId → `https://youtu.be/{id}` (universal link)
-    - Android + videoId → `intent://watch?v=...` (with browser fallback URL)
-    - otherwise → canonical watch URL or original URL
-  - `getYouTubeAnchorProps(url)`:
-    - mobile: no `_blank`
-    - desktop: `_blank` + `rel`
-- Keep `openYouTubeUrl(url)` only as fallback for legacy callsites, internally using the same builder (no separate iOS logic branch with timers).
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-B) Convert all YouTube click entry points to the same anchor-based path (single source of truth).
-- Update these files to use `Button asChild` + `<a {...getYouTubeAnchorProps(url)}>` (or equivalent anchor wrapper):
-  - `src/components/SongCard.tsx`
-  - `src/components/SetSongItem.tsx`
-  - `src/components/SongTable.tsx`
-  - `src/components/SongDialog.tsx` (thumbnail wrapper)
-  - `src/components/YouTubeSearchBar.tsx` (preview button)
-  - `src/components/dashboard/ProfileSidebarCard.tsx`
-  - `src/components/DuplicateReviewDialog.tsx`
-  - `src/components/admin/AdminUserProfileDialog.tsx`
-- This removes per-screen behavior drift and makes mobile behavior consistent.
+### 변경 사항
 
-C) Remove mobile `_blank` for YouTube everywhere.
-- Desktop keeps `_blank`.
-- Mobile always same-tab for app handoff.
+**파일: `src/components/SongDialog.tsx`**
 
-D) Hardening
-- Keep lightweight debounce only to prevent double tap duplicate launches.
-- Normalize malformed/param-heavy YouTube URLs before building href.
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-Why this should fix your specific regression
-- Your current failure is likely from JS-driven redirects + mixed click patterns.  
-- This plan changes the mechanism itself: user taps a real YouTube anchor URL that iOS can hand off to the app, rather than relying on scripted redirects.  
-- It also eliminates route-by-route inconsistencies that caused “works here, fails there” behavior.
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
-Acceptance checks (single pass)
-1) iPhone Chrome: SongCard / SetSongItem / SongDialog thumbnail / Profile sidebar / Duplicate dialog / Admin profile all open consistently via same behavior.
-2) iPhone Chrome with YouTube app installed: opens app directly from tap.
-3) iPhone Chrome without app: opens web YouTube (expected fallback).
-4) Android Chrome: intent path still opens app with proper web fallback.
-5) Desktop: still opens YouTube in a new tab.

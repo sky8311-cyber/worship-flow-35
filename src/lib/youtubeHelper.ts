@@ -12,24 +12,89 @@ export function extractYouTubeVideoId(url: string): string | null {
   return match ? match[1] : null;
 }
 
+/**
+ * Builds the best launch URL for a YouTube video based on platform.
+ * - iOS browser  → https://youtu.be/{id} (Universal Link, most reliable for app handoff)
+ * - Android browser → intent:// scheme with browser fallback
+ * - Desktop/other → canonical https://www.youtube.com/watch?v={id}
+ */
+export function buildYouTubeLaunchHref(url: string): string {
+  const videoId = extractYouTubeVideoId(url);
+  const canonical = videoId
+    ? `https://www.youtube.com/watch?v=${videoId}`
+    : url;
+
+  if (Capacitor.isNativePlatform()) {
+    // Native apps handle their own launch via openYouTubeUrl
+    return canonical;
+  }
+
+  const ua = navigator.userAgent;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+
+  if (!isMobile || !videoId) {
+    return canonical;
+  }
+
+  const isAndroid = /Android/i.test(ua);
+  if (isAndroid) {
+    return `intent://watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(canonical)};end`;
+  }
+
+  // iOS — use youtu.be Universal Link for best app-handoff reliability
+  return `https://youtu.be/${videoId}`;
+}
+
+/**
+ * Returns props for an <a> element that opens YouTube optimally per platform.
+ * - Mobile: target="_self" (same-tab, required for Universal Links / intent)
+ * - Desktop: target="_blank" with rel="noopener noreferrer"
+ */
+export function getYouTubeAnchorProps(url: string): {
+  href: string;
+  target: string;
+  rel?: string;
+  onClick?: (e: React.MouseEvent) => void;
+} {
+  const href = buildYouTubeLaunchHref(url);
+  const ua = navigator.userAgent;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+
+  if (Capacitor.isNativePlatform()) {
+    return {
+      href: '#',
+      target: '_self',
+      onClick: (e: React.MouseEvent) => {
+        e.preventDefault();
+        openYouTubeUrl(url);
+      },
+    };
+  }
+
+  if (isMobile) {
+    return {
+      href,
+      target: '_self',
+    };
+  }
+
+  return {
+    href,
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  };
+}
+
 // Debounce guard — prevent double-fires within 1s
 let lastOpenTime = 0;
 
 /**
- * Opens a YouTube URL, attempting the native app first on mobile devices.
- *
- * Strategy per platform:
- * - Capacitor native → AppLauncher (vnd.youtube://)
- * - Android browser  → intent:// scheme (handles app/browser fallback natively)
- * - iOS browser      → same-tab navigate to https://youtu.be/{id} (triggers Universal Link)
- *                       with visibility-change guard for fallback
- * - Desktop          → window.open in new tab
+ * Programmatic opener — kept for Capacitor native and edge cases.
+ * For browser contexts, prefer using getYouTubeAnchorProps() with real <a> tags.
  */
 export async function openYouTubeUrl(url: string) {
-  // Debounce: ignore rapid successive calls
   const now = Date.now();
   if (now - lastOpenTime < 1000) {
-    console.log('[YT] Debounced — ignoring rapid call');
     return;
   }
   lastOpenTime = now;
@@ -39,11 +104,8 @@ export async function openYouTubeUrl(url: string) {
     ? `https://www.youtube.com/watch?v=${videoId}`
     : url;
 
-  console.log('[YT] openYouTubeUrl called', { url, videoId, canonicalUrl });
-
   // ─── 1. Capacitor native app → use AppLauncher plugin ───
   if (Capacitor.isNativePlatform() && videoId) {
-    console.log('[YT] Capacitor native path');
     try {
       const { value } = await AppLauncher.canOpenUrl({ url: 'vnd.youtube://' });
       if (value) {
@@ -53,68 +115,19 @@ export async function openYouTubeUrl(url: string) {
     } catch (e) {
       console.log('[YT] AppLauncher error:', e);
     }
-    // Fallback: open in system browser
     window.open(canonicalUrl, '_blank');
     return;
   }
 
-  // ─── 2. Detect mobile browser ───
+  // ─── 2. Browser fallback — use same logic as anchor props ───
   const ua = navigator.userAgent;
   const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
 
   if (!isMobile) {
-    // ─── 3. Desktop → always new tab ───
-    console.log('[YT] Desktop: new tab');
     window.open(canonicalUrl, '_blank');
     return;
   }
 
-  // ─── 4. Android browser → intent:// scheme ───
-  const isAndroid = /Android/i.test(ua);
-  if (isAndroid && videoId) {
-    console.log('[YT] Android: intent://');
-    window.location.href =
-      `intent://watch?v=${videoId}#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=${encodeURIComponent(canonicalUrl)};end`;
-    return;
-  }
-
-  // ─── 5. iOS browser → same-tab Universal Link with fallback guard ───
-  if (videoId) {
-    console.log('[YT] iOS browser: same-tab Universal Link');
-
-    // Use youtu.be short URL — iOS reliably triggers Universal Links for this domain
-    // when navigated in the same tab (not _blank).
-    const universalLinkUrl = `https://youtu.be/${videoId}`;
-
-    // Track whether the page loses visibility (= app switched successfully)
-    let didLeave = false;
-    const onLeave = () => { didLeave = true; };
-
-    document.addEventListener('visibilitychange', onLeave);
-    window.addEventListener('pagehide', onLeave);
-    window.addEventListener('blur', onLeave);
-
-    // Navigate same-tab — this is key for iOS Universal Links
-    window.location.assign(universalLinkUrl);
-
-    // Fallback: if the app didn't open after 2.5s, the page is still visible.
-    // Navigate same-tab to YouTube web as fallback.
-    setTimeout(() => {
-      document.removeEventListener('visibilitychange', onLeave);
-      window.removeEventListener('pagehide', onLeave);
-      window.removeEventListener('blur', onLeave);
-
-      if (!didLeave) {
-        console.log('[YT] iOS fallback: app did not open, navigating to web');
-        window.location.assign(canonicalUrl);
-      } else {
-        console.log('[YT] iOS: app opened successfully');
-      }
-    }, 2500);
-    return;
-  }
-
-  // ─── 6. Fallback: no videoId extracted, open as-is same-tab on mobile ───
-  console.log('[YT] Mobile fallback: same-tab navigate');
-  window.location.assign(canonicalUrl);
+  // Mobile: same-tab navigate using the best launch URL
+  window.location.assign(buildYouTubeLaunchHref(url));
 }

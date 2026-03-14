@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import {
@@ -206,11 +206,13 @@ const handleDelete = async () => {
               <Button
                 variant="outline"
                 size="sm"
-              onClick={() => openYouTubeUrl(song.youtube_url)}
+                asChild
                 className="flex-1 w-full"
               >
-                <Youtube className="w-4 h-4 mr-1 text-red-500" />
-                <span className="truncate">{t("songCard.viewYouTube")}</span>
+                <a {...getYouTubeAnchorProps(song.youtube_url)}>
+                  <Youtube className="w-4 h-4 mr-1 text-red-500" />
+                  <span className="truncate">{t("songCard.viewYouTube")}</span>
+                </a>
               </Button>
             )}
             {song.score_file_url && (
