@@ -2177,8 +2177,29 @@ const SetBuilder = () => {
                           : `Total ${items.length} items (${songCount} songs, ${componentCount} components)`
                         }
                       </p>
+                      {items.length > 0 && (
+                        <ol className="mt-2 space-y-0.5 text-sm text-muted-foreground list-decimal list-inside">
+                          {items.map((item, idx) => {
+                            if (item.type === "song") {
+                              const title = item.data.song?.title || item.data.title || "?";
+                              const playKey = item.data.key || item.data.song?.default_key;
+                              const keyChangeTo = item.data.key_change_to;
+                              const keyDisplay = keyChangeTo && playKey
+                                ? `${playKey} → ${keyChangeTo}`
+                                : playKey || "";
+                              return (
+                                <li key={idx}>
+                                  {title}{keyDisplay ? ` (${keyDisplay})` : ""}
+                                </li>
+                              );
+                            }
+                            const label = item.data.label || item.data.component_type || "순서";
+                            return <li key={idx} className="text-muted-foreground/70">{label}</li>;
+                          })}
+                        </ol>
+                      )}
                       {songCount > 0 && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mt-2">
                           {language === "ko" ? "키 순서: " : "Key sequence: "}
                           {items
                             .filter(i => i.type === "song")

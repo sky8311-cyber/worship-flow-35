@@ -583,6 +583,11 @@ const BandView = () => {
     />
     <AppLayout breadcrumb={breadcrumbNav}>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {searchParams.get('preview') === 'true' && (
+          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg text-center text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            ⚠️ 미리보기 모드 — 아직 게시되지 않은 워십세트입니다
+          </div>
+        )}
         {/* Cross-community read-only banner */}
         {isCrossCommunity && serviceSet?.status === 'published' && (
           <div className="mb-6 p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/30 rounded-xl flex items-start gap-4">
