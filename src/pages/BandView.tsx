@@ -1022,6 +1022,7 @@ const BandView = () => {
                                       referrerPolicy="strict-origin-when-cross-origin"
                                       allowFullScreen
                                     />
+                                    </div>
                                   </div>
                                 )}
                               </TabsContent>
