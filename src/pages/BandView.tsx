@@ -47,6 +47,8 @@ import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard"
 import { parseLocalDate } from "@/lib/countdownHelper";
 import { creditBandViewOpenedReward } from "@/lib/rewardsHelper";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { ExternalLink } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -955,9 +957,20 @@ const BandView = () => {
                           const videoId = getYouTubeVideoId(youtubeLinks[0].url);
                           return videoId ? (
                             <div>
-                              {youtubeLinks[0].label && (
-                                <p className="text-sm font-semibold text-foreground mb-2">{youtubeLinks[0].label}</p>
-                              )}
+                              <div className="flex items-center justify-between mb-2">
+                                {youtubeLinks[0].label && (
+                                  <p className="text-sm font-semibold text-foreground">{youtubeLinks[0].label}</p>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs ml-auto"
+                                  onClick={() => openYouTubeUrl(youtubeLinks[0].url)}
+                                >
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                  {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                                </Button>
+                              </div>
                               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                 <iframe
                                   className="absolute top-0 left-0 w-full h-full rounded-lg"
@@ -987,7 +1000,19 @@ const BandView = () => {
                             return (
                               <TabsContent key={link.id} value={String(idx)}>
                                 {videoId && (
-                                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                                  <div>
+                                    <div className="flex justify-end mb-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1.5 text-xs"
+                                        onClick={() => openYouTubeUrl(link.url)}
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                        {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                                      </Button>
+                                    </div>
+                                    <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                     <iframe
                                       className="absolute top-0 left-0 w-full h-full rounded-lg"
                                       src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
@@ -997,6 +1022,7 @@ const BandView = () => {
                                       referrerPolicy="strict-origin-when-cross-origin"
                                       allowFullScreen
                                     />
+                                    </div>
                                   </div>
                                 )}
                               </TabsContent>
@@ -1008,6 +1034,17 @@ const BandView = () => {
                   ) : fallbackVideoId ? (
                     // Fallback to legacy single youtube_url field
                     <div className="mb-4 print:hidden">
+                      <div className="flex justify-end mb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => openYouTubeUrl(fallbackYoutubeUrl)}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                        </Button>
+                      </div>
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                         <iframe
                           className="absolute top-0 left-0 w-full h-full rounded-lg"
