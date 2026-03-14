@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Youtube, Loader2, ExternalLink, Check } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
-import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 interface YouTubeVideo {
   id: string;
@@ -81,9 +81,9 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
     setQuery("");
   };
 
-  const getPreviewProps = (videoId: string) => {
+  const handlePreview = (videoId: string) => {
     const url = `https://www.youtube.com/watch?v=${videoId}`;
-    return getYouTubeAnchorProps(url);
+    openYouTubeUrl(url);
   };
 
   return (
@@ -132,13 +132,11 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
                       type="button"
                       variant="outline"
                       size="sm"
-                      asChild
+                      onClick={() => handlePreview(video.id)}
                       className="w-full sm:flex-1"
                     >
-                      <a {...getPreviewProps(video.id)}>
-                        <ExternalLink className="w-3 h-3 mr-1" />
-                        {t("songDialog.previewVideo")}
-                      </a>
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      {t("songDialog.previewVideo")}
                     </Button>
                     <Button
                       type="button"

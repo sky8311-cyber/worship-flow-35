@@ -11,7 +11,6 @@ import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/dateUtils";
-import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 
 interface AdminUserProfileDialogProps {
   userId: string | null;
@@ -274,12 +273,10 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                       <Button
                         variant="outline"
                         size="sm"
-                        asChild
+                        onClick={() => window.open(profile.youtube_url!, "_blank")}
                       >
-                        <a {...getYouTubeAnchorProps(profile.youtube_url!)}>
-                          <Youtube className="h-4 w-4 mr-2" />
-                          YouTube
-                        </a>
+                        <Youtube className="h-4 w-4 mr-2" />
+                        YouTube
                       </Button>
                     )}
                   </div>

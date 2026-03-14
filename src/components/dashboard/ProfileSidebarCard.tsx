@@ -11,7 +11,6 @@ import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SeedWidget } from "@/components/seeds/SeedWidget";
-import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 
 interface ProfileStats {
   sets: number;
@@ -171,12 +170,11 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
               </a>
             ) : null}
             {profile?.youtube_url ? (
-              <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 dark:hover:bg-red-950"
-                asChild>
-                <a {...getYouTubeAnchorProps(profile.youtube_url!)}>
+              <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer">
+                <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 dark:hover:bg-red-950">
                   <Youtube className="w-4 h-4" />
-                </a>
-              </Button>
+                </Button>
+              </a>
             ) : null}
             {!profile?.instagram_url && !profile?.youtube_url && !profileOverride && (
               <Button

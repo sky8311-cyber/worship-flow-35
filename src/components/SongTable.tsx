@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
-import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 // Helper function to check if song is new (within 14 days)
 const isNewSong = (createdAt: string | null) => {
@@ -228,6 +228,11 @@ const handleDelete = async (song: any) => {
     setScorePreviewOpen(true);
   };
 
+  const handleYoutubeClick = (url: string | null) => {
+    if (url) {
+      openYouTubeUrl(url);
+    }
+  };
 
   return (
     <>
@@ -432,13 +437,11 @@ const handleDelete = async (song: any) => {
                            <Button
                              variant="ghost"
                              size="icon"
-                             asChild
+                             onClick={() => handleYoutubeClick(song.youtube_url)}
                              className="h-8 w-8"
                              title={t("songCard.viewYouTube")}
                            >
-                             <a {...getYouTubeAnchorProps(song.youtube_url)}>
-                               <Youtube className="h-4 w-4 text-red-500" />
-                             </a>
+                             <Youtube className="h-4 w-4 text-red-500" />
                            </Button>
                          )}
                          {song.score_file_url && (

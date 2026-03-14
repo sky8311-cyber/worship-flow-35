@@ -29,7 +29,6 @@ import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 
 const MUSICAL_KEYS = [
   "C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"
@@ -1186,9 +1185,9 @@ const [loading, setLoading] = useState(false);
                     {/* YouTube Thumbnail Preview - 2x size, centered, play overlay */}
                     {videoId && (
                       <div className="flex justify-center">
-                        <a 
-                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group block"
-                          {...getYouTubeAnchorProps(link.url)}
+                        <div 
+                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
+                          onClick={() => window.open(link.url, "_blank")}
                         >
                           <img 
                             src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
@@ -1201,7 +1200,7 @@ const [loading, setLoading] = useState(false);
                               <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-red-600 border-b-[6px] border-b-transparent ml-1" />
                             </div>
                           </div>
-                        </a>
+                        </div>
                       </div>
                     )}
                     
