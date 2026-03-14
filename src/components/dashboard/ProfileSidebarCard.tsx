@@ -171,11 +171,10 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
               </a>
             ) : null}
             {profile?.youtube_url ? (
-              <a href={profile.youtube_url} target="_blank" rel="noopener noreferrer">
-                <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 dark:hover:bg-red-950">
-                  <Youtube className="w-4 h-4" />
-                </Button>
-              </a>
+              <Button size="icon" variant="ghost" className="rounded-full hover:bg-red-100 dark:hover:bg-red-950"
+                onClick={() => openYouTubeUrl(profile.youtube_url!)}>
+                <Youtube className="w-4 h-4" />
+              </Button>
             ) : null}
             {!profile?.instagram_url && !profile?.youtube_url && !profileOverride && (
               <Button

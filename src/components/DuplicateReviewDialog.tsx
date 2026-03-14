@@ -956,15 +956,13 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
                                             </div>
                                             <div className="flex items-center gap-2 text-xs flex-wrap">
                                               {song.youtube_url && (
-                                                <a
-                                                  href={song.youtube_url}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
+                                                <button
+                                                  onClick={() => openYouTubeUrl(song.youtube_url)}
                                                   className="inline-flex items-center gap-1 hover:underline"
                                                 >
                                                   <Youtube className="h-3 w-3" />
                                                   보기
-                                                </a>
+                                                </button>
                                               )}
                                               {song.score_file_url && (
                                                 <button

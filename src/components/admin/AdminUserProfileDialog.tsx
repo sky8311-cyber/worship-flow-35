@@ -11,6 +11,7 @@ import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/dateUtils";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 interface AdminUserProfileDialogProps {
   userId: string | null;
