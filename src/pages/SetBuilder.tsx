@@ -768,6 +768,8 @@ const SetBuilder = () => {
   };
 
   const confirmPublish = () => {
+    suppressAutoSaveRef.current = true;
+    cancelPendingAutoSave();
     saveSetMutation.mutate("published");
     setShowPublishConfirm(false);
   };

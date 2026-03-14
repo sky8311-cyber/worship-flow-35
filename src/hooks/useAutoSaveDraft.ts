@@ -405,11 +405,19 @@ export const useAutoSaveDraft = ({
     }
   }, [hasUnsavedChanges, status, autoSaveMutation]);
 
+  const cancelPendingAutoSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  }, []);
+
   return {
     hasUnsavedChanges,
     isSaving,
     lastSavedAt,
     forceSave,
+    cancelPendingAutoSave,
     newSetId: autoSaveMutation.data,
     consecutiveErrors: consecutiveErrorCountRef.current,
     autoSaveError: autoSaveMutation.error,
