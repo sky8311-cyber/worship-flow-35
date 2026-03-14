@@ -1,17 +1,60 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## 문제 원인
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+Capacitor 네이티브 앱(WKWebView / Android WebView) 안에서는 `window.location.href = "vnd.youtube://..."` 같은 커스텀 URL 스킴이 **차단**됩니다. 일반 브라우저에서는 작동하지만 WebView에서는 OS가 해당 스킴을 처리하지 못해 fallback으로 새 탭이 열립니다.
+
+## 해결 방안
+
+**`@capacitor/app-launcher`** 플러그인을 사용하여 네이티브 앱 환경에서 YouTube 앱을 직접 열기.
 
 ### 변경 사항
 
-**파일: `src/components/SongDialog.tsx`**
+**1. 패키지 추가**
+- `@capacitor/app-launcher` 설치
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+**2. `src/lib/youtubeHelper.ts` 수정**
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+```text
+호출 흐름:
+
+openYouTubeUrl(url)
+  ├─ Capacitor 네이티브?
+  │   ├─ AppLauncher.canOpenUrl("vnd.youtube://") 확인
+  │   │   ├─ 가능 → AppLauncher.openUrl("vnd.youtube://{videoId}")
+  │   │   └─ 불가 → window.open(url, "_blank")
+  │   └─ (Android는 intent:// 대신 AppLauncher 사용)
+  └─ 웹 브라우저?
+      ├─ 모바일 브라우저 → 기존 intent:// / vnd.youtube:// 로직 유지
+      └─ 데스크톱 → window.open(url, "_blank")
+```
+
+핵심 로직:
+```ts
+import { Capacitor } from '@capacitor/core';
+import { AppLauncher } from '@capacitor/app-launcher';
+
+if (Capacitor.isNativePlatform()) {
+  // 네이티브 앱: AppLauncher로 YouTube 앱 직접 열기
+  const { value } = await AppLauncher.canOpenUrl({ url: 'vnd.youtube://' });
+  if (value) {
+    await AppLauncher.openUrl({ url: `vnd.youtube://${videoId}` });
+  } else {
+    window.open(url, "_blank");
+  }
+} else {
+  // 웹: 기존 intent:// / visibilitychange 로직 유지
+}
+```
+
+**3. 로컬 빌드 시 `npx cap sync` 필요** (네이티브 플러그인 등록)
+
+### 결과
+
+| 환경 | 동작 |
+|------|------|
+| Capacitor 앱 + YouTube 있음 | AppLauncher로 앱 바로 열림 |
+| Capacitor 앱 + YouTube 없음 | 새 탭으로 YouTube 웹 |
+| 모바일 브라우저 | 기존 intent/vnd 딥링크 유지 |
+| 데스크톱 | 새 탭 |
 
