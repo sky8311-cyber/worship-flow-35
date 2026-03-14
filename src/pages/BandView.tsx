@@ -47,6 +47,8 @@ import { PositionSignupCard } from "@/components/worship-set/PositionSignupCard"
 import { parseLocalDate } from "@/lib/countdownHelper";
 import { creditBandViewOpenedReward } from "@/lib/rewardsHelper";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { ExternalLink } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
