@@ -207,9 +207,9 @@ const handleDelete = async () => {
                 variant="outline"
                 size="sm"
                 onClick={() => openYouTubeUrl(song.youtube_url)}
-                className="flex-1 w-full group hover:bg-red-600 hover:text-white hover:border-red-600"
+                className="flex-1 w-full group hover:bg-accent hover:text-white hover:border-accent"
               >
-                <Youtube className="w-4 h-4 mr-1 text-red-500 group-hover:text-white" />
+                <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
                 <span className="truncate">{t("songCard.viewYouTube")}</span>
               </Button>
             )}
