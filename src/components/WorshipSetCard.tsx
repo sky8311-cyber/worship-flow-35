@@ -153,10 +153,10 @@ export function WorshipSetCard({ set, songs = [], canManage, isPast = false, onD
                 <Button 
                   size="sm" 
                   variant="ghost" 
-                  className="h-8 px-2 gap-1 text-xs justify-start text-destructive hover:text-destructive"
+                  className="group h-8 px-2 gap-1 text-xs justify-start text-destructive hover:bg-destructive hover:text-white"
                   onClick={() => onDelete(set.id)}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4 group-hover:text-white" />
                   {language === "ko" ? "삭제" : "Delete"}
                 </Button>
               </>

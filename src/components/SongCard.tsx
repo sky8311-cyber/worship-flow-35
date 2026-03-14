@@ -295,13 +295,13 @@ const handleDelete = async () => {
             {onDelete && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button 
+                    <Button 
                     variant="outline" 
                     size="icon" 
-                    className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
+                    className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
                     title={t("common.delete")}
                   >
-                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>

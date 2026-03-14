@@ -470,7 +470,7 @@ const handleDelete = async (song: any) => {
                            <Button
                              variant="ghost"
                              size="icon"
-                             className="h-8 w-8 text-destructive hover:text-destructive"
+                             className="group h-8 w-8 text-destructive hover:bg-destructive hover:text-white"
                              onClick={() => {
                                setSongToDelete(song);
                                setDeleteDialogOpen(true);
