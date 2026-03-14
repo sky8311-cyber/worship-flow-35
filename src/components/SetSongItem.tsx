@@ -391,10 +391,12 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => openYouTubeUrl(song.youtube_url)}
+                    asChild
                   >
-                    <Youtube className="w-4 h-4 mr-1" />
-                    유튜브
+                    <a {...getYouTubeAnchorProps(song.youtube_url)}>
+                      <Youtube className="w-4 h-4 mr-1" />
+                      유튜브
+                    </a>
                   </Button>
                 )}
                 {(currentScoreUrl || song?.id) && (

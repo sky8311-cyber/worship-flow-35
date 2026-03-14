@@ -206,11 +206,13 @@ const handleDelete = async () => {
               <Button
                 variant="outline"
                 size="sm"
-              onClick={() => openYouTubeUrl(song.youtube_url)}
+                asChild
                 className="flex-1 w-full"
               >
-                <Youtube className="w-4 h-4 mr-1 text-red-500" />
-                <span className="truncate">{t("songCard.viewYouTube")}</span>
+                <a {...getYouTubeAnchorProps(song.youtube_url)}>
+                  <Youtube className="w-4 h-4 mr-1 text-red-500" />
+                  <span className="truncate">{t("songCard.viewYouTube")}</span>
+                </a>
               </Button>
             )}
             {song.score_file_url && (

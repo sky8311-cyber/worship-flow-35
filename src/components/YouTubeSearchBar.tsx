@@ -132,11 +132,13 @@ export const YouTubeSearchBar = ({ onSelectVideo, defaultQuery = "" }: YouTubeSe
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePreview(video.id)}
+                      asChild
                       className="w-full sm:flex-1"
                     >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      {t("songDialog.previewVideo")}
+                      <a {...getPreviewProps(video.id)}>
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        {t("songDialog.previewVideo")}
+                      </a>
                     </Button>
                     <Button
                       type="button"

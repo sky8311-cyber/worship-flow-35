@@ -432,11 +432,13 @@ const handleDelete = async (song: any) => {
                            <Button
                              variant="ghost"
                              size="icon"
-                             onClick={() => handleYoutubeClick(song.youtube_url)}
+                             asChild
                              className="h-8 w-8"
                              title={t("songCard.viewYouTube")}
                            >
-                             <Youtube className="h-4 w-4 text-red-500" />
+                             <a {...getYouTubeAnchorProps(song.youtube_url)}>
+                               <Youtube className="h-4 w-4 text-red-500" />
+                             </a>
                            </Button>
                          )}
                          {song.score_file_url && (

@@ -1186,9 +1186,9 @@ const [loading, setLoading] = useState(false);
                     {/* YouTube Thumbnail Preview - 2x size, centered, play overlay */}
                     {videoId && (
                       <div className="flex justify-center">
-                        <div 
-                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
-                          onClick={() => openYouTubeUrl(link.url)}
+                        <a 
+                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group block"
+                          {...getYouTubeAnchorProps(link.url)}
                         >
                           <img 
                             src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
