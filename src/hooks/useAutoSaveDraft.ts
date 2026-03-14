@@ -119,6 +119,7 @@ export const useAutoSaveDraft = ({
   
   const formDataRef = useRef(formData);
   const itemsRef = useRef(items);
+  const statusRef = useRef(status);
   const initialLoadRef = useRef(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevFormSignatureRef = useRef<string>("");
