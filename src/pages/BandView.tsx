@@ -86,6 +86,7 @@ type SetItem =
 
 const BandView = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isAdmin, loading: authLoading } = useAuth();
