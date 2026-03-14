@@ -425,32 +425,20 @@ export const MusicPlayerMode = ({
         {/* Lyrics / Playlist */}
         <div className="flex-1 min-h-[200px] flex flex-col overflow-hidden">
           <Tabs
-            value={currentTrack?.lyrics ? "lyrics" : "playlist"}
+            defaultValue="playlist"
             key={currentIndex}
             className="flex flex-col flex-1 min-h-0"
           >
             <TabsList className="w-full rounded-none border-b bg-muted/30 h-9 flex-shrink-0">
+              <TabsTrigger value="playlist" className="flex-1 text-xs">
+                {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
+              </TabsTrigger>
               {currentTrack?.lyrics && (
                 <TabsTrigger value="lyrics" className="flex-1 text-xs">
                   {language === "ko" ? "가사" : "Lyrics"}
                 </TabsTrigger>
               )}
-              <TabsTrigger value="playlist" className="flex-1 text-xs">
-                {t("bandView.musicPlayer.playlist")} ({playlist.length}{language === "ko" ? "곡" : " songs"})
-              </TabsTrigger>
             </TabsList>
-
-            {currentTrack?.lyrics && (
-              <TabsContent value="lyrics" className="mt-0 flex-1 min-h-0">
-                <ScrollArea className="flex-1 h-full">
-                  <div className="p-4">
-                    <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
-                      {currentTrack.lyrics}
-                    </pre>
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-            )}
 
             <TabsContent value="playlist" className="mt-0 flex-1 min-h-0">
               <ScrollArea className="flex-1 h-full">
