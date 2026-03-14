@@ -1,17 +1,18 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## 곡 저장 후 프리즈 수정
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### 원인
+곡 수정 후 저장 시 `onClose()` → 부모가 `open=false` 설정 → `handleOpenChange(false)` 실행 → `hasUnsavedChanges()`가 아직 갱신 안 된 `song` prop과 수정된 `formData`를 비교하여 `true` 반환 → 닫기 확인 다이얼로그가 뜨면서 충돌 → UI 프리즈
 
-### 변경 사항
+### 해결 방안
 
 **파일: `src/components/SongDialog.tsx`**
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+1. **저장 완료 플래그 추가**: `const [justSaved, setJustSaved] = useState(false)` 상태 추가
+2. **handleSubmit에서 플래그 설정**: `onClose()` 호출 전에 `setJustSaved(true)` 설정
+3. **handleOpenChange에서 플래그 확인**: `justSaved`가 `true`이면 `hasUnsavedChanges()` 체크를 건너뛰고 바로 닫기
+4. **다이얼로그 열릴 때 플래그 초기화**: 기존 초기화 로직에서 `setJustSaved(false)` 추가
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+이렇게 하면 저장 직후에는 변경사항 확인을 생략하여 프리즈 없이 정상 종료됩니다.
 
