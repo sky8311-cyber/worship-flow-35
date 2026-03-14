@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -86,6 +86,7 @@ type SetItem =
 
 const BandView = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -582,6 +583,11 @@ const BandView = () => {
     />
     <AppLayout breadcrumb={breadcrumbNav}>
       <div className="container mx-auto px-4 py-6 max-w-5xl">
+        {searchParams.get('preview') === 'true' && (
+          <div className="mb-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg text-center text-sm font-medium text-yellow-800 dark:text-yellow-200">
+            ⚠️ 미리보기 모드 — 아직 게시되지 않은 워십세트입니다
+          </div>
+        )}
         {/* Cross-community read-only banner */}
         {isCrossCommunity && serviceSet?.status === 'published' && (
           <div className="mb-6 p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/30 rounded-xl flex items-start gap-4">

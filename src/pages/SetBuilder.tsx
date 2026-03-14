@@ -1490,10 +1490,21 @@ const SetBuilder = () => {
       </TooltipProvider>
 
       {id && (
-        <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
-          <Share2 className="w-4 h-4 shrink-0" />
-          <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
-        </Button>
+        <>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="h-8 gap-1 px-2 sm:px-3" 
+            onClick={() => window.open(`/band-view/${id}?preview=true`, '_blank')}
+          >
+            <Eye className="w-4 h-4 shrink-0" />
+            <span className="text-xs sm:text-sm">{language === "ko" ? "미리보기" : "Preview"}</span>
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 gap-1 px-2 sm:px-3" onClick={handleCopyLink}>
+            <Share2 className="w-4 h-4 shrink-0" />
+            <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
+          </Button>
+        </>
       )}
     </div>
   );
@@ -2166,8 +2177,29 @@ const SetBuilder = () => {
                           : `Total ${items.length} items (${songCount} songs, ${componentCount} components)`
                         }
                       </p>
+                      {items.length > 0 && (
+                        <ol className="mt-2 space-y-0.5 text-sm text-muted-foreground list-decimal list-inside">
+                          {items.map((item, idx) => {
+                            if (item.type === "song") {
+                              const title = item.data.song?.title || item.data.title || "?";
+                              const playKey = item.data.key || item.data.song?.default_key;
+                              const keyChangeTo = item.data.key_change_to;
+                              const keyDisplay = keyChangeTo && playKey
+                                ? `${playKey} → ${keyChangeTo}`
+                                : playKey || "";
+                              return (
+                                <li key={idx}>
+                                  {title}{keyDisplay ? ` (${keyDisplay})` : ""}
+                                </li>
+                              );
+                            }
+                            const label = item.data.label || item.data.component_type || "순서";
+                            return <li key={idx} className="text-muted-foreground/70">{label}</li>;
+                          })}
+                        </ol>
+                      )}
                       {songCount > 0 && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground mt-2">
                           {language === "ko" ? "키 순서: " : "Key sequence: "}
                           {items
                             .filter(i => i.type === "song")
