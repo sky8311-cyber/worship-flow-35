@@ -1034,6 +1034,17 @@ const BandView = () => {
                   ) : fallbackVideoId ? (
                     // Fallback to legacy single youtube_url field
                     <div className="mb-4 print:hidden">
+                      <div className="flex justify-end mb-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 text-xs"
+                          onClick={() => openYouTubeUrl(fallbackYoutubeUrl)}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                        </Button>
+                      </div>
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                         <iframe
                           className="absolute top-0 left-0 w-full h-full rounded-lg"
