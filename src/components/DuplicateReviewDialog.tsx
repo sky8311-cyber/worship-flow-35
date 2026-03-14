@@ -644,13 +644,14 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
     switch (field) {
       case "youtube_url":
         return value ? (
-          <button
-            onClick={(e) => { e.stopPropagation(); openYouTubeUrl(value); }}
+          <a
+            {...getYouTubeAnchorProps(value)}
+            onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-primary hover:text-primary/80 hover:underline"
           >
             <ExternalLink className="h-4 w-4" />
             <span className="text-xs">Watch</span>
-          </button>
+          </a>
         ) : (
           <XCircle className="h-4 w-4 text-destructive" />
         );
