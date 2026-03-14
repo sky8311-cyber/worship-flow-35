@@ -1187,7 +1187,7 @@ const [loading, setLoading] = useState(false);
                       <div className="flex justify-center">
                         <div 
                           className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
-                          onClick={() => window.open(link.url, "_blank")}
+                          onClick={() => openYouTubeUrl(link.url)}
                         >
                           <img 
                             src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}

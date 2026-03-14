@@ -273,7 +273,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(profile.youtube_url!, "_blank")}
+                        onClick={() => openYouTubeUrl(profile.youtube_url!)}
                       >
                         <Youtube className="h-4 w-4 mr-2" />
                         YouTube
