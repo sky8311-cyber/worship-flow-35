@@ -1,36 +1,17 @@
 
 
-## 삭제 버튼 hover 시 흰색 아이콘 전환
+## 악보 편집 영역 버튼 너비 정렬
 
-### 수정 파일 (2개)
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-**1. `src/components/SongCard.tsx`** (라인 298-304)
-- `hover:text-destructive` → `hover:bg-destructive hover:text-white hover:border-destructive`
-- `group` 클래스 추가, 아이콘에 `group-hover:text-white`
+### 변경 사항
 
-**2. `src/components/WorshipSetCard.tsx`** (라인 153-160)
-- 동일 패턴 적용
+**파일: `src/components/SongDialog.tsx`**
 
-### 구현
-```tsx
-// SongCard
-<Button 
-  variant="outline" 
-  size="icon" 
-  className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
->
-  <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
-</Button>
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-// WorshipSetCard
-<Button 
-  variant="ghost" 
-  className="group h-8 px-2 gap-1 text-xs justify-start text-destructive hover:bg-destructive hover:text-white"
->
-  <Trash2 className="w-4 h-4 group-hover:text-white" />
-  삭제
-</Button>
-```
-
-SongTable의 삭제 버튼도 동일하게 적용 (라인 ~470).
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
