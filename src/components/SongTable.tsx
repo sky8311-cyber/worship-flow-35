@@ -438,10 +438,10 @@ const handleDelete = async (song: any) => {
                              variant="ghost"
                              size="icon"
                              onClick={() => handleYoutubeClick(song.youtube_url)}
-                             className="h-8 w-8 group hover:bg-red-600 hover:border-red-600"
+                             className="h-8 w-8 group hover:bg-accent hover:border-accent"
                              title={t("songCard.viewYouTube")}
                            >
-                             <Youtube className="h-4 w-4 text-red-500 group-hover:text-white" />
+                             <Youtube className="h-4 w-4 text-accent group-hover:text-white" />
                            </Button>
                          )}
                          {song.score_file_url && (
