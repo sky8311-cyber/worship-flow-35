@@ -150,6 +150,10 @@ export const useAutoSaveDraft = ({
     itemsRef.current = items;
   }, [items]);
 
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   // UPSERT-based auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async () => {
