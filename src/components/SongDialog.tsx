@@ -233,6 +233,7 @@ const [loading, setLoading] = useState(false);
   
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   
   // Check if form has unsaved changes
   const hasUnsavedChanges = () => {
