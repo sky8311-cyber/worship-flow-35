@@ -11,7 +11,7 @@ import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SeedWidget } from "@/components/seeds/SeedWidget";
-import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getYouTubeAnchorProps } from "@/lib/youtubeHelper";
 
 interface ProfileStats {
   sets: number;
