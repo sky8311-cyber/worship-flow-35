@@ -1000,7 +1000,19 @@ const BandView = () => {
                             return (
                               <TabsContent key={link.id} value={String(idx)}>
                                 {videoId && (
-                                  <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                                  <div>
+                                    <div className="flex justify-end mb-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1.5 text-xs"
+                                        onClick={() => openYouTubeUrl(link.url)}
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                        {language === "ko" ? "YouTube 앱" : "YouTube App"}
+                                      </Button>
+                                    </div>
+                                    <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                                     <iframe
                                       className="absolute top-0 left-0 w-full h-full rounded-lg"
                                       src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
