@@ -1,17 +1,38 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## YouTube 앱 직접 열기 — 전체 사이트 적용
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### 현재 상태
+- `SongCard.tsx`만 `vnd.youtube://` 딥링크 로직이 있음
+- `SongTable.tsx`, `SetSongItem.tsx`, `YouTubeSearchBar.tsx`는 모두 `window.open(url, '_blank')` 사용 → 새 탭이 먼저 열리고, 그 후 앱으로 이동
 
-### 변경 사항
+### 해결 방안
 
-**파일: `src/components/SongDialog.tsx`**
+#### 1. 공통 유틸리티 생성
+**새 파일: `src/lib/youtubeHelper.ts`**
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+```ts
+export function openYouTubeUrl(url: string) {
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    const videoId = url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
+    if (videoId) {
+      window.location.href = `vnd.youtube://${videoId}`;
+      setTimeout(() => { window.open(url, "_blank"); }, 500);
+      return;
+    }
+  }
+  window.open(url, "_blank");
+}
+```
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+#### 2. 적용 대상 파일 (4곳)
+
+| 파일 | 변경 |
+|------|------|
+| `src/components/SongCard.tsx` | 인라인 로직 → `openYouTubeUrl(url)` 호출로 교체 |
+| `src/components/SongTable.tsx` | `handleYoutubeClick` → `openYouTubeUrl` 사용 |
+| `src/components/SetSongItem.tsx` | `window.open(song.youtube_url, "_blank")` → `openYouTubeUrl` |
+| `src/components/YouTubeSearchBar.tsx` | `handlePreview` → `openYouTubeUrl` |
+
+프로필 YouTube URL (ProfileSidebarCard, AdminUserProfileDialog)은 유저 채널 링크이므로 제외.
 
