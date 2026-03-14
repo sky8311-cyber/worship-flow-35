@@ -1,17 +1,40 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## 뮤직 플레이어 가사 표시 기능
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### 변경 요약
+재생 중인 곡에 가사가 등록되어 있으면 뮤직 플레이어 다이얼로그에서 가사를 스크롤 가능하게 표시. 가사가 없는 곡은 기존과 동일하게 플레이리스트만 표시.
 
-### 변경 사항
+### 수정 파일
 
-**파일: `src/components/SongDialog.tsx`**
+#### 1. `src/contexts/MusicPlayerContext.tsx`
+- `PlaylistItem` 인터페이스에 `lyrics?: string` 필드 추가
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+#### 2. `src/pages/BandView.tsx`
+- `musicPlaylist` 빌드 시 `setSong.lyrics || song?.lyrics` 값을 `lyrics` 필드에 포함
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+#### 3. `src/components/music-player/GlobalMusicPlayerDialog.tsx`
+- 플레이리스트 영역을 탭 구조로 변경: **가사** / **플레이리스트** 탭
+- 현재 곡에 가사가 있으면 "가사" 탭이 기본 선택, 없으면 "플레이리스트" 탭이 기본
+- 가사 탭: `ScrollArea`로 감싼 `<pre>` 태그에 가사 표시 (기존 BandView 가사 스타일과 동일)
+- 곡 변경 시 가사 유무에 따라 자동 탭 전환
+
+#### 4. `src/components/band-view/MusicPlayerMode.tsx` (밴드뷰 내장 플레이어)
+- 동일한 가사 표시 로직 적용 (플레이리스트 영역 위 또는 탭으로)
+
+### UI 레이아웃 (GlobalMusicPlayerDialog)
+```text
+┌──────────────────────┐
+│  🎵 Header / Art     │
+│  Controls / Seek     │
+├──────────────────────┤
+│  [가사]  [플레이리스트] │  ← 탭
+├──────────────────────┤
+│                      │
+│  가사 내용 (scroll)   │
+│                      │
+└──────────────────────┘
+```
+
+수정 파일: 4개
 
