@@ -357,6 +357,7 @@ const SetBuilder = () => {
     isSaving: autoSaveIsSaving, 
     lastSavedAt,
     forceSave,
+    cancelPendingAutoSave,
     newSetId,
     consecutiveErrors: autoSaveConsecutiveErrors,
     autoSaveError,
@@ -767,6 +768,8 @@ const SetBuilder = () => {
   };
 
   const confirmPublish = () => {
+    suppressAutoSaveRef.current = true;
+    cancelPendingAutoSave();
     saveSetMutation.mutate("published");
     setShowPublishConfirm(false);
   };
@@ -1049,6 +1052,8 @@ const SetBuilder = () => {
     },
     onError: (error: any) => {
       toast.error("저장 실패: " + error.message);
+      // Restore auto-save if publish failed
+      suppressAutoSaveRef.current = false;
     },
     onSettled: () => {
       setIsSaving(false);

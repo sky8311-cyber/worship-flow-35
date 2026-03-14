@@ -119,6 +119,7 @@ export const useAutoSaveDraft = ({
   
   const formDataRef = useRef(formData);
   const itemsRef = useRef(items);
+  const statusRef = useRef(status);
   const initialLoadRef = useRef(true);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const prevFormSignatureRef = useRef<string>("");
@@ -148,6 +149,10 @@ export const useAutoSaveDraft = ({
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
 
   // UPSERT-based auto-save mutation
   const autoSaveMutation = useMutation({
@@ -211,7 +216,11 @@ export const useAutoSaveDraft = ({
       }
       prevItemsCountRef.current = currentItems.length;
 
-      if (status !== "draft") return null;
+      // Use ref to always check latest status (prevents stale closure after publish)
+      if (statusRef.current !== "draft") {
+        console.log('[AutoSave] Skipping - status is', statusRef.current);
+        return null;
+      }
       if (!currentForm.date || !currentForm.service_time || !currentForm.service_name?.trim() || !currentForm.community_id || !currentForm.worship_leader?.trim()) return null;
 
       // Safety check: If editing existing set with empty items, check DB first
@@ -396,11 +405,19 @@ export const useAutoSaveDraft = ({
     }
   }, [hasUnsavedChanges, status, autoSaveMutation]);
 
+  const cancelPendingAutoSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+  }, []);
+
   return {
     hasUnsavedChanges,
     isSaving,
     lastSavedAt,
     forceSave,
+    cancelPendingAutoSave,
     newSetId: autoSaveMutation.data,
     consecutiveErrors: consecutiveErrorCountRef.current,
     autoSaveError: autoSaveMutation.error,
