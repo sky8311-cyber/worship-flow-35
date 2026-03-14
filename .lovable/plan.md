@@ -1,39 +1,17 @@
 
 
-## YouTube 아이콘 hover 시 흰색 전환
+## 악보 편집 영역 버튼 너비 정렬
 
-### 변경 내용
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-YouTube 버튼의 아이콘이 hover 시 흰색으로 바뀌도록 `group` + `group-hover:text-white` 패턴 적용.
+### 변경 사항
 
-### 수정 파일
+**파일: `src/components/SongDialog.tsx`**
 
-**1. `src/components/SetSongItem.tsx`** (라인 391-398)
-- Button에 `group` 클래스 추가, 배경색 hover 스타일 추가
-- Youtube 아이콘에 `group-hover:text-white` 추가
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-**2. `src/components/SongCard.tsx`** (라인 206-214)
-- 동일 패턴 적용
-
-**3. `src/components/SongTable.tsx`** (라인 ~442-445)
-- 아이콘 버튼에 동일 패턴 적용
-
-**4. `src/components/YouTubeSearchBar.tsx`** (라인 ~99-109)
-- 검색 버튼은 이미 `bg-red-600 text-white`이므로 아이콘은 이미 흰색 — 변경 불필요
-
-### 구현 방식
-```tsx
-// SetSongItem / SongCard 예시
-<Button
-  variant="outline"
-  size="sm"
-  className="group hover:bg-red-600 hover:text-white hover:border-red-600"
-  onClick={...}
->
-  <Youtube className="w-4 h-4 mr-1 text-red-500 group-hover:text-white" />
-  유튜브
-</Button>
-```
-
-변경 파일: 3개
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 

@@ -392,8 +392,9 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     variant="outline"
                     size="sm"
                     onClick={() => openYouTubeUrl(song.youtube_url)}
+                    className="group hover:bg-red-600 hover:text-white hover:border-red-600"
                   >
-                    <Youtube className="w-4 h-4 mr-1" />
+                    <Youtube className="w-4 h-4 mr-1 text-red-500 group-hover:text-white" />
                     유튜브
                   </Button>
                 )}
