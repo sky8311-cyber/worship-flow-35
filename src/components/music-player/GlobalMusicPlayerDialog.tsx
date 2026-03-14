@@ -407,6 +407,18 @@ export const GlobalMusicPlayerDialog = () => {
                 </div>
               </ScrollArea>
             </TabsContent>
+
+            {currentTrack?.lyrics && (
+              <TabsContent value="lyrics" className="mt-0 flex-1 min-h-0">
+                <ScrollArea className="h-48 sm:h-56">
+                  <div className="p-4">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
+                      {currentTrack.lyrics}
+                    </pre>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </DialogContent>

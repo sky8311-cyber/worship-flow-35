@@ -480,6 +480,18 @@ export const MusicPlayerMode = ({
                 </div>
               </ScrollArea>
             </TabsContent>
+
+            {currentTrack?.lyrics && (
+              <TabsContent value="lyrics" className="mt-0 flex-1 min-h-0">
+                <ScrollArea className="flex-1 h-full">
+                  <div className="p-4">
+                    <pre className="whitespace-pre-wrap font-sans text-sm text-foreground leading-relaxed">
+                      {currentTrack.lyrics}
+                    </pre>
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </DialogContent>
