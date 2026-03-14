@@ -233,6 +233,7 @@ const [loading, setLoading] = useState(false);
   
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   
   // Check if form has unsaved changes
   const hasUnsavedChanges = () => {
@@ -266,12 +267,13 @@ const [loading, setLoading] = useState(false);
   // Handle dialog close with confirmation
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && open) {
-      // User is trying to close the dialog
-      if (hasUnsavedChanges()) {
+      // Skip unsaved changes check if we just saved
+      if (!justSaved && hasUnsavedChanges()) {
         setShowCloseConfirm(true);
         return; // Don't close yet
       }
     }
+    setJustSaved(false);
     onOpenChange(newOpen);
   };
   
@@ -445,6 +447,7 @@ const [loading, setLoading] = useState(false);
       if (isNewSong) {
         setShowAddToSetPrompt(true);
       } else {
+        setJustSaved(true);
         onClose();
       }
     } catch (error: any) {
