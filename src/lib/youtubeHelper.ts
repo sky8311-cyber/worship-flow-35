@@ -22,9 +22,8 @@ export function openYouTubeUrl(url: string) {
       };
 
       const fallbackTimer = setTimeout(() => {
-        // If browser was suspended (elapsed >> 1500ms), skip fallback
         const elapsed = Date.now() - startedAt;
-        if (cancelled || elapsed > 2000) {
+        if (cancelled || elapsed > 1000) {
           cleanup();
           return;
         }
