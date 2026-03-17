@@ -1,17 +1,56 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## Song Library Import: Partial Update Problem
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### Current Behavior (lines 329-339)
+When a row has an `id`, the update sets **every field** from the Excel row — including blank ones. So:
 
-### 변경 사항
+- ✅ Excel has lyrics, DB doesn't → **lyrics get added** (works correctly)
+- ❌ Excel has empty lyrics, DB has lyrics → **lyrics get erased** (set to `null`)
+- ❌ Any blank cell in Excel overwrites existing DB data with `null`
 
-**파일: `src/components/SongDialog.tsx`**
+This is dangerous. Users export, edit a few columns, re-import, and unknowingly wipe fields they didn't touch.
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+### Fix (1 file: `src/components/CSVImportDialog.tsx`)
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+**Change the update logic to only include non-empty fields** — skip any field where the Excel cell is blank/empty so existing DB values are preserved.
+
+Replace the static `updateData` object (lines 329-339) with a conditional builder:
+
+```typescript
+const updateData: Record<string, any> = {};
+
+// Only include fields that have actual values in the Excel
+const fieldMap: Record<string, any> = {
+  title: row.title?.trim(),
+  subtitle: row.subtitle?.trim(),
+  artist: row.artist?.trim(),
+  language: row.language?.trim(),
+  default_key: row.default_key?.trim(),
+  topics: row.topics?.trim(),
+  youtube_url: row.youtube_url?.trim(),
+  interpretation: row.interpretation?.trim(),
+  notes: row.notes?.trim(),
+  lyrics: row.lyrics?.trim(),
+};
+
+for (const [key, value] of Object.entries(fieldMap)) {
+  if (value && value !== "") {
+    updateData[key] = value;
+  }
+}
+// title is always required
+if (!updateData.title) {
+  updateData.title = row.title.trim();
+}
+```
+
+This way:
+- Non-empty Excel cells → update the DB field
+- Empty Excel cells → leave the existing DB value untouched
+- Score file URL logic (lines 342-344) already has this pattern — only sets if `scoreUrl !== null`
+
+### Impact
+- Safe re-imports: users can export, edit specific columns, and re-import without data loss
+- No DB migration needed — purely a client-side logic change
 
