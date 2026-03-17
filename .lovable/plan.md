@@ -1,17 +1,32 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## Seed tier_features Table
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### Schema Reality Check
+The `tier_features` table does NOT have a `min_tier` integer column. It uses four boolean columns: `tier_member`, `tier_worship_leader`, `tier_premium`, `tier_church`. The `useTierFeature()` hook checks the boolean matching the user's tier level — so a feature available at tier 2 (premium) means `tier_premium = true` AND `tier_church = true` (higher tiers inherit access).
 
-### 변경 사항
+Required columns per row: `feature_key`, `feature_name`, `category`, `tier_member`, `tier_worship_leader`, `tier_premium`, `tier_church`, `is_active`, `display_order`.
 
-**파일: `src/components/SongDialog.tsx`**
+### Mapping (min_tier → booleans, cumulative upward)
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+| feature_key | min_tier | member | wl | premium | church |
+|---|---|---|---|---|---|
+| studio_comment | 1 | false | true | true | true |
+| studio_publish | 2 | false | false | true | true |
+| ai_set_builder | 2 | false | false | true | true |
+| institute_browse | 1 | false | true | true | true |
+| institute_enroll_free | 1 | false | true | true | true |
+| institute_full_access | 2 | false | false | true | true |
+| institute_ai_coach | 2 | false | false | true | true |
+| institute_badge | 2 | false | false | true | true |
+| team_rotation | 3 | false | false | false | true |
+| community_branding | 3 | false | false | false | true |
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+### Verification
+For `ai_set_builder`: `tier_worship_leader = false`, `tier_premium = true`. So `hasFeature('ai_set_builder')` returns `false` for a worship_leader user and `true` for a premium user. Confirmed correct.
+
+### Implementation
+Single SQL migration inserting 10 rows with appropriate `feature_name`, `category`, and `display_order` values. No code changes needed — `useTierFeature()` and `FeatureGate` will start working immediately once the data exists.
+
+Categories will be assigned logically: `ai` for AI features, `management` for community management features, matching the `CATEGORY_CONFIG` in `AdminFeatures.tsx`.
 
