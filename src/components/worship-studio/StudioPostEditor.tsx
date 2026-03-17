@@ -62,6 +62,7 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       display_type: displayType,
       cover_image_url: coverUrl || undefined,
       is_draft: isDraft,
+      visibility,
     }, {
       onSuccess: () => {
         onSuccess?.();
