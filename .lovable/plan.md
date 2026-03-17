@@ -1,32 +1,80 @@
 
 
-## Seed tier_features Table
+## Plan: Three Worship Studio Extensions
 
-### Schema Reality Check
-The `tier_features` table does NOT have a `min_tier` integer column. It uses four boolean columns: `tier_member`, `tier_worship_leader`, `tier_premium`, `tier_church`. The `useTierFeature()` hook checks the boolean matching the user's tier level — so a feature available at tier 2 (premium) means `tier_premium = true` AND `tier_church = true` (higher tiers inherit access).
+### Addition 1 — Comment System for room_posts
 
-Required columns per row: `feature_key`, `feature_name`, `category`, `tier_member`, `tier_worship_leader`, `tier_premium`, `tier_church`, `is_active`, `display_order`.
+**Database migration** — Create `room_post_comments` table:
+```sql
+CREATE TABLE room_post_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES room_posts(id) ON DELETE CASCADE NOT NULL,
+  author_user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  body TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
-### Mapping (min_tier → booleans, cumulative upward)
+ALTER TABLE room_post_comments ENABLE ROW LEVEL SECURITY;
 
-| feature_key | min_tier | member | wl | premium | church |
-|---|---|---|---|---|---|
-| studio_comment | 1 | false | true | true | true |
-| studio_publish | 2 | false | false | true | true |
-| ai_set_builder | 2 | false | false | true | true |
-| institute_browse | 1 | false | true | true | true |
-| institute_enroll_free | 1 | false | true | true | true |
-| institute_full_access | 2 | false | false | true | true |
-| institute_ai_coach | 2 | false | false | true | true |
-| institute_badge | 2 | false | false | true | true |
-| team_rotation | 3 | false | false | false | true |
-| community_branding | 3 | false | false | false | true |
+-- Read: anyone who can view the room the post belongs to
+CREATE POLICY "Can read comments on viewable posts"
+ON room_post_comments FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM room_posts rp
+    JOIN worship_rooms wr ON wr.id = rp.room_id
+    WHERE rp.id = room_post_comments.post_id
+    AND can_view_room(wr.id, auth.uid())
+  )
+);
 
-### Verification
-For `ai_set_builder`: `tier_worship_leader = false`, `tier_premium = true`. So `hasFeature('ai_set_builder')` returns `false` for a worship_leader user and `true` for a premium user. Confirmed correct.
+-- Insert: authenticated users (tier gating handled client-side via useTierFeature)
+CREATE POLICY "Authenticated users can comment"
+ON room_post_comments FOR INSERT TO authenticated
+WITH CHECK (author_user_id = auth.uid());
 
-### Implementation
-Single SQL migration inserting 10 rows with appropriate `feature_name`, `category`, and `display_order` values. No code changes needed — `useTierFeature()` and `FeatureGate` will start working immediately once the data exists.
+-- Delete: authors can delete own comments
+CREATE POLICY "Authors can delete own comments"
+ON room_post_comments FOR DELETE TO authenticated
+USING (author_user_id = auth.uid());
+```
 
-Categories will be assigned logically: `ai` for AI features, `management` for community management features, matching the `CATEGORY_CONFIG` in `AdminFeatures.tsx`.
+**New hook** — `src/hooks/usePostComments.ts`: fetch comments for a post_id (with author profile join), create comment mutation, delete comment mutation.
+
+**UI changes** — In `PostDetailDialog.tsx`: below the reactions section, render a comment list (avatar, name, body, time) and a comment input. Gate the input with `useTierFeature('studio_comment')` — if the user lacks access, show `<LockedFeatureBanner feature="studio_comment" compact />` instead of the input.
+
+---
+
+### Addition 2 — Post Search & Category Filter
+
+**UI changes** — In `StudioPostList` component (`PostDisplayCard.tsx`, lines 166-242):
+- Add state for `searchQuery` and `activeCategory` (default: `null` = all).
+- Above the post grid, add a `<SearchInput>` (already exists in `src/components/ui/search-input.tsx`) filtering posts client-side by `title` and `content` (case-insensitive includes).
+- Add a row of category filter buttons using `useEnabledCategories()` from `useStudioCategories.ts`. Each button shows the category label (bilingual). Filter posts by matching `post.post_type` to the selected category key. An "All" button clears the filter.
+- Apply both filters before the existing display-type grouping logic.
+
+No new tables or hooks needed.
+
+---
+
+### Addition 3 — Per-Post Visibility Selector in Editor
+
+**UI changes** — In `StudioPostEditor.tsx`:
+- Add `visibility` state, defaulting to `room?.visibility || "friends"`.
+- In the "Display Settings" section, add a visibility selector with three options: Private (비공개) / Friends (친구공개) / Public (전체공개), using the same button-grid pattern as display type.
+- Pass `visibility` to the `createPost.mutate()` call (the `useCreateStudioPost` hook already accepts `visibility`).
+
+No database or hook changes needed — the column and mutation support already exist.
+
+---
+
+### Files Changed Summary
+
+| File | Change |
+|---|---|
+| **Migration SQL** | Create `room_post_comments` table + RLS |
+| `src/hooks/usePostComments.ts` | New hook: fetch/create/delete comments |
+| `src/components/worship-studio/PostDetailDialog.tsx` | Add comment list + gated input below post |
+| `src/components/worship-studio/PostDisplayCard.tsx` | Add search input + category filter to `StudioPostList` |
+| `src/components/worship-studio/StudioPostEditor.tsx` | Add visibility selector, pass to mutation |
 
