@@ -37,7 +37,9 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [displayType, setDisplayType] = useState<DisplayType>("card");
   const [coverUrl, setCoverUrl] = useState("");
-  
+  const [visibility, setVisibility] = useState<RoomVisibility>(
+    (room?.visibility as RoomVisibility) || "friends"
+  );
   const handleEditorChange = (newBlocks: BlockContent[], html: string) => {
     setBlocks(newBlocks);
     setHtmlContent(html);
