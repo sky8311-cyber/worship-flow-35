@@ -132,6 +132,7 @@ const [loading, setLoading] = useState(false);
       });
       setScoreVariations([{ key: "", files: [] }]);
       setYoutubeLinks([{ label: "", url: "" }]);
+      setSaveStatus('idle');
     }
   }, [song, open]);
 
