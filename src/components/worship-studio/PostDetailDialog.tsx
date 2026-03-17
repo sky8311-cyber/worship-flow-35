@@ -1,12 +1,20 @@
+import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAuth } from "@/contexts/AuthContext";
 import { type StudioPost } from "@/hooks/useStudioPosts";
+import { usePostComments, useCreateComment, useDeleteComment } from "@/hooks/usePostComments";
+import { useTierFeature } from "@/hooks/useTierFeature";
+import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
 import { SongBlock } from "./editor/blocks/SongBlock";
 import { WorshipSetBlock } from "./editor/blocks/WorshipSetBlock";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
+import { Send, Trash2 } from "lucide-react";
 
 interface PostDetailDialogProps {
   post: StudioPost | null;
@@ -16,6 +24,14 @@ interface PostDetailDialogProps {
 
 export function PostDetailDialog({ post, open, onOpenChange }: PostDetailDialogProps) {
   const { language } = useTranslation();
+  const { user } = useAuth();
+  const { hasFeature } = useTierFeature();
+  const canComment = hasFeature("studio_comment");
+
+  const { data: comments, isLoading: commentsLoading } = usePostComments(open && post ? post.id : undefined);
+  const createComment = useCreateComment();
+  const deleteComment = useDeleteComment();
+  const [commentBody, setCommentBody] = useState("");
   
   if (!post) return null;
   
@@ -23,6 +39,13 @@ export function PostDetailDialog({ post, open, onOpenChange }: PostDetailDialogP
     addSuffix: true,
     locale: language === "ko" ? ko : enUS,
   });
+
+  const handleSubmitComment = () => {
+    if (!commentBody.trim() || !post) return;
+    createComment.mutate({ postId: post.id, body: commentBody.trim() }, {
+      onSuccess: () => setCommentBody(""),
+    });
+  };
   
   // Render blocks
   const renderBlock = (block: typeof post.blocks[0], index: number) => {
@@ -133,6 +156,88 @@ export function PostDetailDialog({ post, open, onOpenChange }: PostDetailDialogP
                 ))}
               </div>
             )}
+
+            {/* Comments Section */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <h3 className="text-sm font-medium mb-4">
+                {language === "ko" ? "댓글" : "Comments"}
+                {comments && comments.length > 0 && ` (${comments.length})`}
+              </h3>
+
+              {/* Comment list */}
+              <div className="space-y-3 mb-4">
+                {commentsLoading && (
+                  <p className="text-sm text-muted-foreground">{language === "ko" ? "로딩 중..." : "Loading..."}</p>
+                )}
+                {comments?.map(comment => {
+                  const commentTime = formatDistanceToNow(new Date(comment.created_at), {
+                    addSuffix: true,
+                    locale: language === "ko" ? ko : enUS,
+                  });
+                  return (
+                    <div key={comment.id} className="flex gap-2.5 group">
+                      <Avatar className="h-7 w-7 flex-shrink-0 mt-0.5">
+                        <AvatarImage src={comment.author?.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {comment.author?.full_name?.charAt(0) || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-medium">
+                            {comment.author?.full_name || (language === "ko" ? "익명" : "Anonymous")}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{commentTime}</span>
+                        </div>
+                        <p className="text-sm text-foreground mt-0.5">{comment.body}</p>
+                      </div>
+                      {user?.id === comment.author_user_id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                          onClick={() => deleteComment.mutate({ commentId: comment.id, postId: post.id })}
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground" />
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+                {!commentsLoading && (!comments || comments.length === 0) && (
+                  <p className="text-sm text-muted-foreground">
+                    {language === "ko" ? "아직 댓글이 없습니다" : "No comments yet"}
+                  </p>
+                )}
+              </div>
+
+              {/* Comment input (gated) */}
+              {canComment ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={commentBody}
+                    onChange={(e) => setCommentBody(e.target.value)}
+                    placeholder={language === "ko" ? "댓글을 입력하세요..." : "Write a comment..."}
+                    className="flex-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmitComment();
+                      }
+                    }}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleSubmitComment}
+                    disabled={!commentBody.trim() || createComment.isPending}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <LockedFeatureBanner feature="studio_comment" compact />
+              )}
+            </div>
           </div>
         </ScrollArea>
       </DialogContent>

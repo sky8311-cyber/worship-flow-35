@@ -15,8 +15,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, LayoutList, LayoutGrid, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Save, Send, LayoutList, LayoutGrid, Image as ImageIcon, Lock, Users, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/integrations/supabase/types";
+
+type RoomVisibility = Database["public"]["Enums"]["room_visibility"];
 
 interface StudioPostEditorProps {
   onBack?: () => void;
