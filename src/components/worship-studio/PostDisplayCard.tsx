@@ -1,10 +1,13 @@
+import { useState, useMemo } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioPosts, type StudioPost, type DisplayType } from "@/hooks/useStudioPosts";
+import { useEnabledCategories } from "@/hooks/useStudioCategories";
 import { SongBlock } from "./editor/blocks/SongBlock";
 import { WorshipSetBlock } from "./editor/blocks/WorshipSetBlock";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SearchInput } from "@/components/ui/search-input";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { FileText, Music, Calendar, Image as ImageIcon } from "lucide-react";
@@ -20,23 +23,19 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
   
   const displayType = post.display_type || "card";
   
-  // Count embedded content
   const songCount = post.blocks.filter(b => b.type === "song").length;
   const setCount = post.blocks.filter(b => b.type === "worship-set").length;
   
-  // Get text preview
   const textBlocks = post.blocks.filter(b => 
     b.type === "paragraph" || b.type === "heading"
   );
   const preview = textBlocks.map(b => b.content).join(" ").slice(0, 150);
   
-  // Format date
   const timeAgo = formatDistanceToNow(new Date(post.created_at), {
     addSuffix: true,
     locale: language === "ko" ? ko : enUS,
   });
   
-  // List view
   if (displayType === "list") {
     return (
       <button
@@ -57,7 +56,6 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
     );
   }
   
-  // Gallery view
   if (displayType === "gallery") {
     return (
       <button
@@ -65,11 +63,7 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
         className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-colors"
       >
         {post.cover_image_url ? (
-          <img 
-            src={post.cover_image_url} 
-            alt="" 
-            className="w-full h-full object-cover"
-          />
+          <img src={post.cover_image_url} alt="" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-muted flex items-center justify-center">
             <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
@@ -94,15 +88,10 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
     >
       {post.cover_image_url && (
         <div className="aspect-video overflow-hidden">
-          <img 
-            src={post.cover_image_url} 
-            alt="" 
-            className="w-full h-full object-cover"
-          />
+          <img src={post.cover_image_url} alt="" className="w-full h-full object-cover" />
         </div>
       )}
       <CardContent className="p-4">
-        {/* Author */}
         <div className="flex items-center gap-2 mb-3">
           <Avatar className="h-6 w-6">
             <AvatarImage src={post.author?.avatar_url || undefined} />
@@ -117,17 +106,13 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
         </div>
         
-        {/* Title & Preview */}
         <h3 className="font-medium mb-1">
           {post.title || (language === "ko" ? "제목 없음" : "Untitled")}
         </h3>
         {preview && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-            {preview}
-          </p>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{preview}</p>
         )}
         
-        {/* Embedded content indicators */}
         {(songCount > 0 || setCount > 0) && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {songCount > 0 && (
@@ -145,7 +130,6 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
           </div>
         )}
         
-        {/* Reactions */}
         {post.reactions && post.reactions.length > 0 && (
           <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
             {post.reactions.map(r => (
@@ -172,6 +156,30 @@ interface StudioPostListProps {
 export function StudioPostList({ roomId, includeDrafts = false, onPostClick }: StudioPostListProps) {
   const { language } = useTranslation();
   const { data: posts, isLoading } = useStudioPosts(roomId, includeDrafts);
+  const { data: categories } = useEnabledCategories();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  // Filter posts
+  const filteredPosts = useMemo(() => {
+    if (!posts) return [];
+    let result = posts;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(p =>
+        (p.title && p.title.toLowerCase().includes(q)) ||
+        (p.content && p.content.toLowerCase().includes(q))
+      );
+    }
+
+    if (activeCategory) {
+      result = result.filter(p => p.post_type === activeCategory);
+    }
+
+    return result;
+  }, [posts, searchQuery, activeCategory]);
   
   if (isLoading) {
     return (
@@ -193,21 +201,64 @@ export function StudioPostList({ roomId, includeDrafts = false, onPostClick }: S
   }
   
   // Group by display type for rendering
-  const listPosts = posts.filter(p => p.display_type === "list");
-  const cardPosts = posts.filter(p => p.display_type === "card" || !p.display_type);
-  const galleryPosts = posts.filter(p => p.display_type === "gallery");
+  const listPosts = filteredPosts.filter(p => p.display_type === "list");
+  const cardPosts = filteredPosts.filter(p => p.display_type === "card" || !p.display_type);
+  const galleryPosts = filteredPosts.filter(p => p.display_type === "gallery");
   
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-4">
+      {/* Search & Category Filters */}
+      <div className="space-y-3">
+        <SearchInput
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClear={() => setSearchQuery("")}
+          placeholder={language === "ko" ? "게시물 검색..." : "Search posts..."}
+        />
+        {categories && categories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                !activeCategory
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-accent"
+              )}
+            >
+              {language === "ko" ? "전체" : "All"}
+            </button>
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
+                className={cn(
+                  "px-3 py-1 rounded-full text-xs font-medium transition-colors",
+                  activeCategory === cat.key
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                )}
+              >
+                {cat.icon && <span className="mr-1">{cat.icon}</span>}
+                {language === "ko" ? cat.label_ko : cat.label_en}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* No results */}
+      {filteredPosts.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          <p>{language === "ko" ? "검색 결과가 없습니다" : "No matching posts"}</p>
+        </div>
+      )}
+
       {/* Gallery posts grid */}
       {galleryPosts.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {galleryPosts.map(post => (
-            <PostDisplayCard 
-              key={post.id} 
-              post={post} 
-              onClick={() => onPostClick?.(post)}
-            />
+            <PostDisplayCard key={post.id} post={post} onClick={() => onPostClick?.(post)} />
           ))}
         </div>
       )}
@@ -216,11 +267,7 @@ export function StudioPostList({ roomId, includeDrafts = false, onPostClick }: S
       {cardPosts.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {cardPosts.map(post => (
-            <PostDisplayCard 
-              key={post.id} 
-              post={post} 
-              onClick={() => onPostClick?.(post)}
-            />
+            <PostDisplayCard key={post.id} post={post} onClick={() => onPostClick?.(post)} />
           ))}
         </div>
       )}
@@ -229,11 +276,7 @@ export function StudioPostList({ roomId, includeDrafts = false, onPostClick }: S
       {listPosts.length > 0 && (
         <div className="space-y-2">
           {listPosts.map(post => (
-            <PostDisplayCard 
-              key={post.id} 
-              post={post} 
-              onClick={() => onPostClick?.(post)}
-            />
+            <PostDisplayCard key={post.id} post={post} onClick={() => onPostClick?.(post)} />
           ))}
         </div>
       )}

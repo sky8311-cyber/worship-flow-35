@@ -1,80 +1,17 @@
 
 
-## Plan: Three Worship Studio Extensions
+## 악보 편집 영역 버튼 너비 정렬
 
-### Addition 1 — Comment System for room_posts
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-**Database migration** — Create `room_post_comments` table:
-```sql
-CREATE TABLE room_post_comments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID REFERENCES room_posts(id) ON DELETE CASCADE NOT NULL,
-  author_user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
-  body TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+### 변경 사항
 
-ALTER TABLE room_post_comments ENABLE ROW LEVEL SECURITY;
+**파일: `src/components/SongDialog.tsx`**
 
--- Read: anyone who can view the room the post belongs to
-CREATE POLICY "Can read comments on viewable posts"
-ON room_post_comments FOR SELECT TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM room_posts rp
-    JOIN worship_rooms wr ON wr.id = rp.room_id
-    WHERE rp.id = room_post_comments.post_id
-    AND can_view_room(wr.id, auth.uid())
-  )
-);
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
--- Insert: authenticated users (tier gating handled client-side via useTierFeature)
-CREATE POLICY "Authenticated users can comment"
-ON room_post_comments FOR INSERT TO authenticated
-WITH CHECK (author_user_id = auth.uid());
-
--- Delete: authors can delete own comments
-CREATE POLICY "Authors can delete own comments"
-ON room_post_comments FOR DELETE TO authenticated
-USING (author_user_id = auth.uid());
-```
-
-**New hook** — `src/hooks/usePostComments.ts`: fetch comments for a post_id (with author profile join), create comment mutation, delete comment mutation.
-
-**UI changes** — In `PostDetailDialog.tsx`: below the reactions section, render a comment list (avatar, name, body, time) and a comment input. Gate the input with `useTierFeature('studio_comment')` — if the user lacks access, show `<LockedFeatureBanner feature="studio_comment" compact />` instead of the input.
-
----
-
-### Addition 2 — Post Search & Category Filter
-
-**UI changes** — In `StudioPostList` component (`PostDisplayCard.tsx`, lines 166-242):
-- Add state for `searchQuery` and `activeCategory` (default: `null` = all).
-- Above the post grid, add a `<SearchInput>` (already exists in `src/components/ui/search-input.tsx`) filtering posts client-side by `title` and `content` (case-insensitive includes).
-- Add a row of category filter buttons using `useEnabledCategories()` from `useStudioCategories.ts`. Each button shows the category label (bilingual). Filter posts by matching `post.post_type` to the selected category key. An "All" button clears the filter.
-- Apply both filters before the existing display-type grouping logic.
-
-No new tables or hooks needed.
-
----
-
-### Addition 3 — Per-Post Visibility Selector in Editor
-
-**UI changes** — In `StudioPostEditor.tsx`:
-- Add `visibility` state, defaulting to `room?.visibility || "friends"`.
-- In the "Display Settings" section, add a visibility selector with three options: Private (비공개) / Friends (친구공개) / Public (전체공개), using the same button-grid pattern as display type.
-- Pass `visibility` to the `createPost.mutate()` call (the `useCreateStudioPost` hook already accepts `visibility`).
-
-No database or hook changes needed — the column and mutation support already exist.
-
----
-
-### Files Changed Summary
-
-| File | Change |
-|---|---|
-| **Migration SQL** | Create `room_post_comments` table + RLS |
-| `src/hooks/usePostComments.ts` | New hook: fetch/create/delete comments |
-| `src/components/worship-studio/PostDetailDialog.tsx` | Add comment list + gated input below post |
-| `src/components/worship-studio/PostDisplayCard.tsx` | Add search input + category filter to `StudioPostList` |
-| `src/components/worship-studio/StudioPostEditor.tsx` | Add visibility selector, pass to mutation |
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 
