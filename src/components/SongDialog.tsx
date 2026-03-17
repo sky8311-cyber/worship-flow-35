@@ -1265,8 +1265,8 @@ const [loading, setLoading] = useState(false);
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? t("common.loading") : t("common.save")}
+            <Button type="submit" disabled={loading || saveStatus === 'saved'} className={saveStatus === 'saved' ? 'bg-green-600 hover:bg-green-600 text-white' : ''}>
+              {loading ? t("common.loading") : saveStatus === 'saved' ? '✓ 저장됨' : t("common.save")}
             </Button>
           </div>
         </form>
