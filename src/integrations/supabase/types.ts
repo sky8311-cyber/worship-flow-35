@@ -2301,6 +2301,45 @@ export type Database = {
           },
         ]
       }
+      room_post_comments: {
+        Row: {
+          author_user_id: string
+          body: string
+          created_at: string | null
+          id: string
+          post_id: string
+        }
+        Insert: {
+          author_user_id: string
+          body: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+        }
+        Update: {
+          author_user_id?: string
+          body?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_post_comments_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "room_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_posts: {
         Row: {
           author_user_id: string
