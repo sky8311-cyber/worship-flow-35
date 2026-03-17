@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
@@ -46,6 +46,8 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { user } = useAuth();
   const queryClient = useQueryClient();
 const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const submittingRef = useRef(false);
   const [uploading, setUploading] = useState(false);
   const [setUsageCount, setSetUsageCount] = useState<number>(0);
   const [usageHistoryExpanded, setUsageHistoryExpanded] = useState(false);
@@ -130,6 +132,7 @@ const [loading, setLoading] = useState(false);
       });
       setScoreVariations([{ key: "", files: [] }]);
       setYoutubeLinks([{ label: "", url: "" }]);
+      setSaveStatus('idle');
     }
   }, [song, open]);
 
@@ -358,6 +361,10 @@ const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Synchronous double-submit guard
+    if (submittingRef.current) return;
+    
     if (!formData.title) {
       toast.error(t("songDialog.titleRequired"));
       return;
@@ -374,7 +381,9 @@ const [loading, setLoading] = useState(false);
       return;
     }
 
+    submittingRef.current = true;
     setLoading(true);
+    setSaveStatus('idle');
     try {
       const data: any = {
         ...formData,
@@ -396,6 +405,7 @@ const [loading, setLoading] = useState(false);
         if (error) throw error;
         songId = song.id;
         toast.success(t("songDialog.songUpdated"));
+        setSaveStatus('saved');
       } else {
         const { data: newSong, error } = await supabase
           .from("songs")
@@ -405,7 +415,10 @@ const [loading, setLoading] = useState(false);
         if (error) throw error;
         songId = newSong.id;
         isNewSong = true;
+        
+        // Immediate feedback — user sees confirmation right after INSERT
         toast.success(t("songDialog.songAdded"));
+        setSaveStatus('saved');
         
         // Credit K-Seed reward for adding a new song (fire-and-forget)
         if (user?.id) {
@@ -435,12 +448,14 @@ const [loading, setLoading] = useState(false);
         });
       }
 
-      // Save score variations and youtube links
-      await saveScoreVariations(songId);
-      await saveYoutubeLinks(songId);
+      // Save score variations and youtube links in parallel
+      await Promise.all([
+        saveScoreVariations(songId),
+        saveYoutubeLinks(songId),
+      ]);
 
-      // Invalidate queries for real-time UI update
-      await queryClient.invalidateQueries({ queryKey: ["songs"] });
+      // Fire-and-forget — don't block UI waiting for refetch
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
 
       // For new songs, show the "Add to Worship Set?" prompt
       // For editing, just close
@@ -452,8 +467,10 @@ const [loading, setLoading] = useState(false);
       }
     } catch (error: any) {
       toast.error("Error: " + error.message);
+      setSaveStatus('idle');
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -1249,8 +1266,8 @@ const [loading, setLoading] = useState(false);
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? t("common.loading") : t("common.save")}
+            <Button type="submit" disabled={loading || saveStatus === 'saved'} className={saveStatus === 'saved' ? 'bg-green-600 hover:bg-green-600 text-white' : ''}>
+              {loading ? t("common.loading") : saveStatus === 'saved' ? '✓ 저장됨' : t("common.save")}
             </Button>
           </div>
         </form>
