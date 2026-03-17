@@ -175,6 +175,42 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
                 type="url"
               />
             </div>
+
+            {/* Visibility selector */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                {language === "ko" ? "공개 범위" : "Visibility"}
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { value: "private" as RoomVisibility, label_en: "Private", label_ko: "비공개", icon: Lock },
+                  { value: "friends" as RoomVisibility, label_en: "Friends", label_ko: "친구공개", icon: Users },
+                  { value: "public" as RoomVisibility, label_en: "Public", label_ko: "전체공개", icon: Globe },
+                ]).map(option => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setVisibility(option.value)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors",
+                        visibility === option.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted"
+                      )}
+                    >
+                      <Icon className={cn(
+                        "h-5 w-5",
+                        visibility === option.value ? "text-primary" : "text-muted-foreground"
+                      )} />
+                      <span className="text-sm">
+                        {language === "ko" ? option.label_ko : option.label_en}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           
           {/* Philosophy quote */}
