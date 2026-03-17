@@ -1,17 +1,43 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## Song Save Freeze Fix
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### Root Cause
 
-### 변경 사항
+The "freeze" users experience is caused by the `handleSubmit` flow in `SongDialog.tsx` (line 359-458):
 
-**파일: `src/components/SongDialog.tsx`**
+```text
+handleSubmit flow (current):
+  setLoading(true)
+  → INSERT song (network call #1)
+  → dynamic import rewardsHelper (async module load)
+  → await saveScoreVariations (DELETE + INSERT = 2 network calls)
+  → await saveYoutubeLinks (DELETE + INSERT = 2 network calls)
+  → await queryClient.invalidateQueries(["songs"])  ← THIS IS THE KILLER
+  → setShowAddToSetPrompt(true)
+  → setLoading(false)
+```
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+**The `await invalidateQueries` on line 443 waits for the entire songs list to refetch before proceeding.** If the library has hundreds of songs, this can take 2-5+ seconds. During this entire chain (5-6 sequential network calls), the save button shows "로딩 중..." and the dialog is unresponsive. Users think it froze and close/reopen/re-save.
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+Additionally, there's **no double-click guard** — the `loading` state is async so rapid clicks can fire two submissions.
+
+### Fix (1 file: `SongDialog.tsx`)
+
+#### 1. Don't await `invalidateQueries` — fire and forget
+Change line 443 from `await queryClient.invalidateQueries(...)` to just `queryClient.invalidateQueries(...)` (no await). The UI doesn't need to wait for the background refetch.
+
+#### 2. Add `useRef` double-submit guard
+Add `const submittingRef = useRef(false)` — set synchronously at the start of `handleSubmit`, return early if already true, reset in `finally`. This prevents double-clicks that slip past the async `setLoading`.
+
+#### 3. Parallelize score + youtube saves
+Change lines 439-440 from sequential awaits to `Promise.all([saveScoreVariations(songId), saveYoutubeLinks(songId)])`. These are independent operations — no reason to run sequentially.
+
+#### 4. Show immediate visual feedback
+After the INSERT succeeds (line 408), immediately show the toast AND change button text to "✓ 저장됨" before proceeding with the secondary saves. This gives users instant confirmation that the song was saved, even while scores/links are still being written.
+
+### Expected Impact
+- Save-to-feedback time: ~3-6s → ~0.5s (toast appears right after INSERT)
+- Double-submit: impossible (ref guard)
+- Dialog responsiveness: no longer blocked by query refetch
 
