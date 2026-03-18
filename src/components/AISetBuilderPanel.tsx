@@ -169,8 +169,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
                   type="number"
                   min={3}
                   max={12}
-                  value={songCount}
-                  onChange={(e) => setSongCount(Math.min(12, Math.max(3, parseInt(e.target.value) || 3)))}
+                  value={songCount || ""}
+                  onChange={(e) => setSongCount(parseInt(e.target.value) || 0)}
                 />
               </div>
 
