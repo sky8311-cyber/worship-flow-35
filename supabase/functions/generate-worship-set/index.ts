@@ -84,7 +84,7 @@ serve(async (req) => {
     // Fetch available songs
     let query = adminSupabase
       .from('songs')
-      .select('id, title, artist, default_key, tempo, tags, topics, language')
+      .select('id, title, artist, default_key, tags, topics, language')
       .limit(500);
 
     if (communityId) {
