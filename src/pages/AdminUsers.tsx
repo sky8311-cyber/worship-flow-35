@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal, Users } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal, Users, Crown } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
