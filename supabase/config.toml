@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.sitemap]
 verify_jwt = false
+
+[functions.log-ai-usage]
+verify_jwt = false
