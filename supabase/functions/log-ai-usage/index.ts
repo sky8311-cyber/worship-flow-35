@@ -47,23 +47,14 @@ serve(async (req) => {
       );
     }
 
-    // Upsert ai_usage_summary
-    const { error: summaryError } = await supabase
-      .from('ai_usage_summary')
-      .upsert(
-        {
-          user_id,
-          total_uses: 1,
-          last_used_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id' }
-      );
+    // Upsert ai_usage_summary via DB function (atomic increment)
+    const { error: summaryError } = await supabase.rpc('increment_ai_usage', {
+      p_user_id: user_id,
+    });
 
-    // If upsert worked but didn't increment, do a raw increment
-    if (!summaryError) {
-      await supabase.rpc('increment_ai_usage', { p_user_id: user_id });
-    } else {
-      console.error('Failed to upsert usage summary:', summaryError);
+    if (summaryError) {
+      console.error('Failed to update usage summary:', summaryError);
+      // Non-fatal — log was already inserted
     }
 
     return new Response(
