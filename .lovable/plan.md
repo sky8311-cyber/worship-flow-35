@@ -1,17 +1,35 @@
 
 
-## 악보 편집 영역 버튼 너비 정렬
+## AI Usage Tracking System
 
-### 현재 문제
-Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
+### Database Migration
+Create two tables:
 
-### 변경 사항
+**ai_usage_log** — append-only event log
+- `id` UUID PK, `user_id` UUID references auth.users NOT NULL, `action_type` TEXT NOT NULL, `created_at` TIMESTAMPTZ DEFAULT now()
 
-**파일: `src/components/SongDialog.tsx`**
+**ai_usage_summary** — per-user aggregate
+- `user_id` UUID PK references auth.users, `total_uses` INTEGER DEFAULT 0, `last_used_at` TIMESTAMPTZ
 
-1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
-2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
-3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
+**RLS**: Both tables get RLS enabled. Users can SELECT their own rows only. No INSERT/UPDATE/DELETE policies for anon/authenticated — only service role writes.
 
-이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
+### Edge Function: `log-ai-usage`
+- Accepts `{ user_id, action_type }` in POST body
+- Inserts into `ai_usage_log`
+- Upserts `ai_usage_summary` (increment `total_uses`, set `last_used_at`)
+- Called server-to-server (from other edge functions after successful AI responses), so `verify_jwt = false`
+- Validates `action_type` is one of `set_generation` or `institute_coach`
+- Returns success/failure — never blocks the calling function
+
+### Config
+Add `[functions.log-ai-usage]` with `verify_jwt = false` to `supabase/config.toml`.
+
+### Files
+| File | Change |
+|---|---|
+| Migration SQL | Create 2 tables + RLS |
+| `supabase/functions/log-ai-usage/index.ts` | New edge function |
+| `supabase/config.toml` | Register function |
+
+No UI changes. No client-side code.
 
