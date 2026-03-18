@@ -9,6 +9,7 @@ interface LockedFeatureBannerProps {
   message?: string;
   className?: string;
   compact?: boolean;
+  onUpgrade?: () => void;
 }
 
 export function LockedFeatureBanner({ 
