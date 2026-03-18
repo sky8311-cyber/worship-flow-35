@@ -109,7 +109,41 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
     enabled: !!userId && open,
   });
 
+  const { data: subscription } = useQuery({
+    queryKey: ["admin-user-subscription", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from("premium_subscriptions")
+        .select("subscription_status, current_period_end")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && open,
+  });
+
+  const queryClient = useQueryClient();
+  const grantMembershipMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("admin-grant-membership", {
+        body: { user_id: userId, duration_days: 365 },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-subscription", userId] });
+      toast.success(language === "ko" ? "정식멤버를 부여했습니다" : "Granted Full Membership");
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "멤버십 부여 실패" : "Failed to grant membership");
+    },
+  });
+
   const isLoading = profileLoading || rolesLoading || seedLoading;
+  const isFullMember = subscription?.subscription_status === "active";
 
   const hasAdmin = userRoles?.includes("admin");
   const hasWorshipLeader = userRoles?.includes("worship_leader");
