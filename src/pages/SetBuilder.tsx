@@ -2062,6 +2062,19 @@ const SetBuilder = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
                       </Button>
+                      {/* AI Set Builder button - tier gated */}
+                      {hasFeature('ai_set_builder') && (
+                        <Button
+                          type="button"
+                          onClick={() => setShowAIPanel(true)}
+                          size="sm"
+                          variant="outline"
+                          disabled={isBlocked}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          AI 세트
+                        </Button>
+                      )}
                       {/* Mobile only - add component button */}
                       <Button 
                         onClick={() => handleAddComponent("welcome")} 
