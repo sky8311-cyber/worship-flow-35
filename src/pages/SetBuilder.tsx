@@ -2322,6 +2322,17 @@ const SetBuilder = () => {
           }}
         />
       )}
+
+      <AISetBuilderPanel
+        open={showAIPanel}
+        onOpenChange={setShowAIPanel}
+        communityId={formData.community_id || undefined}
+        onAddSongs={(songs) => {
+          songs.forEach(({ song, key }) => {
+            handleAddSong(song, key);
+          });
+        }}
+      />
     </AppLayout>
     </>
   );
