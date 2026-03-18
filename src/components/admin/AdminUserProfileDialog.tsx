@@ -191,6 +191,36 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
               </div>
             </div>
 
+            {/* Membership Status */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">
+                  {language === "ko" ? "멤버십" : "Membership"}
+                </span>
+                {isFullMember ? (
+                  <Badge variant="default" className="text-xs">
+                    {language === "ko" ? "정식멤버" : "Full Member"}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    {language === "ko" ? "기본멤버" : "Basic"}
+                  </Badge>
+                )}
+              </div>
+              {!isFullMember && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => grantMembershipMutation.mutate()}
+                  disabled={grantMembershipMutation.isPending}
+                >
+                  <Crown className="w-3 h-3 mr-1" />
+                  {language === "ko" ? "정식멤버 부여" : "Grant Full"}
+                </Button>
+              )}
+            </div>
+
             <Separator />
 
             {/* Seed Info Section */}
