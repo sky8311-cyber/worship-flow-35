@@ -17,6 +17,7 @@ export function LockedFeatureBanner({
   message,
   className,
   compact = false,
+  onUpgrade,
 }: LockedFeatureBannerProps) {
   const { getRequiredTier } = useTierFeature();
   const { language } = useTranslation();
