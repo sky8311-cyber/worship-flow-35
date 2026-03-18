@@ -783,6 +783,10 @@ const AdminUsers = () => {
                                 <KeyRound className="w-4 h-4 mr-2" />
                                 {t("admin.users.resetPassword")}
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => grantMembershipMutation.mutate({ userId: user.id, userName: user.full_name || user.email })}>
+                                <Crown className="w-4 h-4 mr-2" />
+                                {language === "ko" ? "정식멤버 부여" : "Grant Full Membership"}
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
                                 className="text-destructive focus:text-destructive"
