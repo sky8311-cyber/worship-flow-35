@@ -69,9 +69,9 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
           },
           body: JSON.stringify({
             theme,
-            songCount,
+            songCount: songCount || 5,
             preferredKey: preferredKey || undefined,
-            durationMinutes,
+            durationMinutes: durationMinutes || 30,
             tone,
             communityId: communityId || undefined,
           }),
