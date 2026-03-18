@@ -1,49 +1,17 @@
 
 
-## Two Issues to Fix
+## 악보 편집 영역 버튼 너비 정렬
 
-### Issue 1: AI Set Builder button invisible to Basic Members
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-Currently the "AI 세트" button is hidden with `hasFeature('ai_set_builder')` — Basic Members never see it. The `LockedFeatureBanner` only shows in the **empty state** area, so if a Basic Member already has songs in their set, they see nothing about this feature at all.
+### 변경 사항
 
-**Fix**: Always show the "AI 세트" button in the toolbar. If the user doesn't have the feature, clicking it opens the `LockedFeatureBanner` / upgrade prompt instead of the AI panel. This way all authenticated users discover the feature exists.
+**파일: `src/components/SongDialog.tsx`**
 
-**Changes to `src/pages/SetBuilder.tsx`**:
-- Remove the `hasFeature('ai_set_builder')` condition wrapping the button — always render it
-- When clicked without feature access, show an upgrade prompt (e.g., navigate to `/membership` or open the `UpgradePlanDialog`)
-- Keep the `LockedFeatureBanner` in the empty state as a secondary prompt
-- Add a small lock icon or "PRO" badge on the button when the user lacks the feature
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-### Issue 2: No admin function to manually upgrade a user to Full Membership
-
-There is no admin UI or backend capability to manually grant a user (e.g., `sky@goodpapa.org`) Full Member status by inserting/updating a `premium_subscriptions` record.
-
-**Fix**: Add a "Grant Full Membership" action in the Admin Users page.
-
-**Changes**:
-
-1. **New edge function: `admin-grant-membership`** (`supabase/functions/admin-grant-membership/index.ts`)
-   - Accepts `{ user_id, duration_days? }` (default 365 days)
-   - Validates admin role via JWT
-   - Upserts into `premium_subscriptions` table: sets `subscription_status = 'active'`, `subscription_end` to now + duration, `subscription_type = 'manual'` (or similar field if available)
-   - Returns success
-
-2. **Admin Users UI** (`src/pages/AdminUsers.tsx`)
-   - Add a "Grant Full Membership" option in the user action dropdown menu
-   - Confirmation dialog before granting
-   - Calls the edge function and refreshes the user list
-
-3. **AdminUserProfileDialog** (`src/components/admin/AdminUserProfileDialog.tsx`)
-   - Show current subscription status in the profile dialog
-   - Add a "Grant Full Membership" button if user is not already a Full Member
-
-### Files Summary
-
-| File | Change |
-|---|---|
-| `src/pages/SetBuilder.tsx` | Always show AI 세트 button; show upgrade prompt when feature not available |
-| `src/components/LockedFeatureBanner.tsx` | Add optional `onUpgrade` callback to the Upgrade button |
-| `supabase/functions/admin-grant-membership/index.ts` | New edge function for manual membership grants |
-| `src/pages/AdminUsers.tsx` | Add "Grant Full Membership" dropdown action |
-| `src/components/admin/AdminUserProfileDialog.tsx` | Show subscription status + grant button |
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 

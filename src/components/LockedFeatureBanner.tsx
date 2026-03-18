@@ -9,6 +9,7 @@ interface LockedFeatureBannerProps {
   message?: string;
   className?: string;
   compact?: boolean;
+  onUpgrade?: () => void;
 }
 
 export function LockedFeatureBanner({ 
@@ -16,6 +17,7 @@ export function LockedFeatureBanner({
   message,
   className,
   compact = false,
+  onUpgrade,
 }: LockedFeatureBannerProps) {
   const { getRequiredTier } = useTierFeature();
   const { language } = useTranslation();
@@ -61,7 +63,7 @@ export function LockedFeatureBanner({
               : `Available for ${tierLabel} and above`}
           </p>
         </div>
-        <Button size="sm" variant="outline" className="shrink-0">
+        <Button size="sm" variant="outline" className="shrink-0" onClick={onUpgrade}>
           <Lock className="w-3 h-3 mr-1" />
           {language === "ko" ? "업그레이드" : "Upgrade"}
         </Button>

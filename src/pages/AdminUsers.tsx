@@ -16,7 +16,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal, Users } from "lucide-react";
+import { Search, UserPlus, UserMinus, Trash2, KeyRound, LayoutGrid, List, CheckCircle, XCircle, Mail, Music, MoreHorizontal, Users, Crown } from "lucide-react";
 
 const AdminUsers = () => {
   const { t, language } = useTranslation();
@@ -505,6 +505,25 @@ const AdminUsers = () => {
     },
   });
 
+  const grantMembershipMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string; userName: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+      const { data, error } = await supabase.functions.invoke("admin-grant-membership", {
+        body: { user_id: userId, duration_days: 365 },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, { userName }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(language === "ko" ? `${userName}님에게 정식멤버를 부여했습니다` : `Granted Full Membership to ${userName}`);
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "멤버십 부여 실패" : "Failed to grant membership");
+    },
+  });
+
   const toggleUserSelection = (userId: string) => {
     const newSelection = new Set(selectedUsers);
     if (newSelection.has(userId)) {
@@ -782,6 +801,10 @@ const AdminUsers = () => {
                               <DropdownMenuItem onClick={() => setResetDialog({ open: true, email: user.email, userName: user.full_name || user.email })}>
                                 <KeyRound className="w-4 h-4 mr-2" />
                                 {t("admin.users.resetPassword")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => grantMembershipMutation.mutate({ userId: user.id, userName: user.full_name || user.email })}>
+                                <Crown className="w-4 h-4 mr-2" />
+                                {language === "ko" ? "정식멤버 부여" : "Grant Full Membership"}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 

@@ -3,11 +3,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
 import { RoleBadge } from "@/components/RoleBadge";
-import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout } from "lucide-react";
+import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout, Crown } from "lucide-react";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
 import { parseLocalDate } from "@/lib/dateUtils";
@@ -107,7 +109,41 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
     enabled: !!userId && open,
   });
 
+  const { data: subscription } = useQuery({
+    queryKey: ["admin-user-subscription", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from("premium_subscriptions")
+        .select("subscription_status, current_period_end")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId && open,
+  });
+
+  const queryClient = useQueryClient();
+  const grantMembershipMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("admin-grant-membership", {
+        body: { user_id: userId, duration_days: 365 },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-user-subscription", userId] });
+      toast.success(language === "ko" ? "정식멤버를 부여했습니다" : "Granted Full Membership");
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "멤버십 부여 실패" : "Failed to grant membership");
+    },
+  });
+
   const isLoading = profileLoading || rolesLoading || seedLoading;
+  const isFullMember = subscription?.subscription_status === "active";
 
   const hasAdmin = userRoles?.includes("admin");
   const hasWorshipLeader = userRoles?.includes("worship_leader");
@@ -153,6 +189,36 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                   <span className="text-sm">{profile.email}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Membership Status */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Crown className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">
+                  {language === "ko" ? "멤버십" : "Membership"}
+                </span>
+                {isFullMember ? (
+                  <Badge variant="default" className="text-xs">
+                    {language === "ko" ? "정식멤버" : "Full Member"}
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    {language === "ko" ? "기본멤버" : "Basic"}
+                  </Badge>
+                )}
+              </div>
+              {!isFullMember && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => grantMembershipMutation.mutate()}
+                  disabled={grantMembershipMutation.isPending}
+                >
+                  <Crown className="w-3 h-3 mr-1" />
+                  {language === "ko" ? "정식멤버 부여" : "Grant Full"}
+                </Button>
+              )}
             </div>
 
             <Separator />

@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.generate-worship-set]
 verify_jwt = false
+
+[functions.admin-grant-membership]
+verify_jwt = true
