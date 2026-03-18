@@ -120,7 +120,6 @@ ${JSON.stringify(songs.map(s => ({
   title: s.title,
   artist: s.artist,
   key: s.default_key,
-  tempo: s.tempo,
   tags: s.tags,
   topics: s.topics,
   language: s.language,
