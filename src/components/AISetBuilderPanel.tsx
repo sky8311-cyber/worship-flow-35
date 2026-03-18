@@ -197,8 +197,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
                   type="number"
                   min={10}
                   max={120}
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 30)}
+                  value={durationMinutes || ""}
+                  onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
                 />
               </div>
 
