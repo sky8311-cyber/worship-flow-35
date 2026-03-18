@@ -74,6 +74,45 @@ export type Database = {
           },
         ]
       }
+      ai_usage_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_usage_summary: {
+        Row: {
+          last_used_at: string | null
+          total_uses: number | null
+          user_id: string
+        }
+        Insert: {
+          last_used_at?: string | null
+          total_uses?: number | null
+          user_id: string
+        }
+        Update: {
+          last_used_at?: string | null
+          total_uses?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string | null
