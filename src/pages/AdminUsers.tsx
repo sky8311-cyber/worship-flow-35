@@ -505,7 +505,25 @@ const AdminUsers = () => {
     },
   });
 
-  const toggleUserSelection = (userId: string) => {
+  const grantMembershipMutation = useMutation({
+    mutationFn: async ({ userId }: { userId: string; userName: string }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session");
+      const { data, error } = await supabase.functions.invoke("admin-grant-membership", {
+        body: { user_id: userId, duration_days: 365 },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, { userName }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success(language === "ko" ? `${userName}님에게 정식멤버를 부여했습니다` : `Granted Full Membership to ${userName}`);
+    },
+    onError: () => {
+      toast.error(language === "ko" ? "멤버십 부여 실패" : "Failed to grant membership");
+    },
+  });
+
     const newSelection = new Set(selectedUsers);
     if (newSelection.has(userId)) {
       newSelection.delete(userId);
