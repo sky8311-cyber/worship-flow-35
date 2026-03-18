@@ -1,21 +1,17 @@
 
 
-## Problem
+## 악보 편집 영역 버튼 너비 정렬
 
-The duration input (`예배 시간`) and song count input (`곡 수`) use `parseInt(e.target.value) || 30` and `parseInt(e.target.value) || 3` respectively. When the user clears the field (empty string), `parseInt("")` returns `NaN`, so `|| 30` immediately kicks in and resets the value to 30. The user can never clear the field to type a new number.
+### 현재 문제
+Score variation 영역에서 키 선택기, 악보 업로드 버튼, 삭제 버튼, 그리고 아래 URL 다운로드 버튼의 너비가 일관되지 않아 정렬이 깔끔하지 않음.
 
-## Fix
+### 변경 사항
 
-Allow empty/intermediate states by storing the raw string or allowing `""` temporarily:
+**파일: `src/components/SongDialog.tsx`**
 
-**`src/components/AISetBuilderPanel.tsx`** (lines 200-201 and 173):
-- **Duration (line 201)**: Change to allow empty string — only parse on blur or treat empty as valid intermediate state. Simplest: use `e.target.value === "" ? "" : parseInt(...)` pattern, but since state is `number`, the cleanest fix is to allow `0` or use `e.target.valueAsNumber`:
-  ```
-  onChange={(e) => setDurationMinutes(e.target.value === "" ? 0 : parseInt(e.target.value))}
-  ```
-  But `0` still shows "0". Better approach: let `value` accept empty string by changing to `value={durationMinutes || ""}` and `onChange` to `setDurationMinutes(parseInt(e.target.value) || 0)`, then use `durationMinutes || 30` when sending to the API.
+1. **키 선택기 + 업로드 버튼 행** (line 750): `flex items-center gap-3` 유지하되, 업로드 버튼에 `flex-1`을 추가하여 키 선택기와 삭제 버튼을 제외한 나머지 공간을 채우도록 변경
+2. **업로드 버튼** (line 800): `label`에 `flex-1` 추가, 내부 `Button`에 `w-full` 추가하여 가용 공간 전체를 사용
+3. **URL 다운로드 버튼** (line 847-862): 다운로드 버튼도 업로드 버튼과 동일한 너비 패턴 적용 -- 혹은 `flex-1`과 `w-full`로 입력과 버튼이 균일하게 정렬
 
-- **Song Count (line 173)**: Same issue — apply the same fix.
-
-Both inputs: allow the field to be emptied in the UI, and default to sensible values only at submission time in `handleGenerate`.
+이렇게 하면 모든 행에서 버튼이 동일한 너비로 정렬됩니다.
 

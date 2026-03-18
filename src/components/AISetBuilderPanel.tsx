@@ -69,9 +69,9 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
           },
           body: JSON.stringify({
             theme,
-            songCount,
+            songCount: songCount || 5,
             preferredKey: preferredKey || undefined,
-            durationMinutes,
+            durationMinutes: durationMinutes || 30,
             tone,
             communityId: communityId || undefined,
           }),
@@ -169,8 +169,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
                   type="number"
                   min={3}
                   max={12}
-                  value={songCount}
-                  onChange={(e) => setSongCount(Math.min(12, Math.max(3, parseInt(e.target.value) || 3)))}
+                  value={songCount || ""}
+                  onChange={(e) => setSongCount(parseInt(e.target.value) || 0)}
                 />
               </div>
 
@@ -197,8 +197,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
                   type="number"
                   min={10}
                   max={120}
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 30)}
+                  value={durationMinutes || ""}
+                  onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
                 />
               </div>
 
