@@ -524,6 +524,7 @@ const AdminUsers = () => {
     },
   });
 
+  const toggleUserSelection = (userId: string) => {
     const newSelection = new Set(selectedUsers);
     if (newSelection.has(userId)) {
       newSelection.delete(userId);
