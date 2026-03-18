@@ -90,6 +90,7 @@ const SetBuilder = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const { hasFeature } = useTierFeature();
+  const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Query to get set creator for auto-acquire decision (lightweight)
