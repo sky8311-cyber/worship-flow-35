@@ -88,7 +88,8 @@ const SetBuilder = () => {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const [templateApplied, setTemplateApplied] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const { hasFeature } = useTierFeature();
   const [isSaving, setIsSaving] = useState(false);
 
   // Query to get set creator for auto-acquire decision (lightweight)
