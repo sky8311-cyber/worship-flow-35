@@ -4542,6 +4542,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ai_usage: { Args: { p_user_id: string }; Returns: undefined }
       increment_news_view_count: {
         Args: { post_id: string }
         Returns: undefined
