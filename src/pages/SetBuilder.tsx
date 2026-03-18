@@ -40,6 +40,10 @@ import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeS
 import { useSetEditLock } from "@/hooks/useSetEditLock";
 import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
+import { useTierFeature } from "@/hooks/useTierFeature";
+import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
+import { Sparkles } from "lucide-react";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 

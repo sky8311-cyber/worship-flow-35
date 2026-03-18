@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.log-ai-usage]
 verify_jwt = false
+
+[functions.generate-worship-set]
+verify_jwt = false
