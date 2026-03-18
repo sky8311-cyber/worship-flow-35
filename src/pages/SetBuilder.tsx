@@ -40,6 +40,10 @@ import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeS
 import { useSetEditLock } from "@/hooks/useSetEditLock";
 import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
+import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
+import { useTierFeature } from "@/hooks/useTierFeature";
+import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
+import { Sparkles } from "lucide-react";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -84,6 +88,8 @@ const SetBuilder = () => {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const { hasFeature } = useTierFeature();
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -2056,6 +2062,19 @@ const SetBuilder = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
                       </Button>
+                      {/* AI Set Builder button - tier gated */}
+                      {hasFeature('ai_set_builder') && (
+                        <Button
+                          type="button"
+                          onClick={() => setShowAIPanel(true)}
+                          size="sm"
+                          variant="outline"
+                          disabled={isBlocked}
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          AI 세트
+                        </Button>
+                      )}
                       {/* Mobile only - add component button */}
                       <Button 
                         onClick={() => handleAddComponent("welcome")} 
@@ -2095,7 +2114,16 @@ const SetBuilder = () => {
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
         </div>
-
+                      {/* Locked feature banner for non-eligible users */}
+                      {!hasFeature('ai_set_builder') && (
+                        <div className="mt-4">
+                          <LockedFeatureBanner
+                            feature="ai_set_builder"
+                            message={language === "ko" ? "AI 세트 만들기" : "AI Set Builder"}
+                            compact
+                          />
+                        </div>
+                      )}
       </div>
                 ) : (
                   <>
@@ -2294,6 +2322,17 @@ const SetBuilder = () => {
           }}
         />
       )}
+
+      <AISetBuilderPanel
+        open={showAIPanel}
+        onOpenChange={setShowAIPanel}
+        communityId={formData.community_id || undefined}
+        onAddSongs={(songs) => {
+          songs.forEach(({ song, key }) => {
+            handleAddSong(song, key);
+          });
+        }}
+      />
     </AppLayout>
     </>
   );
