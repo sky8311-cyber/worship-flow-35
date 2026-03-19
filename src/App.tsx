@@ -180,6 +180,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <LegalConsentGate>
       <GlobalRsvpPrompt />
+      <CurationProfilePromptDialog />
       {children}
     </LegalConsentGate>
   );
