@@ -32,7 +32,7 @@ export function CurationProfilePromptDialog() {
   });
 
   useEffect(() => {
-    if (isLoading || !user || !hasAiAccess) return;
+    if (isLoading || !user || !isWorshipLeader) return;
     if (curationProfile?.skills_summary) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
     if (sessionStorage.getItem(IN_PROGRESS_KEY)) return;
