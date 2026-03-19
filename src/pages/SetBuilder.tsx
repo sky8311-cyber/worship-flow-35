@@ -2019,6 +2019,29 @@ const SetBuilder = () => {
               </CardContent>
             </Card>
 
+            {/* Save & Delete buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={() => saveSetMutation.mutate(undefined)}
+                disabled={saveSetMutation.isPending || isBlocked}
+                className="flex-1 gap-1.5"
+              >
+                <Save className="w-4 h-4" />
+                {saveSetMutation.isPending ? t("common.saving") : t("common.save")}
+              </Button>
+              {id && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending || isBlocked}
+                  className="gap-1.5"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {language === "ko" ? "삭제" : "Delete"}
+                </Button>
+              )}
+            </div>
+
             {/* Worship Components Palette - Desktop only */}
             <div className="hidden lg:block">
               <WorshipComponentPalette onAddComponent={handleAddComponent} disabled={isBlocked} />
