@@ -136,8 +136,8 @@ const InstituteModule = () => {
           >
             <div
               style={{
-                fontSize: 9,
-                fontWeight: 700,
+              fontSize: 11,
+              fontWeight: 700,
                 letterSpacing: 1.5,
                 textTransform: "uppercase",
                 color: "var(--inst-ink3)",
