@@ -18,6 +18,7 @@ const PUBLIC_ROUTES = [
   '/features',
   '/press',
   '/help',
+  '/institute',
 ];
 
 export const GlobalMusicPlayer = () => {
