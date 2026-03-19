@@ -199,7 +199,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <p className="text-sm font-medium">{profile?.full_name || t("profile.title")}</p>
                     <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
                     
-                    {/* Role Badges */}
+                    {/* Role & Tier Badges */}
                     <div className="flex gap-1 flex-wrap">
                       {isAdmin && <RoleBadge role="admin" />}
                       {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
@@ -209,6 +209,12 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                       )}
                       {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="member" />
+                      )}
+                      {/* Tier Badge */}
+                      {(tier === "premium" || tier === "church") && (
+                        <Badge variant="outline" className={`text-xs ${TIER_CONFIG[tier].color}`}>
+                          {language === "ko" ? TIER_CONFIG[tier].labelKo : TIER_CONFIG[tier].label}
+                        </Badge>
                       )}
                     </div>
                   </div>
