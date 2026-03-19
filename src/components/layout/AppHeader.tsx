@@ -16,6 +16,8 @@ import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SongCartPopover } from "@/components/SongCartPopover";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { AiBadge } from "@/components/AiBadge";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
