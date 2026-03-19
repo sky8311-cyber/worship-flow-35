@@ -204,12 +204,33 @@ export default function CommunityManagement() {
         .select("user_id, role")
         .in("user_id", userIds);
       
+      // Fetch premium subscriptions to determine tier
+      const { data: subscriptions } = await supabase
+        .from("premium_subscriptions")
+        .select("user_id, subscription_status")
+        .in("user_id", userIds)
+        .eq("subscription_status", "active");
+
+      // Check church account membership
+      const { data: churchMembers } = await supabase
+        .from("church_account_members")
+        .select("user_id")
+        .in("user_id", userIds);
+      
       // Merge
-      return members.map(m => ({
-        ...m,
-        profiles: profiles?.find(p => p.id === m.user_id),
-        globalRoles: userRoles?.filter(r => r.user_id === m.user_id).map(r => r.role) || []
-      }));
+      return members.map(m => {
+        const roles = userRoles?.filter(r => r.user_id === m.user_id).map(r => r.role) || [];
+        const isWL = roles.includes('worship_leader');
+        const hasPremium = subscriptions?.some(s => s.user_id === m.user_id);
+        const hasChurch = churchMembers?.some(cm => cm.user_id === m.user_id);
+        const tier: TierLevel = hasChurch ? 'church' : hasPremium ? 'premium' : isWL ? 'worship_leader' : 'member';
+        return {
+          ...m,
+          profiles: profiles?.find(p => p.id === m.user_id),
+          globalRoles: roles,
+          tier,
+        };
+      });
     },
   });
 
