@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Send, CheckCircle2, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Send, CheckCircle2, Sparkles, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -27,7 +28,10 @@ export function CurationProfileChat({ existingSummary, onComplete }: CurationPro
   // Start conversation on mount
   useEffect(() => {
     if (messages.length === 0 && !isComplete) {
-      sendMessage("안녕하세요, 시작합니다.", true);
+      const initialMsg = existingSummary
+        ? "기존 프로필을 수정하고 싶습니다."
+        : "안녕하세요, 시작합니다.";
+      sendMessage(initialMsg, true);
     }
   }, []);
 
@@ -39,7 +43,7 @@ export function CurationProfileChat({ existingSummary, onComplete }: CurationPro
     setIsLoading(true);
 
     const newMessages: ChatMessage[] = isInitial
-      ? [{ role: "user", content: "안녕하세요" }]
+      ? [{ role: "user", content: existingSummary ? "기존 프로필을 수정하고 싶습니다." : "안녕하세요" }]
       : [...messages, { role: "user", content: text }];
 
     if (!isInitial) {
@@ -110,6 +114,23 @@ export function CurationProfileChat({ existingSummary, onComplete }: CurationPro
           {existingSummary ? "예배 프로필 수정" : "내 예배 프로필 설정"}
         </span>
       </div>
+
+      {/* Existing profile summary card */}
+      {existingSummary && (
+        <Card className="mb-3 border-primary/20 bg-primary/5">
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              <FileText className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-primary mb-1">현재 저장된 프로필</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {existingSummary}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1 -mx-6 px-6">
