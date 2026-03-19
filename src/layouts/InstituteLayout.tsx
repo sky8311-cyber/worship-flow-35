@@ -21,7 +21,7 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
     <div className="inst-root">
       {/* Header */}
       <header
-        className="flex items-center px-3 py-2 border-b flex-shrink-0"
+        className="flex items-center px-3 py-4 border-b flex-shrink-0"
         style={{ background: '#ffffff', borderColor: '#e8e6e0' }}
       >
         <div className="w-10 flex items-center">
