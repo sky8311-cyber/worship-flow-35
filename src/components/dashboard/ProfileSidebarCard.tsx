@@ -11,6 +11,7 @@ import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SeedWidget } from "@/components/seeds/SeedWidget";
+import { ProfileBadgesSection } from "@/components/institute/ProfileBadgesSection";
 
 interface ProfileStats {
   sets: number;
