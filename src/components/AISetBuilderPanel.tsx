@@ -16,6 +16,8 @@ interface AISetBuilderPanelProps {
   onOpenChange: (open: boolean) => void;
   communityId?: string;
   onAddSongs: (songs: Array<{ song: any; key: string }>) => void;
+  initialTheme?: string;
+  initialDuration?: number;
 }
 
 interface GeneratedSong {
