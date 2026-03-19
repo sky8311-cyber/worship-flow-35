@@ -1,61 +1,78 @@
 
 
-## 문제 진단 결과
+## 멤버십 정보 표시 전체 감사 (Audit) 및 수정
 
-**DB 테이블 `user_curation_profiles`가 비어 있습니다.** 이전에 채팅을 했지만, AI가 `is_complete: true`를 반환하기 전에 Sheet를 닫았거나, 대화가 끝까지 완료되지 않아 프로필이 저장되지 않았습니다.
+### 문제
+`RoleBadge role="worship_leader"`은 항상 "기본 멤버"를 표시합니다. 하지만 worship_leader 역할을 가진 사용자가 정식멤버(premium) 구독이 있는 경우에도 "기본 멤버"로 표시됩니다. 플랫폼 **역할**(role)과 **티어**(tier)가 혼동되고 있습니다.
 
-현재 저장 로직: AI 대화가 완료(`is_complete: true`)되어야만 edge function이 DB에 upsert → 대화 중간에 닫으면 모든 내용 유실
+### 핵심 원칙
+- `RoleBadge role="worship_leader"` → **더 이상 멤버십 티어 표시용으로 사용하지 않음**
+- 대신 `TierBadge` 컴포넌트를 사용하여 실제 구독 상태 기반으로 표시
+- `RoleBadge`는 community_owner, community_leader, admin, member(팀멤버)에만 사용
 
-## 수정 계획
+### 수정 대상 파일 (5개)
 
-### 1. 대화 중간 저장 (Partial Save)
-- Edge function에서 매 응답마다 `skills_summary`가 아직 없더라도, 대화 진행 상태를 저장할 수 있도록 `conversation_state` 컬럼 추가
-- DB 마이그레이션: `user_curation_profiles`에 `conversation_messages` (jsonb, nullable) 컬럼 추가
-- 매 AI 응답 후 대화 히스토리를 DB에 저장 → Sheet를 닫아도 다음에 이어서 대화 가능
+**1. `src/pages/CommunityManagement.tsx`** (스크린샷의 페이지)
+- 멤버 쿼리에 `premium_subscriptions` 테이블 조인 추가 → 각 멤버의 실제 tier 확인
+- `RoleBadge role="worship_leader"` → `TierBadge tier={memberTier}` 교체
+- worship_leader이면서 premium 구독 있으면 "정식멤버", 없으면 "기본멤버", 아무것도 없으면 "팀멤버"
 
-### 2. 대화 이어가기 (Resume)
-- `CurationProfileChat` 마운트 시, DB에서 기존 `conversation_messages`를 로드
-- 저장된 대화가 있으면 히스토리를 복원하고 이어서 대화
-- `skills_summary`가 이미 있으면 수정 모드로 진입 (기존 로직 유지)
+**2. `src/pages/Settings.tsx`**
+- 현재: `{isWorshipLeader && <RoleBadge role="worship_leader" />}` (항상 "기본 멤버")
+- 변경: `useTierFeature()`의 `tier` 값으로 `TierBadge` 표시
 
-### 3. Edge Function 수정
-- 매 응답마다 `conversation_messages`를 upsert (대화 완료 여부와 무관)
-- `is_complete: true`일 때만 `skills_summary` 저장 (기존 로직 유지)
-- 대화 완료 시 `conversation_messages`를 null로 클리어 (완료된 대화는 보관 불필요)
+**3. `src/components/admin/AdminUserProfileDialog.tsx`**
+- 사용자별 premium_subscriptions 조회 추가
+- `RoleBadge role="worship_leader"` → 실제 tier 기반 `TierBadge` 교체
 
-### 4. Settings UI 개선
-- 미완료 대화가 있으면 "이전 대화 이어하기" 표시
-- `skills_summary`가 있으면 기존대로 요약 표시 + "수정하기" 버튼
+**4. `src/components/admin/UserCard.tsx`**
+- 동일하게 `RoleBadge role="worship_leader"` → `TierBadge` 교체
+- 부모 컴포넌트에서 tier 정보를 전달받거나 내부 조회
 
-## 기술 상세
+**5. `src/components/layout/AppHeader.tsx`**
+- 이미 부분 수정됨 (tier !== "premium" 조건). 완전히 `TierBadge`로 통일
+- worship_leader 역할이면 항상 `TierBadge tier={tier}` 표시 (tier가 worship_leader/premium/church 중 하나)
 
-**DB 마이그레이션:**
-```sql
-ALTER TABLE user_curation_profiles 
-ADD COLUMN conversation_messages jsonb DEFAULT NULL;
-```
+### 기술 상세
 
-**Edge Function 변경 (매 응답 후):**
+**CommunityManagement 멤버 쿼리 확장:**
 ```typescript
-// Always save conversation state
-await supabase.from("user_curation_profiles").upsert({
-  user_id: user.id,
-  conversation_messages: messages, // full conversation history
-  ...(parsed.is_complete && parsed.skills_summary
-    ? { skills_summary: parsed.skills_summary, conversation_messages: null }
-    : {}),
-  updated_at: new Date().toISOString(),
-}, { onConflict: "user_id" });
+// 기존 globalRoles 외에 premium_subscriptions도 조회
+const { data: subscriptions } = await supabase
+  .from("premium_subscriptions")
+  .select("user_id, subscription_status")
+  .in("user_id", userIds)
+  .eq("subscription_status", "active");
+
+// 멤버에 tier 정보 추가
+return members.map(m => {
+  const isWL = userRoles?.some(r => r.user_id === m.user_id && r.role === 'worship_leader');
+  const hasPremium = subscriptions?.some(s => s.user_id === m.user_id);
+  const tier = hasPremium ? 'premium' : isWL ? 'worship_leader' : 'member';
+  return { ...m, profiles: ..., globalRoles: ..., tier };
+});
 ```
 
-**CurationProfileChat 변경:**
-- Props에 `existingMessages?: ChatMessage[]` 추가
-- Settings 페이지에서 DB의 `conversation_messages`를 로드해 전달
-- 마운트 시 기존 메시지 복원, 마지막 AI 메시지부터 대화 재개
+**뱃지 렌더링 변경 패턴:**
+```tsx
+// Before
+{memberIsWorshipLeader && <RoleBadge role="worship_leader" />}
+{!memberIsCommunityLeader && !memberIsOwner && <RoleBadge role="member" />}
 
-**수정 파일:**
-- DB 마이그레이션 (1개 컬럼 추가)
-- `supabase/functions/update-curation-profile/index.ts` — 매 응답 후 대화 저장
-- `src/components/CurationProfileChat.tsx` — 대화 복원 로직
-- `src/pages/Settings.tsx` — `conversation_messages` 로드 및 전달
+// After
+<TierBadge tier={member.tier} size="sm" />
+```
+
+**Settings 페이지:**
+```tsx
+// Before
+{isWorshipLeader && <RoleBadge role="worship_leader" />}
+// After  
+<TierBadge tier={tier} size="sm" />
+```
+
+### 수정하지 않는 것
+- `RoleBadge role="admin"` — 역할 뱃지로 정상 사용
+- `RoleBadge role="community_owner"` / `community_leader` — 커뮤니티 역할로 정상 사용
+- `RoleBadge role="member"` — 팀멤버 표시용으로 유지하되, worship_leader 역할이 있는 경우 TierBadge가 대체
 
