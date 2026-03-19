@@ -1047,9 +1047,11 @@ export type Database = {
           duration_minutes: number | null
           id: string
           instructor_name: string | null
+          instructor_user_id: string | null
           is_certification: boolean | null
           is_free: boolean | null
           is_published: boolean | null
+          required_tier: number
           sort_order: number | null
           thumbnail_url: string | null
           title: string
@@ -1063,9 +1065,11 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           instructor_name?: string | null
+          instructor_user_id?: string | null
           is_certification?: boolean | null
           is_free?: boolean | null
           is_published?: boolean | null
+          required_tier?: number
           sort_order?: number | null
           thumbnail_url?: string | null
           title: string
@@ -1079,9 +1083,11 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           instructor_name?: string | null
+          instructor_user_id?: string | null
           is_certification?: boolean | null
           is_free?: boolean | null
           is_published?: boolean | null
+          required_tier?: number
           sort_order?: number | null
           thumbnail_url?: string | null
           title?: string
@@ -1127,6 +1133,36 @@ export type Database = {
           },
         ]
       }
+      institute_instructors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          bio_ko: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          bio_ko?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          bio_ko?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       institute_modules: {
         Row: {
           content: string | null
@@ -1134,6 +1170,7 @@ export type Database = {
           course_id: string
           created_at: string | null
           id: string
+          required_tier: number
           sort_order: number | null
           title: string
           title_ko: string
@@ -1145,6 +1182,7 @@ export type Database = {
           course_id: string
           created_at?: string | null
           id?: string
+          required_tier?: number
           sort_order?: number | null
           title: string
           title_ko: string
@@ -1156,6 +1194,7 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           id?: string
+          required_tier?: number
           sort_order?: number | null
           title?: string
           title_ko?: string
