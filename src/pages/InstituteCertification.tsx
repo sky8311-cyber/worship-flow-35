@@ -93,7 +93,7 @@ const InstituteCertification = () => {
 
   if (!cert) {
     return (
-      <InstituteLayout backTo="/institute" backLabel={language === "ko" ? "목록으로" : "Back"}>
+      <InstituteLayout pageTitle={language === "ko" ? "자격증" : "Certification"}>
         <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
       </InstituteLayout>
     );
