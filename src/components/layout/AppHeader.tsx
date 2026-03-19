@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2, Share2, Gift, Info } from "lucide-react";
+import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2, Share2, Gift, Info, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
