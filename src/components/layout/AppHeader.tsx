@@ -205,18 +205,18 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <div className="flex gap-1 flex-wrap">
                       {isAdmin && <RoleBadge role="admin" />}
                       {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
-                      {isWorshipLeader && <RoleBadge role="worship_leader" />}
+                      {isWorshipLeader && tier !== "premium" && tier !== "church" && (
+                        <RoleBadge role="worship_leader" />
+                      )}
                       {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="community_leader" />
                       )}
                       {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="member" />
                       )}
-                      {/* Tier Badge */}
+                      {/* Tier Badge with icons */}
                       {(tier === "premium" || tier === "church") && (
-                        <Badge variant="outline" className={`text-xs ${TIER_CONFIG[tier].color}`}>
-                          {language === "ko" ? TIER_CONFIG[tier].labelKo : TIER_CONFIG[tier].label}
-                        </Badge>
+                        <TierBadge tier={tier} size="sm" />
                       )}
                     </div>
                   </div>
