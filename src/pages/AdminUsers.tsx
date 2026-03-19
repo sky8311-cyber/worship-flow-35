@@ -107,7 +107,12 @@ const AdminUsers = () => {
       const songs = songsResult.data || [];
       const communityMembers = communityMembersResult.data || [];
       const communities = communitiesResult.data || [];
+      const premiumSubs = premiumResult.data || [];
+      const churchMembers = churchMembersResult.data || [];
       
+      // Create premium/church lookup sets
+      const premiumUserIds = new Set(premiumSubs.map(s => s.user_id));
+      const churchUserIds = new Set(churchMembers.map(m => m.user_id));
       // Create lookup maps for O(1) access
       const seedsMap = new Map(seeds.map(s => [s.user_id, s]));
       const levelsMap = new Map(levels.map(l => [l.level, l]));
