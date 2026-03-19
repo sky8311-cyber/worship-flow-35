@@ -15,8 +15,7 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const location = useLocation();
 
   const isMain = location.pathname === "/institute";
-  // Show bottom nav only on the main institute page (not course/module sub-pages)
-  const showBottomNav = isMain;
+  const showBottomNav = true;
 
   return (
     <div className="inst-root">
