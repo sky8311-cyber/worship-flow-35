@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft } from "lucide-react";
+import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
   children: React.ReactNode;
@@ -30,28 +31,35 @@ export function InstituteLayout({ children, backTo, backLabel }: InstituteLayout
               <span>{backLabel || "뒤로"}</span>
             </button>
           ) : (
-            <div className="flex flex-col">
-              <span
-                style={{
-                  fontSize: 8,
-                  fontWeight: 700,
-                  letterSpacing: 3,
-                  textTransform: "uppercase",
-                  color: "var(--inst-gold)",
-                }}
-              >
-                K-Worship
-              </span>
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 800,
-                  color: "var(--inst-ink)",
-                  letterSpacing: -0.3,
-                }}
-              >
-                Institute
-              </span>
+            <div className="flex items-center gap-3">
+              <img
+                src={instituteLogo}
+                alt="K-Worship Institute"
+                style={{ height: 36, width: "auto" }}
+              />
+              <div className="flex flex-col">
+                <span
+                  style={{
+                    fontSize: 8,
+                    fontWeight: 700,
+                    letterSpacing: 3,
+                    textTransform: "uppercase" as const,
+                    color: "var(--inst-gold)",
+                  }}
+                >
+                  K-Worship
+                </span>
+                <span
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 800,
+                    color: "var(--inst-ink)",
+                    letterSpacing: -0.3,
+                  }}
+                >
+                  Institute
+                </span>
+              </div>
             </div>
           )}
         </div>
