@@ -136,8 +136,8 @@ const InstituteModule = () => {
           >
             <div
               style={{
-                fontSize: 9,
-                fontWeight: 700,
+              fontSize: 11,
+              fontWeight: 700,
                 letterSpacing: 1.5,
                 textTransform: "uppercase",
                 color: "var(--inst-ink3)",
@@ -165,7 +165,7 @@ const InstituteModule = () => {
                     textAlign: "left",
                     padding: "9px 10px",
                     borderRadius: 8,
-                    fontSize: 12,
+                    fontSize: 13,
                     border: isActive ? "1px solid var(--inst-gold-bdr)" : "1px solid transparent",
                     background: isActive ? "var(--inst-gold-bg)" : "transparent",
                     color: isCompleted ? "var(--inst-gold)" : isActive ? "var(--inst-ink)" : isLocked ? "var(--inst-ink3)" : "var(--inst-ink2)",

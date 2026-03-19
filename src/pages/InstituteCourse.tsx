@@ -205,7 +205,7 @@ const InstituteCourse = () => {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: 500,
                     color: isLocked ? "var(--inst-ink3)" : "var(--inst-ink)",
                   }}

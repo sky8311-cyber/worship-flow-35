@@ -3,14 +3,88 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
+import { useTierFeature } from "@/hooks/useTierFeature";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { Play, Sparkles } from "lucide-react";
+import { useState } from "react";
 
+/* ── Inline styles ── */
 const S = {
-  page: { background: '#f5f4f0', minHeight: '100%', padding: '24px' } as React.CSSProperties,
+  page: { background: '#f5f4f0', minHeight: '100%' } as React.CSSProperties,
+
+  /* Hero */
+  hero: { background: '#ffffff', padding: '28px 20px 24px', borderBottom: '1px solid #e8e6e0' } as React.CSSProperties,
+  eyebrow: {
+    display: 'inline-flex', alignItems: 'center', gap: '6px',
+    background: '#fdf6e8', border: '1px solid #e8d090', borderRadius: '20px',
+    padding: '5px 14px', fontSize: '11px', fontWeight: 700, color: '#b8902a', letterSpacing: '0.5px',
+  } as React.CSSProperties,
+  heroTitle: { fontSize: '22px', fontWeight: 800, color: '#1a1a1a', lineHeight: 1.3, marginTop: '16px', letterSpacing: '-0.3px' } as React.CSSProperties,
+  heroGold: { color: '#b8902a' },
+  heroSub: { fontSize: '13px', color: '#5a5850', lineHeight: 1.7, marginTop: '10px' } as React.CSSProperties,
+
+  /* Video placeholder */
+  videoBox: {
+    marginTop: '20px', background: '#1a1a1a', borderRadius: '12px',
+    position: 'relative' as const, paddingTop: '56.25%', overflow: 'hidden' as const,
+  } as React.CSSProperties,
+  videoOverlay: {
+    position: 'absolute' as const, inset: 0, display: 'flex', flexDirection: 'column' as const,
+    alignItems: 'center', justifyContent: 'center', gap: '10px',
+  } as React.CSSProperties,
+  playBtn: {
+    width: '48px', height: '48px', borderRadius: '50%',
+    background: 'rgba(184,144,42,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  } as React.CSSProperties,
+  videoLabel: { fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 },
+
+  /* Stats */
+  statsRow: { display: 'flex', gap: '10px', marginTop: '20px' } as React.CSSProperties,
+  statCard: {
+    flex: 1, background: '#f9f8f5', border: '1px solid #e8e6e0', borderRadius: '10px',
+    padding: '14px 10px', textAlign: 'center' as const,
+  } as React.CSSProperties,
+  statNum: { fontSize: '18px', fontWeight: 800, color: '#b8902a', marginBottom: '2px' },
+  statLabel: { fontSize: '11px', color: '#5a5850', fontWeight: 500 },
+
+  /* AI Coach Banner */
+  aiBanner: {
+    margin: '16px 20px 0', background: '#ffffff', border: '1px solid #e8d090',
+    borderRadius: '12px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px',
+    cursor: 'pointer', boxShadow: '0 2px 10px rgba(184,144,42,0.08)',
+  } as React.CSSProperties,
+  aiIcon: {
+    width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+    background: 'linear-gradient(135deg, #b8902a, #d4a840)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    color: '#fff', fontSize: '10px', fontWeight: 800,
+  } as React.CSSProperties,
+  aiTitle: { fontSize: '14px', fontWeight: 700, color: '#1a1a1a' },
+  aiSub: { fontSize: '12px', color: '#9a9890', marginTop: '2px' },
+  aiBadge: {
+    display: 'inline-flex', alignItems: 'center', background: '#fdf6e8', border: '1px solid #e8d090',
+    borderRadius: '20px', padding: '4px 10px', fontSize: '10px', fontWeight: 700, color: '#b8902a',
+    whiteSpace: 'nowrap' as const, flexShrink: 0,
+  } as React.CSSProperties,
+
+  /* Locked banner */
+  lockedBanner: {
+    margin: '8px 20px 0', background: '#fdf6e8', border: '1px solid #e8d090', borderRadius: '10px',
+    padding: '12px 16px', fontSize: '12px', color: '#5a5850', lineHeight: 1.6,
+  } as React.CSSProperties,
+  lockedLink: {
+    display: 'block', marginTop: '8px', fontSize: '11px', fontWeight: 700,
+    color: '#b8902a', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+  } as React.CSSProperties,
+
+  /* Sections */
+  section: { padding: '24px 20px 0' } as React.CSSProperties,
   sectionHd: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' } as React.CSSProperties,
   sectionTxt: { fontSize: '11px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#9a9890', whiteSpace: 'nowrap' as const },
   sectionLine: { flex: 1, height: '1px', background: '#e8e6e0' },
-  certScroll: { display: 'flex', gap: '14px', overflowX: 'auto' as const, paddingBottom: '4px', marginBottom: '28px', scrollbarWidth: 'none' as const } as React.CSSProperties,
+
+  /* Cert scroll */
+  certScroll: { display: 'flex', gap: '14px', overflowX: 'auto' as const, paddingBottom: '4px', marginBottom: '8px', scrollbarWidth: 'none' as const } as React.CSSProperties,
   certCard: {
     minWidth: '200px', flexShrink: 0, background: '#ffffff',
     border: '1px solid #e8d090', borderRadius: '14px', padding: '20px 18px',
@@ -23,16 +97,14 @@ const S = {
   certMeta: { fontSize: '12px', color: '#9a9890', marginBottom: '12px' },
   certTag: { display: 'inline-flex', alignItems: 'center', background: '#fdf6e8', border: '1px solid #e8d090', borderRadius: '20px', padding: '4px 12px' },
   certTagTxt: { color: '#b8902a', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' },
-  courseList: { display: 'flex', flexDirection: 'column' as const, gap: '10px' },
+
+  /* Course list */
+  courseList: { display: 'flex', flexDirection: 'column' as const, gap: '10px', paddingBottom: '24px' },
   courseCard: {
     background: '#ffffff', border: '1px solid #e8e6e0',
     borderRadius: '12px', padding: '16px 18px',
     display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer',
     transition: 'border-color 0.15s, box-shadow 0.15s',
-  },
-  courseCardHover: {
-    borderColor: '#e8d090',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
   },
   courseThumb: {
     width: '52px', height: '52px', borderRadius: '10px',
@@ -62,23 +134,20 @@ export default function Institute() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { userTier } = useUserTier();
+  const { hasFeature } = useTierFeature();
+  const [showAiLocked, setShowAiLocked] = useState(false);
 
+  const canUseCoach = hasFeature("institute_ai_coach");
+
+  /* ── Data queries (unchanged) ── */
   const { data: certifications = [] } = useQuery({
     queryKey: ["institute-certifications"],
     queryFn: async () => {
-      const { data: certs, error } = await supabase
-        .from("institute_certifications")
-        .select("*")
-        .eq("is_published", true)
-        .order("sort_order");
+      const { data: certs, error } = await supabase.from("institute_certifications").select("*").eq("is_published", true).order("sort_order");
       if (error) throw error;
-      const { data: certCourses } = await supabase
-        .from("institute_certification_courses")
-        .select("certification_id");
+      const { data: certCourses } = await supabase.from("institute_certification_courses").select("certification_id");
       const counts: Record<string, number> = {};
-      certCourses?.forEach((cc) => {
-        if (cc.certification_id) counts[cc.certification_id] = (counts[cc.certification_id] || 0) + 1;
-      });
+      certCourses?.forEach((cc) => { if (cc.certification_id) counts[cc.certification_id] = (counts[cc.certification_id] || 0) + 1; });
       return (certs || []).map((c: any) => ({ ...c, courseCount: counts[c.id] || 0 }));
     },
   });
@@ -115,10 +184,7 @@ export default function Institute() {
     queryKey: ["institute-enrollments", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from("institute_enrollments")
-        .select("course_id, completed_modules, completed_at")
-        .eq("user_id", user.id);
+      const { data, error } = await supabase.from("institute_enrollments").select("course_id, completed_modules, completed_at").eq("user_id", user.id);
       if (error) throw error;
       return data || [];
     },
@@ -145,12 +211,83 @@ export default function Institute() {
     return instructors.find((i) => i.user_id === userId)?.display_name || null;
   };
 
+  const handleAiCoachClick = () => {
+    if (!canUseCoach) {
+      setShowAiLocked(true);
+      return;
+    }
+    // Navigate to first enrolled course's first module, or show info
+    navigate("/membership");
+  };
+
   return (
     <InstituteLayout>
       <div style={S.page}>
-        {/* Certifications */}
+
+        {/* ═══ Hero ═══ */}
+        <div style={S.hero}>
+          <div style={S.eyebrow}>🎓 K-WORSHIP CERTIFIED</div>
+
+          <h1 style={S.heroTitle}>
+            한국 예배 사역자를 위한{' '}
+            <span style={S.heroGold}>공식 자격증 스쿨</span>
+          </h1>
+
+          <p style={S.heroSub}>
+            찬양인도자, 예배팀 리더, 사역자를 위한 온라인 커리큘럼 · AI 학습 코치 · 공식 배지 발급
+          </p>
+
+          {/* Video placeholder */}
+          <div style={S.videoBox}>
+            <div style={S.videoOverlay}>
+              <div style={S.playBtn}>
+                <Play className="w-5 h-5 text-white" fill="white" />
+              </div>
+              <span style={S.videoLabel}>AI 강사 소개 영상</span>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div style={S.statsRow}>
+            <div style={S.statCard}>
+              <div style={S.statNum}>3+</div>
+              <div style={S.statLabel}>자격증 과정</div>
+            </div>
+            <div style={S.statCard}>
+              <div style={S.statNum}>
+                <Sparkles className="w-4 h-4 inline-block" style={{ marginBottom: 2 }} />
+              </div>
+              <div style={S.statLabel}>AI 학습 코치</div>
+            </div>
+            <div style={S.statCard}>
+              <div style={S.statNum}>∞</div>
+              <div style={S.statLabel}>평생 수강</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ AI Coach Banner ═══ */}
+        <div style={S.aiBanner} onClick={handleAiCoachClick}>
+          <div style={S.aiIcon}>AI</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={S.aiTitle}>AI 코치에게 질문하기</div>
+            <div style={S.aiSub}>예배 신학, 선곡, 사역 고민을 함께 나눠요</div>
+          </div>
+          <div style={S.aiBadge}>정식멤버</div>
+        </div>
+
+        {showAiLocked && !canUseCoach && (
+          <div style={S.lockedBanner}>
+            AI 코치는 정식멤버(Full Member) 이상에서 이용 가능합니다.
+            <button onClick={() => navigate("/membership")} style={S.lockedLink}>
+              멤버십 보기 →
+            </button>
+          </div>
+        )}
+
+        {/* ═══ Certifications ═══ */}
         {certifications.length > 0 && (
-          <section>
+          <section style={S.section}>
             <div style={S.sectionHd}>
               <span style={S.sectionTxt}>자격증 과정</span>
               <div style={S.sectionLine} />
@@ -177,8 +314,8 @@ export default function Institute() {
           </section>
         )}
 
-        {/* Courses */}
-        <section>
+        {/* ═══ All Courses ═══ */}
+        <section style={S.section}>
           <div style={S.sectionHd}>
             <span style={S.sectionTxt}>전체 과목</span>
             <div style={S.sectionLine} />
@@ -213,7 +350,6 @@ export default function Institute() {
                       (e.currentTarget as HTMLDivElement).style.boxShadow = 'none';
                     }}
                   >
-                    {/* Thumbnail */}
                     <div style={S.courseThumb}>
                       {course.thumbnail_url ? (
                         <img src={course.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} />
@@ -222,7 +358,6 @@ export default function Institute() {
                       )}
                     </div>
 
-                    {/* Info */}
                     <div style={S.courseInfo}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={S.courseTitle}>{course.title_ko}</span>
@@ -234,8 +369,6 @@ export default function Institute() {
                           <span style={S.certPipTxt}>수료증 발급</span>
                         </div>
                       )}
-
-                      {/* Progress */}
                       <div style={S.progRow}>
                         <div style={S.progBar}>
                           <div style={S.progFill(pct)} />
@@ -244,7 +377,6 @@ export default function Institute() {
                           {enrollment ? `${completed}/${totalModules} 완료` : '미시작'}
                         </span>
                       </div>
-
                       {enrollment?.completed_at && (
                         <div style={{ ...S.certPip, marginTop: '6px', marginBottom: 0, background: '#b8902a', border: 'none' }}>
                           <span style={{ ...S.certPipTxt, color: '#fff' }}>수강 완료</span>
@@ -252,7 +384,6 @@ export default function Institute() {
                       )}
                     </div>
 
-                    {/* Chevron */}
                     <span style={S.chev}>›</span>
                   </div>
                 );

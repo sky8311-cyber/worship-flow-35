@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileDropdownMenu } from "@/components/worship-studio/ProfileDropdownMenu";
+import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
 import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
@@ -14,15 +15,16 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const location = useLocation();
 
   const isMain = location.pathname === "/institute";
+  // Show bottom nav only on the main institute page (not course/module sub-pages)
+  const showBottomNav = isMain;
 
   return (
     <div className="inst-root">
-      {/* Header — 3-column flex for centered logo */}
+      {/* Header */}
       <header
         className="flex items-center px-3 py-2 border-b flex-shrink-0"
         style={{ background: '#ffffff', borderColor: '#e8e6e0' }}
       >
-        {/* Left */}
         <div className="w-10 flex items-center">
           {!isMain && (
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
@@ -31,7 +33,6 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
           )}
         </div>
 
-        {/* Center — Logo or page title */}
         <div className="flex-1 flex justify-center items-center">
           {isMain ? (
             <img
@@ -46,7 +47,6 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
           )}
         </div>
 
-        {/* Right — ProfileDropdownMenu */}
         <div className="w-10 flex justify-end">
           <ProfileDropdownMenu onExit={() => navigate('/')} />
         </div>
@@ -54,6 +54,9 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
 
       {/* Content */}
       <main className="inst-content">{children}</main>
+
+      {/* Bottom Navigation — main page only */}
+      {showBottomNav && <InstituteBottomNav />}
     </div>
   );
 }
