@@ -32,13 +32,19 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
   const { user } = useAuth();
   const { language } = useTranslation();
   const { tier } = useTierFeature();
-  const [chatOpen, setChatOpen] = useState(autoOpen);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Open to worship_leader (Basic) and above
   const canAccessProfile = tier === "worship_leader" || tier === "premium" || tier === "church";
 
   useEffect(() => {
-    if (autoOpen) setChatOpen(true);
+    if (autoOpen && !chatOpen) {
+      setChatOpen(true);
+      // Clear the route state so back-navigation doesn't re-trigger
+      navigate(location.pathname, { replace: true, state: {} });
+    }
   }, [autoOpen]);
 
   const { data: profile } = useQuery({
@@ -55,6 +61,13 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
     },
     enabled: !!user,
   });
+
+  const handleComplete = () => {
+    setChatOpen(false);
+    // Clear in-progress flag and sync profile state globally
+    sessionStorage.removeItem("kworship_profile_prompt_in_progress");
+    queryClient.invalidateQueries({ queryKey: ["curation-profile", user?.id] });
+  };
 
   if (!canAccessProfile) return null;
 
@@ -95,7 +108,7 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
           <div className="flex-1 min-h-0">
             <CurationProfileChat
               existingSummary={profile?.skills_summary}
-              onComplete={() => setChatOpen(false)}
+              onComplete={handleComplete}
             />
           </div>
         </SheetContent>
