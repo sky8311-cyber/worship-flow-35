@@ -56,34 +56,31 @@ serve(async (req) => {
 
     const { messages, existingSummary } = await req.json();
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: "AI not configured" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Build conversation with context
+    // Build system prompt with context
     const systemContent = existingSummary
       ? `${SYSTEM_PROMPT}\n\n기존 프로필 정보:\n${existingSummary}\n\n사용자가 프로필을 수정하려 합니다. 기존 정보를 참고하여 변경사항을 반영하세요.`
       : SYSTEM_PROMPT;
 
-    const aiMessages = [
-      { role: "system", content: systemContent },
-      ...messages,
-    ];
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: aiMessages,
-        temperature: 0.7,
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 800,
+        system: systemContent,
+        messages,
       }),
     });
 
@@ -94,24 +91,17 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "AI 크레딧이 부족합니다." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error("AI gateway error");
+      console.error("Anthropic API error:", response.status, errorText);
+      throw new Error("AI API error");
     }
 
     const aiData = await response.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
+    const rawContent = aiData.content?.[0]?.text || "";
 
     // Parse JSON from response
     let parsed;
     try {
-      // Try to extract JSON from the response
       const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
       parsed = JSON.parse(jsonMatch ? jsonMatch[0] : rawContent);
     } catch {

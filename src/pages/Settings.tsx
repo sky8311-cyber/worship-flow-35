@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -28,11 +28,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { CurationProfileChat } from "@/components/CurationProfileChat";
 
 // Curation Profile Card Component
-const CurationProfileCard = () => {
+const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
   const { user } = useAuth();
   const { language } = useTranslation();
-  const { hasFeature } = useTierFeature();
-  const [chatOpen, setChatOpen] = useState(false);
+  const { tier } = useTierFeature();
+  const [chatOpen, setChatOpen] = useState(autoOpen);
+
+  // Open to worship_leader (Basic) and above
+  const canAccessProfile = tier === "worship_leader" || tier === "premium" || tier === "church";
+
+  useEffect(() => {
+    if (autoOpen) setChatOpen(true);
+  }, [autoOpen]);
 
   const { data: profile } = useQuery({
     queryKey: ["curation-profile", user?.id],
@@ -49,7 +56,7 @@ const CurationProfileCard = () => {
     enabled: !!user,
   });
 
-  if (!hasFeature("ai_set_builder")) return null;
+  if (!canAccessProfile) return null;
 
   return (
     <>
@@ -196,6 +203,7 @@ const EmailPreferencesCard = () => {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
   const { isSandboxTester } = useAppSettings();
@@ -853,7 +861,7 @@ const Settings = () => {
         )}
 
         {/* Worship Curation Profile */}
-        <CurationProfileCard />
+        <CurationProfileCard autoOpen={!!(location.state as any)?.openCurationChat} />
 
         {/* Delete Account Section */}
         <DeleteAccountSection />
