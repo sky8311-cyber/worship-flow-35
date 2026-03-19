@@ -45,6 +45,13 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
   const [result, setResult] = useState<GeneratedSong[] | null>(null);
   const [songMap, setSongMap] = useState<Record<string, any>>({});
 
+  useEffect(() => {
+    if (open) {
+      if (initialTheme) setTheme(initialTheme);
+      if (initialDuration) setDurationMinutes(initialDuration);
+    }
+  }, [open, initialTheme, initialDuration]);
+
   const handleGenerate = async () => {
     setIsLoading(true);
     setResult(null);
