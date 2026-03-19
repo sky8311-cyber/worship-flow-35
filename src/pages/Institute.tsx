@@ -243,51 +243,56 @@ export default function Institute() {
             찬양인도자, 예배팀 리더, 사역자를 위한 온라인 커리큘럼 · AI 학습 코치 · 공식 배지 발급
           </p>
 
-          {/* Video placeholder */}
-          <div style={S.videoBox}>
-            <div style={S.videoOverlay}>
-              <div style={S.playBtn}>
-                <Play className="w-5 h-5 text-white" fill="white" />
+          {/* 2-column: vertical video + right stats/AI */}
+          <div style={S.twoCol}>
+            {/* Left: vertical video */}
+            <div style={S.videoBox}>
+              <div style={S.videoOverlay}>
+                <div style={S.playBtn}>
+                  <Play className="w-4 h-4 text-white" fill="white" />
+                </div>
+                <span style={S.videoLabel}>AI 강사 소개 영상</span>
               </div>
-              <span style={S.videoLabel}>AI 강사 소개 영상</span>
             </div>
-          </div>
 
-          {/* Stats */}
-          <div style={S.statsRow}>
-            <div style={S.statCard}>
-              <div style={S.statNum}>3+</div>
-              <div style={S.statLabel}>자격증 과정</div>
-            </div>
-            <div style={S.statCard}>
-              <div style={S.statNum}>
-                <Sparkles className="w-4 h-4 inline-block" style={{ marginBottom: 2 }} />
+            {/* Right: stats + AI coach */}
+            <div style={S.rightCol}>
+              <div style={S.statsCol}>
+                <div style={S.statCard}>
+                  <div style={S.statNum}>3+</div>
+                  <div style={S.statLabel}>자격증 과정</div>
+                </div>
+                <div style={S.statCard}>
+                  <div style={S.statNum}>
+                    <Sparkles className="w-4 h-4 inline-block" style={{ marginBottom: 2 }} />
+                  </div>
+                  <div style={S.statLabel}>AI 학습 코치</div>
+                </div>
+                <div style={S.statCard}>
+                  <div style={S.statNum}>∞</div>
+                  <div style={S.statLabel}>평생 수강</div>
+                </div>
               </div>
-              <div style={S.statLabel}>AI 학습 코치</div>
-            </div>
-            <div style={S.statCard}>
-              <div style={S.statNum}>∞</div>
-              <div style={S.statLabel}>평생 수강</div>
-            </div>
-          </div>
-        </div>
 
-        {/* ═══ AI Coach Banner ═══ */}
-        <div style={S.aiBanner} onClick={handleAiCoachClick}>
-          <div style={S.aiIcon}>AI</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={S.aiTitle}>AI 코치에게 질문하기</div>
-            <div style={S.aiSub}>예배 신학, 선곡, 사역 고민을 함께 나눠요</div>
-          </div>
-          <div style={S.aiBadge}>정식멤버</div>
-        </div>
+              {/* AI Coach Banner */}
+              <div style={{ ...S.aiBanner, margin: 0 }} onClick={handleAiCoachClick}>
+                <div style={S.aiIcon}>AI</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={S.aiTitle}>AI 코치에게 질문하기</div>
+                  <div style={S.aiSub}>예배 신학, 선곡, 사역 고민을 함께 나눠요</div>
+                </div>
+                <div style={S.aiBadge}>정식멤버</div>
+              </div>
 
-        {showAiLocked && !canUseCoach && (
-          <div style={S.lockedBanner}>
-            AI 코치는 정식멤버(Full Member) 이상에서 이용 가능합니다.
-            <button onClick={() => navigate("/membership")} style={S.lockedLink}>
-              멤버십 보기 →
-            </button>
+              {showAiLocked && !canUseCoach && (
+                <div style={{ ...S.lockedBanner, margin: 0 }}>
+                  AI 코치는 정식멤버(Full Member) 이상에서 이용 가능합니다.
+                  <button onClick={() => navigate("/membership")} style={S.lockedLink}>
+                    멤버십 보기 →
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
