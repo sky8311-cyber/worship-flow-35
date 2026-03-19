@@ -28,11 +28,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { CurationProfileChat } from "@/components/CurationProfileChat";
 
 // Curation Profile Card Component
-const CurationProfileCard = () => {
+const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
   const { user } = useAuth();
   const { language } = useTranslation();
-  const { hasFeature } = useTierFeature();
-  const [chatOpen, setChatOpen] = useState(false);
+  const { tier } = useTierFeature();
+  const [chatOpen, setChatOpen] = useState(autoOpen);
+
+  // Open to worship_leader (Basic) and above
+  const canAccessProfile = tier === "worship_leader" || tier === "premium" || tier === "church";
+
+  useEffect(() => {
+    if (autoOpen) setChatOpen(true);
+  }, [autoOpen]);
 
   const { data: profile } = useQuery({
     queryKey: ["curation-profile", user?.id],
@@ -49,7 +56,7 @@ const CurationProfileCard = () => {
     enabled: !!user,
   });
 
-  if (!hasFeature("ai_set_builder")) return null;
+  if (!canAccessProfile) return null;
 
   return (
     <>
