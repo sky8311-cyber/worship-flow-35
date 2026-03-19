@@ -1,78 +1,67 @@
 
 
-## 멤버십 정보 표시 전체 감사 (Audit) 및 수정
+## Song Library 데이터 보호 — Export를 서버사이드로 이동
 
-### 문제
-`RoleBadge role="worship_leader"`은 항상 "기본 멤버"를 표시합니다. 하지만 worship_leader 역할을 가진 사용자가 정식멤버(premium) 구독이 있는 경우에도 "기본 멤버"로 표시됩니다. 플랫폼 **역할**(role)과 **티어**(tier)가 혼동되고 있습니다.
+### 현재 상태 분석
 
-### 핵심 원칙
-- `RoleBadge role="worship_leader"` → **더 이상 멤버십 티어 표시용으로 사용하지 않음**
-- 대신 `TierBadge` 컴포넌트를 사용하여 실제 구독 상태 기반으로 표시
-- `RoleBadge`는 community_owner, community_leader, admin, member(팀멤버)에만 사용
+**songs 테이블 RLS 정책 (현재):**
+- SELECT: `"Authenticated users can view songs"` → 모든 인증 유저 `USING (true)`
+- INSERT/UPDATE/DELETE: worship_leader 또는 admin만 가능
 
-### 수정 대상 파일 (5개)
+**문제점:**
+- SELECT가 완전 개방이므로, 어떤 로그인 유저든 Supabase API로 직접 `songs.select("*")`를 호출하면 전체 라이브러리(582곡 + 가사 + 악보URL + YouTube링크) 일괄 다운로드 가능
+- Export 함수(`handleExportXLSX`)는 클라이언트에서 `isAdmin` 체크만 하고, 실제 데이터는 일반 SELECT로 가져옴
+- `song_youtube_links`, `song_scores` 테이블도 마찬가지로 SELECT 개방
 
-**1. `src/pages/CommunityManagement.tsx`** (스크린샷의 페이지)
-- 멤버 쿼리에 `premium_subscriptions` 테이블 조인 추가 → 각 멤버의 실제 tier 확인
-- `RoleBadge role="worship_leader"` → `TierBadge tier={memberTier}` 교체
-- worship_leader이면서 premium 구독 있으면 "정식멤버", 없으면 "기본멤버", 아무것도 없으면 "팀멤버"
+**SELECT RLS를 제한하면 안 되는 이유:**
+songs SELECT는 앱 전체에서 광범위하게 사용됨 (총 5개 파일, 30+ 호출):
+- `SongLibrary.tsx` — 곡 브라우징 (모든 유저)
+- `Dashboard.tsx` — 곡 수 카운트
+- `SetBuilder` — 세트에 곡 추가 시 검색
+- `useSetAuditHistory.ts` — 감사 로그에서 곡 제목 조회
+- `AdminDashboard.tsx` — 관리자 통계
+- Edge function `generate-worship-set` — AI 세트 생성 시 곡 목록 조회
 
-**2. `src/pages/Settings.tsx`**
-- 현재: `{isWorshipLeader && <RoleBadge role="worship_leader" />}` (항상 "기본 멤버")
-- 변경: `useTierFeature()`의 `tier` 값으로 `TierBadge` 표시
+→ SELECT RLS를 건드리면 기존 기능 전체가 깨질 위험이 큼
 
-**3. `src/components/admin/AdminUserProfileDialog.tsx`**
-- 사용자별 premium_subscriptions 조회 추가
-- `RoleBadge role="worship_leader"` → 실제 tier 기반 `TierBadge` 교체
+### 안전한 접근법: Export만 서버사이드로 이동
 
-**4. `src/components/admin/UserCard.tsx`**
-- 동일하게 `RoleBadge role="worship_leader"` → `TierBadge` 교체
-- 부모 컴포넌트에서 tier 정보를 전달받거나 내부 조회
+기존 RLS/기능은 그대로 두고, **대량 데이터 반출(export)만** 서버에서 admin 검증 후 허용.
 
-**5. `src/components/layout/AppHeader.tsx`**
-- 이미 부분 수정됨 (tier !== "premium" 조건). 완전히 `TierBadge`로 통일
-- worship_leader 역할이면 항상 `TierBadge tier={tier}` 표시 (tier가 worship_leader/premium/church 중 하나)
+**1. Edge Function 생성 — `export-songs`**
+- JWT 인증 + 서버사이드 admin 역할 검증
+- songs + song_youtube_links + song_scores를 service role로 조회하여 JSON 반환
+- 비admin이 호출하면 403 거부
 
-### 기술 상세
+**2. `SongLibrary.tsx` 수정**
+- `handleExportXLSX`에서 직접 DB 쿼리 3개(`songs`, `song_youtube_links`, `song_scores`)를
+  `supabase.functions.invoke('export-songs')` 한 번으로 교체
+- 응답 데이터로 기존 XLSX 생성 로직 유지
 
-**CommunityManagement 멤버 쿼리 확장:**
-```typescript
-// 기존 globalRoles 외에 premium_subscriptions도 조회
-const { data: subscriptions } = await supabase
-  .from("premium_subscriptions")
-  .select("user_id, subscription_status")
-  .in("user_id", userIds)
-  .eq("subscription_status", "active");
-
-// 멤버에 tier 정보 추가
-return members.map(m => {
-  const isWL = userRoles?.some(r => r.user_id === m.user_id && r.role === 'worship_leader');
-  const hasPremium = subscriptions?.some(s => s.user_id === m.user_id);
-  const tier = hasPremium ? 'premium' : isWL ? 'worship_leader' : 'member';
-  return { ...m, profiles: ..., globalRoles: ..., tier };
-});
+**3. `config.toml`에 함수 등록**
+```toml
+[functions.export-songs]
+verify_jwt = true
 ```
 
-**뱃지 렌더링 변경 패턴:**
-```tsx
-// Before
-{memberIsWorshipLeader && <RoleBadge role="worship_leader" />}
-{!memberIsCommunityLeader && !memberIsOwner && <RoleBadge role="member" />}
+### 기존 기능 안전 체크리스트
 
-// After
-<TierBadge tier={member.tier} size="sm" />
-```
+변경 후 아래 기능이 정상 작동하는지 코드 레벨에서 확인:
 
-**Settings 페이지:**
-```tsx
-// Before
-{isWorshipLeader && <RoleBadge role="worship_leader" />}
-// After  
-<TierBadge tier={tier} size="sm" />
-```
+| 기능 | 영향 여부 | 이유 |
+|------|-----------|------|
+| Song Library 브라우징 | ❌ 무관 | SELECT RLS 변경 없음 |
+| Set Builder 곡 검색 | ❌ 무관 | SELECT RLS 변경 없음 |
+| Dashboard 곡 카운트 | ❌ 무관 | SELECT RLS 변경 없음 |
+| AI 세트 생성 (edge fn) | ❌ 무관 | service role 사용 |
+| 곡 추가/수정/삭제 | ❌ 무관 | INSERT/UPDATE/DELETE 정책 변경 없음 |
+| Audit History 곡 제목 | ❌ 무관 | SELECT RLS 변경 없음 |
+| 악보/YouTube 조회 | ❌ 무관 | 해당 테이블 RLS 변경 없음 |
 
-### 수정하지 않는 것
-- `RoleBadge role="admin"` — 역할 뱃지로 정상 사용
-- `RoleBadge role="community_owner"` / `community_leader` — 커뮤니티 역할로 정상 사용
-- `RoleBadge role="member"` — 팀멤버 표시용으로 유지하되, worship_leader 역할이 있는 경우 TierBadge가 대체
+**핵심: songs 테이블 RLS 정책은 일절 건드리지 않음.** Export 로직만 클라이언트→서버로 이동.
+
+### 수정 파일 (3개만)
+- `supabase/functions/export-songs/index.ts` — 신규 생성
+- `src/pages/SongLibrary.tsx` — export 함수만 수정
+- `supabase/config.toml` — 함수 등록
 
