@@ -16,6 +16,8 @@ import { MobileSidebarDrawer } from "@/components/layout/MobileSidebarDrawer";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SongCartPopover } from "@/components/SongCartPopover";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { AiBadge } from "@/components/AiBadge";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -203,18 +205,18 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <div className="flex gap-1 flex-wrap">
                       {isAdmin && <RoleBadge role="admin" />}
                       {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
-                      {isWorshipLeader && <RoleBadge role="worship_leader" />}
+                      {isWorshipLeader && tier !== "premium" && tier !== "church" && (
+                        <RoleBadge role="worship_leader" />
+                      )}
                       {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="community_leader" />
                       )}
                       {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="member" />
                       )}
-                      {/* Tier Badge */}
+                      {/* Tier Badge with icons */}
                       {(tier === "premium" || tier === "church") && (
-                        <Badge variant="outline" className={`text-xs ${TIER_CONFIG[tier].color}`}>
-                          {language === "ko" ? TIER_CONFIG[tier].labelKo : TIER_CONFIG[tier].label}
-                        </Badge>
+                        <TierBadge tier={tier} size="sm" />
                       )}
                     </div>
                   </div>
@@ -255,14 +257,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 {/* Worship Profile Settings - Worship Leaders only */}
                 {isWorshipLeader && (
                   <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
-                    <User className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     <span className="flex items-center justify-between w-full">
-                      {language === "ko" ? "예배 프로필 설정" : "Worship Profile"}
-                      {showProfileNewBadge && (
-                        <Badge variant="destructive" className="text-xs ml-2 px-1.5 py-0">
-                          NEW
-                        </Badge>
-                      )}
+                      {language === "ko" ? "내 예배 프로필 설정" : "Worship Profile"}
+                      <span className="flex items-center gap-1 ml-2">
+                        <AiBadge size="sm" />
+                        {showProfileNewBadge && (
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                            NEW
+                          </Badge>
+                        )}
+                      </span>
                     </span>
                   </DropdownMenuItem>
                 )}
