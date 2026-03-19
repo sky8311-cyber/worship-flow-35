@@ -1,54 +1,57 @@
 
+
 ## 문제 분석
 
-**문제 1: 아바타 메뉴 뱃지가 "기본멤버"로 표시됨**
-- `AppHeader.tsx`의 Role Badges 섹션(181-191행)은 `isWorshipLeader` 기준으로만 `RoleBadge`를 표시
-- `RoleBadge`는 platform role만 보여줌 (admin, worship_leader, member 등) — subscription tier(정식멤버/공동체계정)를 반영하지 않음
-- 해결: `useTierFeature()`의 `tier`와 `TIER_CONFIG`를 사용해 **티어 뱃지**를 Role Badge 옆에 추가 표시
-
-**문제 2: 예배 프로필 설정 메뉴를 아바타 드롭다운에 추가**
-- Worship Leader(예배인도자) 이상만 볼 수 있는 "예배 프로필 설정" 메뉴 항목 추가
-- `user_curation_profiles`에 skills_summary가 없으면 "NEW" 뱃지 표시
-- 클릭 시 `/settings`로 이동하면서 `openCurationChat: true` state 전달
-
-**문제 3: 온보딩 팝업 대상을 Worship Leader로 제한**
-- 현재 `CurationProfilePromptDialog`는 `hasFeature("ai_set_builder")` (Full Member 이상)로 게이트
-- 변경: `isWorshipLeader`로 게이트 — 예배인도자 승인된 모든 사람이 대상
-- 일반 팀멤버(커뮤니티 소속이더라도 worship_leader 롤 없음)에게는 팝업 미표시
-
----
+스크린샷에서 확인된 이슈:
+1. **"기본 멤버" + "정식멤버" 뱃지가 동시 표시됨** — `RoleBadge role="worship_leader"`가 한국어로 "기본 멤버"를 표시하고, 별도로 tier 뱃지가 "정식멤버"를 표시. 정식멤버로 올라갔으면 "기본 멤버"는 불필요.
+2. **정식멤버 뱃지에 아이콘 없음** — 현재 `<Badge variant="outline">` 텍스트만 사용. 이미 `TierBadge` 컴포넌트(아이콘 포함)가 존재하지만 사용하지 않음.
+3. **"예배 프로필 설정" 아이콘이 User** — AI 기능임을 나타내는 아이콘/뱃지 필요.
+4. **AI 뱃지 패턴 부재** — AI 기능을 표시하는 공통 뱃지가 없음.
 
 ## 수정 계획
 
-### 1. AppHeader.tsx — 티어 뱃지 + 예배 프로필 메뉴 추가
+### 1. AppHeader 뱃지 로직 수정 (lines 202-218)
 
-- `useTierFeature` import 추가, `tier`와 `TIER_CONFIG` 사용
-- Role Badges 영역에 티어 뱃지 추가 (예: "정식멤버" 배지를 role badge 옆에)
-- `isWorshipLeader`일 때 "예배 프로필 설정" 메뉴 항목 추가 (Settings 메뉴 근처)
-- skills_summary 없으면 "NEW" Badge 표시 (간단한 useQuery로 체크)
+- tier가 `premium` 또는 `church`이면 `RoleBadge role="worship_leader"` 숨김 (tier 뱃지가 대체)
+- 기존 plain `Badge`를 `TierBadge` 컴포넌트로 교체 (아이콘 자동 포함: premium = Crown+Star, church = Building2+Shield)
 
-### 2. CurationProfilePromptDialog.tsx — 게이트 변경
+### 2. 재사용 가능한 AiBadge 컴포넌트 생성
 
-- `hasFeature("ai_set_builder")` → `isWorshipLeader`로 변경
-- query의 `enabled` 조건도 동일하게 수정
-- useEffect 내 조건도 `hasAiAccess` → `isWorshipLeader`로 교체
+- `src/components/AiBadge.tsx` — 작은 "AI" 라벨 + Sparkles 아이콘
+- 크기 옵션 (sm/md), AI 기능 표시가 필요한 곳에서 공통 사용
 
-### 3. RoleBadge 또는 AppHeader — 티어 표시 로직
+### 3. "예배 프로필 설정" 메뉴 아이콘 변경
 
-- 현재 role 뱃지(worship_leader)는 그대로 유지하되, 티어가 premium 이상이면 **추가로** 티어 뱃지도 표시
-- `TIER_CONFIG`의 color/label 사용해 일관된 스타일 적용
+- `User` → `Sparkles` 아이콘으로 교체
+- "NEW" 뱃지 옆에 또는 대신 `AiBadge` 추가 (프로필 미완료 시 "NEW" 유지, 완료 시 "AI" 뱃지 표시)
 
----
+### 기술 상세
 
-## 기술 상세
+**AppHeader.tsx 뱃지 영역 변경:**
+```tsx
+// Before: worship_leader role badge always shown
+{isWorshipLeader && <RoleBadge role="worship_leader" />}
+// After: hide when tier supersedes
+{isWorshipLeader && tier !== "premium" && tier !== "church" && (
+  <RoleBadge role="worship_leader" />
+)}
 
-**AppHeader 수정 포인트:**
-- Import: `useTierFeature, TIER_CONFIG` 추가
-- 181-191행 Role Badges 영역: tier가 `premium` 또는 `church`일 때 해당 티어 뱃지 추가
-- 227-231행 Settings 메뉴 위: worship leader용 "예배 프로필 설정" 메뉴 삽입 (NEW 뱃지 포함)
-- 프로필 조회 query: `["curation-profile", user?.id]` 키로 skills_summary 존재 여부 확인
+// Before: plain Badge for tier
+<Badge variant="outline">{TIER_CONFIG[tier].label}</Badge>
+// After: TierBadge component with icons
+<TierBadge tier={tier} size="sm" />
+```
 
-**CurationProfilePromptDialog 수정:**
-- `useAuth()`에서 `isWorshipLeader` 가져옴
-- `hasFeature("ai_set_builder")` 3곳을 모두 `isWorshipLeader`로 교체
+**AiBadge 컴포넌트:**
+```tsx
+// 작은 인라인 뱃지: [✨ AI]
+<span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full 
+  bg-gradient-to-r from-violet-100 to-blue-100 text-violet-700 text-xs font-medium">
+  <Sparkles className="w-3 h-3" /> AI
+</span>
+```
+
+**수정 파일:**
+- `src/components/AiBadge.tsx` — 새 파일
+- `src/components/layout/AppHeader.tsx` — 뱃지 로직 + 메뉴 아이콘
 
