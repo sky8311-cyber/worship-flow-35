@@ -338,110 +338,139 @@ const SongLibrary = () => {
 
     toast.info("내보내기 준비 중...");
 
-    // Fetch multiple youtube links and scores for all songs
-    const songIds = songs.map(s => s.id);
-    
-    const [youtubeLinksResult, scoresResult] = await Promise.all([
-      supabase.from("song_youtube_links").select("*").in("song_id", songIds),
-      supabase.from("song_scores").select("*").in("song_id", songIds)
-    ]);
+    try {
+      // Server-side admin-verified export
+      const { data: sessionData } = await supabase.auth.refreshSession();
+      if (!sessionData?.session) {
+        toast.error("세션이 만료되었습니다. 다시 로그인해주세요.");
+        return;
+      }
 
-    const youtubeLinksMap = new Map<string, { label: string; url: string }[]>();
-    youtubeLinksResult.data?.forEach(link => {
-      const existing = youtubeLinksMap.get(link.song_id) || [];
-      existing.push({ label: link.label, url: link.url });
-      youtubeLinksMap.set(link.song_id, existing);
-    });
+      const { data, error } = await supabase.functions.invoke('export-songs', {
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+      });
 
-    const scoresMap = new Map<string, { key: string; url: string }[]>();
-    scoresResult.data?.forEach(score => {
-      const existing = scoresMap.get(score.song_id) || [];
-      existing.push({ key: score.key, url: score.file_url });
-      scoresMap.set(score.song_id, existing);
-    });
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('403') || msg.includes('Forbidden')) {
+          toast.error("관리자 권한이 확인되지 않았습니다");
+        } else {
+          toast.error("내보내기 실패: " + msg);
+        }
+        return;
+      }
 
-    // Format multiple links to delimited string
-    const formatYoutubeLinks = (songId: string) => {
-      const links = youtubeLinksMap.get(songId) || [];
-      return links.map(l => `${l.label}|${l.url}`).join(";;");
-    };
+      const exportedSongs = data.songs || [];
+      const youtubeLinks = data.youtubeLinks || [];
+      const scores = data.scores || [];
 
-    const formatScores = (songId: string) => {
-      const scoresList = scoresMap.get(songId) || [];
-      return scoresList.map(s => `${s.key}|${s.url}`).join(";;");
-    };
+      if (exportedSongs.length === 0) {
+        toast.error("내보낼 데이터가 없습니다");
+        return;
+      }
 
-    // Header style
-    const headerStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" } },
-      fill: { fgColor: { rgb: "4F46E5" } },
-      alignment: { horizontal: "center" as const }
-    };
+      // Build maps from server response
+      const youtubeLinksMap = new Map<string, { label: string; url: string }[]>();
+      youtubeLinks.forEach((link: any) => {
+        const existing = youtubeLinksMap.get(link.song_id) || [];
+        existing.push({ label: link.label, url: link.url });
+        youtubeLinksMap.set(link.song_id, existing);
+      });
 
-    // Headers
-    const headers = [
-      { v: "id", s: headerStyle },
-      { v: "title", s: headerStyle },
-      { v: "subtitle", s: headerStyle },
-      { v: "artist", s: headerStyle },
-      { v: "language", s: headerStyle },
-      { v: "default_key", s: headerStyle },
-      { v: "tags", s: headerStyle },
-      { v: "youtube_url", s: headerStyle },
-      { v: "score_file_url", s: headerStyle },
-      { v: "notes", s: headerStyle },
-      { v: "interpretation", s: headerStyle },
-      { v: "lyrics", s: headerStyle },
-      { v: "youtube_links", s: headerStyle },
-      { v: "scores", s: headerStyle },
-    ];
+      const scoresMap = new Map<string, { key: string; url: string }[]>();
+      scores.forEach((score: any) => {
+        const existing = scoresMap.get(score.song_id) || [];
+        existing.push({ key: score.key, url: score.file_url });
+        scoresMap.set(score.song_id, existing);
+      });
 
-    // Data rows
-    const dataRows = songs.map(song => [
-      song.id,
-      song.title,
-      song.subtitle || "",
-      song.artist || "",
-      song.language || "",
-      song.default_key || "",
-      song.tags || "",
-      song.youtube_url || "",
-      song.score_file_url || "",
-      song.notes || "",
-      song.interpretation || "",
-      song.lyrics || "",
-      formatYoutubeLinks(song.id),
-      formatScores(song.id),
-    ]);
+      // Format multiple links to delimited string
+      const formatYoutubeLinks = (songId: string) => {
+        const links = youtubeLinksMap.get(songId) || [];
+        return links.map(l => `${l.label}|${l.url}`).join(";;");
+      };
 
-    // Create worksheet
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
-    
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 36 },  // id
-      { wch: 30 },  // title
-      { wch: 20 },  // subtitle
-      { wch: 20 },  // artist
-      { wch: 8 },   // language
-      { wch: 8 },   // default_key
-      { wch: 12 },  // category
-      { wch: 20 },  // tags
-      { wch: 40 },  // youtube_url
-      { wch: 40 },  // score_file_url
-      { wch: 30 },  // notes
-      { wch: 30 },  // interpretation
-      { wch: 50 },  // lyrics
-      { wch: 60 },  // youtube_links
-      { wch: 60 },  // scores
-    ];
+      const formatScores = (songId: string) => {
+        const scoresList = scoresMap.get(songId) || [];
+        return scoresList.map(s => `${s.key}|${s.url}`).join(";;");
+      };
 
-    // Create workbook and download
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Songs");
-    XLSX.writeFile(wb, `songs-export-${new Date().toISOString().split('T')[0]}.xlsx`);
-    
-    toast.success("Excel 파일이 다운로드되었습니다");
+      // Header style
+      const headerStyle = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4F46E5" } },
+        alignment: { horizontal: "center" as const }
+      };
+
+      // Headers
+      const headers = [
+        { v: "id", s: headerStyle },
+        { v: "title", s: headerStyle },
+        { v: "subtitle", s: headerStyle },
+        { v: "artist", s: headerStyle },
+        { v: "language", s: headerStyle },
+        { v: "default_key", s: headerStyle },
+        { v: "tags", s: headerStyle },
+        { v: "youtube_url", s: headerStyle },
+        { v: "score_file_url", s: headerStyle },
+        { v: "notes", s: headerStyle },
+        { v: "interpretation", s: headerStyle },
+        { v: "lyrics", s: headerStyle },
+        { v: "youtube_links", s: headerStyle },
+        { v: "scores", s: headerStyle },
+      ];
+
+      // Data rows
+      const dataRows = exportedSongs.map((song: any) => [
+        song.id,
+        song.title,
+        song.subtitle || "",
+        song.artist || "",
+        song.language || "",
+        song.default_key || "",
+        song.tags || "",
+        song.youtube_url || "",
+        song.score_file_url || "",
+        song.notes || "",
+        song.interpretation || "",
+        song.lyrics || "",
+        formatYoutubeLinks(song.id),
+        formatScores(song.id),
+      ]);
+
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+      
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 36 },  // id
+        { wch: 30 },  // title
+        { wch: 20 },  // subtitle
+        { wch: 20 },  // artist
+        { wch: 8 },   // language
+        { wch: 8 },   // default_key
+        { wch: 12 },  // tags
+        { wch: 20 },  // youtube_url
+        { wch: 40 },  // score_file_url
+        { wch: 30 },  // notes
+        { wch: 30 },  // interpretation
+        { wch: 50 },  // lyrics
+        { wch: 60 },  // youtube_links
+        { wch: 60 },  // scores
+      ];
+
+      // Create workbook and download
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Songs");
+      XLSX.writeFile(wb, `songs-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+      
+      toast.success("Excel 파일이 다운로드되었습니다");
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("내보내기 중 오류가 발생했습니다");
+    }
   };
 
   const handleToggleSelection = (songId: string) => {
