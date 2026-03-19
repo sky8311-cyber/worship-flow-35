@@ -2350,7 +2350,14 @@ const SetBuilder = () => {
         open={showAIPanel}
         onOpenChange={setShowAIPanel}
         communityId={formData.community_id || undefined}
-        onAddSongs={(songs) => {
+        onAddSongs={async (songs) => {
+          if (!isEditMode) {
+            const acquired = await acquireLock();
+            if (!acquired) {
+              toast.error(language === "ko" ? "편집 모드를 시작할 수 없습니다." : "Could not enter edit mode.");
+              return;
+            }
+          }
           songs.forEach(({ song, key }) => {
             handleAddSong(song, key);
           });
