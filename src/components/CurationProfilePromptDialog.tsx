@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
@@ -9,17 +9,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const DISMISSED_KEY = "kworship_profile_prompt_dismissed";
+const IN_PROGRESS_KEY = "kworship_profile_prompt_in_progress";
 
 export function CurationProfilePromptDialog() {
   const { user } = useAuth();
   const { hasFeature } = useTierFeature();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
 
   const hasAiAccess = hasFeature("ai_set_builder");
 
   const { data: curationProfile, isLoading } = useQuery({
-    queryKey: ["curation-profile-prompt", user?.id],
+    queryKey: ["curation-profile", user?.id],
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await (supabase
@@ -37,12 +39,17 @@ export function CurationProfilePromptDialog() {
     if (isLoading || !user || !hasAiAccess) return;
     if (curationProfile?.skills_summary) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
+    if (sessionStorage.getItem(IN_PROGRESS_KEY)) return;
+    if (location.pathname === "/settings") return;
     setOpen(true);
-  }, [isLoading, user, hasAiAccess, curationProfile]);
+  }, [isLoading, user, hasAiAccess, curationProfile, location.pathname]);
 
   const handleSetup = () => {
+    sessionStorage.setItem(IN_PROGRESS_KEY, "1");
     setOpen(false);
-    navigate("/settings", { state: { openCurationChat: true } });
+    setTimeout(() => {
+      navigate("/settings", { state: { openCurationChat: true } });
+    }, 100);
   };
 
   const handleDismiss = () => {
@@ -80,3 +87,4 @@ export function CurationProfilePromptDialog() {
     </Dialog>
   );
 }
+
