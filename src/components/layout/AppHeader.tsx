@@ -49,23 +49,8 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if worship profile is set up (for NEW badge)
-  const { data: curationProfile } = useQuery({
-    queryKey: ["curation-profile", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await (supabase
-        .from("user_curation_profiles" as any)
-        .select("skills_summary")
-        .eq("user_id", user.id)
-        .maybeSingle() as any);
-      if (error) throw error;
-      return data as { skills_summary: string | null } | null;
-    },
-    enabled: !!user && isWorshipLeader,
-    staleTime: 5 * 60 * 1000,
-  });
-  const showProfileNewBadge = isWorshipLeader && !curationProfile?.skills_summary;
+
+
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
