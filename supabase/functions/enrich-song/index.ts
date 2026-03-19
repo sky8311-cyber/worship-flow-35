@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { AI_CONFIG } from "../_shared/ai-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,9 +96,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     console.log('Enriching song:', { title, artist, language, subtitle, youtube_url });
@@ -164,64 +165,57 @@ ${TOPIC_NAMES_KO.join(', ')}`;
 ${TOPIC_NAMES_KO.join(', ')}`;
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(AI_CONFIG.endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': AI_CONFIG.anthropicVersion,
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { 
-            role: 'system', 
-            content: `당신은 한국 CCM과 예배 음악 전문가입니다. 곡의 가사와 분위기를 분석하여 정확한 메타데이터를 추천합니다.
+        model: AI_CONFIG.model,
+        max_tokens: 1024,
+        system: `당신은 한국 CCM과 예배 음악 전문가입니다. 곡의 가사와 분위기를 분석하여 정확한 메타데이터를 추천합니다.
 
 중요 규칙:
 1. 주제(topics)는 반드시 지정된 목록에서만 선택하세요.
 2. 가사가 제공된 경우, 가사 내용을 깊이 분석하여 주제를 선택하세요.
 3. 키는 실제 곡의 일반적인 연주 키를 추천하세요.
 4. 확신이 없으면 confidence를 낮게 설정하세요.
-5. 부제(subtitle)나 YouTube 제목이 제공된 경우, 정확한 곡 식별에 활용하세요.`
-          },
+5. 부제(subtitle)나 YouTube 제목이 제공된 경우, 정확한 곡 식별에 활용하세요.`,
+        messages: [
           { role: 'user', content: analysisPrompt }
         ],
         tools: [{
-          type: 'function',
-          function: {
-            name: 'analyze_song_metadata',
-            description: 'Return analyzed song metadata including key and topics',
-            parameters: {
-              type: 'object',
-              properties: {
-                default_key: { 
-                  type: 'string', 
-                  enum: ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
-                  description: '추천하는 음악 키'
-                },
-                topics: {
-                  type: 'array',
-                  description: '가사 내용에서 분석된 주제들 (2-3개)',
-                  items: { type: 'string', enum: TOPIC_NAMES_KO },
-                  minItems: 2,
-                  maxItems: 3
-                },
-                confidence: {
-                  type: 'string',
-                  enum: ['high', 'medium', 'low'],
-                  description: '분석 결과의 신뢰도'
-                },
-                analysis_notes: {
-                  type: 'string',
-                  description: '분석에 대한 간단한 설명이나 참고사항'
-                }
+          name: 'analyze_song_metadata',
+          description: 'Return analyzed song metadata including key and topics',
+          input_schema: {
+            type: 'object',
+            properties: {
+              default_key: { 
+                type: 'string', 
+                enum: ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
+                description: '추천하는 음악 키'
               },
-              required: ['default_key', 'topics', 'confidence'],
-              additionalProperties: false
-            }
+              topics: {
+                type: 'array',
+                description: '가사 내용에서 분석된 주제들 (2-3개)',
+                items: { type: 'string', enum: TOPIC_NAMES_KO },
+              },
+              confidence: {
+                type: 'string',
+                enum: ['high', 'medium', 'low'],
+                description: '분석 결과의 신뢰도'
+              },
+              analysis_notes: {
+                type: 'string',
+                description: '분석에 대한 간단한 설명이나 참고사항'
+              }
+            },
+            required: ['default_key', 'topics', 'confidence'],
           }
         }],
-        tool_choice: { type: 'function', function: { name: 'analyze_song_metadata' } }
+        tool_choice: { type: 'tool', name: 'analyze_song_metadata' }
       }),
     });
 
@@ -232,30 +226,24 @@ ${TOPIC_NAMES_KO.join(', ')}`;
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Payment required. Please add credits to your Lovable workspace.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
+      console.error('Anthropic API error:', response.status, errorText);
       return new Response(
-        JSON.stringify({ error: 'AI gateway error' }),
+        JSON.stringify({ error: 'AI API error' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
+    const toolUseBlock = data.content?.find((block: any) => block.type === 'tool_use');
+    if (!toolUseBlock) {
       return new Response(
         JSON.stringify({ error: 'No metadata suggestions generated' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const aiAnalysis = JSON.parse(toolCall.function.arguments);
+    const aiAnalysis = toolUseBlock.input;
     
     const bilingualTopics = aiAnalysis.topics
       .map((topicKo: string) => {
