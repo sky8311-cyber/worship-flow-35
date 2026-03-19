@@ -94,6 +94,7 @@ const AdminNews = lazyWithRetry(() => import("./pages/AdminNews"));
 const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
 const AdminMembershipProducts = lazyWithRetry(() => import("./pages/AdminMembershipProducts"));
 const AdminInstitute = lazyWithRetry(() => import("./pages/AdminInstitute"));
+const InstructorManage = lazyWithRetry(() => import("./pages/InstructorManage"));
 
 // Public/invitation pages
 const PublicBandView = lazyWithRetry(() => import("./pages/PublicBandView"));
@@ -270,6 +271,7 @@ const App = () => {
               <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
               <Route path="/admin/membership-products" element={<AdminRoute><AdminMembershipProducts /></AdminRoute>} />
               <Route path="/admin/institute" element={<AdminRoute><AdminInstitute /></AdminRoute>} />
+              <Route path="/institute/manage" element={<ProtectedRoute><InstructorManage /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

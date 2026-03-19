@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2, Share2, Gift, Info } from "lucide-react";
+import { LogOut, Bell, Heart, MessageCircle, Shield, Menu, Building2, Sparkles, Settings, HelpCircle, Music2, Share2, Gift, Info, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -49,9 +49,22 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if user is a registered instructor
+  const { data: isInstructor } = useQuery({
+    queryKey: ["is-instructor", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from("institute_instructors")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
 
 
-  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -210,6 +223,15 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <Link to="/admin">
                       <Shield className="mr-2 h-4 w-4" />
                       {t("dashboard.adminMenu")}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
+                {isInstructor && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/institute/manage">
+                      <GraduationCap className="mr-2 h-4 w-4" />
+                      {language === "ko" ? "내 과목 관리" : "My Courses"}
                     </Link>
                   </DropdownMenuItem>
                 )}
