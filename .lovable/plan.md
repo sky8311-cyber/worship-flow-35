@@ -1,45 +1,6 @@
+## AI Set Builder v2 — Korean Worship Curation Overhaul
 
-
-## Pre-fill AI Panel with Worship Info
-
-### What
-When opening the AI Set Builder panel, pre-fill its fields from the already-entered worship info: `theme` → Theme, `scripture_reference` → Theme (combined), `worship_duration` → Duration.
-
-### Changes
-
-**`src/components/AISetBuilderPanel.tsx`**:
-1. Add new optional props: `initialTheme?: string`, `initialDuration?: number`
-2. Use a `useEffect` to set `theme` and `durationMinutes` from props when the panel opens (`open` changes to `true`)
-
-**`src/pages/SetBuilder.tsx`**:
-1. Pass new props to `AISetBuilderPanel`:
-   - `initialTheme` — combine `formData.theme` and `formData.scripture_reference` (e.g., "은혜, 요한복음 3:16")
-   - `initialDuration` — parse `formData.worship_duration` if set
-
-### Technical detail
-
-```tsx
-// AISetBuilderPanel.tsx — new props + useEffect
-interface AISetBuilderPanelProps {
-  // ...existing
-  initialTheme?: string;
-  initialDuration?: number;
-}
-
-useEffect(() => {
-  if (open) {
-    if (initialTheme) setTheme(initialTheme);
-    if (initialDuration) setDurationMinutes(initialDuration);
-  }
-}, [open]);
-
-// SetBuilder.tsx — pass props
-<AISetBuilderPanel
-  initialTheme={[formData.theme, formData.scripture_reference].filter(Boolean).join(", ")}
-  initialDuration={formData.worship_duration ? parseInt(formData.worship_duration) : undefined}
-  // ...existing props
-/>
-```
-
-Two files changed, no new dependencies.
-
+### Completed
+1. **New table**: `user_curation_profiles` (user_id PK, skills_summary, congregation_notes) with RLS
+2. **Edge function rewrite**: New SKILLS_MD with Korean worship arc philosophy, fetches user profile + recent community patterns from `service_sets`/`set_songs`, includes truncated lyrics, outputs role/tempo fields
+3. **UI update**: Result cards show role badges (마음열기/선포/고백/경배) and tempo badges (느림/보통/빠름) with color coding
