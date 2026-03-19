@@ -1,33 +1,54 @@
 
-문제 원인 요약
-- 전역 팝업(`CurationProfilePromptDialog`)이 모든 보호 라우트에서 마운트되고, `skills_summary`가 비어 있으면 조건이 계속 참이어서 다시 열립니다.
-- 특히 “지금 설정하기”로 `/settings` 이동 후에도, 팝업 쪽에는 “온보딩 진행 중” 상태가 없어서 채팅 중 재등장합니다.
-- 추가로 프로필 조회 query key가 화면별로 달라(`curation-profile-prompt` vs `curation-profile`) 저장 직후 상태 동기화가 늦어 재오픈 가능성이 있습니다.
+## 문제 분석
 
-수정 계획
-1) 전역 팝업 재등장 방지 로직 추가 (`src/components/CurationProfilePromptDialog.tsx`)
-- `useLocation`으로 현재 경로 확인 후, `/settings`에서는 팝업 오픈 로직을 중단.
-- “지금 설정하기” 클릭 시 세션 단위 플래그(예: `sessionStorage`의 `kworship_profile_prompt_in_progress`)를 기록해 온보딩 중에는 전역 팝업이 다시 뜨지 않게 함.
-- 다이얼로그 닫기 → 짧은 지연(100ms) → `navigate("/settings", { state: { openCurationChat: true } })` 순서로 전환해 닫힘/라우팅 경합 방지.
+**문제 1: 아바타 메뉴 뱃지가 "기본멤버"로 표시됨**
+- `AppHeader.tsx`의 Role Badges 섹션(181-191행)은 `isWorshipLeader` 기준으로만 `RoleBadge`를 표시
+- `RoleBadge`는 platform role만 보여줌 (admin, worship_leader, member 등) — subscription tier(정식멤버/공동체계정)를 반영하지 않음
+- 해결: `useTierFeature()`의 `tier`와 `TIER_CONFIG`를 사용해 **티어 뱃지**를 Role Badge 옆에 추가 표시
 
-2) 프로필 상태 동기화 일원화
-- 전역 팝업의 프로필 조회 `queryKey`를 `["curation-profile", user?.id]`로 통일.
-- Settings의 `CurationProfileCard`에서 채팅 완료 시 `invalidateQueries(["curation-profile", user?.id])` 실행하도록 보완(현재 Settings 쪽은 완료 후 닫기만 함).
-- 필요 시 팝업에서도 동일 key 구독으로 저장 직후 즉시 숨김 반영.
+**문제 2: 예배 프로필 설정 메뉴를 아바타 드롭다운에 추가**
+- Worship Leader(예배인도자) 이상만 볼 수 있는 "예배 프로필 설정" 메뉴 항목 추가
+- `user_curation_profiles`에 skills_summary가 없으면 "NEW" 뱃지 표시
+- 클릭 시 `/settings`로 이동하면서 `openCurationChat: true` state 전달
 
-3) 라우트 state 재사용 방지 (`src/pages/Settings.tsx`)
-- `openCurationChat`로 자동 오픈 후에는 `replace` 네비게이션으로 해당 state를 정리해, 뒤로가기/재진입 시 의도치 않은 재오픈 방지.
+**문제 3: 온보딩 팝업 대상을 Worship Leader로 제한**
+- 현재 `CurationProfilePromptDialog`는 `hasFeature("ai_set_builder")` (Full Member 이상)로 게이트
+- 변경: `isWorshipLeader`로 게이트 — 예배인도자 승인된 모든 사람이 대상
+- 일반 팀멤버(커뮤니티 소속이더라도 worship_leader 롤 없음)에게는 팝업 미표시
 
-검증 계획 (수동 E2E)
-- 케이스 A: 프로필 미완료 + Full/Church 유저
-  1) 대시보드에서 팝업 노출 확인
-  2) “지금 설정하기” 클릭 → Settings 채팅 열림
-  3) 채팅 입력 중 전역 팝업이 다시 뜨지 않는지 확인
-- 케이스 B: 채팅 완료 후
-  1) 완료 메시지 후 시트 닫힘
-  2) 다른 페이지 이동해도 팝업 미노출 확인
-- 케이스 C: “나중에 하기”
-  1) dismiss 저장 후 재방문 시 팝업 미노출 확인
-- 케이스 D: Basic 멤버
-  1) 전역 팝업 비노출 유지
-  2) Settings의 “내 예배 프로필” 채팅 접근 가능 유지
+---
+
+## 수정 계획
+
+### 1. AppHeader.tsx — 티어 뱃지 + 예배 프로필 메뉴 추가
+
+- `useTierFeature` import 추가, `tier`와 `TIER_CONFIG` 사용
+- Role Badges 영역에 티어 뱃지 추가 (예: "정식멤버" 배지를 role badge 옆에)
+- `isWorshipLeader`일 때 "예배 프로필 설정" 메뉴 항목 추가 (Settings 메뉴 근처)
+- skills_summary 없으면 "NEW" Badge 표시 (간단한 useQuery로 체크)
+
+### 2. CurationProfilePromptDialog.tsx — 게이트 변경
+
+- `hasFeature("ai_set_builder")` → `isWorshipLeader`로 변경
+- query의 `enabled` 조건도 동일하게 수정
+- useEffect 내 조건도 `hasAiAccess` → `isWorshipLeader`로 교체
+
+### 3. RoleBadge 또는 AppHeader — 티어 표시 로직
+
+- 현재 role 뱃지(worship_leader)는 그대로 유지하되, 티어가 premium 이상이면 **추가로** 티어 뱃지도 표시
+- `TIER_CONFIG`의 color/label 사용해 일관된 스타일 적용
+
+---
+
+## 기술 상세
+
+**AppHeader 수정 포인트:**
+- Import: `useTierFeature, TIER_CONFIG` 추가
+- 181-191행 Role Badges 영역: tier가 `premium` 또는 `church`일 때 해당 티어 뱃지 추가
+- 227-231행 Settings 메뉴 위: worship leader용 "예배 프로필 설정" 메뉴 삽입 (NEW 뱃지 포함)
+- 프로필 조회 query: `["curation-profile", user?.id]` 키로 skills_summary 존재 여부 확인
+
+**CurationProfilePromptDialog 수정:**
+- `useAuth()`에서 `isWorshipLeader` 가져옴
+- `hasFeature("ai_set_builder")` 3곳을 모두 `isWorshipLeader`로 교체
+
