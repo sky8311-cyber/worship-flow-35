@@ -223,6 +223,7 @@ const Settings = () => {
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
   const { isSandboxTester } = useAppSettings();
+  const { tier } = useTierFeature();
   const queryClient = useQueryClient();
 
   // Email change state
