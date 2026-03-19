@@ -116,3 +116,6 @@ verify_jwt = true
 
 [functions.update-curation-profile]
 verify_jwt = false
+
+[functions.export-songs]
+verify_jwt = false
