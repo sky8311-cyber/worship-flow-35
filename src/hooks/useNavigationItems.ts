@@ -47,6 +47,7 @@ export const iconMap: Record<string, LucideIcon> = {
   Eye,
   EyeOff,
   GripVertical,
+  GraduationCap,
 };
 
 export function useNavigationItems(location?: NavigationLocation) {
