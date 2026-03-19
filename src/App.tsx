@@ -277,9 +277,9 @@ const App = () => {
               <Route path="/admin/institute" element={<AdminRoute><AdminInstitute /></AdminRoute>} />
               <Route path="/institute/manage" element={<ProtectedRoute><InstructorManage /></ProtectedRoute>} />
               <Route path="/institute" element={<ProtectedRoute><Institute /></ProtectedRoute>} />
-              <Route path="/institute/:courseId" element={<ProtectedRoute><InstituteCourse /></ProtectedRoute>} />
-              <Route path="/institute/:courseId/:moduleId" element={<ProtectedRoute><InstituteModule /></ProtectedRoute>} />
               <Route path="/institute/certification/:certId" element={<ProtectedRoute><InstituteCertification /></ProtectedRoute>} />
+              <Route path="/institute/:courseId/:moduleId" element={<ProtectedRoute><InstituteModule /></ProtectedRoute>} />
+              <Route path="/institute/:courseId" element={<ProtectedRoute><InstituteCourse /></ProtectedRoute>} />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
