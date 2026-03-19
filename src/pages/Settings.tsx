@@ -861,7 +861,7 @@ const Settings = () => {
         )}
 
         {/* Worship Curation Profile */}
-        <CurationProfileCard />
+        <CurationProfileCard autoOpen={!!(location.state as any)?.openCurationChat} />
 
         {/* Delete Account Section */}
         <DeleteAccountSection />
