@@ -212,6 +212,13 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 
+                <DropdownMenuItem asChild>
+                  <Link to="/institute">
+                    <GraduationCap className="mr-2 h-4 w-4" />
+                    K-Worship Institute
+                  </Link>
+                </DropdownMenuItem>
+                
                 {/* Mobile-only items */}
                 <DropdownMenuItem className="md:hidden" onClick={() => setLanguage(language === "en" ? "ko" : "en")}>
                   <Languages className="mr-2 h-4 w-4" />
