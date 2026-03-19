@@ -29,6 +29,7 @@ interface UserCardProps {
     last_sign_in_at?: string | null;
     last_active_at?: string | null;
     user_roles?: { role: string }[];
+    tier?: TierLevel;
   };
   seedData?: SeedData | null;
   onAddRole: (userId: string, role: string) => void;
