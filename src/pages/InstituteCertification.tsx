@@ -149,7 +149,7 @@ const InstituteCertification = () => {
                   >
                     {isCompleted ? <Check className="w-3 h-3" /> : ""}
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 500, color: "var(--inst-ink)" }}>{course.title_ko}</span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "var(--inst-ink)" }}>{course.title_ko}</span>
                 </div>
               </Link>
             );
