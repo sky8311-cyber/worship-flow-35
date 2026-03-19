@@ -15,14 +15,13 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const location = useLocation();
 
   const isMain = location.pathname === "/institute";
-  // Show bottom nav only on the main institute page (not course/module sub-pages)
-  const showBottomNav = isMain;
+  const showBottomNav = true;
 
   return (
     <div className="inst-root">
       {/* Header */}
       <header
-        className="flex items-center px-3 py-2 border-b flex-shrink-0"
+        className="flex items-center px-3 py-4 border-b flex-shrink-0"
         style={{ background: '#ffffff', borderColor: '#e8e6e0' }}
       >
         <div className="w-10 flex items-center">
@@ -38,7 +37,7 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
             <img
               src={instituteLogo}
               alt="K-Worship Institute"
-              style={{ height: 32, width: 'auto' }}
+              style={{ height: 128, width: 'auto' }}
             />
           ) : (
             <span style={{ fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
