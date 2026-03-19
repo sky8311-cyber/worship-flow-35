@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.admin-grant-membership]
 verify_jwt = true
+
+[functions.update-curation-profile]
+verify_jwt = false
