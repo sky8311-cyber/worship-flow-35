@@ -779,6 +779,9 @@ const Settings = () => {
           </Card>
         )}
 
+        {/* Worship Curation Profile */}
+        <CurationProfileCard />
+
         {/* Delete Account Section */}
         <DeleteAccountSection />
 
