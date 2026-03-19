@@ -203,6 +203,7 @@ const EmailPreferencesCard = () => {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
   const { isSandboxTester } = useAppSettings();
