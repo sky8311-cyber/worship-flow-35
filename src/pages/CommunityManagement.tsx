@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Trash2, Mail, ArrowUp, ArrowDown, Send, Users, RefreshCw, Settings, Lock, Crown, CalendarClock, Gift } from "lucide-react";
 import { RoleBadge } from "@/components/RoleBadge";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { TierLevel } from "@/hooks/useTierFeature";
 import { CommunityTeamRotationTab } from "@/components/community/CommunityTeamRotationTab";
 import { CommunityRecurringCalendarTab } from "@/components/community/CommunityRecurringCalendarTab";
 import { CommunityAvatarUpload } from "@/components/community/CommunityAvatarUpload";
