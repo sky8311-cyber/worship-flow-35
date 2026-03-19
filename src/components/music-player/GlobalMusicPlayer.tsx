@@ -28,7 +28,8 @@ export const GlobalMusicPlayer = () => {
   // 공개 페이지에서는 플레이어 숨김
   const isPublicRoute = PUBLIC_ROUTES.includes(location.pathname) || 
                         location.pathname.startsWith('/r/') ||
-                        location.pathname.startsWith('/invite/');
+                        location.pathname.startsWith('/invite/') ||
+                        location.pathname.startsWith('/institute/');
 
   if (isPublicRoute) return null;
 
