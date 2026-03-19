@@ -24,10 +24,12 @@ import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useTierFeature, TIER_CONFIG } from "@/hooks/useTierFeature";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Home, Languages } from "lucide-react";
-
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Home, Languages, User } from "lucide-react";
 interface AppHeaderProps {
   showBackButton?: boolean;
   backPath?: string;

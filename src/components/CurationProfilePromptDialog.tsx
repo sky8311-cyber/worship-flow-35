@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTierFeature } from "@/hooks/useTierFeature";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
