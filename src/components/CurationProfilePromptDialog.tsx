@@ -38,7 +38,7 @@ export function CurationProfilePromptDialog() {
     if (sessionStorage.getItem(IN_PROGRESS_KEY)) return;
     if (location.pathname === "/settings") return;
     setOpen(true);
-  }, [isLoading, user, hasAiAccess, curationProfile, location.pathname]);
+  }, [isLoading, user, isWorshipLeader, curationProfile, location.pathname]);
 
   const handleSetup = () => {
     sessionStorage.setItem(IN_PROGRESS_KEY, "1");
