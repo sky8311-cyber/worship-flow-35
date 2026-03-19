@@ -1,0 +1,1 @@
+ALTER TABLE user_curation_profiles ADD COLUMN conversation_messages jsonb DEFAULT NULL;

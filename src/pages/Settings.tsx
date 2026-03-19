@@ -58,7 +58,7 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
         .eq("user_id", user.id)
         .maybeSingle() as any);
       if (error) throw error;
-      return data as { skills_summary: string | null } | null;
+      return data as { skills_summary: string | null; conversation_messages: Array<{role: "user"|"assistant"; content: string}> | null } | null;
     },
     enabled: !!user,
   });
@@ -109,6 +109,7 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
           <div className="flex-1 min-h-0">
             <CurationProfileChat
               existingSummary={profile?.skills_summary}
+              existingMessages={profile?.conversation_messages}
               onComplete={handleComplete}
             />
           </div>

@@ -140,19 +140,22 @@ serve(async (req) => {
       parsed = { response: rawContent, skills_summary: null, is_complete: false };
     }
 
-    // If complete, save to database
+    // Always save conversation state; clear messages when complete
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      conversation_messages: parsed.is_complete ? null : [...messages, { role: "assistant", content: parsed.response }],
+      updated_at: new Date().toISOString(),
+    };
     if (parsed.is_complete && parsed.skills_summary) {
-      const { error: upsertError } = await supabase
-        .from("user_curation_profiles")
-        .upsert({
-          user_id: user.id,
-          skills_summary: parsed.skills_summary,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id" });
+      upsertData.skills_summary = parsed.skills_summary;
+    }
 
-      if (upsertError) {
-        console.error("Upsert error:", upsertError);
-      }
+    const { error: upsertError } = await supabase
+      .from("user_curation_profiles")
+      .upsert(upsertData, { onConflict: "user_id" });
+
+    if (upsertError) {
+      console.error("Upsert error:", upsertError);
     }
 
     return new Response(JSON.stringify(parsed), {

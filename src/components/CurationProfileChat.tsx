@@ -14,20 +14,29 @@ interface ChatMessage {
 
 interface CurationProfileChatProps {
   existingSummary?: string | null;
+  existingMessages?: ChatMessage[] | null;
   onComplete: () => void;
 }
 
-export function CurationProfileChat({ existingSummary, onComplete }: CurationProfileChatProps) {
+export function CurationProfileChat({ existingSummary, existingMessages, onComplete }: CurationProfileChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Start conversation on mount
+  // Start or resume conversation on mount
   useEffect(() => {
-    if (messages.length === 0 && !isComplete) {
+    if (initialized) return;
+    setInitialized(true);
+
+    if (existingMessages && existingMessages.length > 0) {
+      // Resume saved conversation
+      setMessages(existingMessages);
+    } else {
+      // Start new conversation
       const initialMsg = existingSummary
         ? "기존 프로필을 수정하고 싶습니다."
         : "안녕하세요, 시작합니다.";
@@ -128,6 +137,15 @@ export function CurationProfileChat({ existingSummary, onComplete }: CurationPro
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Resumed conversation indicator */}
+      {existingMessages && existingMessages.length > 0 && !existingSummary && (
+        <Card className="mb-3 border-muted bg-muted/30">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">💬 이전 대화를 이어갑니다. 계속 답변해 주세요.</p>
           </CardContent>
         </Card>
       )}
