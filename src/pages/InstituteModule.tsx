@@ -106,7 +106,7 @@ const InstituteModule = () => {
 
   if (!currentModule || !course) {
     return (
-      <InstituteLayout backTo={`/institute/${courseId}`} backLabel={language === "ko" ? "과목으로" : "Back"}>
+      <InstituteLayout pageTitle={language === "ko" ? "모듈" : "Module"}>
         <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
       </InstituteLayout>
     );
@@ -120,7 +120,7 @@ const InstituteModule = () => {
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
-    <InstituteLayout backTo={`/institute/${courseId}`} backLabel={language === "ko" ? "과목으로" : "Back"}>
+    <InstituteLayout pageTitle={currentModule.title_ko}>
       <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
         {/* Sidebar — desktop only */}
         {!isMobile && (

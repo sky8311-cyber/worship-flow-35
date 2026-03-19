@@ -1,104 +1,53 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { ChevronLeft } from "lucide-react";
-import instituteLogo from "@/assets/kworship-institute-logo.png";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ProfileDropdownMenu } from "@/components/worship-studio/ProfileDropdownMenu";
 
 interface InstituteLayoutProps {
   children: React.ReactNode;
-  backTo?: string;
-  backLabel?: string;
+  pageTitle?: string;
 }
 
-export function InstituteLayout({ children, backTo, backLabel }: InstituteLayoutProps) {
+export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profile } = useAuth();
 
   const isMain = location.pathname === "/institute";
 
   return (
     <div className="inst-root">
-      {/* Header */}
-      <header className="inst-header">
-        <div className="flex items-center gap-2">
-          {!isMain && backTo ? (
-            <button
-              onClick={() => navigate(backTo)}
-              className="flex items-center gap-1"
-              style={{ color: "var(--inst-ink3)", fontSize: 12 }}
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>{backLabel || "뒤로"}</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-3">
-              <img
-                src={instituteLogo}
-                alt="K-Worship Institute"
-                style={{ height: 36, width: "auto" }}
-              />
-              <div className="flex flex-col">
-                <span
-                  style={{
-                    fontSize: 8,
-                    fontWeight: 700,
-                    letterSpacing: 3,
-                    textTransform: "uppercase" as const,
-                    color: "var(--inst-gold)",
-                  }}
-                >
-                  K-Worship
-                </span>
-                <span
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 800,
-                    color: "var(--inst-ink)",
-                    letterSpacing: -0.3,
-                  }}
-                >
-                  Institute
-                </span>
+      {/* Header — Studio pattern */}
+      <header
+        className="flex items-center justify-between px-3 py-2 border-b flex-shrink-0"
+        style={{ background: '#ffffff', borderColor: '#e8e6e0' }}
+      >
+        {/* Left */}
+        {isMain ? (
+          <div className="flex items-center gap-2">
+            <div style={{ lineHeight: 1.1 }}>
+              <div style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', color: '#b8902a' }}>
+                K-Worship
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 800, letterSpacing: '-0.3px', color: '#1a1a1a' }}>
+                Institute
               </div>
             </div>
-          )}
-        </div>
-        <button
-          onClick={() => navigate("/settings")}
-          className="flex-shrink-0"
-        >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                border: "1px solid var(--inst-border)",
-                objectFit: "cover",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: "50%",
-                border: "1px solid var(--inst-border)",
-                background: "var(--inst-surface2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--inst-ink3)",
-              }}
-            >
-              {profile?.full_name?.[0] || "?"}
-            </div>
-          )}
-        </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
+              {pageTitle || '인스티튜트'}
+            </span>
+          </div>
+        )}
+
+        {/* Right — ProfileDropdownMenu */}
+        <ProfileDropdownMenu
+          onExit={() => navigate('/')}
+        />
       </header>
 
       {/* Content */}

@@ -93,14 +93,14 @@ const InstituteCertification = () => {
 
   if (!cert) {
     return (
-      <InstituteLayout backTo="/institute" backLabel={language === "ko" ? "목록으로" : "Back"}>
+      <InstituteLayout pageTitle={language === "ko" ? "자격증" : "Certification"}>
         <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
       </InstituteLayout>
     );
   }
 
   return (
-    <InstituteLayout backTo="/institute" backLabel={language === "ko" ? "목록으로" : "Back"}>
+    <InstituteLayout pageTitle={cert.title_ko}>
       {/* Hero */}
       <div style={{ background: "var(--inst-surface)", padding: "24px 20px", borderBottom: "1px solid var(--inst-border)" }}>
         <span className="inst-badge-certified" style={{ marginBottom: 14, display: "inline-flex" }}>
