@@ -2067,6 +2067,20 @@ const SetBuilder = () => {
                         type="button"
                         onClick={() => {
                           if (hasFeature('ai_set_builder')) {
+                            const missingFields = getMissingRequiredFields();
+                            if (missingFields.length > 0) {
+                              toast.error(
+                                language === "ko" 
+                                  ? "필수 정보를 입력해주세요" 
+                                  : "Please fill in required information",
+                                { 
+                                  description: language === "ko" 
+                                    ? `다음 항목을 선택해주세요: ${missingFields.join(", ")}` 
+                                    : `Please select: ${missingFields.join(", ")}`
+                                }
+                              );
+                              return;
+                            }
                             setShowAIPanel(true);
                           } else {
                             navigate('/membership');
