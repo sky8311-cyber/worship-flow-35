@@ -2067,6 +2067,20 @@ const SetBuilder = () => {
                         type="button"
                         onClick={() => {
                           if (hasFeature('ai_set_builder')) {
+                            const missingFields = getMissingRequiredFields();
+                            if (missingFields.length > 0) {
+                              toast.error(
+                                language === "ko" 
+                                  ? "필수 정보를 입력해주세요" 
+                                  : "Please fill in required information",
+                                { 
+                                  description: language === "ko" 
+                                    ? `다음 항목을 선택해주세요: ${missingFields.join(", ")}` 
+                                    : `Please select: ${missingFields.join(", ")}`
+                                }
+                              );
+                              return;
+                            }
                             setShowAIPanel(true);
                           } else {
                             navigate('/membership');
@@ -2336,7 +2350,14 @@ const SetBuilder = () => {
         open={showAIPanel}
         onOpenChange={setShowAIPanel}
         communityId={formData.community_id || undefined}
-        onAddSongs={(songs) => {
+        onAddSongs={async (songs) => {
+          if (!isEditMode) {
+            const acquired = await acquireLock();
+            if (!acquired) {
+              toast.error(language === "ko" ? "편집 모드를 시작할 수 없습니다." : "Could not enter edit mode.");
+              return;
+            }
+          }
           songs.forEach(({ song, key }) => {
             handleAddSong(song, key);
           });
