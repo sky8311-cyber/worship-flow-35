@@ -2,56 +2,37 @@
 
 ## 문제 분석
 
-스크린샷에서 확인된 이슈:
-1. **"기본 멤버" + "정식멤버" 뱃지가 동시 표시됨** — `RoleBadge role="worship_leader"`가 한국어로 "기본 멤버"를 표시하고, 별도로 tier 뱃지가 "정식멤버"를 표시. 정식멤버로 올라갔으면 "기본 멤버"는 불필요.
-2. **정식멤버 뱃지에 아이콘 없음** — 현재 `<Badge variant="outline">` 텍스트만 사용. 이미 `TierBadge` 컴포넌트(아이콘 포함)가 존재하지만 사용하지 않음.
-3. **"예배 프로필 설정" 아이콘이 User** — AI 기능임을 나타내는 아이콘/뱃지 필요.
-4. **AI 뱃지 패턴 부재** — AI 기능을 표시하는 공통 뱃지가 없음.
+1. **NEW 뱃지 overflow** — 메뉴 항목에 AiBadge + NEW 뱃지가 같이 있어서 넘침. NEW 뱃지 제거.
+2. **기존 프로필이 있는데 처음부터 질문함** — `existingSummary`가 edge function에 전달되고 시스템 프롬프트에도 포함되지만, 채팅 UI에서는 기존 요약을 보여주지 않아 사용자가 맥락을 모름. AI도 "처음부터" 시작하는 것처럼 대화함.
 
 ## 수정 계획
 
-### 1. AppHeader 뱃지 로직 수정 (lines 202-218)
+### 1. AppHeader.tsx — NEW 뱃지 제거
 
-- tier가 `premium` 또는 `church`이면 `RoleBadge role="worship_leader"` 숨김 (tier 뱃지가 대체)
-- 기존 plain `Badge`를 `TierBadge` 컴포넌트로 교체 (아이콘 자동 포함: premium = Crown+Star, church = Building2+Shield)
+- lines 263-270: `showProfileNewBadge` 관련 코드 및 NEW 뱃지 렌더링 제거
+- `showProfileNewBadge` 변수와 관련 useQuery도 정리 (AiBadge만 유지)
 
-### 2. 재사용 가능한 AiBadge 컴포넌트 생성
+### 2. CurationProfileChat.tsx — 기존 프로필 요약 표시 + 수정 모드
 
-- `src/components/AiBadge.tsx` — 작은 "AI" 라벨 + Sparkles 아이콘
-- 크기 옵션 (sm/md), AI 기능 표시가 필요한 곳에서 공통 사용
+**기존 프로필이 있을 때:**
+- 채팅 시작 전, 상단에 기존 `existingSummary`를 카드 형태로 표시 ("현재 저장된 프로필")
+- 초기 메시지를 `"안녕하세요"` 대신 `"기존 프로필을 수정하고 싶습니다"` 같은 맥락 있는 메시지로 변경
+- 이렇게 하면 edge function의 시스템 프롬프트가 이미 기존 정보를 참고하도록 되어 있으므로, AI가 "어떤 부분을 수정하시겠어요?" 식으로 대화 시작
 
-### 3. "예배 프로필 설정" 메뉴 아이콘 변경
+**기존 프로필이 없을 때:**
+- 현재 동작 유지 (처음부터 질문)
 
-- `User` → `Sparkles` 아이콘으로 교체
-- "NEW" 뱃지 옆에 또는 대신 `AiBadge` 추가 (프로필 미완료 시 "NEW" 유지, 완료 시 "AI" 뱃지 표시)
+### 3. Edge Function 시스템 프롬프트 보강
 
-### 기술 상세
+현재 수정 모드 프롬프트: `"사용자가 프로필을 수정하려 합니다. 기존 정보를 참고하여 변경사항을 반영하세요."`
 
-**AppHeader.tsx 뱃지 영역 변경:**
-```tsx
-// Before: worship_leader role badge always shown
-{isWorshipLeader && <RoleBadge role="worship_leader" />}
-// After: hide when tier supersedes
-{isWorshipLeader && tier !== "premium" && tier !== "church" && (
-  <RoleBadge role="worship_leader" />
-)}
+더 명확하게 변경:
+- 기존 정보를 먼저 요약해서 사용자에게 보여주고
+- "어떤 부분을 수정/추가/삭제하시겠어요?" 라고 물어보도록 지시
+- 변경 없이 대화 종료 시에도 기존 프로필 유지
 
-// Before: plain Badge for tier
-<Badge variant="outline">{TIER_CONFIG[tier].label}</Badge>
-// After: TierBadge component with icons
-<TierBadge tier={tier} size="sm" />
-```
-
-**AiBadge 컴포넌트:**
-```tsx
-// 작은 인라인 뱃지: [✨ AI]
-<span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full 
-  bg-gradient-to-r from-violet-100 to-blue-100 text-violet-700 text-xs font-medium">
-  <Sparkles className="w-3 h-3" /> AI
-</span>
-```
-
-**수정 파일:**
-- `src/components/AiBadge.tsx` — 새 파일
-- `src/components/layout/AppHeader.tsx` — 뱃지 로직 + 메뉴 아이콘
+## 수정 파일
+- `src/components/layout/AppHeader.tsx` — NEW 뱃지 제거
+- `src/components/CurationProfileChat.tsx` — 기존 요약 카드 + 수정 모드 초기 메시지
+- `supabase/functions/update-curation-profile/index.ts` — 수정 모드 프롬프트 개선
 
