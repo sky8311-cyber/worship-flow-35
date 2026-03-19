@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ChevronLeft } from "lucide-react";
+import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
   children: React.ReactNode;
