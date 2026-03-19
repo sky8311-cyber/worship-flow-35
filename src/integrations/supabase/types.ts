@@ -1009,6 +1009,168 @@ export type Database = {
           },
         ]
       }
+      institute_badges: {
+        Row: {
+          awarded_at: string | null
+          course_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          course_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string | null
+          course_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_badges_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "institute_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_courses: {
+        Row: {
+          badge_image_url: string | null
+          created_at: string | null
+          description: string | null
+          description_ko: string | null
+          duration_minutes: number | null
+          id: string
+          instructor_name: string | null
+          is_certification: boolean | null
+          is_free: boolean | null
+          is_published: boolean | null
+          sort_order: number | null
+          thumbnail_url: string | null
+          title: string
+          title_ko: string
+        }
+        Insert: {
+          badge_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          description_ko?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_name?: string | null
+          is_certification?: boolean | null
+          is_free?: boolean | null
+          is_published?: boolean | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title: string
+          title_ko: string
+        }
+        Update: {
+          badge_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          description_ko?: string | null
+          duration_minutes?: number | null
+          id?: string
+          instructor_name?: string | null
+          is_certification?: boolean | null
+          is_free?: boolean | null
+          is_published?: boolean | null
+          sort_order?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          title_ko?: string
+        }
+        Relationships: []
+      }
+      institute_enrollments: {
+        Row: {
+          assessment_passed: boolean | null
+          completed_at: string | null
+          completed_modules: number | null
+          course_id: string
+          enrolled_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          assessment_passed?: boolean | null
+          completed_at?: string | null
+          completed_modules?: number | null
+          course_id: string
+          enrolled_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          assessment_passed?: boolean | null
+          completed_at?: string | null
+          completed_modules?: number | null
+          course_id?: string
+          enrolled_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "institute_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_modules: {
+        Row: {
+          content: string | null
+          content_ko: string | null
+          course_id: string
+          created_at: string | null
+          id: string
+          sort_order: number | null
+          title: string
+          title_ko: string
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          content_ko?: string | null
+          course_id: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number | null
+          title: string
+          title_ko: string
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          content_ko?: string | null
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number | null
+          title?: string
+          title_ko?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "institute_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_acceptances: {
         Row: {
           accepted_at: string | null
