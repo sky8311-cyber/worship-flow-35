@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI_CONFIG } from "../_shared/ai-config.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,9 +56,9 @@ serve(async (req) => {
     const moduleContent = moduleRes.data?.content_ko || '';
     const courseTitle = courseRes.data?.title_ko || '';
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     const systemPrompt = `당신은 K-Worship Institute의 AI 러닝 코치입니다.
@@ -70,20 +71,21 @@ serve(async (req) => {
 예배 신학, 사역 원칙, 실천적 리더십에 대해 깊이 있게 답합니다.
 답변은 한국어로 합니다. 간결하고 실용적으로 답합니다.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(AI_CONFIG.endpoint, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': AI_CONFIG.anthropicVersion,
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
+        model: AI_CONFIG.model,
+        max_tokens: 800,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           ...conversation_history,
           { role: 'user', content: message },
         ],
-        max_tokens: 800,
       }),
     });
 
@@ -93,18 +95,13 @@ serve(async (req) => {
           status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: 'AI 서비스 크레딧이 부족합니다.' }), {
-          status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
       const t = await response.text();
-      console.error('AI gateway error:', response.status, t);
-      throw new Error('AI gateway error');
+      console.error('Anthropic API error:', response.status, t);
+      throw new Error('Anthropic API error');
     }
 
     const aiResult = await response.json();
-    const reply = aiResult.choices?.[0]?.message?.content || '';
+    const reply = aiResult.content?.[0]?.text || '';
 
     // Fire-and-forget: log AI usage
     fetch(`${supabaseUrl}/functions/v1/log-ai-usage`, {
