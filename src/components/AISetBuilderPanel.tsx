@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, RefreshCw, Check, ArrowRight, UserCircle } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, Check, ArrowRight, UserCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CurationProfileChat } from "@/components/CurationProfileChat";
+import { Link } from "react-router-dom";
 
 interface AISetBuilderPanelProps {
   open: boolean;
@@ -59,7 +60,7 @@ type PanelView = "onboarding" | "form" | "result";
 export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs, initialTheme, initialDuration }: AISetBuilderPanelProps) {
   const { language } = useTranslation();
   const { user } = useAuth();
-  const { hasFeature } = useTierFeature();
+  const { hasFeature, tier } = useTierFeature();
   const queryClient = useQueryClient();
 
   const [theme, setTheme] = useState("");
@@ -71,6 +72,10 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
   const [result, setResult] = useState<GeneratedSong[] | null>(null);
   const [songMap, setSongMap] = useState<Record<string, any>>({});
   const [showEditProfile, setShowEditProfile] = useState(false);
+
+  const hasAiAccess = hasFeature("ai_set_builder");
+  // Profile onboarding is open to worship_leader (Basic) and above
+  const canAccessProfile = tier === "worship_leader" || tier === "premium" || tier === "church";
 
   // Fetch curation profile
   const { data: curationProfile, isLoading: profileLoading } = useQuery({
@@ -89,13 +94,13 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
   });
 
   const hasProfile = !!curationProfile?.skills_summary;
-  const hasAiAccess = hasFeature("ai_set_builder");
 
   // Determine current view
   const getCurrentView = (): PanelView => {
     if (showEditProfile) return "onboarding";
     if (result) return "result";
-    if (hasAiAccess && !hasProfile && !profileLoading) return "onboarding";
+    // Show onboarding if user can access profile but hasn't set one up yet
+    if (canAccessProfile && !hasProfile && !profileLoading) return "onboarding";
     return "form";
   };
 
@@ -202,6 +207,29 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
     setResult(null);
   };
 
+  // Locked banner for users who have profile but no AI access
+  const LockedGenerationBanner = () => (
+    <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg space-y-3">
+      <div className="flex items-start gap-3">
+        <div className="p-2 bg-primary/10 rounded-full">
+          <Lock className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm">예배 프로필이 준비됐습니다.</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            AI 워십세트 생성은 정식멤버(Full Member)부터 사용할 수 있습니다.
+            정식멤버가 되면 지금 설정한 프로필이 바로 적용됩니다.
+          </p>
+        </div>
+      </div>
+      <Link to="/membership">
+        <Button variant="outline" size="sm" className="w-full">
+          정식멤버 안내 보기
+        </Button>
+      </Link>
+    </div>
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
@@ -250,84 +278,92 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                     </button>
                   )}
 
-                  <div className="space-y-2">
-                    <Label>{language === "ko" ? "설교 본문/주제" : "Sermon Theme / Scripture"}</Label>
-                    <Input
-                      placeholder={language === "ko" ? "예: 은혜, 요한복음 3:16" : "e.g., Grace, John 3:16"}
-                      value={theme}
-                      onChange={(e) => setTheme(e.target.value)}
-                    />
-                  </div>
+                  {/* Show locked banner if profile exists but no AI access */}
+                  {hasProfile && !hasAiAccess && <LockedGenerationBanner />}
 
-                  <div className="space-y-2">
-                    <Label>{language === "ko" ? "곡 수" : "Number of Songs"}</Label>
-                    <Input
-                      type="number"
-                      min={3}
-                      max={12}
-                      value={songCount || ""}
-                      onChange={(e) => setSongCount(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
+                  {/* Show form only if user has AI access */}
+                  {hasAiAccess && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>{language === "ko" ? "설교 본문/주제" : "Sermon Theme / Scripture"}</Label>
+                        <Input
+                          placeholder={language === "ko" ? "예: 은혜, 요한복음 3:16" : "e.g., Grace, John 3:16"}
+                          value={theme}
+                          onChange={(e) => setTheme(e.target.value)}
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>{language === "ko" ? "선호 키" : "Preferred Key"}</Label>
-                    <Select value={preferredKey} onValueChange={setPreferredKey}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={language === "ko" ? "키 선택 (선택사항)" : "Select key (optional)"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">{language === "ko" ? "상관없음" : "Any"}</SelectItem>
-                        {MUSICAL_KEYS.map((k) => (
-                          <SelectItem key={k} value={k}>{k}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <div className="space-y-2">
+                        <Label>{language === "ko" ? "곡 수" : "Number of Songs"}</Label>
+                        <Input
+                          type="number"
+                          min={3}
+                          max={12}
+                          value={songCount || ""}
+                          onChange={(e) => setSongCount(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>{language === "ko" ? "예배 시간 (분)" : "Service Duration (min)"}</Label>
-                    <Input
-                      type="number"
-                      min={10}
-                      max={120}
-                      value={durationMinutes || ""}
-                      onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
-                    />
-                  </div>
+                      <div className="space-y-2">
+                        <Label>{language === "ko" ? "선호 키" : "Preferred Key"}</Label>
+                        <Select value={preferredKey} onValueChange={setPreferredKey}>
+                          <SelectTrigger>
+                            <SelectValue placeholder={language === "ko" ? "키 선택 (선택사항)" : "Select key (optional)"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="any">{language === "ko" ? "상관없음" : "Any"}</SelectItem>
+                            {MUSICAL_KEYS.map((k) => (
+                              <SelectItem key={k} value={k}>{k}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label>{language === "ko" ? "분위기" : "Tone"}</Label>
-                    <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high_energy">{language === "ko" ? "에너지 높은" : "High Energy"}</SelectItem>
-                        <SelectItem value="reflective">{language === "ko" ? "묵상적" : "Reflective"}</SelectItem>
-                        <SelectItem value="mixed">{language === "ko" ? "혼합" : "Mixed"}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <div className="space-y-2">
+                        <Label>{language === "ko" ? "예배 시간 (분)" : "Service Duration (min)"}</Label>
+                        <Input
+                          type="number"
+                          min={10}
+                          max={120}
+                          value={durationMinutes || ""}
+                          onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
+                        />
+                      </div>
 
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={isLoading}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {language === "ko" ? "AI가 세트를 구성하고 있습니다..." : "AI is building your set..."}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        {language === "ko" ? "AI 세트 생성" : "Generate AI Set"}
-                      </>
-                    )}
-                  </Button>
+                      <div className="space-y-2">
+                        <Label>{language === "ko" ? "분위기" : "Tone"}</Label>
+                        <Select value={tone} onValueChange={setTone}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high_energy">{language === "ko" ? "에너지 높은" : "High Energy"}</SelectItem>
+                            <SelectItem value="reflective">{language === "ko" ? "묵상적" : "Reflective"}</SelectItem>
+                            <SelectItem value="mixed">{language === "ko" ? "혼합" : "Mixed"}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        onClick={handleGenerate}
+                        disabled={isLoading}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            {language === "ko" ? "AI가 세트를 구성하고 있습니다..." : "AI is building your set..."}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            {language === "ko" ? "AI 세트 생성" : "Generate AI Set"}
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3 py-4">
