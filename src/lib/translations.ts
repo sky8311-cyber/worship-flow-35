@@ -140,6 +140,7 @@ export const translations = {
       chat: "Chat",
       customerSupport: "Support",
       communitySearch: "Communities",
+      institute: "Institute",
     },
     studio: {
       title: "Worship Studio",
@@ -2287,6 +2288,7 @@ songCard: {
       chat: "채팅",
       customerSupport: "고객상담",
       communitySearch: "공동체 찾기",
+      institute: "인스티튜트",
     },
     studio: {
       title: "예배공작소",
