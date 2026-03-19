@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTierFeature } from "@/hooks/useTierFeature";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,13 +11,10 @@ const DISMISSED_KEY = "kworship_profile_prompt_dismissed";
 const IN_PROGRESS_KEY = "kworship_profile_prompt_in_progress";
 
 export function CurationProfilePromptDialog() {
-  const { user } = useAuth();
-  const { hasFeature } = useTierFeature();
+  const { user, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
-
-  const hasAiAccess = hasFeature("ai_set_builder");
 
   const { data: curationProfile, isLoading } = useQuery({
     queryKey: ["curation-profile", user?.id],
@@ -32,17 +28,17 @@ export function CurationProfilePromptDialog() {
       if (error) throw error;
       return data as { skills_summary: string | null } | null;
     },
-    enabled: !!user && hasAiAccess,
+    enabled: !!user && isWorshipLeader,
   });
 
   useEffect(() => {
-    if (isLoading || !user || !hasAiAccess) return;
+    if (isLoading || !user || !isWorshipLeader) return;
     if (curationProfile?.skills_summary) return;
     if (localStorage.getItem(DISMISSED_KEY)) return;
     if (sessionStorage.getItem(IN_PROGRESS_KEY)) return;
     if (location.pathname === "/settings") return;
     setOpen(true);
-  }, [isLoading, user, hasAiAccess, curationProfile, location.pathname]);
+  }, [isLoading, user, isWorshipLeader, curationProfile, location.pathname]);
 
   const handleSetup = () => {
     sessionStorage.setItem(IN_PROGRESS_KEY, "1");

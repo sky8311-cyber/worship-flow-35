@@ -24,10 +24,12 @@ import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useTierFeature, TIER_CONFIG } from "@/hooks/useTierFeature";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Home, Languages } from "lucide-react";
-
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Home, Languages, User } from "lucide-react";
 interface AppHeaderProps {
   showBackButton?: boolean;
   backPath?: string;
@@ -35,14 +37,34 @@ interface AppHeaderProps {
 }
 
 export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderProps) => {
-  const { isAdmin, signOut, profile, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity } = useAuth();
+  const { isAdmin, signOut, profile, user, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity } = useAuth();
   const { unreadCount, markAllAsRead } = useNotifications();
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const { isSubscriptionActive } = useChurchSubscription();
   const { isChurchMenuVisible, isSandboxTester, isLoading: settingsLoading } = useAppSettings();
+  const { tier } = useTierFeature();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if worship profile is set up (for NEW badge)
+  const { data: curationProfile } = useQuery({
+    queryKey: ["curation-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await (supabase
+        .from("user_curation_profiles" as any)
+        .select("skills_summary")
+        .eq("user_id", user.id)
+        .maybeSingle() as any);
+      if (error) throw error;
+      return data as { skills_summary: string | null } | null;
+    },
+    enabled: !!user && isWorshipLeader,
+    staleTime: 5 * 60 * 1000,
+  });
+  const showProfileNewBadge = isWorshipLeader && !curationProfile?.skills_summary;
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -177,7 +199,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <p className="text-sm font-medium">{profile?.full_name || t("profile.title")}</p>
                     <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
                     
-                    {/* Role Badges */}
+                    {/* Role & Tier Badges */}
                     <div className="flex gap-1 flex-wrap">
                       {isAdmin && <RoleBadge role="admin" />}
                       {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
@@ -187,6 +209,12 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                       )}
                       {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="member" />
+                      )}
+                      {/* Tier Badge */}
+                      {(tier === "premium" || tier === "church") && (
+                        <Badge variant="outline" className={`text-xs ${TIER_CONFIG[tier].color}`}>
+                          {language === "ko" ? TIER_CONFIG[tier].labelKo : TIER_CONFIG[tier].label}
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -224,6 +252,20 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
+                {/* Worship Profile Settings - Worship Leaders only */}
+                {isWorshipLeader && (
+                  <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span className="flex items-center justify-between w-full">
+                      {language === "ko" ? "예배 프로필 설정" : "Worship Profile"}
+                      {showProfileNewBadge && (
+                        <Badge variant="destructive" className="text-xs ml-2 px-1.5 py-0">
+                          NEW
+                        </Badge>
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" />
