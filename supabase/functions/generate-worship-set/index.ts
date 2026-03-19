@@ -199,17 +199,18 @@ serve(async (req) => {
             if (songsInSet.length > 0) {
               const flow = songsInSet.map(ss => {
                 const title = songTitleMap[ss.song_id] || '?';
-                const key = ss.key || '?';
+                const key = ss.key ? `Key:${ss.key}` : '';
                 const bpm = ss.bpm;
-                const tempo = bpm ? (bpm >= 120 ? '빠름' : bpm >= 90 ? '보통' : '느림') : '?';
-                return `${title} (Key:${key}, 템포:${tempo})`;
+                const tempoPart = bpm ? (bpm >= 120 ? '빠름' : bpm >= 90 ? '보통' : '느림') : '';
+                const meta = [key, tempoPart ? `템포:${tempoPart}` : ''].filter(Boolean).join(', ');
+                return meta ? `${title} (${meta})` : title;
               }).join(' → ');
               patternLines.push(`- 세트 ${idx + 1}: ${flow}`);
             }
           });
 
-          if (patternLines.length > 0) {
-            patternsSection = `\n\n실제 찬양인도자들의 최근 선곡 패턴 참고 (복사 금지, 패턴만 참고):\n${patternLines.join('\n')}`;
+          if (patternLines.length >= 3) {
+            patternsSection = `\n\n실제 찬양인도자들의 최근 키 흐름 패턴 참고 (복사 금지, 키 전환 흐름만 참고):\n각 세트의 곡 순서와 키 흐름을 보여줍니다. 템포는 SKILLS_MD의 선곡 구조 원칙을 따릅니다.\n${patternLines.join('\n')}`;
           }
         }
       }
