@@ -245,14 +245,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <Sparkles className="mr-2 h-4 w-4" />
                     <span className="flex items-center justify-between w-full">
                       {language === "ko" ? "내 예배 프로필 설정" : "Worship Profile"}
-                      <span className="flex items-center gap-1 ml-2">
-                        <AiBadge size="sm" />
-                        {showProfileNewBadge && (
-                          <Badge variant="destructive" className="text-xs px-1.5 py-0">
-                            NEW
-                          </Badge>
-                        )}
-                      </span>
+                      <AiBadge size="sm" className="ml-2" />
                     </span>
                   </DropdownMenuItem>
                 )}
