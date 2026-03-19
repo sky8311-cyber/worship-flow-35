@@ -257,14 +257,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 {/* Worship Profile Settings - Worship Leaders only */}
                 {isWorshipLeader && (
                   <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
-                    <User className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     <span className="flex items-center justify-between w-full">
-                      {language === "ko" ? "예배 프로필 설정" : "Worship Profile"}
-                      {showProfileNewBadge && (
-                        <Badge variant="destructive" className="text-xs ml-2 px-1.5 py-0">
-                          NEW
-                        </Badge>
-                      )}
+                      {language === "ko" ? "내 예배 프로필 설정" : "Worship Profile"}
+                      <span className="flex items-center gap-1 ml-2">
+                        <AiBadge size="sm" />
+                        {showProfileNewBadge && (
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                            NEW
+                          </Badge>
+                        )}
+                      </span>
                     </span>
                   </DropdownMenuItem>
                 )}
