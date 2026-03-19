@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Lock, Check, ChevronLeft, ChevronRight, BookOpen, PartyPopper } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AiCoachPanel } from "@/components/institute/AiCoachPanel";
 
 const InstituteModule = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
