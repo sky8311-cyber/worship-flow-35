@@ -59,7 +59,7 @@ const AdminUsers = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch all data in parallel
-      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult] = await Promise.all([
+      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult, premiumResult, churchMembersResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, email, full_name, created_at, last_active_at")
@@ -86,7 +86,14 @@ const AdminUsers = () => {
           .select("user_id, community_id"),
         supabase
           .from("worship_communities")
-          .select("id, name, leader_id")
+          .select("id, name, leader_id"),
+        supabase
+          .from("premium_subscriptions")
+          .select("user_id, subscription_status")
+          .eq("subscription_status", "active"),
+        supabase
+          .from("church_account_members")
+          .select("user_id"),
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
@@ -100,7 +107,12 @@ const AdminUsers = () => {
       const songs = songsResult.data || [];
       const communityMembers = communityMembersResult.data || [];
       const communities = communitiesResult.data || [];
+      const premiumSubs = premiumResult.data || [];
+      const churchMembers = churchMembersResult.data || [];
       
+      // Create premium/church lookup sets
+      const premiumUserIds = new Set(premiumSubs.map(s => s.user_id));
+      const churchUserIds = new Set(churchMembers.map(m => m.user_id));
       // Create lookup maps for O(1) access
       const seedsMap = new Map(seeds.map(s => [s.user_id, s]));
       const levelsMap = new Map(levels.map(l => [l.level, l]));
@@ -151,12 +163,20 @@ const AdminUsers = () => {
         // Use last_active_at from profiles (more accurate), fallback to last_sign_in_at from auth
         const lastActivity = profile.last_active_at || authUser?.last_sign_in_at || null;
         
+        const userRolesList = roles?.filter(r => r.user_id === profile.id) || [];
+        const isWL = userRolesList.some(r => r.role === 'worship_leader');
+        const tier = churchUserIds.has(profile.id) ? 'church' as const
+          : premiumUserIds.has(profile.id) ? 'premium' as const
+          : isWL ? 'worship_leader' as const
+          : 'member' as const;
+
         return {
           ...profile,
-          user_roles: roles?.filter(r => r.user_id === profile.id) || [],
+          user_roles: userRolesList,
           email_confirmed_at: authUser?.email_confirmed_at || null,
           last_sign_in_at: authUser?.last_sign_in_at || null,
           last_active_at: lastActivity,
+          tier,
           songCount: songCountMap.get(profile.id) || 0,
           communities: userCommunitiesMap.get(profile.id) || [],
           seedData: seedData ? {

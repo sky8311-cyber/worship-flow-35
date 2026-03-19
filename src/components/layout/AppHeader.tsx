@@ -190,19 +190,10 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                     <div className="flex gap-1 flex-wrap">
                       {isAdmin && <RoleBadge role="admin" />}
                       {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
-                      {isWorshipLeader && tier !== "premium" && tier !== "church" && (
-                        <RoleBadge role="worship_leader" />
-                      )}
                       {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                         <RoleBadge role="community_leader" />
                       )}
-                      {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
-                        <RoleBadge role="member" />
-                      )}
-                      {/* Tier Badge with icons */}
-                      {(tier === "premium" || tier === "church") && (
-                        <TierBadge tier={tier} size="sm" />
-                      )}
+                      <TierBadge tier={tier} size="sm" />
                     </div>
                   </div>
                 </DropdownMenuLabel>

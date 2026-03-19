@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 import { RoleBadge } from "@/components/RoleBadge";
+import { TierBadge } from "@/components/admin/TierBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -222,6 +223,7 @@ const Settings = () => {
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
   const { isSandboxTester } = useAppSettings();
+  const { tier } = useTierFeature();
   const queryClient = useQueryClient();
 
   // Email change state
@@ -703,13 +705,10 @@ const Settings = () => {
             <div className="flex flex-wrap gap-2">
               {isAdmin && <RoleBadge role="admin" />}
               {isCommunityOwnerInAnyCommunity && <RoleBadge role="community_owner" />}
-              {isWorshipLeader && <RoleBadge role="worship_leader" />}
               {isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
                 <RoleBadge role="community_leader" />
               )}
-              {!isAdmin && !isWorshipLeader && !isCommunityLeaderInAnyCommunity && !isCommunityOwnerInAnyCommunity && (
-                <RoleBadge role="member" />
-              )}
+              <TierBadge tier={tier} size="sm" />
             </div>
 
             <Separator />

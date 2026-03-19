@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoleBadge } from "@/components/RoleBadge";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { TierLevel } from "@/hooks/useTierFeature";
 import { Shield, ShieldOff, Mic, MicOff, KeyRound, Trash2, CheckCircle, XCircle, Mail, Sprout } from "lucide-react";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -27,6 +29,7 @@ interface UserCardProps {
     last_sign_in_at?: string | null;
     last_active_at?: string | null;
     user_roles?: { role: string }[];
+    tier?: TierLevel;
   };
   seedData?: SeedData | null;
   onAddRole: (userId: string, role: string) => void;
@@ -105,8 +108,7 @@ export function UserCard({
             </Badge>
           )}
           {hasAdmin && <RoleBadge role="admin" />}
-          {hasWorshipLeader && <RoleBadge role="worship_leader" />}
-          {!hasAdmin && !hasWorshipLeader && <RoleBadge role="member" />}
+          <TierBadge tier={user.tier || (hasWorshipLeader ? 'worship_leader' : 'member')} size="sm" />
           {/* Seed Level Badge */}
           {seedData && (
             <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
