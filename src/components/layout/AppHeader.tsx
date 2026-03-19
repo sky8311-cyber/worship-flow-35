@@ -252,6 +252,20 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
+                {/* Worship Profile Settings - Worship Leaders only */}
+                {isWorshipLeader && (
+                  <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span className="flex items-center justify-between w-full">
+                      {language === "ko" ? "예배 프로필 설정" : "Worship Profile"}
+                      {showProfileNewBadge && (
+                        <Badge variant="destructive" className="text-xs ml-2 px-1.5 py-0">
+                          NEW
+                        </Badge>
+                      )}
+                    </span>
+                  </DropdownMenuItem>
+                )}
                 
                 <DropdownMenuItem onClick={() => navigate("/settings")}>
                   <Settings className="mr-2 h-4 w-4" />
