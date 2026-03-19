@@ -227,6 +227,15 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
+                {isInstructor && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/institute/manage">
+                      <GraduationCap className="mr-2 h-4 w-4" />
+                      {language === "ko" ? "내 과목 관리" : "My Courses"}
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                
                 {!settingsLoading && (isAdmin || isSandboxTester) && (
                   <DropdownMenuItem asChild>
                     <Link to="/membership" className="flex items-center justify-between w-full">
