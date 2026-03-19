@@ -1,9 +1,10 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Users } from "lucide-react";
+import { BookOpen, Users, Award } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AdminInstituteInstructors } from "@/components/institute/AdminInstituteInstructors";
 import { AdminInstituteCourses } from "@/components/institute/AdminInstituteCourses";
+import { AdminInstituteCertifications } from "@/components/institute/AdminInstituteCertifications";
 
 const AdminInstitute = () => {
   const { language } = useTranslation();
@@ -26,6 +27,10 @@ const AdminInstitute = () => {
               <BookOpen className="w-4 h-4" />
               {language === "ko" ? "과목 관리" : "Courses"}
             </TabsTrigger>
+            <TabsTrigger value="certifications" className="flex items-center gap-1.5">
+              <Award className="w-4 h-4" />
+              {language === "ko" ? "Certification 관리" : "Certifications"}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="instructors">
@@ -34,6 +39,10 @@ const AdminInstitute = () => {
 
           <TabsContent value="courses">
             <AdminInstituteCourses />
+          </TabsContent>
+
+          <TabsContent value="certifications">
+            <AdminInstituteCertifications />
           </TabsContent>
         </Tabs>
       </div>
