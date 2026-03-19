@@ -34,7 +34,7 @@ const MUSICAL_KEYS = [
   "Am", "A#m/Bbm", "Bm", "Cm", "C#m/Dbm", "Dm", "D#m/Ebm", "Em", "Fm", "F#m/Gbm", "Gm", "G#m/Abm",
 ];
 
-export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs }: AISetBuilderPanelProps) {
+export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs, initialTheme, initialDuration }: AISetBuilderPanelProps) {
   const { language } = useTranslation();
   const [theme, setTheme] = useState("");
   const [songCount, setSongCount] = useState(5);
