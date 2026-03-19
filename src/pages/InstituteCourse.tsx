@@ -91,7 +91,7 @@ const InstituteCourse = () => {
 
   if (!course) {
     return (
-      <InstituteLayout backTo="/institute" backLabel={language === "ko" ? "목록으로" : "Back"}>
+      <InstituteLayout pageTitle={language === "ko" ? "과목 상세" : "Course Detail"}>
         <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
       </InstituteLayout>
     );
