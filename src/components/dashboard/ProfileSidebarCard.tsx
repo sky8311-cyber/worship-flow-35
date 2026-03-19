@@ -223,6 +223,11 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
               <SeedWidget onNavigate={onNavigate} />
             </div>
           )}
+
+          {/* K-Worship Certified Badges */}
+          {profile?.id && (
+            <ProfileBadgesSection userId={profile.id} />
+          )}
         </CardContent>
       </Card>
 

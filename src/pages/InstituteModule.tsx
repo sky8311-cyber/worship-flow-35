@@ -203,9 +203,12 @@ const InstituteModule = () => {
             {/* Content */}
             {(language === "ko" ? currentModule.content_ko : currentModule.content) && (
               <div className="prose prose-sm dark:prose-invert max-w-none mb-8">
-                <div dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }} />
+              <div dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }} />
               </div>
             )}
+
+            {/* AI Coach */}
+            <AiCoachPanel courseId={courseId!} moduleId={moduleId!} />
 
             {/* Navigation */}
             <Card className="p-4 flex items-center justify-between">
