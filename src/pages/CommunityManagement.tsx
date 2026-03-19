@@ -1092,16 +1092,13 @@ export default function CommunityManagement() {
                               </p>
                             )}
                             
-                            {/* Role Badges */}
+                            {/* Role & Tier Badges */}
                             <div className="flex flex-wrap gap-1 mt-1">
                               {memberIsOwner && <RoleBadge role="community_owner" />}
-                              {memberIsWorshipLeader && <RoleBadge role="worship_leader" />}
                               {memberIsCommunityLeader && !memberIsOwner && (
                                 <RoleBadge role="community_leader" />
                               )}
-                              {!memberIsCommunityLeader && !memberIsOwner && (
-                                <RoleBadge role="member" />
-                              )}
+                              <TierBadge tier={(member as any).tier || 'member'} size="sm" />
                             </div>
                           </div>
                         </div>

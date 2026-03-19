@@ -108,8 +108,7 @@ export function UserCard({
             </Badge>
           )}
           {hasAdmin && <RoleBadge role="admin" />}
-          {hasWorshipLeader && <RoleBadge role="worship_leader" />}
-          {!hasAdmin && !hasWorshipLeader && <RoleBadge role="member" />}
+          <TierBadge tier={user.tier || (hasWorshipLeader ? 'worship_leader' : 'member')} size="sm" />
           {/* Seed Level Badge */}
           {seedData && (
             <Badge variant="outline" className="gap-1 bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">

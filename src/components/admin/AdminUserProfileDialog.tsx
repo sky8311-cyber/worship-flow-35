@@ -183,8 +183,7 @@ export function AdminUserProfileDialog({ userId, open, onOpenChange }: AdminUser
                 <div className="flex items-center gap-2 flex-wrap mb-2">
                   <h3 className="text-xl font-semibold">{profile.full_name || "No name"}</h3>
                   {hasAdmin && <RoleBadge role="admin" />}
-                  {hasWorshipLeader && <RoleBadge role="worship_leader" />}
-                  {!hasAdmin && !hasWorshipLeader && <RoleBadge role="member" />}
+                  <TierBadge tier={determineTierFromData({ hasPremium: isFullMember, isWorshipLeader: hasWorshipLeader })} size="sm" />
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Mail className="h-4 w-4" />
