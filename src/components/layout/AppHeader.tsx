@@ -49,9 +49,22 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if user is a registered instructor
+  const { data: isInstructor } = useQuery({
+    queryKey: ["is-instructor", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      const { data } = await supabase
+        .from("institute_instructors")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user?.id,
+  });
 
 
-  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
