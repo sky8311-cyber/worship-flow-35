@@ -109,6 +109,7 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
           <div className="flex-1 min-h-0">
             <CurationProfileChat
               existingSummary={profile?.skills_summary}
+              existingMessages={profile?.conversation_messages}
               onComplete={handleComplete}
             />
           </div>
