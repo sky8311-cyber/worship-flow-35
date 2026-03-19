@@ -3788,18 +3788,21 @@ export type Database = {
       user_curation_profiles: {
         Row: {
           congregation_notes: string | null
+          conversation_messages: Json | null
           skills_summary: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           congregation_notes?: string | null
+          conversation_messages?: Json | null
           skills_summary?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           congregation_notes?: string | null
+          conversation_messages?: Json | null
           skills_summary?: string | null
           updated_at?: string | null
           user_id?: string
