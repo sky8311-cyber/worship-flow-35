@@ -163,12 +163,20 @@ const AdminUsers = () => {
         // Use last_active_at from profiles (more accurate), fallback to last_sign_in_at from auth
         const lastActivity = profile.last_active_at || authUser?.last_sign_in_at || null;
         
+        const userRolesList = roles?.filter(r => r.user_id === profile.id) || [];
+        const isWL = userRolesList.some(r => r.role === 'worship_leader');
+        const tier = churchUserIds.has(profile.id) ? 'church' as const
+          : premiumUserIds.has(profile.id) ? 'premium' as const
+          : isWL ? 'worship_leader' as const
+          : 'member' as const;
+
         return {
           ...profile,
-          user_roles: roles?.filter(r => r.user_id === profile.id) || [],
+          user_roles: userRolesList,
           email_confirmed_at: authUser?.email_confirmed_at || null,
           last_sign_in_at: authUser?.last_sign_in_at || null,
           last_active_at: lastActivity,
+          tier,
           songCount: songCountMap.get(profile.id) || 0,
           communities: userCommunitiesMap.get(profile.id) || [],
           seedData: seedData ? {
