@@ -101,7 +101,7 @@ const InstituteCourse = () => {
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
-    <InstituteLayout backTo="/institute" backLabel={language === "ko" ? "목록으로" : "Back"}>
+    <InstituteLayout pageTitle={course.title_ko}>
       {/* Hero */}
       <div style={{ background: "var(--inst-surface)", padding: "24px 20px 20px", borderBottom: "1px solid var(--inst-border)" }}>
         {certLink && (

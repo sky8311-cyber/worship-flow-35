@@ -120,7 +120,7 @@ const InstituteModule = () => {
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
-    <InstituteLayout backTo={`/institute/${courseId}`} backLabel={language === "ko" ? "과목으로" : "Back"}>
+    <InstituteLayout pageTitle={currentModule.title_ko}>
       <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
         {/* Sidebar — desktop only */}
         {!isMobile && (
