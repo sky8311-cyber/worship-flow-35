@@ -34,6 +34,7 @@ const CurationProfileCard = ({ autoOpen = false }: { autoOpen?: boolean }) => {
   const { tier } = useTierFeature();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
   const [chatOpen, setChatOpen] = useState(false);
 
   // Open to worship_leader (Basic) and above
