@@ -64,7 +64,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
     staleTime: 5 * 60 * 1000,
   });
   const showProfileNewBadge = isWorshipLeader && !curationProfile?.skills_summary;
-  const location = useLocation();
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
