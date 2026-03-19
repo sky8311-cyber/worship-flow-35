@@ -11,13 +11,10 @@ const DISMISSED_KEY = "kworship_profile_prompt_dismissed";
 const IN_PROGRESS_KEY = "kworship_profile_prompt_in_progress";
 
 export function CurationProfilePromptDialog() {
-  const { user } = useAuth();
-  const { hasFeature } = useTierFeature();
+  const { user, isWorshipLeader } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
-
-  const hasAiAccess = hasFeature("ai_set_builder");
 
   const { data: curationProfile, isLoading } = useQuery({
     queryKey: ["curation-profile", user?.id],
