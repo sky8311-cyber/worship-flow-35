@@ -1012,31 +1012,103 @@ export type Database = {
       institute_badges: {
         Row: {
           awarded_at: string | null
-          course_id: string
+          certification_id: string | null
           id: string
           user_id: string
         }
         Insert: {
           awarded_at?: string | null
-          course_id: string
+          certification_id?: string | null
           id?: string
           user_id: string
         }
         Update: {
           awarded_at?: string | null
-          course_id?: string
+          certification_id?: string | null
           id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "institute_badges_course_id_fkey"
+            foreignKeyName: "institute_badges_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "institute_certifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_certification_courses: {
+        Row: {
+          certification_id: string | null
+          course_id: string | null
+          id: string
+          sort_order: number | null
+        }
+        Insert: {
+          certification_id?: string | null
+          course_id?: string | null
+          id?: string
+          sort_order?: number | null
+        }
+        Update: {
+          certification_id?: string | null
+          course_id?: string | null
+          id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_certification_courses_certification_id_fkey"
+            columns: ["certification_id"]
+            isOneToOne: false
+            referencedRelation: "institute_certifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_certification_courses_course_id_fkey"
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "institute_courses"
             referencedColumns: ["id"]
           },
         ]
+      }
+      institute_certifications: {
+        Row: {
+          badge_image_url: string | null
+          certificate_template_url: string | null
+          created_at: string | null
+          description_ko: string | null
+          id: string
+          is_published: boolean | null
+          sort_order: number | null
+          title: string
+          title_ko: string
+        }
+        Insert: {
+          badge_image_url?: string | null
+          certificate_template_url?: string | null
+          created_at?: string | null
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean | null
+          sort_order?: number | null
+          title: string
+          title_ko: string
+        }
+        Update: {
+          badge_image_url?: string | null
+          certificate_template_url?: string | null
+          created_at?: string | null
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean | null
+          sort_order?: number | null
+          title?: string
+          title_ko?: string
+        }
+        Relationships: []
       }
       institute_courses: {
         Row: {
