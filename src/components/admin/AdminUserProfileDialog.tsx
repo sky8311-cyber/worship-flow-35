@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
 import { RoleBadge } from "@/components/RoleBadge";
+import { TierBadge } from "@/components/admin/TierBadge";
+import { determineTierFromData } from "@/hooks/useTierFeature";
 import { Phone, Calendar, MapPin, Music, Church, Instagram, Youtube, Mail, Globe, Briefcase, Sprout, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
