@@ -82,22 +82,62 @@ serve(async (req) => {
     const { theme, songCount, preferredKey, durationMinutes, tone, communityId } = await req.json();
 
     // Fetch available songs
-    let query = adminSupabase
-      .from('songs')
-      .select('id, title, artist, default_key, tags, topics, language')
-      .limit(500);
+    let songs: any[] = [];
 
     if (communityId) {
-      // Get songs visible to this community
-      query = query.or(`is_private.eq.false,is_private.is.null,created_by.in.(select user_id from community_members where community_id='${communityId}')`);
-    }
+      // First get community member IDs
+      const { data: members } = await adminSupabase
+        .from('community_members')
+        .select('user_id')
+        .eq('community_id', communityId);
 
-    const { data: songs, error: songsError } = await query;
-    if (songsError) {
-      console.error('Failed to fetch songs:', songsError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch songs' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      const memberIds = (members || []).map((m: any) => m.user_id);
+
+      // Get public songs + private songs created by community members
+      const { data: publicSongs, error: pubErr } = await adminSupabase
+        .from('songs')
+        .select('id, title, artist, default_key, tags, topics, language')
+        .or('is_private.eq.false,is_private.is.null')
+        .limit(400);
+
+      if (pubErr) {
+        console.error('Failed to fetch public songs:', pubErr);
+        return new Response(JSON.stringify({ error: 'Failed to fetch songs' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      let privateSongs: any[] = [];
+      if (memberIds.length > 0) {
+        const { data: privData } = await adminSupabase
+          .from('songs')
+          .select('id, title, artist, default_key, tags, topics, language')
+          .eq('is_private', true)
+          .in('created_by', memberIds)
+          .limit(100);
+        privateSongs = privData || [];
+      }
+
+      // Deduplicate by id
+      const songMap = new Map<string, any>();
+      for (const s of [...(publicSongs || []), ...privateSongs]) {
+        songMap.set(s.id, s);
+      }
+      songs = Array.from(songMap.values());
+    } else {
+      const { data, error: songsError } = await adminSupabase
+        .from('songs')
+        .select('id, title, artist, default_key, tags, topics, language')
+        .or('is_private.eq.false,is_private.is.null')
+        .limit(500);
+
+      if (songsError) {
+        console.error('Failed to fetch songs:', songsError);
+        return new Response(JSON.stringify({ error: 'Failed to fetch songs' }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      songs = data || [];
     }
 
     if (!songs || songs.length === 0) {
