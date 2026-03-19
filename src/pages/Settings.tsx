@@ -20,9 +20,82 @@ import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/l
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
-import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Home, CreditCard } from "lucide-react";
+import { Mail, Lock, User, UserCog, Users, ExternalLink, Clock, XCircle, AlertTriangle, Globe, RefreshCw, Bell, BellOff, Home, CreditCard, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
+import { useTierFeature } from "@/hooks/useTierFeature";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { CurationProfileChat } from "@/components/CurationProfileChat";
+
+// Curation Profile Card Component
+const CurationProfileCard = () => {
+  const { user } = useAuth();
+  const { language } = useTranslation();
+  const { hasFeature } = useTierFeature();
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["curation-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await (supabase
+        .from("user_curation_profiles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle() as any);
+      if (error) throw error;
+      return data as { skills_summary: string | null } | null;
+    },
+    enabled: !!user,
+  });
+
+  if (!hasFeature("ai_set_builder")) return null;
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            {language === "ko" ? "내 예배 프로필" : "My Worship Profile"}
+          </CardTitle>
+          <CardDescription>
+            {profile?.skills_summary
+              ? profile.skills_summary
+              : (language === "ko" ? "AI 선곡을 위한 프로필을 아직 설정하지 않았습니다." : "You haven't set up your worship profile yet.")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => setChatOpen(true)} variant={profile?.skills_summary ? "outline" : "default"} className="w-full">
+            {profile?.skills_summary
+              ? (language === "ko" ? "프로필 수정하기" : "Edit Profile")
+              : (language === "ko" ? "프로필 설정하기" : "Set Up Profile")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Sheet open={chatOpen} onOpenChange={setChatOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              {profile?.skills_summary ? "예배 프로필 수정" : "내 예배 프로필 설정"}
+            </SheetTitle>
+            <SheetDescription>
+              AI가 더 정확한 선곡을 위해 몇 가지를 물어봅니다.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 min-h-0">
+            <CurationProfileChat
+              existingSummary={profile?.skills_summary}
+              onComplete={() => setChatOpen(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+};
 
 // Email Preferences Card Component
 const EmailPreferencesCard = () => {
