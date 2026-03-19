@@ -11,6 +11,7 @@ import { AvatarEditDialog } from "@/components/profile/AvatarEditDialog";
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { AvatarWithLevel } from "@/components/seeds/AvatarWithLevel";
 import { SeedWidget } from "@/components/seeds/SeedWidget";
+import { ProfileBadgesSection } from "@/components/institute/ProfileBadgesSection";
 
 interface ProfileStats {
   sets: number;
@@ -221,6 +222,11 @@ export function ProfileSidebarCard({ stats, profileOverride, onNavigate }: Profi
             <div className="mt-6">
               <SeedWidget onNavigate={onNavigate} />
             </div>
+          )}
+
+          {/* K-Worship Certified Badges */}
+          {profile?.id && (
+            <ProfileBadgesSection userId={profile.id} />
           )}
         </CardContent>
       </Card>

@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Lock, Check, ChevronLeft, ChevronRight, BookOpen, PartyPopper } from "lucide-react";
 import { useEffect, useState } from "react";
+import { AiCoachPanel } from "@/components/institute/AiCoachPanel";
 
 const InstituteModule = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -87,11 +88,30 @@ const InstituteModule = () => {
         await supabase.from("institute_enrollments").update({ completed_modules: newCompleted }).eq("id", enrollment.id);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ["institute-enrollment", user?.id, courseId] });
       queryClient.invalidateQueries({ queryKey: ["institute-enrollments"] });
       if (isLastModule) {
-        // TODO: award-institute-badge stub — 4C에서 구현
+        // Auto-award badge if this course is part of a certification
+        if (certLink?.certification_id) {
+          try {
+            await supabase.auth.refreshSession();
+            const { data: { session } } = await supabase.auth.getSession();
+            await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-institute-badge`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ user_id: user!.id, certification_id: certLink.certification_id }),
+              }
+            );
+          } catch {
+            // Non-fatal — badge can be requested from certification page
+          }
+        }
         setShowCompletionDialog(true);
       } else if (nextModule && canAccess(nextModule.required_tier, userTier)) {
         navigate(`/institute/${courseId}/${nextModule.id}`);
@@ -183,9 +203,12 @@ const InstituteModule = () => {
             {/* Content */}
             {(language === "ko" ? currentModule.content_ko : currentModule.content) && (
               <div className="prose prose-sm dark:prose-invert max-w-none mb-8">
-                <div dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }} />
+              <div dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }} />
               </div>
             )}
+
+            {/* AI Coach */}
+            <AiCoachPanel courseId={courseId!} moduleId={moduleId!} />
 
             {/* Navigation */}
             <Card className="p-4 flex items-center justify-between">

@@ -119,3 +119,9 @@ verify_jwt = false
 
 [functions.export-songs]
 verify_jwt = false
+
+[functions.award-institute-badge]
+verify_jwt = false
+
+[functions.institute-ai-coach]
+verify_jwt = false

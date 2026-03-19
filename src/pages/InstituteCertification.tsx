@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -7,14 +7,19 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Award, ArrowLeft, Check, BookOpen, Circle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Award, ArrowLeft, Check, BookOpen, Circle, PartyPopper } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const InstituteCertification = () => {
   const { certId } = useParams<{ certId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { language } = useTranslation();
+  const [showBadgeDialog, setShowBadgeDialog] = useState(false);
+  const [awardedBadge, setAwardedBadge] = useState<any>(null);
 
   const { data: cert } = useQuery({
     queryKey: ["institute-certification", certId],
@@ -85,6 +90,39 @@ const InstituteCertification = () => {
     if (!userId) return null;
     return instructors.find((i) => i.user_id === userId)?.display_name || null;
   };
+
+  const awardBadge = useMutation({
+    mutationFn: async () => {
+      await supabase.auth.refreshSession();
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-institute-badge`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ user_id: user!.id, certification_id: certId }),
+        }
+      );
+      if (!resp.ok) throw new Error("Failed to award badge");
+      return resp.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        setAwardedBadge(data.badge);
+        setShowBadgeDialog(true);
+        queryClient.invalidateQueries({ queryKey: ["institute-cert-enrollments"] });
+        queryClient.invalidateQueries({ queryKey: ["institute-badges"] });
+      } else if (data.reason === "courses_incomplete") {
+        toast({ title: language === "ko" ? "아직 완료하지 않은 과정이 있습니다" : "Some courses are not yet completed" });
+      }
+    },
+    onError: () => {
+      toast({ title: language === "ko" ? "배지 발급에 실패했습니다" : "Failed to award badge", variant: "destructive" });
+    },
+  });
 
   if (!cert) return <AppLayout><div className="p-8 text-center text-muted-foreground">Loading...</div></AppLayout>;
 
@@ -172,12 +210,7 @@ const InstituteCertification = () => {
               <p className="font-semibold">
                 {language === "ko" ? "모든 과정을 완료했습니다!" : "All courses completed!"}
               </p>
-              <Button
-                onClick={() => {
-                  // TODO: award-institute-badge stub — 4C에서 구현
-                  toast({ title: language === "ko" ? "배지 신청 기능은 준비 중입니다" : "Badge request coming soon" });
-                }}
-              >
+              <Button onClick={() => awardBadge.mutate()} disabled={awardBadge.isPending}>
                 <Award className="w-4 h-4 mr-2" />
                 {language === "ko" ? "K-Worship Certified 배지 신청" : "Request K-Worship Certified Badge"}
               </Button>
@@ -197,6 +230,42 @@ const InstituteCertification = () => {
           )}
         </Card>
       </div>
+
+      {/* Badge awarded dialog */}
+      <Dialog open={showBadgeDialog} onOpenChange={setShowBadgeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PartyPopper className="w-5 h-5 text-primary" />
+              K-Worship Certified
+            </DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              {cert.badge_image_url && (
+                <img src={cert.badge_image_url} alt="" className="w-20 h-20 rounded-xl object-cover mx-auto" />
+              )}
+              <p className="text-center font-medium">{cert.title_ko}</p>
+              <p className="text-center text-sm">
+                {language === "ko"
+                  ? "K-Worship Certified 자격을 취득하셨습니다. 프로필에서 배지를 확인하세요."
+                  : "You have earned your K-Worship Certified credential. Check your profile for the badge."}
+              </p>
+              {awardedBadge?.awarded_at && (
+                <p className="text-center text-xs text-muted-foreground">
+                  {new Date(awardedBadge.awarded_at).toLocaleDateString(language === "ko" ? "ko-KR" : "en-US")}
+                </p>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowBadgeDialog(false)}>
+              {language === "ko" ? "확인" : "OK"}
+            </Button>
+            <Button onClick={() => { setShowBadgeDialog(false); navigate("/dashboard"); }}>
+              {language === "ko" ? "프로필 보기" : "View Profile"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
