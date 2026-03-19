@@ -23,20 +23,26 @@ const S = {
   heroGold: { color: '#b8902a' },
   heroSub: { fontSize: '13px', color: '#5a5850', lineHeight: 1.7, marginTop: '10px' } as React.CSSProperties,
 
-  /* Video placeholder */
+  /* Video + right column 2-col layout */
+  twoCol: { display: 'flex', gap: '16px', marginTop: '20px' } as React.CSSProperties,
+
+  /* Vertical video placeholder */
   videoBox: {
-    marginTop: '20px', background: '#1a1a1a', borderRadius: '12px',
-    position: 'relative' as const, paddingTop: '56.25%', overflow: 'hidden' as const,
+    width: '160px', flexShrink: 0, background: '#1a1a1a', borderRadius: '12px',
+    position: 'relative' as const, aspectRatio: '9/16', overflow: 'hidden' as const,
   } as React.CSSProperties,
   videoOverlay: {
     position: 'absolute' as const, inset: 0, display: 'flex', flexDirection: 'column' as const,
-    alignItems: 'center', justifyContent: 'center', gap: '10px',
+    alignItems: 'center', justifyContent: 'center', gap: '8px',
   } as React.CSSProperties,
   playBtn: {
-    width: '48px', height: '48px', borderRadius: '50%',
+    width: '40px', height: '40px', borderRadius: '50%',
     background: 'rgba(184,144,42,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center',
   } as React.CSSProperties,
-  videoLabel: { fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 },
+  videoLabel: { fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 },
+
+  /* Right column */
+  rightCol: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '10px', minWidth: 0 } as React.CSSProperties,
 
   /* Stats */
   statsRow: { display: 'flex', gap: '10px', marginTop: '20px' } as React.CSSProperties,
