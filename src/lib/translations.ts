@@ -140,6 +140,7 @@ export const translations = {
       chat: "Chat",
       customerSupport: "Support",
       communitySearch: "Communities",
+      institute: "Institute",
     },
     studio: {
       title: "Worship Studio",
