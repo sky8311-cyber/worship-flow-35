@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProfileEditDialog } from "@/components/profile/ProfileEditDialog";
 import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection";
 import { RoleBadge } from "@/components/RoleBadge";
+import { TierBadge } from "@/components/admin/TierBadge";
 import { COMMON_TIMEZONES, getSystemTimezone, getTimezoneDisplayName } from "@/lib/dateUtils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
