@@ -294,7 +294,7 @@ export default function Institute() {
               )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* ═══ Certifications ═══ */}
         {certifications.length > 0 && (
