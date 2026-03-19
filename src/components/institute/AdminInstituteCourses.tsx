@@ -332,10 +332,6 @@ export const AdminInstituteCourses = () => {
                           <Input defaultValue={course.instructor_name || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "instructor_name", value: e.target.value })} />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Duration (min)</label>
-                          <Input type="number" defaultValue={course.duration_minutes || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "duration_minutes", value: parseInt(e.target.value) || null })} />
-                        </div>
-                        <div>
                           <label className="text-xs font-medium text-muted-foreground mb-1 block">Thumbnail URL</label>
                           <Input defaultValue={course.thumbnail_url || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "thumbnail_url", value: e.target.value || null })} />
                         </div>
