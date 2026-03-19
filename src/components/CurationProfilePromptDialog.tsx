@@ -28,7 +28,7 @@ export function CurationProfilePromptDialog() {
       if (error) throw error;
       return data as { skills_summary: string | null } | null;
     },
-    enabled: !!user && hasAiAccess,
+    enabled: !!user && isWorshipLeader,
   });
 
   useEffect(() => {
