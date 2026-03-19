@@ -132,6 +132,11 @@ export const AdminNav = () => {
       label: language === "ko" ? "뉴스" : "News",
       icon: Newspaper,
     },
+    {
+      to: "/admin/institute",
+      label: "Institute",
+      icon: GraduationCap,
+    },
   ];
 
   // Check if a path is active (exact match for /admin, prefix match for others)
