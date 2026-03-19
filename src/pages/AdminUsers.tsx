@@ -59,7 +59,7 @@ const AdminUsers = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       // Fetch all data in parallel
-      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult] = await Promise.all([
+      const [profilesResult, rolesResult, authResult, seedsResult, levelsResult, songsResult, communityMembersResult, communitiesResult, premiumResult, churchMembersResult] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, email, full_name, created_at, last_active_at")
@@ -86,7 +86,14 @@ const AdminUsers = () => {
           .select("user_id, community_id"),
         supabase
           .from("worship_communities")
-          .select("id, name, leader_id")
+          .select("id, name, leader_id"),
+        supabase
+          .from("premium_subscriptions")
+          .select("user_id, subscription_status")
+          .eq("subscription_status", "active"),
+        supabase
+          .from("church_account_members")
+          .select("user_id"),
       ]);
       
       if (profilesResult.error) throw profilesResult.error;
