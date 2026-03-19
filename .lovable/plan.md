@@ -1,26 +1,46 @@
 
 
-## Plan: Guard AI Panel with Same Prerequisites as Adding Songs
+## Add Save & Delete Buttons Below 예배 정보 Card
 
-### Approach
-
-Apply the **same validation** used before adding songs (community, date, time, name, worship leader) **before opening the AI panel**. This way, when the user clicks "이 세트 사용", all prerequisites are already met, and `handleAddSong` will succeed. Also auto-acquire edit lock before adding.
+### What
+Add "Save" and "Delete" buttons right after the 예배 정보 `<Card>` closes (after line 2020), visible on both mobile and desktop.
 
 ### Changes
 
-**`src/pages/SetBuilder.tsx`**
+**`src/pages/SetBuilder.tsx`** — Insert a button group after line 2020 (`</Card>`):
 
-1. **Guard the AI panel button click** (line ~2068): Before opening the panel, run `getMissingRequiredFields()`. If fields are missing, show the same toast error and don't open the panel. This ensures the user fills in community/date/time/name/leader first.
+- A flex container with two buttons:
+  1. **Save button** — triggers `saveSetMutation.mutate()`, shows spinner when pending, disabled when `isBlocked`
+  2. **Delete button** — triggers `setShowDeleteConfirm(true)`, only shown when editing an existing set (`id` exists), disabled when `isBlocked` or `!canDelete`
+- Uses the same logic/styles as the existing header save/delete buttons (lines 1438–1465)
+- Responsive: `w-full` buttons stacked or side-by-side via `flex gap-2`
 
-2. **Auto-acquire edit lock in `onAddSongs`** (line ~2339): When the AI panel calls `onAddSongs`, check if `isEditMode` is false and call `acquireLock()` first, then add songs. This removes the "not in edit mode" blocker silently.
+### Technical detail
 
-3. **Result**: By the time the user clicks "이 세트 사용", all guards in `handleAddSong` (required fields + edit mode) are already satisfied. Songs get added successfully.
+```tsx
+{/* After </Card> on line 2020 */}
+<div className="flex gap-2">
+  <Button
+    onClick={() => saveSetMutation.mutate(undefined)}
+    disabled={saveSetMutation.isPending || isBlocked}
+    className="flex-1 gap-1.5"
+  >
+    <Save className="w-4 h-4" />
+    {saveSetMutation.isPending ? t("common.saving") : t("common.save")}
+  </Button>
+  {id && (
+    <Button
+      variant="destructive"
+      onClick={() => setShowDeleteConfirm(true)}
+      disabled={isSetOwnerLoading || !canDelete || deleteSetMutation.isPending || isBlocked}
+      className="gap-1.5"
+    >
+      <Trash2 className="w-4 h-4" />
+      {language === "ko" ? "삭제" : "Delete"}
+    </Button>
+  )}
+</div>
+```
 
-### Summary
-
-| What | How |
-|---|---|
-| Guard AI panel opening | Same `getMissingRequiredFields()` check + toast before `setShowAIPanel(true)` |
-| Auto edit mode on "Use set" | Call `acquireLock()` in `onAddSongs` if not already editing |
-| No changes to `AISetBuilderPanel.tsx` | All logic stays in `SetBuilder.tsx` |
+Single insertion, no other files affected.
 
