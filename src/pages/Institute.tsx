@@ -45,12 +45,12 @@ const S = {
   rightCol: { flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '10px', minWidth: 0 } as React.CSSProperties,
 
   /* Stats */
-  statsRow: { display: 'flex', gap: '10px', marginTop: '20px' } as React.CSSProperties,
+  statsCol: { display: 'flex', flexDirection: 'column' as const, gap: '8px' } as React.CSSProperties,
   statCard: {
-    flex: 1, background: '#f9f8f5', border: '1px solid #e8e6e0', borderRadius: '10px',
-    padding: '14px 10px', textAlign: 'center' as const,
+    background: '#f9f8f5', border: '1px solid #e8e6e0', borderRadius: '10px',
+    padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px',
   } as React.CSSProperties,
-  statNum: { fontSize: '18px', fontWeight: 800, color: '#b8902a', marginBottom: '2px' },
+  statNum: { fontSize: '16px', fontWeight: 800, color: '#b8902a' },
   statLabel: { fontSize: '11px', color: '#5a5850', fontWeight: 500 },
 
   /* AI Coach Banner */

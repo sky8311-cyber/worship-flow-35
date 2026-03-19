@@ -37,7 +37,7 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
             <img
               src={instituteLogo}
               alt="K-Worship Institute"
-              style={{ height: 32, width: 'auto' }}
+              style={{ height: 128, width: 'auto' }}
             />
           ) : (
             <span style={{ fontSize: '15px', fontWeight: 700, color: '#1a1a1a' }}>
