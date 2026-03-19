@@ -6,51 +6,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SKILLS_MD = `# Worship Set Curation Knowledge Base
+const SKILLS_MD = `당신은 한인교회 장년 예배를 위한 찬양 선곡 전문가입니다. 찬양인도자의 시각으로 예배 흐름을 설계합니다.
 
-## Worship Flow Structure (Korean Church Context)
+## 핵심 철학
+- 찬양으로 설교 내용을 담는 것이 목적이 아니다. 성도들이 하나님을 바라보고 말씀에 귀 기울일 수 있도록 마음을 여는 것이 목적이다.
+- 설교 본문의 핵심 신학 명제를 추출한다. 키워드 매칭이 아닌 명제(proposition)로 연결한다.
+- 가사를 모르면 선곡하지 않는다. 추측 절대 금지.
 
-Korean Protestant worship services typically follow this flow pattern:
+## 예배 아크 (Worship Arc)
+나아감 → 하나님의 위대하심/선하심/신실하심 선포 → 나의 고백/낮아짐/엎드림 → 오직 주만 바라봄
 
-1. **Opening / 시작 (환영)** — Upbeat, congregational engagement. Sets energy and expectation.
-2. **Praise / 찬양** — High-energy, celebratory songs. Key: major keys, faster tempos (120–140 BPM). 1–2 songs.
-3. **Worship / 경배** — Transitional, moving from outward praise to inward devotion. Medium tempo (90–110 BPM). 1–2 songs.
-4. **Encounter / 만남 (깊은 경배)** — Intimate, reflective. Slower tempo (60–90 BPM), minor keys or gentle major keys. 1–2 songs.
-5. **Response / 응답** — After the sermon or encounter, a song of commitment or prayer. Often a hymn or well-known CCM. 1 song.
-6. **Closing / 마무리 (축복)** — Sends the congregation out. Can be upbeat or a benediction. 1 song.
+## 선곡 구조
+- 1번: 마음 열기. 친숙하고 간결한 가사. 템포 유연.
+- 2번: 선포/높임. 빠른 곡 우선. 하나님의 성품 선포.
+- 3번: 깊이로 전환. 고백 또는 경배로 전환.
+- 4번: 깊은 경배/엎드림. 느린 곡 필수. 말씀 직전 마음 준비.
+- 5번(선택): 에너지 추가 시만. 후렴만. 억지로 추가하지 않는다.
 
-## Key Transition Rules
-- Relative minor/major: C major → A minor, G major → E minor (smooth)
-- Fourth up: C → F, G → C (natural resolution)
-- Fifth up: C → G, D → A (bright, lifting)
-- Avoid tritone jumps (C → F#) and random jumps > 3 semitones without harmonic relationship
-- Use capo-friendly keys for guitar-led worship: G, C, D, E, A, Em, Am
+## 템포 패턴 선호 순서
+1. 느→빠→느→느 (기본 선호)
+2. 빠→빠→느→느
+3. 느→빠→빠→느
 
-## Korean Church Worship Context
-- Korean CCM (마커스워십, 제이어스, 아이자야식스티원)
-- Translated Western Worship (Hillsong, Bethel, Elevation Korean translations)
-- Korean Hymns (찬송가)
-- Balance familiar songs (70%) with newer songs (30%)
+## 가사 처리 원칙
+- 곡 데이터에 lyrics가 있으면: 가사를 읽고 본문과 신학적으로 대조하여 선곡
+- lyrics가 없으면: 확실히 아는 곡만 선곡. 모르면 건너뜀. 추측 금지.
 
-## Duration Planning
-- Average song: 4–5 minutes including intro/outro
-- Transition: 30s – 1 min
-- 25-min worship block: 5–6 songs
-- 40-min worship block: 7–9 songs
-- 15-min worship block: 3–4 songs
+## 실제 예배 데이터 활용 원칙
+- 제공된 community_patterns(실제 찬양인도자들의 선곡 패턴)를 참고 자료로 활용한다.
+- 특정 인도자의 세트를 복사하지 않는다. 패턴과 흐름을 참고하여 새 세트를 설계한다.
+- 자주 함께 쓰이는 곡 조합, 자주 쓰이는 키 전환, 실제 선호 템포 패턴을 반영한다.
 
-## Output Quality Guidelines
-- Every song must have a clear rationale for its position
-- Transition notes should explain the musical and spiritual connection
-- Key suggestions should account for vocalist range (most Korean worship in D–A range)
-- Only suggest songs from the provided database — never invent songs
-`;
+## 출력 형식 (JSON array만 반환. 다른 텍스트 없음)
+[{"song_id":"uuid","song_title":"string","artist":"string","key":"string","order_position":number,"role":"마음열기|선포|고백|경배","tempo":"느림|보통|빠름","transition_note":"string(한국어)","rationale":"string(한국어)"}]`;
 
-const SYSTEM_PROMPT = `You are a worship set curator for Korean Christian churches. You understand worship flow, key transitions, energy arcs, and how to guide a congregation from preparation through encounter to response. Given a list of available songs and user preferences, return a worship set as a valid JSON array. Each item must have: song_id, song_title, key, order_position, transition_note, rationale. Return only the JSON array with no other text.
+const SYSTEM_PROMPT = `${SKILLS_MD}
 
-Here is your worship curation knowledge base:
+위 지침에 따라 예배 세트를 구성한다. 제공된 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON array만 반환한다. 다른 텍스트 없음.`;
 
-${SKILLS_MD}`;
+// Truncate lyrics to save tokens
+function truncateLyrics(lyrics: string | null, maxLen = 200): string | null {
+  if (!lyrics) return null;
+  return lyrics.length > maxLen ? lyrics.substring(0, maxLen) + '...' : lyrics;
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,7 +56,7 @@ serve(async (req) => {
   }
 
   try {
-    // Auth validation
+    // Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -69,9 +67,9 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+    const db = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { data: userData, error: userError } = await adminSupabase.auth.getUser(token);
+    const { data: userData, error: userError } = await db.auth.getUser(token);
     if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -81,22 +79,19 @@ serve(async (req) => {
     const userId = userData.user.id;
     const { theme, songCount, preferredKey, durationMinutes, tone, communityId } = await req.json();
 
-    // Fetch available songs
+    // ── 1. Fetch songs ──
     let songs: any[] = [];
 
     if (communityId) {
-      // First get community member IDs
-      const { data: members } = await adminSupabase
+      const { data: members } = await db
         .from('community_members')
         .select('user_id')
         .eq('community_id', communityId);
-
       const memberIds = (members || []).map((m: any) => m.user_id);
 
-      // Get public songs + private songs created by community members
-      const { data: publicSongs, error: pubErr } = await adminSupabase
+      const { data: publicSongs, error: pubErr } = await db
         .from('songs')
-        .select('id, title, artist, default_key, tags, topics, language')
+        .select('id, title, artist, default_key, lyrics, tags, topics, language')
         .or('is_private.eq.false,is_private.is.null')
         .limit(400);
 
@@ -109,25 +104,24 @@ serve(async (req) => {
 
       let privateSongs: any[] = [];
       if (memberIds.length > 0) {
-        const { data: privData } = await adminSupabase
+        const { data: privData } = await db
           .from('songs')
-          .select('id, title, artist, default_key, tags, topics, language')
+          .select('id, title, artist, default_key, lyrics, tags, topics, language')
           .eq('is_private', true)
           .in('created_by', memberIds)
           .limit(100);
         privateSongs = privData || [];
       }
 
-      // Deduplicate by id
       const songMap = new Map<string, any>();
       for (const s of [...(publicSongs || []), ...privateSongs]) {
         songMap.set(s.id, s);
       }
       songs = Array.from(songMap.values());
     } else {
-      const { data, error: songsError } = await adminSupabase
+      const { data, error: songsError } = await db
         .from('songs')
-        .select('id, title, artist, default_key, tags, topics, language')
+        .select('id, title, artist, default_key, lyrics, tags, topics, language')
         .or('is_private.eq.false,is_private.is.null')
         .limit(500);
 
@@ -146,28 +140,106 @@ serve(async (req) => {
       });
     }
 
-    // Build user message
-    const userMessage = `User preferences:
-- Theme/Scripture: ${theme || 'General worship'}
-- Number of songs: ${songCount || 5}
-- Preferred key: ${preferredKey || 'Any'}
-- Service duration: ${durationMinutes || 30} minutes
-- Tone: ${tone || 'Mixed'}
+    // ── 2. Fetch user curation profile ──
+    let profileSection = '';
+    try {
+      const { data: profile } = await db
+        .from('user_curation_profiles')
+        .select('skills_summary')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-Available songs (${songs.length} total):
-${JSON.stringify(songs.map(s => ({
-  id: s.id,
-  title: s.title,
-  artist: s.artist,
-  key: s.default_key,
-  tags: s.tags,
-  topics: s.topics,
-  language: s.language,
-})), null, 2)}
+      if (profile?.skills_summary) {
+        profileSection = `\n\n이 찬양인도자의 회중 정보:\n${profile.skills_summary}`;
+      }
+    } catch (e) {
+      console.error('Failed to fetch curation profile:', e);
+    }
 
-Select exactly ${songCount || 5} songs from the list above and return a JSON array.`;
+    // ── 3. Fetch recent community patterns ──
+    let patternsSection = '';
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Call Anthropic API
+      const { data: recentSets } = await db
+        .from('service_sets')
+        .select('id, service_name, date')
+        .gte('date', thirtyDaysAgo)
+        .order('date', { ascending: false })
+        .limit(20);
+
+      if (recentSets && recentSets.length > 0) {
+        // Pick up to 5 random sets
+        const shuffled = recentSets.sort(() => Math.random() - 0.5).slice(0, 5);
+        const setIds = shuffled.map(s => s.id);
+
+        const { data: setSongs } = await db
+          .from('set_songs')
+          .select('service_set_id, position, key, bpm, song_id')
+          .in('service_set_id', setIds)
+          .order('position', { ascending: true });
+
+        if (setSongs && setSongs.length > 0) {
+          // Get song titles for pattern display
+          const patternSongIds = [...new Set(setSongs.map(ss => ss.song_id))];
+          const { data: patternSongs } = await db
+            .from('songs')
+            .select('id, title')
+            .in('id', patternSongIds);
+
+          const songTitleMap: Record<string, string> = {};
+          (patternSongs || []).forEach((s: any) => { songTitleMap[s.id] = s.title; });
+
+          const patternLines: string[] = [];
+          shuffled.forEach((set, idx) => {
+            const songsInSet = (setSongs || [])
+              .filter(ss => ss.service_set_id === set.id)
+              .sort((a, b) => a.position - b.position);
+
+            if (songsInSet.length > 0) {
+              const flow = songsInSet.map(ss => {
+                const title = songTitleMap[ss.song_id] || '?';
+                const key = ss.key || '?';
+                const bpm = ss.bpm;
+                const tempo = bpm ? (bpm >= 120 ? '빠름' : bpm >= 90 ? '보통' : '느림') : '?';
+                return `${title} (Key:${key}, 템포:${tempo})`;
+              }).join(' → ');
+              patternLines.push(`- 세트 ${idx + 1}: ${flow}`);
+            }
+          });
+
+          if (patternLines.length > 0) {
+            patternsSection = `\n\n실제 찬양인도자들의 최근 선곡 패턴 참고 (복사 금지, 패턴만 참고):\n${patternLines.join('\n')}`;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch community patterns:', e);
+    }
+
+    // ── 4. Build user message ──
+    const songListJson = JSON.stringify(songs.map(s => ({
+      song_id: s.id,
+      title: s.title,
+      artist: s.artist,
+      original_key: s.default_key,
+      lyrics: truncateLyrics(s.lyrics),
+      language: s.language,
+    })), null, 2);
+
+    const userMessage = `예배 정보:
+- 설교 본문/주제: ${theme || '일반 예배'}
+- 곡 수: ${songCount || 5}곡
+- 선호 키: ${preferredKey || '상관없음'}
+- 예배 시간: ${durationMinutes || 30}분
+- 분위기: ${tone || '혼합'}${profileSection}${patternsSection}
+
+사용 가능한 곡 목록 (song_id, title, artist, original_key, lyrics 포함):
+${songListJson}
+
+위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON array만 반환한다.`;
+
+    // ── 5. Call Anthropic API ──
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicKey) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
@@ -184,7 +256,7 @@ Select exactly ${songCount || 5} songs from the list above and return a JSON arr
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
+        max_tokens: 2000,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
       }),
@@ -214,7 +286,7 @@ Select exactly ${songCount || 5} songs from the list above and return a JSON arr
       });
     }
 
-    // Parse JSON from Claude's response (handle potential markdown wrapping)
+    // Parse JSON
     let worshipSet;
     try {
       const jsonMatch = content.match(/\[[\s\S]*\]/);
@@ -227,9 +299,9 @@ Select exactly ${songCount || 5} songs from the list above and return a JSON arr
       });
     }
 
-    // Log AI usage (fire and forget)
+    // ── 6. Log AI usage (fire and forget) ──
     try {
-      await fetch(`${supabaseUrl}/functions/v1/log-ai-usage`, {
+      fetch(`${supabaseUrl}/functions/v1/log-ai-usage`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

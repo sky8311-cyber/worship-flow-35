@@ -3785,6 +3785,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_curation_profiles: {
+        Row: {
+          congregation_notes: string | null
+          skills_summary: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          congregation_notes?: string | null
+          skills_summary?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          congregation_notes?: string | null
+          skills_summary?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_favorite_songs: {
         Row: {
           created_at: string | null

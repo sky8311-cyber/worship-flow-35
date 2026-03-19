@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Loader2, RefreshCw, Check, Music, ArrowRight } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, Check, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -23,8 +23,11 @@ interface AISetBuilderPanelProps {
 interface GeneratedSong {
   song_id: string;
   song_title: string;
+  artist: string;
   key: string;
   order_position: number;
+  role: string;
+  tempo: string;
   transition_note: string;
   rationale: string;
 }
@@ -33,6 +36,19 @@ const MUSICAL_KEYS = [
   "A", "A#/Bb", "B", "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab",
   "Am", "A#m/Bbm", "Bm", "Cm", "C#m/Dbm", "Dm", "D#m/Ebm", "Em", "Fm", "F#m/Gbm", "Gm", "G#m/Abm",
 ];
+
+const ROLE_COLORS: Record<string, string> = {
+  '마음열기': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  '선포': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  '고백': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  '경배': 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200',
+};
+
+const TEMPO_COLORS: Record<string, string> = {
+  '느림': 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+  '보통': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  '빠름': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+};
 
 export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs, initialTheme, initialDuration }: AISetBuilderPanelProps) {
   const { language } = useTranslation();
@@ -57,7 +73,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
     setResult(null);
 
     try {
-      // Refresh session to prevent 401
       await supabase.auth.refreshSession();
 
       const { data: sessionData } = await supabase.auth.getSession();
@@ -99,7 +114,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
         throw new Error("AI가 적합한 곡을 찾지 못했습니다.");
       }
 
-      // Fetch full song data for the generated set
       const songIds = worshipSet.map((s) => s.song_id);
       const { data: fullSongs } = await supabase
         .from("songs")
@@ -161,9 +175,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
         <ScrollArea className="flex-1 -mx-6 px-6">
           {!result ? (
             <div className="space-y-4 py-4">
-              {/* Theme */}
               <div className="space-y-2">
-                <Label>{language === "ko" ? "주제 또는 성경구절" : "Theme or Scripture"}</Label>
+                <Label>{language === "ko" ? "설교 본문/주제" : "Sermon Theme / Scripture"}</Label>
                 <Input
                   placeholder={language === "ko" ? "예: 은혜, 요한복음 3:16" : "e.g., Grace, John 3:16"}
                   value={theme}
@@ -171,7 +184,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                 />
               </div>
 
-              {/* Song Count */}
               <div className="space-y-2">
                 <Label>{language === "ko" ? "곡 수" : "Number of Songs"}</Label>
                 <Input
@@ -183,7 +195,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                 />
               </div>
 
-              {/* Preferred Key */}
               <div className="space-y-2">
                 <Label>{language === "ko" ? "선호 키" : "Preferred Key"}</Label>
                 <Select value={preferredKey} onValueChange={setPreferredKey}>
@@ -199,7 +210,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                 </Select>
               </div>
 
-              {/* Duration */}
               <div className="space-y-2">
                 <Label>{language === "ko" ? "예배 시간 (분)" : "Service Duration (min)"}</Label>
                 <Input
@@ -211,7 +221,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                 />
               </div>
 
-              {/* Tone */}
               <div className="space-y-2">
                 <Label>{language === "ko" ? "분위기" : "Tone"}</Label>
                 <Select value={tone} onValueChange={setTone}>
@@ -226,7 +235,6 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
                 </Select>
               </div>
 
-              {/* Generate Button */}
               <Button
                 onClick={handleGenerate}
                 disabled={isLoading}
@@ -247,55 +255,60 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
               </Button>
             </div>
           ) : (
-            <div className="space-y-4 py-4">
-              {/* Result List */}
-              <div className="space-y-3">
-                {result.map((item, idx) => {
-                  const song = songMap[item.song_id];
-                  return (
-                    <div key={item.song_id} className="border rounded-lg p-3 space-y-2">
-                      <div className="flex items-start gap-3">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
-                          {item.order_position}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {song?.title || item.song_title}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {song?.artist || ""}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              Key: {item.key}
-                            </Badge>
-                          </div>
+            <div className="space-y-3 py-4">
+              {result.map((item, idx) => {
+                const song = songMap[item.song_id];
+                return (
+                  <div key={item.song_id} className="border rounded-lg p-3 space-y-2">
+                    {/* Transition note between songs */}
+                    {item.transition_note && idx > 0 && (
+                      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded p-2 -mt-1 mb-2">
+                        <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
+                        <span>{item.transition_note}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                        {item.order_position}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">
+                          {song?.title || item.song_title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.artist || song?.artist || ""}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <Badge variant="outline" className="text-xs">
+                            Key: {item.key}
+                          </Badge>
+                          {item.role && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[item.role] || 'bg-muted text-muted-foreground'}`}>
+                              {item.role}
+                            </span>
+                          )}
+                          {item.tempo && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${TEMPO_COLORS[item.tempo] || 'bg-muted text-muted-foreground'}`}>
+                              {item.tempo}
+                            </span>
+                          )}
                         </div>
                       </div>
-
-                      {/* Transition Note */}
-                      {item.transition_note && idx > 0 && (
-                        <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded p-2">
-                          <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
-                          <span>{item.transition_note}</span>
-                        </div>
-                      )}
-
-                      {/* Rationale */}
-                      {item.rationale && (
-                        <p className="text-xs text-muted-foreground italic pl-10">
-                          {item.rationale}
-                        </p>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
+
+                    {item.rationale && (
+                      <p className="text-xs text-muted-foreground italic pl-10">
+                        {item.rationale}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </ScrollArea>
 
-        {/* Bottom Actions */}
         {result && (
           <div className="flex gap-2 pt-4 border-t">
             <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="flex-1">
