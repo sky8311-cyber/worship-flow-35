@@ -93,6 +93,7 @@ const AdminStudio = lazyWithRetry(() => import("./pages/AdminStudio"));
 const AdminNews = lazyWithRetry(() => import("./pages/AdminNews"));
 const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
 const AdminMembershipProducts = lazyWithRetry(() => import("./pages/AdminMembershipProducts"));
+const AdminInstitute = lazyWithRetry(() => import("./pages/AdminInstitute"));
 
 // Public/invitation pages
 const PublicBandView = lazyWithRetry(() => import("./pages/PublicBandView"));
