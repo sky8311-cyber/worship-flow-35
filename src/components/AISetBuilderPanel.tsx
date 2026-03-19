@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,8 @@ interface AISetBuilderPanelProps {
   onOpenChange: (open: boolean) => void;
   communityId?: string;
   onAddSongs: (songs: Array<{ song: any; key: string }>) => void;
+  initialTheme?: string;
+  initialDuration?: number;
 }
 
 interface GeneratedSong {
@@ -32,7 +34,7 @@ const MUSICAL_KEYS = [
   "Am", "A#m/Bbm", "Bm", "Cm", "C#m/Dbm", "Dm", "D#m/Ebm", "Em", "Fm", "F#m/Gbm", "Gm", "G#m/Abm",
 ];
 
-export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs }: AISetBuilderPanelProps) {
+export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs, initialTheme, initialDuration }: AISetBuilderPanelProps) {
   const { language } = useTranslation();
   const [theme, setTheme] = useState("");
   const [songCount, setSongCount] = useState(5);
@@ -42,6 +44,13 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs 
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GeneratedSong[] | null>(null);
   const [songMap, setSongMap] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (open) {
+      if (initialTheme) setTheme(initialTheme);
+      if (initialDuration) setDurationMinutes(initialDuration);
+    }
+  }, [open, initialTheme, initialDuration]);
 
   const handleGenerate = async () => {
     setIsLoading(true);

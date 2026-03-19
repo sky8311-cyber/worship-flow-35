@@ -2373,6 +2373,8 @@ const SetBuilder = () => {
         open={showAIPanel}
         onOpenChange={setShowAIPanel}
         communityId={formData.community_id || undefined}
+        initialTheme={[formData.theme, formData.scripture_reference].filter(Boolean).join(", ")}
+        initialDuration={formData.worship_duration ? parseInt(formData.worship_duration) : undefined}
         onAddSongs={async (songs) => {
           if (!isEditMode) {
             const acquired = await acquireLock();
