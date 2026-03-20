@@ -1107,7 +1107,7 @@ const [loading, setLoading] = useState(false);
       <DialogContent 
         className={cn(
           "w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh]",
-          !song && (!song || song?.status === 'draft') ? "p-0 overflow-hidden" : "overflow-y-auto"
+          !song || song?.status === 'draft' ? "p-0 overflow-hidden" : "overflow-y-auto"
         )}
         hideCloseButton
         style={{
