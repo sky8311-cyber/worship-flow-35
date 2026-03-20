@@ -44,7 +44,7 @@ interface EditingSetContext {
 
 // SongLibrary component - refactored to use MobileSelect for better mobile UX
 const SongLibrary = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { signOut, profile, isAdmin, isWorshipLeader, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -657,76 +657,106 @@ const SongLibrary = () => {
                 )}
                 
                 {/* View Mode Toggle */}
-                <div className="flex gap-1 border rounded-md p-1 bg-card">
-                  <Button
-                    variant={viewMode === "card" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("card")}
-                    className="h-8 w-8"
-                    title={t("songLibrary.viewMode.card")}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "table" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("table")}
-                    className="h-8 w-8"
-                    title={t("songLibrary.viewMode.table")}
-                  >
-                    <LayoutList className="h-4 w-4" />
-                  </Button>
-                </div>
+                <TooltipProvider>
+                  <div className="flex gap-1 border rounded-md p-1 bg-card">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "card" ? "secondary" : "ghost"}
+                          size="icon"
+                          onClick={() => setViewMode("card")}
+                          className="h-8 w-8"
+                        >
+                          <LayoutGrid className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{t("songLibrary.viewMode.card")}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "table" ? "secondary" : "ghost"}
+                          size="icon"
+                          onClick={() => setViewMode("table")}
+                          className="h-8 w-8"
+                        >
+                          <LayoutList className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">{t("songLibrary.viewMode.table")}</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </div>
 
               {/* Second row: Action Buttons (Desktop/Tablet only) */}
               <div className="hidden sm:flex items-center gap-1">
-                {(isWorshipLeader || isAdmin) && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleAddSong}
-                    className="gap-1 px-3"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t("songLibrary.addSong")}
-                  </Button>
-                )}
-                {isWorshipLeader && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsCSVDialogOpen(true)}
-                    className="h-8 w-8"
-                    title={t("songLibrary.importCSV")}
-                  >
-                    <Upload className="w-4 h-4" />
-                  </Button>
-                )}
-                {isAdmin && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={handleExportXLSX}
-                    disabled={!songs || songs.length === 0}
-                    className="h-8 w-8"
-                    title="Excel 내보내기"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                )}
-                {isWorshipLeader && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIsDuplicateDialogOpen(true)}
-                    disabled={!songs || songs.length < 2}
-                    className="h-8 w-8"
-                    title={t("songLibrary.findDuplicates")}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                )}
+                <TooltipProvider>
+                  {(isWorshipLeader || isAdmin) && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleAddSong}
+                      className="gap-1 px-3"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {t("songLibrary.addSong")}
+                    </Button>
+                  )}
+                  {isWorshipLeader && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsCSVDialogOpen(true)}
+                          className="h-8 w-8"
+                        >
+                          <Upload className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {language === "ko" ? "CSV 파일로 곡 일괄 가져오기" : "Import songs from CSV"}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {isAdmin && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleExportXLSX}
+                          disabled={!songs || songs.length === 0}
+                          className="h-8 w-8"
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {language === "ko" ? "곡 목록 Excel 내보내기" : "Export songs to Excel"}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {isWorshipLeader && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsDuplicateDialogOpen(true)}
+                          disabled={!songs || songs.length < 2}
+                          className="h-8 w-8"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {language === "ko" ? "중복 곡 자동 검색" : "Find duplicate songs"}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </TooltipProvider>
               </div>
             </div>
 

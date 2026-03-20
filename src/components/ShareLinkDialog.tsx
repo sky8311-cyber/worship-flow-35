@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Copy, Check, Link, Globe, Users, RefreshCw, ExternalLink } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -155,6 +156,11 @@ export const ShareLinkDialog = ({
               <Label className="font-semibold">
                 {language === "ko" ? "팀 링크" : "Team Link"}
               </Label>
+              <HelpTooltip 
+                text={language === "ko" ? "로그인한 팀원만 접근 가능한 내부 링크입니다" : "Internal link accessible only to logged-in team members"}
+                helpLink="/help#share"
+                side="right"
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               {language === "ko" 
@@ -192,6 +198,11 @@ export const ShareLinkDialog = ({
                 <Label className="font-semibold">
                   {language === "ko" ? "공개 링크" : "Public Link"}
                 </Label>
+                <HelpTooltip 
+                  text={language === "ko" ? "로그인 없이 누구나 볼 수 있는 외부 공유 링크입니다" : "External share link viewable by anyone without login"}
+                  helpLink="/help#share"
+                  side="right"
+                />
               </div>
               <Switch
                 checked={localEnabled}

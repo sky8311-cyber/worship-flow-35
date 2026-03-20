@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { PublicPageHeader } from "@/components/landing/PublicPageHeader";
@@ -12,10 +12,47 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/seo/SEOHead";
 
+// FAQ anchor IDs mapped by index (same order for both languages)
+const FAQ_ANCHORS = [
+  "getting-started",
+  "worship-leader",
+  "community",
+  "worship-set",
+  "add-song",
+  "share",
+  "roles",
+  "language",
+  "fullscreen",
+  "band-view",
+  "favorites",
+  "templates",
+  "recurring-templates",
+  "print",
+];
+
 const Help = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
   const [showEmail, setShowEmail] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState<string | undefined>(undefined);
+
+  // Handle URL hash deep-linking to FAQ items
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      const anchorIndex = FAQ_ANCHORS.indexOf(hash);
+      if (anchorIndex !== -1) {
+        setOpenAccordion(`item-${anchorIndex}`);
+        // Scroll to the item after a short delay for render
+        setTimeout(() => {
+          const el = document.getElementById(`faq-${hash}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 300);
+      }
+    }
+  }, []);
 
   const faqItems = language === "ko" ? [
     {
@@ -857,11 +894,12 @@ Method 2 - Share Link:
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full" value={openAccordion} onValueChange={setOpenAccordion}>
               {faqItems.map((item, index) => {
                 const Icon = item.icon;
+                const anchor = FAQ_ANCHORS[index] || `item-${index}`;
                 return (
-                  <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionItem key={index} value={`item-${index}`} id={`faq-${anchor}`}>
                     <AccordionTrigger className="text-left hover:no-underline">
                       <span className="flex items-center gap-3">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
