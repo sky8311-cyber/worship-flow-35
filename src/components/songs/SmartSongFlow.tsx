@@ -458,6 +458,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           lyricsSearching={lyricsSearching}
           lyricsSource={lyricsSource}
           lyricsSearchDone={lyricsSearchDone}
+          lyricsCandidates={lyricsCandidates}
         />}
         {currentStep === 5 && <Step5_LanguageTopics
           songLanguage={songLanguage}
