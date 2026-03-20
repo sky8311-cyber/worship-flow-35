@@ -1450,6 +1450,8 @@ const [loading, setLoading] = useState(false);
             </Button>
           </div>
         </form>
+        </>
+        )}
       </DialogContent>
 
       {aiSuggestions && (
