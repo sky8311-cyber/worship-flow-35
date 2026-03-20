@@ -251,7 +251,6 @@ const handleDelete = async (song: any) => {
             <TableHead>{renderColumnHeader('title', t("songLibrary.tableHeaders.title"))}</TableHead>
             <TableHead>{renderColumnHeader('artist', t("songLibrary.tableHeaders.artist"))}</TableHead>
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
-            <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
             <TableHead>{renderColumnHeader('key', t("songLibrary.tableHeaders.key"), false)}</TableHead>
             <TableHead>{renderColumnHeader('tags', t("songLibrary.tableHeaders.tags"), false)}</TableHead>
             <TableHead>{t("songLibrary.tableHeaders.actions")}</TableHead>
