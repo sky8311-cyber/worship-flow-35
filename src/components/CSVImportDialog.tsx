@@ -439,7 +439,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       { v: "artist", s: headerStyle },
       { v: "language", s: headerStyle },
       { v: "default_key", s: headerStyle },
-      { v: "topics", s: headerStyle },
+      { v: "tags", s: headerStyle },
       { v: "youtube_url", s: headerStyle },
       { v: "score_file_url", s: headerStyle },
       { v: "interpretation", s: headerStyle },
