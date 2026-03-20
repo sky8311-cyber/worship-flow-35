@@ -1106,8 +1106,10 @@ const [loading, setLoading] = useState(false);
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
-          "w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh]",
-          !song || song?.status === 'draft' ? "p-0 overflow-hidden" : "overflow-y-auto"
+          "w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl",
+          !song || song?.status === 'draft' 
+            ? "h-[90dvh] max-h-[90dvh] sm:h-[85vh] sm:max-h-[85vh] p-0 overflow-hidden flex flex-col" 
+            : "max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
         )}
         hideCloseButton
         style={{
