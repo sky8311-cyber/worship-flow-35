@@ -188,35 +188,35 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     setLyricsSearchDone(false);
     setLyricsCandidates([]);
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
-
     try {
-      const { data, error } = await supabase.functions.invoke("match-lyrics", {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+      );
+      const invokePromise = supabase.functions.invoke("match-lyrics", {
         body: {
           title: title.trim(),
           artist: artist.trim() || undefined,
           original_composer: originalComposer.trim() || undefined,
         },
       });
+      const { data, error } = await Promise.race([invokePromise, timeoutPromise]) as any;
       if (error) throw error;
-      if (data.found && data.lyrics) {
+      if (data?.found && data?.lyrics) {
         setLyrics(data.lyrics);
         setLyricsSource(data.source);
-      } else if (data.candidates && data.candidates.length > 0) {
+      } else if (data?.candidates && data.candidates.length > 0) {
         setLyricsCandidates(data.candidates);
       }
       setLyricsSearchDone(true);
     } catch (err: any) {
       console.error("Lyrics search error:", err);
-      if (err?.name === 'AbortError') {
+      if (err?.message === 'TIMEOUT') {
         toast.error("검색 시간이 초과되었습니다. 직접 입력해주세요.");
       } else {
         toast.error("가사 검색 중 오류가 발생했습니다");
       }
       setLyricsSearchDone(true);
     } finally {
-      clearTimeout(timeout);
       setLyricsSearching(false);
     }
   };
