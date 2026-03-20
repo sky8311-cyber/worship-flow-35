@@ -66,6 +66,11 @@ export const AdminNav = () => {
   // Secondary links (in "More" dropdown)
   const secondaryLinks = [
     {
+      to: "/admin/songlibrary",
+      label: language === "ko" ? "곡 라이브러리" : "Song Library",
+      icon: Music,
+    },
+    {
       to: "/admin/analytics",
       label: language === "ko" ? "분석" : "Analytics",
       icon: BarChart3,
