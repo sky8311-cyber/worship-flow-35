@@ -24,6 +24,7 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
       let query = supabase
         .from("songs")
         .select("id, title, artist, youtube_url")
+        .eq("status", "published")
         .not("youtube_url", "is", null)
         .neq("youtube_url", "")
         .order("title")
