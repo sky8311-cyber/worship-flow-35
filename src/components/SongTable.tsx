@@ -294,7 +294,12 @@ const handleDelete = async (song: any) => {
                               N
                             </sup>
                           )}
-                          {song.is_private && (
+                          {isDraft && (
+                            <Badge className="bg-orange-500 text-white border-orange-500 text-[10px] px-1.5 py-0.5 shrink-0">
+                              {t("songDialog.private") === "비공개" ? "임시저장" : "Draft"}
+                            </Badge>
+                          )}
+                          {!isDraft && song.is_private && (
                             <Badge variant="secondary" className="text-xs gap-0.5 shrink-0">
                               <Lock className="w-3 h-3" />
                               {t("songDialog.private")}
