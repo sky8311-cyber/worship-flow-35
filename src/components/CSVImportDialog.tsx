@@ -10,6 +10,8 @@ import XLSX from "xlsx-js-style";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -17,21 +19,27 @@ interface CSVImportDialogProps {
 }
 
 interface CSVRow {
-  id?: string;  // Optional ID for upsert support
+  id?: string;
   title: string;
   subtitle?: string;
   artist?: string;
   language?: string;
   default_key?: string;
-  topics?: string;  // "찬양, 감사, 기쁨" format (2-3 required)
+  topics?: string;
+  tags?: string;  // Export uses "tags" column
   youtube_url?: string;
   score_file_url?: string;
   interpretation?: string;
   notes?: string;
   lyrics?: string;
-  youtube_links?: string;  // "레이블|URL;;레이블|URL" 형식
-  scores?: string;         // "키|URL;;키|URL" 형식
+  youtube_links?: string;
+  scores?: string;
 }
+
+const getRowTags = (row: CSVRow): string | null => {
+  const val = (row.tags || row.topics || "").trim();
+  return val || null;
+};
 
 interface ImportProgress {
   phase: string;
@@ -258,7 +266,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             artist: row.artist || null,
             language: row.language || null,
             default_key: row.default_key || null,
-            topics: row.topics || null,
+            tags: getRowTags(row),
             youtube_url: row.youtube_url?.trim() || null,
             score_file_url: uploadedScoreUrl,
             interpretation: row.interpretation || null,
@@ -326,27 +334,19 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             }
           }
 
-          const updateData: Record<string, any> = {};
-          const fieldMap: Record<string, string | undefined> = {
-            title: row.title?.trim(),
-            subtitle: row.subtitle?.trim(),
-            artist: row.artist?.trim(),
-            language: row.language?.trim(),
-            default_key: row.default_key?.trim(),
-            topics: row.topics?.trim(),
-            youtube_url: row.youtube_url?.trim(),
-            interpretation: row.interpretation?.trim(),
-            notes: row.notes?.trim(),
-            lyrics: row.lyrics?.trim(),
+          // Full overwrite: all fields replaced (empty → null)
+          const updateData: Record<string, any> = {
+            title: row.title?.trim() || "",
+            subtitle: row.subtitle?.trim() || null,
+            artist: row.artist?.trim() || null,
+            language: row.language?.trim() || null,
+            default_key: row.default_key?.trim() || null,
+            tags: getRowTags(row),
+            youtube_url: row.youtube_url?.trim() || null,
+            interpretation: row.interpretation?.trim() || null,
+            notes: row.notes?.trim() || null,
+            lyrics: row.lyrics?.trim() || null,
           };
-          for (const [key, value] of Object.entries(fieldMap)) {
-            if (value && value !== "") {
-              updateData[key] = value;
-            }
-          }
-          if (!updateData.title) {
-            updateData.title = row.title?.trim() || "";
-          }
 
           if (scoreUrl !== null) {
             updateData.score_file_url = scoreUrl;
@@ -439,7 +439,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
       { v: "artist", s: headerStyle },
       { v: "language", s: headerStyle },
       { v: "default_key", s: headerStyle },
-      { v: "topics", s: headerStyle },
+      { v: "tags", s: headerStyle },
       { v: "youtube_url", s: headerStyle },
       { v: "score_file_url", s: headerStyle },
       { v: "interpretation", s: headerStyle },
@@ -534,9 +534,14 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                CSV로 대량 가져오기 및 업데이트가 가능합니다.<br/>
-                • <strong>신규 추가:</strong> id 열을 비워두세요<br/>
-                • <strong>기존 업데이트:</strong> id 열에 기존 곡 ID를 입력하세요 (내보내기 CSV 사용)
+                <div className="flex items-start gap-1">
+                  <span>
+                    CSV/Excel 파일로 곡을 대량으로 추가하거나 업데이트합니다.<br/>
+                    • <strong>신규 추가:</strong> id 열을 비워두세요<br/>
+                    • <strong>기존 업데이트:</strong> id 열에 기존 곡 ID를 입력하세요 (전체 덮어쓰기)
+                  </span>
+                  <HelpTooltip text="내보내기한 파일을 수정 후 다시 가져오면 ID 기준으로 기존 곡이 업데이트됩니다. 빈 값은 null로 저장됩니다." helpLink="/help#add-song" />
+                </div>
               </AlertDescription>
             </Alert>
 
@@ -633,19 +638,31 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="bg-muted/50 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{getDataCompleteness().total}</div>
-                <div className="text-xs text-muted-foreground">전체</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  전체
+                  <HelpTooltip text="파일에 포함된 총 곡 수" size={12} />
+                </div>
               </div>
               <div className="bg-green-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-green-600">{getDataCompleteness().newCount}</div>
-                <div className="text-xs text-muted-foreground">신규 추가</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  신규 추가
+                  <HelpTooltip text="ID가 없는 곡 — 새로 추가됩니다" size={12} />
+                </div>
               </div>
               <div className="bg-blue-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-blue-600">{getDataCompleteness().updateCount}</div>
-                <div className="text-xs text-muted-foreground">업데이트</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  업데이트
+                  <HelpTooltip text="ID가 있는 곡 — 파일 내용으로 전체 덮어쓰기됩니다" size={12} />
+                </div>
               </div>
               <div className="bg-purple-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-purple-600">{getDataCompleteness().matchedImages}</div>
-                <div className="text-xs text-muted-foreground">이미지 매칭</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  이미지 매칭
+                  <HelpTooltip text="업로드한 이미지 파일과 자동 매칭된 악보 수" size={12} />
+                </div>
               </div>
             </div>
 
@@ -653,16 +670,26 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
               <h3 className="font-semibold mb-3">
                 {t("csvImport.songsPreview")} ({csvData.length} {t("csvImport.songs")})
               </h3>
-              <div className="border rounded-lg overflow-auto max-h-80">
+              <ScrollArea className="border rounded-lg max-h-[50vh]">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted sticky top-0">
+                  <thead className="bg-muted sticky top-0 z-10">
                     <tr>
                       <th className="p-2 text-left w-8"></th>
-                      <th className="p-2 text-left w-20">타입</th>
+                      <th className="p-2 text-left w-20">
+                        <span className="flex items-center gap-1">
+                          타입
+                          <HelpTooltip text="ID가 있으면 기존 곡을 전체 덮어쓰기, 없으면 신규 추가" size={12} />
+                        </span>
+                      </th>
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
                       <th className="p-2 text-left">{t("songDialog.topics")}</th>
-                      <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
+                      <th className="p-2 text-left">
+                        <span className="flex items-center gap-1">
+                          {t("csvImport.scoreStatus")}
+                          <HelpTooltip text="이미지 파일을 함께 업로드하면 파일명 기준으로 자동 매칭됩니다" size={12} />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -687,7 +714,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                           </td>
                           <td className="p-2 font-medium">{row.title}</td>
                           <td className="p-2 text-sm">{row.artist || "-"}</td>
-                          <td className="p-2 text-sm">{row.topics || "-"}</td>
+                          <td className="p-2 text-sm">{getRowTags(row) || "-"}</td>
                           <td className="p-2">
                             {scoreStatus === "existing" ? (
                               <Badge variant="outline" className="gap-1">
@@ -716,7 +743,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Progress indicator */}
