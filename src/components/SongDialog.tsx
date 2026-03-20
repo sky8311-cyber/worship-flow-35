@@ -26,6 +26,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
+import { SmartSongFlow } from "@/components/songs/SmartSongFlow";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
