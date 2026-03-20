@@ -1,58 +1,75 @@
 
 
-## 가사 검색 경량화: 단계 축소 + delay 제거 + 클라이언트 타임아웃
+## 가사 검색 실패 근본 원인 + 수정 계획
 
-### 문제
+### 근본 원인 (Gasazip 실제 HTML로 확인)
 
-현재 `scrape-lyrics`는 최악의 경우 **9단계 × 최대 5개 후보 상세 페이지 + 각 200-300ms delay** = 60초+ 소요:
+"내가 예수를 못박았습니다"를 Gasazip에서 **title-only로 검색하면 3번째 결과에 정확한 곡이 있음** (gasazip.com/3034221, "투 미니스트리"). 하지만 현재 코드는 두 가지 버그로 이 곡을 찾지 못함:
 
-```text
-1. Gasazip (title+artist+subtitle)     → 검색 + 5개 상세
-2. Gasazip (title+artist, no subtitle) → 검색 + 5개 상세  (200ms delay)
-3. Gasazip (title only)                → 검색 + 5개 상세  (200ms delay)
-4. Bugs Track (title+artist)           → 검색 + 5개 상세  (200ms delay)
-5. Bugs Track (title only)             → 검색 + 5개 상세  (200ms delay)
-6. Bugs Lyrics Search                  → 검색 + 1개 상세  (200ms delay)
-7. Melon                               → 검색 + 1개 상세  (300ms delay)
-8. Google Fallback                     → 검색 + 8개 상세  (300ms delay)
-9. Build Candidate Links               → 검색 2개
+**버그 1: artist가 검색을 오염시킴**
+- `match-lyrics`가 artist="전은주"를 전달 → Gasazip 검색어가 "내가 예수를 못박았습니다 전은주"가 됨
+- 결과: 전은주의 다른 노래만 나옴 (엄마의 밥, 소원, 이젠 안녕)
+- title+artist 실패 후 **title-only 재시도가 없음** (이전에 제거됨)
+
+**버그 2: 검색 결과에서 제목을 못 읽음**
+- candidateRegex가 `href="...">([^<]*)`로 linkText를 추출하는데, 실제 HTML 구조는:
+```html
+<a href="https://www.gasazip.com/3034221" class="list-group-item">
+  <div><h4>내가 예수를 못 박았습니다<code>투 미니스트리</code></h4></div>
+  <h5>가사 미리보기...</h5>
+</a>
 ```
+- `([^<]*)` 는 `<a>` 태그 바로 다음의 공백만 캡처 → linkText 항상 빈 문자열 → preScore 항상 0 → 사전 필터링 불가
 
-실제로 CCM은 Gasazip 첫 검색에서 상위 2-3개 안에 거의 다 있음. 나머지는 과잉.
+**버그 3: 클라이언트 타임아웃 미작동**
+- `AbortController`를 생성했지만 `supabase.functions.invoke()`에 `signal`을 전달하지 않음 → 타임아웃이 실제로 작동하지 않음
 
 ### 수정 계획
 
-#### 1. `scrape-lyrics/index.ts` — 대폭 경량화
+#### 1. `scrape-lyrics/index.ts` — Gasazip 검색 결과 파싱 수정
 
-**제거:**
-- 모든 `await new Promise(r => setTimeout(r, ...))` delay 제거
-- Gasazip subtitle 제거 재시도 (2단계) 제거
-- Gasazip title-only 재시도 (3단계) 제거
-- Bugs title-only 재시도 (5단계) 제거
-- Google fallback의 개별 URL 스크래핑 제거 (후보 URL만 수집)
-- `buildCandidateLinks` 함수 제거 (Google fallback이 이미 후보 반환)
+candidateRegex를 **2단계 파싱**으로 교체:
+- 먼저 각 `<a href=".../{songId}"...>...</a>` 블록을 추출
+- 블록 내부에서 `<h4>` 태그의 텍스트를 제목으로 추출
+- 이렇게 하면 linkText가 정확한 곡 제목이 되어 사전 유사도 점수 계산 가능
 
-**축소:**
-- 후보 수: 5개 → **3개** (Gasazip, Bugs 모두)
-
-**최종 흐름 (4단계):**
-```text
-1. Gasazip (title+artist) → 검색 + 상위 3개 후보 중 best match
-2. Bugs Track (title+artist) → 검색 + 상위 3개 후보 중 best match
-3. Bugs Lyrics Search → 검색 + 1개
-4. Google Search → 후보 URL만 수집 (스크래핑 안함, candidates로 반환)
+```
+기존: href 속성 뒤의 빈 텍스트 캡처 → linkText=""
+수정: <h4> 태그 내용 파싱 → linkText="내가 예수를 못 박았습니다"
 ```
 
-artist가 비어있으면 자동으로 title-only 검색이 됨 (buildSearchQuery가 처리). 별도 재시도 불필요.
+#### 2. `scrape-lyrics/index.ts` — Main Handler에 title-only 재시도 추가
 
-#### 2. `SmartSongFlow.tsx` — 30초 타임아웃
+4단계 모두 실패 후, **title-only로 Gasazip 1회 재시도** 추가:
 
-`searchLyrics`에 `AbortController` + 30초 타임아웃 추가. 타임아웃 시 스피너 해제 + 토스트.
+```
+기존 흐름:
+1. Gasazip(title+artist) → 2. Bugs(title+artist) → 3. BugsLyrics → 4. Google
+
+수정 흐름:
+1. Gasazip(title+artist) → 2. Bugs(title+artist) → 3. BugsLyrics
+→ 4. artist가 있었으면 Gasazip(title-only) 재시도
+→ 5. Google 후보 URL 수집
+```
+
+#### 3. `SmartSongFlow.tsx` — 타임아웃을 Promise.race로 수정
+
+`AbortController` 대신 `Promise.race`로 30초 타임아웃 구현:
+
+```typescript
+const timeoutPromise = new Promise((_, reject) => 
+  setTimeout(() => reject(new Error('TIMEOUT')), 30000)
+);
+const result = await Promise.race([
+  supabase.functions.invoke("match-lyrics", { body: {...} }),
+  timeoutPromise
+]);
+```
 
 ### 수정 파일 (2개)
 
 | 파일 | 변경 |
 |---|---|
-| `supabase/functions/scrape-lyrics/index.ts` | delay 제거, 재시도 단계 제거, 후보 3개로 축소, Google은 URL만 수집 |
-| `src/components/songs/SmartSongFlow.tsx` | 30초 AbortController 타임아웃 |
+| `supabase/functions/scrape-lyrics/index.ts` | Gasazip 파싱 수정 + title-only 재시도 |
+| `src/components/songs/SmartSongFlow.tsx` | Promise.race 타임아웃 |
 
