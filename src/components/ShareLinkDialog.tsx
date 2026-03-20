@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Copy, Check, Link, Globe, Users, RefreshCw, ExternalLink } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
