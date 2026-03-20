@@ -45,7 +45,7 @@ const SYSTEM_PROMPT = `${SKILLS_MD}
 위 지침에 따라 예배 세트를 구성한다. 제공된 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON array만 반환한다. 다른 텍스트 없음.`;
 
 // Truncate lyrics to save tokens
-function truncateLyrics(lyrics: string | null, maxLen = 200): string | null {
+function truncateLyrics(lyrics: string | null, maxLen = 400): string | null {
   if (!lyrics) return null;
   return lyrics.length > maxLen ? lyrics.substring(0, maxLen) + '...' : lyrics;
 }
