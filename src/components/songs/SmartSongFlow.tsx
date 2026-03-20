@@ -423,7 +423,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className="flex-1 overflow-y-auto min-h-0 px-4 py-3">
         {currentStep === 1 && <Step1_BasicInfo 
           title={title} setTitle={setTitle}
           subtitle={subtitle} setSubtitle={setSubtitle}
