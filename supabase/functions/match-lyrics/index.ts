@@ -45,7 +45,9 @@ Deno.serve(async (req) => {
     }
 
     // Build artist string: combine artist and original_composer for better search
-    const searchArtist = [artist, original_composer].filter(Boolean).join(" ");
+    const searchArtist = original_composer 
+      ? original_composer        // 원곡자 있으면 원곡자만
+      : (artist || "");          // 없으면 artist (없으면 빈 문자열)
 
     console.log("match-lyrics: calling scrape-lyrics with", { title, artist: searchArtist });
 

@@ -453,6 +453,13 @@ serve(async (req) => {
       result = await scrapeBugsLyrics(title, artist || '', sub);
     }
     
+    // Bugs Track: title only 재시도
+    if (!result.lyrics && (artist || '').length > 0) {
+      console.log('Retrying Bugs with title only...');
+      await new Promise(r => setTimeout(r, 200));
+      result = await scrapeBugsLyrics(title, '', sub);
+    }
+    
     // 3단계: Bugs Lyrics
     if (!result.lyrics) {
       console.log('Bugs track search failed, trying Bugs lyrics search...');
