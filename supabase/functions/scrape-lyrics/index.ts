@@ -31,18 +31,15 @@ function normalizeForMatching(text: string): string {
     .toLowerCase()
     .replace(/\s+/g, '')
     .replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣]/g, '')
-    .replace(/\(.*?\)/g, '') // Remove parenthetical text
+    .replace(/\(.*?\)/g, '')
     .trim();
 }
 
-// Levenshtein-based similarity (0-100)
 function calculateSimilarity(str1: string, str2: string): number {
   const s1 = normalizeForMatching(str1);
   const s2 = normalizeForMatching(str2);
   if (s1 === s2) return 100;
   if (!s1 || !s2) return 0;
-  
-  // Check if one contains the other
   if (s1.includes(s2) || s2.includes(s1)) return 85;
   
   const len1 = s1.length;
@@ -65,7 +62,6 @@ function calculateSimilarity(str1: string, str2: string): number {
   return Math.round((1 - distance / maxLen) * 100);
 }
 
-// Verify scraped result matches the requested song
 function verifyMatch(
   requestTitle: string, 
   requestArtist: string, 
@@ -76,9 +72,8 @@ function verifyMatch(
   const titleSim = calculateSimilarity(requestTitle, resultTitle);
   const artistSim = requestArtist && resultArtist 
     ? calculateSimilarity(requestArtist, resultArtist) 
-    : 50; // neutral if no artist to compare
+    : 50;
   
-  // Also check subtitle match
   let subtitleBoost = 0;
   if (subtitle) {
     const subtitleSim = calculateSimilarity(subtitle, resultTitle);
@@ -87,7 +82,6 @@ function verifyMatch(
   
   const effectiveTitleSim = Math.min(100, titleSim + subtitleBoost);
   
-  // Pass if title similarity >= 40% OR artist similarity >= 60% with title >= 30%
   const passed = 
     effectiveTitleSim >= 40 ||
     (artistSim >= 60 && effectiveTitleSim >= 30) ||
@@ -99,7 +93,7 @@ function verifyMatch(
 }
 
 // ============================================================
-// YouTube oEmbed: Get video title without API key
+// YouTube oEmbed
 // ============================================================
 async function getYouTubeTitle(youtubeUrl: string): Promise<string | null> {
   if (!youtubeUrl) return null;
@@ -107,7 +101,7 @@ async function getYouTubeTitle(youtubeUrl: string): Promise<string | null> {
     const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(youtubeUrl)}&format=json`;
     const response = await fetch(oembedUrl);
     if (!response.ok) {
-      await response.text(); // consume body
+      await response.text();
       return null;
     }
     const data = await response.json();
@@ -119,7 +113,6 @@ async function getYouTubeTitle(youtubeUrl: string): Promise<string | null> {
   }
 }
 
-// Build optimized search query
 function buildSearchQuery(title: string, artist: string, subtitle: string): string {
   let query = title;
   if (subtitle && !title.includes(subtitle)) {
@@ -145,7 +138,7 @@ function stripHtml(html: string): string {
 }
 
 // ============================================================
-// 1. PRIMARY: Gasazip — Multi-candidate
+// 1. PRIMARY: Gasazip — up to 3 candidates
 // ============================================================
 async function scrapeGasazipLyrics(title: string, artist: string, subtitle: string): Promise<ScrapeResult> {
   try {
@@ -161,20 +154,17 @@ async function scrapeGasazipLyrics(title: string, artist: string, subtitle: stri
     
     const searchHtml = await searchResponse.text();
     
-    // Extract ALL candidate song IDs (up to 5)
     const candidateRegex = /href="(?:https:\/\/www\.gasazip\.com\/|(?:https:\/\/mini\.gasazip\.com\/view\.html\?no=)|\/)(\d+)"[^>]*>([^<]*)/gi;
     const candidates: Array<{ songId: string; linkText: string }> = [];
     let match;
     while ((match = candidateRegex.exec(searchHtml)) !== null && candidates.length < 3) {
       const songId = match[1];
       const linkText = stripHtml(match[2]).trim();
-      // Avoid duplicate IDs
       if (!candidates.some(c => c.songId === songId)) {
         candidates.push({ songId, linkText });
       }
     }
     
-    // Fallback: simpler regex
     if (candidates.length === 0) {
       const simpleRegex = /href="(?:https:\/\/www\.gasazip\.com\/|\/)(\d+)"/gi;
       while ((match = simpleRegex.exec(searchHtml)) !== null && candidates.length < 3) {
@@ -191,16 +181,12 @@ async function scrapeGasazipLyrics(title: string, artist: string, subtitle: stri
     
     console.log(`Gasazip: found ${candidates.length} candidates`);
     
-    // Score each candidate by link text similarity (pre-filter)
     const scoredCandidates = candidates.map(c => ({
       ...c,
       score: c.linkText ? calculateSimilarity(title, c.linkText) : 0,
     }));
-    
-    // Sort by score descending, but keep original order for zero-score items
     scoredCandidates.sort((a, b) => b.score - a.score);
     
-    // Try each candidate in order of best score
     for (const candidate of scoredCandidates) {
       console.log(`Gasazip: trying candidate ${candidate.songId} (linkText="${candidate.linkText}", preScore=${candidate.score})`);
       
@@ -211,19 +197,17 @@ async function scrapeGasazipLyrics(title: string, artist: string, subtitle: stri
         
         const detailHtml = await detailResponse.text();
         
-        // Extract track info for verification
         const titleMatch = detailHtml.match(/<h2[^>]*id="gasatitle"[^>]*>([^<]+)<\/h2>/i);
         const artistMatch = detailHtml.match(/<span[^>]*id="gasasinger"[^>]*>([^<]+)<\/span>/i);
         
         const resultTitle = titleMatch ? stripHtml(titleMatch[1]) : '';
         const resultArtist = artistMatch ? stripHtml(artistMatch[1]) : '';
         
-        // Verify match
         if (resultTitle) {
           const verification = verifyMatch(title, artist, resultTitle, resultArtist, subtitle);
           if (!verification.passed) {
             console.log(`Gasazip candidate ${candidate.songId} rejected: "${resultTitle}" by "${resultArtist}"`);
-            continue; // Try next candidate instead of giving up
+            continue;
           }
         }
         
@@ -255,7 +239,7 @@ async function scrapeGasazipLyrics(title: string, artist: string, subtitle: stri
 }
 
 // ============================================================
-// 2. FALLBACK: Bugs Music - Track Search — Multi-candidate
+// 2. FALLBACK: Bugs Music - Track Search — up to 3 candidates
 // ============================================================
 async function scrapeBugsLyrics(title: string, artist: string, subtitle: string): Promise<ScrapeResult> {
   try {
@@ -271,7 +255,6 @@ async function scrapeBugsLyrics(title: string, artist: string, subtitle: string)
     
     const searchHtml = await searchResponse.text();
     
-    // Extract ALL track IDs (up to 3)
     const trackIdRegex = /data-trackid="(\d+)"/gi;
     const trackIds: string[] = [];
     let match;
@@ -281,7 +264,6 @@ async function scrapeBugsLyrics(title: string, artist: string, subtitle: string)
       }
     }
     
-    // Fallback
     if (trackIds.length === 0) {
       const hrefRegex = /href="\/track\/(\d+)"/gi;
       while ((match = hrefRegex.exec(searchHtml)) !== null && trackIds.length < 3) {
@@ -305,7 +287,6 @@ async function scrapeBugsLyrics(title: string, artist: string, subtitle: string)
         
         const trackHtml = await trackResponse.text();
         
-        // Extract title/artist from detail page for verification
         const pageTitleMatch = trackHtml.match(/<header[^>]*>[\s\S]*?<h1[^>]*>([^<]+)<\/h1>/i);
         const pageArtistMatch = trackHtml.match(/<a[^>]*class="[^"]*artistTitle[^"]*"[^>]*>([^<]+)<\/a>/i);
         
@@ -402,227 +383,56 @@ async function scrapeBugsLyricsSearch(title: string, artist: string, subtitle: s
 }
 
 // ============================================================
-// 4. FALLBACK: Melon
+// 4. FALLBACK: Google → collect candidate URLs only (no scraping)
 // ============================================================
-async function scrapeMelonLyrics(title: string, artist: string, subtitle: string): Promise<ScrapeResult> {
-  try {
-    const searchQuery = buildSearchQuery(title, artist, subtitle);
-    const searchUrl = `https://www.melon.com/search/song/index.htm?q=${encodeURIComponent(searchQuery)}`;
-    
-    console.log('Melon search URL:', searchUrl);
-    
-    const searchResponse = await fetch(searchUrl, { headers: browserHeaders });
-    if (!searchResponse.ok) {
-      return { lyrics: null, source: 'none', error: `Search failed: ${searchResponse.status}` };
-    }
-    
-    const searchHtml = await searchResponse.text();
-    
-    const songIdMatch = searchHtml.match(/goSongDetail\('(\d+)'\)/i) ||
-                        searchHtml.match(/data-song-no="(\d+)"/i);
-    
-    if (!songIdMatch) {
-      return { lyrics: null, source: 'none', error: 'No song found' };
-    }
-    
-    const songId = songIdMatch[1];
-    const detailUrl = `https://www.melon.com/song/detail.htm?songId=${songId}`;
-    const detailResponse = await fetch(detailUrl, { headers: browserHeaders });
-    
-    if (!detailResponse.ok) {
-      return { lyrics: null, source: 'none', error: `Detail page failed: ${detailResponse.status}` };
-    }
-    
-    const detailHtml = await detailResponse.text();
-    
-    let lyricsMatch = detailHtml.match(/<div[^>]*id="d_video_summary"[^>]*>([\s\S]*?)<\/div>/i);
-    if (!lyricsMatch) lyricsMatch = detailHtml.match(/<div[^>]*class="[^"]*lyric[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-    
-    if (!lyricsMatch || !lyricsMatch[1]) {
-      return { lyrics: null, source: 'none', error: 'Lyrics not available' };
-    }
-    
-    const lyrics = stripHtml(lyricsMatch[1]).trim();
-    if (!lyrics || lyrics.length < 20) {
-      return { lyrics: null, source: 'none', error: 'Lyrics too short or empty' };
-    }
-    
-    console.log('Successfully scraped lyrics from Melon, length:', lyrics.length);
-    return { lyrics, source: 'melon', verified: true, trackInfo: { title, artist } };
-    
-  } catch (error) {
-    console.error('Melon scraping error:', error);
-    return { lyrics: null, source: 'none', error: error instanceof Error ? error.message : 'Unknown error' };
-  }
-}
-
-// ============================================================
-// 5. FALLBACK: Google Web Search → scrape from found URLs
-// ============================================================
-async function googleSearchFallback(title: string, artist: string): Promise<ScrapeResult> {
+async function googleSearchCandidates(title: string, artist: string): Promise<Array<{ url: string; title: string; source: string }>> {
+  const candidates: Array<{ url: string; title: string; source: string }> = [];
   try {
     const query = `${title} ${artist} 가사`.trim();
-    // Use Google's web search and parse result URLs
-    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=ko&num=10`;
+    const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=ko&num=5`;
     
-    console.log('Google fallback search:', googleUrl);
+    console.log('Google candidate search:', googleUrl);
     
     const response = await fetch(googleUrl, {
-      headers: {
-        ...browserHeaders,
-        'Accept': 'text/html,application/xhtml+xml',
-      },
+      headers: { ...browserHeaders, 'Accept': 'text/html,application/xhtml+xml' },
     });
     
     if (!response.ok) {
-      const body = await response.text();
-      console.log('Google search failed:', response.status, body.substring(0, 200));
-      return { lyrics: null, source: 'none', error: `Google search failed: ${response.status}` };
+      await response.text();
+      return candidates;
     }
     
     const html = await response.text();
     
-    // Extract candidate URLs from Google results
-    const candidates: Array<{ url: string; title: string; source: string }> = [];
-    
-    // Match gasazip URLs
     const gasazipRegex = /href="(https?:\/\/(?:www\.)?gasazip\.com\/(\d+))"/gi;
     let match;
-    while ((match = gasazipRegex.exec(html)) !== null && candidates.length < 3) {
-      candidates.push({ url: match[1], title: '', source: 'gasazip' });
+    while ((match = gasazipRegex.exec(html)) !== null && candidates.length < 2) {
+      candidates.push({ url: match[1], title, source: 'gasazip' });
     }
     
-    // Match bugs URLs
     const bugsRegex = /href="(https?:\/\/music\.bugs\.co\.kr\/track\/(\d+))"/gi;
-    while ((match = bugsRegex.exec(html)) !== null && candidates.length < 5) {
-      candidates.push({ url: match[1], title: '', source: 'bugs' });
+    while ((match = bugsRegex.exec(html)) !== null && candidates.length < 4) {
+      candidates.push({ url: match[1], title, source: 'bugs' });
     }
     
-    // Also try extracting URLs from Google's redirect links
     const googleRedirectRegex = /\/url\?q=(https?(?:%3A|:)(?:%2F|\/){2}(?:www\.)?(?:gasazip\.com|music\.bugs\.co\.kr)[^&"]*)/gi;
-    while ((match = googleRedirectRegex.exec(html)) !== null && candidates.length < 8) {
+    while ((match = googleRedirectRegex.exec(html)) !== null && candidates.length < 4) {
       const decodedUrl = decodeURIComponent(match[1]);
       if (!candidates.some(c => c.url === decodedUrl)) {
         const isGasazip = decodedUrl.includes('gasazip.com');
-        candidates.push({ url: decodedUrl, title: '', source: isGasazip ? 'gasazip' : 'bugs' });
+        candidates.push({ url: decodedUrl, title, source: isGasazip ? 'gasazip' : 'bugs' });
       }
     }
     
-    console.log(`Google fallback: found ${candidates.length} candidate URLs`);
-    
-    // Try scraping each candidate URL
-    for (const candidate of candidates) {
-      try {
-        console.log(`Google fallback: trying ${candidate.url}`);
-        const pageResponse = await fetch(candidate.url, { headers: browserHeaders });
-        if (!pageResponse.ok) continue;
-        
-        const pageHtml = await pageResponse.text();
-        
-        if (candidate.source === 'gasazip') {
-          const titleMatch = pageHtml.match(/<h2[^>]*id="gasatitle"[^>]*>([^<]+)<\/h2>/i);
-          candidate.title = titleMatch ? stripHtml(titleMatch[1]) : '';
-          
-          const lyricsMatch = pageHtml.match(/<div[^>]*id="gasa"[^>]*>([\s\S]*?)<\/div>/i);
-          if (lyricsMatch && lyricsMatch[1]) {
-            const lyrics = stripHtml(lyricsMatch[1]).trim();
-            if (lyrics.length >= 20) {
-              // Verify
-              const verification = verifyMatch(title, artist, candidate.title, '', '');
-              if (verification.passed) {
-                console.log('Google fallback: found lyrics from gasazip, length:', lyrics.length);
-                return { lyrics, source: 'gasazip', verified: true, trackInfo: { title: candidate.title, artist } };
-              }
-            }
-          }
-        } else if (candidate.source === 'bugs') {
-          let lyricsMatch = pageHtml.match(/<xmp[^>]*>([\s\S]*?)<\/xmp>/i);
-          if (!lyricsMatch) lyricsMatch = pageHtml.match(/<div[^>]*class="[^"]*lyricsContainer[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-          
-          if (lyricsMatch && lyricsMatch[1]) {
-            const lyrics = stripHtml(lyricsMatch[1]).trim();
-            if (lyrics.length >= 20) {
-              console.log('Google fallback: found lyrics from bugs, length:', lyrics.length);
-              return { lyrics, source: 'bugs', verified: true, trackInfo: { title, artist } };
-            }
-          }
-        }
-      } catch (e) {
-        console.log(`Google fallback: error fetching ${candidate.url}:`, e);
-        continue;
-      }
-    }
-    
-    // Return candidates for user display even if we couldn't auto-scrape
-    if (candidates.length > 0) {
-      return { lyrics: null, source: 'none', candidates, error: 'Could not auto-extract but found candidate URLs' };
-    }
-    
-    return { lyrics: null, source: 'none', error: 'No results from Google fallback' };
-    
+    console.log(`Google: found ${candidates.length} candidate URLs (no scraping)`);
   } catch (error) {
-    console.error('Google fallback error:', error);
-    return { lyrics: null, source: 'none', error: error instanceof Error ? error.message : 'Unknown error' };
+    console.log('Google candidate search error:', error);
   }
-}
-
-// ============================================================
-// 6. Build candidate links via Google (for UI display)
-// ============================================================
-async function buildCandidateLinks(title: string, artist: string): Promise<Array<{ url: string; title: string; source: string }>> {
-  const candidates: Array<{ url: string; title: string; source: string }> = [];
-  
-  try {
-    // Direct search on Gasazip
-    const gasazipQuery = `${title} ${artist}`.trim();
-    const gasazipUrl = `https://www.gasazip.com/search.html?q=${encodeURIComponent(gasazipQuery)}`;
-    
-    const gasazipResponse = await fetch(gasazipUrl, { headers: browserHeaders });
-    if (gasazipResponse.ok) {
-      const html = await gasazipResponse.text();
-      const idRegex = /href="(?:https:\/\/www\.gasazip\.com\/|\/)(\d+)"[^>]*>([^<]*)/gi;
-      let match;
-      while ((match = idRegex.exec(html)) !== null && candidates.length < 3) {
-        const songId = match[1];
-        const linkTitle = stripHtml(match[2]).trim() || title;
-        candidates.push({
-          url: `https://www.gasazip.com/${songId}`,
-          title: linkTitle,
-          source: 'gasazip',
-        });
-      }
-    }
-  } catch (e) {
-    console.log('Candidate link building (gasazip) failed:', e);
-  }
-  
-  try {
-    // Direct search on Bugs
-    const bugsQuery = `${title} ${artist}`.trim();
-    const bugsUrl = `https://music.bugs.co.kr/search/track?q=${encodeURIComponent(bugsQuery)}`;
-    
-    const bugsResponse = await fetch(bugsUrl, { headers: browserHeaders });
-    if (bugsResponse.ok) {
-      const html = await bugsResponse.text();
-      const trackRegex = /data-trackid="(\d+)"/gi;
-      let match;
-      while ((match = trackRegex.exec(html)) !== null && candidates.length < 6) {
-        candidates.push({
-          url: `https://music.bugs.co.kr/track/${match[1]}`,
-          title: title,
-          source: 'bugs',
-        });
-      }
-    }
-  } catch (e) {
-    console.log('Candidate link building (bugs) failed:', e);
-  }
-  
   return candidates;
 }
 
 // ============================================================
-// Main Handler
+// Main Handler — 4 stages, no delays, no retries
 // ============================================================
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -641,7 +451,6 @@ serve(async (req) => {
 
     console.log('Scraping lyrics for:', { title, artist, subtitle, youtube_url });
     
-    // Get YouTube title for extra verification context
     let youtubeTitle: string | null = null;
     if (youtube_url) {
       youtubeTitle = await getYouTubeTitle(youtube_url);
@@ -649,68 +458,30 @@ serve(async (req) => {
     
     const sub = subtitle || '';
     
-    // 1단계: Gasazip (CCM 전문)
+    // 1단계: Gasazip (title+artist)
     let result = await scrapeGasazipLyrics(title, artist || '', sub);
     
-    // If Gasazip failed due to mismatch, try without subtitle for a broader search
-    if (!result.lyrics && result.verified === false && sub) {
-      console.log('Retrying Gasazip without subtitle...');
-      await new Promise(r => setTimeout(r, 200));
-      result = await scrapeGasazipLyrics(title, artist || '', '');
-    }
-    
-    // Gasazip: title only 재시도
+    // 2단계: Bugs Track (title+artist)
     if (!result.lyrics) {
-      console.log('Retrying Gasazip with title only (no artist)...');
-      await new Promise(r => setTimeout(r, 200));
-      result = await scrapeGasazipLyrics(title, '', '');
-    }
-    
-    // 2단계: Bugs Track
-    if (!result.lyrics) {
-      console.log('Gasazip failed, trying Bugs track search...');
-      await new Promise(r => setTimeout(r, 200));
+      console.log('Gasazip failed, trying Bugs track...');
       result = await scrapeBugsLyrics(title, artist || '', sub);
     }
     
-    // Bugs Track: title only 재시도
-    if (!result.lyrics && (artist || '').length > 0) {
-      console.log('Retrying Bugs with title only...');
-      await new Promise(r => setTimeout(r, 200));
-      result = await scrapeBugsLyrics(title, '', sub);
-    }
-    
-    // 3단계: Bugs Lyrics
+    // 3단계: Bugs Lyrics Search
     if (!result.lyrics) {
-      console.log('Bugs track search failed, trying Bugs lyrics search...');
-      await new Promise(r => setTimeout(r, 200));
+      console.log('Bugs track failed, trying Bugs lyrics search...');
       result = await scrapeBugsLyricsSearch(title, artist || '', sub);
     }
     
-    // 4단계: Melon
+    // 4단계: Google → 후보 URL만 수집 (스크래핑 안함)
     if (!result.lyrics) {
-      console.log('Bugs lyrics search failed, trying Melon...');
-      await new Promise(r => setTimeout(r, 300));
-      result = await scrapeMelonLyrics(title, artist || '', sub);
-    }
-    
-    // 5단계: Google Web Search Fallback
-    if (!result.lyrics) {
-      console.log('All direct searches failed, trying Google fallback...');
-      await new Promise(r => setTimeout(r, 300));
-      result = await googleSearchFallback(title, artist || '');
-    }
-    
-    // 6단계: If still no lyrics, build candidate links for the user
-    if (!result.lyrics && (!result.candidates || result.candidates.length === 0)) {
-      console.log('Building candidate links for user...');
-      const candidates = await buildCandidateLinks(title, artist || '');
+      console.log('All direct searches failed, collecting Google candidates...');
+      const candidates = await googleSearchCandidates(title, artist || '');
       if (candidates.length > 0) {
         result.candidates = candidates;
       }
     }
     
-    // Attach YouTube title to result for upstream use
     if (youtubeTitle) {
       result.youtube_title = youtubeTitle;
     }
