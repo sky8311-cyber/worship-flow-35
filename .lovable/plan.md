@@ -1,28 +1,44 @@
 
 
-## 아티스트 자동 입력 + 검색 결과 10개 확장
+## 플랜 수정: draft_step 컬럼 추가
 
-### 문제 원인
-1. **아티스트 자동 입력 안 됨**: `handleSelect`에서 `if (!artist.trim())` 조건 때문에, 이미 `initialArtist`가 있으면 channelTitle로 덮어쓰지 않음. YouTube 선택 시 항상 channelTitle을 제안해야 함.
-2. **검색 결과 5개**: Edge Function의 `maxResults: "5"` → `"10"`으로 변경 필요.
+기존 승인된 SmartSongFlow 플랜의 DB 변경사항에 `draft_step` 컬럼을 추가합니다.
 
-### 수정
+---
+
+### DB 변경 (기존 2개 → 3개 컬럼)
+
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| `original_composer` | TEXT, nullable, default null | 가사 검색 보조용 |
+| `status` | TEXT, default 'published' | draft / published |
+| **`draft_step`** | INTEGER, nullable, default null | 임시저장 시 현재 step (1-6) |
+
+**Migration SQL 추가분:**
+```sql
+ALTER TABLE songs ADD COLUMN draft_step integer DEFAULT NULL;
+```
+
+---
+
+### 동작 변경
+
+1. **임시저장 시**: 현재 step 번호를 `draft_step`에 저장
+   - 예: Step 3에서 임시저장 → `draft_step = 3`
+
+2. **Draft 재개 시**: `draft_step` 값이 있으면 해당 step부터 시작, 없으면 Step 1부터
+
+3. **최종 저장 시**: `draft_step = null`로 초기화 (published 상태에선 불필요)
+
+---
+
+### 영향 파일
 
 | 파일 | 변경 |
 |---|---|
-| `src/components/songs/SmartSongEntry.tsx` (line 68-70) | 선택 시 항상 `setArtist(result.channelTitle)` 적용 (조건 제거) |
-| `supabase/functions/search-youtube/index.ts` (line 62) | `maxResults: "5"` → `"10"` |
+| Migration SQL | `draft_step` 컬럼 추가 |
+| `SmartSongFlow.tsx` | 임시저장 시 `draft_step` 저장, 재개 시 초기 step으로 사용 |
+| `SongLibrary.tsx` | Draft 재개 시 `draft_step` 값을 SmartSongFlow에 전달 |
 
-**SmartSongEntry 변경**:
-```typescript
-const handleSelect = (result: YouTubeResult) => {
-  setSelectedResult(result);
-  setArtist(result.channelTitle); // 항상 채널명으로 자동 입력 (수정 가능)
-};
-```
-
-**Edge Function 변경**:
-```typescript
-maxResults: "10",
-```
+나머지 플랜은 기존 승인 내용 그대로 유지.
 
