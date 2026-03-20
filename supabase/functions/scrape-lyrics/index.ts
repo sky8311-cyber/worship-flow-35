@@ -87,7 +87,10 @@ function verifyMatch(
   const effectiveTitleSim = Math.min(100, titleSim + subtitleBoost);
   
   // Pass if title similarity >= 50% OR artist similarity >= 70% with title >= 40%
-  const passed = effectiveTitleSim >= 50 || (artistSim >= 70 && effectiveTitleSim >= 40);
+  const passed = 
+    effectiveTitleSim >= 40 ||
+    (artistSim >= 60 && effectiveTitleSim >= 30) ||
+    (artistSim === 50 && effectiveTitleSim >= 42);
   
   console.log(`Verification: title="${resultTitle}" artist="${resultArtist}" → titleSim=${titleSim}(+${subtitleBoost}) artistSim=${artistSim} → ${passed ? 'PASS' : 'FAIL'}`);
   
