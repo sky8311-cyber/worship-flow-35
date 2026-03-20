@@ -1,8 +1,9 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileDropdownMenu } from "@/components/worship-studio/ProfileDropdownMenu";
 import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
@@ -13,6 +14,11 @@ interface InstituteLayoutProps {
 export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isInstituteEnabled, isLoading } = useAppSettings();
+
+  if (!isLoading && !isInstituteEnabled) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const isMain = location.pathname === "/institute";
   const showBottomNav = true;
