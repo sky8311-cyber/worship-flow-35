@@ -10,6 +10,8 @@ import XLSX from "xlsx-js-style";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
