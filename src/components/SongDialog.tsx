@@ -1104,13 +1104,26 @@ const [loading, setLoading] = useState(false);
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
-        className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
+        className={cn(
+          "w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh]",
+          !song && (!song || song?.status === 'draft') ? "p-0 overflow-hidden" : "overflow-y-auto"
+        )}
         hideCloseButton
         style={{
-          paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
-          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))'
+          paddingTop: !song ? '0' : 'max(1rem, env(safe-area-inset-top, 0px))',
+          paddingBottom: !song ? '0' : 'max(1rem, env(safe-area-inset-bottom, 0px))'
         }}
       >
+        {/* New song → SmartSongFlow | Edit → existing form */}
+        {!song || (song && song.status === 'draft') ? (
+          <SmartSongFlow
+            draftSong={song?.status === 'draft' ? song : undefined}
+            onComplete={handleSmartFlowComplete}
+            onDraftSave={handleSmartFlowDraftSave}
+            onClose={() => { onOpenChange(false); onClose(); }}
+          />
+        ) : (
+          <>
         <DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex-1 min-w-0">
