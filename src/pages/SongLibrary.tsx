@@ -262,7 +262,7 @@ const SongLibrary = () => {
 
     // Topic filter - show only songs matching selected topics (OR logic)
     if (selectedTopics.length > 0) {
-      const songTopics = song.topics?.split(',').map((t: string) => t.trim()) || [];
+      const songTopics = song.tags?.split(',').map((t: string) => t.trim()) || [];
       const hasMatchingTopic = selectedTopics.some(topic => songTopics.includes(topic));
       if (!hasMatchingTopic) {
         return false;
