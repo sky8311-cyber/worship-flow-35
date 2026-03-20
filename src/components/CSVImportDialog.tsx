@@ -266,7 +266,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             artist: row.artist || null,
             language: row.language || null,
             default_key: row.default_key || null,
-            topics: row.topics || null,
+            tags: getRowTags(row),
             youtube_url: row.youtube_url?.trim() || null,
             score_file_url: uploadedScoreUrl,
             interpretation: row.interpretation || null,
