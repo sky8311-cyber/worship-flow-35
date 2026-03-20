@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     const params = new URLSearchParams({
       part: "snippet",
       type: "video",
-      maxResults: "5",
+      maxResults: "10",
       relevanceLanguage: "ko",
       q: query,
       key: apiKey,

@@ -65,9 +65,7 @@ export const SmartSongEntry = ({
 
   const handleSelect = (result: YouTubeResult) => {
     setSelectedResult(result);
-    if (!artist.trim()) {
-      setArtist(result.channelTitle);
-    }
+    setArtist(result.channelTitle);
   };
 
   const handleSave = () => {
