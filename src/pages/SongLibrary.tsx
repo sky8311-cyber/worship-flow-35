@@ -197,7 +197,7 @@ const SongLibrary = () => {
           `title.ilike.%${debouncedSearchQuery}%,` +
           `subtitle.ilike.%${debouncedSearchQuery}%,` +
           `artist.ilike.%${debouncedSearchQuery}%,` +
-          `topics.ilike.%${debouncedSearchQuery}%,` +
+          `tags.ilike.%${debouncedSearchQuery}%,` +
           `lyrics.ilike.%${debouncedSearchQuery}%`
         );
       }
