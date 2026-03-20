@@ -222,7 +222,7 @@ const Settings = () => {
   const location = useLocation();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
-  const { isSandboxTester } = useAppSettings();
+  const { isSandboxTester, isWorshipProfileEnabled } = useAppSettings();
   const { tier } = useTierFeature();
   const queryClient = useQueryClient();
 
