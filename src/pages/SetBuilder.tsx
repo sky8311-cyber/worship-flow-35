@@ -42,6 +42,7 @@ import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
 import { useTierFeature } from "@/hooks/useTierFeature";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
 import { Sparkles } from "lucide-react";
 
@@ -90,6 +91,7 @@ const SetBuilder = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const { hasFeature } = useTierFeature();
+  const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -2105,7 +2107,7 @@ const SetBuilder = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
                       </Button>
-                      {/* AI Set Builder button - visible to all, upgrade prompt for non-eligible */}
+                      {isAiSetBuilderEnabled && (
                       <Button
                         type="button"
                         onClick={() => {
@@ -2141,6 +2143,7 @@ const SetBuilder = () => {
                           <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0 h-4">PRO</Badge>
                         )}
                       </Button>
+                      )}
                       {/* Mobile only - add component button */}
                       <Button 
                         onClick={() => handleAddComponent("welcome")} 
@@ -2180,8 +2183,7 @@ const SetBuilder = () => {
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
         </div>
-                      {/* Locked feature banner for non-eligible users */}
-                      {!hasFeature('ai_set_builder') && (
+                      {isAiSetBuilderEnabled && !hasFeature('ai_set_builder') && (
                         <div className="mt-4">
                           <LockedFeatureBanner
                             feature="ai_set_builder"

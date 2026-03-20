@@ -44,7 +44,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
   const { t, language } = useTranslation();
   const { setLanguage } = useLanguageContext();
   const { isSubscriptionActive } = useChurchSubscription();
-  const { isChurchMenuVisible, isSandboxTester, isLoading: settingsLoading } = useAppSettings();
+  const { isChurchMenuVisible, isSandboxTester, isLoading: settingsLoading, isInstituteEnabled, isWorshipProfileEnabled } = useAppSettings();
   const { tier } = useTierFeature();
   const navigate = useNavigate();
   const location = useLocation();
@@ -212,12 +212,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 
-                <DropdownMenuItem asChild>
-                  <Link to="/institute">
-                    <GraduationCap className="mr-2 h-4 w-4" />
-                    K-Worship Institute
-                  </Link>
-                </DropdownMenuItem>
+                {isInstituteEnabled && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/institute">
+                      <GraduationCap className="mr-2 h-4 w-4" />
+                      K-Worship Institute
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 
                 {/* Mobile-only items */}
                 <DropdownMenuItem className="md:hidden" onClick={() => setLanguage(language === "en" ? "ko" : "en")}>
@@ -234,7 +236,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {isInstructor && (
+                {isInstructor && isInstituteEnabled && (
                   <DropdownMenuItem asChild>
                     <Link to="/institute/manage">
                       <GraduationCap className="mr-2 h-4 w-4" />
@@ -260,7 +262,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 )}
                 
                 {/* Worship Profile Settings - Worship Leaders only */}
-                {isWorshipLeader && (
+                {isWorshipLeader && isWorshipProfileEnabled && (
                   <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
                     <Sparkles className="mr-2 h-4 w-4" />
                     <span className="flex items-center justify-between w-full">

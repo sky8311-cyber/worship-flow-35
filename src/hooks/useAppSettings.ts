@@ -14,6 +14,9 @@ interface FeatureFlags {
   worship_leader_auto_approve: boolean;
   google_login_enabled: boolean;
   team_rotation_enabled: boolean;
+  ai_set_builder_enabled: boolean;
+  worship_profile_enabled: boolean;
+  institute_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -27,6 +30,9 @@ const DEFAULT_FLAGS: FeatureFlags = {
   worship_leader_auto_approve: false,
   google_login_enabled: true,
   team_rotation_enabled: false,
+  ai_set_builder_enabled: false,
+  worship_profile_enabled: false,
+  institute_enabled: false,
 };
 
 export function useAppSettings() {
@@ -115,6 +121,9 @@ export function useAppSettings() {
     isWorshipLeaderAutoApproveEnabled: !isLoading && (flags?.worship_leader_auto_approve ?? false),
     isGoogleLoginEnabled: !isLoading && (flags?.google_login_enabled ?? true),
     isTeamRotationEnabled: !isLoading && (flags?.team_rotation_enabled ?? false),
+    isAiSetBuilderEnabled: !isLoading && ((flags?.ai_set_builder_enabled ?? false) || hasSandboxAccess("ai_set_builder_enabled")),
+    isWorshipProfileEnabled: !isLoading && ((flags?.worship_profile_enabled ?? false) || hasSandboxAccess("worship_profile_enabled")),
+    isInstituteEnabled: !isLoading && ((flags?.institute_enabled ?? false) || hasSandboxAccess("institute_enabled")),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     updateError: updateFlagMutation.error,
@@ -129,6 +138,9 @@ export function useAppSettings() {
     toggleWorshipLeaderAutoApprove: () => toggleFlag("worship_leader_auto_approve"),
     toggleGoogleLogin: () => toggleFlag("google_login_enabled"),
     toggleTeamRotation: () => toggleFlag("team_rotation_enabled"),
+    toggleAiSetBuilder: () => toggleFlag("ai_set_builder_enabled"),
+    toggleWorshipProfile: () => toggleFlag("worship_profile_enabled"),
+    toggleInstitute: () => toggleFlag("institute_enabled"),
     // Sandbox access info
     isSandboxTester: sandboxAccess && sandboxAccess.length > 0,
   };

@@ -222,7 +222,7 @@ const Settings = () => {
   const location = useLocation();
   const { t, language } = useTranslation();
   const { user, profile, isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity, isCommunityOwnerInAnyCommunity, updatePassword, refreshProfile } = useAuth();
-  const { isSandboxTester } = useAppSettings();
+  const { isSandboxTester, isWorshipProfileEnabled } = useAppSettings();
   const { tier } = useTierFeature();
   const queryClient = useQueryClient();
 
@@ -875,7 +875,9 @@ const Settings = () => {
         )}
 
         {/* Worship Curation Profile */}
-        <CurationProfileCard autoOpen={!!(location.state as any)?.openCurationChat} />
+        {isWorshipProfileEnabled && (
+          <CurationProfileCard autoOpen={!!(location.state as any)?.openCurationChat} />
+        )}
 
         {/* Delete Account Section */}
         <DeleteAccountSection />
