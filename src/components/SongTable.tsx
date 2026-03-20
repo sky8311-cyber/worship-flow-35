@@ -261,8 +261,10 @@ const handleDelete = async (song: any) => {
               const isEditable = bulkEditMode && selectedSongs.has(song.id);
               const displaySong = isEditable && editedSongs[song.id] ? editedSongs[song.id] : song;
 
+              const isDraft = song.status === 'draft';
+
               return (
-                <TableRow key={song.id} className={selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""}>
+                <TableRow key={song.id} className={`${selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""} ${isDraft ? "opacity-70" : ""}`}>
                   {selectionMode && (
                     <TableCell>
                       <Checkbox
