@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -26,6 +27,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
+import { SmartSongFlow } from "@/components/songs/SmartSongFlow";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -237,6 +239,162 @@ const [loading, setLoading] = useState(false);
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  
+  // Track draft song ID for SmartSongFlow upsert
+  const draftSongIdRef = useRef<string | null>(null);
+  
+  // Reset draft ID when dialog opens/closes or song changes
+  useEffect(() => {
+    if (!open) draftSongIdRef.current = null;
+    if (song?.id && song?.status === 'draft') draftSongIdRef.current = song.id;
+  }, [open, song]);
+
+  // SmartSongFlow: final save handler (status = published)
+  const handleSmartFlowComplete = useCallback(async (
+    songData: any,
+    flowScoreVariations: any[],
+    flowYoutubeLinks: any[]
+  ) => {
+    if (!user?.id) return;
+    
+    let songId: string;
+    
+    if (draftSongIdRef.current) {
+      // Update existing draft → published
+      const { error } = await supabase
+        .from("songs")
+        .update({ ...songData, status: "published", draft_step: null })
+        .eq("id", draftSongIdRef.current);
+      if (error) throw error;
+      songId = draftSongIdRef.current;
+    } else {
+      // Insert new song as published
+      const { data: newSong, error } = await supabase
+        .from("songs")
+        .insert([{ ...songData, created_by: user.id, status: "published", draft_step: null }])
+        .select()
+        .single();
+      if (error) throw error;
+      songId = newSong.id;
+    }
+    
+    // Save scores and youtube links (reuse existing functions)
+    // Inline save logic identical to saveScoreVariations/saveYoutubeLinks
+    await supabase.from("song_scores").delete().eq("song_id", songId);
+    const scoresToInsert = flowScoreVariations.flatMap((variation: any, varIndex: number) =>
+      variation.files.map((file: any, fileIndex: number) => ({
+        song_id: songId,
+        key: variation.key,
+        file_url: file.url,
+        page_number: fileIndex + 1,
+        position: varIndex + 1,
+      }))
+    );
+    if (scoresToInsert.length > 0) {
+      await supabase.from("song_scores").insert(scoresToInsert);
+    }
+
+    await supabase.from("song_youtube_links").delete().eq("song_id", songId);
+    const linksToInsert = flowYoutubeLinks
+      .filter((link: any) => link.url.trim())
+      .map((link: any, index: number) => ({
+        song_id: songId,
+        label: link.label || "YouTube",
+        url: link.url,
+        position: index + 1,
+      }));
+    if (linksToInsert.length > 0) {
+      await supabase.from("song_youtube_links").insert(linksToInsert);
+    }
+
+    // K-Seed rewards (fire-and-forget)
+    import("@/lib/rewardsHelper").then(({ creditSongAddedReward, creditSongMetadataCompleteReward, isSongMetadataComplete }) => {
+      creditSongAddedReward(user.id, songId, songData.title);
+      if (isSongMetadataComplete({
+        title: songData.title,
+        default_key: songData.default_key,
+        lyrics: songData.lyrics,
+        youtube_url: flowYoutubeLinks[0]?.url || songData.youtube_url,
+        language: songData.language,
+        score_file_url: flowScoreVariations[0]?.files[0]?.url || songData.score_file_url,
+      })) {
+        creditSongMetadataCompleteReward(user.id, songId, songData.title);
+      }
+    });
+
+    toast.success(t("songDialog.songAdded"));
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+    
+    // Show "Add to Set" prompt
+    setNewlyCreatedSong({
+      id: songId,
+      title: songData.title,
+      artist: songData.artist,
+      default_key: songData.default_key,
+    });
+    setShowAddToSetPrompt(true);
+  }, [user, queryClient, t]);
+
+  // SmartSongFlow: draft save handler
+  const handleSmartFlowDraftSave = useCallback(async (
+    songData: any,
+    flowScoreVariations: any[],
+    flowYoutubeLinks: any[],
+    currentStep: number
+  ) => {
+    if (!user?.id) return;
+    
+    let songId: string;
+    
+    if (draftSongIdRef.current) {
+      const { error } = await supabase
+        .from("songs")
+        .update({ ...songData, draft_step: currentStep })
+        .eq("id", draftSongIdRef.current);
+      if (error) throw error;
+      songId = draftSongIdRef.current;
+    } else {
+      const { data: newSong, error } = await supabase
+        .from("songs")
+        .insert([{ ...songData, created_by: user.id, draft_step: currentStep }])
+        .select()
+        .single();
+      if (error) throw error;
+      songId = newSong.id;
+      draftSongIdRef.current = songId;
+    }
+
+    // Save scores and youtube links
+    await supabase.from("song_scores").delete().eq("song_id", songId);
+    const scoresToInsert = flowScoreVariations.flatMap((variation: any, varIndex: number) =>
+      variation.files.map((file: any, fileIndex: number) => ({
+        song_id: songId,
+        key: variation.key,
+        file_url: file.url,
+        page_number: fileIndex + 1,
+        position: varIndex + 1,
+      }))
+    );
+    if (scoresToInsert.length > 0) {
+      await supabase.from("song_scores").insert(scoresToInsert);
+    }
+
+    await supabase.from("song_youtube_links").delete().eq("song_id", songId);
+    const linksToInsert = flowYoutubeLinks
+      .filter((link: any) => link.url.trim())
+      .map((link: any, index: number) => ({
+        song_id: songId,
+        label: link.label || "YouTube",
+        url: link.url,
+        position: index + 1,
+      }));
+    if (linksToInsert.length > 0) {
+      await supabase.from("song_youtube_links").insert(linksToInsert);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+    onClose();
+  }, [user, queryClient, onClose]);
   
   // Check if form has unsaved changes
   const hasUnsavedChanges = () => {
@@ -947,13 +1105,26 @@ const [loading, setLoading] = useState(false);
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
-        className="w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
+        className={cn(
+          "w-[calc(100vw-2rem)] sm:w-[calc(100vw-4rem)] max-w-lg sm:max-w-2xl max-h-[70vh] sm:max-h-[85vh]",
+          !song || song?.status === 'draft' ? "p-0 overflow-hidden" : "overflow-y-auto"
+        )}
         hideCloseButton
         style={{
-          paddingTop: 'max(1rem, env(safe-area-inset-top, 0px))',
-          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px))'
+          paddingTop: !song ? '0' : 'max(1rem, env(safe-area-inset-top, 0px))',
+          paddingBottom: !song ? '0' : 'max(1rem, env(safe-area-inset-bottom, 0px))'
         }}
       >
+        {/* New song → SmartSongFlow | Edit → existing form */}
+        {!song || (song && song.status === 'draft') ? (
+          <SmartSongFlow
+            draftSong={song?.status === 'draft' ? song : undefined}
+            onComplete={handleSmartFlowComplete}
+            onDraftSave={handleSmartFlowDraftSave}
+            onClose={() => { onOpenChange(false); onClose(); }}
+          />
+        ) : (
+          <>
         <DialogHeader>
           <div className="flex items-center justify-between gap-2">
             <DialogTitle className="flex-1 min-w-0">
@@ -1280,6 +1451,8 @@ const [loading, setLoading] = useState(false);
             </Button>
           </div>
         </form>
+        </>
+        )}
       </DialogContent>
 
       {aiSuggestions && (

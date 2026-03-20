@@ -27,7 +27,8 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
       const { data } = await supabase
         .from("songs")
         .select("artist")
-        .not("artist", "is", null);
+        .not("artist", "is", null)
+        .eq("status", "published");
       
       const allArtists = new Set<string>();
       data?.forEach(song => {

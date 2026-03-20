@@ -3531,6 +3531,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           default_key: string | null
+          draft_step: number | null
           enrichment_status: string | null
           id: string
           interpretation: string | null
@@ -3539,7 +3540,9 @@ export type Database = {
           last_enrichment_at: string | null
           lyrics: string | null
           notes: string | null
+          original_composer: string | null
           score_file_url: string | null
+          status: string
           subtitle: string | null
           tags: string | null
           title: string
@@ -3552,6 +3555,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_key?: string | null
+          draft_step?: number | null
           enrichment_status?: string | null
           id?: string
           interpretation?: string | null
@@ -3560,7 +3564,9 @@ export type Database = {
           last_enrichment_at?: string | null
           lyrics?: string | null
           notes?: string | null
+          original_composer?: string | null
           score_file_url?: string | null
+          status?: string
           subtitle?: string | null
           tags?: string | null
           title: string
@@ -3573,6 +3579,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           default_key?: string | null
+          draft_step?: number | null
           enrichment_status?: string | null
           id?: string
           interpretation?: string | null
@@ -3581,7 +3588,9 @@ export type Database = {
           last_enrichment_at?: string | null
           lyrics?: string | null
           notes?: string | null
+          original_composer?: string | null
           score_file_url?: string | null
+          status?: string
           subtitle?: string | null
           tags?: string | null
           title?: string
