@@ -44,7 +44,7 @@ interface EditingSetContext {
 
 // SongLibrary component - refactored to use MobileSelect for better mobile UX
 const SongLibrary = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { signOut, profile, isAdmin, isWorshipLeader, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
