@@ -334,27 +334,19 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             }
           }
 
-          const updateData: Record<string, any> = {};
-          const fieldMap: Record<string, string | undefined> = {
-            title: row.title?.trim(),
-            subtitle: row.subtitle?.trim(),
-            artist: row.artist?.trim(),
-            language: row.language?.trim(),
-            default_key: row.default_key?.trim(),
-            topics: row.topics?.trim(),
-            youtube_url: row.youtube_url?.trim(),
-            interpretation: row.interpretation?.trim(),
-            notes: row.notes?.trim(),
-            lyrics: row.lyrics?.trim(),
+          // Full overwrite: all fields replaced (empty → null)
+          const updateData: Record<string, any> = {
+            title: row.title?.trim() || "",
+            subtitle: row.subtitle?.trim() || null,
+            artist: row.artist?.trim() || null,
+            language: row.language?.trim() || null,
+            default_key: row.default_key?.trim() || null,
+            tags: getRowTags(row),
+            youtube_url: row.youtube_url?.trim() || null,
+            interpretation: row.interpretation?.trim() || null,
+            notes: row.notes?.trim() || null,
+            lyrics: row.lyrics?.trim() || null,
           };
-          for (const [key, value] of Object.entries(fieldMap)) {
-            if (value && value !== "") {
-              updateData[key] = value;
-            }
-          }
-          if (!updateData.title) {
-            updateData.title = row.title?.trim() || "";
-          }
 
           if (scoreUrl !== null) {
             updateData.score_file_url = scoreUrl;
