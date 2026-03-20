@@ -894,11 +894,12 @@ Method 2 - Share Link:
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full" value={openAccordion} onValueChange={setOpenAccordion}>
               {faqItems.map((item, index) => {
                 const Icon = item.icon;
+                const anchor = FAQ_ANCHORS[index] || `item-${index}`;
                 return (
-                  <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionItem key={index} value={`item-${index}`} id={`faq-${anchor}`}>
                     <AccordionTrigger className="text-left hover:no-underline">
                       <span className="flex items-center gap-3">
                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">

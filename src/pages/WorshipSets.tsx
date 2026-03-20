@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Trash2, Plus, Upload, Music, Eye, LayoutGrid, LayoutList, Share2, XCircle, ArrowUpCircle, Download, FileText, ChevronDown } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { SetImportDialog } from "@/components/SetImportDialog";
 import { useNavigate, useSearchParams } from "react-router-dom";

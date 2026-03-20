@@ -198,6 +198,11 @@ export const ShareLinkDialog = ({
                 <Label className="font-semibold">
                   {language === "ko" ? "공개 링크" : "Public Link"}
                 </Label>
+                <HelpTooltip 
+                  text={language === "ko" ? "로그인 없이 누구나 볼 수 있는 외부 공유 링크입니다" : "External share link viewable by anyone without login"}
+                  helpLink="/help#share"
+                  side="right"
+                />
               </div>
               <Switch
                 checked={localEnabled}

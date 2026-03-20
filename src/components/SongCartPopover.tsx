@@ -38,14 +38,23 @@ export const SongCartPopover = () => {
   return (
     <>
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl">
-            <Music className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
-              {cartCount > 99 ? "99+" : cartCount}
-            </span>
-          </Button>
-        </PopoverTrigger>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl">
+                  <Music className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {t("songLibrary.cartTitle")} ({cartCount})
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <PopoverContent align="end" className="w-80 p-0">
           <div className="p-4 pb-2">
             <div className="flex items-center justify-between">

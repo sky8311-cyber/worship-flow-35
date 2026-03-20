@@ -960,25 +960,34 @@ const [loading, setLoading] = useState(false);
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <div className="flex items-center gap-1 shrink-0">
-              <Button
-                onClick={handleAIEnrich}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                disabled={aiEnriching || !formData.title.trim()}
-              >
-                {aiEnriching ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="hidden sm:inline">{t('aiEnrich.loading')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
-                  </>
-                )}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={handleAIEnrich}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-1"
+                      disabled={aiEnriching || !formData.title.trim()}
+                    >
+                      {aiEnriching ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="hidden sm:inline">{t('aiEnrich.loading')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          <span className="hidden sm:inline">{t('aiEnrich.buttonLabel')}</span>
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {language === "ko" ? "AI가 곡 정보(가사, 키, 태그)를 자동으로 채워줍니다" : "AI auto-fills song info (lyrics, key, tags)"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <DialogClose asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                   <X className="h-4 w-4" />

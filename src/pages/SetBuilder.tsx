@@ -1565,37 +1565,57 @@ const SetBuilder = () => {
 
             {/* Auto-save status indicator */}
             {status === "draft" && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {autoSaveIsSaving ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>저장 중...</span>
-                  </>
-                ) : autoSaveHasChanges ? (
-                  <>
-                    <Circle className="h-2 w-2 fill-orange-500 text-orange-500" />
-                    <span>저장 대기</span>
-                  </>
-                ) : lastSavedAt ? (
-                  <>
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                    <span>자동 저장됨</span>
-                  </>
-                ) : null}
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-help">
+                      {autoSaveIsSaving ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          <span>저장 중...</span>
+                        </>
+                      ) : autoSaveHasChanges ? (
+                        <>
+                          <Circle className="h-2 w-2 fill-orange-500 text-orange-500" />
+                          <span>저장 대기</span>
+                        </>
+                      ) : lastSavedAt ? (
+                        <>
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                          <span>자동 저장됨</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {language === "ko" ? "변경사항이 자동으로 저장됩니다" : "Changes are auto-saved"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
-            {status === "draft" ? (
-              <Badge variant="outline">
-                <Lock className="w-3 h-3 mr-1" />
-                임시저장
-              </Badge>
-            ) : (
-              <Badge>
-                <Check className="w-3 h-3 mr-1" />
-                게시됨
-              </Badge>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {status === "draft" ? (
+                    <Badge variant="outline" className="cursor-help">
+                      <Lock className="w-3 h-3 mr-1" />
+                      임시저장
+                    </Badge>
+                  ) : (
+                    <Badge className="cursor-help">
+                      <Check className="w-3 h-3 mr-1" />
+                      게시됨
+                    </Badge>
+                  )}
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {status === "draft" 
+                    ? (language === "ko" ? "임시저장: 본인만 볼 수 있습니다" : "Draft: only you can see this")
+                    : (language === "ko" ? "게시됨: 커뮤니티 멤버가 볼 수 있습니다" : "Published: community members can view")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
         
