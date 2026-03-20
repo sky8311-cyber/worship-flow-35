@@ -271,11 +271,11 @@ async function scrapeBugsLyrics(title: string, artist: string, subtitle: string)
     
     const searchHtml = await searchResponse.text();
     
-    // Extract ALL track IDs (up to 5)
+    // Extract ALL track IDs (up to 3)
     const trackIdRegex = /data-trackid="(\d+)"/gi;
     const trackIds: string[] = [];
     let match;
-    while ((match = trackIdRegex.exec(searchHtml)) !== null && trackIds.length < 5) {
+    while ((match = trackIdRegex.exec(searchHtml)) !== null && trackIds.length < 3) {
       if (!trackIds.includes(match[1])) {
         trackIds.push(match[1]);
       }
