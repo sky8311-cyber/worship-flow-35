@@ -187,6 +187,10 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     setLyricsSearching(true);
     setLyricsSearchDone(false);
     setLyricsCandidates([]);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
     try {
       const { data, error } = await supabase.functions.invoke("match-lyrics", {
         body: {
@@ -203,11 +207,16 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         setLyricsCandidates(data.candidates);
       }
       setLyricsSearchDone(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Lyrics search error:", err);
-      toast.error("가사 검색 중 오류가 발생했습니다");
+      if (err?.name === 'AbortError') {
+        toast.error("검색 시간이 초과되었습니다. 직접 입력해주세요.");
+      } else {
+        toast.error("가사 검색 중 오류가 발생했습니다");
+      }
       setLyricsSearchDone(true);
     } finally {
+      clearTimeout(timeout);
       setLyricsSearching(false);
     }
   };
