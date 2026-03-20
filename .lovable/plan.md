@@ -1,33 +1,34 @@
 
 
-## 가사 검색 오류 수정 계획
+## match-lyrics 수정: Claude AI → scrape-lyrics 호출로 교체
 
 ### 원인
+Claude는 저작권 정책상 가사 전체 반환을 거부합니다. 이미 프로젝트에 `scrape-lyrics` Edge Function이 있고, `enrich-song`에서 동일한 패턴으로 호출 중입니다.
 
-`match-lyrics`와 `suggest-song-topics` 두 Edge Function 모두 **`supabase.auth.getClaims(token)`**을 사용하고 있는데, 이 메서드는 Supabase JS v2에 존재하지 않습니다. 런타임에서 `TypeError`가 발생하며 함수가 즉시 crash → 500 에러 반환.
+### 변경 내용
 
-로그가 없는 이유: crash가 `console.log` 호출 전에 발생하기 때문.
+**파일: `supabase/functions/match-lyrics/index.ts`**
 
-### 수정 방법
+Claude API 호출을 제거하고, `enrich-song/index.ts`의 `scrapeLyrics()` 패턴을 그대로 차용하여 내부적으로 `scrape-lyrics` 함수를 호출합니다.
 
-두 함수의 인증 로직을 `supabase.auth.getUser(token)` 방식으로 교체:
-
-```typescript
-// 기존 (오류)
-const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-if (claimsError || !claimsData?.claims) { ... }
-
-// 수정
-const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-if (userError || !user) { ... }
+```
+match-lyrics (클라이언트 호출)
+  ├─ 인증 확인 (기존 유지)
+  ├─ scrape-lyrics 내부 호출 (SUPABASE_SERVICE_ROLE_KEY 사용)
+  │   ├─ title, artist 전달
+  │   └─ original_composer가 있으면 artist 파라미터에 함께 전달
+  └─ 결과를 { found, lyrics, source } 형태로 변환
 ```
 
-### 수정 파일
+주요 변경:
+- `ANTHROPIC_API_KEY`, `AI_CONFIG` 의존성 완전 제거
+- `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`로 `scrape-lyrics` 호출 (enrich-song과 동일 패턴)
+- `original_composer`가 있으면 검색 정확도를 위해 artist 필드에 보조 정보로 포함
+- 응답 매핑: `{ lyrics, source }` → `{ found: !!lyrics, lyrics, source }`
 
-| 파일 | 변경 |
-|---|---|
-| `supabase/functions/match-lyrics/index.ts` (line 32-37) | `getClaims` → `getUser` |
-| `supabase/functions/suggest-song-topics/index.ts` (line 32-37) | `getClaims` → `getUser` |
+### 수정 파일: 1개
 
-두 파일 모두 동일한 2줄 수정. 배포 후 테스트까지 진행.
+`supabase/functions/match-lyrics/index.ts`
+
+클라이언트 코드(SmartSongFlow.tsx) 변경 없음 — 응답 포맷 동일.
 
