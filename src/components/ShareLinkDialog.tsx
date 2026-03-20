@@ -156,6 +156,11 @@ export const ShareLinkDialog = ({
               <Label className="font-semibold">
                 {language === "ko" ? "팀 링크" : "Team Link"}
               </Label>
+              <HelpTooltip 
+                text={language === "ko" ? "로그인한 팀원만 접근 가능한 내부 링크입니다" : "Internal link accessible only to logged-in team members"}
+                helpLink="/help#share"
+                side="right"
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               {language === "ko" 
