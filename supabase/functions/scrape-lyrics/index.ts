@@ -284,7 +284,7 @@ async function scrapeBugsLyrics(title: string, artist: string, subtitle: string)
     // Fallback
     if (trackIds.length === 0) {
       const hrefRegex = /href="\/track\/(\d+)"/gi;
-      while ((match = hrefRegex.exec(searchHtml)) !== null && trackIds.length < 5) {
+      while ((match = hrefRegex.exec(searchHtml)) !== null && trackIds.length < 3) {
         if (!trackIds.includes(match[1])) {
           trackIds.push(match[1]);
         }
