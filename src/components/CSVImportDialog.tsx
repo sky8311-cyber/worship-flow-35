@@ -638,19 +638,31 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="bg-muted/50 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold">{getDataCompleteness().total}</div>
-                <div className="text-xs text-muted-foreground">전체</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  전체
+                  <HelpTooltip text="파일에 포함된 총 곡 수" size={12} />
+                </div>
               </div>
               <div className="bg-green-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-green-600">{getDataCompleteness().newCount}</div>
-                <div className="text-xs text-muted-foreground">신규 추가</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  신규 추가
+                  <HelpTooltip text="ID가 없는 곡 — 새로 추가됩니다" size={12} />
+                </div>
               </div>
               <div className="bg-blue-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-blue-600">{getDataCompleteness().updateCount}</div>
-                <div className="text-xs text-muted-foreground">업데이트</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  업데이트
+                  <HelpTooltip text="ID가 있는 곡 — 파일 내용으로 전체 덮어쓰기됩니다" size={12} />
+                </div>
               </div>
               <div className="bg-purple-500/10 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-purple-600">{getDataCompleteness().matchedImages}</div>
-                <div className="text-xs text-muted-foreground">이미지 매칭</div>
+                <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                  이미지 매칭
+                  <HelpTooltip text="업로드한 이미지 파일과 자동 매칭된 악보 수" size={12} />
+                </div>
               </div>
             </div>
 
