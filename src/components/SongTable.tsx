@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check, Lock } from "lucide-react";
+import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check, Lock, PenLine } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
