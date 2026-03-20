@@ -128,6 +128,8 @@ const handleDelete = async () => {
     return langMap[lang] || lang;
   };
 
+  const isDraft = song.status === 'draft';
+
   return (
     <>
       <Card className={`shadow-md hover:shadow-lg transition-all animate-fade-in overflow-hidden relative ${
@@ -136,8 +138,17 @@ const handleDelete = async () => {
         inCart ? "ring-2 ring-blue-500 shadow-lg" : ""
       } ${
         selectorMode && isSelectedForSet ? "ring-2 ring-primary shadow-lg" : ""
+      } ${
+        isDraft ? "opacity-75" : ""
       }`}>
-        {selectionMode && (
+        {isDraft && (
+          <div className="absolute top-2 right-2 z-10">
+            <Badge className="bg-orange-500 text-white border-orange-500 text-[10px] px-1.5 py-0.5">
+              {language === "ko" ? "임시저장" : "Draft"}
+            </Badge>
+          </div>
+        )}
+        {selectionMode && !isDraft && (
           <div className="absolute top-2 right-2 z-10">
             <Checkbox
               checked={isSelected}
