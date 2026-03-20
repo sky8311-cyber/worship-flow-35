@@ -534,9 +534,14 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                CSV로 대량 가져오기 및 업데이트가 가능합니다.<br/>
-                • <strong>신규 추가:</strong> id 열을 비워두세요<br/>
-                • <strong>기존 업데이트:</strong> id 열에 기존 곡 ID를 입력하세요 (내보내기 CSV 사용)
+                <div className="flex items-start gap-1">
+                  <span>
+                    CSV/Excel 파일로 곡을 대량으로 추가하거나 업데이트합니다.<br/>
+                    • <strong>신규 추가:</strong> id 열을 비워두세요<br/>
+                    • <strong>기존 업데이트:</strong> id 열에 기존 곡 ID를 입력하세요 (전체 덮어쓰기)
+                  </span>
+                  <HelpTooltip text="내보내기한 파일을 수정 후 다시 가져오면 ID 기준으로 기존 곡이 업데이트됩니다. 빈 값은 null로 저장됩니다." helpLink="/help#add-song" />
+                </div>
               </AlertDescription>
             </Alert>
 
