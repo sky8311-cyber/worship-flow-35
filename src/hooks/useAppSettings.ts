@@ -14,6 +14,9 @@ interface FeatureFlags {
   worship_leader_auto_approve: boolean;
   google_login_enabled: boolean;
   team_rotation_enabled: boolean;
+  ai_set_builder_enabled: boolean;
+  worship_profile_enabled: boolean;
+  institute_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -27,6 +30,9 @@ const DEFAULT_FLAGS: FeatureFlags = {
   worship_leader_auto_approve: false,
   google_login_enabled: true,
   team_rotation_enabled: false,
+  ai_set_builder_enabled: false,
+  worship_profile_enabled: false,
+  institute_enabled: false,
 };
 
 export function useAppSettings() {
