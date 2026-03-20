@@ -777,7 +777,7 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
       </Button>
 
       {lyricsSearchDone && lyrics && lyricsSource && (
-        <p className="text-sm text-green-600 flex items-center gap-1"><Check className="w-4 h-4" /> 가사를 찾았습니다 (출처: {lyricsSource})</p>
+        <p className="text-sm text-primary flex items-center gap-1"><Check className="w-4 h-4" /> 가사를 찾았습니다 (출처: {lyricsSource})</p>
       )}
       {lyricsSearchDone && !lyrics && !originalComposer && (
         <div className="text-sm text-muted-foreground space-y-1">
