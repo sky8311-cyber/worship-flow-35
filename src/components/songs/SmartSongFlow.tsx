@@ -186,6 +186,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     if (!title.trim()) return;
     setLyricsSearching(true);
     setLyricsSearchDone(false);
+    setLyricsCandidates([]);
     try {
       const { data, error } = await supabase.functions.invoke("match-lyrics", {
         body: {
@@ -198,6 +199,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       if (data.found && data.lyrics) {
         setLyrics(data.lyrics);
         setLyricsSource(data.source);
+      } else if (data.candidates && data.candidates.length > 0) {
+        setLyricsCandidates(data.candidates);
       }
       setLyricsSearchDone(true);
     } catch (err) {
