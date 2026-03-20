@@ -832,7 +832,7 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
 
       <div className="space-y-2">
         <Label>가사</Label>
-        <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder="가사를 입력하세요" rows={10} className="font-mono text-sm" />
+        <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder="가사를 입력하세요" rows={6} className="font-mono text-sm" />
       </div>
 
       <div className="space-y-2">
