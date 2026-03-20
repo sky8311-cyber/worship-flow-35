@@ -12,10 +12,47 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/seo/SEOHead";
 
+// FAQ anchor IDs mapped by index (same order for both languages)
+const FAQ_ANCHORS = [
+  "getting-started",
+  "worship-leader",
+  "community",
+  "worship-set",
+  "add-song",
+  "share",
+  "roles",
+  "language",
+  "fullscreen",
+  "band-view",
+  "favorites",
+  "templates",
+  "recurring-templates",
+  "print",
+];
+
 const Help = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
   const [showEmail, setShowEmail] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState<string | undefined>(undefined);
+
+  // Handle URL hash deep-linking to FAQ items
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      const anchorIndex = FAQ_ANCHORS.indexOf(hash);
+      if (anchorIndex !== -1) {
+        setOpenAccordion(`item-${anchorIndex}`);
+        // Scroll to the item after a short delay for render
+        setTimeout(() => {
+          const el = document.getElementById(`faq-${hash}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 300);
+      }
+    }
+  }, []);
 
   const faqItems = language === "ko" ? [
     {
