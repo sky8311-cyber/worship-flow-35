@@ -90,6 +90,7 @@ const SetBuilder = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
   const { hasFeature } = useTierFeature();
+  const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
