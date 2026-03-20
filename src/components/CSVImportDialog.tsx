@@ -19,21 +19,27 @@ interface CSVImportDialogProps {
 }
 
 interface CSVRow {
-  id?: string;  // Optional ID for upsert support
+  id?: string;
   title: string;
   subtitle?: string;
   artist?: string;
   language?: string;
   default_key?: string;
-  topics?: string;  // "찬양, 감사, 기쁨" format (2-3 required)
+  topics?: string;
+  tags?: string;  // Export uses "tags" column
   youtube_url?: string;
   score_file_url?: string;
   interpretation?: string;
   notes?: string;
   lyrics?: string;
-  youtube_links?: string;  // "레이블|URL;;레이블|URL" 형식
-  scores?: string;         // "키|URL;;키|URL" 형식
+  youtube_links?: string;
+  scores?: string;
 }
+
+const getRowTags = (row: CSVRow): string | null => {
+  const val = (row.tags || row.topics || "").trim();
+  return val || null;
+};
 
 interface ImportProgress {
   phase: string;
