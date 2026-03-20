@@ -499,7 +499,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       </div>
 
       {/* Footer Buttons */}
-      <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
           취소
         </Button>
