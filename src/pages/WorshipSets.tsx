@@ -658,31 +658,48 @@ export default function WorshipSets() {
         
         <Card className="shadow-md">
           <CardHeader className="relative">
-            <CardTitle className="text-base md:text-lg flex items-center gap-2">
-              <Music className="w-4 h-4 sm:w-5 sm:h-5" />
-              {t("worshipSets.title")}
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <Music className="w-4 h-4 sm:w-5 sm:h-5" />
+                {t("worshipSets.title")}
+              </CardTitle>
+              <HelpTooltip 
+                text={language === "ko" ? "예배에서 사용할 곡 목록과 순서를 관리합니다" : "Manage song lists and order for your services"}
+                helpLink="/help#worship-set"
+                side="bottom"
+              />
+            </div>
             
             {/* View mode toggle */}
             <div className="absolute top-4 right-4 flex gap-1 bg-muted rounded-md p-1">
-              <Button
-                size="icon"
-                variant={viewMode === "card" ? "default" : "ghost"}
-                className="h-8 w-8"
-                onClick={() => setViewMode("card")}
-                title={t("worshipSets.viewMode.card")}
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant={viewMode === "table" ? "default" : "ghost"}
-                className="h-8 w-8"
-                onClick={() => setViewMode("table")}
-                title={t("worshipSets.viewMode.table")}
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant={viewMode === "card" ? "default" : "ghost"}
+                      className="h-8 w-8"
+                      onClick={() => setViewMode("card")}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{language === "ko" ? "카드 보기" : "Card view"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant={viewMode === "table" ? "default" : "ghost"}
+                      className="h-8 w-8"
+                      onClick={() => setViewMode("table")}
+                    >
+                      <LayoutList className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">{language === "ko" ? "테이블 보기" : "Table view"}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </CardHeader>
           <CardContent>
