@@ -42,6 +42,7 @@ import { AlertTriangle, Edit2, Eye, BookOpen } from "lucide-react";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
 import { useTierFeature } from "@/hooks/useTierFeature";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
 import { Sparkles } from "lucide-react";
 
