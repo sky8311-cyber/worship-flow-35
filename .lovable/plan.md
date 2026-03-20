@@ -1,23 +1,36 @@
 
 
-## 주제 필터 태그 버튼 가나다 순 정렬
+## 주제 필터 불일치 버그 수정
 
-### 원인
-`SongLibrary.tsx` line 183에서 `.order("name_ko")`로 DB 정렬하고 있지만, PostgreSQL 기본 collation이 한글 가나다 순을 정확히 보장하지 않을 수 있음.
+### 원인 분석
 
-### 수정 (`src/pages/SongLibrary.tsx`)
-`allTopics` 데이터를 렌더링 전에 클라이언트에서 Korean locale 정렬 추가:
+DB `songs` 테이블에 **두 개의 컬럼**이 존재:
+- `tags` — Import가 여기에 데이터 저장 (예: `"경배, 찬양, 예배"`)
+- `topics` — 비어 있음 (legacy 컬럼)
 
+**필터 코드 (line 265):**
 ```typescript
-const sortedTopics = [...(allTopics || [])].sort((a, b) => 
-  a.name_ko.localeCompare(b.name_ko, 'ko')
-);
+const songTopics = song.topics?.split(',')...  // ← topics 컬럼 읽음 (비어있음!)
 ```
 
-Topic Filter Chips 섹션(line 935)에서 `allTopics.map` → `sortedTopics.map`으로 변경.
+**검색 코드 (line 200):**
+```typescript
+topics.ilike.%${query}%  // ← topics 컬럼 검색 (비어있음!)
+```
+
+→ "경배"를 눌러도 `song.topics`가 `null`이므로 매칭 결과 0건.
+
+### 수정 (`src/pages/SongLibrary.tsx`)
+
+| 위치 | 현재 | 수정 |
+|---|---|---|
+| Line 200 (검색) | `topics.ilike.%...%` | `tags.ilike.%...%` |
+| Line 265 (필터) | `song.topics?.split(',')` | `song.tags?.split(',')` |
+
+두 곳 모두 `topics` → `tags`로 변경하면 Import된 데이터와 필터/검색이 정확히 매칭됩니다.
 
 ### 수정 파일
 | 파일 | 변경 |
 |---|---|
-| `src/pages/SongLibrary.tsx` | `allTopics`를 `localeCompare('ko')`로 정렬 후 렌더링 |
+| `src/pages/SongLibrary.tsx` | 검색 쿼리 + 주제 필터에서 `topics` → `tags` 참조로 수정 (2곳) |
 
