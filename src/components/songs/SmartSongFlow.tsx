@@ -402,7 +402,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const stepLabels = ["곡 정보", "YouTube", "악보·링크", "가사", "언어·주제", "리뷰"];
 
   return (
-    <div className="flex flex-col h-full max-h-[calc(85vh-4rem)] sm:max-h-[calc(85vh-2rem)]">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <div className="min-w-0">
