@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset, Sparkles, Palette, Newspaper, BarChart3, CreditCard, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Users, Building2, UserPlus, Church, LayoutList, Sprout, Mail, Layers, History, BookOpen, MoreHorizontal, Headset, Sparkles, Palette, Newspaper, BarChart3, CreditCard, GraduationCap, Music } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
@@ -65,6 +65,11 @@ export const AdminNav = () => {
 
   // Secondary links (in "More" dropdown)
   const secondaryLinks = [
+    {
+      to: "/admin/songlibrary",
+      label: language === "ko" ? "곡 라이브러리" : "Song Library",
+      icon: Music,
+    },
     {
       to: "/admin/analytics",
       label: language === "ko" ? "분석" : "Analytics",
