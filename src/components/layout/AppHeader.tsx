@@ -262,7 +262,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                 )}
                 
                 {/* Worship Profile Settings - Worship Leaders only */}
-                {isWorshipLeader && (
+                {isWorshipLeader && isWorshipProfileEnabled && (
                   <DropdownMenuItem onClick={() => navigate("/settings", { state: { openCurationChat: true } })}>
                     <Sparkles className="mr-2 h-4 w-4" />
                     <span className="flex items-center justify-between w-full">

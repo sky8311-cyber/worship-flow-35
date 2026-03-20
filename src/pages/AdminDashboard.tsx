@@ -594,6 +594,69 @@ const AdminDashboard = () => {
 
                   <Separator />
 
+                  {/* AI Set Builder Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        {language === "ko" ? "AI 세트 빌더" : "AI Set Builder"}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "AI를 활용한 워십세트 자동 생성 기능"
+                          : "AI-powered automatic worship set generation"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isAiSetBuilderEnabled}
+                      onCheckedChange={toggleAiSetBuilder}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* Worship Profile Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        {language === "ko" ? "예배 프로필" : "Worship Profile"}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "AI 기반 예배 프로필 온보딩 챗"
+                          : "AI-based worship profile onboarding chat"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isWorshipProfileEnabled}
+                      onCheckedChange={toggleWorshipProfile}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
+                  {/* K-Worship Institute Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        K-Worship Institute
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "온라인 자격증 스쿨 전체 표시"
+                          : "Show the online certification school"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isInstituteEnabled}
+                      onCheckedChange={toggleInstitute}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
+
                   {/* Membership Products Management Link */}
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
