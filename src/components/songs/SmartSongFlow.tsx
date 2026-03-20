@@ -184,6 +184,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   // === Lyrics Search (Step 4) ===
   const searchLyrics = async () => {
     if (!title.trim()) return;
+    const previousLyrics = lyrics;
     setLyricsSearching(true);
     setLyricsSearchDone(false);
     setLyricsCandidates([]);
@@ -206,6 +207,13 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         setLyricsSource(data.source);
       } else if (data?.candidates && data.candidates.length > 0) {
         setLyricsCandidates(data.candidates);
+        if (!previousLyrics) {
+          toast.info("자동 검색에 실패했지만 후보를 찾았습니다. 아래에서 확인해주세요.");
+        }
+      } else {
+        if (!previousLyrics) {
+          toast.info("가사를 찾지 못했습니다. 직접 입력해주세요.");
+        }
       }
       setLyricsSearchDone(true);
     } catch (err: any) {
@@ -214,6 +222,10 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         toast.error("검색 시간이 초과되었습니다. 직접 입력해주세요.");
       } else {
         toast.error("가사 검색 중 오류가 발생했습니다");
+      }
+      // Preserve existing lyrics on failure
+      if (previousLyrics && !lyrics) {
+        setLyrics(previousLyrics);
       }
       setLyricsSearchDone(true);
     } finally {
