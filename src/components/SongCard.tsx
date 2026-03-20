@@ -211,31 +211,33 @@ const handleDelete = async () => {
             </div>
           </div>
 
-          {/* Media buttons - stacked on mobile */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            {song.youtube_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openYouTubeUrl(song.youtube_url)}
-                className="flex-1 w-full group hover:bg-accent hover:text-white hover:border-accent"
-              >
-                <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
-                <span className="truncate">{t("songCard.viewYouTube")}</span>
-              </Button>
-            )}
-            {song.score_file_url && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setScorePreviewOpen(true)}
-                className="flex-1 w-full group hover:bg-primary hover:text-white hover:border-primary"
-              >
-                <FileMusic className="w-4 h-4 mr-1 text-primary group-hover:text-white" />
-                <span className="truncate">{t("songCard.viewScore")}</span>
-              </Button>
-            )}
-          </div>
+          {/* Media buttons - stacked on mobile (hidden for drafts) */}
+          {!isDraft && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              {song.youtube_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openYouTubeUrl(song.youtube_url)}
+                  className="flex-1 w-full group hover:bg-accent hover:text-white hover:border-accent"
+                >
+                  <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
+                  <span className="truncate">{t("songCard.viewYouTube")}</span>
+                </Button>
+              )}
+              {song.score_file_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setScorePreviewOpen(true)}
+                  className="flex-1 w-full group hover:bg-primary hover:text-white hover:border-primary"
+                >
+                  <FileMusic className="w-4 h-4 mr-1 text-primary group-hover:text-white" />
+                  <span className="truncate">{t("songCard.viewScore")}</span>
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Action buttons - Selector mode or Cart first, Usage History, then Heart, Edit, Delete */}
           <div className="flex gap-1 justify-start mt-4">
