@@ -1,17 +1,23 @@
 
 
-## 컬럼 정렬 버그 수정
+## 주제 필터 태그 버튼 가나다 순 정렬
 
 ### 원인
-`SongTable.tsx` 254행에 `language` 헤더가 **중복 선언**되어 있음:
+`SongLibrary.tsx` line 183에서 `.order("name_ko")`로 DB 정렬하고 있지만, PostgreSQL 기본 collation이 한글 가나다 순을 정확히 보장하지 않을 수 있음.
 
-```text
-헤더:  제목 | 아티스트 | 언어 | 언어(중복) | 키 | 태그 | 액션   ← 7개
-바디:  제목 | 아티스트 | 언어 |            | 키 | 태그 | 액션   ← 6개
+### 수정 (`src/pages/SongLibrary.tsx`)
+`allTopics` 데이터를 렌더링 전에 클라이언트에서 Korean locale 정렬 추가:
+
+```typescript
+const sortedTopics = [...(allTopics || [])].sort((a, b) => 
+  a.name_ko.localeCompare(b.name_ko, 'ko')
+);
 ```
 
-헤더가 1개 더 많아서 "키" 헤더 아래에 태그 데이터가 표시되고, "태그" 헤더 아래에 액션이 표시되는 상황.
+Topic Filter Chips 섹션(line 935)에서 `allTopics.map` → `sortedTopics.map`으로 변경.
 
-### 수정
-`src/components/SongTable.tsx` 254행의 중복 `language` 헤더 1줄 삭제.
+### 수정 파일
+| 파일 | 변경 |
+|---|---|
+| `src/pages/SongLibrary.tsx` | `allTopics`를 `localeCompare('ko')`로 정렬 후 렌더링 |
 
