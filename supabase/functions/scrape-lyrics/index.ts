@@ -165,7 +165,7 @@ async function scrapeGasazipLyrics(title: string, artist: string, subtitle: stri
     const candidateRegex = /href="(?:https:\/\/www\.gasazip\.com\/|(?:https:\/\/mini\.gasazip\.com\/view\.html\?no=)|\/)(\d+)"[^>]*>([^<]*)/gi;
     const candidates: Array<{ songId: string; linkText: string }> = [];
     let match;
-    while ((match = candidateRegex.exec(searchHtml)) !== null && candidates.length < 5) {
+    while ((match = candidateRegex.exec(searchHtml)) !== null && candidates.length < 3) {
       const songId = match[1];
       const linkText = stripHtml(match[2]).trim();
       // Avoid duplicate IDs
