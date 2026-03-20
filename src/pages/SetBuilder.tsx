@@ -2107,7 +2107,7 @@ const SetBuilder = () => {
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
                       </Button>
-                      {/* AI Set Builder button - visible to all, upgrade prompt for non-eligible */}
+                      {isAiSetBuilderEnabled && (
                       <Button
                         type="button"
                         onClick={() => {
@@ -2143,6 +2143,7 @@ const SetBuilder = () => {
                           <Badge variant="secondary" className="ml-1 text-[10px] px-1 py-0 h-4">PRO</Badge>
                         )}
                       </Button>
+                      )}
                       {/* Mobile only - add component button */}
                       <Button 
                         onClick={() => handleAddComponent("welcome")} 
