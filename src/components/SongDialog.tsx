@@ -239,6 +239,162 @@ const [loading, setLoading] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   
+  // Track draft song ID for SmartSongFlow upsert
+  const draftSongIdRef = useRef<string | null>(null);
+  
+  // Reset draft ID when dialog opens/closes or song changes
+  useEffect(() => {
+    if (!open) draftSongIdRef.current = null;
+    if (song?.id && song?.status === 'draft') draftSongIdRef.current = song.id;
+  }, [open, song]);
+
+  // SmartSongFlow: final save handler (status = published)
+  const handleSmartFlowComplete = useCallback(async (
+    songData: any,
+    flowScoreVariations: any[],
+    flowYoutubeLinks: any[]
+  ) => {
+    if (!user?.id) return;
+    
+    let songId: string;
+    
+    if (draftSongIdRef.current) {
+      // Update existing draft → published
+      const { error } = await supabase
+        .from("songs")
+        .update({ ...songData, status: "published", draft_step: null })
+        .eq("id", draftSongIdRef.current);
+      if (error) throw error;
+      songId = draftSongIdRef.current;
+    } else {
+      // Insert new song as published
+      const { data: newSong, error } = await supabase
+        .from("songs")
+        .insert([{ ...songData, created_by: user.id, status: "published", draft_step: null }])
+        .select()
+        .single();
+      if (error) throw error;
+      songId = newSong.id;
+    }
+    
+    // Save scores and youtube links (reuse existing functions)
+    // Inline save logic identical to saveScoreVariations/saveYoutubeLinks
+    await supabase.from("song_scores").delete().eq("song_id", songId);
+    const scoresToInsert = flowScoreVariations.flatMap((variation: any, varIndex: number) =>
+      variation.files.map((file: any, fileIndex: number) => ({
+        song_id: songId,
+        key: variation.key,
+        file_url: file.url,
+        page_number: fileIndex + 1,
+        position: varIndex + 1,
+      }))
+    );
+    if (scoresToInsert.length > 0) {
+      await supabase.from("song_scores").insert(scoresToInsert);
+    }
+
+    await supabase.from("song_youtube_links").delete().eq("song_id", songId);
+    const linksToInsert = flowYoutubeLinks
+      .filter((link: any) => link.url.trim())
+      .map((link: any, index: number) => ({
+        song_id: songId,
+        label: link.label || "YouTube",
+        url: link.url,
+        position: index + 1,
+      }));
+    if (linksToInsert.length > 0) {
+      await supabase.from("song_youtube_links").insert(linksToInsert);
+    }
+
+    // K-Seed rewards (fire-and-forget)
+    import("@/lib/rewardsHelper").then(({ creditSongAddedReward, creditSongMetadataCompleteReward, isSongMetadataComplete }) => {
+      creditSongAddedReward(user.id, songId, songData.title);
+      if (isSongMetadataComplete({
+        title: songData.title,
+        default_key: songData.default_key,
+        lyrics: songData.lyrics,
+        youtube_url: flowYoutubeLinks[0]?.url || songData.youtube_url,
+        language: songData.language,
+        score_file_url: flowScoreVariations[0]?.files[0]?.url || songData.score_file_url,
+      })) {
+        creditSongMetadataCompleteReward(user.id, songId, songData.title);
+      }
+    });
+
+    toast.success(t("songDialog.songAdded"));
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+    
+    // Show "Add to Set" prompt
+    setNewlyCreatedSong({
+      id: songId,
+      title: songData.title,
+      artist: songData.artist,
+      default_key: songData.default_key,
+    });
+    setShowAddToSetPrompt(true);
+  }, [user, queryClient, t]);
+
+  // SmartSongFlow: draft save handler
+  const handleSmartFlowDraftSave = useCallback(async (
+    songData: any,
+    flowScoreVariations: any[],
+    flowYoutubeLinks: any[],
+    currentStep: number
+  ) => {
+    if (!user?.id) return;
+    
+    let songId: string;
+    
+    if (draftSongIdRef.current) {
+      const { error } = await supabase
+        .from("songs")
+        .update({ ...songData, draft_step: currentStep })
+        .eq("id", draftSongIdRef.current);
+      if (error) throw error;
+      songId = draftSongIdRef.current;
+    } else {
+      const { data: newSong, error } = await supabase
+        .from("songs")
+        .insert([{ ...songData, created_by: user.id, draft_step: currentStep }])
+        .select()
+        .single();
+      if (error) throw error;
+      songId = newSong.id;
+      draftSongIdRef.current = songId;
+    }
+
+    // Save scores and youtube links
+    await supabase.from("song_scores").delete().eq("song_id", songId);
+    const scoresToInsert = flowScoreVariations.flatMap((variation: any, varIndex: number) =>
+      variation.files.map((file: any, fileIndex: number) => ({
+        song_id: songId,
+        key: variation.key,
+        file_url: file.url,
+        page_number: fileIndex + 1,
+        position: varIndex + 1,
+      }))
+    );
+    if (scoresToInsert.length > 0) {
+      await supabase.from("song_scores").insert(scoresToInsert);
+    }
+
+    await supabase.from("song_youtube_links").delete().eq("song_id", songId);
+    const linksToInsert = flowYoutubeLinks
+      .filter((link: any) => link.url.trim())
+      .map((link: any, index: number) => ({
+        song_id: songId,
+        label: link.label || "YouTube",
+        url: link.url,
+        position: index + 1,
+      }));
+    if (linksToInsert.length > 0) {
+      await supabase.from("song_youtube_links").insert(linksToInsert);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+    onClose();
+  }, [user, queryClient, onClose]);
+  
   // Check if form has unsaved changes
   const hasUnsavedChanges = () => {
     // For new song: check if any field has been filled
