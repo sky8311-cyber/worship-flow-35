@@ -364,7 +364,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         status: "draft",
         draft_step: currentStep,
       };
-      await onDraftSave(songData, scoreVariations, youtubeLinks);
+      await onDraftSave(songData, scoreVariations, youtubeLinks, currentStep);
       toast.success("임시저장되었습니다");
     } catch (error: any) {
       toast.error("임시저장 오류: " + error.message);
