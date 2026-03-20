@@ -239,99 +239,117 @@ const handleDelete = async () => {
             </div>
           )}
 
-          {/* Action buttons - Selector mode or Cart first, Usage History, then Heart, Edit, Delete */}
+          {/* Action buttons */}
           <div className="flex gap-1 justify-start mt-4">
-            {selectorMode && onSelectForSet && (
-              <Button
-                variant={isSelectedForSet ? "default" : "outline"}
-                size="sm"
-                onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
-                className="h-7 sm:h-8 px-2 tracking-tight"
-              >
-                {isSelectedForSet ? (
-                  <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
-                ) : (
-                  <>
-                    <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
-                    {song.is_private && <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
-                    {t("songSelector.addToSet")}
-                  </>
-                )}
-              </Button>
-            )}
-            {!selectorMode && onToggleCart && (
-              <Button
-                variant={inCart ? "default" : "outline"}
-                size="icon"
-                onClick={() => onToggleCart()}
-                className="h-7 w-7 sm:h-8 sm:w-8"
-                title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
-              >
-                <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </Button>
-            )}
-            {canViewUsageHistory && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setUsageHistoryOpen(true)}
-                className="h-7 w-7 sm:h-8 sm:w-8 relative"
-                title={t("songUsage.viewUsageHistory")}
-              >
-                <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                {usageCount > 0 && (
-                  <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
-                    {usageCount > 99 ? "99+" : usageCount}
-                  </span>
-                )}
-              </Button>
-            )}
-            <FavoriteButton 
-              songId={song.id} 
-              isFavorite={isFavorite}
-              favoriteCount={favoriteCount}
-              size="icon" 
-              variant="outline" 
-              className="h-7 w-7 sm:h-8 sm:w-8" 
-            />
-            {onEdit && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => onEdit(song)}
-                className="h-7 w-7 sm:h-8 sm:w-8"
-                title={t("common.edit")}
-              >
-                <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              </Button>
-            )}
-            {onDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button 
-                    variant="outline" 
-                    size="icon" 
-                    className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
-                    title={t("common.delete")}
+            {isDraft ? (
+              /* Draft: show only "Resume Registration" button */
+              onEdit && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onEdit(song)}
+                  className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  <Edit className="w-3.5 h-3.5 mr-1" />
+                  {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
+                </Button>
+              )
+            ) : (
+              /* Published: existing action buttons */
+              <>
+                {selectorMode && onSelectForSet && (
+                  <Button
+                    variant={isSelectedForSet ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
+                    className="h-7 sm:h-8 px-2 tracking-tight"
                   >
-                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
+                    {isSelectedForSet ? (
+                      <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
+                    ) : (
+                      <>
+                        <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
+                        {song.is_private && <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
+                        {t("songSelector.addToSet")}
+                      </>
+                    )}
                   </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {t("songCard.deleteConfirm")}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      {t("common.delete")}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                )}
+                {!selectorMode && onToggleCart && (
+                  <Button
+                    variant={inCart ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => onToggleCart()}
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                  >
+                    <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </Button>
+                )}
+                {canViewUsageHistory && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setUsageHistoryOpen(true)}
+                    className="h-7 w-7 sm:h-8 sm:w-8 relative"
+                    title={t("songUsage.viewUsageHistory")}
+                  >
+                    <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    {usageCount > 0 && (
+                      <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+                        {usageCount > 99 ? "99+" : usageCount}
+                      </span>
+                    )}
+                  </Button>
+                )}
+                <FavoriteButton 
+                  songId={song.id} 
+                  isFavorite={isFavorite}
+                  favoriteCount={favoriteCount}
+                  size="icon" 
+                  variant="outline" 
+                  className="h-7 w-7 sm:h-8 sm:w-8" 
+                />
+                {onEdit && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onEdit(song)}
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    title={t("common.edit")}
+                  >
+                    <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </Button>
+                )}
+                {onDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
+                        title={t("common.delete")}
+                      >
+                        <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t("songCard.deleteConfirm")}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete}>
+                          {t("common.delete")}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
         </CardContent>

@@ -65,6 +65,7 @@ export const SetImportDialog = ({
       const { data } = await supabase
         .from("songs")
         .select("id, title, artist, language, default_key")
+        .eq("status", "published")
         .order("title");
       return (data || []) as Song[];
     },

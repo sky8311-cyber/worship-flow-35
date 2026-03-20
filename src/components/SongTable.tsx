@@ -383,108 +383,126 @@ const handleDelete = async (song: any) => {
                    <TableCell>
                      {!bulkEditMode && (
                        <div className="flex items-center gap-1">
-                          {selectorMode && onSelectForSet && (
-                           <Button
-                             variant={selectedForSet.has(song.id) ? "default" : "ghost"}
-                             size="sm"
-                             onClick={() => onSelectForSet(song, song.default_key, song.score_file_url)}
-                             className="h-8"
-                           >
-                             {selectedForSet.has(song.id) ? (
-                               <><Check className="h-4 w-4 mr-1" />{t("songSelector.selected")}</>
-                             ) : (
-                               <>
-                                 <Plus className="h-4 w-4 mr-1" />
-                                 {song.is_private && <Lock className="h-4 w-4 mr-1" />}
-                                 {t("songSelector.addToSet")}
-                               </>
-                             )}
-                           </Button>
-                         )}
-                         {!selectorMode && onToggleCart && (
-                           <Button
-                             variant={isInCart?.(song.id) ? "default" : "ghost"}
-                             size="icon"
-                             onClick={() => onToggleCart(song)}
-                             className="h-8 w-8"
-                             title={isInCart?.(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
-                           >
-                             <Plus className="h-4 w-4" />
-                           </Button>
-                         )}
-                         {canViewUsageHistory && (
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => {
-                               setSelectedSong(song);
-                               setUsageHistoryOpen(true);
-                             }}
-                             className="h-8 w-8 relative"
-                             title={t("songUsage.viewUsageHistory")}
-                           >
-                             <BarChart3 className="h-4 w-4" />
-                              {(usageCounts.get(song.id) || 0) > 0 && (
-                                <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
-                                  {(usageCounts.get(song.id) || 0) > 99 ? "99+" : usageCounts.get(song.id)}
-                                </span>
-                              )}
-                           </Button>
-                         )}
-                          <FavoriteButton 
-                            songId={song.id} 
-                            isFavorite={favoriteIds.has(song.id)}
-                            favoriteCount={favoriteCounts.get(song.id) || 0}
-                            size="icon" 
-                            variant="ghost" 
-                            className="h-8 w-8" 
-                          />
-                         {song.youtube_url && (
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => handleYoutubeClick(song.youtube_url)}
-                             className="h-8 w-8 group hover:bg-accent hover:border-accent"
-                             title={t("songCard.viewYouTube")}
-                           >
-                             <Youtube className="h-4 w-4 text-accent group-hover:text-white" />
-                           </Button>
-                         )}
-                         {song.score_file_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handlePreviewScore(song)}
-                              className="group h-8 w-8 hover:bg-primary hover:text-white"
-                              title={t("songCard.viewScore")}
-                            >
-                              <FileMusic className="h-4 w-4 text-primary group-hover:text-white" />
-                           </Button>
-                         )}
-                         {onEdit && (
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             onClick={() => onEdit(song)}
-                             className="h-8 w-8"
-                             title={t("common.edit")}
-                           >
-                             <Edit className="h-4 w-4" />
-                           </Button>
-                         )}
-                         {onDelete && (
-                           <Button
-                             variant="ghost"
-                             size="icon"
-                             className="group h-8 w-8 text-destructive hover:bg-destructive hover:text-white"
-                             onClick={() => {
-                               setSongToDelete(song);
-                               setDeleteDialogOpen(true);
-                             }}
-                             title={t("common.delete")}
-                           >
-                             <Trash2 className="h-4 w-4 group-hover:text-white" />
-                           </Button>
+                         {isDraft ? (
+                           /* Draft: show only "Resume" button */
+                           onEdit && (
+                             <Button
+                               variant="default"
+                               size="sm"
+                               onClick={() => onEdit(song)}
+                               className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
+                             >
+                               <PenLine className="h-4 w-4 mr-1" />
+                               {t("songDialog.private") === "비공개" ? "마무리" : "Finish"}
+                             </Button>
+                           )
+                         ) : (
+                           /* Published: existing action buttons */
+                           <>
+                             {selectorMode && onSelectForSet && (
+                              <Button
+                                variant={selectedForSet.has(song.id) ? "default" : "ghost"}
+                                size="sm"
+                                onClick={() => onSelectForSet(song, song.default_key, song.score_file_url)}
+                                className="h-8"
+                              >
+                                {selectedForSet.has(song.id) ? (
+                                  <><Check className="h-4 w-4 mr-1" />{t("songSelector.selected")}</>
+                                ) : (
+                                  <>
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    {song.is_private && <Lock className="h-4 w-4 mr-1" />}
+                                    {t("songSelector.addToSet")}
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            {!selectorMode && onToggleCart && (
+                              <Button
+                                variant={isInCart?.(song.id) ? "default" : "ghost"}
+                                size="icon"
+                                onClick={() => onToggleCart(song)}
+                                className="h-8 w-8"
+                                title={isInCart?.(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canViewUsageHistory && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setSelectedSong(song);
+                                  setUsageHistoryOpen(true);
+                                }}
+                                className="h-8 w-8 relative"
+                                title={t("songUsage.viewUsageHistory")}
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                                 {(usageCounts.get(song.id) || 0) > 0 && (
+                                   <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+                                     {(usageCounts.get(song.id) || 0) > 99 ? "99+" : usageCounts.get(song.id)}
+                                   </span>
+                                 )}
+                              </Button>
+                            )}
+                             <FavoriteButton 
+                               songId={song.id} 
+                               isFavorite={favoriteIds.has(song.id)}
+                               favoriteCount={favoriteCounts.get(song.id) || 0}
+                               size="icon" 
+                               variant="ghost" 
+                               className="h-8 w-8" 
+                             />
+                            {song.youtube_url && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleYoutubeClick(song.youtube_url)}
+                                className="h-8 w-8 group hover:bg-accent hover:border-accent"
+                                title={t("songCard.viewYouTube")}
+                              >
+                                <Youtube className="h-4 w-4 text-accent group-hover:text-white" />
+                              </Button>
+                            )}
+                            {song.score_file_url && (
+                               <Button
+                                 variant="ghost"
+                                 size="icon"
+                                 onClick={() => handlePreviewScore(song)}
+                                 className="group h-8 w-8 hover:bg-primary hover:text-white"
+                                 title={t("songCard.viewScore")}
+                               >
+                                 <FileMusic className="h-4 w-4 text-primary group-hover:text-white" />
+                              </Button>
+                            )}
+                            {onEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(song)}
+                                className="h-8 w-8"
+                                title={t("common.edit")}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {onDelete && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="group h-8 w-8 text-destructive hover:bg-destructive hover:text-white"
+                                onClick={() => {
+                                  setSongToDelete(song);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                title={t("common.delete")}
+                              >
+                                <Trash2 className="h-4 w-4 group-hover:text-white" />
+                              </Button>
+                            )}
+                           </>
                          )}
                        </div>
                      )}

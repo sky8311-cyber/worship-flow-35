@@ -34,6 +34,7 @@ export function SongSelectorDialog({ open, onOpenChange, onSelect }: SongSelecto
         .from("songs")
         .select("id, title, artist, default_key")
         .eq("is_private", false)
+        .eq("status", "published")
         .order("title")
         .limit(50);
       
