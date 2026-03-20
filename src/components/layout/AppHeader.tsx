@@ -236,7 +236,7 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   </DropdownMenuItem>
                 )}
                 
-                {isInstructor && (
+                {isInstructor && isInstituteEnabled && (
                   <DropdownMenuItem asChild>
                     <Link to="/institute/manage">
                       <GraduationCap className="mr-2 h-4 w-4" />
