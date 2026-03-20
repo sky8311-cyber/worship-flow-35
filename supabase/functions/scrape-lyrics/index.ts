@@ -439,6 +439,13 @@ serve(async (req) => {
       result = await scrapeGasazipLyrics(title, artist || '', '');
     }
     
+    // Gasazip: title only 재시도
+    if (!result.lyrics) {
+      console.log('Retrying Gasazip with title only (no artist)...');
+      await new Promise(r => setTimeout(r, 200));
+      result = await scrapeGasazipLyrics(title, '', '');
+    }
+    
     // 2단계: Bugs Track
     if (!result.lyrics) {
       console.log('Gasazip failed, trying Bugs track search...');
