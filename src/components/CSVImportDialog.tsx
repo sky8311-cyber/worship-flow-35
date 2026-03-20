@@ -670,16 +670,26 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
               <h3 className="font-semibold mb-3">
                 {t("csvImport.songsPreview")} ({csvData.length} {t("csvImport.songs")})
               </h3>
-              <div className="border rounded-lg overflow-auto max-h-80">
+              <ScrollArea className="border rounded-lg max-h-[50vh]">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted sticky top-0">
+                  <thead className="bg-muted sticky top-0 z-10">
                     <tr>
                       <th className="p-2 text-left w-8"></th>
-                      <th className="p-2 text-left w-20">타입</th>
+                      <th className="p-2 text-left w-20">
+                        <span className="flex items-center gap-1">
+                          타입
+                          <HelpTooltip text="ID가 있으면 기존 곡을 전체 덮어쓰기, 없으면 신규 추가" size={12} />
+                        </span>
+                      </th>
                       <th className="p-2 text-left">{t("songDialog.title")}</th>
                       <th className="p-2 text-left">{t("songDialog.artist")}</th>
                       <th className="p-2 text-left">{t("songDialog.topics")}</th>
-                      <th className="p-2 text-left">{t("csvImport.scoreStatus")}</th>
+                      <th className="p-2 text-left">
+                        <span className="flex items-center gap-1">
+                          {t("csvImport.scoreStatus")}
+                          <HelpTooltip text="이미지 파일을 함께 업로드하면 파일명 기준으로 자동 매칭됩니다" size={12} />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -704,7 +714,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                           </td>
                           <td className="p-2 font-medium">{row.title}</td>
                           <td className="p-2 text-sm">{row.artist || "-"}</td>
-                          <td className="p-2 text-sm">{row.topics || "-"}</td>
+                          <td className="p-2 text-sm">{getRowTags(row) || "-"}</td>
                           <td className="p-2">
                             {scoreStatus === "existing" ? (
                               <Badge variant="outline" className="gap-1">
@@ -733,7 +743,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Progress indicator */}
