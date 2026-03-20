@@ -1,61 +1,50 @@
 
 
-## 전체 플랫폼 툴팁 & 도움말 audit + 개선 계획
+## 정식멤버 기능 토글 — AI Integration + Institute 숨기기/표시
 
-### 현황 분석
+### 목적
+AI 기능(Worship Set AI, Worship Profile Chat)과 K-Worship Institute를 퍼블리시 전에 숨길 수 있도록 관리자 토글 3개를 추가한다.
 
-**현재 툴팁 있는 곳**: SongLibrary (Cross-Community 토글, 뷰모드), SetSongItem (일부 아이콘), CommunityManagement (역할 관리 버튼), LandingNav (앱스토어 버튼)
+### 변경 내용
 
-**툴팁 없는 곳 (문제)**:
-- SongLibrary: CSV Import, Export, 중복검사, 선택모드 — `title` 속성만 사용 (모바일에서 안 보임)
-- WorshipSets: 뷰모드 토글, Import/Export 버튼에 `title`만
-- SetBuilder: 미리보기, 공유, 템플릿 버튼, 자동저장 상태 아이콘, Draft/Published 배지
-- WorshipSetCard: Eye/Share/Edit/Publish/Delete 아이콘 — 텍스트 있긴 하지만 모바일에서 작음
-- SongCartPopover: 장바구니 아이콘에 설명 없음
-- ShareLinkDialog: 팀링크 vs 공유링크 차이 설명 없음
-- SongDialog: 다수 아이콘 버튼 (악보 업로드, AI 보강, 유튜브 등)
-- Help 페이지: FAQ에 ID 앵커 없어서 딥링크 불가
+#### 1. DB: `platform_feature_flags` 테이블에 3개 신규 플래그 삽입
+- `ai_set_builder_enabled` (default: false) — AI 세트 빌더 기능
+- `worship_profile_enabled` (default: false) — 예배 프로필 챗 기능
+- `institute_enabled` (default: false) — K-Worship Institute 전체
 
----
+#### 2. `useAppSettings.ts` — 3개 플래그 추가
+- `FeatureFlags` 인터페이스에 `ai_set_builder_enabled`, `worship_profile_enabled`, `institute_enabled` 추가
+- 각각 `isAiSetBuilderEnabled`, `isWorshipProfileEnabled`, `isInstituteEnabled` 반환값 + toggle 함수 추가
+- sandbox tester override 지원
 
-### 변경 계획
+#### 3. `AdminDashboard.tsx` — 멤버십 설정 카드에 토글 3개 추가
+기존 "정식멤버 계정 설정" 카드 내에:
+- **AI 세트 빌더**: "AI를 활용한 워십세트 자동 생성 기능"
+- **예배 프로필**: "AI 기반 예배 프로필 온보딩 챗"
+- **K-Worship Institute**: "온라인 자격증 스쿨 전체 표시"
 
-#### 1. 공통 HelpTooltip 컴포넌트 생성 (`src/components/ui/help-tooltip.tsx`)
-- `HelpCircle` 아이콘 + Tooltip 조합을 재사용 가능한 컴포넌트로 만듦
-- Props: `text` (툴팁 내용), `helpLink?` (FAQ 딥링크), `side?`
-- helpLink이 있으면 아이콘 클릭 시 해당 FAQ로 이동
+#### 4. `AppHeader.tsx` — 메뉴 항목 조건부 숨기기
+- Institute 메뉴 (`<Link to="/institute">`): `isInstituteEnabled` 또는 sandbox 조건으로 감싸기
+- Worship Profile 메뉴 (`openCurationChat`): `isWorshipProfileEnabled` 조건 추가
+- Instructor 메뉴 (`/institute/manage`): `isInstituteEnabled` 조건 추가
 
-#### 2. Help 페이지 FAQ 딥링크 지원 (`src/pages/Help.tsx`)
-- 각 FAQ 항목에 고유 ID 부여: `getting-started`, `worship-leader`, `community`, `worship-set`, `add-song`, `share`, `roles`, `language`, `fullscreen`, `favorites`, `print`
-- URL 해시로 자동 스크롤 + 해당 아코디언 열기 (예: `/help#add-song`)
+#### 5. `SetBuilder.tsx` — AI 세트 버튼 숨기기
+- AI 세트 버튼/패널: 기존 `hasFeature('ai_set_builder')` 체크에 추가로 `isAiSetBuilderEnabled` 플래그 확인. 플래그 OFF 시 AI 세트 버튼 자체를 숨김
 
-#### 3. SongLibrary 툴팁 추가 (`src/pages/SongLibrary.tsx`)
-- CSV Import 아이콘: "CSV 파일로 곡 일괄 가져오기" + `/help#add-song` 링크
-- Export 아이콘: "곡 목록 Excel 내보내기"
-- 중복검사 아이콘: "중복 곡 자동 검색"
-- 장바구니 아이콘 (FloatingCartIndicator): "선택한 곡을 워십세트에 추가" + `/help#add-song`
-- 선택모드 버튼: "여러 곡을 선택하여 일괄 작업"
+#### 6. Institute 라우트 보호
+- Institute 관련 라우트(`/institute`, `/institute/*`)에서 `isInstituteEnabled`가 false이면 대시보드로 리다이렉트 또는 빈 상태 표시. `InstituteLayout.tsx`에서 처리
 
-#### 4. WorshipSets 페이지 (`src/pages/WorshipSets.tsx`)
-- 뷰모드 토글: 카드/테이블에 Tooltip 추가
-- "새로 만들기" 옆 HelpTooltip: "예배 콘티를 작성합니다" + `/help#worship-set`
-- Import/Export 버튼에 Tooltip
+#### 7. `CurationProfileCard` (Settings.tsx 내) — 숨기기
+- `isWorshipProfileEnabled`가 false이면 Worship Curation Profile 카드 숨김
 
-#### 5. SetBuilder 워크플로우 도움말 (`src/pages/SetBuilder.tsx`)
-- "예배 정보" 카드 제목 옆 HelpTooltip: "워십세트 기본 정보를 입력하세요" + `/help#worship-set`
-- 템플릿 버튼들에 Tooltip: "이전에 저장한 예배 형식을 불러옵니다" / "현재 세트를 템플릿으로 저장"
-- Draft/Published 배지에 Tooltip: "임시저장: 본인만 볼 수 있음" / "게시됨: 커뮤니티 멤버가 볼 수 있음"
-- 자동저장 상태 아이콘에 Tooltip: "변경사항이 자동으로 저장됩니다"
-- 미리보기 버튼: "밴드뷰로 미리보기"
-- 공유 버튼: "링크를 생성하여 팀원에게 공유" + `/help#share`
-- 커뮤니티 선택 옆 HelpTooltip: "이 콘티가 공유될 그룹을 선택하세요"
+### 수정 파일
+| 파일 | 변경 |
+|---|---|
+| DB migration | 3개 플래그 INSERT |
+| `src/hooks/useAppSettings.ts` | 3개 플래그 + toggle 추가 |
+| `src/pages/AdminDashboard.tsx` | 멤버십 카드에 토글 3개 UI |
+| `src/components/layout/AppHeader.tsx` | Institute/Profile 메뉴 조건부 |
+| `src/pages/SetBuilder.tsx` | AI 세트 버튼 플래그 체크 |
+| `src/layouts/InstituteLayout.tsx` | 플래그 OFF 시 리다이렉트 |
+| `src/pages/Settings.tsx` | Profile 카드 플래그 체크 |
 
-#### 6. ShareLinkDialog 안내 개선 (`src/components/ShareLinkDialog.tsx`)
-- 팀링크 레이블 옆 HelpTooltip: "로그인한 팀원만 접근 가능한 내부 링크"
-- 공유링크 레이블 옆 HelpTooltip: "로그인 없이 누구나 볼 수 있는 외부 공유 링크"
-
-#### 7. SongDialog 아이콘 설명 (`src/components/SongDialog.tsx`)
-- 악보 업로드, AI 보강, 유튜브 검색 등 아이콘 버튼에 Tooltip 추가
-
-#### 8. SongCartPopover 안내 (`src/components/SongCartPopover.tsx`)
--
