@@ -44,14 +44,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build artist string: combine artist and original_composer for better search
+    // Build artist string: prefer original_composer for accurate search
     const searchArtist = original_composer 
       ? original_composer        // 원곡자 있으면 원곡자만
       : (artist || "");          // 없으면 artist (없으면 빈 문자열)
 
     console.log("match-lyrics: calling scrape-lyrics with", { title, artist: searchArtist });
 
-    // Call scrape-lyrics internally (same pattern as enrich-song)
+    // Call scrape-lyrics internally
     const scrapeResponse = await fetch(
       `${Deno.env.get("SUPABASE_URL")}/functions/v1/scrape-lyrics`,
       {
@@ -68,19 +68,20 @@ Deno.serve(async (req) => {
       const errorText = await scrapeResponse.text();
       console.error("scrape-lyrics call failed:", scrapeResponse.status, errorText);
       return new Response(
-        JSON.stringify({ found: false, lyrics: null, source: null }),
+        JSON.stringify({ found: false, lyrics: null, source: null, candidates: [] }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const scrapeData = await scrapeResponse.json();
-    console.log("scrape-lyrics result:", { source: scrapeData.source, hasLyrics: !!scrapeData.lyrics });
+    console.log("scrape-lyrics result:", { source: scrapeData.source, hasLyrics: !!scrapeData.lyrics, candidateCount: scrapeData.candidates?.length || 0 });
 
     return new Response(
       JSON.stringify({
         found: !!scrapeData.lyrics,
         lyrics: scrapeData.lyrics || null,
         source: scrapeData.source === "none" ? null : scrapeData.source,
+        candidates: scrapeData.candidates || [],
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
