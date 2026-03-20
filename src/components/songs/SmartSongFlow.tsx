@@ -93,6 +93,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const [lyricsSearching, setLyricsSearching] = useState(false);
   const [lyricsSource, setLyricsSource] = useState<string | null>(null);
   const [lyricsSearchDone, setLyricsSearchDone] = useState(false);
+  const [lyricsCandidates, setLyricsCandidates] = useState<Array<{ url: string; title: string; source: string }>>([]);
 
   // === STEP 5: Language & Topics ===
   const [songLanguage, setSongLanguage] = useState(draftSong?.language || "");
