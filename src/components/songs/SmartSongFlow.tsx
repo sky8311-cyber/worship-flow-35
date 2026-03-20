@@ -768,12 +768,12 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
   );
 }
 
-function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, notes, setNotes, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone }: any) {
+function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, notes, setNotes, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates }: any) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>원곡자 (선택사항)</Label>
-        <Input value={originalComposer} onChange={(e) => setOriginalComposer(e.target.value)} placeholder="작곡가/작사가를 알면 입력하세요" />
+        <Input value={originalComposer} onChange={(e: any) => setOriginalComposer(e.target.value)} placeholder="작곡가/작사가를 알면 입력하세요" />
         <p className="text-xs text-muted-foreground">가사 검색 정확도가 높아집니다</p>
       </div>
 
@@ -784,24 +784,51 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
       {lyricsSearchDone && lyrics && lyricsSource && (
         <p className="text-sm text-primary flex items-center gap-1"><Check className="w-4 h-4" /> 가사를 찾았습니다 (출처: {lyricsSource})</p>
       )}
-      {lyricsSearchDone && !lyrics && !originalComposer && (
+      
+      {/* Candidate links when auto-search fails */}
+      {lyricsSearchDone && !lyrics && lyricsCandidates && lyricsCandidates.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <ExternalLink className="w-4 h-4" />
+            관련 가사 페이지를 찾았습니다
+          </div>
+          <p className="text-xs text-muted-foreground">아래 링크에서 가사를 확인 후 복사하여 붙여넣어주세요.</p>
+          <div className="space-y-2">
+            {lyricsCandidates.slice(0, 5).map((c: any, i: number) => (
+              <Card key={i} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.open(c.url, '_blank')}>
+                <CardContent className="p-3 flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{c.title || '가사 페이지'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{c.source === 'gasazip' ? 'gasazip.com' : c.source === 'bugs' ? 'music.bugs.co.kr' : c.source}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" className="flex-shrink-0 gap-1 text-xs">
+                    <ExternalLink className="w-3 h-3" /> 열기
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lyricsSearchDone && !lyrics && (!lyricsCandidates || lyricsCandidates.length === 0) && !originalComposer && (
         <div className="text-sm text-muted-foreground space-y-1">
           <p>자동으로 가사를 찾지 못했습니다.</p>
           <p className="text-primary">💡 원곡자를 입력하면 검색 정확도가 높아집니다. 입력 후 다시 검색해보세요.</p>
         </div>
       )}
-      {lyricsSearchDone && !lyrics && originalComposer && (
+      {lyricsSearchDone && !lyrics && (!lyricsCandidates || lyricsCandidates.length === 0) && originalComposer && (
         <p className="text-sm text-muted-foreground">가사를 찾지 못했습니다. 직접 입력해주세요.</p>
       )}
 
       <div className="space-y-2">
         <Label>가사</Label>
-        <Textarea value={lyrics} onChange={(e) => setLyrics(e.target.value)} placeholder="가사를 입력하세요" rows={10} className="font-mono text-sm" />
+        <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder="가사를 입력하세요" rows={10} className="font-mono text-sm" />
       </div>
 
       <div className="space-y-2">
         <Label>노트</Label>
-        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="메모, 연주 팁 등" rows={3} />
+        <Textarea value={notes} onChange={(e: any) => setNotes(e.target.value)} placeholder="메모, 연주 팁 등" rows={3} />
       </div>
     </div>
   );
