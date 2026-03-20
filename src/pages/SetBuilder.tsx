@@ -2183,8 +2183,7 @@ const SetBuilder = () => {
                         {language === "ko" ? "순서 추가하기" : "Add Component"}
                       </Button>
         </div>
-                      {/* Locked feature banner for non-eligible users */}
-                      {!hasFeature('ai_set_builder') && (
+                      {isAiSetBuilderEnabled && !hasFeature('ai_set_builder') && (
                         <div className="mt-4">
                           <LockedFeatureBanner
                             feature="ai_set_builder"
