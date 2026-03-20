@@ -87,7 +87,10 @@ function verifyMatch(
   const effectiveTitleSim = Math.min(100, titleSim + subtitleBoost);
   
   // Pass if title similarity >= 50% OR artist similarity >= 70% with title >= 40%
-  const passed = effectiveTitleSim >= 50 || (artistSim >= 70 && effectiveTitleSim >= 40);
+  const passed = 
+    effectiveTitleSim >= 40 ||
+    (artistSim >= 60 && effectiveTitleSim >= 30) ||
+    (artistSim === 50 && effectiveTitleSim >= 42);
   
   console.log(`Verification: title="${resultTitle}" artist="${resultArtist}" → titleSim=${titleSim}(+${subtitleBoost}) artistSim=${artistSim} → ${passed ? 'PASS' : 'FAIL'}`);
   
@@ -436,11 +439,25 @@ serve(async (req) => {
       result = await scrapeGasazipLyrics(title, artist || '', '');
     }
     
+    // Gasazip: title only 재시도
+    if (!result.lyrics) {
+      console.log('Retrying Gasazip with title only (no artist)...');
+      await new Promise(r => setTimeout(r, 200));
+      result = await scrapeGasazipLyrics(title, '', '');
+    }
+    
     // 2단계: Bugs Track
     if (!result.lyrics) {
       console.log('Gasazip failed, trying Bugs track search...');
       await new Promise(r => setTimeout(r, 200));
       result = await scrapeBugsLyrics(title, artist || '', sub);
+    }
+    
+    // Bugs Track: title only 재시도
+    if (!result.lyrics && (artist || '').length > 0) {
+      console.log('Retrying Bugs with title only...');
+      await new Promise(r => setTimeout(r, 200));
+      result = await scrapeBugsLyrics(title, '', sub);
     }
     
     // 3단계: Bugs Lyrics
