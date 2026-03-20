@@ -1,34 +1,98 @@
 
 
-## match-lyrics 수정: Claude AI → scrape-lyrics 호출로 교체
+## 가사 검색 근본 수정: 다중 후보 검증 + 웹 fallback + 후보 링크 UI
 
-### 원인
-Claude는 저작권 정책상 가사 전체 반환을 거부합니다. 이미 프로젝트에 `scrape-lyrics` Edge Function이 있고, `enrich-song`에서 동일한 패턴으로 호출 중입니다.
+### 근본 원인
 
-### 변경 내용
+로그와 실제 Gasazip 페이지를 대조한 결과:
+- "내가 예수를 못박았습니다"로 검색하면 Gasazip에서 **3번째 결과**에 정확한 곡이 있음
+- 현재 코드는 **첫 번째 결과만** 확인 후 mismatch면 바로 포기
+- Bugs/Melon도 동일하게 첫 번째 결과만 확인
 
-**파일: `supabase/functions/match-lyrics/index.ts`**
+### 변경 계획
 
-Claude API 호출을 제거하고, `enrich-song/index.ts`의 `scrapeLyrics()` 패턴을 그대로 차용하여 내부적으로 `scrape-lyrics` 함수를 호출합니다.
+---
+
+#### 1. `scrape-lyrics/index.ts` — 다중 후보 검증 (핵심 수정)
+
+**Gasazip**: 검색 결과에서 첫 번째만이 아니라 **모든 후보**(최대 5개)를 추출하여 제목 유사도가 가장 높은 것을 선택
 
 ```
-match-lyrics (클라이언트 호출)
-  ├─ 인증 확인 (기존 유지)
-  ├─ scrape-lyrics 내부 호출 (SUPABASE_SERVICE_ROLE_KEY 사용)
-  │   ├─ title, artist 전달
-  │   └─ original_composer가 있으면 artist 파라미터에 함께 전달
-  └─ 결과를 { found, lyrics, source } 형태로 변환
+기존: regex로 첫 번째 songId만 추출 → 상세 페이지 → 검증 실패 → 포기
+수정: regex로 모든 songId 추출 → 유사도 점수 계산 → 최고 점수 후보의 상세 페이지 → 가사 추출
 ```
 
-주요 변경:
-- `ANTHROPIC_API_KEY`, `AI_CONFIG` 의존성 완전 제거
-- `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`로 `scrape-lyrics` 호출 (enrich-song과 동일 패턴)
-- `original_composer`가 있으면 검색 정확도를 위해 artist 필드에 보조 정보로 포함
-- 응답 매핑: `{ lyrics, source }` → `{ found: !!lyrics, lyrics, source }`
+구체적으로:
+- `searchHtml.matchAll()` 로 모든 `href="/(\d+)"` + 제목/아티스트 추출
+- 각 후보에 대해 `calculateSimilarity(title, candidateTitle)` 계산
+- 가장 높은 유사도의 후보를 선택하여 상세 페이지 접근
+- 검색 결과 페이지 자체에 제목이 `<h4>` 태그에 있으므로 상세 페이지 없이 사전 필터링 가능
 
-### 수정 파일: 1개
+**Bugs Track**: 동일 패턴 적용 — 여러 `data-trackid` 중 제목 매칭 최고점 선택
 
-`supabase/functions/match-lyrics/index.ts`
+---
 
-클라이언트 코드(SmartSongFlow.tsx) 변경 없음 — 응답 포맷 동일.
+#### 2. `scrape-lyrics/index.ts` — Google 웹 검색 fallback 추가 (5단계)
+
+4단계(Melon) 실패 후 **5단계: Google 검색 기반 가사 페이지 탐색** 추가
+
+```
+5단계: Google 검색 fallback
+  - 검색어: "{title} {artist} 가사" site:gasazip.com OR site:music.bugs.co.kr
+  - Google 검색 결과에서 URL 추출
+  - 해당 URL에서 가사 스크래핑 시도
+```
+
+이 방식은 Gasazip/Bugs의 내부 검색보다 Google의 한국어 검색이 더 정확한 경우를 커버함.
+
+---
+
+#### 3. `match-lyrics/index.ts` — 후보 링크 반환 추가
+
+`scrape-lyrics` 결과가 없을 때, Google 검색으로 후보 URL 목록을 반환:
+
+```typescript
+// 응답 포맷 확장
+{
+  found: boolean,
+  lyrics: string | null,
+  source: string | null,
+  candidates?: Array<{ url: string, title: string, source: string }> // 새로 추가
+}
+```
+
+---
+
+#### 4. `SmartSongFlow.tsx` — 후보 링크 UI (Step4)
+
+가사 검색 실패 시 후보 링크 목록을 카드 형태로 표시:
+
+```
+┌─────────────────────────────────┐
+│ 🔗 관련 가사 페이지를 찾았습니다    │
+│                                 │
+│ ┌─ "내가 예수를 못 박았습니다"  ──┐ │
+│ │ gasazip.com          [열기]  │ │
+│ └──────────────────────────────┘ │
+│ ┌─ "내가 예수를 못박았습니다"   ──┐ │
+│ │ music.bugs.co.kr     [열기]  │ │
+│ └──────────────────────────────┘ │
+│                                 │
+│ 위 링크에서 가사를 복사해         │
+│ 아래에 붙여넣어주세요             │
+└─────────────────────────────────┘
+```
+
+- 후보 URL을 클릭하면 새 탭에서 열림
+- 사용자가 가사를 복사/붙여넣기 가능
+
+---
+
+### 수정 파일 (3개)
+
+| 파일 | 변경 |
+|---|---|
+| `supabase/functions/scrape-lyrics/index.ts` | 다중 후보 검증 + Google fallback |
+| `supabase/functions/match-lyrics/index.ts` | 후보 링크 반환 추가 |
+| `src/components/songs/SmartSongFlow.tsx` | 후보 링크 UI 표시 |
 
