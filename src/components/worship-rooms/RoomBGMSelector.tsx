@@ -33,6 +33,7 @@ export function RoomBGMSelector({ selectedSongId, onSelect }: RoomBGMSelectorPro
         .from("songs")
         .select("id, title, artist, youtube_url")
         .not("youtube_url", "is", null)
+        .eq("status", "published")
         .order("title", { ascending: true })
         .limit(50);
       
