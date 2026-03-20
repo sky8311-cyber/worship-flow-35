@@ -932,7 +932,7 @@ const SongLibrary = () => {
                   {t("songLibrary.topicFilter")}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {allTopics.map((topic) => (
+                  {[...(allTopics || [])].sort((a, b) => a.name_ko.localeCompare(b.name_ko, 'ko')).map((topic) => (
                     <Badge
                       key={topic.id}
                       variant={selectedTopics.includes(topic.name_ko) ? "default" : "outline"}
