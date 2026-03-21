@@ -1216,6 +1216,7 @@ const [loading, setLoading] = useState(false);
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 1. Title */}
           <div>
             <Label htmlFor="title">{t("songDialog.title")} *</Label>
             <Input
@@ -1226,6 +1227,7 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
+          {/* 2. Subtitle */}
           <div>
             <Label htmlFor="subtitle">{t("songDialog.subtitle")}</Label>
             <Input
@@ -1236,45 +1238,7 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          {/* Artist - Full width with tooltip below label */}
-          <div className="space-y-1.5">
-            <Label htmlFor="artist">{t("songDialog.artist")}</Label>
-            <p className="text-xs text-muted-foreground">
-              {t("songDialog.artistTooltip")}
-            </p>
-            <ArtistSelector
-              value={formData.artist}
-              onValueChange={(artist) => setFormData({ ...formData, artist })}
-            />
-          </div>
-
-          {/* Language - Full width on next row */}
-          <div>
-            <Label htmlFor="language">{t("songDialog.language")}</Label>
-            <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Topics (주제) - replaces category and tags */}
-          <div>
-            <Label htmlFor="topics">{t("songDialog.topics")}</Label>
-            <TopicSelector 
-              selectedTopics={formData.topics} 
-              onTopicsChange={(topics) => setFormData({ ...formData, topics })} 
-              minTopics={2}
-              maxTopics={3}
-            />
-          </div>
-
-          {/* Private Song Toggle */}
+          {/* 3. Private Song Toggle */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
             <div className="flex items-center gap-3">
               <Lock className="w-4 h-4 text-muted-foreground" />
@@ -1298,6 +1262,90 @@ const [loading, setLoading] = useState(false);
             </p>
           )}
 
+          {/* 4. Artist */}
+          <div className="space-y-1.5">
+            <Label htmlFor="artist">{t("songDialog.artist")}</Label>
+            <p className="text-xs text-muted-foreground">
+              {t("songDialog.artistTooltip")}
+            </p>
+            <ArtistSelector
+              value={formData.artist}
+              onValueChange={(artist) => setFormData({ ...formData, artist })}
+            />
+          </div>
+
+          {/* 5. YouTube Links */}
+          <div>
+            <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
+            <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
+            
+            <div className="space-y-3">
+              {youtubeLinks.map((link, index) => {
+                const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
+                
+                return (
+                  <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                    <Input
+                      placeholder={t("songDialog.youtubeLabel")}
+                      value={link.label}
+                      onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
+                      className="text-sm"
+                    />
+                    
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        type="url"
+                        placeholder="https://youtube.com/..."
+                        value={link.url}
+                        onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
+                        className="flex-1 text-sm"
+                      />
+                      {youtubeLinks.length > 1 && (
+                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => removeYoutubeLink(index)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {videoId && (
+                      <div className="flex justify-center">
+                        <div 
+                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
+                          onClick={() => window.open(link.url, "_blank")}
+                        >
+                          <img 
+                            src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                            alt="YouTube thumbnail"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                            <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center group-hover:bg-white transition-colors">
+                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-red-600 border-b-[6px] border-b-transparent ml-1" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="pl-3 border-l-2 border-primary/50">
+                      <YouTubeSearchBar
+                        defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
+                        onSelectVideo={(url) => {
+                          updateYoutubeLink(index, 'url', url);
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("songDialog.addYoutubeLink")}
+              </Button>
+            </div>
+          </div>
+
+          {/* 6. Scores (Key / Sheet Music) */}
           <div>
             <Label>{t("songDialog.key")}</Label>
             <p className="text-xs text-muted-foreground mb-2">
@@ -1334,7 +1382,6 @@ const [loading, setLoading] = useState(false);
               </SortableContext>
             </DndContext>
             
-            {/* Add Variation button */}
             <Button
               type="button"
               variant="outline"
@@ -1346,82 +1393,20 @@ const [loading, setLoading] = useState(false);
             </Button>
           </div>
 
+          {/* 7. Lyrics */}
           <div>
-            <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
-            <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
-            
-            <div className="space-y-3">
-              {youtubeLinks.map((link, index) => {
-                // Extract video ID for thumbnail
-                const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
-                
-                return (
-                  <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
-                    {/* Line 1: Label */}
-                    <Input
-                      placeholder={t("songDialog.youtubeLabel")}
-                      value={link.label}
-                      onChange={(e) => updateYoutubeLink(index, 'label', e.target.value)}
-                      className="text-sm"
-                    />
-                    
-                    {/* Line 2: URL + Delete button */}
-                    <div className="flex gap-2 items-center">
-                      <Input
-                        type="url"
-                        placeholder="https://youtube.com/..."
-                        value={link.url}
-                        onChange={(e) => updateYoutubeLink(index, 'url', e.target.value)}
-                        className="flex-1 text-sm"
-                      />
-                      {youtubeLinks.length > 1 && (
-                        <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => removeYoutubeLink(index)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    
-                    {/* YouTube Thumbnail Preview - 2x size, centered, play overlay */}
-                    {videoId && (
-                      <div className="flex justify-center">
-                        <div 
-                          className="relative w-32 h-24 rounded-lg overflow-hidden cursor-pointer group"
-                          onClick={() => window.open(link.url, "_blank")}
-                        >
-                          <img 
-                            src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                            alt="YouTube thumbnail"
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Always visible subtle play overlay */}
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                            <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center group-hover:bg-white transition-colors">
-                              <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-red-600 border-b-[6px] border-b-transparent ml-1" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="pl-3 border-l-2 border-primary/50">
-                      <YouTubeSearchBar
-                        defaultQuery={formData.title + (formData.artist ? ` ${formData.artist}` : "")}
-                        onSelectVideo={(url) => {
-                          updateYoutubeLink(index, 'url', url);
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t("songDialog.addYoutubeLink")}
-              </Button>
-            </div>
+            <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
+            <Textarea
+              id="lyrics"
+              value={formData.lyrics}
+              onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
+              placeholder={t("songDialog.lyricsPlaceholder")}
+              rows={6}
+              className="font-mono text-sm"
+            />
           </div>
 
-
+          {/* 8. Notes */}
           <div>
             <Label htmlFor="notes">{t("songDialog.notes")}</Label>
             <Textarea
@@ -1432,15 +1417,29 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
+          {/* 9. Language */}
           <div>
-            <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
-            <Textarea
-              id="lyrics"
-              value={formData.lyrics}
-              onChange={(e) => setFormData({ ...formData, lyrics: e.target.value })}
-              placeholder={t("songDialog.lyricsPlaceholder")}
-              rows={6}
-              className="font-mono text-sm"
+            <Label htmlFor="language">{t("songDialog.language")}</Label>
+            <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+                <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+                <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 10. Topics */}
+          <div>
+            <Label htmlFor="topics">{t("songDialog.topics")}</Label>
+            <TopicSelector 
+              selectedTopics={formData.topics} 
+              onTopicsChange={(topics) => setFormData({ ...formData, topics })} 
+              minTopics={2}
+              maxTopics={3}
             />
           </div>
 
