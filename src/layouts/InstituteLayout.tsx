@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileDropdownMenu } from "@/components/worship-studio/ProfileDropdownMenu";
 import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
+import { InstituteComingSoon } from "@/components/institute/InstituteComingSoon";
 import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
