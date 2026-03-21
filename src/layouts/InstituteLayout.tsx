@@ -23,7 +23,7 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
         featureName="K-Worship Institute"
         featureNameKo="K-Worship 인스티튜트"
         description="Online certification courses for worship leaders are coming soon."
-        descriptionKo="예배 인도자를 위한 온라인 자격증 과정이 곧 시작됩니다!"
+        descriptionKo="예배인도자와 예배팀 멤버들을 위한 온라인스쿨이 곧 시작됩니다!"
         icon={GraduationCap}
       />
     );
