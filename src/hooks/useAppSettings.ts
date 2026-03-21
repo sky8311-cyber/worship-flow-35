@@ -93,13 +93,25 @@ export function useAppSettings() {
 
       if (error) throw error;
     },
+    onMutate: async ({ key, enabled }) => {
+      await queryClient.cancelQueries({ queryKey: ["platform-feature-flags"] });
+      const previous = queryClient.getQueryData<FeatureFlags>(["platform-feature-flags"]);
+      queryClient.setQueryData<FeatureFlags>(["platform-feature-flags"], (old) => {
+        if (!old) return old;
+        return { ...old, [key]: enabled };
+      });
+      return { previous };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform-feature-flags"] });
-      // Note: Toast message is now handled by the component using translations
+      toast.success("Settings saved");
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _vars, context) => {
       console.error("Settings save failed:", error.message);
-      // Note: Toast message is now handled by the component using translations
+      if (context?.previous) {
+        queryClient.setQueryData(["platform-feature-flags"], context.previous);
+      }
+      toast.error("Failed to save settings");
     },
   });
 

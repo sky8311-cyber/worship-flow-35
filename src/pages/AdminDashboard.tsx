@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -49,22 +49,7 @@ const AdminDashboard = () => {
     toggleWorshipProfile,
     toggleInstitute,
     isUpdating,
-    updateSuccess,
-    updateError,
   } = useAppSettings();
-
-  // Show toast when settings are updated
-  useEffect(() => {
-    if (updateSuccess) {
-      toast.success(t("admin.settings.settingsSaved"));
-    }
-  }, [updateSuccess, t]);
-
-  useEffect(() => {
-    if (updateError) {
-      toast.error(t("admin.settings.settingsSaveFailed"));
-    }
-  }, [updateError, t]);
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
