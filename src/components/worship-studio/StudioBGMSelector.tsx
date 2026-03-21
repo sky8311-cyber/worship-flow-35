@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -19,17 +19,11 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  useState(() => {
-    // Initial sync
-    setDebouncedSearch(searchQuery);
-  });
-
-  // Debounce search - 300ms
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const _debounceEffect = (() => {
-    // This is handled by the useEffect below
-  })();
-
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+  
   const { data: songs, isLoading } = useQuery({
     queryKey: ["songs-with-youtube", debouncedSearch],
     queryFn: async () => {
