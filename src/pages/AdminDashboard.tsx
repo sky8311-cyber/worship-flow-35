@@ -49,7 +49,7 @@ const AdminDashboard = () => {
     toggleWorshipProfile,
     toggleInstitute,
     isUpdating,
-  } = useAppSettings();
+  } = useAppSettings({ ignoreSandboxOverride: true });
   
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
