@@ -157,6 +157,7 @@ export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
     toggleAiSetBuilder: () => toggleFlag("ai_set_builder_enabled"),
     toggleWorshipProfile: () => toggleFlag("worship_profile_enabled"),
     toggleInstitute: () => toggleFlag("institute_enabled"),
+    toggleStudio: () => toggleFlag("studio_enabled"),
     // Sandbox access info
     isSandboxTester: sandboxAccess && sandboxAccess.length > 0,
   };
