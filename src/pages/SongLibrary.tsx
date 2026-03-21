@@ -189,16 +189,17 @@ const SongLibrary = () => {
   const { data: songs, isLoading, refetch } = useQuery({
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
-      let query = supabase.from("songs").select("*");
+      let query = supabase.from("songs").select(
+        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, bpm, youtube_url, lyrics, notes"
+      );
 
       if (debouncedSearchQuery) {
-        // Enhanced search: title, subtitle, artist, topics, lyrics
+        // Search: title, subtitle, artist, tags (excludes lyrics for performance)
         query = query.or(
           `title.ilike.%${debouncedSearchQuery}%,` +
           `subtitle.ilike.%${debouncedSearchQuery}%,` +
           `artist.ilike.%${debouncedSearchQuery}%,` +
-          `tags.ilike.%${debouncedSearchQuery}%,` +
-          `lyrics.ilike.%${debouncedSearchQuery}%`
+          `tags.ilike.%${debouncedSearchQuery}%`
         );
       }
 
@@ -227,7 +228,7 @@ const SongLibrary = () => {
           query = query.order("title");
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.limit(200);
       if (error) throw error;
       return data;
     },

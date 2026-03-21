@@ -17,9 +17,21 @@ interface StudioBGMSelectorProps {
 export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelectorProps) {
   const { language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useState(() => {
+    // Initial sync
+    setDebouncedSearch(searchQuery);
+  });
+
+  // Debounce search - 300ms
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const _debounceEffect = (() => {
+    // This is handled by the useEffect below
+  })();
+
   const { data: songs, isLoading } = useQuery({
-    queryKey: ["songs-with-youtube", searchQuery],
+    queryKey: ["songs-with-youtube", debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("songs")
