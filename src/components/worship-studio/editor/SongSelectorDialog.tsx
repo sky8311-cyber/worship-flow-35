@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,10 +25,16 @@ interface SongSelectorDialogProps {
 export function SongSelectorDialog({ open, onOpenChange, onSelect }: SongSelectorDialogProps) {
   const { language } = useTranslation();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
   
   const { data: songs, isLoading } = useQuery({
-    queryKey: ["songs-for-embed", search],
+    queryKey: ["songs-for-embed", debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("songs")
@@ -38,8 +44,8 @@ export function SongSelectorDialog({ open, onOpenChange, onSelect }: SongSelecto
         .order("title")
         .limit(50);
       
-      if (search) {
-        query = query.or(`title.ilike.%${search}%,artist.ilike.%${search}%`);
+      if (debouncedSearch) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,artist.ilike.%${debouncedSearch}%`);
       }
       
       const { data, error } = await query;
@@ -54,6 +60,7 @@ export function SongSelectorDialog({ open, onOpenChange, onSelect }: SongSelecto
     onSelect(song);
     onOpenChange(false);
     setSearch("");
+    setDebouncedSearch("");
     setSelectedId(null);
   };
   

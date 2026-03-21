@@ -36,8 +36,8 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
         .order("title")
         .limit(50);
       
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%`);
+      if (debouncedSearch) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,artist.ilike.%${debouncedSearch}%`);
       }
       
       const { data, error } = await query;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -24,10 +24,16 @@ interface Song {
 export function RoomBGMSelector({ selectedSongId, onSelect }: RoomBGMSelectorProps) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   // Search songs with YouTube URLs
   const { data: songs, isLoading } = useQuery({
-    queryKey: ["songs-for-bgm", searchQuery],
+    queryKey: ["songs-for-bgm", debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("songs")
@@ -37,8 +43,8 @@ export function RoomBGMSelector({ selectedSongId, onSelect }: RoomBGMSelectorPro
         .order("title", { ascending: true })
         .limit(50);
       
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%`);
+      if (debouncedSearch) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,artist.ilike.%${debouncedSearch}%`);
       }
       
       const { data, error } = await query;
