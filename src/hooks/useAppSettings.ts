@@ -139,6 +139,7 @@ export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
     isAiSetBuilderEnabled: !isLoading && ((flags?.ai_set_builder_enabled ?? false) || hasSandboxAccess("ai_set_builder_enabled")),
     isWorshipProfileEnabled: !isLoading && ((flags?.worship_profile_enabled ?? false) || hasSandboxAccess("worship_profile_enabled")),
     isInstituteEnabled: !isLoading && ((flags?.institute_enabled ?? false) || hasSandboxAccess("institute_enabled")),
+    isStudioEnabled: !isLoading && ((flags?.studio_enabled ?? false) || hasSandboxAccess("studio_enabled")),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     updateError: updateFlagMutation.error,
