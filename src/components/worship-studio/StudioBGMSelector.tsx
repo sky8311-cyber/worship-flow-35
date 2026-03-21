@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -17,9 +17,15 @@ interface StudioBGMSelectorProps {
 export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelectorProps) {
   const { language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   
   const { data: songs, isLoading } = useQuery({
-    queryKey: ["songs-with-youtube", searchQuery],
+    queryKey: ["songs-with-youtube", debouncedSearch],
     queryFn: async () => {
       let query = supabase
         .from("songs")
@@ -30,8 +36,8 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
         .order("title")
         .limit(50);
       
-      if (searchQuery) {
-        query = query.or(`title.ilike.%${searchQuery}%,artist.ilike.%${searchQuery}%`);
+      if (debouncedSearch) {
+        query = query.or(`title.ilike.%${debouncedSearch}%,artist.ilike.%${debouncedSearch}%`);
       }
       
       const { data, error } = await query;
