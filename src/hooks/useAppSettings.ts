@@ -35,7 +35,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   institute_enabled: false,
 };
 
-export function useAppSettings() {
+export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
+  const ignoreSandbox = options?.ignoreSandboxOverride ?? false;
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
