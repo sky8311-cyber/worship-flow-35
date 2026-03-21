@@ -7,7 +7,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight, UserPlus, Gift } from "lucide-react";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { Badge } from "@/components/ui/badge";
@@ -18,17 +17,36 @@ export function WLOnboardingChecklist() {
   const { user, isWorshipLeader, profile } = useAuth();
   const { t, language } = useTranslation();
   const [dismissed, setDismissed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('wl-onboarding-dismissed') === 'true';
+    if (typeof window !== 'undefined' && user?.id) {
+      return localStorage.getItem(`wl-onboarding-dismissed:${user.id}`) === 'true';
     }
     return false;
   });
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleDismiss = () => {
+  // Check server-side dismissal flag
+  const serverDismissed = !!(profile as any)?.wl_onboarding_dismissed_at;
+
+  // Sync server → local on mount
+  useState(() => {
+    if (serverDismissed && user?.id) {
+      localStorage.setItem(`wl-onboarding-dismissed:${user.id}`, 'true');
+    }
+  });
+
+  const handleDismiss = async () => {
     setDismissed(true);
-    localStorage.setItem('wl-onboarding-dismissed', 'true');
+    if (user?.id) {
+      localStorage.setItem(`wl-onboarding-dismissed:${user.id}`, 'true');
+      try {
+        await supabase
+          .from("profiles")
+          .update({ wl_onboarding_dismissed_at: new Date().toISOString() } as any)
+          .eq("id", user.id);
+      } catch (e) {
+        // Local already saved — server failure is non-critical
+      }
+    }
   };
 
   // Check if user has communities and get the first one (any role counts)
@@ -88,7 +106,7 @@ export function WLOnboardingChecklist() {
   // 데이터 로딩 중이면 아무것도 표시하지 않음 (플래시 방지)
   const isDataLoading = communityLoading || invitedLoading || setLoading;
 
-  if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
+  if (!profile || !isWorshipLeader || dismissed || serverDismissed || isDataLoading) {
     return null;
   }
 
@@ -240,17 +258,7 @@ export function WLOnboardingChecklist() {
                       {t("onboarding.start")}
                       <ChevronRight className="w-4 h-4" />
                     </Button>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <Checkbox 
-                        checked={dontShowAgain}
-                        onCheckedChange={(checked) => {
-                          setDontShowAgain(checked === true);
-                          if (checked === true) {
-                            handleDismiss();
-                          }
-                        }}
-                        className="h-3.5 w-3.5"
-                      />
+                    <label className="flex items-center gap-2 p-1 cursor-pointer" onClick={handleDismiss}>
                       <span className="text-xs text-muted-foreground">
                         {language === "ko" ? "더이상 보지 않기" : "Don't show again"}
                       </span>

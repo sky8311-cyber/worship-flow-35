@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN wl_onboarding_dismissed_at timestamptz NULL;
