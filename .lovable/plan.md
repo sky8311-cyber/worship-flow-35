@@ -1,74 +1,32 @@
-## I'm Performance Audit: Song Library & Search
-
-### Critical Issues Found
-
-#### 1. SongLibrary — `select("*")` fetches ALL columns including `lyrics` (HIGH impact)
-
-**File**: `src/pages/SongLibrary.tsx` line 192
-
-- Every search query fetches the entire `lyrics` text for every song — potentially thousands of rows with large text blobs
-- No `.limit()` on the query — returns ALL matching songs (could be 500+)
-- `lyrics.ilike.%...%` forces a full-text scan on large text columns — very slow at DB level
-- Combined: each keystroke (even debounced) triggers a heavy DB scan + large payload transfer
-
-#### 2. StudioBGMSelector — No debounce (MEDIUM impact)
-
-**File**: `src/components/worship-studio/StudioBGMSelector.tsx`
-
-- `searchQuery` is used directly in queryKey with no debounce — fires a DB query on every keystroke
-
-#### 3. RoomBGMSelector — No debounce (MEDIUM impact)
-
-**File**: `src/components/worship-rooms/RoomBGMSelector.tsx`
-
-- Same issue — no debounce on search input
-
-#### 4. SongSelectorDialog — No debounce (LOW impact)
-
-**File**: `src/components/worship-studio/editor/SongSelectorDialog.tsx`
-
-- Direct `search` state in queryKey, fires per keystroke
-
-#### 5. SongLibrary debounce too short (LOW-MEDIUM)
-
-- 300ms debounce exists but may feel insufficient on slow connections with heavy queries
-
----
-
-### Fix Plan
-
-#### A. SongLibrary query optimization (biggest win)
-
-1. **Select only needed columns** — replace `select("*")` with explicit columns (id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, bpm, youtube_url). Exclude `lyrics` and `notes` from list query.
-2. **Add `.limit(200)**` — cap results to prevent massive payloads
-3. **Remove `lyrics.ilike` from search** — searching inside lyrics text is the slowest operation. Instead, search only title/subtitle/artist/tags. If lyrics search is essential, make it a separate "deep search" toggle.
-4. **Increase debounce to 500ms** — gives more breathing room for the DB
-
-#### B. Add debounce to 3 other search components
-
-- `StudioBGMSelector`: add 300ms debounce
-- `RoomBGMSelector`: add 300ms debounce
-- `SongSelectorDialog`: add 300ms debounce
-
-Pattern: same `useState` + `useEffect` + `setTimeout` pattern already used in SongLibrary.
-
-#### C. CommunitySearch — already audited, no debounce but client-side filtering (acceptable)
-
----
-
-### Modified Files
 
 
-| File                                                          | Change                                                                                                            |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `src/pages/SongLibrary.tsx`                                   | Select specific columns (drop lyrics/notes), add `.limit(200)`, remove `lyrics.ilike`, increase debounce to 500ms |
-| `src/components/worship-studio/StudioBGMSelector.tsx`         | Add 300ms debounce                                                                                                |
-| `src/components/worship-rooms/RoomBGMSelector.tsx`            | Add 300ms debounce                                                                                                |
-| `src/components/worship-studio/editor/SongSelectorDialog.tsx` | Add 300ms debounce                                                                                                |
+## Admin 정식멤버 설정 Toggle 수정 계획
 
+### 문제 분석
 
-### Expected Impact
+DB를 확인한 결과 토글 값은 실제로 저장되고 있습니다 (`premium_enabled`의 `updated_at`이 방금 전 시간). 그러나 두 가지 버그가 UX를 깨뜨리고 있습니다:
 
-- **Payload size**: ~80% reduction (excluding lyrics column from list queries)
-- **DB query speed**: ~3-5x faster (removing full-text lyrics scan)
-- **Network requests**: ~50% fewer (debounce on 3 additional components)
+#### Bug 1: Toast가 중복 발생
+`AdminDashboard.tsx`의 `useEffect`에서 `[updateSuccess, t]`를 dependency로 사용합니다. `t` 함수가 렌더마다 새로운 참조를 반환하면, `updateSuccess`가 `true`인 동안 toast가 반복 발생합니다. Session replay에서 토글 1회 클릭에 toast 2개가 뜨는 것이 확인됨.
+
+#### Bug 2: Optimistic update 없음 → 토글이 시각적으로 반응 안 함
+`toggleFlag`가 DB 업데이트 → 쿼리 무효화 → 리패치 후에야 UI가 바뀝니다. 리패치 완료 전까지 Switch가 이전 상태를 유지하므로 "작동 안 함"으로 보입니다. 또한 `isUpdating`이 모든 Switch를 동시에 disable해서 UX가 더 불안정.
+
+### 수정 계획
+
+#### A. Toast 중복 수정 (`AdminDashboard.tsx`)
+- `useEffect` 대신 mutation의 `onSuccess`/`onError` 콜백에서 직접 toast 호출
+- `useAppSettings.ts`의 `updateFlagMutation`에 `onSuccess`/`onError` 콜백 추가하여 toast 표시
+
+#### B. Optimistic update 추가 (`useAppSettings.ts`)
+- `useMutation`에 `onMutate`로 즉시 queryData 업데이트 (토글 즉시 반영)
+- `onError`에서 rollback 처리
+- 개별 Switch의 `disabled`를 제거하거나 해당 key만 disable
+
+### 수정 파일
+
+| 파일 | 변경 |
+|---|---|
+| `src/hooks/useAppSettings.ts` | Optimistic update 추가 + onSuccess에서 toast 호출 |
+| `src/pages/AdminDashboard.tsx` | useEffect toast 제거 (hook에서 처리) |
+
