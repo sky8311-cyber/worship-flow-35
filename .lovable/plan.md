@@ -1,50 +1,59 @@
 
 
-## Invitation System Audit — Findings & Fix Plan
+## 오딧 결과 + 편집 폼 필드 재정렬 제안
 
-### Audit Scope
-The invitation flow covers: **CommunityManagement** (send/resend/cancel invites), **RoleAssignmentDialog** (admin invite), **InvitedSignUp** (new user signup), **AcceptInvitation** (existing user accept/decline), and the **send-community-invitation** Edge Function.
+### Part 1: Publish 오딧 결과
 
----
+Publish 플로우(`handleSmartFlowComplete`)를 검토한 결과, **심각한 버그는 없습니다.** 주요 확인 사항:
 
-### Current Flow Summary
+| 항목 | 상태 | 비고 |
+|---|---|---|
+| Draft → Published 업데이트 | ✅ | `status: "published"`, `draft_step: null` 올바르게 설정 |
+| 신규 곡 Insert | ✅ | `created_by`, `status: "published"` 정상 |
+| 악보 저장 (song_scores) | ✅ | 기존 삭제 후 재삽입 |
+| YouTube 링크 저장 | ✅ | 기존 삭제 후 재삽입 |
+| K-Seed 리워드 | ✅ | fire-and-forget으로 정상 처리 |
+| "워십세트에 추가" 프롬프트 | ✅ | publish 후 정상 표시 |
+| Validation | ⚠️ 경미 | 제목/언어/주제 체크는 있지만, artist 미입력은 허용 (의도적) |
+| 에러 핸들링 | ✅ | try-catch + toast.error |
 
-```text
-Worship Leader/Owner → CommunityManagement page → enters email(s) → 
-  calls send-community-invitation Edge Function →
-    sends email via Resend API → creates DB record (community_invitations)
-    
-Recipient clicks link → /invite/:id (new user) or /accept-invitation/:id (existing user) →
-  fetches invitation via get_invitation_by_id RPC →
-  signs up / accepts → community_members insert + accept_invitation RPC
-```
+**경미한 개선점 1개**: `handleSmartFlowComplete`에서 scores/youtube 저장 실패 시 개별 에러 처리가 없음 (전체 try-catch에 포함되긴 함). 실질적 문제는 아님.
 
----
-
-### ✅ What Works Well
-
-1. **Email-first approach**: DB record created only after email sends successfully — no orphaned invitations
-2. **Security**: `accept_invitation` / `decline_invitation` RPCs verify email match (case-insensitive)
-3. **RLS policies**: Proper policies for community_invitations (leaders, owners, admins only)
-4. **Expiry handling**: 7-day expiry checked on both frontend (InvitedSignUp) and in DB default
-5. **Duplicate handling**: `upsert` with `onConflict` for community_members in InvitedSignUp
-6. **Multi-email support**: CommunityManagement handles comma-separated emails with rate limiting (500ms delay)
+**결론: Publish 플로우는 정상 작동합니다.**
 
 ---
 
-### ⚠️ Issues Found (4 bugs, 2 improvements)
+### Part 2: 편집 폼 필드 재정렬 제안
 
-#### Bug 1: `inviterName` uses `user.email` instead of profile name
-**File**: `CommunityManagement.tsx` line 560
-```
-inviterName: user.email || "A worship leader"
-```
-The email HTML shows this as the inviter's name. Should use the user's `full_name` from their profile.
+**현재 등록(SmartSongFlow) 순서:**
+1. Title, Subtitle, Privacy
+2. YouTube 검색 + Artist
+3. 악보(Scores) + 추가 링크
+4. 가사(Lyrics) + 메모(Notes)
+5. 언어(Language) + 주제(Topics)
+6. 리뷰
 
-#### Bug 2: `RoleAssignmentDialog` sends `roleId` param that Edge Function ignores
-**File**: `RoleAssignmentDialog.tsx` line 214 passes `roleId` in the body, but `send-community-invitation` doesn't use it. The invitation is always created with `role: "member"`. If an admin invites someone for a specific band role, that context is lost.
+**현재 편집(SongDialog) 순서:**
+1. Title → 2. Subtitle → 3. Artist → 4. Language → 5. Topics → 6. Private → 7. Scores → 8. YouTube → 9. Notes → 10. Lyrics
 
-#### Bug 3: Expired invitations still show pending to managers
-**File**: `CommunityManagement.tsx` — the invitation list query doesn't filter out expired invitations. Managers see stale "pending" invitations for expired links. The `resend` action will resend the email but the DB record's `expires_at` is never refreshed.
+**제안하는 편집 폼 순서** (등록 흐름과 일치하도록):
 
-#### Bug 4: `accept_invitation` RPC requires `auth.uid()` but InvitedSignUp calls it immediately
+| 순서 | 필드 | 등록 대응 |
+|---|---|---|
+| 1 | Title | Step 1 |
+| 2 | Subtitle | Step 1 |
+| 3 | Private toggle | Step 1 |
+| 4 | Artist | Step 2 |
+| 5 | YouTube Links | Step 2-3 |
+| 6 | Scores (Key/악보) | Step 3 |
+| 7 | Lyrics | Step 4 |
+| 8 | Notes | Step 4 |
+| 9 | Language | Step 5 |
+| 10 | Topics | Step 5 |
+
+### 수정 파일
+
+| 파일 | 변경 |
+|---|---|
+| `src/components/SongDialog.tsx` | 편집 폼의 필드 순서를 위 표대로 재정렬 (코드 블록 순서만 변경, 로직 변경 없음) |
+
