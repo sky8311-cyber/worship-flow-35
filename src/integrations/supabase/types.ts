@@ -1904,6 +1904,7 @@ export type Database = {
           serving_position: string | null
           timezone: string | null
           updated_at: string | null
+          wl_onboarding_dismissed_at: string | null
           worship_leader_intro: string | null
           years_serving: number | null
           youtube_url: string | null
@@ -1935,6 +1936,7 @@ export type Database = {
           serving_position?: string | null
           timezone?: string | null
           updated_at?: string | null
+          wl_onboarding_dismissed_at?: string | null
           worship_leader_intro?: string | null
           years_serving?: number | null
           youtube_url?: string | null
@@ -1966,6 +1968,7 @@ export type Database = {
           serving_position?: string | null
           timezone?: string | null
           updated_at?: string | null
+          wl_onboarding_dismissed_at?: string | null
           worship_leader_intro?: string | null
           years_serving?: number | null
           youtube_url?: string | null
