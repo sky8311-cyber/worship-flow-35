@@ -17,6 +17,7 @@ interface FeatureFlags {
   ai_set_builder_enabled: boolean;
   worship_profile_enabled: boolean;
   institute_enabled: boolean;
+  studio_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
