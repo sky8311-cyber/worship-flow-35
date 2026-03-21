@@ -35,6 +35,7 @@ const AdminDashboard = () => {
     isAiSetBuilderEnabled,
     isWorshipProfileEnabled,
     isInstituteEnabled,
+    isStudioEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
@@ -48,6 +49,7 @@ const AdminDashboard = () => {
     toggleAiSetBuilder,
     toggleWorshipProfile,
     toggleInstitute,
+    toggleStudio,
     isUpdating,
   } = useAppSettings({ ignoreSandboxOverride: true });
   
@@ -642,7 +644,26 @@ const AdminDashboard = () => {
 
                   <Separator />
 
-                  {/* Membership Products Management Link */}
+                  {/* Worship Studio Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Worship Studio
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {language === "ko" 
+                          ? "예배공작소 기능 전체 표시"
+                          : "Show the Worship Studio feature"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={isStudioEnabled}
+                      onCheckedChange={toggleStudio}
+                      disabled={isUpdating}
+                    />
+                  </div>
+
+                  <Separator />
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">

@@ -17,6 +17,7 @@ interface FeatureFlags {
   ai_set_builder_enabled: boolean;
   worship_profile_enabled: boolean;
   institute_enabled: boolean;
+  studio_enabled: boolean;
 }
 
 const DEFAULT_FLAGS: FeatureFlags = {
@@ -33,6 +34,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   ai_set_builder_enabled: false,
   worship_profile_enabled: false,
   institute_enabled: false,
+  studio_enabled: false,
 };
 
 export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
@@ -137,6 +139,7 @@ export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
     isAiSetBuilderEnabled: !isLoading && ((flags?.ai_set_builder_enabled ?? false) || hasSandboxAccess("ai_set_builder_enabled")),
     isWorshipProfileEnabled: !isLoading && ((flags?.worship_profile_enabled ?? false) || hasSandboxAccess("worship_profile_enabled")),
     isInstituteEnabled: !isLoading && ((flags?.institute_enabled ?? false) || hasSandboxAccess("institute_enabled")),
+    isStudioEnabled: !isLoading && ((flags?.studio_enabled ?? false) || hasSandboxAccess("studio_enabled")),
     isLoading,
     isUpdating: updateFlagMutation.isPending,
     updateError: updateFlagMutation.error,
@@ -154,6 +157,7 @@ export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
     toggleAiSetBuilder: () => toggleFlag("ai_set_builder_enabled"),
     toggleWorshipProfile: () => toggleFlag("worship_profile_enabled"),
     toggleInstitute: () => toggleFlag("institute_enabled"),
+    toggleStudio: () => toggleFlag("studio_enabled"),
     // Sandbox access info
     isSandboxTester: sandboxAccess && sandboxAccess.length > 0,
   };

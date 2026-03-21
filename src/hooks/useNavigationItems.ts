@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { LucideIcon, Home, Calendar, Music, DoorOpen, MessageCircle, Heart, Music2, Share2, Bell, Settings, HelpCircle, Gift, Scale, History, Users, FileText, Star, Bookmark, Search, Plus, Edit, Trash2, Eye, EyeOff, GripVertical, GraduationCap } from "lucide-react";
+import { LucideIcon, Home, Calendar, Music, DoorOpen, MessageCircle, Heart, Music2, Share2, Bell, Settings, HelpCircle, Gift, Scale, History, Users, FileText, Star, Bookmark, Search, Plus, Edit, Trash2, Eye, EyeOff, GripVertical, GraduationCap, Palette } from "lucide-react";
 
 export type NavigationLocation = "bottom" | "top" | "profile_menu";
 
@@ -48,6 +48,7 @@ export const iconMap: Record<string, LucideIcon> = {
   EyeOff,
   GripVertical,
   GraduationCap,
+  Palette,
 };
 
 export function useNavigationItems(location?: NavigationLocation) {
