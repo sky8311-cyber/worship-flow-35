@@ -34,6 +34,7 @@ const DEFAULT_FLAGS: FeatureFlags = {
   ai_set_builder_enabled: false,
   worship_profile_enabled: false,
   institute_enabled: false,
+  studio_enabled: false,
 };
 
 export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
