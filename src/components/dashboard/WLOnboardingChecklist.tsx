@@ -107,7 +107,7 @@ export function WLOnboardingChecklist() {
   // 데이터 로딩 중이면 아무것도 표시하지 않음 (플래시 방지)
   const isDataLoading = communityLoading || invitedLoading || setLoading;
 
-  if (!profile || !isWorshipLeader || dismissed || isDataLoading) {
+  if (!profile || !isWorshipLeader || dismissed || serverDismissed || isDataLoading) {
     return null;
   }
 
