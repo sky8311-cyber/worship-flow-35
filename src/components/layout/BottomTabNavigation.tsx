@@ -167,10 +167,10 @@ export const BottomTabNavigation = () => {
           WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
-        <div className="grid grid-cols-5 h-14">
-          {[1, 2, 3, 4, 5].map(i => (
+        <div className="grid grid-cols-6 h-14">
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="flex items-center justify-center py-1">
-              <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             </div>
           ))}
         </div>
