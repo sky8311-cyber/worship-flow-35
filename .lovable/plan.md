@@ -1,31 +1,20 @@
 
 
-## Institute Coming Soon 페이지 디자인 수정
+## InstituteComingSoon: Bottom Nav 제거
 
-### 변경 내용
+### 문제
+Coming Soon 페이지에 `InstituteBottomNav`가 있으면 Institute 내부 네비게이션처럼 보이고, 메인 앱으로 돌아갈 수 없음. 이 페이지는 마케팅 프리뷰일 뿐이므로 기존 앱의 `BottomTabNavigation`이 보여야 함.
 
-Institute의 Coming Soon 페이지만 Institute 전용 디자인(Premium Light 테마)을 적용합니다. 범용 `FeatureComingSoon`은 그대로 두고, Institute 전용 Coming Soon 컴포넌트를 새로 만들거나 — 더 간단하게 — `FeatureComingSoon`에 optional props를 추가하여 Institute 스타일을 적용합니다.
+### 변경
 
-가장 깔끔한 방법: **Institute 전용 Coming Soon 컴포넌트** 생성
+**파일: `src/components/institute/InstituteComingSoon.tsx`**
+- `InstituteBottomNav` 제거
+- `inst-root` (fixed fullscreen overlay) 대신 일반 div로 변경 → 메인 앱 레이아웃 안에서 렌더링되어 기존 bottom nav 유지
 
-### 파일: `src/components/institute/InstituteComingSoon.tsx` (신규)
+**파일: `src/layouts/InstituteLayout.tsx`**
+- Coming Soon 반환 시 `InstituteLayout`의 fullscreen wrapper 없이 `<InstituteComingSoon />` 단독 반환 (현재 이미 이렇게 동작)
 
-- Institute CSS 테마 적용 (`inst-root` 배경 `#f5f4f0`, 서피스 `#ffffff`, 골드 `#b8902a`)
-- 헤더에 `kworship-institute-logo.png` 로고 중앙 배치 (실제 Institute 페이지와 동일)
-- 본문 영역:
-  - 골드 컬러 아이콘 (GraduationCap)
-  - 골드 톤 "준비 중" 배지 (`inst-gold-bg` + `inst-gold` 텍스트)
-  - "홈으로 돌아가기" 버튼을 `inst-btn-outline` 스타일로
-- 하단에 InstituteBottomNav 유지 (일관성)
-
-### 파일: `src/layouts/InstituteLayout.tsx` (수정)
-
-- `FeatureComingSoon` 대신 `InstituteComingSoon` 렌더링
-
-### 수정 파일 요약
-
-| 파일 | 변경 |
-|---|---|
-| `src/components/institute/InstituteComingSoon.tsx` | 신규 — Institute 테마 Coming Soon |
-| `src/layouts/InstituteLayout.tsx` | import 변경, `InstituteComingSoon` 사용 |
+### 핵심
+- `inst-root` (position: fixed, inset: 0, z-index: 50) 제거 → 메인 앱 BottomTabNavigation 위에 덮어쓰지 않음
+- "홈으로 돌아가기" 버튼은 유지
 
