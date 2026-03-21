@@ -35,6 +35,7 @@ const AdminDashboard = () => {
     isAiSetBuilderEnabled,
     isWorshipProfileEnabled,
     isInstituteEnabled,
+    isStudioEnabled,
     toggleLeaderboard,
     toggleChurchSubscription,
     toggleChurchMenu,
@@ -48,6 +49,7 @@ const AdminDashboard = () => {
     toggleAiSetBuilder,
     toggleWorshipProfile,
     toggleInstitute,
+    toggleStudio,
     isUpdating,
   } = useAppSettings({ ignoreSandboxOverride: true });
   
