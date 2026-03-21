@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, Sparkles } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { InstituteBottomNav } from "./InstituteBottomNav";
 import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 export function InstituteComingSoon() {
@@ -10,7 +9,7 @@ export function InstituteComingSoon() {
   const isKo = language === "ko";
 
   return (
-    <div className="inst-root">
+    <div className="flex flex-col min-h-[calc(100dvh-56px)]" style={{ background: "var(--inst-bg)", fontFamily: "-apple-system, 'Helvetica Neue', sans-serif" }}>
       {/* Header */}
       <header
         className="flex items-center justify-center px-3 py-4 border-b flex-shrink-0"
@@ -24,7 +23,7 @@ export function InstituteComingSoon() {
       </header>
 
       {/* Content */}
-      <main className="inst-content flex flex-col items-center justify-center px-6 text-center gap-6">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center"
           style={{ background: "var(--inst-gold-bg)" }}
@@ -64,8 +63,6 @@ export function InstituteComingSoon() {
           {isKo ? "홈으로 돌아가기" : "Back to Home"}
         </button>
       </main>
-
-      <InstituteBottomNav />
     </div>
   );
 }
