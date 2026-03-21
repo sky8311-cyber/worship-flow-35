@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileDropdownMenu } from "@/components/worship-studio/ProfileDropdownMenu";
 import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { InstituteComingSoon } from "@/components/institute/InstituteComingSoon";
+import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import instituteLogo from "@/assets/kworship-institute-logo.png";
 
 interface InstituteLayoutProps {
@@ -18,7 +18,15 @@ export function InstituteLayout({ children, pageTitle }: InstituteLayoutProps) {
   const { isInstituteEnabled, isLoading } = useAppSettings();
 
   if (!isLoading && !isInstituteEnabled) {
-    return <InstituteComingSoon />;
+    return (
+      <FeatureComingSoon
+        featureName="K-Worship Institute"
+        featureNameKo="K-Worship 인스티튜트"
+        description="Online certification courses for worship leaders are coming soon."
+        descriptionKo="예배 인도자를 위한 온라인 자격증 과정이 곧 시작됩니다!"
+        icon={GraduationCap}
+      />
+    );
   }
 
   const isMain = location.pathname === "/institute";
