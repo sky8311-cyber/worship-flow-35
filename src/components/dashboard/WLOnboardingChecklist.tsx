@@ -259,17 +259,7 @@ export function WLOnboardingChecklist() {
                       {t("onboarding.start")}
                       <ChevronRight className="w-4 h-4" />
                     </Button>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <Checkbox 
-                        checked={dontShowAgain}
-                        onCheckedChange={(checked) => {
-                          setDontShowAgain(checked === true);
-                          if (checked === true) {
-                            handleDismiss();
-                          }
-                        }}
-                        className="h-3.5 w-3.5"
-                      />
+                    <label className="flex items-center gap-2 p-1 cursor-pointer" onClick={handleDismiss}>
                       <span className="text-xs text-muted-foreground">
                         {language === "ko" ? "더이상 보지 않기" : "Don't show again"}
                       </span>
