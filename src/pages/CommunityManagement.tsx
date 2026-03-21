@@ -557,7 +557,7 @@ export default function CommunityManagement() {
               email,
               communityId: id,
               communityName: community.name,
-              inviterName: user.email || "A worship leader",
+              inviterName: profile?.full_name || user.email || "A worship leader",
               inviterId: user.id,
               language,
             },
