@@ -231,20 +231,21 @@ export const BottomTabNavigation = () => {
                 className="flex items-center justify-center py-1"
               >
                 <div className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                  "flex flex-col items-center justify-center gap-0.5 rounded-full transition-all",
+                  itemPadding,
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}>
                   <div className="relative">
-                    <Icon className="h-5 w-5" />
+                    <Icon className={iconSize} />
                     {isSongsTab && cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                      <span className={badgeClass}>
                         {cartCount > 9 ? "9+" : cartCount}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-medium">{t(item.label_key as TranslationPath)}</span>
+                  <span className={cn(labelSize, "font-medium")}>{t(item.label_key as TranslationPath)}</span>
                 </div>
               </Link>
             );
