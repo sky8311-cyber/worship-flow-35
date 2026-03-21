@@ -72,11 +72,11 @@ const SongLibrary = () => {
     }
   }, []);
 
-  // Debounce search query - wait 300ms after user stops typing
+  // Debounce search query - wait 500ms after user stops typing
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery]);
   // Category and Tags removed - now using Topics system
