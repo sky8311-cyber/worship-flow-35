@@ -83,7 +83,7 @@ export function useAppSettings(options?: { ignoreSandboxOverride?: boolean }) {
 
   // Check if user has sandbox access for a specific feature
   const hasSandboxAccess = (feature: string) =>
-    sandboxAccess?.includes(feature) || sandboxAccess?.includes("all");
+    !ignoreSandbox && (sandboxAccess?.includes(feature) || sandboxAccess?.includes("all"));
 
   const updateFlagMutation = useMutation({
     mutationFn: async ({ key, enabled }: { key: string; enabled: boolean }) => {
