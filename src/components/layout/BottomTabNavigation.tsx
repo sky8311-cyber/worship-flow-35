@@ -133,6 +133,7 @@ export const BottomTabNavigation = () => {
 
   // Calculate grid columns based on items count + chat
   const totalItems = regularItems.length + (chatItem ? 1 : 0);
+  const isCompact = totalItems >= 6;
   
   // Static mapping for Tailwind JIT - dynamic classes don't work
   const gridColsClass = {
@@ -141,7 +142,15 @@ export const BottomTabNavigation = () => {
     3: "grid-cols-3",
     4: "grid-cols-4",
     5: "grid-cols-5",
+    6: "grid-cols-6",
   }[totalItems] || "grid-cols-5";
+  
+  const iconSize = isCompact ? "h-4 w-4" : "h-5 w-5";
+  const itemPadding = isCompact ? "px-1.5 py-1" : "px-3 py-1.5";
+  const labelSize = isCompact ? "text-[9px]" : "text-[10px]";
+  const badgeClass = isCompact
+    ? "absolute -top-1 -right-2 flex h-3 min-w-3 items-center justify-center rounded-full bg-destructive px-0.5 text-[8px] font-bold text-destructive-foreground"
+    : "absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground";
   
   // Hide navigation when keyboard is visible
   if (keyboardVisible) {
