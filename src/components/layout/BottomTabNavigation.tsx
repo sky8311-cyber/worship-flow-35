@@ -133,6 +133,7 @@ export const BottomTabNavigation = () => {
 
   // Calculate grid columns based on items count + chat
   const totalItems = regularItems.length + (chatItem ? 1 : 0);
+  const isCompact = totalItems >= 6;
   
   // Static mapping for Tailwind JIT - dynamic classes don't work
   const gridColsClass = {
@@ -141,7 +142,15 @@ export const BottomTabNavigation = () => {
     3: "grid-cols-3",
     4: "grid-cols-4",
     5: "grid-cols-5",
+    6: "grid-cols-6",
   }[totalItems] || "grid-cols-5";
+  
+  const iconSize = isCompact ? "h-4 w-4" : "h-5 w-5";
+  const itemPadding = isCompact ? "px-1.5 py-1" : "px-3 py-1.5";
+  const labelSize = isCompact ? "text-[9px]" : "text-[10px]";
+  const badgeClass = isCompact
+    ? "absolute -top-1 -right-2 flex h-3 min-w-3 items-center justify-center rounded-full bg-destructive px-0.5 text-[8px] font-bold text-destructive-foreground"
+    : "absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground";
   
   // Hide navigation when keyboard is visible
   if (keyboardVisible) {
@@ -158,10 +167,10 @@ export const BottomTabNavigation = () => {
           WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
-        <div className="grid grid-cols-5 h-14">
-          {[1, 2, 3, 4, 5].map(i => (
+        <div className="grid grid-cols-6 h-14">
+          {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="flex items-center justify-center py-1">
-              <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             </div>
           ))}
         </div>
@@ -195,20 +204,21 @@ export const BottomTabNavigation = () => {
                   className="flex items-center justify-center py-1"
                 >
                   <div className={cn(
-                    "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                    "flex flex-col items-center justify-center gap-0.5 rounded-full transition-all",
+                    itemPadding,
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground"
                   )}>
                     <div className="relative">
-                      <Icon className="h-5 w-5" />
+                      <Icon className={iconSize} />
                       {draftCount > 0 && (
-                        <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                        <span className={badgeClass}>
                           {draftCount > 9 ? "9+" : draftCount}
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] font-medium">{t(item.label_key as TranslationPath)}</span>
+                    <span className={cn(labelSize, "font-medium")}>{t(item.label_key as TranslationPath)}</span>
                   </div>
                 </button>
               );
@@ -221,20 +231,21 @@ export const BottomTabNavigation = () => {
                 className="flex items-center justify-center py-1"
               >
                 <div className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                  "flex flex-col items-center justify-center gap-0.5 rounded-full transition-all",
+                  itemPadding,
                   isActive
                     ? "bg-primary/10 text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}>
                   <div className="relative">
-                    <Icon className="h-5 w-5" />
+                    <Icon className={iconSize} />
                     {isSongsTab && cartCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                      <span className={badgeClass}>
                         {cartCount > 9 ? "9+" : cartCount}
                       </span>
                     )}
                   </div>
-                  <span className="text-[10px] font-medium">{t(item.label_key as TranslationPath)}</span>
+                  <span className={cn(labelSize, "font-medium")}>{t(item.label_key as TranslationPath)}</span>
                 </div>
               </Link>
             );
@@ -253,7 +264,8 @@ export const BottomTabNavigation = () => {
               className="flex items-center justify-center py-1"
             >
               <div className={cn(
-                "flex flex-col items-center justify-center gap-0.5 px-3 py-1.5 rounded-full transition-all",
+                "flex flex-col items-center justify-center gap-0.5 rounded-full transition-all",
+                itemPadding,
                 isAdmin && location.pathname.includes("/admin/support")
                   ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -261,10 +273,10 @@ export const BottomTabNavigation = () => {
                 <div className="relative">
                   {(() => {
                     const ChatIcon = iconMap[chatItem.icon] || iconMap.MessageCircle;
-                    return <ChatIcon className="h-5 w-5" />;
+                    return <ChatIcon className={iconSize} />;
                   })()}
                   {(isAdmin ? adminSupportUnread : chatUnreadCount) > 0 && (
-                    <span className="absolute -top-1.5 -right-2.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-destructive px-0.5 text-[9px] font-bold text-destructive-foreground">
+                    <span className={badgeClass}>
                       {isAdmin 
                         ? (adminSupportUnread > 99 ? "99+" : adminSupportUnread)
                         : (chatUnreadCount > 99 ? "99+" : chatUnreadCount)
@@ -272,7 +284,7 @@ export const BottomTabNavigation = () => {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-medium">
+                <span className={cn(labelSize, "font-medium")}>
                   {isAdmin ? t("navigation.customerSupport") : t(chatItem.label_key as TranslationPath)}
                 </span>
               </div>
