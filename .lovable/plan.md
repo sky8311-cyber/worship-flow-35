@@ -1,59 +1,74 @@
+## I'm Performance Audit: Song Library & Search
 
+### Critical Issues Found
 
-## 오딧 결과 + 편집 폼 필드 재정렬 제안
+#### 1. SongLibrary — `select("*")` fetches ALL columns including `lyrics` (HIGH impact)
 
-### Part 1: Publish 오딧 결과
+**File**: `src/pages/SongLibrary.tsx` line 192
 
-Publish 플로우(`handleSmartFlowComplete`)를 검토한 결과, **심각한 버그는 없습니다.** 주요 확인 사항:
+- Every search query fetches the entire `lyrics` text for every song — potentially thousands of rows with large text blobs
+- No `.limit()` on the query — returns ALL matching songs (could be 500+)
+- `lyrics.ilike.%...%` forces a full-text scan on large text columns — very slow at DB level
+- Combined: each keystroke (even debounced) triggers a heavy DB scan + large payload transfer
 
-| 항목 | 상태 | 비고 |
-|---|---|---|
-| Draft → Published 업데이트 | ✅ | `status: "published"`, `draft_step: null` 올바르게 설정 |
-| 신규 곡 Insert | ✅ | `created_by`, `status: "published"` 정상 |
-| 악보 저장 (song_scores) | ✅ | 기존 삭제 후 재삽입 |
-| YouTube 링크 저장 | ✅ | 기존 삭제 후 재삽입 |
-| K-Seed 리워드 | ✅ | fire-and-forget으로 정상 처리 |
-| "워십세트에 추가" 프롬프트 | ✅ | publish 후 정상 표시 |
-| Validation | ⚠️ 경미 | 제목/언어/주제 체크는 있지만, artist 미입력은 허용 (의도적) |
-| 에러 핸들링 | ✅ | try-catch + toast.error |
+#### 2. StudioBGMSelector — No debounce (MEDIUM impact)
 
-**경미한 개선점 1개**: `handleSmartFlowComplete`에서 scores/youtube 저장 실패 시 개별 에러 처리가 없음 (전체 try-catch에 포함되긴 함). 실질적 문제는 아님.
+**File**: `src/components/worship-studio/StudioBGMSelector.tsx`
 
-**결론: Publish 플로우는 정상 작동합니다.**
+- `searchQuery` is used directly in queryKey with no debounce — fires a DB query on every keystroke
+
+#### 3. RoomBGMSelector — No debounce (MEDIUM impact)
+
+**File**: `src/components/worship-rooms/RoomBGMSelector.tsx`
+
+- Same issue — no debounce on search input
+
+#### 4. SongSelectorDialog — No debounce (LOW impact)
+
+**File**: `src/components/worship-studio/editor/SongSelectorDialog.tsx`
+
+- Direct `search` state in queryKey, fires per keystroke
+
+#### 5. SongLibrary debounce too short (LOW-MEDIUM)
+
+- 300ms debounce exists but may feel insufficient on slow connections with heavy queries
 
 ---
 
-### Part 2: 편집 폼 필드 재정렬 제안
+### Fix Plan
 
-**현재 등록(SmartSongFlow) 순서:**
-1. Title, Subtitle, Privacy
-2. YouTube 검색 + Artist
-3. 악보(Scores) + 추가 링크
-4. 가사(Lyrics) + 메모(Notes)
-5. 언어(Language) + 주제(Topics)
-6. 리뷰
+#### A. SongLibrary query optimization (biggest win)
 
-**현재 편집(SongDialog) 순서:**
-1. Title → 2. Subtitle → 3. Artist → 4. Language → 5. Topics → 6. Private → 7. Scores → 8. YouTube → 9. Notes → 10. Lyrics
+1. **Select only needed columns** — replace `select("*")` with explicit columns (id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, bpm, youtube_url). Exclude `lyrics` and `notes` from list query.
+2. **Add `.limit(200)**` — cap results to prevent massive payloads
+3. **Remove `lyrics.ilike` from search** — searching inside lyrics text is the slowest operation. Instead, search only title/subtitle/artist/tags. If lyrics search is essential, make it a separate "deep search" toggle.
+4. **Increase debounce to 500ms** — gives more breathing room for the DB
 
-**제안하는 편집 폼 순서** (등록 흐름과 일치하도록):
+#### B. Add debounce to 3 other search components
 
-| 순서 | 필드 | 등록 대응 |
-|---|---|---|
-| 1 | Title | Step 1 |
-| 2 | Subtitle | Step 1 |
-| 3 | Private toggle | Step 1 |
-| 4 | Artist | Step 2 |
-| 5 | YouTube Links | Step 2-3 |
-| 6 | Scores (Key/악보) | Step 3 |
-| 7 | Lyrics | Step 4 |
-| 8 | Notes | Step 4 |
-| 9 | Language | Step 5 |
-| 10 | Topics | Step 5 |
+- `StudioBGMSelector`: add 300ms debounce
+- `RoomBGMSelector`: add 300ms debounce
+- `SongSelectorDialog`: add 300ms debounce
 
-### 수정 파일
+Pattern: same `useState` + `useEffect` + `setTimeout` pattern already used in SongLibrary.
 
-| 파일 | 변경 |
-|---|---|
-| `src/components/SongDialog.tsx` | 편집 폼의 필드 순서를 위 표대로 재정렬 (코드 블록 순서만 변경, 로직 변경 없음) |
+#### C. CommunitySearch — already audited, no debounce but client-side filtering (acceptable)
 
+---
+
+### Modified Files
+
+
+| File                                                          | Change                                                                                                            |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `src/pages/SongLibrary.tsx`                                   | Select specific columns (drop lyrics/notes), add `.limit(200)`, remove `lyrics.ilike`, increase debounce to 500ms |
+| `src/components/worship-studio/StudioBGMSelector.tsx`         | Add 300ms debounce                                                                                                |
+| `src/components/worship-rooms/RoomBGMSelector.tsx`            | Add 300ms debounce                                                                                                |
+| `src/components/worship-studio/editor/SongSelectorDialog.tsx` | Add 300ms debounce                                                                                                |
+
+
+### Expected Impact
+
+- **Payload size**: ~80% reduction (excluding lyrics column from list queries)
+- **DB query speed**: ~3-5x faster (removing full-text lyrics scan)
+- **Network requests**: ~50% fewer (debounce on 3 additional components)
