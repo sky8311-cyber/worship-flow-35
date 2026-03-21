@@ -18,17 +18,36 @@ export function WLOnboardingChecklist() {
   const { user, isWorshipLeader, profile } = useAuth();
   const { t, language } = useTranslation();
   const [dismissed, setDismissed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('wl-onboarding-dismissed') === 'true';
+    if (typeof window !== 'undefined' && user?.id) {
+      return localStorage.getItem(`wl-onboarding-dismissed:${user.id}`) === 'true';
     }
     return false;
   });
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  const handleDismiss = () => {
+  // Check server-side dismissal flag
+  const serverDismissed = !!(profile as any)?.wl_onboarding_dismissed_at;
+
+  // Sync server → local on mount
+  useState(() => {
+    if (serverDismissed && user?.id) {
+      localStorage.setItem(`wl-onboarding-dismissed:${user.id}`, 'true');
+    }
+  });
+
+  const handleDismiss = async () => {
     setDismissed(true);
-    localStorage.setItem('wl-onboarding-dismissed', 'true');
+    if (user?.id) {
+      localStorage.setItem(`wl-onboarding-dismissed:${user.id}`, 'true');
+      try {
+        await supabase
+          .from("profiles")
+          .update({ wl_onboarding_dismissed_at: new Date().toISOString() } as any)
+          .eq("id", user.id);
+      } catch (e) {
+        // Local already saved — server failure is non-critical
+      }
+    }
   };
 
   // Check if user has communities and get the first one (any role counts)
