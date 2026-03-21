@@ -81,8 +81,20 @@ const handler = async (req: Request): Promise<Response> => {
       inviterName = profile.full_name || "A worship leader";
       inviterId = invitation.invited_by;
       language = "ko"; // Default to Korean for resends
+
+      // Refresh expires_at on resend
+      const { error: refreshError } = await supabase
+        .from("community_invitations")
+        .update({
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq("id", invitationId);
+
+      if (refreshError) {
+        console.error("Failed to refresh expires_at:", refreshError);
+      }
     } else {
-      // New invitation - store details but DON'T insert yet
+      // New invitation
       const inviteBody = body as InvitationRequest;
       email = inviteBody.email;
       communityId = inviteBody.communityId;
@@ -91,18 +103,41 @@ const handler = async (req: Request): Promise<Response> => {
       inviterId = inviteBody.inviterId;
       language = inviteBody.language;
       isNewInvitation = true;
-      invitationId = ""; // Will be set after successful email send
+      invitationId = "";
+
+      // Check for existing pending invitation for same email + community
+      const { data: existingInvite } = await supabase
+        .from("community_invitations")
+        .select("id, expires_at")
+        .eq("email", email.toLowerCase())
+        .eq("community_id", communityId)
+        .eq("status", "pending")
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (existingInvite) {
+        // Already has a valid pending invitation — return it instead of creating duplicate
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            invitationId: existingInvite.id,
+            message: "Existing pending invitation found" 
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
     }
 
-    // For new invitations, we'll create a temporary ID for the email link
-    // then insert the record only after email sends successfully
+    // For new invitations, generate a UUID for the email link
     let tempInvitationId = invitationId;
     if (isNewInvitation) {
-      // Generate a UUID for the invitation link
       tempInvitationId = crypto.randomUUID();
     }
 
-    // Build invitation URL - use production domain with dedicated invite signup page
+    // Build invitation URL
     const appUrl = "https://kworship.app";
     const inviteUrl = `${appUrl}/invite/${tempInvitationId}`;
 
@@ -215,8 +250,8 @@ const handler = async (req: Request): Promise<Response> => {
       const { data: newInvitation, error: createError } = await supabase
         .from("community_invitations")
         .insert({
-          id: tempInvitationId, // Use the same ID we used in the email
-          email,
+          id: tempInvitationId,
+          email: email.toLowerCase(),
           community_id: communityId,
           invited_by: inviterId,
           role: "member",

@@ -45,7 +45,7 @@ import { parseLocalDate } from "@/lib/dateUtils";
 
 export default function CommunityManagement() {
   const { id } = useParams();
-  const { user, isAdmin, isWorshipLeader } = useAuth();
+  const { user, profile, isAdmin, isWorshipLeader } = useAuth();
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -557,7 +557,7 @@ export default function CommunityManagement() {
               email,
               communityId: id,
               communityName: community.name,
-              inviterName: user.email || "A worship leader",
+              inviterName: profile?.full_name || user.email || "A worship leader",
               inviterId: user.id,
               language,
             },

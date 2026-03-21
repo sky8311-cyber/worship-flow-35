@@ -141,11 +141,30 @@ const InvitedSignUp = () => {
       return;
     }
     
-    // Wait a moment for the auth state to update
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Get the current user
-    const { data: { user: newUser } } = await supabase.auth.getUser();
+    // Wait for auth session to be established reliably
+    const newUser = await new Promise<any>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        subscription.unsubscribe();
+        reject(new Error("Auth session timeout"));
+      }, 10000);
+      
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          clearTimeout(timeout);
+          subscription.unsubscribe();
+          resolve(session.user);
+        }
+      });
+      
+      // Also check if already signed in
+      supabase.auth.getUser().then(({ data: { user: existingUser } }) => {
+        if (existingUser) {
+          clearTimeout(timeout);
+          subscription.unsubscribe();
+          resolve(existingUser);
+        }
+      });
+    }).catch(() => null);
     
     if (!newUser) {
       toast({
@@ -167,11 +186,9 @@ const InvitedSignUp = () => {
       }, { onConflict: 'community_id,user_id' });
     
     if (memberError) {
-      // Suppress duplicate key errors - user is already a member (which is fine)
       if (!memberError.message?.includes('duplicate')) {
         console.error("Failed to add to community:", memberError);
       }
-      // Don't block - they can accept invitation later
     }
     
     // Update invitation status using RPC (bypasses RLS for new users)
