@@ -7,7 +7,6 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, Circle, Users, Music, X, Sparkles, ChevronRight, UserPlus, Gift } from "lucide-react";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { Badge } from "@/components/ui/badge";
