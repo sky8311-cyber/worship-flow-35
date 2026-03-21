@@ -45,7 +45,7 @@ import { parseLocalDate } from "@/lib/dateUtils";
 
 export default function CommunityManagement() {
   const { id } = useParams();
-  const { user, isAdmin, isWorshipLeader } = useAuth();
+  const { user, profile, isAdmin, isWorshipLeader } = useAuth();
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
