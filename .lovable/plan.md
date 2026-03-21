@@ -1,38 +1,71 @@
 
-문제 원인을 확인했습니다. 현재 정식멤버 토글이 “항상 ON”처럼 보이는 핵심 이유는 **관리자 계정이 sandbox tester override 대상**이기 때문입니다.  
-`useAppSettings`에서 `isPremiumEnabled = DB값 OR sandbox override`로 계산하고 있어, DB를 OFF로 저장해도 관리자 화면에서 다시 ON으로 표시됩니다.
+
+## Institute & Studio: Bottom Nav 추가 + Coming Soon 게이팅
+
+### 현재 상태
+- **Institute**: `institute_enabled` 플래그 존재, 비활성 시 `/dashboard`로 리다이렉트
+- **Studio**: 플래그 없음, 누구나 접근 가능
+- **Bottom Nav**: DB `navigation_items` 테이블에서 로드 — Admin에서 항목 추가 필요
 
 ### 구현 계획
 
-1. **`useAppSettings`에 “sandbox override 무시 모드” 추가**
-   - 파일: `src/hooks/useAppSettings.ts`
-   - 옵션 파라미터 추가 (예: `ignoreSandboxOverride?: boolean`, 기본 `false`)
-   - 플래그 계산을 공통 함수로 정리:
-     - 기본(기존): `rawFlag || sandboxOverride`
-     - 무시 모드: `rawFlag`만 사용
-   - 기존 사용처는 기본값으로 동작 유지(기능 영향 없음)
+#### 1. `studio_enabled` 플래그 추가 (DB Migration)
+- `platform_feature_flags` 테이블에 `studio_enabled` row 삽입 (기본 `false`)
 
-2. **Admin Dashboard는 raw DB 값으로 토글 표시**
-   - 파일: `src/pages/AdminDashboard.tsx`
-   - `useAppSettings({ ignoreSandboxOverride: true })`로 변경
-   - 정식멤버/교회/AI/인스티튜트 등 모든 토글이 실제 DB 상태를 정확히 반영하도록 수정
+#### 2. `useAppSettings` 훅에 Studio 플래그 추가
+- **파일**: `src/hooks/useAppSettings.ts`
+- `FeatureFlags` 인터페이스에 `studio_enabled` 추가
+- `isStudioEnabled` 반환값 추가 (sandbox override 지원)
+- `toggleStudio` 추가
 
-3. **오해 방지 안내 문구 추가 (관리자 UX)**
-   - Admin 설정 카드에 짧은 안내 추가:
-     - “현재 계정이 sandbox tester이면, 관리자 토글과 별개로 본인 계정에서 기능이 강제 활성화되어 보일 수 있음”
-   - 재발 방지 목적 (왜 본인 화면에서 계속 보이는지 명확화)
+#### 3. Coming Soon 페이지 컴포넌트 생성
+- **파일**: `src/components/common/FeatureComingSoon.tsx`
+- 재사용 가능한 "준비 중" 마케팅 랜딩 페이지
+- Props: `featureName`, `description`, `icon`
+- 디자인: 아이콘 + 제목 + 설명 + "준비중입니다" 메시지 + 대시보드 돌아가기 버튼
+- 한/영 지원
 
-### 기술 상세
+#### 4. Institute 게이팅 수정
+- **파일**: `src/layouts/InstituteLayout.tsx`
+- 현재: 비활성 시 `/dashboard`로 리다이렉트
+- 변경: 비활성 시 `<FeatureComingSoon>` 컴포넌트 렌더링 (리다이렉트 대신)
 
-- 변경 파일
-  - `src/hooks/useAppSettings.ts`
-  - `src/pages/AdminDashboard.tsx`
-- DB 스키마/정책 변경 없음
-- 토글 저장 mutation 로직은 유지 (이미 정상 저장됨)
+#### 5. Studio 게이팅 추가
+- **파일**: `src/pages/WorshipStudio.tsx` (또는 Studio 래퍼)
+- `useAppSettings`에서 `isStudioEnabled` 체크
+- 비활성 시 `<FeatureComingSoon>` 표시
+- sandbox tester/admin은 정상 페이지 접근
 
-### 완료 기준 (QA)
+#### 6. Admin Dashboard에 Studio 토글 추가
+- **파일**: `src/pages/AdminDashboard.tsx`
+- 정식멤버 설정 섹션에 "Worship Studio 활성화" 토글 추가
 
-1. 관리자에서 `정식멤버 활성화` OFF → 즉시 OFF로 유지되고 새로고침 후에도 OFF 유지
-2. `platform_feature_flags.premium_enabled` 값이 실제로 OFF 저장됨
-3. 같은 관리자 계정이 sandbox tester여도, **Admin 토글 UI는 raw 값 기준으로 정확히 표시**
-4. 다른 화면의 런치 게이팅은 기존 sandbox override 정책 그대로 동작
+#### 7. Bottom Nav에 Institute/Studio 항목 추가 (DB)
+- `navigation_items` 테이블에 2개 row 삽입:
+  - Institute: key=`institute`, icon=`GraduationCap`, path=`/institute`, order_index 적절히 배치
+  - Studio: key=`studio`, icon=`Palette`, path=`/studio`, order_index 적절히 배치
+- 총 6개 아이콘 (Home, WorshipSets, Songs, Studio, Institute, Chat) — 이전에 구현한 compact 모드 적용
+
+### 수정 파일 요약
+
+| 파일 | 변경 |
+|---|---|
+| DB Migration | `studio_enabled` 플래그 + navigation_items 2개 추가 |
+| `src/hooks/useAppSettings.ts` | `studio_enabled` 플래그 지원 |
+| `src/components/common/FeatureComingSoon.tsx` | 새 파일 — 재사용 Coming Soon 페이지 |
+| `src/layouts/InstituteLayout.tsx` | 리다이렉트 → Coming Soon 페이지 |
+| `src/pages/WorshipStudio.tsx` | Studio 게이팅 추가 |
+| `src/pages/AdminDashboard.tsx` | Studio 토글 추가 |
+
+### 동작 흐름
+
+```text
+일반 유저가 Studio/Institute 탭 클릭
+  → useAppSettings에서 플래그 체크
+  → 비활성 → FeatureComingSoon 페이지 표시
+
+관리자/sandbox tester가 동일 탭 클릭
+  → hasSandboxAccess("studio_enabled") = true
+  → 정상 페이지 표시
+```
+
