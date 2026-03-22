@@ -17,7 +17,7 @@ import { TopicSelector } from "@/components/TopicSelector";
 import { toast } from "sonner";
 import { 
   Lock, Loader2, ExternalLink, Check, Search, Plus, 
-  Music, FileText, Pen, ChevronRight, Save, X
+  Music, FileText, Pen, ChevronRight, ChevronLeft, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
