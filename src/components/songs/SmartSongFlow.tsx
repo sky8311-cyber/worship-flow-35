@@ -52,7 +52,7 @@ interface SmartSongFlowProps {
   onCancel?: () => void;
 }
 
-export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: SmartSongFlowProps) => {
+export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onCancel }: SmartSongFlowProps) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   
