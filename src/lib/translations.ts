@@ -1200,8 +1200,8 @@ export const translations = {
         koreanGospel: "Korean Gospel Song"
       },
       tags: "Tags",
-      topics: "Topics",
-      topicsRequired: "Please select 2-3 topics",
+      topics: "Tags",
+      topicsRequired: "Please select 2-3 tags",
       tagsPlaceholder: "e.g., praise, grace, modern",
       tagPlaceholder: "Search or add tags...",
       youtubeUrl: "YouTube URL",
