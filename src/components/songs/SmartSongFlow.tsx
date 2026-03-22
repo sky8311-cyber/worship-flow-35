@@ -422,7 +422,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
             {currentStep} / {TOTAL_STEPS} · {stepLabels[currentStep - 1]}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setShowCancelConfirm(true)}>
+        <Button variant="ghost" size="icon" onClick={() => onCancel ? onCancel() : onClose()}>
           <X className="h-4 w-4" />
         </Button>
       </div>
