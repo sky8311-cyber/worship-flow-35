@@ -177,8 +177,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     // Set first YouTube link
     setYoutubeLinks(prev => {
       const updated = [...prev];
-      if (updated.length === 0) updated.push({ label: t("songFlow.original"), url: result.url });
-      else { updated[0] = { ...updated[0], label: updated[0].label || t("songFlow.original"), url: result.url }; }
+      const defaultLabel = artist || "";
+      if (updated.length === 0) updated.push({ label: defaultLabel, url: result.url });
+      else { updated[0] = { ...updated[0], label: updated[0].label || defaultLabel, url: result.url }; }
       return updated;
     });
   };
