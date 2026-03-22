@@ -1840,7 +1840,7 @@ const SetBuilder = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Worship Info */}
           <div className="lg:col-span-1 space-y-4">
-            <Card className="shadow-md">
+            <Card className="shadow-md" data-tutorial="set-worship-info">
               <CardHeader className="pb-3">
                 <div className="space-y-2">
                   <CardTitle>예배 정보</CardTitle>
