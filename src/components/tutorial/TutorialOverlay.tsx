@@ -63,12 +63,12 @@ export const TutorialOverlay = ({
 
     const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
     if (!isVisible) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.scrollIntoView({ behavior: "instant", block: "center" });
       setTimeout(() => {
         const r = el.getBoundingClientRect();
         setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
         decidePosition(r);
-      }, 400);
+      }, 50);
     } else {
       setTargetRect(newRect);
       decidePosition(rect);
