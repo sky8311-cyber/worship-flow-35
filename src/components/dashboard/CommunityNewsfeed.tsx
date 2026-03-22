@@ -186,7 +186,7 @@ export function CommunityNewsfeed({ userStats, canPost = false }: CommunityNewsf
             : "Join a community to connect with your team, share worship sets, and stay updated on events."}
         </p>
         <Button asChild>
-          <Link to="/communities">
+          <Link to="/community/search">
             {language === "ko" ? "예배공동체 찾기" : "Find Community"}
           </Link>
         </Button>
