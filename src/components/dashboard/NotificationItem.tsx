@@ -18,6 +18,24 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
   const { language } = useTranslation();
   const [showLevelUpDialog, setShowLevelUpDialog] = useState(false);
 
+  const getLocalizedMessage = (): string | null => {
+    if (language !== "ko") return null;
+    const communityName = notification.metadata?.community_name as string;
+    const actorNameVal = notification.metadata?.actor_name as string;
+    switch (notification.type) {
+      case "join_approved":
+        return communityName ? `${communityName} 가입이 승인되었습니다!` : "가입이 승인되었습니다!";
+      case "join_rejected":
+        return communityName ? `${communityName} 가입이 거절되었습니다.` : "가입이 거절되었습니다.";
+      case "join_request":
+        return actorNameVal && communityName
+          ? `${actorNameVal}님이 ${communityName} 가입을 요청했습니다`
+          : communityName ? `${communityName} 가입 요청이 있습니다` : null;
+      default:
+        return null;
+    }
+  };
+
   const isLevelUp = notification.type === "level_up";
   const isCollaboratorInvited = notification.type === "collaborator_invited";
   const isRolePromotion = ["promoted_to_owner", "promoted_to_community_leader", "promoted_to_worship_leader"].includes(notification.type);
@@ -224,10 +242,18 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
             </p>
           ) : (
             <p className="text-sm">
-              {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
-              <span className="text-muted-foreground">
-                {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
-              </span>
+              {(() => {
+                const localizedMsg = getLocalizedMessage();
+                if (localizedMsg) {
+                  return <span className="text-muted-foreground">{localizedMsg}</span>;
+                }
+                return <>
+                  {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
+                  <span className="text-muted-foreground">
+                    {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
+                  </span>
+                </>;
+              })()}
             </p>
           )}
           <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
