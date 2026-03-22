@@ -281,6 +281,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => setUsageHistoryOpen(true)}
                           className="h-7 w-7 sm:h-8 sm:w-8 relative"
+                          data-tutorial="song-usage-btn"
                         >
                           <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           {usageCount > 0 && (
