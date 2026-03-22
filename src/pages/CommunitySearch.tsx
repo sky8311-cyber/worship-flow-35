@@ -226,14 +226,6 @@ export default function CommunitySearch() {
                         <X className="h-4 w-4 mr-2" />
                         {t("community.cancelJoinRequest")}
                       </Button>
-                    ) : getRequestStatus(community.id) === "rejected" ? (
-                      <Button
-                        className="w-full"
-                        onClick={() => joinRequestMutation.mutate(community.id)}
-                        disabled={joinRequestMutation.isPending}
-                      >
-                        {t("community.reapplyJoinRequest")}
-                      </Button>
                     ) : (
                       <Button
                         className="w-full"
