@@ -87,10 +87,11 @@ export default function CommunitySearch() {
       const { data, error } = await supabase
         .from("community_join_requests")
         .select("community_id, status")
-        .eq("user_id", user?.id)
-        .eq("status", "pending");
+        .eq("user_id", user?.id);
       if (error) throw error;
-      return data.map(r => r.community_id);
+      const map: Record<string, string> = {};
+      data.forEach(r => { map[r.community_id] = r.status; });
+      return map;
     },
     enabled: !!user?.id,
   });
