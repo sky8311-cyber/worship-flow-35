@@ -28,30 +28,35 @@ export const SET_BUILDER_STEPS: TutorialStep[] = [
   },
 ];
 
-export const SONG_ADD_STEPS: TutorialStep[] = [
+export const SONG_LIBRARY_STEPS: TutorialStep[] = [
   {
-    targetSelector: "song-title-input",
-    title: "1. 곡 제목 입력",
-    description: "찬양곡의 제목을 입력하세요. AI 자동완성으로 가사, 키, 태그를 자동으로 채울 수 있습니다.",
+    targetSelector: "song-youtube-btn",
+    title: "1. YouTube 영상",
+    description: "YouTube 버튼을 누르면 해당 곡의 영상이 바로 열립니다.",
   },
   {
-    targetSelector: "song-youtube-section",
-    title: "2. YouTube 영상 연결",
-    description: "곡에 맞는 YouTube 영상을 검색하여 연결하세요. 여러 버전을 추가할 수 있습니다.",
+    targetSelector: "song-score-btn",
+    title: "2. 악보 미리보기",
+    description: "악보 버튼으로 등록된 악보를 바로 확인할 수 있습니다.",
   },
   {
-    targetSelector: "song-score-section",
-    title: "3. 악보 업로드",
-    description: "키별로 악보 이미지를 업로드하세요. 여러 키의 악보를 등록할 수 있습니다.",
+    targetSelector: "song-cart-btn",
+    title: "3. 카트에 담기",
+    description: "카트 버튼으로 여러 곡을 담은 뒤, 한번에 워십세트에 추가할 수 있습니다.",
   },
   {
-    targetSelector: "song-lyrics-section",
-    title: "4. 가사 입력",
-    description: "가사를 직접 입력하거나 AI 자동완성을 사용하세요.",
+    targetSelector: "song-usage-btn",
+    title: "4. 사용 내역",
+    description: "사용 내역 버튼으로 이 곡이 포함된 다른 워십세트를 열람할 수 있습니다.",
   },
   {
-    targetSelector: "song-save-button",
-    title: "5. 저장",
-    description: "모든 정보를 입력한 후 저장 버튼을 눌러 곡을 라이브러리에 등록하세요.",
+    targetSelector: "song-favorite-btn",
+    title: "5. 즐겨찾기",
+    description: "하트 버튼으로 즐겨찾기에 추가하세요. 상단 네비게이션의 하트 아이콘을 눌러 즐겨찾기 목록을 확인할 수 있습니다.",
+  },
+  {
+    targetSelector: "song-edit-btn",
+    title: "6. 곡 수정",
+    description: "수정 버튼으로 곡 정보를 편집할 수 있습니다.",
   },
 ];

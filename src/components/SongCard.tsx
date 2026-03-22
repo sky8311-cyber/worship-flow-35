@@ -311,6 +311,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => onEdit(song)}
                           className="h-7 w-7 sm:h-8 sm:w-8"
+                          data-tutorial="song-edit-btn"
                         >
                           <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
