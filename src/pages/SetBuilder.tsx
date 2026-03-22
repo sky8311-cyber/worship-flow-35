@@ -44,7 +44,10 @@ import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
 import { useTierFeature } from "@/hooks/useTierFeature";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, HelpCircle } from "lucide-react";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { useTutorial } from "@/components/tutorial/useTutorial";
+import { SET_BUILDER_STEPS } from "@/components/tutorial/tutorialSteps";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
