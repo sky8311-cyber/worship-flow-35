@@ -453,8 +453,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           setShowCustomSearch={setShowCustomSearch}
           artist={artist}
           setArtist={setArtist}
-          manualArtistMode={manualArtistMode}
-          setManualArtistMode={setManualArtistMode}
+          artistSectionRef={artistSectionRef}
+          artistHighlight={artistHighlight}
+          setArtistHighlight={setArtistHighlight}
         />}
         {currentStep === 3 && <Step3_LinksScores
           youtubeLinks={youtubeLinks}
