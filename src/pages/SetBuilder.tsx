@@ -63,6 +63,9 @@ const SetBuilder = () => {
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useTranslation();
   
+  // Tutorial system
+  const tutorial = useTutorial({ key: "set-builder", steps: SET_BUILDER_STEPS });
+
   // Remember scroll position per set
   useScrollPosition(id ? `set-builder-${id}` : "set-builder-new");
   const [formData, setFormData] = useState({
