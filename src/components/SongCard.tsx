@@ -294,15 +294,16 @@ export const SongCard = memo(function SongCard({
                       <TooltipContent>{t("songUsage.viewUsageHistory")}</TooltipContent>
                     </Tooltip>
                   )}
-                  <FavoriteButton 
-                    songId={song.id} 
-                    isFavorite={isFavorite}
-                    favoriteCount={favoriteCount}
-                    size="icon" 
-                    variant="outline" 
-                    className="h-7 w-7 sm:h-8 sm:w-8"
-                    data-tutorial="song-favorite-btn"
-                  />
+                  <span data-tutorial="song-favorite-btn">
+                    <FavoriteButton 
+                      songId={song.id} 
+                      isFavorite={isFavorite}
+                      favoriteCount={favoriteCount}
+                      size="icon" 
+                      variant="outline" 
+                      className="h-7 w-7 sm:h-8 sm:w-8" 
+                    />
+                  </span>
                   {onEdit && (
                     <Tooltip>
                       <TooltipTrigger asChild>
