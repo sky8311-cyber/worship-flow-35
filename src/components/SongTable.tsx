@@ -344,7 +344,7 @@ const handleDelete = async (song: any) => {
                                 className="h-8 w-8"
                                 title={isInCart?.(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
                               >
-                                <Plus className="h-4 w-4" />
+                                <ShoppingCart className="h-4 w-4" />
                               </Button>
                             )}
                             {canViewUsageHistory && (
