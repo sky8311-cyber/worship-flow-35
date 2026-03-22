@@ -1110,6 +1110,92 @@ export type Database = {
         }
         Relationships: []
       }
+      institute_chapter_progress: {
+        Row: {
+          chapter_id: string
+          completed_at: string | null
+          id: string
+          quiz_passed: boolean | null
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          completed_at?: string | null
+          id?: string
+          quiz_passed?: boolean | null
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          completed_at?: string | null
+          id?: string
+          quiz_passed?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_chapter_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "institute_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_chapter_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_chapters: {
+        Row: {
+          audio_url: string | null
+          content_ko: string | null
+          created_at: string | null
+          id: string
+          module_id: string | null
+          required_tier: number | null
+          sort_order: number | null
+          title: string | null
+          title_ko: string | null
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          content_ko?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          required_tier?: number | null
+          sort_order?: number | null
+          title?: string | null
+          title_ko?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          content_ko?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string | null
+          required_tier?: number | null
+          sort_order?: number | null
+          title?: string | null
+          title_ko?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_chapters_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "institute_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institute_courses: {
         Row: {
           badge_image_url: string | null
@@ -1235,6 +1321,58 @@ export type Database = {
         }
         Relationships: []
       }
+      institute_invitations: {
+        Row: {
+          accepted_at: string | null
+          course_id: string | null
+          created_at: string | null
+          id: string
+          invited_by: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          id?: string
+          invited_by?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_invitations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "institute_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_invitations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institute_modules: {
         Row: {
           content: string | null
@@ -1281,6 +1419,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      institute_pathway_courses: {
+        Row: {
+          course_id: string | null
+          id: string
+          pathway_id: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          course_id?: string | null
+          id?: string
+          pathway_id?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          course_id?: string | null
+          id?: string
+          pathway_id?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_pathway_courses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "institute_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_pathway_courses_pathway_id_fkey"
+            columns: ["pathway_id"]
+            isOneToOne: false
+            referencedRelation: "institute_pathways"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_pathways: {
+        Row: {
+          badge_image_url: string | null
+          created_at: string | null
+          description_ko: string | null
+          id: string
+          is_published: boolean | null
+          sort_order: number | null
+          title: string | null
+          title_ko: string | null
+        }
+        Insert: {
+          badge_image_url?: string | null
+          created_at?: string | null
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean | null
+          sort_order?: number | null
+          title?: string | null
+          title_ko?: string | null
+        }
+        Update: {
+          badge_image_url?: string | null
+          created_at?: string | null
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean | null
+          sort_order?: number | null
+          title?: string | null
+          title_ko?: string | null
+        }
+        Relationships: []
       }
       legal_acceptances: {
         Row: {
