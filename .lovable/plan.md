@@ -1,60 +1,67 @@
 
-## 프리즈 재수정 계획 (원인 재진단 반영)
 
-### 원인 재진단
-현재 증상(배경만 검게 되고 박스 프리즈)은 여전히 **중첩 모달 레이어 충돌**입니다.
+## 곡 라이브러리 UI 개선 — 선택 모드 제거, 툴팁, 카트 아이콘
 
-- 기본 Dialog: `z-[60]` (`src/components/ui/dialog.tsx`)
-- Close 확인 AlertDialog: `z-50` (`src/components/ui/alert-dialog.tsx`)
-
-즉, 확인창이 실제로는 부모 Dialog 뒤에 떠서 클릭이 막히고 포커스만 잠겨 프리즈처럼 보입니다.  
-또한 SmartSongFlow 모드에서 바깥 클릭 동작이 명시적으로 제어되지 않아 즉시 닫힘처럼 보일 수 있습니다.
+### 문제 요약
+1. **"Select Songs" 체크모드** — 선택 후 할 수 있는 건 일괄편집/삭제뿐인데, 카트에 추가하는 기능과 혼동됨
+2. **SongCard 액션 버튼 6개에 툴팁 없음** — `title` 속성만 있어 데스크탑에서도 즉시 알 수 없음
+3. **카드의 `+` 버튼 ↔ 플로팅 `+` 버튼 혼동** — 둘 다 Plus 아이콘이지만 기능이 완전히 다름
+4. **카트 아이콘이 0개일 때 안 보임** — 카트 기능 자체를 인지하기 어려움
 
 ---
 
-## 구현 계획
+### 변경 계획
 
-### 1) AlertDialog 레이어 우선순위 상향 (공통 UI)
-**파일:** `src/components/ui/alert-dialog.tsx`
+#### 1. "Select Songs" 선택 모드 제거
+**파일:** `SongLibrary.tsx`, `SongCard.tsx`, `SongTable.tsx`
 
-- `AlertDialogOverlay`와 `AlertDialogContent`의 z-index를 Dialog보다 높게 조정
-  - `z-50` → `z-[70]` (또는 상위 고정값)
-- 이렇게 하면 SongDialog 위에서 확인창이 항상 클릭 가능
+- `selectionMode`, `selectedSongIds`, `BulkActionsBar` 관련 코드 전부 제거
+- 모바일/데스크탑 양쪽의 `CheckSquare` 버튼 제거
+- `bulkEditMode`, `showDeleteConfirm` 등 관련 상태도 제거
+- SongCard/SongTable에서 `selectionMode` prop 제거
 
-### 2) SmartSongFlow 모드의 바깥 클릭/ESC 닫힘 제어
-**파일:** `src/components/SongDialog.tsx`
+#### 2. SongCard 액션 버튼에 Tooltip 추가
+**파일:** `SongCard.tsx`
 
-- SmartSongFlow 모드(`!song || song.status === 'draft'`)에서:
-  - `DialogContent`에 `onPointerDownOutside`, `onInteractOutside`, `onEscapeKeyDown` 처리 추가
-  - 기본 닫힘을 `preventDefault()`로 막고 `setShowCloseConfirm(true)` 실행
-- 목표: 바깥 클릭/ESC도 X/취소와 동일하게 “닫기 확인”으로 통일
+현재 `title` 속성 → `<Tooltip>` 컴포넌트로 교체 (6개 버튼 모두):
 
-### 3) Close confirm 상태 누수 방지
-**파일:** `src/components/SongDialog.tsx`
+| 버튼 | 아이콘 | 툴팁 내용 |
+|------|--------|----------|
+| 카트 추가 | `ShoppingCart` (변경) | "워십세트 카트에 추가" / "Add to worship set cart" |
+| 사용 이력 | `BarChart3` | 기존 title 유지 |
+| 즐겨찾기 | `Heart` | FavoriteButton 자체 처리 |
+| 편집 | `Edit` | 기존 title 유지 |
+| 삭제 | `Trash2` | 기존 title 유지 |
 
-- 다이얼로그가 닫힐 때 `showCloseConfirm`를 강제 false로 리셋하는 effect 추가
-- 재오픈 시 이전 confirm 상태가 남아 검은 오버레이만 뜨는 케이스 차단
+#### 3. 카트 버튼 아이콘 변경 — `Plus` → `ShoppingCart`
+**파일:** `SongCard.tsx`, `FloatingCartIndicator.tsx`, `SongCartPopover.tsx`
 
-### 4) SmartSongFlow 접근성 경고 정리 (안정성 보강)
-**파일:** `src/components/SongDialog.tsx`
+- Lucide에 `ShoppingCart` 아이콘 존재 — 장바구니 의미가 명확
+- SongCard: `<Plus>` → `<ShoppingCart>` (카트에 추가 버튼)
+- FloatingCartIndicator: `<Music>` → `<ShoppingCart>`
+- SongCartPopover: `<Music>` → `<ShoppingCart>`
+- 이렇게 하면 "곡 추가(Plus)"와 "카트에 담기(ShoppingCart)"가 시각적으로 구분됨
 
-- SmartSongFlow 분기에서도 `DialogTitle`/`DialogDescription`(sr-only) 제공
-- 현재 콘솔 경고:
-  - DialogTitle required
-  - Missing Description
-- 경고 제거로 포커스/모달 동작 안정성 개선
+#### 4. 카트 아이콘 항상 표시 (0개일 때도)
+**파일:** `SongCartPopover.tsx`, `FloatingCartIndicator.tsx`, `SongLibrary.tsx`
+
+- `SongCartPopover`: `if (cartCount === 0) return null` 제거 → 항상 렌더링, 빈 카트일 때 "0" 배지 표시
+- `FloatingCartIndicator`: `if (count === 0) return null` 제거 → 항상 표시, 0일 때도 배지 "0"
+- `SongLibrary.tsx`: `{cartCount > 0 && ...}` 조건 제거
+
+#### 5. 플로팅 버튼에 텍스트 라벨 추가
+**파일:** `SongLibrary.tsx`
+
+- 플로팅 "곡 추가" 버튼: 원형 → 알약형으로 변경, `<Plus>` + "곡 추가"/"Add Song" 텍스트
+- 플로팅 카트 버튼: `<ShoppingCart>` + 배지 (기존 유지)
 
 ---
 
-## 수정 파일
-1. `src/components/ui/alert-dialog.tsx`
-2. `src/components/SongDialog.tsx`
+### 수정 파일
+1. `src/pages/SongLibrary.tsx` — 선택 모드 제거, 플로팅 버튼 텍스트 추가, 카트 항상 표시
+2. `src/components/SongCard.tsx` — 툴팁 추가, ShoppingCart 아이콘
+3. `src/components/SongTable.tsx` — selectionMode prop 제거
+4. `src/components/FloatingCartIndicator.tsx` — ShoppingCart 아이콘, 항상 표시
+5. `src/components/SongCartPopover.tsx` — ShoppingCart 아이콘, 항상 표시
+6. `src/components/BulkActionsBar.tsx` — 파일 삭제 또는 import 제거
 
----
-
-## 검증 시나리오 (데스크탑 + 모바일)
-1. 곡 추가 창에서 **X 클릭** → 확인창이 Dialog 위에 정상 표시되고 버튼 클릭 가능
-2. **취소 버튼 클릭** → 동일 동작
-3. **창 바깥 클릭** → 즉시 닫히지 않고 확인창 표시
-4. 확인창에서 **Stay/계속 작성** → 원래 폼으로 복귀, 프리즈 없음
-5. 확인창에서 **Close/닫기** → 완전 종료, 배경 검은 오버레이 잔존 없음
