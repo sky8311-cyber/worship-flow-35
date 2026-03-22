@@ -355,7 +355,7 @@ export const SongCard = memo(function SongCard({
       <ScorePreviewDialog
         open={scorePreviewOpen}
         onOpenChange={setScorePreviewOpen}
-        scoreUrl={song.score_file_url}
+        scoreUrl={scoreUrl}
         songTitle={song.title}
         songId={song.id}
       />
