@@ -52,7 +52,11 @@ interface SmartSongFlowProps {
   onCancel?: () => void;
 }
 
-export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onCancel }: SmartSongFlowProps) => {
+export interface SmartSongFlowRef {
+  triggerDraftSave: () => Promise<void>;
+}
+
+export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({ draftSong, onComplete, onDraftSave, onClose, onCancel }, ref) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   
