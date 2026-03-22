@@ -1,74 +1,42 @@
 
 
-## 플랫폼 전체 한/영 번역 감사 및 보완
+## 곡 추가 UI 개선 (4가지 수정)
 
-### 문제점
-다수의 컴포넌트에서 한국어 문자열이 하드코딩되어 있어 영어 모드에서도 한국어가 표시됩니다. 특히 최근 추가/수정된 곡 추가(SmartSongFlow), 곡 검색(SmartSongEntry), 세트 추가(AddToSetDialog) 등이 전혀 번역되지 않았습니다.
+### 1. YouTube 링크 라벨 기본값을 아티스트명으로
 
-### 작업 범위
+**파일: `SmartSongFlow.tsx`** — `handleSelectYoutubeResult` (line 174-184)
+- 첫 번째 YouTube 링크의 label에 `artist` 값을 기본으로 세팅 (기존에는 `t("songFlow.original")`)
+- Step3에서도 첫 번째 링크의 label이 비어있으면 artist 이름을 placeholder로 표시
 
-총 **4개 파일** 수정 + **translations.ts** 키 추가
+### 2. YouTube 링크 추가 시 placeholder 개선
 
----
+**파일: `SmartSongFlow.tsx`** — Step3 라벨 placeholder (line 729)
+- 현재: `t("songFlow.labelPlaceholder")` → "라벨 (예: 원곡, 라이브)"
+- 변경: placeholder를 더 구체적으로: "예: 베이스 연주, 드럼 연주, 라이브 버전, 스튜디오 버전"
+- `translations.ts`에 해당 키 업데이트
 
-#### 1. `src/lib/translations.ts` — 새 번역 키 추가
+### 3. 악보 자동 스캔 문구 제거
 
-**`songFlow` 섹션 (신규)** — SmartSongFlow 전용 (~60개 키)
+**파일: `SmartSongFlow.tsx`** — line ~800 부근
+- `{t("songFlow.autoScanNote")}` 라인 삭제
+- `translations.ts`에서 `autoScanNote` 키 유지 (다른 곳에서 참조할 수 있으므로)
 
-| 카테고리 | 주요 키 |
-|---------|--------|
-| Step Labels | songInfo, youtube, scoresLinks, lyrics, languageTopics, review |
-| Step 1 | songTitle, subtitle, subtitleHint, privateSong, privateDesc |
-| Step 2 | searchingYoutube, editSearch, searchPlaceholder, searchResults, open, selected, artist, selectArtist, youtubeChannel |
-| Step 3 | youtubeLinks, labelPlaceholder, addYoutubeLink, scores, keySelect, scoreUpload, uploading, imageUrlPaste, download, addScoreVariation, autoScanNote |
-| Step 4 | originalComposer, composerPlaceholder, composerHint, autoSearchLyrics, searchingLyrics, lyricsFound, candidatesFound, candidatesFailed, noLyricsFound, composerTip, enterManually, lyricsLabel, lyricsPlaceholder, notesLabel, notesPlaceholder |
-| Step 5 | language, languageSelect, topicsLabel, topicsHint, analyzingTopics |
-| Step 6 (Review) | artistAndComposer, notEntered, noKey, pages, none, edit |
-| Navigation | cancel, previous, draftSave, draftSaved, next, save, newSong |
-| Errors/Toasts | enterTitle, selectLanguage, minTopics, uploadComplete, uploadError, downloadComplete, downloadFailed, saveError, draftSaveError, searchError, lyricsSearchError, searchTimeout |
-| Cancel Dialog | cancelTitle, cancelDesc, continueWriting, confirmCancel |
+### 4. ArtistSelector 드롭다운 스크롤 수정
 
-**`addToSet` 섹션 (신규)** — AddToSetDialog 전용 (~15개 키)
+**파일: `ArtistSelector.tsx`** — CommandGroup (line 98)
+- 현재: `<CommandGroup className="max-h-64 overflow-y-auto">` — CommandList가 이미 스크롤을 관리하므로 CommandGroup의 overflow가 충돌
+- 수정: `CommandList`에 `className="max-h-64 overflow-y-auto"` 적용, `CommandGroup`에서 스크롤 관련 클래스 제거
+- cmdk의 CommandList는 기본적으로 wheel scroll을 지원하므로, max-h를 CommandList 레벨에서 설정하면 wheel 스크롤 작동
 
-| 키 | EN | KO |
-|---|---|---|
-| title | Add to Worship Set | 워십세트에 추가 |
-| description | Add selected songs to a new or existing set | 선택한 곡을 새 워십세트에 추가하거나 기존 세트에 추가할 수 있습니다 |
-| selectedSong / selectedSongs | Selected song: / Selected songs ({count}): | 선택한 곡: / 선택한 곡 ({count}곡): |
-| noSongsSelected | No songs selected | 선택된 곡이 없습니다 |
-| currentEditingSet | Currently editing set | 현재 편집 중인 세트 |
-| createNewSet | Create new worship set | 새 워십세트 만들기 |
-| addToOtherSet | Add to another set: | 다른 워십세트에 추가: |
-| leaderTbd | Leader TBD | 인도자 미정 |
-| adding | Adding... | 추가 중... |
-| addButton | Add | 추가하기 |
-| permissionError | Cannot add. Check permissions. | 워십세트에 추가할 수 없습니다. 권한을 확인해주세요. |
+### 5. X 버튼 프리즈 수정
 
-**`smartSongEntry` 섹션 (신규)** — SmartSongEntry 전용 (~10개 키)
+**파일: `SongDialog.tsx`** — `handleOpenChange` (line 429-439)
+- **원인**: SmartSongFlow에서 X 클릭 → `setShowCancelConfirm(true)` → AlertDialog 열림. 그런데 `Dialog`의 overlay/escape 닫기도 `handleOpenChange`를 호출하고, `hasUnsavedChanges()`가 edit form의 `formData`를 체크하여 `showCloseConfirm` AlertDialog도 열림 → 두 AlertDialog 충돌로 프리즈
+- **수정**: `handleOpenChange`에서 SmartSongFlow 모드일 때 (`!song || song?.status === 'draft'`) 별도 처리 — unsaved changes 체크를 건너뛰고 SmartSongFlow 자체의 취소 확인에 위임
 
----
-
-#### 2. `src/components/songs/SmartSongFlow.tsx` — 전체 번역 적용
-
-- `useTranslation()` 활용하여 모든 하드코딩 한국어를 `t("songFlow.xxx")` 또는 `language === "ko" ? ... : ...` 패턴으로 교체
-- 대상: stepLabels, 헤더, 모든 Label/placeholder/Button 텍스트, toast 메시지, AlertDialog, Step1~6 내부 텍스트 전부
-- 약 **80곳** 이상의 하드코딩 문자열 교체
-
-#### 3. `src/components/songs/SmartSongEntry.tsx` — 전체 번역 적용
-
-- `useTranslation()` 추가
-- 모든 Label, placeholder, Button, toast, 상태 텍스트 번역 (~15곳)
-
-#### 4. `src/components/AddToSetDialog.tsx` — 전체 번역 적용
-
-- `useTranslation()` 추가
-- DialogTitle, Description, Button, toast, RadioGroup 라벨 전부 번역 (~15곳)
-
-### 구현 방식
-- 기존 `language === "ko" ? ... : ...` 패턴이 많이 사용되고 있으므로 같은 패턴 유지 (일부는 `t()` 함수 사용)
-- translations.ts에 새 섹션 추가 후 컴포넌트에서 참조
-
-### 범위 밖 (이번에 다루지 않음)
-- Admin 전용 페이지 (AdminFeatures, EmailSettings 등) — 이미 `language === "ko"` 패턴으로 번역됨
-- worship-studio 내부 위젯 — 이미 번역됨
+### 수정 파일 목록
+1. `src/components/songs/SmartSongFlow.tsx` — label 기본값, placeholder 변경, autoScan 문구 제거
+2. `src/components/ArtistSelector.tsx` — 스크롤 수정
+3. `src/components/SongDialog.tsx` — X 버튼 프리즈 수정
+4. `src/lib/translations.ts` — labelPlaceholder 업데이트
 
