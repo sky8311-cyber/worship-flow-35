@@ -7,6 +7,10 @@ import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { Lock, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 const InstituteCourse = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -91,8 +95,8 @@ const InstituteCourse = () => {
 
   if (!course) {
     return (
-      <InstituteLayout pageTitle={language === "ko" ? "과목 상세" : "Course Detail"}>
-        <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
+      <InstituteLayout pageTitle={language === "ko" ? "과목 상세" : "Course Detail"} showBackButton>
+        <div className="p-8 text-center text-muted-foreground">Loading...</div>
       </InstituteLayout>
     );
   }
@@ -101,126 +105,120 @@ const InstituteCourse = () => {
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
-    <InstituteLayout pageTitle={course.title_ko}>
-      {/* Hero */}
-      <div style={{ background: "var(--inst-surface)", padding: "24px 20px 20px", borderBottom: "1px solid var(--inst-border)" }}>
-        {certLink && (
-          <span className="inst-badge-certified" style={{ marginBottom: 14, display: "inline-flex" }}>
-            🎓 K-WORSHIP CERTIFIED
-          </span>
-        )}
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: "var(--inst-ink)", letterSpacing: -0.5, lineHeight: 1.2, marginTop: certLink ? 14 : 0 }}>
-          {course.title_ko}
-        </h1>
-        {instructor?.display_name && (
-          <div style={{ fontSize: 12, color: "var(--inst-ink3)", marginTop: 6 }}>{instructor.display_name}</div>
-        )}
-        {course.description_ko && (
-          <p style={{ fontSize: 13, color: "var(--inst-ink2)", lineHeight: 1.7, marginTop: 10 }}>{course.description_ko}</p>
-        )}
+    <InstituteLayout pageTitle={course.title_ko} showBackButton>
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
+        {/* Hero */}
+        <Card className="mb-6">
+          <CardContent className="p-5 md:p-6">
+            {certLink && (
+              <Badge variant="secondary" className="mb-3">
+                🎓 K-WORSHIP CERTIFIED
+              </Badge>
+            )}
+            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
+              {course.title_ko}
+            </h1>
+            {instructor?.display_name && (
+              <div className="text-xs text-muted-foreground mt-1.5">{instructor.display_name}</div>
+            )}
+            {course.description_ko && (
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2.5">{course.description_ko}</p>
+            )}
 
-        {/* CTA */}
-        <div style={{ marginTop: 20 }}>
-          {courseLocked ? (
-            <div
-              style={{
-                background: "var(--inst-surface2)",
-                border: "1px solid var(--inst-border)",
-                borderRadius: 10,
-                padding: "14px 16px",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <Lock className="w-4 h-4" style={{ color: "var(--inst-ink3)" }} />
-                <span style={{ fontSize: 12, color: "var(--inst-ink2)", lineHeight: 1.5 }}>
-                  {course.required_tier === 2
-                    ? "이 과정은 정식멤버(Full Member)와 공동체계정(Community Account)에 포함되어 있습니다."
-                    : course.required_tier === 1
-                    ? "이 과정은 기본멤버(Basic Member)부터 수강할 수 있습니다."
-                    : "이 과정은 공동체계정(Community Account)에서 이용 가능합니다."}
-                </span>
-              </div>
-              <Link to={course.required_tier === 1 ? "/request-worship-leader" : "/membership"}>
-                <button className="inst-btn-outline" style={{ fontSize: 11 }}>
-                  {language === "ko" ? "자세히 보기" : "Learn more"}
-                </button>
-              </Link>
-            </div>
-          ) : enrollment ? (
-            <button
-              className="inst-btn-gold"
-              style={{ background: "var(--inst-surface2)", color: "var(--inst-ink)", border: "1.5px solid var(--inst-border)", boxShadow: "none" }}
-              onClick={() => {
-                const next = modules.find((m) => canAccess(m.required_tier, userTier));
-                if (next) navigate(`/institute/${courseId}/${next.id}`);
-              }}
-            >
-              {language === "ko" ? "이어서 수강하기" : "Continue Learning"}
-            </button>
-          ) : (
-            <button className="inst-btn-gold" onClick={() => enroll.mutate()} disabled={enroll.isPending}>
-              {language === "ko" ? "수강 신청하기" : "Enroll Now"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Module list */}
-      <div style={{ padding: "8px 20px 20px" }}>
-        <div className="inst-section-header" style={{ marginTop: 16 }}>
-          <span>{language === "ko" ? "커리큘럼" : "CURRICULUM"} ({modules.length})</span>
-        </div>
-        {modules.map((mod, idx) => {
-          const accessible = canAccess(mod.required_tier, userTier);
-          const isCompleted = idx < completedModules;
-          const isCurrent = idx === completedModules && !!enrollment;
-          const isLocked = !accessible;
-
-          return (
-            <div
-              key={mod.id}
-              onClick={() => {
-                if (accessible && enrollment) navigate(`/institute/${courseId}/${mod.id}`);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "13px 0",
-                borderBottom: "1px solid var(--inst-border)",
-                cursor: accessible && enrollment ? "pointer" : "default",
-              }}
-            >
-              {/* Status indicator */}
-              <div
-                className={`inst-status ${
-                  isCompleted ? "inst-status-done" :
-                  isCurrent ? "inst-status-current" :
-                  isLocked ? "inst-status-locked" : "inst-status-pending"
-                }`}
-              >
-                {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
-              </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    color: isLocked ? "var(--inst-ink3)" : "var(--inst-ink)",
+            {/* CTA */}
+            <div className="mt-5">
+              {courseLocked ? (
+                <div className="bg-muted border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground leading-relaxed">
+                      {course.required_tier === 2
+                        ? "이 과정은 정식멤버(Full Member)와 공동체계정(Community Account)에 포함되어 있습니다."
+                        : course.required_tier === 1
+                        ? "이 과정은 기본멤버(Basic Member)부터 수강할 수 있습니다."
+                        : "이 과정은 공동체계정(Community Account)에서 이용 가능합니다."}
+                    </span>
+                  </div>
+                  <Link to={course.required_tier === 1 ? "/request-worship-leader" : "/membership"}>
+                    <Button variant="outline" size="sm">
+                      {language === "ko" ? "자세히 보기" : "Learn more"}
+                    </Button>
+                  </Link>
+                </div>
+              ) : enrollment ? (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const next = modules.find((m) => canAccess(m.required_tier, userTier));
+                    if (next) navigate(`/institute/${courseId}/${next.id}`);
                   }}
                 >
-                  {language === "ko" ? mod.title_ko : mod.title}
-                </div>
-                {isLocked && (
-                  <div style={{ fontSize: 10, color: "var(--inst-ink3)", marginTop: 2 }}>
-                    {mod.required_tier === 2 ? "정식멤버 이상" : mod.required_tier === 1 ? "기본멤버 이상" : "공동체계정"}
-                  </div>
-                )}
-              </div>
+                  {language === "ko" ? "이어서 수강하기" : "Continue Learning"}
+                </Button>
+              ) : (
+                <Button className="w-full" onClick={() => enroll.mutate()} disabled={enroll.isPending}>
+                  {language === "ko" ? "수강 신청하기" : "Enroll Now"}
+                </Button>
+              )}
             </div>
-          );
-        })}
+          </CardContent>
+        </Card>
+
+        {/* Module list */}
+        <div className="flex items-center gap-2.5 mb-4">
+          <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground whitespace-nowrap">
+            {language === "ko" ? "커리큘럼" : "CURRICULUM"} ({modules.length})
+          </span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          {modules.map((mod, idx) => {
+            const accessible = canAccess(mod.required_tier, userTier);
+            const isCompleted = idx < completedModules;
+            const isCurrent = idx === completedModules && !!enrollment;
+            const isLocked = !accessible;
+
+            return (
+              <div
+                key={mod.id}
+                onClick={() => {
+                  if (accessible && enrollment) navigate(`/institute/${courseId}/${mod.id}`);
+                }}
+                className={`flex items-center gap-3 py-3.5 border-b border-border ${
+                  accessible && enrollment ? "cursor-pointer hover:bg-muted/50" : ""
+                }`}
+              >
+                {/* Status indicator */}
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                    isCompleted
+                      ? "bg-primary text-primary-foreground"
+                      : isCurrent
+                      ? "bg-foreground text-background"
+                      : isLocked
+                      ? "bg-muted text-muted-foreground border border-border opacity-40"
+                      : "bg-muted text-muted-foreground border border-border"
+                  }`}
+                >
+                  {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className={`text-sm font-medium ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
+                    {language === "ko" ? mod.title_ko : mod.title}
+                  </div>
+                  {isLocked && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      {mod.required_tier === 2 ? "정식멤버 이상" : mod.required_tier === 1 ? "기본멤버 이상" : "공동체계정"}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </InstituteLayout>
   );
