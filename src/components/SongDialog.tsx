@@ -51,11 +51,11 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Tutorial for editing existing songs
+  // Tutorial for song add/edit
   const songTutorial = useTutorial({ 
-    key: "song-edit", 
+    key: "song-add", 
     steps: SONG_ADD_STEPS, 
-    autoStart: false, // Only manual trigger for edit dialog
+    autoStart: !song, // Auto-start for new songs only
   });
 
 const [loading, setLoading] = useState(false);
