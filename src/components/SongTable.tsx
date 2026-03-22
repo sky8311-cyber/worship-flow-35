@@ -284,15 +284,7 @@ const handleDelete = async (song: any) => {
                       <span>{song.default_key || "-"}</span>
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.tags || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'tags', e.target.value)}
-                        className="h-8 text-sm"
-                        placeholder="tag1, tag2"
-                      />
-                    ) : (
-                      song.tags ? (
+                      {song.tags ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
@@ -305,9 +297,8 @@ const handleDelete = async (song: any) => {
                             </span>
                           )}
                         </div>
-                      ) : "-"
-                    )}
-                   </TableCell>
+                      ) : "-"}
+                  </TableCell>
                    <TableCell>
                      {!bulkEditMode && (
                        <div className="flex items-center gap-1">
