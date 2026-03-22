@@ -276,25 +276,9 @@ const handleDelete = async (song: any) => {
                       <span>{song.artist || "-"}</span>
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Select
-                        value={displaySong.language || ''}
-                        onValueChange={(value) => onUpdateEditedSong?.(song.id, 'language', value)}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                          <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                          <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
                       <Badge variant="outline" className="text-xs">
                         {getLanguageTranslation(song.language)}
                       </Badge>
-                    )}
                   </TableCell>
                   <TableCell>
                     {isEditable ? (
