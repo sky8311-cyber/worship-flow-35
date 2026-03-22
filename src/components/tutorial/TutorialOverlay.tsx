@@ -94,7 +94,7 @@ export const TutorialOverlay = ({
     if (!isOpen) return;
     const timer = setTimeout(updatePosition, 100);
     window.addEventListener("resize", throttledUpdate);
-    window.addEventListener("scroll", throttledUpdate, true);
+    window.addEventListener("scroll", throttledUpdate, { capture: true, passive: true });
     return () => {
       clearTimeout(timer);
       window.removeEventListener("resize", throttledUpdate);
