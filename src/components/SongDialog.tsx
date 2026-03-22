@@ -27,7 +27,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
-import { SmartSongFlow } from "@/components/songs/SmartSongFlow";
+import { SmartSongFlow, type SmartSongFlowRef } from "@/components/songs/SmartSongFlow";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -249,6 +249,7 @@ const [loading, setLoading] = useState(false);
   
   // Track draft song ID for SmartSongFlow upsert
   const draftSongIdRef = useRef<string | null>(null);
+  const smartFlowRef = useRef<SmartSongFlowRef>(null);
   
   // Reset draft ID when dialog opens/closes or song changes
   useEffect(() => {
@@ -1150,6 +1151,7 @@ const [loading, setLoading] = useState(false);
         {/* New song → SmartSongFlow | Edit → existing form */}
         {!song || (song && song.status === 'draft') ? (
           <SmartSongFlow
+            ref={smartFlowRef}
             draftSong={song?.status === 'draft' ? song : undefined}
             onComplete={handleSmartFlowComplete}
             onDraftSave={handleSmartFlowDraftSave}
@@ -1583,11 +1585,26 @@ const [loading, setLoading] = useState(false);
                 : "Your unsaved changes will be lost. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel>
               {language === "ko" ? "계속 작성" : "Stay"}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose}>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await smartFlowRef.current?.triggerDraftSave();
+                  setShowCloseConfirm(false);
+                  onOpenChange(false);
+                  onClose();
+                } catch (e) {
+                  // Error already toasted in handleDraftSave
+                }
+              }}
+            >
+              {language === "ko" ? "임시저장" : "Save Draft"}
+            </Button>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {language === "ko" ? "닫기" : "Close"}
             </AlertDialogAction>
           </AlertDialogFooter>

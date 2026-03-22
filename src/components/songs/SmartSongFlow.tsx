@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,7 +52,11 @@ interface SmartSongFlowProps {
   onCancel?: () => void;
 }
 
-export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onCancel }: SmartSongFlowProps) => {
+export interface SmartSongFlowRef {
+  triggerDraftSave: () => Promise<void>;
+}
+
+export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({ draftSong, onComplete, onDraftSave, onClose, onCancel }, ref) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   
@@ -405,6 +409,10 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    triggerDraftSave: handleDraftSave,
+  }));
+
   // === RENDER ===
   const stepLabels = [
     t("songFlow.steps.songInfo"),
@@ -558,7 +566,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
 
     </div>
   );
-};
+});
+
+SmartSongFlow.displayName = "SmartSongFlow";
 
 // ========== STEP COMPONENTS ==========
 
