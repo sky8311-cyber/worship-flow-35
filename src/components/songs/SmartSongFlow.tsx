@@ -320,6 +320,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const handleNext = async () => {
     if (!canGoNext()) {
       if (currentStep === 1) toast.error(t("songFlow.enterTitle"));
+      if (currentStep === 2) toast.error(t("songFlow.selectYoutubeAndArtist"));
+      if (currentStep === 3) toast.error(t("songFlow.uploadScoreRequired"));
       if (currentStep === 5) {
         if (!songLanguage) toast.error(t("songFlow.selectLanguage"));
         else if (topics.length < 2) toast.error(t("songFlow.minTopics"));
