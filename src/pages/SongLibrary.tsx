@@ -676,6 +676,16 @@ const SongLibrary = () => {
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                   {t("songLibrary.searchAndFilter")}
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={libraryTutorial.start}>
+                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardTitle>
                 
                 {/* Favorites Filter Badge */}
