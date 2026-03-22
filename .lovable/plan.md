@@ -1,40 +1,41 @@
 
 
-## 공동체 가입 요청 중복 오류 수정
+## 공동체 가입 로직 단순화
 
-### 원인 분석
-- **409 Conflict**: `community_join_requests` 테이블에 `(community_id, user_id)` 유니크 제약 존재
-- 이전에 **거절(rejected)** 또는 **승인(approved)** 된 요청이 남아있음
-- 쿼리는 `status = "pending"`만 조회 → 이전 거절 요청을 감지 못함 → "가입 신청" 버튼이 보임
-- insert 시 유니크 제약 위반으로 실패
+### 핵심 원칙
+현재 멤버가 아니면 무조건 가입 신청 가능. 유일한 예외: 이미 `pending` 상태 요청이 있으면 알림만 표시.
 
-### 수정 방안
+### 변경 사항
 
 **파일:** `src/pages/CommunitySearch.tsx`
 
-#### 1. 쿼리 확장 — 모든 상태의 요청 조회
+#### 1. joinRequestMutation — 기존 요청 무조건 삭제 후 재삽입
 ```tsx
-// 기존: .eq("status", "pending") 만 조회
-// 변경: 모든 상태 조회하여 status별 분기 처리
-.select("community_id, status")
-.eq("user_id", user?.id)
+mutationFn: async (communityId: string) => {
+  // 기존 요청이 있으면 상태 무관하게 삭제
+  const currentStatus = userJoinRequests?.[communityId];
+  if (currentStatus) {
+    await supabase
+      .from("community_join_requests")
+      .delete()
+      .eq("community_id", communityId)
+      .eq("user_id", user?.id);
+  }
+  // 새 pending 요청 삽입
+  const { error } = await supabase
+    .from("community_join_requests")
+    .insert({ community_id: communityId, user_id: user?.id, status: "pending" });
+  if (error) throw error;
+}
 ```
-→ `pending`, `rejected`, `approved` 모두 가져와서 Map으로 관리
 
-#### 2. UI 분기 — 상태별 다른 버튼 표시
-- **pending**: "가입 취소" 버튼 (기존)
-- **rejected**: "재신청" 버튼 (기존 요청 삭제 후 새로 insert)
-- **approved**: "가입 신청" 버튼 숨김 (이미 멤버)
-- **없음**: "가입 신청" 버튼 (기존)
+#### 2. UI 버튼 분기 단순화
+- **멤버** → "이미 멤버" 버튼 (공동체로 이동)
+- **pending 요청 있음** → "가입 취소" 버튼
+- **그 외 (rejected, approved, 없음 등)** → "가입 신청" 버튼 (동일하게 처리)
 
-#### 3. 재신청 로직 — rejected 요청 삭제 후 재insert
-rejected 상태일 때 "재신청" 클릭 시:
-1. 기존 rejected 요청 delete
-2. 새 pending 요청 insert
-
-#### 4. 에러 메시지 개선
-중복 에러(23505) 발생 시 "이미 가입 요청이 존재합니다" 메시지 표시
+기존의 `rejected` / `approved` 별도 분기 제거. 멤버가 아니고 pending이 아니면 전부 "가입 신청".
 
 ### 수정 파일
-1. `src/pages/CommunitySearch.tsx` — 쿼리 확장 + 상태별 UI 분기 + 재신청 로직
+1. `src/pages/CommunitySearch.tsx` — mutation 로직 + UI 분기 단순화
 
