@@ -2045,7 +2045,7 @@ const SetBuilder = () => {
             </Card>
 
             {/* Save & Delete buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-tutorial="set-save-buttons">
               <Button
                 onClick={() => saveSetMutation.mutate(undefined)}
                 disabled={saveSetMutation.isPending || isBlocked}
