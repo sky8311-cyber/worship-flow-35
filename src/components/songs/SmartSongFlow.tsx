@@ -809,7 +809,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
         <Button type="button" variant="outline" size="sm" onClick={() => setScoreVariations([...scoreVariations, { key: "", files: [] }])}>
           <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addScoreVariation")}
         </Button>
-        <p className="text-xs text-muted-foreground">{t("songFlow.autoScanNote")}</p>
+        
       </div>
     </div>
   );

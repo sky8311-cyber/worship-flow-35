@@ -428,10 +428,18 @@ const [loading, setLoading] = useState(false);
   // Handle dialog close with confirmation
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen && open) {
-      // Skip unsaved changes check if we just saved
+      // SmartSongFlow mode: let SmartSongFlow handle its own cancel confirmation
+      const isSmartFlowMode = !song || song?.status === 'draft';
+      if (isSmartFlowMode) {
+        // Don't block — SmartSongFlow has its own cancel dialog
+        onOpenChange(false);
+        onClose();
+        return;
+      }
+      // Edit mode: check unsaved changes
       if (!justSaved && hasUnsavedChanges()) {
         setShowCloseConfirm(true);
-        return; // Don't close yet
+        return;
       }
     }
     setJustSaved(false);

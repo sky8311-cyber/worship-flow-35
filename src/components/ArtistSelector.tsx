@@ -81,7 +81,7 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
         onValueChange={setSearchValue}
         className="text-base"
       />
-      <CommandList>
+      <CommandList className="max-h-64 overflow-y-auto">
         <CommandEmpty>
           {showAddNew ? (
             <Button
@@ -95,7 +95,7 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
             t("artistSelector.noArtistFound")
           )}
         </CommandEmpty>
-        <CommandGroup className="max-h-64 overflow-y-auto">
+        <CommandGroup>
           {filteredArtists.map((artist) => (
             <CommandItem
               key={artist}
