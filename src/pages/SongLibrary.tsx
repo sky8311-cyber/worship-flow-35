@@ -942,21 +942,19 @@ const SongLibrary = () => {
       {/* Mobile Floating Action Stack */}
       <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown}>
         {/* Cart indicator - bottom of stack */}
-        {cartCount > 0 && (
-          <FloatingCartIndicator 
-            count={cartCount} 
-            onClick={() => setIsCartDialogOpen(true)} 
-          />
-        )}
+        <FloatingCartIndicator 
+          count={cartCount} 
+          onClick={() => setIsCartDialogOpen(true)} 
+        />
         
-        {/* Add Song button - middle of stack */}
+        {/* Add Song button - pill shape with label */}
         {isWorshipLeader && (
           <Button
             onClick={handleAddSong}
-            className="h-14 w-14 rounded-full shadow-lg"
-            size="icon"
+            className="h-14 rounded-full shadow-lg gap-2 px-5"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
+            <span className="text-sm font-medium">{t("songLibrary.addSong")}</span>
           </Button>
         )}
         
