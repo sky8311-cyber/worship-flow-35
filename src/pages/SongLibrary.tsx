@@ -185,7 +185,7 @@ const SongLibrary = () => {
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select(
-        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes"
+        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes, song_scores(id, key, file_url, page_number)"
       );
 
       if (debouncedSearchQuery) {
@@ -907,7 +907,7 @@ const SongLibrary = () => {
               {sortedAndFilteredSongs.map((song) => (
                 <SongCard
                   key={song.id}
-                  song={song}
+                  song={{ ...song, score_file_url: (song as any).song_scores?.[0]?.file_url || null }}
                   onEdit={isWorshipLeader ? handleEditSong : undefined}
                   onDelete={isWorshipLeader ? () => refetch() : undefined}
                   inCart={isWorshipLeader ? cartIds.has(song.id) : false}

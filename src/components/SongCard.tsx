@@ -73,6 +73,9 @@ export const SongCard = memo(function SongCard({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   
+  // Fallback: use song_scores if score_file_url is not directly set
+  const scoreUrl = song.score_file_url || song.song_scores?.[0]?.file_url || null;
+  
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const handleDelete = async () => {
@@ -134,13 +137,13 @@ export const SongCard = memo(function SongCard({
             </Badge>
           </div>
         )}
-        {song.score_file_url && (
+        {scoreUrl && (
           <div 
             className="relative h-32 bg-muted cursor-pointer group"
             onClick={() => setScorePreviewOpen(true)}
           >
             <img 
-              src={song.score_file_url} 
+              src={scoreUrl} 
               alt={`${song.title} score preview`}
               className="w-full h-full object-cover object-top"
             />
@@ -201,7 +204,7 @@ export const SongCard = memo(function SongCard({
                   <span className="truncate">{t("songCard.viewYouTube")}</span>
                 </Button>
               )}
-              {song.score_file_url && (
+              {scoreUrl && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -352,7 +355,7 @@ export const SongCard = memo(function SongCard({
       <ScorePreviewDialog
         open={scorePreviewOpen}
         onOpenChange={setScorePreviewOpen}
-        scoreUrl={song.score_file_url}
+        scoreUrl={scoreUrl}
         songTitle={song.title}
         songId={song.id}
       />
