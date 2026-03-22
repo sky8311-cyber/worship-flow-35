@@ -1,52 +1,37 @@
 
 
-## Step 2에 제목 수정 기회 추가 + Step 3 악보 필수 검증
+## X 버튼 / 취소 버튼 프리즈 수정
 
-### 변경 사항
+### 원인
+SmartSongFlow 내부의 `AlertDialog` (z-index: 50)가 부모 `Dialog` (z-index: 60) 뒤에 렌더링됩니다. 확인 창이 열리지만 Dialog 오버레이에 가려져 클릭 불가 → 프리즈 현상.
 
-#### 1. Step 2에 제목 수정 필드 추가 (`SmartSongFlow.tsx`)
+### 해결 방법
+SmartSongFlow의 취소 확인 `AlertDialog`에 z-index를 `z-[70]`으로 올려서 부모 Dialog 위에 표시되도록 수정.
 
-유튜브 선택 후, 아티스트 선택 바로 위에 **제목 확인/수정 영역** 추가:
+### 변경 내용
 
-```text
-[YouTube 검색 결과...]
+**파일: `src/components/songs/SmartSongFlow.tsx`** — line 554-567 (Cancel Confirmation AlertDialog)
 
-─── 제목 확인 ──────────────────────
-"은혜 아니면" [수정 버튼]
-  → 수정 클릭 시 Input으로 변환, 편집 가능
-
-─── 아티스트 ───────────────────────
-ℹ️ YouTube 채널: 마커스워십
-[ArtistSelector 드롭다운]
+현재:
+```tsx
+<AlertDialogContent>
 ```
 
-- 유튜브 결과 선택 후 `selectedResult`가 있을 때만 표시
-- 기본: 현재 `title` 값을 텍스트로 표시 + "수정" 버튼
-- 수정 클릭 → Input으로 전환, 수정 완료 후 "확인" 버튼으로 저장
-- `title` state를 직접 수정하므로 Step 1으로 돌아가지 않아도 됨
+변경:
+```tsx
+<AlertDialogContent className="z-[70]">
+```
 
-#### 2. Step 2 "다음" 조건 강화 (`canGoNext`)
+그리고 AlertDialog의 overlay도 z-[70]으로 올려야 하므로, AlertDialogContent만으로는 부족합니다. Radix AlertDialog Portal 안의 overlay가 z-50이기 때문입니다.
 
-- `case 2`: `selectedYoutubeResult`가 있고 `artist.trim()`이 있어야 다음 가능
-- 누락 시 toast 에러 메시지 표시
+실제 수정: SmartSongFlow의 AlertDialog를 쓰지 않고, **SmartSongFlow에서 `onCancel` 콜백을 호출 → SongDialog에서 취소 확인 AlertDialog를 렌더링**하는 방식으로 변경. SongDialog의 AlertDialog는 이미 Dialog 바깥에 렌더링되므로 z-index 충돌 없음.
 
-#### 3. Step 3 악보 필수 검증 (`canGoNext`)
-
-- `case 3`: `scoreVariations` 중 하나라도 `files.length > 0`인 것이 있어야 다음 가능
-- YouTube 링크는 Step 2에서 이미 선택되므로 별도 검증 불필요
-- 누락 시 toast: "악보를 최소 1개 업로드해주세요" / "Please upload at least one score"
-
-#### 4. `translations.ts` 키 추가
-
-| 키 | KO | EN |
-|---|---|---|
-| `songFlow.confirmTitle` | 제목 확인 | Confirm Title |
-| `songFlow.editTitle` | 수정 | Edit |
-| `songFlow.titleConfirmed` | 확인 | Confirm |
-| `songFlow.selectYoutubeAndArtist` | 유튜브를 선택하고 아티스트를 입력해주세요 | Please select a YouTube video and enter the artist |
-| `songFlow.uploadScoreRequired` | 악보를 최소 1개 업로드해주세요 | Please upload at least one score |
+구체적으로:
+1. **SmartSongFlow**: `showCancelConfirm` 상태와 AlertDialog 제거. X/취소 버튼 클릭 시 `onCancel()` 콜백 호출
+2. **SmartSongFlow props**: `onCancel: () => void` 추가
+3. **SongDialog**: SmartSongFlow 모드일 때 `handleOpenChange`에서 `showCloseConfirm`을 사용하여 확인 다이얼로그 표시. 기존 `showCloseConfirm` AlertDialog 재활용 (이미 Dialog 바깥에 렌더링됨)
 
 ### 수정 파일
-1. `src/components/songs/SmartSongFlow.tsx` — Step2에 제목 수정 UI, canGoNext 강화
-2. `src/lib/translations.ts` — 새 키 추가
+1. `src/components/songs/SmartSongFlow.tsx` — AlertDialog 제거, onCancel prop 추가
+2. `src/components/SongDialog.tsx` — SmartSongFlow에 onCancel 전달, handleOpenChange에서 확인 다이얼로그 표시
 
