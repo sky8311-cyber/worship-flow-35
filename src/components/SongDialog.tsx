@@ -1151,6 +1151,7 @@ const [loading, setLoading] = useState(false);
         {/* New song → SmartSongFlow | Edit → existing form */}
         {!song || (song && song.status === 'draft') ? (
           <SmartSongFlow
+            ref={smartFlowRef}
             draftSong={song?.status === 'draft' ? song : undefined}
             onComplete={handleSmartFlowComplete}
             onDraftSave={handleSmartFlowDraftSave}
