@@ -10,10 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
-import { useTutorial } from "@/components/tutorial/useTutorial";
-import { SONG_ADD_STEPS } from "@/components/tutorial/tutorialSteps";
+import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -51,12 +48,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Tutorial for song add/edit
-  const songTutorial = useTutorial({ 
-    key: "song-add", 
-    steps: SONG_ADD_STEPS, 
-    autoStart: !song, // Auto-start for new songs only
-  });
 
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
@@ -1178,16 +1169,6 @@ const [loading, setLoading] = useState(false);
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <div className="flex items-center gap-1 shrink-0">
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={songTutorial.start}>
-                      <HelpCircle className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1678,21 +1659,6 @@ const [loading, setLoading] = useState(false);
       </Dialog>
     </Dialog>
 
-      {songTutorial.isOpen && songTutorial.currentStepData && (
-        <TutorialOverlay
-          isOpen={songTutorial.isOpen}
-          currentStep={songTutorial.currentStep}
-          totalSteps={songTutorial.totalSteps}
-          title={songTutorial.currentStepData.title}
-          description={songTutorial.currentStepData.description}
-          targetSelector={songTutorial.currentStepData.targetSelector}
-          isFirstStep={songTutorial.isFirstStep}
-          isLastStep={songTutorial.isLastStep}
-          onNext={songTutorial.next}
-          onPrev={songTutorial.prev}
-          onClose={songTutorial.close}
-        />
-      )}
     </>
   );
 };

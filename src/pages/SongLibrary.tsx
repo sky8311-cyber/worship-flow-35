@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, Copy, X, Globe, UserRoundPen, Heart } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, Copy, X, Globe, UserRoundPen, Heart, HelpCircle } from "lucide-react";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { useTutorial } from "@/components/tutorial/useTutorial";
+import { SONG_LIBRARY_STEPS } from "@/components/tutorial/tutorialSteps";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
@@ -54,6 +57,8 @@ const SongLibrary = () => {
   const { isFeatureEnabled: isCrossCommunityFeatureEnabled, isInCrossCommunityMode, toggleMode: toggleCrossCommunityMode } = useCrossCommunityMode();
   const { playerState } = useMusicPlayer();
   const isScrollingDown = useScrollDirection();
+  
+  const libraryTutorial = useTutorial({ key: "song-library", steps: SONG_LIBRARY_STEPS, autoStart: true, autoStartDelay: 1200 });
   
   // Remember scroll position
   useScrollPosition("song-library");
@@ -671,6 +676,16 @@ const SongLibrary = () => {
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
                   {t("songLibrary.searchAndFilter")}
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={libraryTutorial.start}>
+                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </CardTitle>
                 
                 {/* Favorites Filter Badge */}
@@ -1014,6 +1029,22 @@ const SongLibrary = () => {
         songs={songs || []}
         onMergeComplete={() => refetch()}
       />
+
+      {libraryTutorial.isOpen && libraryTutorial.currentStepData && (
+        <TutorialOverlay
+          isOpen={libraryTutorial.isOpen}
+          currentStep={libraryTutorial.currentStep}
+          totalSteps={libraryTutorial.totalSteps}
+          title={libraryTutorial.currentStepData.title}
+          description={libraryTutorial.currentStepData.description}
+          targetSelector={libraryTutorial.currentStepData.targetSelector}
+          isFirstStep={libraryTutorial.isFirstStep}
+          isLastStep={libraryTutorial.isLastStep}
+          onNext={libraryTutorial.next}
+          onPrev={libraryTutorial.prev}
+          onClose={libraryTutorial.close}
+        />
+      )}
     </AppLayout>
   );
 };

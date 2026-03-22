@@ -199,6 +199,7 @@ export const SongCard = memo(function SongCard({
                   size="sm"
                   onClick={() => openYouTubeUrl(song.youtube_url)}
                   className="flex-1 w-full group hover:bg-accent hover:text-white hover:border-accent"
+                  data-tutorial="song-youtube-btn"
                 >
                   <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
                   <span className="truncate">{t("songCard.viewYouTube")}</span>
@@ -210,6 +211,7 @@ export const SongCard = memo(function SongCard({
                   size="sm"
                   onClick={() => setScorePreviewOpen(true)}
                   className="flex-1 w-full group hover:bg-primary hover:text-white hover:border-primary"
+                  data-tutorial="song-score-btn"
                 >
                   <FileMusic className="w-4 h-4 mr-1 text-primary group-hover:text-white" />
                   <span className="truncate">{t("songCard.viewScore")}</span>
@@ -261,6 +263,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => onToggleCart()}
                           className="h-7 w-7 sm:h-8 sm:w-8"
+                          data-tutorial="song-cart-btn"
                         >
                           <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
@@ -278,6 +281,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => setUsageHistoryOpen(true)}
                           className="h-7 w-7 sm:h-8 sm:w-8 relative"
+                          data-tutorial="song-usage-btn"
                         >
                           <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                           {usageCount > 0 && (
@@ -290,14 +294,16 @@ export const SongCard = memo(function SongCard({
                       <TooltipContent>{t("songUsage.viewUsageHistory")}</TooltipContent>
                     </Tooltip>
                   )}
-                  <FavoriteButton 
-                    songId={song.id} 
-                    isFavorite={isFavorite}
-                    favoriteCount={favoriteCount}
-                    size="icon" 
-                    variant="outline" 
-                    className="h-7 w-7 sm:h-8 sm:w-8" 
-                  />
+                  <span data-tutorial="song-favorite-btn">
+                    <FavoriteButton 
+                      songId={song.id} 
+                      isFavorite={isFavorite}
+                      favoriteCount={favoriteCount}
+                      size="icon" 
+                      variant="outline" 
+                      className="h-7 w-7 sm:h-8 sm:w-8" 
+                    />
+                  </span>
                   {onEdit && (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -306,6 +312,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => onEdit(song)}
                           className="h-7 w-7 sm:h-8 sm:w-8"
+                          data-tutorial="song-edit-btn"
                         >
                           <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
