@@ -188,12 +188,17 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             
             {/* Notification Bell - Always visible */}
             <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <NotificationBadge count={unreadCount} />
-                </Button>
-              </PopoverTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      <NotificationBadge count={unreadCount} />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "알림" : "Notifications"}</TooltipContent>
+              </Tooltip>
               <PopoverContent align="center" sideOffset={8} className="p-0 w-auto">
                 <NotificationPanel />
               </PopoverContent>
