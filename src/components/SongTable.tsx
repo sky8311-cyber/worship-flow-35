@@ -424,7 +424,6 @@ const handleDelete = async (song: any) => {
                            </>
                          )}
                        </div>
-                     )}
                    </TableCell>
                  </TableRow>
                );
