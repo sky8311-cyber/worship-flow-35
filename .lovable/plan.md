@@ -1,45 +1,48 @@
 
+## 즉시 재수정 계획 (요청사항 그대로 반영)
 
-## 수정 계획: 테이블뷰 악보 복구 + 플로팅 버튼 개선
+### 확인된 원인
+1. **Heart 툴팁 누락**
+   - `SongCard`/`SongTable`에서 쓰는 `FavoriteButton` 자체가 Tooltip을 렌더링하지 않음.
+2. **헤더 버튼 오버랩 미해결**
+   - `SongLibrary` 상단 우측 툴바가 `absolute top-4 right-4`로 배치되어, 필터 헤더/입력 영역과 레이아웃 충돌이 계속 발생.
 
-### 1. 테이블뷰 악보 버튼 복구
-**파일:** `src/pages/SongLibrary.tsx` (line 891-892)
+---
 
-SongTable에 전달하는 songs 데이터에 `score_file_url` 매핑이 빠져있음. SongCard에는 `song_scores?.[0]?.file_url`을 매핑하지만 SongTable에는 raw 데이터를 그대로 전달.
+## 구현 계획
 
-수정: SongTable에도 동일하게 `score_file_url` 매핑된 데이터 전달:
-```tsx
-songs={sortedAndFilteredSongs.map(song => ({
-  ...song,
-  score_file_url: (song as any).song_scores?.[0]?.file_url || null
-}))}
-```
+### 1) Heart 버튼에 “즐겨찾기” 툴팁 추가 (공통 컴포넌트에서 일괄 해결)
+**파일:** `src/components/FavoriteButton.tsx`
 
-### 2. 플로팅 버튼 3개 통일 디자인 (동그란 아이콘 + 아래 작은 텍스트)
-**파일:** `src/pages/SongLibrary.tsx` (line 942-967), `src/components/FloatingSearchButton.tsx`, `src/components/FloatingCartIndicator.tsx`
+- `FavoriteButton` 내부 `Button`을 Tooltip으로 감쌈
+- 툴팁 문구는 기본적으로 `t("navigation.favorites")` 사용 (ko: 즐겨찾기 / en: Favorites)
+- 이렇게 하면 **카드뷰/테이블뷰 모두 자동 반영**되어 중복 수정 방지
 
-현재: "곡 추가"가 알약형으로 크고, 검색/카트는 원형. 세 버튼 스타일 불일치.
+---
 
-변경: 3개 버튼 모두 **원형 아이콘 + 아래 작은 라벨** 형태로 통일:
+### 2) 데스크탑 헤더 오버랩 구조 자체 수정 (absolute 제거)
+**파일:** `src/pages/SongLibrary.tsx`
 
-```
-  [🔍]        [＋]        [🛒]
- 곡 검색    새곡 추가    곡 담기
-```
+- `CardHeader`의 우측 컨트롤 블록을 `absolute` 방식에서 **일반 flow 레이아웃**으로 변경
+- 상단 영역을 `좌측(검색/필터 타이틀) + 우측(뷰 토글 + 액션 버튼)` 구조의 반응형 flex/grid로 재배치
+- `일괄 가져오기 / 중복곡 검색 / 곡 추가` 버튼 그룹에 `wrap`/`gap`/`shrink-0`를 적용해 폭이 줄어도 겹치지 않게 처리
+- 기존 모바일 액션 행(`sm:hidden`)은 유지, 데스크탑 전용 행(`hidden sm:flex`)만 충돌 없이 재배치
 
-- FloatingSearchButton: 아이콘 아래에 "곡 검색" 작은 텍스트 추가
-- FloatingCartIndicator: 아이콘 아래에 "곡 담기" 작은 텍스트 추가
-- 곡 추가 버튼: 알약형 → 원형 + 아래 "새곡 추가" 텍스트
+---
 
-각 버튼을 `flex flex-col items-center gap-1` wrapper로 감싸고, 텍스트는 `text-[10px]` 정도의 작은 사이즈.
+### 3) 검증 기준 (이번 수정 완료 기준)
+1. 카드뷰/테이블뷰 모두 Heart hover/focus 시 **“즐겨찾기” 툴팁 표시**
+2. 데스크탑 `/songs`에서 `곡 추가 + 일괄 가져오기 + 중복곡 검색` 버튼이 서로/헤더와 **겹치지 않음**
+3. 필터 영역(검색창, 언어/키/정렬 select)과 상단 우측 버튼 간 **중첩 없음**
 
-### 3. 헤더 버튼 오버랩 수정
-**파일:** `src/pages/SongLibrary.tsx` (line 669)
+---
 
-현재 `pr-24`로 패딩을 줬지만 버튼이 여전히 겹침. 헤더 영역의 레이아웃을 점검하여 버튼과 필터 영역이 겹치지 않도록 수정.
+## 수정 파일
+1. `src/components/FavoriteButton.tsx`
+2. `src/pages/SongLibrary.tsx`
 
-### 수정 파일
-1. `src/pages/SongLibrary.tsx` — SongTable score 매핑, 플로팅 버튼 디자인, 오버랩 수정
-2. `src/components/FloatingCartIndicator.tsx` — 라벨 추가
-3. `src/components/FloatingSearchButton.tsx` — 라벨 추가
+---
 
+## 기술 상세 (간단)
+- 근본 원인이 개별 페이지가 아니라 **공용 FavoriteButton의 툴팁 부재**이므로 컴포넌트 단에서 해결
+- 오버랩은 padding 미세조정으로는 재발 가능성이 높아, **absolute 포지셔닝 제거**가 가장 안정적인 수정 방향
