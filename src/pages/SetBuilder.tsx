@@ -2155,6 +2155,7 @@ const SetBuilder = () => {
                         variant="outline"
                         className="lg:hidden"
                         disabled={isBlocked}
+                        data-tutorial="set-add-component"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         순서 추가
