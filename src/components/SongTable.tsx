@@ -241,13 +241,6 @@ const handleDelete = async (song: any) => {
               return (
                 <TableRow key={song.id} className={`${isDraft ? "opacity-70" : ""}`}>
                   <TableCell className="font-medium">
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.title}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'title', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    ) : (
                     <div>
                         <div className="flex items-baseline gap-1.5">
                           <span 
@@ -277,7 +270,7 @@ const handleDelete = async (song: any) => {
                           <div className="text-xs text-muted-foreground">{song.subtitle}</div>
                         )}
                       </div>
-                    )}
+                  </TableCell>
                   </TableCell>
                   <TableCell>
                     {isEditable ? (
