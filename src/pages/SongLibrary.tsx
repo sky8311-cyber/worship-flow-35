@@ -947,18 +947,24 @@ const SongLibrary = () => {
         {/* Cart indicator - bottom of stack */}
         <FloatingCartIndicator 
           count={cartCount} 
-          onClick={() => setIsCartDialogOpen(true)} 
+          onClick={() => setIsCartDialogOpen(true)}
+          label={language === "ko" ? "곡 담기" : "Cart"}
         />
         
-        {/* Add Song button - pill shape with label */}
+        {/* Add Song button */}
         {isWorshipLeader && (
-          <Button
-            onClick={handleAddSong}
-            className="h-14 rounded-full shadow-lg gap-2 px-5"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="text-sm font-medium">{t("songLibrary.addSong")}</span>
-          </Button>
+          <div className="flex flex-col items-center gap-1">
+            <Button
+              onClick={handleAddSong}
+              className="h-14 w-14 rounded-full shadow-lg"
+              size="icon"
+            >
+              <Plus className="w-6 h-6" />
+            </Button>
+            <span className="text-[10px] font-medium text-muted-foreground">
+              {language === "ko" ? "새곡 추가" : "Add"}
+            </span>
+          </div>
         )}
         
         {/* Search button - top of stack */}
@@ -966,6 +972,7 @@ const SongLibrary = () => {
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder={t("songLibrary.searchPlaceholder")}
+          label={language === "ko" ? "곡 검색" : "Search"}
         />
       </FloatingActionStack>
 
