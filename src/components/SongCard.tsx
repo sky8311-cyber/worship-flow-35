@@ -300,7 +300,8 @@ export const SongCard = memo(function SongCard({
                     favoriteCount={favoriteCount}
                     size="icon" 
                     variant="outline" 
-                    className="h-7 w-7 sm:h-8 sm:w-8" 
+                    className="h-7 w-7 sm:h-8 sm:w-8"
+                    data-tutorial="song-favorite-btn"
                   />
                   {onEdit && (
                     <Tooltip>
