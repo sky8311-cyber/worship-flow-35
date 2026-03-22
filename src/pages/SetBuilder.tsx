@@ -2165,7 +2165,7 @@ const SetBuilder = () => {
                 </CardHeader>
                 
                 <TabsContent value="order" className="mt-0">
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4" data-tutorial="set-items-list">
                 {items.length === 0 ? (
                   <div className="text-center py-12">
                     <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
