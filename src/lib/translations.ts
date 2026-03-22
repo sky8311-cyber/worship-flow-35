@@ -4404,7 +4404,7 @@ songCard: {
       noCreditCard: "신용카드 필요 없음",
     },
     songFlow: {
-      steps: { songInfo: "곡 정보", youtube: "YouTube", scoresLinks: "악보·링크", lyrics: "가사", languageTopics: "언어·주제", review: "리뷰" },
+      steps: { songInfo: "곡 정보", youtube: "YouTube", scoresLinks: "악보·링크", lyrics: "가사", languageTopics: "언어·태그", review: "리뷰" },
       newSong: "새 곡 추가",
       songTitle: "곡 제목",
       songTitlePlaceholder: "곡 제목을 입력하세요",
