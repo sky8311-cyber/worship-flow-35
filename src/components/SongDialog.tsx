@@ -1490,7 +1490,7 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2" data-tutorial="song-save-button">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
