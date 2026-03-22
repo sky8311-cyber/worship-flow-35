@@ -9,6 +9,7 @@ import { Plus, Calendar, Check } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AddToSetDialogProps {
   open: boolean;
@@ -22,27 +23,15 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
-  // Track currently editing set - re-read when dialog opens
   const [currentEditingSetId, setCurrentEditingSetId] = useState<string | null>(null);
-  
-  // Default to current editing set if available, otherwise "new"
   const [selectedOption, setSelectedOption] = useState<"new" | string>("new");
-  
-  // CRITICAL: Capture songs in state when dialog opens to prevent closure issues
   const [capturedSongs, setCapturedSongs] = useState<any[]>([]);
-  
-  // Track previous open state to detect open transitions
   const wasOpenRef = useRef(false);
   
   useEffect(() => {
-    // Only capture songs when dialog OPENS (false → true transition)
     if (open && !wasOpenRef.current) {
-      console.log("=== AddToSetDialog Opening ===");
-      console.log("songs prop:", songs);
-      console.log("song prop:", song);
-      
-      // Re-read editing set ID when dialog opens
       const match = location.pathname.match(/\/set-builder\/([a-f0-9-]+)/i);
       if (match) {
         setCurrentEditingSetId(match[1]);
@@ -53,22 +42,14 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         setSelectedOption(storedId || "new");
       }
       
-      // Capture songs ONLY on open transition - prevents re-capture issues
       const songsToCapture = songs || (song ? [song] : []);
-      console.log("Songs to capture:", songsToCapture);
       setCapturedSongs([...songsToCapture]);
     }
-    
-    // Update ref AFTER processing
     wasOpenRef.current = open;
   }, [open, songs, song, location.pathname]);
   
-  // Fallback: If dialog is open but capturedSongs is empty and song prop exists
-  // This handles cases where song prop arrives after dialog opens (e.g., newly created song)
   useEffect(() => {
     if (open && capturedSongs.length === 0 && song) {
-      console.log("=== AddToSetDialog Fallback Capture ===");
-      console.log("Capturing song from prop:", song);
       setCapturedSongs([song]);
     }
   }, [open, capturedSongs.length, song]);
@@ -93,7 +74,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     enabled: open,
   });
   
-  // Fetch currently editing set separately (even if not created by user - for collaborators)
   const { data: editingSet } = useQuery({
     queryKey: ["editing-set-info", currentEditingSetId],
     queryFn: async () => {
@@ -116,8 +96,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
   
   const addToSetMutation = useMutation({
     mutationFn: async (songsParam: any[]) => {
-      console.log("Mutation started with songs:", songsParam);
-      
       if (!songsParam || songsParam.length === 0) {
         throw new Error("No songs to add");
       }
@@ -136,14 +114,13 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
       let targetSetId: string;
       
       if (selectedOption === "new") {
-        // Use insert without select to avoid hanging
         const newSetId = crypto.randomUUID();
         const { error: setError } = await supabase
           .from("service_sets")
           .insert({
             id: newSetId,
             date: format(new Date(), "yyyy-MM-dd"),
-            service_name: "새 워십세트",
+            service_name: t("addToSet.newSetName"),
             status: "draft",
             created_by: user.id,
           });
@@ -158,7 +135,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         targetSetId = selectedOption;
       }
       
-      // Get existing songs position
       const { data: existingSongs } = await supabase
         .from("set_songs")
         .select("position")
@@ -175,7 +151,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         key: s.default_key,
       }));
       
-      // Insert and get the inserted row IDs for protection
       const { data: insertedRows, error: songError } = await supabase
         .from("set_songs")
         .insert(songInserts)
@@ -186,7 +161,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         throw songError;
       }
       
-      // Store inserted IDs in sessionStorage for SetBuilder to protect from auto-save deletion
       const insertedIds = insertedRows?.map(r => r.id) || [];
       if (insertedIds.length > 0) {
         const storageKey = `recentlyAddedSetSongIds:${targetSetId}`;
@@ -194,7 +168,6 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
           ids: insertedIds,
           timestamp: Date.now(),
         }));
-        console.log("[AddToSetDialog] Stored recently added song IDs:", insertedIds);
       }
       
       return { setId: targetSetId, count: validSongs.length };
@@ -202,21 +175,18 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     onSuccess: (result) => {
       const { setId, count } = result;
       const message = count === 1 
-        ? "곡이 워십세트에 추가되었습니다"
-        : `${count}곡이 워십세트에 추가되었습니다`;
+        ? t("addToSet.songAdded")
+        : t("addToSet.songsAdded").replace("{count}", String(count));
       toast.success(message);
       
-      // Invalidate all relevant queries including set-songs and set-components
       queryClient.invalidateQueries({ queryKey: ["service-set", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-songs", setId] });
       queryClient.invalidateQueries({ queryKey: ["set-components", setId] });
       queryClient.invalidateQueries({ queryKey: ["my-draft-sets"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
-      // Also invalidate dashboard queries for immediate reflection
       queryClient.invalidateQueries({ queryKey: ["dashboard-set-songs"] });
       queryClient.invalidateQueries({ queryKey: ["set-songs-preview"] });
       
-      // Clear editing context from session storage
       sessionStorage.removeItem('currentEditingSetId');
       sessionStorage.removeItem('currentEditingSetName');
       
@@ -228,20 +198,16 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     },
     onError: (error: any) => {
       console.error("Add to set mutation error:", error);
-      toast.error("워십세트에 추가할 수 없습니다. 권한을 확인해주세요.");
+      toast.error(t("addToSet.permissionError"));
     },
   });
   
   const handleAddToSet = () => {
-    // Create a snapshot of capturedSongs at click time
     const songsSnapshot = [...capturedSongs];
-    console.log("handleAddToSet clicked, songs snapshot:", songsSnapshot);
-    
     if (songsSnapshot.length === 0) {
-      toast.error("선택된 곡이 없습니다");
+      toast.error(t("addToSet.noSongsSelected"));
       return;
     }
-    
     addToSetMutation.mutate(songsSnapshot);
   };
   
@@ -249,18 +215,18 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-xl">
         <DialogHeader>
-          <DialogTitle>워십세트에 추가</DialogTitle>
+          <DialogTitle>{t("addToSet.title")}</DialogTitle>
           <DialogDescription>
-            선택한 곡을 새 워십세트에 추가하거나 기존 세트에 추가할 수 있습니다.
+            {t("addToSet.description")}
           </DialogDescription>
         </DialogHeader>
         
         <div className="mb-4">
           <p className="text-sm text-muted-foreground mb-1">
-            {capturedSongs.length === 1 ? "선택한 곡:" : `선택한 곡 (${capturedSongs.length}곡):`}
+            {capturedSongs.length === 1 ? t("addToSet.selectedSong") : t("addToSet.selectedSongs").replace("{count}", String(capturedSongs.length))}
           </p>
           {capturedSongs.length === 0 ? (
-            <p className="text-sm text-destructive">선택된 곡이 없습니다</p>
+            <p className="text-sm text-destructive">{t("addToSet.noSongsSelected")}</p>
           ) : capturedSongs.length === 1 ? (
             <p className="font-medium">{capturedSongs[0]?.title}</p>
           ) : (
@@ -275,12 +241,11 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         </div>
         
         <RadioGroup value={selectedOption} onValueChange={setSelectedOption}>
-          {/* Show currently editing set at the top with highlight */}
           {editingSet && (
             <div className="mb-4">
               <div className="flex items-center gap-2 text-sm text-primary mb-2">
                 <Check className="w-4 h-4" />
-                <span className="font-medium">현재 편집 중인 세트</span>
+                <span className="font-medium">{t("addToSet.currentEditingSet")}</span>
               </div>
               <div 
                 className="flex items-center space-x-2 p-3 border-2 border-primary rounded-lg bg-primary/5 cursor-pointer"
@@ -292,7 +257,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
                     <div className="flex-1">
                       <p className="font-medium">{editingSet.service_name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(editingSet.date), "yyyy-MM-dd")} | {editingSet.worship_leader || "인도자 미정"}
+                        {format(new Date(editingSet.date), "yyyy-MM-dd")} | {editingSet.worship_leader || t("addToSet.leaderTbd")}
                       </p>
                     </div>
                   </div>
@@ -306,14 +271,14 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
             <Label htmlFor="new" className="flex-1 cursor-pointer">
               <div className="flex items-center gap-2">
                 <Plus className="w-4 h-4" />
-                <span>새 워십세트 만들기</span>
+                <span>{t("addToSet.createNewSet")}</span>
               </div>
             </Label>
           </div>
           
           {sets && sets.filter(s => s.id !== editingSet?.id).length > 0 && (
             <div className="mt-4">
-              <p className="text-sm font-medium mb-2">다른 워십세트에 추가:</p>
+              <p className="text-sm font-medium mb-2">{t("addToSet.addToOtherSet")}</p>
               {sets.filter(s => s.id !== editingSet?.id).map((set) => (
                 <div key={set.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer mb-2">
                   <RadioGroupItem value={set.id} id={set.id} />
@@ -323,7 +288,7 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
                       <div className="flex-1">
                         <p className="font-medium">{set.service_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(set.date), "yyyy-MM-dd")} | {set.worship_leader || "인도자 미정"}
+                          {format(new Date(set.date), "yyyy-MM-dd")} | {set.worship_leader || t("addToSet.leaderTbd")}
                         </p>
                       </div>
                     </div>
@@ -336,13 +301,13 @@ export function AddToSetDialog({ open, onOpenChange, song, songs, onSuccess }: A
         
         <div className="flex gap-2 justify-end mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {t("addToSet.cancel")}
           </Button>
           <Button 
             onClick={handleAddToSet} 
             disabled={addToSetMutation.isPending || !canAddToSet}
           >
-            {addToSetMutation.isPending ? "추가 중..." : "추가하기"}
+            {addToSetMutation.isPending ? t("addToSet.adding") : t("addToSet.addButton")}
           </Button>
         </div>
       </DialogContent>

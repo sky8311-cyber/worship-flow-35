@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, ExternalLink, Check, SkipForward, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface YouTubeResult {
   videoId: string;
@@ -30,6 +31,7 @@ export const SmartSongEntry = ({
   onSave,
   onSkip,
 }: SmartSongEntryProps) => {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(initialTitle);
   const [artist, setArtist] = useState(initialArtist);
   const [results, setResults] = useState<YouTubeResult[]>([]);
@@ -39,7 +41,7 @@ export const SmartSongEntry = ({
 
   const handleSearch = async () => {
     if (!title.trim()) {
-      toast.error("제목을 입력해주세요");
+      toast.error(t("smartSongEntry.enterTitle"));
       return;
     }
 
@@ -53,11 +55,11 @@ export const SmartSongEntry = ({
       if (error) throw error;
       setResults(data.results || []);
       if ((data.results || []).length === 0) {
-        toast.info("검색 결과가 없습니다");
+        toast.info(t("smartSongEntry.noResults"));
       }
     } catch (err: any) {
       console.error("YouTube search error:", err);
-      toast.error("검색 중 오류가 발생했습니다");
+      toast.error(t("smartSongEntry.searchError"));
     } finally {
       setIsSearching(false);
     }
@@ -70,7 +72,7 @@ export const SmartSongEntry = ({
 
   const handleSave = () => {
     if (!selectedResult) {
-      toast.error("YouTube 영상을 선택해주세요");
+      toast.error(t("smartSongEntry.enterTitle"));
       return;
     }
     setIsSaving(true);
@@ -86,22 +88,22 @@ export const SmartSongEntry = ({
       {/* Song Info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="smart-title">제목</Label>
+          <Label htmlFor="smart-title">{t("smartSongEntry.title")}</Label>
           <Input
             id="smart-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="곡 제목"
+            placeholder={t("smartSongEntry.titlePlaceholder")}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
         </div>
         <div>
-          <Label htmlFor="smart-artist">아티스트</Label>
+          <Label htmlFor="smart-artist">{t("smartSongEntry.artist")}</Label>
           <Input
             id="smart-artist"
             value={artist}
             onChange={(e) => setArtist(e.target.value)}
-            placeholder="아티스트 (선택)"
+            placeholder={t("smartSongEntry.artistPlaceholder")}
           />
         </div>
       </div>
@@ -110,12 +112,12 @@ export const SmartSongEntry = ({
       <div className="flex gap-2">
         <Button onClick={handleSearch} disabled={isSearching} className="gap-2">
           {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-          YouTube 검색
+          {t("smartSongEntry.youtubeSearch")}
         </Button>
         {onSkip && (
           <Button variant="ghost" onClick={onSkip} className="gap-2">
             <SkipForward className="w-4 h-4" />
-            건너뛰기
+            {t("smartSongEntry.skip")}
           </Button>
         )}
       </div>
@@ -123,7 +125,7 @@ export const SmartSongEntry = ({
       {/* Results */}
       {results.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">검색 결과 ({results.length}개)</p>
+          <p className="text-sm text-muted-foreground">{t("smartSongEntry.searchResults").replace("{count}", String(results.length))}</p>
           {results.map((r) => (
             <Card
               key={r.videoId}
@@ -158,11 +160,11 @@ export const SmartSongEntry = ({
                     }}
                   >
                     <ExternalLink className="w-3 h-3" />
-                    미리보기
+                    {t("smartSongEntry.preview")}
                   </Button>
                   {selectedResult?.videoId === r.videoId && (
                     <span className="text-xs text-primary font-medium flex items-center gap-1 justify-center">
-                      <Check className="w-3 h-3" /> 선택됨
+                      <Check className="w-3 h-3" /> {t("smartSongEntry.selected")}
                     </span>
                   )}
                 </div>
@@ -176,12 +178,12 @@ export const SmartSongEntry = ({
       {selectedResult && (
         <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
           <div className="flex-1 text-sm">
-            <span className="text-muted-foreground">선택됨: </span>
+            <span className="text-muted-foreground">{t("smartSongEntry.selectedLabel")}</span>
             <span className="font-medium">{selectedResult.url}</span>
           </div>
           <Button onClick={handleSave} disabled={isSaving} className="gap-2">
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            저장
+            {t("smartSongEntry.save")}
           </Button>
         </div>
       )}
