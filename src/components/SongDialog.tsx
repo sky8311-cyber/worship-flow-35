@@ -1659,21 +1659,6 @@ const [loading, setLoading] = useState(false);
       </Dialog>
     </Dialog>
 
-      {songTutorial.isOpen && songTutorial.currentStepData && (
-        <TutorialOverlay
-          isOpen={songTutorial.isOpen}
-          currentStep={songTutorial.currentStep}
-          totalSteps={songTutorial.totalSteps}
-          title={songTutorial.currentStepData.title}
-          description={songTutorial.currentStepData.description}
-          targetSelector={songTutorial.currentStepData.targetSelector}
-          isFirstStep={songTutorial.isFirstStep}
-          isLastStep={songTutorial.isLastStep}
-          onNext={songTutorial.next}
-          onPrev={songTutorial.prev}
-          onClose={songTutorial.close}
-        />
-      )}
     </>
   );
 };
