@@ -194,15 +194,16 @@
   opacity: 0.4;
 }
 
-/* Prose overrides for module content */
+/* Prose overrides for module/chapter content */
 .inst-prose {
-  font-size: 13px;
+  font-size: 0.94rem;
   color: var(--inst-ink2);
-  line-height: 1.8;
+  line-height: 1.85;
 }
 
 .inst-prose strong {
   color: var(--inst-ink);
+  font-weight: 600;
 }
 
 .inst-prose h2 {
@@ -210,6 +211,28 @@
   font-weight: 700;
   color: var(--inst-ink);
   margin: 24px 0 12px;
+}
+
+.inst-prose h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--inst-ink);
+  margin: 1.4rem 0 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--inst-gold);
+}
+
+.inst-prose p {
+  margin: 0.5rem 0;
+}
+
+.inst-prose ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0;
+}
+
+.inst-prose li {
+  margin: 0.3rem 0;
 }
 
 .inst-prose blockquote {
