@@ -659,7 +659,7 @@ export default function WorshipSets() {
         </div>
         
         <Card className="shadow-md">
-          <CardHeader className="relative p-4 pb-14 sm:p-6 sm:pb-6">
+          <CardHeader className="relative p-4 pb-6 sm:p-6">
             <div className="flex items-center gap-2">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
                 <Music className="w-4 h-4 sm:w-5 sm:h-5" />
