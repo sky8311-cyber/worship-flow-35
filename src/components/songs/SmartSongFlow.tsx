@@ -49,6 +49,7 @@ interface SmartSongFlowProps {
   onComplete: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[]) => Promise<void>;
   onDraftSave: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[], currentStep: number) => Promise<void>;
   onClose: () => void;
+  onCancel?: () => void;
 }
 
 export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: SmartSongFlowProps) => {
