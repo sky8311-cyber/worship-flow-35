@@ -2,11 +2,11 @@ import { useState, memo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Trash2, Youtube, Eye, Plus, BarChart3, Check, Lock } from "lucide-react";
-import { FileMusic } from "lucide-react";
+import { Edit, Trash2, Youtube, Eye, ShoppingCart, BarChart3, Check, Lock } from "lucide-react";
+import { FileMusic, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -39,9 +39,6 @@ interface SongCardProps {
   song: any;
   onEdit?: (song: any) => void;
   onDelete?: () => void;
-  selectionMode?: boolean;
-  isSelected?: boolean;
-  onToggleSelection?: (songId: string) => void;
   inCart?: boolean;
   onToggleCart?: () => void;
   isFavorite?: boolean;
@@ -59,9 +56,6 @@ export const SongCard = memo(function SongCard({
   song, 
   onEdit, 
   onDelete,
-  selectionMode = false,
-  isSelected = false,
-  onToggleSelection,
   inCart = false,
   onToggleCart,
   isFavorite = false,
@@ -79,13 +73,10 @@ export const SongCard = memo(function SongCard({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   
-  // Song usage history is available only to Basic Members and above (worship leaders, admins)
-  // Regular team members cannot access this feature
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
-const handleDelete = async () => {
+  const handleDelete = async () => {
     try {
-      // Check if song is used in any worship sets
       const { count } = await supabase
         .from("set_songs")
         .select("*", { count: "exact", head: true })
@@ -107,7 +98,6 @@ const handleDelete = async () => {
 
       if (error) throw error;
       
-      // Invalidate queries for real-time UI update
       await queryClient.invalidateQueries({ queryKey: ["songs"] });
       
       toast.success(t("songCard.songDeleted"));
@@ -116,8 +106,6 @@ const handleDelete = async () => {
       toast.error("Error: " + error.message);
     }
   };
-
-  // Category removed - now using topics
 
   const getLanguageTranslation = (lang: string) => {
     const langMap: { [key: string]: string } = {
@@ -133,8 +121,6 @@ const handleDelete = async () => {
   return (
     <>
       <Card className={`shadow-md hover:shadow-lg transition-all animate-fade-in overflow-hidden relative ${
-        selectionMode && isSelected ? "ring-2 ring-primary shadow-lg" : ""
-      } ${
         inCart ? "ring-2 ring-blue-500 shadow-lg" : ""
       } ${
         selectorMode && isSelectedForSet ? "ring-2 ring-primary shadow-lg" : ""
@@ -146,15 +132,6 @@ const handleDelete = async () => {
             <Badge className="bg-orange-500 text-white border-orange-500 text-[10px] px-1.5 py-0.5">
               {language === "ko" ? "임시저장" : "Draft"}
             </Badge>
-          </div>
-        )}
-        {selectionMode && !isDraft && (
-          <div className="absolute top-2 right-2 z-10">
-            <Checkbox
-              checked={isSelected}
-              onCheckedChange={() => onToggleSelection?.(song.id)}
-              className="bg-background shadow-md h-5 w-5"
-            />
           </div>
         )}
         {song.score_file_url && (
@@ -174,7 +151,6 @@ const handleDelete = async () => {
         )}
         <CardContent className="p-5">
           <div className="mb-3">
-           {/* Private badge: independent row, right-aligned */}
            {song.is_private && (
              <div className="flex justify-end mb-1">
                <Badge variant="secondary" className="text-xs gap-1">
@@ -211,7 +187,7 @@ const handleDelete = async () => {
             </div>
           </div>
 
-          {/* Media buttons - stacked on mobile (hidden for drafts) */}
+          {/* Media buttons (hidden for drafts) */}
           {!isDraft && (
             <div className="flex flex-col sm:flex-row gap-2">
               {song.youtube_url && (
@@ -240,118 +216,136 @@ const handleDelete = async () => {
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-1 justify-start mt-4">
-            {isDraft ? (
-              /* Draft: show only "Resume Registration" button */
-              onEdit && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onEdit(song)}
-                  className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
-                >
-                  <Edit className="w-3.5 h-3.5 mr-1" />
-                  {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
-                </Button>
-              )
-            ) : (
-              /* Published: existing action buttons */
-              <>
-                {selectorMode && onSelectForSet && (
+          <TooltipProvider>
+            <div className="flex gap-1 justify-start mt-4">
+              {isDraft ? (
+                onEdit && (
                   <Button
-                    variant={isSelectedForSet ? "default" : "outline"}
+                    variant="default"
                     size="sm"
-                    onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
-                    className="h-7 sm:h-8 px-2 tracking-tight"
-                  >
-                    {isSelectedForSet ? (
-                      <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
-                    ) : (
-                      <>
-                        <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
-                        {song.is_private && <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
-                        {t("songSelector.addToSet")}
-                      </>
-                    )}
-                  </Button>
-                )}
-                {!selectorMode && onToggleCart && (
-                  <Button
-                    variant={inCart ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => onToggleCart()}
-                    className="h-7 w-7 sm:h-8 sm:w-8"
-                    title={inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
-                  >
-                    <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                  </Button>
-                )}
-                {canViewUsageHistory && (
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setUsageHistoryOpen(true)}
-                    className="h-7 w-7 sm:h-8 sm:w-8 relative"
-                    title={t("songUsage.viewUsageHistory")}
-                  >
-                    <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    {usageCount > 0 && (
-                      <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
-                        {usageCount > 99 ? "99+" : usageCount}
-                      </span>
-                    )}
-                  </Button>
-                )}
-                <FavoriteButton 
-                  songId={song.id} 
-                  isFavorite={isFavorite}
-                  favoriteCount={favoriteCount}
-                  size="icon" 
-                  variant="outline" 
-                  className="h-7 w-7 sm:h-8 sm:w-8" 
-                />
-                {onEdit && (
-                  <Button
-                    variant="outline"
-                    size="icon"
                     onClick={() => onEdit(song)}
-                    className="h-7 w-7 sm:h-8 sm:w-8"
-                    title={t("common.edit")}
+                    className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
                   >
-                    <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                    <Edit className="w-3.5 h-3.5 mr-1" />
+                    {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
                   </Button>
-                )}
-                {onDelete && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button 
-                        variant="outline" 
-                        size="icon" 
-                        className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
-                        title={t("common.delete")}
-                      >
-                        <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t("songCard.deleteConfirm")}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete}>
-                          {t("common.delete")}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </>
-            )}
-          </div>
+                )
+              ) : (
+                <>
+                  {selectorMode && onSelectForSet && (
+                    <Button
+                      variant={isSelectedForSet ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => onSelectForSet(song, selectedScoreKey, selectedScoreUrl)}
+                      className="h-7 sm:h-8 px-2 tracking-tight"
+                    >
+                      {isSelectedForSet ? (
+                        <><Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />{t("songSelector.selected")}</>
+                      ) : (
+                        <>
+                          <Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />
+                          {song.is_private && <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5" />}
+                          {t("songSelector.addToSet")}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  {!selectorMode && onToggleCart && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={inCart ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => onToggleCart()}
+                          className="h-7 w-7 sm:h-8 sm:w-8"
+                        >
+                          <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {inCart ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {canViewUsageHistory && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setUsageHistoryOpen(true)}
+                          className="h-7 w-7 sm:h-8 sm:w-8 relative"
+                        >
+                          <BarChart3 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          {usageCount > 0 && (
+                            <span className="absolute -top-1 -right-1.5 bg-primary text-primary-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
+                              {usageCount > 99 ? "99+" : usageCount}
+                            </span>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t("songUsage.viewUsageHistory")}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  <FavoriteButton 
+                    songId={song.id} 
+                    isFavorite={isFavorite}
+                    favoriteCount={favoriteCount}
+                    size="icon" 
+                    variant="outline" 
+                    className="h-7 w-7 sm:h-8 sm:w-8" 
+                  />
+                  {onEdit && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => onEdit(song)}
+                          className="h-7 w-7 sm:h-8 sm:w-8"
+                        >
+                          <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t("common.edit")}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {onDelete && (
+                    <AlertDialog>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
+                            </Button>
+                          </AlertDialogTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("common.delete")}</TooltipContent>
+                      </Tooltip>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("songCard.deleteConfirm")}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDelete}>
+                            {t("common.delete")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </>
+              )}
+            </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
       

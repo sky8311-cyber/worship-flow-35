@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchInput } from "@/components/ui/search-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, CheckSquare, Copy, X, Globe, UserRoundPen, Heart } from "lucide-react";
+import { ArrowLeft, Music, Plus, Search, Filter, Upload, Download, LogOut, Shield, LayoutGrid, LayoutList, Copy, X, Globe, UserRoundPen, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
-import { BulkActionsBar } from "@/components/BulkActionsBar";
+
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { FloatingSearchButton } from "@/components/FloatingSearchButton";
@@ -88,11 +88,6 @@ const SongLibrary = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedSongIds, setSelectedSongIds] = useState<Set<string>>(new Set());
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [bulkEditMode, setBulkEditMode] = useState(false);
-  const [editedSongs, setEditedSongs] = useState<Record<string, any>>({});
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [columnSort, setColumnSort] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({
@@ -479,52 +474,6 @@ const SongLibrary = () => {
     }
   };
 
-  const handleToggleSelection = (songId: string) => {
-    const newSelection = new Set(selectedSongIds);
-    if (newSelection.has(songId)) {
-      newSelection.delete(songId);
-    } else {
-      newSelection.add(songId);
-    }
-    setSelectedSongIds(newSelection);
-  };
-
-  const handleSelectAll = () => {
-    if (songs && selectedSongIds.size === songs.length) {
-      setSelectedSongIds(new Set());
-    } else if (songs) {
-      setSelectedSongIds(new Set(songs.map(s => s.id)));
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    const count = selectedSongIds.size;
-    
-    const { error } = await supabase
-      .from("songs")
-      .delete()
-      .in("id", Array.from(selectedSongIds));
-
-    if (error) {
-      toast.error(t("common.error"));
-      console.error("Bulk delete error:", error);
-    } else {
-      toast.success(t("songLibrary.bulkDeleteSuccess", { count }));
-      setSelectedSongIds(new Set());
-      setSelectionMode(false);
-      setShowDeleteConfirm(false);
-      refetch();
-    }
-  };
-
-  // Bulk categorize removed - category column no longer exists
-
-  const handleClearSelection = () => {
-    setSelectedSongIds(new Set());
-    setSelectionMode(false);
-    setBulkEditMode(false);
-    setEditedSongs({});
-  };
 
   const handleToggleCart = (song: any) => {
     toggleCart({ 
@@ -540,55 +489,6 @@ const SongLibrary = () => {
     setIsCartDialogOpen(false);
   };
 
-  const handleEnterBulkEdit = () => {
-    if (selectedSongIds.size === 0) {
-      toast.error(t("songLibrary.selectSongsFirst"));
-      return;
-    }
-    setBulkEditMode(true);
-    const initial = songs
-      ?.filter(s => selectedSongIds.has(s.id))
-      .reduce((acc, song) => {
-        acc[song.id] = { ...song };
-        return acc;
-      }, {} as Record<string, any>);
-    setEditedSongs(initial || {});
-  };
-
-  const handleSaveBulkEdit = async () => {
-    try {
-      const updates = Object.values(editedSongs).map(song => 
-        supabase.from("songs").update({
-          title: song.title,
-          artist: song.artist,
-          language: song.language,
-          default_key: song.default_key,
-          bpm: song.bpm,
-          energy_level: song.energy_level,
-          tags: song.tags,
-          notes: song.notes,
-          interpretation: song.interpretation,
-        }).eq("id", song.id)
-      );
-
-      await Promise.all(updates);
-      
-      toast.success(t("songLibrary.bulkEditSuccess", { count: updates.length }));
-      setBulkEditMode(false);
-      setEditedSongs({});
-      setSelectedSongIds(new Set());
-      setSelectionMode(false);
-      refetch();
-    } catch (error) {
-      console.error("Bulk edit error:", error);
-      toast.error(t("common.error"));
-    }
-  };
-
-  const handleCancelBulkEdit = () => {
-    setBulkEditMode(false);
-    setEditedSongs({});
-  };
 
   return (
     <AppLayout>
@@ -808,20 +708,6 @@ const SongLibrary = () => {
               
               {/* Mobile only: Action Buttons */}
               <div className="flex sm:hidden items-center gap-2">
-                {isWorshipLeader && (
-                  <Button
-                    variant={selectionMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectionMode(!selectionMode);
-                      setSelectedSongIds(new Set());
-                    }}
-                    className="gap-1 px-2 text-[11px]"
-                  >
-                    <CheckSquare className="w-3 h-3" />
-                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
-                  </Button>
-                )}
                 {(isWorshipLeader || isAdmin) && (
                   <Button
                     variant="default"
@@ -867,23 +753,6 @@ const SongLibrary = () => {
                 )}
               </div>
 
-              {/* Desktop/Tablet: Selection Mode Button */}
-              {isWorshipLeader && (
-                <div className="hidden sm:block">
-                  <Button
-                    variant={selectionMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectionMode(!selectionMode);
-                      setSelectedSongIds(new Set());
-                    }}
-                    className="gap-1 px-2 text-sm"
-                  >
-                    <CheckSquare className="w-4 h-4" />
-                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
-                  </Button>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1023,18 +892,6 @@ const SongLibrary = () => {
               songs={sortedAndFilteredSongs}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
-              selectionMode={selectionMode}
-              selectedSongs={selectedSongIds}
-              onToggleSelection={handleToggleSelection}
-              onSelectAll={handleSelectAll}
-              bulkEditMode={bulkEditMode}
-              editedSongs={editedSongs}
-              onUpdateEditedSong={(songId, field, value) => {
-                setEditedSongs(prev => ({
-                  ...prev,
-                  [songId]: { ...prev[songId], [field]: value }
-                }));
-              }}
               columnFilters={columnFilters}
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
@@ -1053,9 +910,6 @@ const SongLibrary = () => {
                   song={song}
                   onEdit={isWorshipLeader ? handleEditSong : undefined}
                   onDelete={isWorshipLeader ? () => refetch() : undefined}
-                  selectionMode={selectionMode}
-                  isSelected={selectedSongIds.has(song.id)}
-                  onToggleSelection={handleToggleSelection}
                   inCart={isWorshipLeader ? cartIds.has(song.id) : false}
                   onToggleCart={isWorshipLeader ? () => handleToggleCart(song) : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
@@ -1088,21 +942,19 @@ const SongLibrary = () => {
       {/* Mobile Floating Action Stack */}
       <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown}>
         {/* Cart indicator - bottom of stack */}
-        {cartCount > 0 && (
-          <FloatingCartIndicator 
-            count={cartCount} 
-            onClick={() => setIsCartDialogOpen(true)} 
-          />
-        )}
+        <FloatingCartIndicator 
+          count={cartCount} 
+          onClick={() => setIsCartDialogOpen(true)} 
+        />
         
-        {/* Add Song button - middle of stack */}
+        {/* Add Song button - pill shape with label */}
         {isWorshipLeader && (
           <Button
             onClick={handleAddSong}
-            className="h-14 w-14 rounded-full shadow-lg"
-            size="icon"
+            className="h-14 rounded-full shadow-lg gap-2 px-5"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
+            <span className="text-sm font-medium">{t("songLibrary.addSong")}</span>
           </Button>
         )}
         

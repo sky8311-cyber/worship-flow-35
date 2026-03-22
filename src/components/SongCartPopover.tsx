@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Music, X, Trash2 } from "lucide-react";
+import { ShoppingCart, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -27,8 +27,6 @@ export const SongCartPopover = () => {
     [cartItems]
   );
 
-  if (cartCount === 0) return null;
-
   const handleAddToSetSuccess = () => {
     clearCart();
     setIsAddToSetOpen(false);
@@ -43,7 +41,7 @@ export const SongCartPopover = () => {
             <TooltipTrigger asChild>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl">
-                  <Music className="h-5 w-5" />
+                  <ShoppingCart className="h-5 w-5" />
                   <span className="absolute -top-1 -right-1.5 bg-destructive text-destructive-foreground text-[10px] rounded-full h-4 min-w-4 flex items-center justify-center font-bold px-1">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
@@ -61,52 +59,62 @@ export const SongCartPopover = () => {
               <h4 className="font-semibold text-sm">
                 {t("songLibrary.cartTitle")} ({cartCount})
               </h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground hover:text-destructive"
-                onClick={clearCart}
-              >
-                <Trash2 className="h-3 w-3 mr-1" />
-                {t("songLibrary.clearCart")}
-              </Button>
-            </div>
-          </div>
-          <Separator />
-          <ScrollArea className="max-h-64">
-            <div className="p-2">
-              {cartItems.map((song) => (
-                <div
-                  key={song.id}
-                  className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group"
+              {cartCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                  onClick={clearCart}
                 >
-                  <div className="flex-1 min-w-0 mr-2">
-                    <p className="text-sm font-medium truncate">{song.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {song.artist || "-"} {song.default_key && `• ${song.default_key}`}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeFromCart(song.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  {t("songLibrary.clearCart")}
+                </Button>
+              )}
             </div>
-          </ScrollArea>
-          <Separator />
-          <div className="p-3">
-            <Button 
-              className="w-full" 
-              onClick={() => setIsAddToSetOpen(true)}
-            >
-              {t("songLibrary.addToSet")}
-            </Button>
           </div>
+          <Separator />
+          {cartCount > 0 ? (
+            <>
+              <ScrollArea className="max-h-64">
+                <div className="p-2">
+                  {cartItems.map((song) => (
+                    <div
+                      key={song.id}
+                      className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50 group"
+                    >
+                      <div className="flex-1 min-w-0 mr-2">
+                        <p className="text-sm font-medium truncate">{song.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {song.artist || "-"} {song.default_key && `• ${song.default_key}`}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeFromCart(song.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+              <Separator />
+              <div className="p-3">
+                <Button 
+                  className="w-full" 
+                  onClick={() => setIsAddToSetOpen(true)}
+                >
+                  {t("songLibrary.addToSet")}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="p-6 text-center text-sm text-muted-foreground">
+              {t("songLibrary.cartEmpty") || "카트가 비어있습니다"}
+            </div>
+          )}
         </PopoverContent>
       </Popover>
 

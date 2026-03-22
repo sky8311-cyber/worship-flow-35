@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, Plus, BarChart3, Check, Lock, PenLine } from "lucide-react";
+import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, ShoppingCart, Plus, BarChart3, Check, Lock, PenLine } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,13 +30,6 @@ interface SongTableProps {
   songs: any[];
   onEdit?: (song: any) => void;
   onDelete?: () => void;
-  selectionMode?: boolean;
-  selectedSongs?: Set<string>;
-  onToggleSelection?: (songId: string) => void;
-  onSelectAll?: () => void;
-  bulkEditMode?: boolean;
-  editedSongs?: Record<string, any>;
-  onUpdateEditedSong?: (songId: string, field: string, value: any) => void;
   columnFilters?: Record<string, string>;
   onColumnFilter?: (column: string, value: string) => void;
   columnSort?: { column: string | null; direction: 'asc' | 'desc' | null };
@@ -58,13 +49,6 @@ export const SongTable = ({
   songs, 
   onEdit, 
   onDelete,
-  selectionMode = false,
-  selectedSongs = new Set(),
-  onToggleSelection,
-  onSelectAll,
-  bulkEditMode = false,
-  editedSongs = {},
-  onUpdateEditedSong,
   columnFilters = {},
   onColumnFilter,
   columnSort = { column: null, direction: null },
@@ -240,14 +224,6 @@ const handleDelete = async (song: any) => {
         <Table>
           <TableHeader>
           <TableRow>
-            {selectionMode && (
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedSongs.size === songs.length && songs.length > 0}
-                  onCheckedChange={onSelectAll}
-                />
-              </TableHead>
-            )}
             <TableHead>{renderColumnHeader('title', t("songLibrary.tableHeaders.title"))}</TableHead>
             <TableHead>{renderColumnHeader('artist', t("songLibrary.tableHeaders.artist"))}</TableHead>
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
@@ -258,29 +234,11 @@ const handleDelete = async (song: any) => {
           </TableHeader>
           <TableBody>
             {songs.map((song) => {
-              const isEditable = bulkEditMode && selectedSongs.has(song.id);
-              const displaySong = isEditable && editedSongs[song.id] ? editedSongs[song.id] : song;
-
               const isDraft = song.status === 'draft';
 
               return (
-                <TableRow key={song.id} className={`${selectionMode && selectedSongs.has(song.id) ? "bg-accent/50" : ""} ${isDraft ? "opacity-70" : ""}`}>
-                  {selectionMode && (
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedSongs.has(song.id)}
-                        onCheckedChange={() => onToggleSelection?.(song.id)}
-                      />
-                    </TableCell>
-                  )}
+                <TableRow key={song.id} className={`${isDraft ? "opacity-70" : ""}`}>
                   <TableCell className="font-medium">
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.title}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'title', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    ) : (
                     <div>
                         <div className="flex items-baseline gap-1.5">
                           <span 
@@ -310,61 +268,20 @@ const handleDelete = async (song: any) => {
                           <div className="text-xs text-muted-foreground">{song.subtitle}</div>
                         )}
                       </div>
-                    )}
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.artist || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'artist', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    ) : (
                       <span>{song.artist || "-"}</span>
-                    )}
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Select
-                        value={displaySong.language || ''}
-                        onValueChange={(value) => onUpdateEditedSong?.(song.id, 'language', value)}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                          <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                          <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
                       <Badge variant="outline" className="text-xs">
                         {getLanguageTranslation(song.language)}
                       </Badge>
-                    )}
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.default_key || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'default_key', e.target.value)}
-                        className="h-8 text-sm w-16"
-                      />
-                    ) : (
                       <span>{song.default_key || "-"}</span>
-                    )}
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.tags || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'tags', e.target.value)}
-                        className="h-8 text-sm"
-                        placeholder="tag1, tag2"
-                      />
-                    ) : (
-                      song.tags ? (
+                      {song.tags ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
                           {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
@@ -377,13 +294,11 @@ const handleDelete = async (song: any) => {
                             </span>
                           )}
                         </div>
-                      ) : "-"
-                    )}
-                   </TableCell>
+                      ) : "-"}
+                  </TableCell>
                    <TableCell>
-                     {!bulkEditMode && (
-                       <div className="flex items-center gap-1">
-                         {isDraft ? (
+                     <div className="flex items-center gap-1">
+                          {isDraft ? (
                            /* Draft: show only "Resume" button */
                            onEdit && (
                              <Button
@@ -425,7 +340,7 @@ const handleDelete = async (song: any) => {
                                 className="h-8 w-8"
                                 title={isInCart?.(song.id) ? t("songLibrary.inCart") : t("songLibrary.addToCart")}
                               >
-                                <Plus className="h-4 w-4" />
+                                <ShoppingCart className="h-4 w-4" />
                               </Button>
                             )}
                             {canViewUsageHistory && (
@@ -505,7 +420,6 @@ const handleDelete = async (song: any) => {
                            </>
                          )}
                        </div>
-                     )}
                    </TableCell>
                  </TableRow>
                );
