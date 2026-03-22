@@ -226,14 +226,6 @@ const handleDelete = async (song: any) => {
         <Table>
           <TableHeader>
           <TableRow>
-            {selectionMode && (
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedSongs.size === songs.length && songs.length > 0}
-                  onCheckedChange={onSelectAll}
-                />
-              </TableHead>
-            )}
             <TableHead>{renderColumnHeader('title', t("songLibrary.tableHeaders.title"))}</TableHead>
             <TableHead>{renderColumnHeader('artist', t("songLibrary.tableHeaders.artist"))}</TableHead>
             <TableHead>{renderColumnHeader('language', t("songLibrary.tableHeaders.language"))}</TableHead>
