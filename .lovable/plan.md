@@ -1,67 +1,51 @@
 
 
-## 곡 라이브러리 UI 개선 — 선택 모드 제거, 툴팁, 카트 아이콘
+## 악보 썸네일/버튼 복구 — songs 쿼리에 song_scores 조인 누락
 
-### 문제 요약
-1. **"Select Songs" 체크모드** — 선택 후 할 수 있는 건 일괄편집/삭제뿐인데, 카트에 추가하는 기능과 혼동됨
-2. **SongCard 액션 버튼 6개에 툴팁 없음** — `title` 속성만 있어 데스크탑에서도 즉시 알 수 없음
-3. **카드의 `+` 버튼 ↔ 플로팅 `+` 버튼 혼동** — 둘 다 Plus 아이콘이지만 기능이 완전히 다름
-4. **카트 아이콘이 0개일 때 안 보임** — 카트 기능 자체를 인지하기 어려움
+### 원인
+`SongLibrary.tsx` line 188의 songs 쿼리가 `score_file_url`도 `song_scores`도 가져오지 않음. 따라서 `song.score_file_url`이 항상 `undefined` → 썸네일과 "악보 보기" 버튼이 조건부 렌더링에서 숨겨짐.
 
----
+### 해결
 
-### 변경 계획
+#### 1. songs 쿼리에 song_scores 조인 추가
+**파일:** `src/pages/SongLibrary.tsx` (line 187-189)
 
-#### 1. "Select Songs" 선택 모드 제거
-**파일:** `SongLibrary.tsx`, `SongCard.tsx`, `SongTable.tsx`
+```tsx
+// Before
+supabase.from("songs").select(
+  "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes"
+);
 
-- `selectionMode`, `selectedSongIds`, `BulkActionsBar` 관련 코드 전부 제거
-- 모바일/데스크탑 양쪽의 `CheckSquare` 버튼 제거
-- `bulkEditMode`, `showDeleteConfirm` 등 관련 상태도 제거
-- SongCard/SongTable에서 `selectionMode` prop 제거
+// After
+supabase.from("songs").select(
+  "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes, song_scores(id, key, file_url, page_number)"
+);
+```
 
-#### 2. SongCard 액션 버튼에 Tooltip 추가
-**파일:** `SongCard.tsx`
+#### 2. SongCard에 첫 번째 score URL 전달
+**파일:** `src/pages/SongLibrary.tsx`
 
-현재 `title` 속성 → `<Tooltip>` 컴포넌트로 교체 (6개 버튼 모두):
+SongCard에 song 데이터를 전달할 때, `song_scores`에서 첫 번째 `file_url`을 `score_file_url`로 매핑:
 
-| 버튼 | 아이콘 | 툴팁 내용 |
-|------|--------|----------|
-| 카트 추가 | `ShoppingCart` (변경) | "워십세트 카트에 추가" / "Add to worship set cart" |
-| 사용 이력 | `BarChart3` | 기존 title 유지 |
-| 즐겨찾기 | `Heart` | FavoriteButton 자체 처리 |
-| 편집 | `Edit` | 기존 title 유지 |
-| 삭제 | `Trash2` | 기존 title 유지 |
+```tsx
+const songWithScore = {
+  ...song,
+  score_file_url: song.song_scores?.[0]?.file_url || null
+};
+```
 
-#### 3. 카트 버튼 아이콘 변경 — `Plus` → `ShoppingCart`
-**파일:** `SongCard.tsx`, `FloatingCartIndicator.tsx`, `SongCartPopover.tsx`
+또는 SongCard 자체에서 `song.song_scores`를 직접 참조하도록 수정.
 
-- Lucide에 `ShoppingCart` 아이콘 존재 — 장바구니 의미가 명확
-- SongCard: `<Plus>` → `<ShoppingCart>` (카트에 추가 버튼)
-- FloatingCartIndicator: `<Music>` → `<ShoppingCart>`
-- SongCartPopover: `<Music>` → `<ShoppingCart>`
-- 이렇게 하면 "곡 추가(Plus)"와 "카트에 담기(ShoppingCart)"가 시각적으로 구분됨
+#### 3. SongCard 썸네일 로직 업데이트 (선택적)
+**파일:** `src/components/SongCard.tsx`
 
-#### 4. 카트 아이콘 항상 표시 (0개일 때도)
-**파일:** `SongCartPopover.tsx`, `FloatingCartIndicator.tsx`, `SongLibrary.tsx`
+현재 `song.score_file_url`을 체크하는 부분을 유지하되, 데이터가 올바르게 전달되면 기존 코드가 그대로 동작함. 추가로 `song.song_scores`가 있으면 그것도 fallback으로 사용:
 
-- `SongCartPopover`: `if (cartCount === 0) return null` 제거 → 항상 렌더링, 빈 카트일 때 "0" 배지 표시
-- `FloatingCartIndicator`: `if (count === 0) return null` 제거 → 항상 표시, 0일 때도 배지 "0"
-- `SongLibrary.tsx`: `{cartCount > 0 && ...}` 조건 제거
-
-#### 5. 플로팅 버튼에 텍스트 라벨 추가
-**파일:** `SongLibrary.tsx`
-
-- 플로팅 "곡 추가" 버튼: 원형 → 알약형으로 변경, `<Plus>` + "곡 추가"/"Add Song" 텍스트
-- 플로팅 카트 버튼: `<ShoppingCart>` + 배지 (기존 유지)
-
----
+```tsx
+const scoreUrl = song.score_file_url || song.song_scores?.[0]?.file_url;
+```
 
 ### 수정 파일
-1. `src/pages/SongLibrary.tsx` — 선택 모드 제거, 플로팅 버튼 텍스트 추가, 카트 항상 표시
-2. `src/components/SongCard.tsx` — 툴팁 추가, ShoppingCart 아이콘
-3. `src/components/SongTable.tsx` — selectionMode prop 제거
-4. `src/components/FloatingCartIndicator.tsx` — ShoppingCart 아이콘, 항상 표시
-5. `src/components/SongCartPopover.tsx` — ShoppingCart 아이콘, 항상 표시
-6. `src/components/BulkActionsBar.tsx` — 파일 삭제 또는 import 제거
+1. `src/pages/SongLibrary.tsx` — songs 쿼리에 `song_scores` 조인 추가, SongCard에 score_file_url 매핑
+2. `src/components/SongCard.tsx` — scoreUrl fallback 추가 (song_scores 지원)
 
