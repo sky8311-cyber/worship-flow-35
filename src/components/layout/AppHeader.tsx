@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 import { RoleBadge } from "@/components/RoleBadge";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -103,15 +104,20 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-3">
             {/* Left: Menu button + Logo (Mobile/Tablet) | Breadcrumb or Home Icon (Desktop) */}
             <div className="justify-self-start flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="lg:hidden" 
-                onClick={() => setSidebarOpen(true)}
-                aria-label={t("navigation.menu")}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="lg:hidden" 
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label={t("navigation.menu")}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "메뉴" : "Menu"}</TooltipContent>
+              </Tooltip>
               
               {/* Logo - Left aligned on mobile/tablet */}
               <Link to="/dashboard" className="md:hidden">
@@ -124,9 +130,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   {breadcrumb}
                 </div>
               ) : (
-                <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  <Home className="h-4 w-4" />
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <Home className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>{language === "ko" ? "홈" : "Home"}</TooltipContent>
+                </Tooltip>
               )}
             </div>
           
@@ -143,31 +154,51 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             </div>
             
             {/* Heart Icon - Always visible */}
-            <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=favorites")}>
-              <Heart className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=favorites")}>
+                  <Heart className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "즐겨찾기" : "Favorites"}</TooltipContent>
+            </Tooltip>
             
             {/* My Songs Icon - Always visible */}
-            <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
-              <Music2 className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
+                  <Music2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "내 곡" : "My Songs"}</TooltipContent>
+            </Tooltip>
             
             {/* Share/Referral Icon */}
-            <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
-              <Share2 className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "공유" : "Share"}</TooltipContent>
+            </Tooltip>
             
             {/* Song Cart - Shows only when items in cart */}
             {(isWorshipLeader || isAdmin) && <SongCartPopover />}
             
             {/* Notification Bell - Always visible */}
             <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="h-5 w-5" />
-                  <NotificationBadge count={unreadCount} />
-                </Button>
-              </PopoverTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="h-5 w-5" />
+                      <NotificationBadge count={unreadCount} />
+                    </Button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "알림" : "Notifications"}</TooltipContent>
+              </Tooltip>
               <PopoverContent align="center" sideOffset={8} className="p-0 w-auto">
                 <NotificationPanel />
               </PopoverContent>
@@ -175,24 +206,29 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             
             {/* Profile Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                  {profile ? (
-                    <AvatarWithLevel
-                      userId={profile.id}
-                      avatarUrl={profile.avatar_url}
-                      fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
-                      size="md"
-                      showLevel={false}
-                      className="h-10 w-10"
-                    />
-                  ) : (
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                      {profile ? (
+                        <AvatarWithLevel
+                          userId={profile.id}
+                          avatarUrl={profile.avatar_url}
+                          fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+                          size="md"
+                          showLevel={false}
+                          className="h-10 w-10"
+                        />
+                      ) : (
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "프로필" : "Profile"}</TooltipContent>
+              </Tooltip>
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-2">
