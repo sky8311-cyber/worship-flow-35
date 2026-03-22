@@ -1,36 +1,40 @@
 
 
-## "주제 → 태그" 통일 명칭 변경 + 태그 3개 모두 표시
+## 공동체 가입 요청 중복 오류 수정
 
-### 변경 사항 두 가지
+### 원인 분석
+- **409 Conflict**: `community_join_requests` 테이블에 `(community_id, user_id)` 유니크 제약 존재
+- 이전에 **거절(rejected)** 또는 **승인(approved)** 된 요청이 남아있음
+- 쿼리는 `status = "pending"`만 조회 → 이전 거절 요청을 감지 못함 → "가입 신청" 버튼이 보임
+- insert 시 유니크 제약 위반으로 실패
 
-#### 1. "주제"를 "태그"로 통일 (UI 라벨만 변경)
-DB 컬럼(`tags`)이나 코드 변수명은 그대로 유지. 사용자에게 보이는 텍스트만 변경.
+### 수정 방안
 
-**파일:** `src/lib/translations.ts`
-- 한국어: `"주제"` → `"태그"` (topicFilter, topicsLabel, topicsHint, topicsRequired, minTopics, languageTopicsLabel, searchPlaceholder, songFlow.steps.languageTopics 등)
-- 영어: `"Topics"` → `"Tags"` (동일 키들)
-- `songDialog.topics` → 이미 `"태그"/"Tags"` 값이지만, 중복된 `topics` 키가 있으면 통일
+**파일:** `src/pages/CommunitySearch.tsx`
 
-**파일:** `src/components/admin/AdminNav.tsx`
-- `"주제 관리"` → `"태그 관리"` / `"Topics"` → `"Tags"`
+#### 1. 쿼리 확장 — 모든 상태의 요청 조회
+```tsx
+// 기존: .eq("status", "pending") 만 조회
+// 변경: 모든 상태 조회하여 status별 분기 처리
+.select("community_id, status")
+.eq("user_id", user?.id)
+```
+→ `pending`, `rejected`, `approved` 모두 가져와서 Map으로 관리
 
-**파일:** `src/components/CSVImportDialog.tsx` (line 686)
-- 테이블 헤더 `t("songDialog.topics")` 확인 (이미 태그로 바뀌면 자동 반영)
+#### 2. UI 분기 — 상태별 다른 버튼 표시
+- **pending**: "가입 취소" 버튼 (기존)
+- **rejected**: "재신청" 버튼 (기존 요청 삭제 후 새로 insert)
+- **approved**: "가입 신청" 버튼 숨김 (이미 멤버)
+- **없음**: "가입 신청" 버튼 (기존)
 
-#### 2. 태그 3개 전부 표시 (slice(0,2) → 전체)
-현재 2개만 보여주고 `+1` 표시하는 곳을 모두 3개 표시로 변경.
+#### 3. 재신청 로직 — rejected 요청 삭제 후 재insert
+rejected 상태일 때 "재신청" 클릭 시:
+1. 기존 rejected 요청 delete
+2. 새 pending 요청 insert
 
-**파일:** `src/components/SongTable.tsx` (line 286-295)
-- `slice(0, 2)` → `slice(0, 3)` 또는 전체 표시
-- `> 2` 조건 → `> 3` 또는 제거
+#### 4. 에러 메시지 개선
+중복 에러(23505) 발생 시 "이미 가입 요청이 존재합니다" 메시지 표시
 
-**파일:** `src/components/DuplicateReviewDialog.tsx` (line 685-692)
-- 동일하게 `slice(0, 2)` → 전체 표시
-
-### 수정 파일 목록
-1. `src/lib/translations.ts` — 주제 → 태그 라벨 통일
-2. `src/components/SongTable.tsx` — 태그 3개 모두 표시
-3. `src/components/DuplicateReviewDialog.tsx` — 태그 3개 모두 표시
-4. `src/components/admin/AdminNav.tsx` — 메뉴 라벨 변경
+### 수정 파일
+1. `src/pages/CommunitySearch.tsx` — 쿼리 확장 + 상태별 UI 분기 + 재신청 로직
 
