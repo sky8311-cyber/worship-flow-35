@@ -61,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [roleSyncComplete, setRoleSyncComplete] = useState(false);
   const syncInProgress = useRef(false);
   const prevUserIdRef = useRef<string | null>(null);
+  const initFetchDoneRef = useRef(false);
   // Auth epoch: increments on every user switch / signIn / signOut to invalidate stale async results
   const authEpochRef = useRef(0);
   // Track last visibility refresh to debounce tab switches
