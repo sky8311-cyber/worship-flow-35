@@ -230,7 +230,8 @@ export default function Institute() {
   return (
     <InstituteLayout>
       <div style={S.page}>
-
+        {/* Invitation banner */}
+        <InstituteInvitationBanner />
         {/* ═══ Hero ═══ */}
         <div style={S.hero}>
           <div style={S.eyebrow}>🎓 K-WORSHIP CERTIFIED</div>
