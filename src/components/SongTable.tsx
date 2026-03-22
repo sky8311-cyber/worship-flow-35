@@ -300,8 +300,7 @@ const handleDelete = async (song: any) => {
                   </TableCell>
                    <TableCell>
                      <div className="flex items-center gap-1">
-                       <div className="flex items-center gap-1">
-                         {isDraft ? (
+                          {isDraft ? (
                            /* Draft: show only "Resume" button */
                            onEdit && (
                              <Button
