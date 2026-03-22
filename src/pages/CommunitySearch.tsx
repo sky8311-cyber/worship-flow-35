@@ -87,16 +87,27 @@ export default function CommunitySearch() {
       const { data, error } = await supabase
         .from("community_join_requests")
         .select("community_id, status")
-        .eq("user_id", user?.id)
-        .eq("status", "pending");
+        .eq("user_id", user?.id);
       if (error) throw error;
-      return data.map(r => r.community_id);
+      const map: Record<string, string> = {};
+      data.forEach(r => { map[r.community_id] = r.status; });
+      return map;
     },
     enabled: !!user?.id,
   });
 
   const joinRequestMutation = useMutation({
     mutationFn: async (communityId: string) => {
+      // If there's a rejected request, delete it first
+      const currentStatus = userJoinRequests?.[communityId];
+      if (currentStatus === "rejected") {
+        const { error: deleteError } = await supabase
+          .from("community_join_requests")
+          .delete()
+          .eq("community_id", communityId)
+          .eq("user_id", user?.id);
+        if (deleteError) throw deleteError;
+      }
       const { error } = await supabase
         .from("community_join_requests")
         .insert({
@@ -113,11 +124,11 @@ export default function CommunitySearch() {
         description: t("community.joinRequestSentDesc"),
       });
     },
-    onError: () => {
-      toast({
-        title: t("community.joinError"),
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      const msg = error?.code === "23505"
+        ? t("community.joinRequestAlreadyExists")
+        : t("community.joinError");
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
@@ -150,8 +161,8 @@ export default function CommunitySearch() {
     return userMemberships?.includes(communityId);
   };
 
-  const hasPendingRequest = (communityId: string) => {
-    return userJoinRequests?.includes(communityId);
+  const getRequestStatus = (communityId: string) => {
+    return userJoinRequests?.[communityId] || null;
   };
 
   return (
@@ -206,7 +217,7 @@ export default function CommunitySearch() {
                       >
                         {t("community.alreadyMember")}
                       </Button>
-                    ) : hasPendingRequest(community.id) ? (
+                    ) : getRequestStatus(community.id) === "pending" ? (
                       <Button
                         variant="outline"
                         className="w-full"
@@ -215,6 +226,14 @@ export default function CommunitySearch() {
                       >
                         <X className="h-4 w-4 mr-2" />
                         {t("community.cancelJoinRequest")}
+                      </Button>
+                    ) : getRequestStatus(community.id) === "rejected" ? (
+                      <Button
+                        className="w-full"
+                        onClick={() => joinRequestMutation.mutate(community.id)}
+                        disabled={joinRequestMutation.isPending}
+                      >
+                        {t("community.reapplyJoinRequest")}
                       </Button>
                     ) : (
                       <Button
