@@ -60,7 +60,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
   
   // Current step (1-indexed)
   const [currentStep, setCurrentStep] = useState(draftSong?.draft_step || 1);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
 
