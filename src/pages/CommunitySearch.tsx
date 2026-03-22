@@ -98,15 +98,14 @@ export default function CommunitySearch() {
 
   const joinRequestMutation = useMutation({
     mutationFn: async (communityId: string) => {
-      // If there's a rejected request, delete it first
+      // Delete any existing request regardless of status
       const currentStatus = userJoinRequests?.[communityId];
-      if (currentStatus === "rejected") {
-        const { error: deleteError } = await supabase
+      if (currentStatus) {
+        await supabase
           .from("community_join_requests")
           .delete()
           .eq("community_id", communityId)
           .eq("user_id", user?.id);
-        if (deleteError) throw deleteError;
       }
       const { error } = await supabase
         .from("community_join_requests")
@@ -226,14 +225,6 @@ export default function CommunitySearch() {
                       >
                         <X className="h-4 w-4 mr-2" />
                         {t("community.cancelJoinRequest")}
-                      </Button>
-                    ) : getRequestStatus(community.id) === "rejected" ? (
-                      <Button
-                        className="w-full"
-                        onClick={() => joinRequestMutation.mutate(community.id)}
-                        disabled={joinRequestMutation.isPending}
-                      >
-                        {t("community.reapplyJoinRequest")}
                       </Button>
                     ) : (
                       <Button
