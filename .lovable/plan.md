@@ -1,28 +1,26 @@
 
 
-## 튜토리얼 시스템 버그 & 성능 수정
+## 튜토리얼 모바일 최적화 — 화면 밖 툴팁 문제 수정
 
-### 발견된 문제
+### 문제
+430×550 모바일 뷰포트에서 툴팁이 화면 밖으로 밀려나 버튼을 누를 수 없음. 원인:
+- `tooltipPosition === "bottom"` 일 때 `top`이 뷰포트 높이를 초과해도 클램핑 없음
+- 타겟 요소가 화면 하단에 있으면 툴팁이 완전히 보이지 않음
+- 툴팁에 `max-height`/`overflow` 없어 긴 설명도 잘림
+- 닫기 버튼 접근 불가 → 앱 전체 사용 불가 상태
 
-1. **`close` 스테일 클로저 버그** (`useTutorial.ts` line 37): `next()` 함수가 `close()`를 호출하지만, `close`가 dependency array에 포함되지 않음 → 마지막 스텝에서 "완료" 클릭 시 `close`가 오래된 참조를 사용하여 예상대로 동작하지 않을 수 있음
+### 수정 사항 (1개 파일)
 
-2. **스크롤 이벤트 과다 렌더링** (`TutorialOverlay.tsx`): `updatePosition`이 모든 scroll 이벤트마다 `setState`를 2개 호출 → 스크롤할 때마다 clip-path 재계산 + 리렌더 → 버벅임 원인. `transition-all duration-300` CSS가 매 프레임 clip-path 트랜지션을 유발하여 성능 악화.
+**`src/components/tutorial/TutorialOverlay.tsx`**
 
-3. **resize 이벤트도 동일** — throttle/debounce 없음
+1. **툴팁 위치 뷰포트 클램핑**: top/bottom 계산 후 뷰포트 경계 내에 강제 배치
+   - bottom 모드: `top = Math.min(계산값, window.innerHeight - tooltipHeight - safeMargin)`
+   - top 모드: 같은 로직으로 상단 벗어남 방지
+   - 공간 부족 시 자동으로 반대편으로 전환
 
-### 수정 계획
+2. **툴팁 max-height + 스크롤**: `max-h-[60vh] overflow-y-auto` 추가하여 작은 화면에서도 내용 접근 가능
 
-#### 1. `useTutorial.ts` — dependency 수정
-- `next`의 dependency array에 `close` 추가
-- `close`를 `next`보다 먼저 선언하도록 순서 변경
+3. **safe-area 고려**: 하단 패딩에 `env(safe-area-inset-bottom)` 반영
 
-#### 2. `TutorialOverlay.tsx` — 성능 최적화
-- scroll/resize 핸들러에 `requestAnimationFrame` 기반 throttle 적용
-- clip-path에서 `transition-all duration-300` 제거 (매 프레임 트랜지션 불필요)
-- spotlight ring의 `transition-all` → `transition-none` (scroll 중 지연 방지)
-- tooltip에도 동일하게 불필요한 transition 제거
-
-### 수정 파일 (2개)
-1. `src/components/tutorial/useTutorial.ts` — close dependency 수정 + 선언 순서
-2. `src/components/tutorial/TutorialOverlay.tsx` — rAF throttle + transition 제거
+4. **모바일 전용 "건너뛰기" 링크**: 닫기(X) 외에 하단에 "튜토리얼 건너뛰기" 텍스트 버튼 추가 — 항상 보이는 위치에 배치
 
