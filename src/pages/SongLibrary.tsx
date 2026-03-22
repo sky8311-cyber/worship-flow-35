@@ -489,55 +489,6 @@ const SongLibrary = () => {
     setIsCartDialogOpen(false);
   };
 
-  const handleEnterBulkEdit = () => {
-    if (selectedSongIds.size === 0) {
-      toast.error(t("songLibrary.selectSongsFirst"));
-      return;
-    }
-    setBulkEditMode(true);
-    const initial = songs
-      ?.filter(s => selectedSongIds.has(s.id))
-      .reduce((acc, song) => {
-        acc[song.id] = { ...song };
-        return acc;
-      }, {} as Record<string, any>);
-    setEditedSongs(initial || {});
-  };
-
-  const handleSaveBulkEdit = async () => {
-    try {
-      const updates = Object.values(editedSongs).map(song => 
-        supabase.from("songs").update({
-          title: song.title,
-          artist: song.artist,
-          language: song.language,
-          default_key: song.default_key,
-          bpm: song.bpm,
-          energy_level: song.energy_level,
-          tags: song.tags,
-          notes: song.notes,
-          interpretation: song.interpretation,
-        }).eq("id", song.id)
-      );
-
-      await Promise.all(updates);
-      
-      toast.success(t("songLibrary.bulkEditSuccess", { count: updates.length }));
-      setBulkEditMode(false);
-      setEditedSongs({});
-      setSelectedSongIds(new Set());
-      setSelectionMode(false);
-      refetch();
-    } catch (error) {
-      console.error("Bulk edit error:", error);
-      toast.error(t("common.error"));
-    }
-  };
-
-  const handleCancelBulkEdit = () => {
-    setBulkEditMode(false);
-    setEditedSongs({});
-  };
 
   return (
     <AppLayout>
