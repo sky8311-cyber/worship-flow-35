@@ -98,6 +98,16 @@ export default function CommunitySearch() {
 
   const joinRequestMutation = useMutation({
     mutationFn: async (communityId: string) => {
+      // If there's a rejected request, delete it first
+      const currentStatus = userJoinRequests?.[communityId];
+      if (currentStatus === "rejected") {
+        const { error: deleteError } = await supabase
+          .from("community_join_requests")
+          .delete()
+          .eq("community_id", communityId)
+          .eq("user_id", user?.id);
+        if (deleteError) throw deleteError;
+      }
       const { error } = await supabase
         .from("community_join_requests")
         .insert({
@@ -114,11 +124,11 @@ export default function CommunitySearch() {
         description: t("community.joinRequestSentDesc"),
       });
     },
-    onError: () => {
-      toast({
-        title: t("community.joinError"),
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      const msg = error?.code === "23505"
+        ? t("community.joinRequestAlreadyExists")
+        : t("community.joinError");
+      toast({ title: msg, variant: "destructive" });
     },
   });
 
