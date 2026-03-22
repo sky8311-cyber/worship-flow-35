@@ -88,11 +88,6 @@ const SongLibrary = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedSongIds, setSelectedSongIds] = useState<Set<string>>(new Set());
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [bulkEditMode, setBulkEditMode] = useState(false);
-  const [editedSongs, setEditedSongs] = useState<Record<string, any>>({});
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [columnSort, setColumnSort] = useState<{ column: string | null; direction: 'asc' | 'desc' | null }>({
