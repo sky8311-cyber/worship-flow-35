@@ -177,8 +177,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     // Set first YouTube link
     setYoutubeLinks(prev => {
       const updated = [...prev];
-      if (updated.length === 0) updated.push({ label: t("songFlow.original"), url: result.url });
-      else { updated[0] = { ...updated[0], label: updated[0].label || t("songFlow.original"), url: result.url }; }
+      const defaultLabel = artist || "";
+      if (updated.length === 0) updated.push({ label: defaultLabel, url: result.url });
+      else { updated[0] = { ...updated[0], label: updated[0].label || defaultLabel, url: result.url }; }
       return updated;
     });
   };
@@ -808,7 +809,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
         <Button type="button" variant="outline" size="sm" onClick={() => setScoreVariations([...scoreVariations, { key: "", files: [] }])}>
           <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addScoreVariation")}
         </Button>
-        <p className="text-xs text-muted-foreground">{t("songFlow.autoScanNote")}</p>
+        
       </div>
     </div>
   );
