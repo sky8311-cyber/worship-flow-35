@@ -1,26 +1,32 @@
 
 
-## 튜토리얼 모바일 최적화 — 화면 밖 툴팁 문제 수정
+## 스크롤 애니메이션 속도 개선 + 튜토리얼 버튼 툴팁 + 곡 추가 튜토리얼 수정
 
-### 문제
-430×550 모바일 뷰포트에서 툴팁이 화면 밖으로 밀려나 버튼을 누를 수 없음. 원인:
-- `tooltipPosition === "bottom"` 일 때 `top`이 뷰포트 높이를 초과해도 클램핑 없음
-- 타겟 요소가 화면 하단에 있으면 툴팁이 완전히 보이지 않음
-- 툴팁에 `max-height`/`overflow` 없어 긴 설명도 잘림
-- 닫기 버튼 접근 불가 → 앱 전체 사용 불가 상태
+### 문제 3가지
 
-### 수정 사항 (1개 파일)
+1. **스크롤 애니메이션 너무 느림**: `revealOnScroll` (1.2초), `revealCard` (1.0초), `revealText` (0.8초) — clip-path + scale 조합이 체감상 매우 느림
+2. **튜토리얼 `?` 버튼에 텍스트 툴팁 없음**: SetBuilder, SongDialog의 HelpCircle 아이콘만 있고 "가이드 보기" 같은 안내 없음
+3. **곡 추가 페이지 튜토리얼 없음**: SongDialog에서 tutorial key가 `"song-edit"`이고 `autoStart: false`로 설정되어 있어, 새 곡 추가 시 튜토리얼이 전혀 시작되지 않음
 
-**`src/components/tutorial/TutorialOverlay.tsx`**
+### 수정 계획
 
-1. **툴팁 위치 뷰포트 클램핑**: top/bottom 계산 후 뷰포트 경계 내에 강제 배치
-   - bottom 모드: `top = Math.min(계산값, window.innerHeight - tooltipHeight - safeMargin)`
-   - top 모드: 같은 로직으로 상단 벗어남 방지
-   - 공간 부족 시 자동으로 반대편으로 전환
+#### 1. `src/lib/animations.ts` — 애니메이션 속도 50% 단축
+- `revealOnScroll`: 1.2s → 0.6s, scale 1.5 → 1.15
+- `revealCard`: 1.0s → 0.5s, scale 1.1 → 1.05
+- `revealText`: 0.8s → 0.4s, y: 50 → 30
+- `staggerChildren` / `delayChildren` 값도 비례 축소
 
-2. **툴팁 max-height + 스크롤**: `max-h-[60vh] overflow-y-auto` 추가하여 작은 화면에서도 내용 접근 가능
+#### 2. `src/pages/SetBuilder.tsx` — `?` 버튼에 Tooltip 추가
+- HelpCircle 버튼을 `TooltipProvider > Tooltip > TooltipTrigger` 로 감싸기
+- 툴팁 내용: "가이드 보기"
 
-3. **safe-area 고려**: 하단 패딩에 `env(safe-area-inset-bottom)` 반영
+#### 3. `src/components/SongDialog.tsx` — 곡 추가 튜토리얼 수정
+- tutorial key: `"song-edit"` → `"song-add"`로 변경
+- 새 곡 추가 모드(`!song`)일 때 `autoStart: true`로 설정하여 첫 접속 시 자동 시작
+- `?` 버튼에도 동일하게 Tooltip 추가 ("가이드 보기")
 
-4. **모바일 전용 "건너뛰기" 링크**: 닫기(X) 외에 하단에 "튜토리얼 건너뛰기" 텍스트 버튼 추가 — 항상 보이는 위치에 배치
+### 수정 파일 (3개)
+1. `src/lib/animations.ts` — 애니메이션 duration 단축
+2. `src/pages/SetBuilder.tsx` — `?` 버튼 Tooltip
+3. `src/components/SongDialog.tsx` — tutorial key/autoStart 수정 + Tooltip
 
