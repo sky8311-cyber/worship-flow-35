@@ -12,7 +12,7 @@ import { SongCard } from "@/components/SongCard";
 import { SongTable } from "@/components/SongTable";
 import { SongDialog } from "@/components/SongDialog";
 import { CSVImportDialog } from "@/components/CSVImportDialog";
-import { BulkActionsBar } from "@/components/BulkActionsBar";
+
 import { DuplicateReviewDialog } from "@/components/DuplicateReviewDialog";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { FloatingSearchButton } from "@/components/FloatingSearchButton";
