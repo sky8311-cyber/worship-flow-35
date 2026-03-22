@@ -310,6 +310,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const canGoNext = () => {
     switch (currentStep) {
       case 1: return title.trim().length > 0;
+      case 2: return !!selectedYoutubeResult && artist.trim().length > 0;
+      case 3: return scoreVariations.some(v => v.files.length > 0);
       case 5: return songLanguage && topics.length >= 2;
       default: return true;
     }
@@ -318,6 +320,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const handleNext = async () => {
     if (!canGoNext()) {
       if (currentStep === 1) toast.error(t("songFlow.enterTitle"));
+      if (currentStep === 2) toast.error(t("songFlow.selectYoutubeAndArtist"));
+      if (currentStep === 3) toast.error(t("songFlow.uploadScoreRequired"));
       if (currentStep === 5) {
         if (!songLanguage) toast.error(t("songFlow.selectLanguage"));
         else if (topics.length < 2) toast.error(t("songFlow.minTopics"));
@@ -461,6 +465,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           artistSectionRef={artistSectionRef}
           artistHighlight={artistHighlight}
           setArtistHighlight={setArtistHighlight}
+          title={title}
+          setTitle={setTitle}
           t={t}
         />}
         {currentStep === 3 && <Step3_LinksScores
@@ -602,7 +608,10 @@ function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, se
   );
 }
 
-function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, t }: any) {
+function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, title, setTitle, t }: any) {
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState(title);
+
   const handleSelectAndScroll = (result: YouTubeResult) => {
     onSelect(result);
     setTimeout(() => {
@@ -681,6 +690,39 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Title confirmation */}
+      {selectedResult && (
+        <div className="space-y-2 pt-3 border-t">
+          <Label>{t("songFlow.confirmTitle")}</Label>
+          {editingTitle ? (
+            <div className="flex gap-2">
+              <Input
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                autoFocus
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && editTitleValue.trim()) {
+                    setTitle(editTitleValue.trim());
+                    setEditingTitle(false);
+                  }
+                }}
+              />
+              <Button size="sm" onClick={() => { if (editTitleValue.trim()) { setTitle(editTitleValue.trim()); setEditingTitle(false); } }}>
+                {t("songFlow.titleConfirmed")}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium flex-1">"{title}"</p>
+              <Button variant="outline" size="sm" onClick={() => { setEditTitleValue(title); setEditingTitle(true); }}>
+                <Pen className="w-3 h-3 mr-1" /> {t("songFlow.editTitle")}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
