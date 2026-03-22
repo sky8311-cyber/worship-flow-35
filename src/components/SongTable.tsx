@@ -300,7 +300,7 @@ const handleDelete = async (song: any) => {
                       ) : "-"}
                   </TableCell>
                    <TableCell>
-                     {!bulkEditMode && (
+                     <div className="flex items-center gap-1">
                        <div className="flex items-center gap-1">
                          {isDraft ? (
                            /* Draft: show only "Resume" button */
