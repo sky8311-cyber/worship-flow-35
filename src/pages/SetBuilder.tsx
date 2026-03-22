@@ -2106,6 +2106,7 @@ const SetBuilder = () => {
                         onClick={handleNavigateToSongs}
                         size="sm"
                         disabled={isBlocked}
+                        data-tutorial="set-add-song"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
