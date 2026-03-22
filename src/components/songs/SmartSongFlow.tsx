@@ -566,7 +566,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
     </div>
   );
-};
+});
+
+SmartSongFlow.displayName = "SmartSongFlow";
 
 // ========== STEP COMPONENTS ==========
 
