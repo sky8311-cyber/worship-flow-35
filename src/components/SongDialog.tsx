@@ -1440,8 +1440,8 @@ const [loading, setLoading] = useState(false);
             </Button>
           </div>
 
-          {/* 7. Lyrics */}
-          <div>
+          <div data-tutorial="song-lyrics-section">
+            <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
             <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
             <Textarea
               id="lyrics"
