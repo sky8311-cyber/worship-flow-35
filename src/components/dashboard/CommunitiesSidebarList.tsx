@@ -90,7 +90,7 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5, currentCom
 
         {hasMore && (
           <Button variant="ghost" size="sm" className="w-full mt-2" asChild>
-            <Link to="/communities">
+            <Link to="/community/search">
               {t("common.seeAll")} ({communities.length})
             </Link>
           </Button>
