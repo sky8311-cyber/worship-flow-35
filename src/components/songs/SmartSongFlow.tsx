@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -49,9 +49,10 @@ interface SmartSongFlowProps {
   onComplete: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[]) => Promise<void>;
   onDraftSave: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[], currentStep: number) => Promise<void>;
   onClose: () => void;
+  onCancel?: () => void;
 }
 
-export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: SmartSongFlowProps) => {
+export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onCancel }: SmartSongFlowProps) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
   
@@ -59,7 +60,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   
   // Current step (1-indexed)
   const [currentStep, setCurrentStep] = useState(draftSong?.draft_step || 1);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
 
@@ -421,7 +422,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
             {currentStep} / {TOTAL_STEPS} · {stepLabels[currentStep - 1]}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setShowCancelConfirm(true)}>
+        <Button variant="ghost" size="icon" onClick={() => onCancel ? onCancel() : onClose()}>
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -518,7 +519,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       {/* Footer Buttons */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
+          <Button variant="ghost" size="sm" onClick={() => onCancel ? onCancel() : onClose()}>
             {t("songFlow.cancel")}
           </Button>
           {currentStep > 1 && (
@@ -550,21 +551,6 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         </div>
       </div>
 
-      {/* Cancel Confirmation */}
-      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("songFlow.cancelTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("songFlow.cancelDesc")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("songFlow.continueWriting")}</AlertDialogCancel>
-            <AlertDialogAction onClick={onClose}>{t("songFlow.confirmCancel")}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
