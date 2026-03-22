@@ -263,6 +263,7 @@ export const SongCard = memo(function SongCard({
                           size="icon"
                           onClick={() => onToggleCart()}
                           className="h-7 w-7 sm:h-8 sm:w-8"
+                          data-tutorial="song-cart-btn"
                         >
                           <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         </Button>
