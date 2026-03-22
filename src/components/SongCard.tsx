@@ -211,6 +211,7 @@ export const SongCard = memo(function SongCard({
                   size="sm"
                   onClick={() => setScorePreviewOpen(true)}
                   className="flex-1 w-full group hover:bg-primary hover:text-white hover:border-primary"
+                  data-tutorial="song-score-btn"
                 >
                   <FileMusic className="w-4 h-4 mr-1 text-primary group-hover:text-white" />
                   <span className="truncate">{t("songCard.viewScore")}</span>
