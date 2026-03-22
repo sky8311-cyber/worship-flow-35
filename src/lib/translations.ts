@@ -2147,7 +2147,7 @@ songCard: {
       noCreditCard: "No credit card required",
     },
     songFlow: {
-      steps: { songInfo: "Song Info", youtube: "YouTube", scoresLinks: "Scores & Links", lyrics: "Lyrics", languageTopics: "Language & Topics", review: "Review" },
+      steps: { songInfo: "Song Info", youtube: "YouTube", scoresLinks: "Scores & Links", lyrics: "Lyrics", languageTopics: "Language & Tags", review: "Review" },
       newSong: "New Song",
       songTitle: "Song Title",
       songTitlePlaceholder: "Enter song title",
