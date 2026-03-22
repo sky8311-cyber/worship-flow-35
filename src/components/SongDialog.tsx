@@ -1118,6 +1118,23 @@ const [loading, setLoading] = useState(false);
             : "max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
         )}
         hideCloseButton
+        onPointerDownOutside={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+            setShowCloseConfirm(true);
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+            setShowCloseConfirm(true);
+          }
+        }}
         style={{
           paddingTop: !song ? '0' : 'max(1rem, env(safe-area-inset-top, 0px))',
           paddingBottom: !song ? '0' : 'max(1rem, env(safe-area-inset-bottom, 0px))'
