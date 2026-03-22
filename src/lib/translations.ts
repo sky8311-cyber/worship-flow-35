@@ -4464,7 +4464,7 @@ songCard: {
       link: "링크",
       edit: "수정",
       private: "비공개",
-      languageTopicsLabel: "언어 / 주제",
+      languageTopicsLabel: "언어 / 태그",
       cancel: "취소",
       previous: "이전",
       draftSave: "임시저장",
