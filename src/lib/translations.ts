@@ -3102,6 +3102,8 @@ songCard: {
       unknownLeader: "알 수 없는 리더",
       join: "가입하기",
       joinError: "가입 실패",
+      joinRequestAlreadyExists: "이미 가입 요청이 존재합니다",
+      reapplyJoinRequest: "재신청",
       manage: "예배공동체 관리",
       memberCount: "{count}명",
       inviteMembers: "팀멤버 초대",
