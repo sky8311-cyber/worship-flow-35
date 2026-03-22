@@ -242,10 +242,18 @@ export function NotificationItem({ notification, onRead }: NotificationItemProps
             </p>
           ) : (
             <p className="text-sm">
-              {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
-              <span className="text-muted-foreground">
-                {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
-              </span>
+              {(() => {
+                const localizedMsg = getLocalizedMessage();
+                if (localizedMsg) {
+                  return <span className="text-muted-foreground">{localizedMsg}</span>;
+                }
+                return <>
+                  {actorName && <><span className="font-semibold">{actorName}</span>{" "}</>}
+                  <span className="text-muted-foreground">
+                    {actorName ? notification.message.replace(actorName, "").trim() : notification.message}
+                  </span>
+                </>;
+              })()}
             </p>
           )}
           <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
