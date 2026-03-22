@@ -146,7 +146,7 @@ export const TutorialOverlay = ({
       {/* Spotlight ring */}
       {targetRect && (
         <div
-          className="absolute rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-transparent pointer-events-none transition-all duration-300"
+          className="absolute rounded-lg ring-2 ring-primary ring-offset-2 ring-offset-transparent pointer-events-none"
           style={{
             top: targetRect.top - padding,
             left: targetRect.left - padding,
