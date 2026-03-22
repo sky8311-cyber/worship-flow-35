@@ -7,7 +7,7 @@ import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteCompletionModal } from "@/components/institute/InstituteCompletionModal";
-import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
+import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle, BookOpen, Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -132,6 +132,12 @@ const InstituteModule = () => {
     },
   });
 
+  const getChapterIcon = (ch: any) => {
+    if (ch.video_url) return <PlayCircle className="w-3.5 h-3.5" />;
+    if (ch.audio_url) return <Headphones className="w-3.5 h-3.5" />;
+    return <BookOpen className="w-3.5 h-3.5" />;
+  };
+
   if (!currentModule || !course) {
     return (
       <InstituteLayout pageTitle={language === "ko" ? "모듈" : "Module"} showBackButton>
@@ -194,8 +200,13 @@ const InstituteModule = () => {
             {/* Mobile progress bar */}
             {isMobile && (
               <div className="px-5 py-3 bg-card border-b border-border">
-                <div className="text-xs font-semibold text-foreground mb-1.5">
-                  {language === "ko" ? currentModule.title_ko : currentModule.title}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-xs font-semibold text-foreground">
+                    {language === "ko" ? currentModule.title_ko : currentModule.title}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    모듈 {currentIndex + 1}/{modules.length}
+                  </span>
                 </div>
                 <Progress value={modules.length > 0 ? ((currentIndex + 1) / modules.length) * 100 : 0} className="h-1" />
               </div>
@@ -209,37 +220,47 @@ const InstituteModule = () => {
                 </h1>
               )}
 
-              {/* Module description if no chapters */}
-              {!hasChapters && (currentModule.content_ko || currentModule.content) && (
+              {/* Module guide text */}
+              {(currentModule.content_ko || currentModule.content) && !hasChapters && (
                 <div
-                  className="prose prose-sm max-w-none text-muted-foreground"
+                  className="inst-prose"
                   dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }}
                 />
+              )}
+
+              {hasChapters && (currentModule.content_ko || currentModule.content) && (
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                  {language === "ko" ? currentModule.content_ko : currentModule.content}
+                </p>
               )}
 
               {/* Chapters list */}
               {hasChapters && (
                 <>
-                  <div className="text-xs text-muted-foreground mb-4">
-                    {completedChapterCount}/{chapters.length} {language === "ko" ? "챕터 완료" : "chapters completed"}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs text-muted-foreground">
+                      {completedChapterCount}/{chapters.length} {language === "ko" ? "챕터 완료" : "chapters completed"}
+                    </span>
+                    <Progress value={(completedChapterCount / chapters.length) * 100} className="h-1 w-20" />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    {chapters.map((ch) => {
+                    {chapters.map((ch, idx) => {
                       const accessible = canAccess(ch.required_tier ?? 0, userTier);
                       const done = chapterProgress.some((p) => p.chapter_id === ch.id && p.completed_at);
 
                       return (
                         <Card
                           key={ch.id}
-                          className={`${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${!accessible ? "opacity-50" : ""} ${done ? "bg-primary/5" : ""}`}
+                          className={`${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${!accessible ? "opacity-50" : ""}`}
                           onClick={() => {
                             if (accessible && enrollment) navigate(`/institute/${courseId}/${moduleId}/${ch.id}`);
                           }}
                         >
                           <CardContent className="p-3.5 flex items-center gap-3">
+                            {/* Completion circle */}
                             <div
-                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                              className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                 done
                                   ? "bg-primary text-primary-foreground"
                                   : !accessible
@@ -247,24 +268,25 @@ const InstituteModule = () => {
                                   : "bg-muted text-muted-foreground border border-border"
                               }`}
                             >
-                              {done ? <Check className="w-3.5 h-3.5" /> : !accessible ? <Lock className="w-3 h-3" /> : <PlayCircle className="w-3.5 h-3.5" />}
+                              {done ? <Check className="w-4 h-4" /> : !accessible ? <Lock className="w-3 h-3" /> : getChapterIcon(ch)}
                             </div>
 
                             <div className="flex-1 min-w-0">
                               <div className={`text-sm font-medium ${!accessible ? "text-muted-foreground" : "text-foreground"}`}>
                                 {language === "ko" ? ch.title_ko || ch.title : ch.title || ch.title_ko}
                               </div>
-                              {!accessible && (
-                                <div className="text-[10px] text-muted-foreground mt-0.5">
-                                  {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
-                                </div>
-                              )}
+                              <div className="text-[10px] text-muted-foreground mt-0.5">
+                                {ch.video_url ? "영상" : ch.audio_url ? "오디오" : "텍스트"}
+                                {!accessible && (
+                                  <span className="ml-1">
+                                    · {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             {done && (
-                              <span className="text-[10px] text-primary font-semibold">
-                                {language === "ko" ? "완료" : "Done"}
-                              </span>
+                              <Check className="w-4 h-4 text-primary flex-shrink-0" />
                             )}
                           </CardContent>
                         </Card>
@@ -285,7 +307,7 @@ const InstituteModule = () => {
               onClick={() => prevModule && navigate(`/institute/${courseId}/${prevModule.id}`)}
             >
               <ChevronLeft className="w-3.5 h-3.5 mr-1" />
-              {language === "ko" ? "이전 모듈" : "Previous"}
+              {language === "ko" ? "이전" : "Prev"}
             </Button>
 
             <Button
@@ -294,10 +316,10 @@ const InstituteModule = () => {
               onClick={() => completeAndNext.mutate()}
             >
               {isLastModule
-                ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
+                ? (language === "ko" ? "수강 완료 ✓" : "Complete ✓")
                 : (
                   <>
-                    {language === "ko" ? "다음 모듈로" : "Next Module"}
+                    {language === "ko" ? "다음 모듈" : "Next"}
                     <ChevronRight className="w-3.5 h-3.5 ml-1" />
                   </>
                 )}

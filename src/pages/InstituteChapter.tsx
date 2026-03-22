@@ -9,6 +9,7 @@ import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 const InstituteChapter = () => {
@@ -166,11 +167,16 @@ const InstituteChapter = () => {
         {/* Main content */}
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto">
-            {/* Mobile progress bar */}
+            {/* Mobile: Chapter progress header */}
             {isMobile && (
               <div className="px-5 py-3 bg-card border-b border-border">
-                <div className="text-xs font-semibold text-foreground mb-1.5">
-                  {chapter.title_ko || chapter.title}
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="text-xs font-semibold text-foreground truncate pr-2">
+                    {chapter.title_ko || chapter.title}
+                  </div>
+                  <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                    {currentIndex + 1}/{chapters.length}
+                  </Badge>
                 </div>
                 <Progress value={chapters.length > 0 ? ((currentIndex + 1) / chapters.length) * 100 : 0} className="h-1" />
               </div>
@@ -191,7 +197,7 @@ const InstituteChapter = () => {
                 );
               })()}
 
-              {/* Title */}
+              {/* Title — desktop */}
               {!isMobile && (
                 <h1 className="text-xl font-bold text-foreground tracking-tight mb-4">
                   {language === "ko" ? chapter.title_ko || chapter.title : chapter.title || chapter.title_ko}
@@ -201,7 +207,7 @@ const InstituteChapter = () => {
               {/* Content */}
               {chapter.content_ko && (
                 <div
-                  className="prose prose-sm max-w-none text-muted-foreground"
+                  className="inst-prose"
                   dangerouslySetInnerHTML={{ __html: chapter.content_ko }}
                 />
               )}
@@ -210,6 +216,16 @@ const InstituteChapter = () => {
               {chapter.audio_url && (
                 <div className="mt-6">
                   <audio src={chapter.audio_url} controls className="w-full rounded-lg" />
+                </div>
+              )}
+
+              {/* Completion indicator */}
+              {isCompleted && (
+                <div className="mt-6 flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <Check className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-primary font-medium">
+                    {language === "ko" ? "이 챕터를 완료했습니다" : "Chapter completed"}
+                  </span>
                 </div>
               )}
             </div>
@@ -224,7 +240,7 @@ const InstituteChapter = () => {
               onClick={() => prevChapter && navigate(`/institute/${courseId}/${moduleId}/${prevChapter.id}`)}
             >
               <ChevronLeft className="w-3.5 h-3.5 mr-1" />
-              {language === "ko" ? "이전" : "Previous"}
+              {language === "ko" ? "이전" : "Prev"}
             </Button>
 
             <Button
@@ -235,12 +251,12 @@ const InstituteChapter = () => {
             >
               {isCompleted ? (
                 <>
-                  {isLastChapter ? (language === "ko" ? "모듈로 돌아가기" : "Back to Module") : (language === "ko" ? "다음 챕터" : "Next Chapter")}
+                  {isLastChapter ? (language === "ko" ? "모듈로 돌아가기" : "Back to Module") : (language === "ko" ? "다음 챕터" : "Next")}
                   {!isLastChapter && <ChevronRight className="w-3.5 h-3.5 ml-1" />}
                 </>
               ) : (
                 <>
-                  {isLastChapter ? (language === "ko" ? "완료하기 ✓" : "Complete ✓") : (language === "ko" ? "완료 & 다음" : "Complete & Next")}
+                  {isLastChapter ? (language === "ko" ? "완료 ✓" : "Complete ✓") : (language === "ko" ? "완료 & 다음" : "Done & Next")}
                   {!isLastChapter && <ChevronRight className="w-3.5 h-3.5 ml-1" />}
                 </>
               )}
