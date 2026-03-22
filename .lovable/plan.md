@@ -1,41 +1,30 @@
 
 
-## 공동체 가입 로직 단순화
+## RLS 정책이 approved/rejected 삭제를 차단하는 문제 수정
 
-### 핵심 원칙
-현재 멤버가 아니면 무조건 가입 신청 가능. 유일한 예외: 이미 `pending` 상태 요청이 있으면 알림만 표시.
+### 원인
+- `community_join_requests` 테이블의 DELETE RLS 정책: `user_id = auth.uid() AND status = 'pending'`
+- status가 `approved`인 요청은 사용자가 직접 삭제 불가
+- DELETE 요청은 204를 반환하지만 실제 삭제된 행은 0개 → INSERT 시 409 충돌
+
+### 해결 방법
+RLS 정책을 수정하여 사용자가 자신의 요청을 상태와 무관하게 삭제할 수 있도록 변경.
 
 ### 변경 사항
 
-**파일:** `src/pages/CommunitySearch.tsx`
+#### 1. DB 마이그레이션 — DELETE RLS 정책 변경
+```sql
+DROP POLICY "Users can delete their own pending requests" ON community_join_requests;
 
-#### 1. joinRequestMutation — 기존 요청 무조건 삭제 후 재삽입
-```tsx
-mutationFn: async (communityId: string) => {
-  // 기존 요청이 있으면 상태 무관하게 삭제
-  const currentStatus = userJoinRequests?.[communityId];
-  if (currentStatus) {
-    await supabase
-      .from("community_join_requests")
-      .delete()
-      .eq("community_id", communityId)
-      .eq("user_id", user?.id);
-  }
-  // 새 pending 요청 삽입
-  const { error } = await supabase
-    .from("community_join_requests")
-    .insert({ community_id: communityId, user_id: user?.id, status: "pending" });
-  if (error) throw error;
-}
+CREATE POLICY "Users can delete their own join requests"
+ON community_join_requests FOR DELETE
+USING (user_id = auth.uid());
 ```
 
-#### 2. UI 버튼 분기 단순화
-- **멤버** → "이미 멤버" 버튼 (공동체로 이동)
-- **pending 요청 있음** → "가입 취소" 버튼
-- **그 외 (rejected, approved, 없음 등)** → "가입 신청" 버튼 (동일하게 처리)
+`status = 'pending'` 조건 제거 → 사용자는 자신의 요청이면 어떤 상태든 삭제 가능.
 
-기존의 `rejected` / `approved` 별도 분기 제거. 멤버가 아니고 pending이 아니면 전부 "가입 신청".
+### 수정 항목
+1. DB 마이그레이션 1건 (RLS 정책 변경)
 
-### 수정 파일
-1. `src/pages/CommunitySearch.tsx` — mutation 로직 + UI 분기 단순화
+코드 변경은 불필요 — 현재 `CommunitySearch.tsx`의 로직은 이미 올바르게 delete → insert를 수행 중.
 
