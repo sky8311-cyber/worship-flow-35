@@ -254,6 +254,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (session?.user) {
         await fetchProfile(session.user.id);
+        initFetchDoneRef.current = true;
       } else {
         setLoading(false);
       }
