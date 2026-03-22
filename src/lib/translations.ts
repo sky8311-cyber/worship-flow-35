@@ -825,6 +825,8 @@ export const translations = {
       unknownLeader: "Unknown Leader",
       join: "Join",
       joinError: "Failed to join community",
+      joinRequestAlreadyExists: "A join request already exists for this community",
+      reapplyJoinRequest: "Re-apply",
       manage: "Manage Community",
       memberCount: "{count} members",
       inviteMembers: "Invite Team Members",
