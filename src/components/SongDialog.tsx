@@ -50,6 +50,14 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Tutorial for editing existing songs
+  const songTutorial = useTutorial({ 
+    key: "song-edit", 
+    steps: SONG_ADD_STEPS, 
+    autoStart: false, // Only manual trigger for edit dialog
+  });
+
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const submittingRef = useRef(false);
