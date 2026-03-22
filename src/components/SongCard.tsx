@@ -73,6 +73,9 @@ export const SongCard = memo(function SongCard({
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   
+  // Fallback: use song_scores if score_file_url is not directly set
+  const scoreUrl = song.score_file_url || song.song_scores?.[0]?.file_url || null;
+  
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const handleDelete = async () => {
