@@ -34,7 +34,7 @@ export const useTutorial = ({ key, steps, autoStart = true, autoStartDelay = 800
     } else {
       close();
     }
-  }, [currentStep, steps.length]);
+  }, [currentStep, steps.length, close]);
 
   const prev = useCallback(() => {
     if (currentStep > 0) {
