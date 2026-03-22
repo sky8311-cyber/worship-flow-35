@@ -2216,7 +2216,7 @@ songCard: {
       save: "Save",
       enterTitle: "Please enter a song title",
       selectLanguage: "Please select a language",
-      minTopics: "Please select at least 2 topics",
+      minTopics: "Please select at least 2 tags",
       uploadComplete: "Upload complete",
       uploadError: "Upload error: {message}",
       downloadComplete: "Download complete",
