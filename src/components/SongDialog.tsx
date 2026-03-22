@@ -1585,11 +1585,26 @@ const [loading, setLoading] = useState(false);
                 : "Your unsaved changes will be lost. Are you sure?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel>
               {language === "ko" ? "계속 작성" : "Stay"}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose}>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await smartFlowRef.current?.triggerDraftSave();
+                  setShowCloseConfirm(false);
+                  onOpenChange(false);
+                  onClose();
+                } catch (e) {
+                  // Error already toasted in handleDraftSave
+                }
+              }}
+            >
+              {language === "ko" ? "임시저장" : "Save Draft"}
+            </Button>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               {language === "ko" ? "닫기" : "Close"}
             </AlertDialogAction>
           </AlertDialogFooter>
