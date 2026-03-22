@@ -376,12 +376,26 @@ export const AdminInstituteCertifications = () => {
                   <Textarea defaultValue={selectedCert.description_ko || ""} onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "description_ko", value: e.target.value || null })} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Badge Image URL</label>
-                  <Input defaultValue={selectedCert.badge_image_url || ""} onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "badge_image_url", value: e.target.value || null })} />
+                  <AdminImageUpload
+                    currentUrl={selectedCert.badge_image_url}
+                    onUploadSuccess={(url) => updateCert.mutate({ id: selectedCert.id, field: "badge_image_url", value: url })}
+                    folder="institute/cert-badges"
+                    label="배지 이미지"
+                    sizeGuide="권장: 400×400px (1:1), 최대 2MB"
+                    aspectClass="aspect-square"
+                    maxSizeMB={2}
+                  />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Certificate Template URL</label>
-                  <Input defaultValue={selectedCert.certificate_template_url || ""} onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "certificate_template_url", value: e.target.value || null })} />
+                  <AdminImageUpload
+                    currentUrl={selectedCert.certificate_template_url}
+                    onUploadSuccess={(url) => updateCert.mutate({ id: selectedCert.id, field: "certificate_template_url", value: url })}
+                    folder="institute/cert-templates"
+                    label="수료증 템플릿"
+                    sizeGuide="권장: 1920×1357px (A4 가로), 최대 5MB"
+                    aspectClass="aspect-[1920/1357]"
+                    maxSizeMB={5}
+                  />
                 </div>
               </div>
             </Card>
