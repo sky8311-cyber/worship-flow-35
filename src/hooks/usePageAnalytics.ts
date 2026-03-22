@@ -28,14 +28,13 @@ export const usePageAnalytics = () => {
   const enteredAtRef = useRef<Date | null>(null);
   const previousPathRef = useRef<string | null>(null);
 
-  // Record page view and update last_active_at
+  // Record page view (removed last_active_at - handled by AuthContext)
   const recordPageView = useCallback(async () => {
     const sessionId = getSessionId();
     const deviceType = getDeviceType();
     const referrerPath = previousPathRef.current;
     
     try {
-      // Record page analytics
       const { data, error } = await supabase
         .from("page_analytics")
         .insert({
@@ -53,16 +52,7 @@ export const usePageAnalytics = () => {
         currentRecordIdRef.current = data.id;
         enteredAtRef.current = new Date();
       }
-      
-      // Update last_active_at on every page navigation (if user is logged in)
-      if (user?.id) {
-        await supabase
-          .from("profiles")
-          .update({ last_active_at: new Date().toISOString() })
-          .eq("id", user.id);
-      }
     } catch (err) {
-      // Silently fail - analytics should not break the app
       console.debug("Analytics insert failed:", err);
     }
   }, [location.pathname, user?.id]);
@@ -93,37 +83,26 @@ export const usePageAnalytics = () => {
 
   // Handle route changes
   useEffect(() => {
-    // Update previous page duration before recording new page
     if (previousPathRef.current && previousPathRef.current !== location.pathname) {
       updateDuration();
     }
 
-    // Record new page view
     recordPageView();
-
-    // Update previous path
     previousPathRef.current = location.pathname;
 
-    // Cleanup on unmount or route change
-    return () => {
-      // Duration will be updated on next route change
-    };
+    return () => {};
   }, [location.pathname, recordPageView, updateDuration]);
 
-  // Handle page visibility changes (tab switch, minimize)
+  // Handle page unload only (removed visibility re-record to reduce duplicates)
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      updateDuration();
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         updateDuration();
-      } else if (document.visibilityState === "visible") {
-        // Re-record when coming back
-        recordPageView();
       }
-    };
-
-    // Handle page unload
-    const handleBeforeUnload = () => {
-      updateDuration();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -133,5 +112,5 @@ export const usePageAnalytics = () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [updateDuration, recordPageView]);
+  }, [updateDuration]);
 };
