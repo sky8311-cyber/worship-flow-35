@@ -519,7 +519,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
       {/* Footer Buttons */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
+          <Button variant="ghost" size="sm" onClick={() => onCancel ? onCancel() : onClose()}>
             {t("songFlow.cancel")}
           </Button>
           {currentStep > 1 && (
