@@ -104,15 +104,20 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-3">
             {/* Left: Menu button + Logo (Mobile/Tablet) | Breadcrumb or Home Icon (Desktop) */}
             <div className="justify-self-start flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="lg:hidden" 
-                onClick={() => setSidebarOpen(true)}
-                aria-label={t("navigation.menu")}
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="lg:hidden" 
+                    onClick={() => setSidebarOpen(true)}
+                    aria-label={t("navigation.menu")}
+                  >
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "메뉴" : "Menu"}</TooltipContent>
+              </Tooltip>
               
               {/* Logo - Left aligned on mobile/tablet */}
               <Link to="/dashboard" className="md:hidden">
