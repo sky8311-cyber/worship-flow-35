@@ -239,6 +239,13 @@ const [loading, setLoading] = useState(false);
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+
+  // Reset close confirm state when dialog closes to prevent stale overlay
+  useEffect(() => {
+    if (!open) {
+      setShowCloseConfirm(false);
+    }
+  }, [open]);
   
   // Track draft song ID for SmartSongFlow upsert
   const draftSongIdRef = useRef<string | null>(null);
