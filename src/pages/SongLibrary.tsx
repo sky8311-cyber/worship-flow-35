@@ -1029,6 +1029,22 @@ const SongLibrary = () => {
         songs={songs || []}
         onMergeComplete={() => refetch()}
       />
+
+      {libraryTutorial.isOpen && libraryTutorial.currentStepData && (
+        <TutorialOverlay
+          isOpen={libraryTutorial.isOpen}
+          currentStep={libraryTutorial.currentStep}
+          totalSteps={libraryTutorial.totalSteps}
+          title={libraryTutorial.currentStepData.title}
+          description={libraryTutorial.currentStepData.description}
+          targetSelector={libraryTutorial.currentStepData.targetSelector}
+          isFirstStep={libraryTutorial.isFirstStep}
+          isLastStep={libraryTutorial.isLastStep}
+          onNext={libraryTutorial.next}
+          onPrev={libraryTutorial.prev}
+          onClose={libraryTutorial.close}
+        />
+      )}
     </AppLayout>
   );
 };
