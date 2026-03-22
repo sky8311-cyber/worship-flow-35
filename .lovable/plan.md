@@ -1,12 +1,19 @@
 
 
-## 404 오류 수정 — `/communities` → `/community/search`
+## 워십세트 카드 액션 버튼 가로 정렬 (모바일)
 
-### 원인
-대시보드의 "예배공동체 찾기" 버튼과 "전체 보기" 링크가 `/communities`로 이동하지만, 실제 라우트는 `/community/search`입니다. `/communities` 라우트는 존재하지 않아 404가 발생합니다.
+### 문제
+스크린샷에서 보기/공유/수정 버튼이 세로로 쌓여 카드 오른쪽 공간을 많이 차지함.
 
-### 수정 파일 (2개)
+### 수정 (1개 파일)
 
-1. **`src/components/dashboard/CommunityNewsfeed.tsx`** (line 189): `<Link to="/communities">` → `<Link to="/community/search">`
-2. **`src/components/dashboard/CommunitiesSidebarList.tsx`** (line 93): `<Link to="/communities">` → `<Link to="/community/search">`
+**`src/components/WorshipSetCard.tsx`** (line 110)
+
+현재: `flex flex-col` → 버튼이 세로 배치
+
+수정:
+- 액션 버튼들을 카드 하단으로 이동하여 가로 한 줄 배치
+- 기존 `flex flex-col gap-1` → `flex flex-row flex-wrap gap-1`
+- 버튼 레이아웃을 카드 콘텐츠 아래로 분리하여 텍스트 영역과 겹치지 않도록 함
+- 아이콘만 표시 (텍스트 숨김) 또는 아이콘+텍스트 가로 배치로 공간 절약
 
