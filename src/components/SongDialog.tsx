@@ -1321,8 +1321,8 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          {/* 5. YouTube Links */}
-          <div>
+          <div data-tutorial="song-youtube-section">
+            <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
             <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
             <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
             
