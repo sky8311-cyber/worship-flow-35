@@ -50,7 +50,7 @@ export const staggerItem: Variants = {
 export const revealOnScroll: Variants = {
   hidden: { 
     opacity: 0, 
-    scale: 1.5,
+    scale: 1.15,
     clipPath: "polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%)"
   },
   visible: { 
@@ -58,7 +58,7 @@ export const revealOnScroll: Variants = {
     scale: 1,
     clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
     transition: { 
-      duration: 1.2, 
+      duration: 0.6, 
       ease: [0.86, 0, 0.31, 1]
     }
   }
@@ -67,7 +67,7 @@ export const revealOnScroll: Variants = {
 export const revealCard: Variants = {
   hidden: { 
     opacity: 0, 
-    scale: 1.1,
+    scale: 1.05,
     clipPath: "polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)"
   },
   visible: { 
@@ -75,7 +75,7 @@ export const revealCard: Variants = {
     scale: 1,
     clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
     transition: { 
-      duration: 1.0, 
+      duration: 0.5, 
       ease: [0.35, 0.35, 0, 1]
     }
   }
@@ -84,7 +84,7 @@ export const revealCard: Variants = {
 export const revealText: Variants = {
   hidden: { 
     opacity: 0, 
-    y: 50,
+    y: 30,
     clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)"
   },
   visible: { 
@@ -92,7 +92,7 @@ export const revealText: Variants = {
     y: 0,
     clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
     transition: { 
-      duration: 0.8, 
+      duration: 0.4, 
       ease: [0.86, 0, 0.31, 1]
     }
   }
@@ -103,8 +103,8 @@ export const revealStaggerContainer: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.15
+      staggerChildren: 0.1,
+      delayChildren: 0.08
     }
   }
 };

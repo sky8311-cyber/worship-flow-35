@@ -1178,9 +1178,16 @@ const [loading, setLoading] = useState(false);
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <div className="flex items-center gap-1 shrink-0">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={songTutorial.start}>
-                <HelpCircle className="w-4 h-4 text-muted-foreground" />
-              </Button>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={songTutorial.start}>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
