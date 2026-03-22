@@ -659,7 +659,7 @@ export default function WorshipSets() {
         </div>
         
         <Card className="shadow-md">
-          <CardHeader className="relative">
+          <CardHeader className="relative p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
                 <Music className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -704,7 +704,7 @@ export default function WorshipSets() {
               </TooltipProvider>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             {/* Filters */}
             <div className="mb-6">
               <WorshipSetFilters
