@@ -1,225 +1,30 @@
-/* K-Worship Institute — Premium Light Design Tokens */
-:root {
-  --inst-bg: #f5f4f0;
-  --inst-surface: #ffffff;
-  --inst-surface2: #f9f8f5;
-  --inst-border: #e8e6e0;
-  --inst-gold: #b8902a;
-  --inst-gold-lt: #d4a840;
-  --inst-gold-bg: #fdf6e8;
-  --inst-gold-bdr: #e8d090;
-  --inst-ink: #1a1a1a;
-  --inst-ink2: #5a5850;
-  --inst-ink3: #9a9890;
-}
+/* K-Worship Institute — Prose styles for chapter content */
 
-.inst-root {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: var(--inst-bg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  font-family: -apple-system, 'Helvetica Neue', sans-serif;
-}
-
-.inst-header {
-  height: 54px;
-  background: var(--inst-surface);
-  border-bottom: 1px solid var(--inst-border);
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.inst-content {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Section header */
-.inst-section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.inst-section-header span {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--inst-ink3);
-  white-space: nowrap;
-}
-
-.inst-section-header::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--inst-border);
-}
-
-/* Gold gradient button */
-.inst-btn-gold {
-  background: linear-gradient(135deg, var(--inst-gold) 0%, var(--inst-gold-lt) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 800;
-  width: 100%;
-  box-shadow: 0 4px 14px rgba(184, 144, 42, 0.3);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.inst-btn-gold:hover {
-  opacity: 0.92;
-}
-
-.inst-btn-gold:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.inst-btn-gold-sm {
-  background: linear-gradient(135deg, var(--inst-gold) 0%, var(--inst-gold-lt) 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 20px;
-  font-size: 12px;
-  font-weight: 800;
-  box-shadow: 0 3px 10px rgba(184, 144, 42, 0.25);
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.inst-btn-gold-sm:hover {
-  opacity: 0.92;
-}
-
-.inst-btn-gold-sm:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Outline button */
-.inst-btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--inst-border);
-  color: var(--inst-ink2);
-  border-radius: 8px;
-  padding: 9px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.inst-btn-outline:hover {
-  border-color: var(--inst-gold-bdr);
-}
-
-.inst-btn-outline:disabled {
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-/* Certified badge tag */
-.inst-badge-certified {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--inst-gold-bg);
-  border: 1px solid var(--inst-gold-bdr);
-  border-radius: 20px;
-  padding: 3px 10px;
-  color: var(--inst-gold);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-/* Card hover */
-.inst-card-hover {
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.inst-card-hover:hover {
-  border-color: var(--inst-gold-bdr);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-/* Module status indicators */
-.inst-status {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.inst-status-done {
-  background: linear-gradient(135deg, var(--inst-gold), var(--inst-gold-lt));
-  color: #fff;
-}
-
-.inst-status-current {
-  background: var(--inst-ink);
-  color: #fff;
-}
-
-.inst-status-pending {
-  background: var(--inst-surface2);
-  color: var(--inst-ink3);
-  border: 1.5px solid var(--inst-border);
-}
-
-.inst-status-locked {
-  background: var(--inst-surface2);
-  color: var(--inst-ink3);
-  border: 1.5px solid var(--inst-border);
-  opacity: 0.4;
-}
-
-/* Prose overrides for module/chapter content */
 .inst-prose {
   font-size: 0.94rem;
-  color: var(--inst-ink2);
+  color: hsl(var(--muted-foreground));
   line-height: 1.85;
 }
 
 .inst-prose strong {
-  color: var(--inst-ink);
+  color: hsl(var(--foreground));
   font-weight: 600;
 }
 
 .inst-prose h2 {
   font-size: 16px;
   font-weight: 700;
-  color: var(--inst-ink);
+  color: hsl(var(--foreground));
   margin: 24px 0 12px;
 }
 
 .inst-prose h3 {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--inst-ink);
+  color: hsl(var(--foreground));
   margin: 1.4rem 0 0.5rem;
   padding-left: 0.6rem;
-  border-left: 3px solid var(--inst-gold);
+  border-left: 3px solid hsl(var(--primary));
 }
 
 .inst-prose p {
@@ -236,55 +41,20 @@
 }
 
 .inst-prose blockquote {
-  border-left: 3px solid var(--inst-gold);
-  background: var(--inst-gold-bg);
+  border-left: 3px solid hsl(var(--primary));
+  background: hsl(var(--muted));
   border-radius: 0 8px 8px 0;
   padding: 10px 14px;
-  color: var(--inst-ink2);
+  color: hsl(var(--muted-foreground));
   font-size: 12px;
   font-style: italic;
   margin: 16px 0;
 }
 
 .inst-prose code {
-  background: var(--inst-surface2);
-  color: var(--inst-gold);
+  background: hsl(var(--muted));
+  color: hsl(var(--primary));
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
-}
-
-/* Progress bar */
-.inst-progress {
-  height: 3px;
-  background: var(--inst-border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.inst-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--inst-gold), var(--inst-gold-lt));
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-/* AI Coach chat */
-.inst-chat-user {
-  background: var(--inst-gold-bg);
-  border-radius: 12px 12px 2px 12px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--inst-ink);
-  max-width: 80%;
-  margin-left: auto;
-}
-
-.inst-chat-ai {
-  background: var(--inst-surface2);
-  border-radius: 12px 12px 12px 2px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: var(--inst-ink2);
-  max-width: 80%;
 }

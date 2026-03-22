@@ -9,6 +9,9 @@ import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteCompletionModal } from "@/components/institute/InstituteCompletionModal";
 import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 
 const InstituteModule = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -60,32 +63,22 @@ const InstituteModule = () => {
     enabled: !!courseId,
   });
 
-  // Fetch chapters for the current module
   const { data: chapters = [] } = useQuery({
     queryKey: ["institute-chapters", moduleId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("institute_chapters")
-        .select("*")
-        .eq("module_id", moduleId!)
-        .order("sort_order");
+      const { data, error } = await supabase.from("institute_chapters").select("*").eq("module_id", moduleId!).order("sort_order");
       if (error) throw error;
       return data || [];
     },
     enabled: !!moduleId,
   });
 
-  // Fetch chapter progress
   const { data: chapterProgress = [] } = useQuery({
     queryKey: ["institute-chapter-progress", user?.id, moduleId],
     queryFn: async () => {
       const chapterIds = chapters.map((c) => c.id);
       if (chapterIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from("institute_chapter_progress")
-        .select("*")
-        .eq("user_id", user!.id)
-        .in("chapter_id", chapterIds);
+      const { data, error } = await supabase.from("institute_chapter_progress").select("*").eq("user_id", user!.id).in("chapter_id", chapterIds);
       if (error) throw error;
       return data || [];
     },
@@ -141,8 +134,8 @@ const InstituteModule = () => {
 
   if (!currentModule || !course) {
     return (
-      <InstituteLayout pageTitle={language === "ko" ? "모듈" : "Module"}>
-        <div style={{ padding: 32, textAlign: "center", color: "var(--inst-ink3)" }}>Loading...</div>
+      <InstituteLayout pageTitle={language === "ko" ? "모듈" : "Module"} showBackButton>
+        <div className="p-8 text-center text-muted-foreground">Loading...</div>
       </InstituteLayout>
     );
   }
@@ -150,30 +143,12 @@ const InstituteModule = () => {
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
-    <InstituteLayout pageTitle={currentModule.title_ko}>
-      <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+    <InstituteLayout pageTitle={currentModule.title_ko} showBackButton>
+      <div className="flex min-h-0">
         {/* Sidebar — desktop only */}
         {!isMobile && (
-          <aside
-            style={{
-              width: 220,
-              background: "var(--inst-surface2)",
-              borderRight: "1px solid var(--inst-border)",
-              overflowY: "auto",
-              padding: "16px 12px",
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: 1.5,
-                textTransform: "uppercase",
-                color: "var(--inst-ink3)",
-                marginBottom: 14,
-              }}
-            >
+          <aside className="w-[220px] bg-muted border-r border-border overflow-y-auto p-4 flex-shrink-0 hidden md:block">
+            <div className="text-[11px] font-bold tracking-wider uppercase text-muted-foreground mb-3.5">
               {course.title_ko}
             </div>
             {modules.map((mod, idx) => {
@@ -187,32 +162,24 @@ const InstituteModule = () => {
                   key={mod.id}
                   disabled={isLocked}
                   onClick={() => accessible && navigate(`/institute/${courseId}/${mod.id}`)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "9px 10px",
-                    borderRadius: 8,
-                    fontSize: 13,
-                    border: isActive ? "1px solid var(--inst-gold-bdr)" : "1px solid transparent",
-                    background: isActive ? "var(--inst-gold-bg)" : "transparent",
-                    color: isCompleted ? "var(--inst-gold)" : isActive ? "var(--inst-ink)" : isLocked ? "var(--inst-ink3)" : "var(--inst-ink2)",
-                    fontWeight: isActive ? 600 : 400,
-                    opacity: isLocked ? 0.4 : 1,
-                    cursor: isLocked ? "not-allowed" : "pointer",
-                    marginBottom: 2,
-                  }}
+                  className={`flex items-center gap-2 w-full text-left py-2 px-2.5 rounded-lg text-[13px] mb-0.5 transition-colors ${
+                    isActive
+                      ? "bg-primary/10 border border-primary/20 text-foreground font-semibold"
+                      : isCompleted
+                      ? "text-primary"
+                      : isLocked
+                      ? "text-muted-foreground opacity-40 cursor-not-allowed"
+                      : "text-muted-foreground hover:bg-muted/80"
+                  }`}
                 >
                   {isLocked ? (
-                    <Lock className="w-3 h-3" style={{ flexShrink: 0 }} />
+                    <Lock className="w-3 h-3 flex-shrink-0" />
                   ) : isCompleted ? (
-                    <Check className="w-3 h-3" style={{ flexShrink: 0 }} />
+                    <Check className="w-3 h-3 flex-shrink-0" />
                   ) : (
-                    <span style={{ width: 12, textAlign: "center", flexShrink: 0 }}>{idx + 1}</span>
+                    <span className="w-3 text-center flex-shrink-0">{idx + 1}</span>
                   )}
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     {language === "ko" ? mod.title_ko : mod.title}
                   </span>
                 </button>
@@ -222,32 +189,30 @@ const InstituteModule = () => {
         )}
 
         {/* Main content */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ flex: 1, overflowY: "auto", background: "var(--inst-bg)" }}>
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 overflow-y-auto">
             {/* Mobile progress bar */}
             {isMobile && (
-              <div style={{ padding: "12px 20px", background: "var(--inst-surface)", borderBottom: "1px solid var(--inst-border)" }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--inst-ink)", marginBottom: 6 }}>
+              <div className="px-5 py-3 bg-card border-b border-border">
+                <div className="text-xs font-semibold text-foreground mb-1.5">
                   {language === "ko" ? currentModule.title_ko : currentModule.title}
                 </div>
-                <div className="inst-progress">
-                  <div className="inst-progress-fill" style={{ width: `${modules.length > 0 ? ((currentIndex + 1) / modules.length) * 100 : 0}%` }} />
-                </div>
+                <Progress value={modules.length > 0 ? ((currentIndex + 1) / modules.length) * 100 : 0} className="h-1" />
               </div>
             )}
 
-            <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
+            <div className="max-w-[680px] mx-auto px-5 py-6">
               {/* Module title */}
               {!isMobile && (
-                <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--inst-ink)", letterSpacing: -0.3, marginBottom: 8 }}>
+                <h1 className="text-xl font-bold text-foreground tracking-tight mb-2">
                   {language === "ko" ? currentModule.title_ko : currentModule.title}
                 </h1>
               )}
 
-              {/* Module description if present and no chapters */}
+              {/* Module description if no chapters */}
               {!hasChapters && (currentModule.content_ko || currentModule.content) && (
                 <div
-                  className="inst-prose"
+                  className="prose prose-sm max-w-none text-muted-foreground"
                   dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }}
                 />
               )}
@@ -255,62 +220,54 @@ const InstituteModule = () => {
               {/* Chapters list */}
               {hasChapters && (
                 <>
-                  {/* Progress summary */}
-                  <div style={{ fontSize: 12, color: "var(--inst-ink3)", marginBottom: 16 }}>
+                  <div className="text-xs text-muted-foreground mb-4">
                     {completedChapterCount}/{chapters.length} {language === "ko" ? "챕터 완료" : "chapters completed"}
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    {chapters.map((ch, idx) => {
+                  <div className="flex flex-col gap-1.5">
+                    {chapters.map((ch) => {
                       const accessible = canAccess(ch.required_tier ?? 0, userTier);
                       const done = chapterProgress.some((p) => p.chapter_id === ch.id && p.completed_at);
 
                       return (
-                        <div
+                        <Card
                           key={ch.id}
+                          className={`${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${!accessible ? "opacity-50" : ""} ${done ? "bg-primary/5" : ""}`}
                           onClick={() => {
-                            if (accessible && enrollment) {
-                              navigate(`/institute/${courseId}/${moduleId}/${ch.id}`);
-                            }
-                          }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            padding: "14px 16px",
-                            borderRadius: 10,
-                            border: "1px solid var(--inst-border)",
-                            background: done ? "var(--inst-gold-bg)" : "var(--inst-surface)",
-                            cursor: accessible && enrollment ? "pointer" : "default",
-                            opacity: !accessible ? 0.5 : 1,
+                            if (accessible && enrollment) navigate(`/institute/${courseId}/${moduleId}/${ch.id}`);
                           }}
                         >
-                          {/* Status indicator */}
-                          <div
-                            className={`inst-status ${
-                              done ? "inst-status-done" : !accessible ? "inst-status-locked" : "inst-status-pending"
-                            }`}
-                          >
-                            {done ? <Check className="w-3.5 h-3.5" /> : !accessible ? <Lock className="w-3 h-3" /> : <PlayCircle className="w-3.5 h-3.5" />}
-                          </div>
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, fontWeight: 500, color: !accessible ? "var(--inst-ink3)" : "var(--inst-ink)" }}>
-                              {language === "ko" ? ch.title_ko || ch.title : ch.title || ch.title_ko}
+                          <CardContent className="p-3.5 flex items-center gap-3">
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
+                                done
+                                  ? "bg-primary text-primary-foreground"
+                                  : !accessible
+                                  ? "bg-muted text-muted-foreground border border-border"
+                                  : "bg-muted text-muted-foreground border border-border"
+                              }`}
+                            >
+                              {done ? <Check className="w-3.5 h-3.5" /> : !accessible ? <Lock className="w-3 h-3" /> : <PlayCircle className="w-3.5 h-3.5" />}
                             </div>
-                            {!accessible && (
-                              <div style={{ fontSize: 10, color: "var(--inst-ink3)", marginTop: 2 }}>
-                                {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
-                              </div>
-                            )}
-                          </div>
 
-                          {done && (
-                            <span style={{ fontSize: 10, color: "var(--inst-gold)", fontWeight: 600 }}>
-                              {language === "ko" ? "완료" : "Done"}
-                            </span>
-                          )}
-                        </div>
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-sm font-medium ${!accessible ? "text-muted-foreground" : "text-foreground"}`}>
+                                {language === "ko" ? ch.title_ko || ch.title : ch.title || ch.title_ko}
+                              </div>
+                              {!accessible && (
+                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                  {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
+                                </div>
+                              )}
+                            </div>
+
+                            {done && (
+                              <span className="text-[10px] text-primary font-semibold">
+                                {language === "ko" ? "완료" : "Done"}
+                              </span>
+                            )}
+                          </CardContent>
+                        </Card>
                       );
                     })}
                   </div>
@@ -320,64 +277,35 @@ const InstituteModule = () => {
           </div>
 
           {/* Bottom nav */}
-          <div
-            style={{
-              background: "var(--inst-surface)",
-              borderTop: "1px solid var(--inst-border)",
-              padding: "12px 24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexShrink: 0,
-            }}
-          >
-            <button
-              className="inst-btn-outline"
+          <div className="bg-card border-t border-border px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
               disabled={!prevModule || !canAccess(prevModule.required_tier, userTier)}
               onClick={() => prevModule && navigate(`/institute/${courseId}/${prevModule.id}`)}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <ChevronLeft className="w-3.5 h-3.5" />
-                {language === "ko" ? "이전 모듈" : "Previous"}
-              </span>
-            </button>
+              <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+              {language === "ko" ? "이전 모듈" : "Previous"}
+            </Button>
 
-            {hasChapters ? (
-              <button
-                className="inst-btn-gold-sm"
-                disabled={!allChaptersCompleted || completeAndNext.isPending}
-                onClick={() => completeAndNext.mutate()}
-              >
-                {isLastModule
-                  ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
-                  : (
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      {language === "ko" ? "다음 모듈로" : "Next Module"}
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-              </button>
-            ) : (
-              <button
-                className="inst-btn-gold-sm"
-                disabled={completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier))}
-                onClick={() => completeAndNext.mutate()}
-              >
-                {isLastModule
-                  ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
-                  : (
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      {language === "ko" ? "다음 모듈로" : "Next Module"}
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  )}
-              </button>
-            )}
+            <Button
+              size="sm"
+              disabled={hasChapters ? (!allChaptersCompleted || completeAndNext.isPending) : (completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier)))}
+              onClick={() => completeAndNext.mutate()}
+            >
+              {isLastModule
+                ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
+                : (
+                  <>
+                    {language === "ko" ? "다음 모듈로" : "Next Module"}
+                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  </>
+                )}
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Completion modal */}
       <InstituteCompletionModal
         open={showCompletion}
         onClose={() => { setShowCompletion(false); navigate(`/institute/${courseId}`); }}
