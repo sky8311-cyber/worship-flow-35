@@ -130,9 +130,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
                   {breadcrumb}
                 </div>
               ) : (
-                <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  <Home className="h-4 w-4" />
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link to="/dashboard" className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <Home className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>{language === "ko" ? "홈" : "Home"}</TooltipContent>
+                </Tooltip>
               )}
             </div>
           
