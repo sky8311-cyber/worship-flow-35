@@ -2207,7 +2207,7 @@ songCard: {
       link: "Link",
       edit: "Edit",
       private: "Private",
-      languageTopicsLabel: "Language / Topics",
+      languageTopicsLabel: "Language / Tags",
       cancel: "Cancel",
       previous: "Previous",
       draftSave: "Save Draft",
