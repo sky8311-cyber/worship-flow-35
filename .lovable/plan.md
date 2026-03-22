@@ -1,37 +1,60 @@
 
+## 프리즈 재수정 계획 (원인 재진단 반영)
 
-## X 버튼 / 취소 버튼 프리즈 수정
+### 원인 재진단
+현재 증상(배경만 검게 되고 박스 프리즈)은 여전히 **중첩 모달 레이어 충돌**입니다.
 
-### 원인
-SmartSongFlow 내부의 `AlertDialog` (z-index: 50)가 부모 `Dialog` (z-index: 60) 뒤에 렌더링됩니다. 확인 창이 열리지만 Dialog 오버레이에 가려져 클릭 불가 → 프리즈 현상.
+- 기본 Dialog: `z-[60]` (`src/components/ui/dialog.tsx`)
+- Close 확인 AlertDialog: `z-50` (`src/components/ui/alert-dialog.tsx`)
 
-### 해결 방법
-SmartSongFlow의 취소 확인 `AlertDialog`에 z-index를 `z-[70]`으로 올려서 부모 Dialog 위에 표시되도록 수정.
+즉, 확인창이 실제로는 부모 Dialog 뒤에 떠서 클릭이 막히고 포커스만 잠겨 프리즈처럼 보입니다.  
+또한 SmartSongFlow 모드에서 바깥 클릭 동작이 명시적으로 제어되지 않아 즉시 닫힘처럼 보일 수 있습니다.
 
-### 변경 내용
+---
 
-**파일: `src/components/songs/SmartSongFlow.tsx`** — line 554-567 (Cancel Confirmation AlertDialog)
+## 구현 계획
 
-현재:
-```tsx
-<AlertDialogContent>
-```
+### 1) AlertDialog 레이어 우선순위 상향 (공통 UI)
+**파일:** `src/components/ui/alert-dialog.tsx`
 
-변경:
-```tsx
-<AlertDialogContent className="z-[70]">
-```
+- `AlertDialogOverlay`와 `AlertDialogContent`의 z-index를 Dialog보다 높게 조정
+  - `z-50` → `z-[70]` (또는 상위 고정값)
+- 이렇게 하면 SongDialog 위에서 확인창이 항상 클릭 가능
 
-그리고 AlertDialog의 overlay도 z-[70]으로 올려야 하므로, AlertDialogContent만으로는 부족합니다. Radix AlertDialog Portal 안의 overlay가 z-50이기 때문입니다.
+### 2) SmartSongFlow 모드의 바깥 클릭/ESC 닫힘 제어
+**파일:** `src/components/SongDialog.tsx`
 
-실제 수정: SmartSongFlow의 AlertDialog를 쓰지 않고, **SmartSongFlow에서 `onCancel` 콜백을 호출 → SongDialog에서 취소 확인 AlertDialog를 렌더링**하는 방식으로 변경. SongDialog의 AlertDialog는 이미 Dialog 바깥에 렌더링되므로 z-index 충돌 없음.
+- SmartSongFlow 모드(`!song || song.status === 'draft'`)에서:
+  - `DialogContent`에 `onPointerDownOutside`, `onInteractOutside`, `onEscapeKeyDown` 처리 추가
+  - 기본 닫힘을 `preventDefault()`로 막고 `setShowCloseConfirm(true)` 실행
+- 목표: 바깥 클릭/ESC도 X/취소와 동일하게 “닫기 확인”으로 통일
 
-구체적으로:
-1. **SmartSongFlow**: `showCancelConfirm` 상태와 AlertDialog 제거. X/취소 버튼 클릭 시 `onCancel()` 콜백 호출
-2. **SmartSongFlow props**: `onCancel: () => void` 추가
-3. **SongDialog**: SmartSongFlow 모드일 때 `handleOpenChange`에서 `showCloseConfirm`을 사용하여 확인 다이얼로그 표시. 기존 `showCloseConfirm` AlertDialog 재활용 (이미 Dialog 바깥에 렌더링됨)
+### 3) Close confirm 상태 누수 방지
+**파일:** `src/components/SongDialog.tsx`
 
-### 수정 파일
-1. `src/components/songs/SmartSongFlow.tsx` — AlertDialog 제거, onCancel prop 추가
-2. `src/components/SongDialog.tsx` — SmartSongFlow에 onCancel 전달, handleOpenChange에서 확인 다이얼로그 표시
+- 다이얼로그가 닫힐 때 `showCloseConfirm`를 강제 false로 리셋하는 effect 추가
+- 재오픈 시 이전 confirm 상태가 남아 검은 오버레이만 뜨는 케이스 차단
 
+### 4) SmartSongFlow 접근성 경고 정리 (안정성 보강)
+**파일:** `src/components/SongDialog.tsx`
+
+- SmartSongFlow 분기에서도 `DialogTitle`/`DialogDescription`(sr-only) 제공
+- 현재 콘솔 경고:
+  - DialogTitle required
+  - Missing Description
+- 경고 제거로 포커스/모달 동작 안정성 개선
+
+---
+
+## 수정 파일
+1. `src/components/ui/alert-dialog.tsx`
+2. `src/components/SongDialog.tsx`
+
+---
+
+## 검증 시나리오 (데스크탑 + 모바일)
+1. 곡 추가 창에서 **X 클릭** → 확인창이 Dialog 위에 정상 표시되고 버튼 클릭 가능
+2. **취소 버튼 클릭** → 동일 동작
+3. **창 바깥 클릭** → 즉시 닫히지 않고 확인창 표시
+4. 확인창에서 **Stay/계속 작성** → 원래 폼으로 복귀, 프리즈 없음
+5. 확인창에서 **Close/닫기** → 완전 종료, 배경 검은 오버레이 잔존 없음
