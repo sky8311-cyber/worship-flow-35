@@ -138,7 +138,7 @@ export const TutorialOverlay = ({
     <div className="fixed inset-0 z-[90]">
       {/* Backdrop with spotlight cutout */}
       <div
-        className="absolute inset-0 bg-black/60 transition-all duration-300"
+        className="absolute inset-0 bg-black/60"
         style={spotlightStyle}
         onClick={onClose}
       />
