@@ -1263,8 +1263,8 @@ const [loading, setLoading] = useState(false);
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Title */}
-          <div>
+          <div data-tutorial="song-title-input">
+            <Label htmlFor="title">{t("songDialog.title")} *</Label>
             <Label htmlFor="title">{t("songDialog.title")} *</Label>
             <Input
               id="title"
