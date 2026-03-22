@@ -63,107 +63,103 @@ export function WorshipSetCard({ set, songs = [], canManage, isPast = false, onD
       onClick={handleCardClick}
     >
       <CardContent className="p-4">
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <Badge variant={set.status === "published" ? "default" : "secondary"}>
-                {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <Badge variant={set.status === "published" ? "default" : "secondary"}>
+              {set.status === "draft" ? t("worshipSets.filterDraft") : t("worshipSets.filterPublished")}
+            </Badge>
+            {set.status === "published" && (
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  isPast 
+                    ? "text-muted-foreground border-muted-foreground/50" 
+                    : "text-green-600 border-green-600"
+                )}
+              >
+                {isPast 
+                  ? (language === "ko" ? "지난 예배" : "Past") 
+                  : (language === "ko" ? "예정" : "Upcoming")}
               </Badge>
-              {set.status === "published" && (
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    isPast 
-                      ? "text-muted-foreground border-muted-foreground/50" 
-                      : "text-green-600 border-green-600"
-                  )}
-                >
-                  {isPast 
-                    ? (language === "ko" ? "지난 예배" : "Past") 
-                    : (language === "ko" ? "예정" : "Upcoming")}
-                </Badge>
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">{formattedDate}</p>
-            <h3 className="font-semibold truncate mt-1">{set.service_name}</h3>
-            {set.worship_leader && (
-              <p className="text-sm text-muted-foreground truncate">{set.worship_leader}</p>
             )}
-            
-            {/* Song Preview */}
-            {songs.length > 0 && (
-              <div className="mt-3 pt-2 border-t">
-                <div className="flex items-start gap-1.5">
-                  <Music className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    {songs.map((title, idx) => (
-                      <p key={idx} className="text-xs text-muted-foreground truncate">
-                        {title}
-                      </p>
-                    ))}
-                  </div>
+          </div>
+          <p className="text-sm text-muted-foreground">{formattedDate}</p>
+          <h3 className="font-semibold truncate mt-1">{set.service_name}</h3>
+          {set.worship_leader && (
+            <p className="text-sm text-muted-foreground truncate">{set.worship_leader}</p>
+          )}
+          
+          {songs.length > 0 && (
+            <div className="mt-3 pt-2 border-t">
+              <div className="flex items-start gap-1.5">
+                <Music className="w-3.5 h-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  {songs.map((title, idx) => (
+                    <p key={idx} className="text-xs text-muted-foreground truncate">
+                      {title}
+                    </p>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
-          
-          <div className="flex flex-col gap-1" onClick={(e) => e.stopPropagation()}>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="h-8 px-2 gap-1 text-xs justify-start"
-              onClick={() => navigate(`/band-view/${set.id}`)}
-            >
-              <Eye className="w-4 h-4" />
-              {language === "ko" ? "보기" : "View"}
-            </Button>
-            {canManage && (
-              <>
-                {onShare && (
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="h-8 px-2 gap-1 text-xs justify-start"
-                    onClick={() => onShare(set)}
-                  >
-                    <Share2 className="w-4 h-4" />
-                    {language === "ko" ? "공유" : "Share"}
-                  </Button>
-                )}
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="h-8 px-2 gap-1 text-xs justify-start"
-                  onClick={handleEditClick}
-                >
-                  <Edit className="w-4 h-4" />
-                  {language === "ko" ? "수정" : "Edit"}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost"
-                  className="h-8 px-2 gap-1 text-xs justify-start"
-                  onClick={() => onTogglePublish(set.id, set.status)}
-                >
-                  {set.status === "draft" ? <Upload className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                  {set.status === "draft" 
-                    ? (language === "ko" ? "게시" : "Publish") 
-                    : (language === "ko" ? "취소" : "Unpublish")}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
-                  className="group h-8 px-2 gap-1 text-xs justify-start text-destructive hover:bg-destructive hover:text-white"
-                  onClick={() => onDelete(set.id)}
-                >
-                  <Trash2 className="w-4 h-4 group-hover:text-white" />
-                  {language === "ko" ? "삭제" : "Delete"}
-                </Button>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-        
+
+        <div className="flex flex-row flex-wrap gap-1 mt-3 pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            size="sm" 
+            variant="ghost" 
+            className="h-7 px-2 gap-1 text-xs"
+            onClick={() => navigate(`/band-view/${set.id}`)}
+          >
+            <Eye className="w-3.5 h-3.5" />
+            {language === "ko" ? "보기" : "View"}
+          </Button>
+          {canManage && (
+            <>
+              {onShare && (
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 px-2 gap-1 text-xs"
+                  onClick={() => onShare(set)}
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  {language === "ko" ? "공유" : "Share"}
+                </Button>
+              )}
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 px-2 gap-1 text-xs"
+                onClick={handleEditClick}
+              >
+                <Edit className="w-3.5 h-3.5" />
+                {language === "ko" ? "수정" : "Edit"}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost"
+                className="h-7 px-2 gap-1 text-xs"
+                onClick={() => onTogglePublish(set.id, set.status)}
+              >
+                {set.status === "draft" ? <Upload className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                {set.status === "draft" 
+                  ? (language === "ko" ? "게시" : "Publish") 
+                  : (language === "ko" ? "취소" : "Unpublish")}
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="group h-7 px-2 gap-1 text-xs text-destructive hover:bg-destructive hover:text-white"
+                onClick={() => onDelete(set.id)}
+              >
+                <Trash2 className="w-3.5 h-3.5 group-hover:text-white" />
+                {language === "ko" ? "삭제" : "Delete"}
+              </Button>
+            </>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
