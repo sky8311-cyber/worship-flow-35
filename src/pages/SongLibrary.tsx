@@ -666,7 +666,7 @@ const SongLibrary = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 pr-24">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <CardTitle className="text-base md:text-lg flex items-center gap-2">
                   <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
