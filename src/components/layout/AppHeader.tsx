@@ -174,9 +174,14 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             </Tooltip>
             
             {/* Share/Referral Icon */}
-            <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
-              <Share2 className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "공유" : "Share"}</TooltipContent>
+            </Tooltip>
             
             {/* Song Cart - Shows only when items in cart */}
             {(isWorshipLeader || isAdmin) && <SongCartPopover />}
