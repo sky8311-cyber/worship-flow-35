@@ -2423,6 +2423,21 @@ const SetBuilder = () => {
           });
         }}
       />
+      {tutorial.isOpen && tutorial.currentStepData && (
+        <TutorialOverlay
+          isOpen={tutorial.isOpen}
+          currentStep={tutorial.currentStep}
+          totalSteps={tutorial.totalSteps}
+          title={tutorial.currentStepData.title}
+          description={tutorial.currentStepData.description}
+          targetSelector={tutorial.currentStepData.targetSelector}
+          isFirstStep={tutorial.isFirstStep}
+          isLastStep={tutorial.isLastStep}
+          onNext={tutorial.next}
+          onPrev={tutorial.prev}
+          onClose={tutorial.close}
+        />
+      )}
     </AppLayout>
     </>
   );
