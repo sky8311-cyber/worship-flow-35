@@ -249,6 +249,7 @@ const [loading, setLoading] = useState(false);
   
   // Track draft song ID for SmartSongFlow upsert
   const draftSongIdRef = useRef<string | null>(null);
+  const smartFlowRef = useRef<SmartSongFlowRef>(null);
   
   // Reset draft ID when dialog opens/closes or song changes
   useEffect(() => {
