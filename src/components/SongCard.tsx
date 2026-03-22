@@ -204,7 +204,7 @@ export const SongCard = memo(function SongCard({
                   <span className="truncate">{t("songCard.viewYouTube")}</span>
                 </Button>
               )}
-              {song.score_file_url && (
+              {scoreUrl && (
                 <Button
                   variant="outline"
                   size="sm"
