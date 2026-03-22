@@ -753,23 +753,6 @@ const SongLibrary = () => {
                 )}
               </div>
 
-              {/* Desktop/Tablet: Selection Mode Button */}
-              {isWorshipLeader && (
-                <div className="hidden sm:block">
-                  <Button
-                    variant={selectionMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectionMode(!selectionMode);
-                      setSelectedSongIds(new Set());
-                    }}
-                    className="gap-1 px-2 text-sm"
-                  >
-                    <CheckSquare className="w-4 h-4" />
-                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
-                  </Button>
-                </div>
-              )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
