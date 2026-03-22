@@ -61,6 +61,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const { user } = useAuth();
   
   const isKo = language === "ko";
+
+  useImperativeHandle(ref, () => ({
+    triggerDraftSave: handleDraftSaveInternal,
+  }));
   
   // Current step (1-indexed)
   const [currentStep, setCurrentStep] = useState(draftSong?.draft_step || 1);
