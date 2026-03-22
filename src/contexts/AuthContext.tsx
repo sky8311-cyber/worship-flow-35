@@ -292,22 +292,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Show timezone toast on SIGNED_IN event (login)
+        // Skip INITIAL_SESSION if initAuth already fetched this user's profile
+        if (event === "INITIAL_SESSION" && initFetchDoneRef.current && prevUserId === newUserId) {
+          // Still run syncWorshipLeaderRole but skip redundant fetchProfile
+          setTimeout(async () => {
+            await syncWorshipLeaderRole();
+          }, 0);
+          return;
+        }
+
         const showToast = event === "SIGNED_IN";
-        // Use setTimeout to avoid potential deadlock; fetchProfile will set loading=false
         setTimeout(async () => {
           await fetchProfile(session.user.id, showToast);
           
-          // Credit daily login reward on SIGNED_IN event (fire-and-forget)
           if (event === "SIGNED_IN") {
             creditDailyLoginReward(session.user.id);
           }
           
-          // Update last_active_at for ALL session events (SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION)
-          // This ensures activity is tracked even when users return to a tab or refresh the page
+          // Update last_active_at once per session event (consolidated here, removed from usePageAnalytics)
           const shouldUpdateActivity = event === "SIGNED_IN" || 
-                                       event === "TOKEN_REFRESHED" || 
-                                       event === "INITIAL_SESSION";
+                                       event === "TOKEN_REFRESHED";
           if (shouldUpdateActivity) {
             supabase.from('profiles').update({ 
               last_active_at: new Date().toISOString() 
@@ -316,7 +320,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
           }
           
-          // Sync worship leader role after profile is loaded
           await syncWorshipLeaderRole();
         }, 0);
       } else {
