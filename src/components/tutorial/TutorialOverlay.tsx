@@ -39,6 +39,7 @@ export const TutorialOverlay = ({
 }: TutorialOverlayProps) => {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<"top" | "bottom">("bottom");
+  const rafRef = useRef<number | null>(null);
 
   const updatePosition = useCallback(() => {
     const el = document.querySelector(`[data-tutorial="${targetSelector}"]`);
@@ -51,11 +52,9 @@ export const TutorialOverlay = ({
         height: rect.height,
       });
 
-      // Scroll element into view if needed
       const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
       if (!isVisible) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Recalculate after scroll
         setTimeout(() => {
           const newRect = el.getBoundingClientRect();
           setTargetRect({
@@ -74,18 +73,26 @@ export const TutorialOverlay = ({
     }
   }, [targetSelector]);
 
+  const throttledUpdate = useCallback(() => {
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      updatePosition();
+      rafRef.current = null;
+    });
+  }, [updatePosition]);
+
   useEffect(() => {
     if (!isOpen) return;
-    // Delay slightly to let DOM settle
     const timer = setTimeout(updatePosition, 100);
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", throttledUpdate);
+    window.addEventListener("scroll", throttledUpdate, true);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", throttledUpdate);
+      window.removeEventListener("scroll", throttledUpdate, true);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [isOpen, updatePosition, currentStep]);
+  }, [isOpen, updatePosition, throttledUpdate, currentStep]);
 
   if (!isOpen) return null;
 
