@@ -28,25 +28,25 @@ export const useTutorial = ({ key, steps, autoStart = true, autoStartDelay = 800
     setIsOpen(true);
   }, []);
 
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setCurrentStep(0);
+    localStorage.setItem(storageKey, "true");
+  }, [storageKey]);
+
   const next = useCallback(() => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
     } else {
       close();
     }
-  }, [currentStep, steps.length]);
+  }, [currentStep, steps.length, close]);
 
   const prev = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep((s) => s - 1);
     }
   }, [currentStep]);
-
-  const close = useCallback(() => {
-    setIsOpen(false);
-    setCurrentStep(0);
-    localStorage.setItem(storageKey, "true");
-  }, [storageKey]);
 
   // Auto-start on first visit
   useEffect(() => {
