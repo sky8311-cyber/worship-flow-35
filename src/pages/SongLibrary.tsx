@@ -708,20 +708,6 @@ const SongLibrary = () => {
               
               {/* Mobile only: Action Buttons */}
               <div className="flex sm:hidden items-center gap-2">
-                {isWorshipLeader && (
-                  <Button
-                    variant={selectionMode ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectionMode(!selectionMode);
-                      setSelectedSongIds(new Set());
-                    }}
-                    className="gap-1 px-2 text-[11px]"
-                  >
-                    <CheckSquare className="w-3 h-3" />
-                    {selectionMode ? t("songLibrary.exitSelection") : t("songLibrary.selectionMode")}
-                  </Button>
-                )}
                 {(isWorshipLeader || isAdmin) && (
                   <Button
                     variant="default"
