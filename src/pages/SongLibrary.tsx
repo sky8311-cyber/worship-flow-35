@@ -58,6 +58,8 @@ const SongLibrary = () => {
   const { playerState } = useMusicPlayer();
   const isScrollingDown = useScrollDirection();
   
+  const libraryTutorial = useTutorial({ key: "song-library", steps: SONG_LIBRARY_STEPS, autoStart: true, autoStartDelay: 1200 });
+  
   // Remember scroll position
   useScrollPosition("song-library");
   const [searchQuery, setSearchQuery] = useState("");
