@@ -56,7 +56,24 @@ const InstructorManage = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { userTier } = useUserTier();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  // Get church account for community tier users
+  const { data: churchAccount } = useQuery({
+    queryKey: ["my-church-account", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("church_account_members")
+        .select("church_account_id")
+        .eq("user_id", user!.id)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && userTier >= 3,
+  });
 
   // Check if current user is an instructor
   const { data: isInstructor, isLoading: checkingInstructor } = useQuery({
