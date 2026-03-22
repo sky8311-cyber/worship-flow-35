@@ -679,8 +679,9 @@ const SongLibrary = () => {
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={libraryTutorial.start}>
-                          <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                        <Button variant="ghost" size="sm" className="h-7 gap-1 text-muted-foreground" onClick={libraryTutorial.start}>
+                          <HelpCircle className="w-3.5 h-3.5" />
+                          <span className="text-xs">가이드</span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>

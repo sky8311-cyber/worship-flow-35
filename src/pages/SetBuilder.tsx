@@ -1564,8 +1564,9 @@ const SetBuilder = () => {
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={tutorial.start}>
-                    <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                  <Button variant="ghost" size="sm" className="h-8 gap-1 text-muted-foreground" onClick={tutorial.start}>
+                    <HelpCircle className="w-4 h-4" />
+                    <span className="text-xs">가이드</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" className="text-xs">가이드 보기</TooltipContent>
