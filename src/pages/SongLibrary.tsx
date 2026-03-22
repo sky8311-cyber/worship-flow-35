@@ -534,9 +534,9 @@ const SongLibrary = () => {
         )}
 
         <Card className="shadow-md mb-6">
-          <CardHeader className="relative">
-            {/* View Mode Toggle, Cross-Community Toggle & Action Buttons - Top Right Corner */}
-            <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+          <CardHeader>
+            {/* View Mode Toggle, Cross-Community Toggle & Action Buttons */}
+            <div className="flex flex-col items-end gap-2 mb-2">
               {/* First row: Cross-Community + View Mode Toggle */}
               <div className="flex items-center gap-2">
                 {/* Cross-Community Toggle */}
