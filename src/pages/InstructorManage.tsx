@@ -406,6 +406,11 @@ const InstructorManage = () => {
             ))}
           </div>
         )}
+
+        {/* Invitation section for community accounts (tier 3) */}
+        {userTier >= 3 && churchAccount?.church_account_id && (
+          <InstituteInviteSection churchAccountId={churchAccount.church_account_id} />
+        )}
       </div>
     </AppLayout>
   );
