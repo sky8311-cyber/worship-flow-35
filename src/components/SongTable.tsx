@@ -32,13 +32,6 @@ interface SongTableProps {
   songs: any[];
   onEdit?: (song: any) => void;
   onDelete?: () => void;
-  selectionMode?: boolean;
-  selectedSongs?: Set<string>;
-  onToggleSelection?: (songId: string) => void;
-  onSelectAll?: () => void;
-  bulkEditMode?: boolean;
-  editedSongs?: Record<string, any>;
-  onUpdateEditedSong?: (songId: string, field: string, value: any) => void;
   columnFilters?: Record<string, string>;
   onColumnFilter?: (column: string, value: string) => void;
   columnSort?: { column: string | null; direction: 'asc' | 'desc' | null };
