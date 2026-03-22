@@ -608,7 +608,10 @@ function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, se
   );
 }
 
-function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, t }: any) {
+function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, title, setTitle, t }: any) {
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState(title);
+
   const handleSelectAndScroll = (result: YouTubeResult) => {
     onSelect(result);
     setTimeout(() => {
@@ -687,6 +690,39 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Title confirmation */}
+      {selectedResult && (
+        <div className="space-y-2 pt-3 border-t">
+          <Label>{t("songFlow.confirmTitle")}</Label>
+          {editingTitle ? (
+            <div className="flex gap-2">
+              <Input
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                autoFocus
+                className="flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && editTitleValue.trim()) {
+                    setTitle(editTitleValue.trim());
+                    setEditingTitle(false);
+                  }
+                }}
+              />
+              <Button size="sm" onClick={() => { if (editTitleValue.trim()) { setTitle(editTitleValue.trim()); setEditingTitle(false); } }}>
+                {t("songFlow.titleConfirmed")}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium flex-1">"{title}"</p>
+              <Button variant="outline" size="sm" onClick={() => { setEditTitleValue(title); setEditingTitle(true); }}>
+                <Pen className="w-3 h-3 mr-1" /> {t("songFlow.editTitle")}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

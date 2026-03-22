@@ -4490,6 +4490,11 @@ songCard: {
       untitled: "제목 없음",
       lyricsPage: "가사 페이지",
       original: "원곡",
+      confirmTitle: "제목 확인",
+      editTitle: "수정",
+      titleConfirmed: "확인",
+      selectYoutubeAndArtist: "유튜브를 선택하고 아티스트를 입력해주세요",
+      uploadScoreRequired: "악보를 최소 1개 업로드해주세요",
     },
     addToSet: {
       title: "워십세트에 추가",
