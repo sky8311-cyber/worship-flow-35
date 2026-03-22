@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserTier } from "@/hooks/useUserTier";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronLeft, BookOpen, AlertCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { InstituteInviteSection } from "@/components/institute/InstituteInviteSection";
 
 const TIER_OPTIONS = [
   { value: "0", label: "모든 멤버", labelEn: "All Members" },
@@ -54,7 +56,24 @@ const InstructorManage = () => {
   const { language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { userTier } = useUserTier();
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+
+  // Get church account for community tier users
+  const { data: churchAccount } = useQuery({
+    queryKey: ["my-church-account", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("church_account_members")
+        .select("church_account_id")
+        .eq("user_id", user!.id)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && userTier >= 3,
+  });
 
   // Check if current user is an instructor
   const { data: isInstructor, isLoading: checkingInstructor } = useQuery({
@@ -386,6 +405,11 @@ const InstructorManage = () => {
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Invitation section for community accounts (tier 3) */}
+        {userTier >= 3 && churchAccount?.church_account_id && (
+          <InstituteInviteSection churchAccountId={churchAccount.church_account_id} />
         )}
       </div>
     </AppLayout>

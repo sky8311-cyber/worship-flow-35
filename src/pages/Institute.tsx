@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useTierFeature } from "@/hooks/useTierFeature";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { InstituteInvitationBanner } from "@/components/institute/InstituteInvitationBanner";
 import { Play, Sparkles } from "lucide-react";
 import { useState } from "react";
 
@@ -229,7 +230,8 @@ export default function Institute() {
   return (
     <InstituteLayout>
       <div style={S.page}>
-
+        {/* Invitation banner */}
+        <InstituteInvitationBanner />
         {/* ═══ Hero ═══ */}
         <div style={S.hero}>
           <div style={S.eyebrow}>🎓 K-WORSHIP CERTIFIED</div>
