@@ -99,6 +99,7 @@ const InstructorManage = lazyWithRetry(() => import("./pages/InstructorManage"))
 const Institute = lazyWithRetry(() => import("./pages/Institute"));
 const InstituteCourse = lazyWithRetry(() => import("./pages/InstituteCourse"));
 const InstituteModule = lazyWithRetry(() => import("./pages/InstituteModule"));
+const InstituteChapter = lazyWithRetry(() => import("./pages/InstituteChapter"));
 const InstituteCertification = lazyWithRetry(() => import("./pages/InstituteCertification"));
 
 // Public/invitation pages
