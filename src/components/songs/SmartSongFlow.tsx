@@ -465,6 +465,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           artistSectionRef={artistSectionRef}
           artistHighlight={artistHighlight}
           setArtistHighlight={setArtistHighlight}
+          title={title}
+          setTitle={setTitle}
           t={t}
         />}
         {currentStep === 3 && <Step3_LinksScores
