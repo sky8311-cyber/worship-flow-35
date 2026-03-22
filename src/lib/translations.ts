@@ -2166,7 +2166,7 @@ songCard: {
       selectArtist: "Please select or enter an artist",
       youtubeChannel: "YouTube Channel: {name}",
       youtubeLinks: "YouTube Links",
-      labelPlaceholder: "Label (e.g., Original, Live)",
+      labelPlaceholder: "e.g., Bass cover, Drum cover, Live version, Studio version",
       addYoutubeLink: "Add YouTube Link",
       scores: "Scores",
       keySelect: "Select Key",
