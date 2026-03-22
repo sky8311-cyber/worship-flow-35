@@ -281,15 +281,7 @@ const handleDelete = async (song: any) => {
                       </Badge>
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.default_key || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'default_key', e.target.value)}
-                        className="h-8 text-sm w-16"
-                      />
-                    ) : (
                       <span>{song.default_key || "-"}</span>
-                    )}
                   </TableCell>
                   <TableCell>
                     {isEditable ? (
