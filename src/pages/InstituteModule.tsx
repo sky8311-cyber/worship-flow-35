@@ -6,9 +6,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
-import { InstituteAiCoach } from "@/components/institute/InstituteAiCoach";
 import { InstituteCompletionModal } from "@/components/institute/InstituteCompletionModal";
-import { Lock, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const InstituteModule = () => {
@@ -61,11 +60,47 @@ const InstituteModule = () => {
     enabled: !!courseId,
   });
 
+  // Fetch chapters for the current module
+  const { data: chapters = [] } = useQuery({
+    queryKey: ["institute-chapters", moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("institute_chapters")
+        .select("*")
+        .eq("module_id", moduleId!)
+        .order("sort_order");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!moduleId,
+  });
+
+  // Fetch chapter progress
+  const { data: chapterProgress = [] } = useQuery({
+    queryKey: ["institute-chapter-progress", user?.id, moduleId],
+    queryFn: async () => {
+      const chapterIds = chapters.map((c) => c.id);
+      if (chapterIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("institute_chapter_progress")
+        .select("*")
+        .eq("user_id", user!.id)
+        .in("chapter_id", chapterIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id && chapters.length > 0,
+  });
+
   const currentModule = modules.find((m) => m.id === moduleId);
   const currentIndex = modules.findIndex((m) => m.id === moduleId);
   const prevModule = currentIndex > 0 ? modules[currentIndex - 1] : null;
   const nextModule = currentIndex < modules.length - 1 ? modules[currentIndex + 1] : null;
   const isLastModule = currentIndex === modules.length - 1 && currentIndex >= 0;
+
+  const hasChapters = chapters.length > 0;
+  const completedChapterCount = chapterProgress.filter((p) => p.completed_at).length;
+  const allChaptersCompleted = hasChapters && completedChapterCount === chapters.length;
 
   useEffect(() => {
     if (enrollment === null && user) navigate(`/institute/${courseId}`, { replace: true });
@@ -112,11 +147,6 @@ const InstituteModule = () => {
     );
   }
 
-  const getYouTubeEmbedUrl = (url: string) => {
-    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
-  };
-
   const completedModules = enrollment?.completed_modules || 0;
 
   return (
@@ -136,8 +166,8 @@ const InstituteModule = () => {
           >
             <div
               style={{
-              fontSize: 11,
-              fontWeight: 700,
+                fontSize: 11,
+                fontWeight: 700,
                 letterSpacing: 1.5,
                 textTransform: "uppercase",
                 color: "var(--inst-ink3)",
@@ -207,48 +237,85 @@ const InstituteModule = () => {
             )}
 
             <div style={{ maxWidth: 680, margin: "0 auto", padding: "24px 20px" }}>
-              {/* Video */}
-              {currentModule.video_url && (() => {
-                const ytUrl = getYouTubeEmbedUrl(currentModule.video_url);
-                return (
-                  <div
-                    style={{
-                      background: "var(--inst-ink)",
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      marginBottom: 22,
-                      position: "relative",
-                      paddingTop: "56.25%",
-                    }}
-                  >
-                    {ytUrl ? (
-                      <iframe src={ytUrl} className="absolute inset-0 w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
-                    ) : (
-                      <video src={currentModule.video_url} controls className="absolute inset-0 w-full h-full" />
-                    )}
-                  </div>
-                );
-              })()}
-
-              {/* Title */}
+              {/* Module title */}
               {!isMobile && (
-                <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--inst-ink)", letterSpacing: -0.3, marginBottom: 16 }}>
+                <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--inst-ink)", letterSpacing: -0.3, marginBottom: 8 }}>
                   {language === "ko" ? currentModule.title_ko : currentModule.title}
                 </h1>
               )}
 
-              {/* Content */}
-              {(language === "ko" ? currentModule.content_ko : currentModule.content) && (
+              {/* Module description if present and no chapters */}
+              {!hasChapters && (currentModule.content_ko || currentModule.content) && (
                 <div
                   className="inst-prose"
                   dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }}
                 />
               )}
 
-              {/* AI Coach */}
-              <div style={{ marginTop: 24 }}>
-                <InstituteAiCoach courseId={courseId!} moduleId={moduleId!} />
-              </div>
+              {/* Chapters list */}
+              {hasChapters && (
+                <>
+                  {/* Progress summary */}
+                  <div style={{ fontSize: 12, color: "var(--inst-ink3)", marginBottom: 16 }}>
+                    {completedChapterCount}/{chapters.length} {language === "ko" ? "챕터 완료" : "chapters completed"}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {chapters.map((ch, idx) => {
+                      const accessible = canAccess(ch.required_tier ?? 0, userTier);
+                      const done = chapterProgress.some((p) => p.chapter_id === ch.id && p.completed_at);
+
+                      return (
+                        <div
+                          key={ch.id}
+                          onClick={() => {
+                            if (accessible && enrollment) {
+                              navigate(`/institute/${courseId}/${moduleId}/${ch.id}`);
+                            }
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            padding: "14px 16px",
+                            borderRadius: 10,
+                            border: "1px solid var(--inst-border)",
+                            background: done ? "var(--inst-gold-bg)" : "var(--inst-surface)",
+                            cursor: accessible && enrollment ? "pointer" : "default",
+                            opacity: !accessible ? 0.5 : 1,
+                          }}
+                        >
+                          {/* Status indicator */}
+                          <div
+                            className={`inst-status ${
+                              done ? "inst-status-done" : !accessible ? "inst-status-locked" : "inst-status-pending"
+                            }`}
+                          >
+                            {done ? <Check className="w-3.5 h-3.5" /> : !accessible ? <Lock className="w-3 h-3" /> : <PlayCircle className="w-3.5 h-3.5" />}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 500, color: !accessible ? "var(--inst-ink3)" : "var(--inst-ink)" }}>
+                              {language === "ko" ? ch.title_ko || ch.title : ch.title || ch.title_ko}
+                            </div>
+                            {!accessible && (
+                              <div style={{ fontSize: 10, color: "var(--inst-ink3)", marginTop: 2 }}>
+                                {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
+                              </div>
+                            )}
+                          </div>
+
+                          {done && (
+                            <span style={{ fontSize: 10, color: "var(--inst-gold)", fontWeight: 600 }}>
+                              {language === "ko" ? "완료" : "Done"}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -275,20 +342,37 @@ const InstituteModule = () => {
               </span>
             </button>
 
-            <button
-              className="inst-btn-gold-sm"
-              disabled={completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier))}
-              onClick={() => completeAndNext.mutate()}
-            >
-              {isLastModule
-                ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
-                : (
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    {language === "ko" ? "다음 모듈로" : "Next Module"}
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </span>
-                )}
-            </button>
+            {hasChapters ? (
+              <button
+                className="inst-btn-gold-sm"
+                disabled={!allChaptersCompleted || completeAndNext.isPending}
+                onClick={() => completeAndNext.mutate()}
+              >
+                {isLastModule
+                  ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
+                  : (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      {language === "ko" ? "다음 모듈로" : "Next Module"}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+              </button>
+            ) : (
+              <button
+                className="inst-btn-gold-sm"
+                disabled={completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier))}
+                onClick={() => completeAndNext.mutate()}
+              >
+                {isLastModule
+                  ? (language === "ko" ? "수강 완료 ✓" : "Complete Course ✓")
+                  : (
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      {language === "ko" ? "다음 모듈로" : "Next Module"}
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+              </button>
+            )}
           </div>
         </div>
       </div>
