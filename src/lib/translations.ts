@@ -4473,7 +4473,7 @@ songCard: {
       save: "저장",
       enterTitle: "곡 제목을 입력해주세요",
       selectLanguage: "언어를 선택해주세요",
-      minTopics: "주제를 최소 2개 선택해주세요",
+      minTopics: "태그를 최소 2개 선택해주세요",
       uploadComplete: "업로드 완료",
       uploadError: "업로드 오류: {message}",
       downloadComplete: "다운로드 완료",
