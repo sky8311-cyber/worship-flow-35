@@ -171,8 +171,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
 
   const handleSelectYoutubeResult = (result: YouTubeResult) => {
     setSelectedYoutubeResult(result);
-    setArtist(result.channelTitle);
-    setManualArtistMode(false);
+    // Don't auto-fill artist — user must select/enter manually
     // Set first YouTube link
     setYoutubeLinks(prev => {
       const updated = [...prev];
