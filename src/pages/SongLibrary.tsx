@@ -474,52 +474,6 @@ const SongLibrary = () => {
     }
   };
 
-  const handleToggleSelection = (songId: string) => {
-    const newSelection = new Set(selectedSongIds);
-    if (newSelection.has(songId)) {
-      newSelection.delete(songId);
-    } else {
-      newSelection.add(songId);
-    }
-    setSelectedSongIds(newSelection);
-  };
-
-  const handleSelectAll = () => {
-    if (songs && selectedSongIds.size === songs.length) {
-      setSelectedSongIds(new Set());
-    } else if (songs) {
-      setSelectedSongIds(new Set(songs.map(s => s.id)));
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    const count = selectedSongIds.size;
-    
-    const { error } = await supabase
-      .from("songs")
-      .delete()
-      .in("id", Array.from(selectedSongIds));
-
-    if (error) {
-      toast.error(t("common.error"));
-      console.error("Bulk delete error:", error);
-    } else {
-      toast.success(t("songLibrary.bulkDeleteSuccess", { count }));
-      setSelectedSongIds(new Set());
-      setSelectionMode(false);
-      setShowDeleteConfirm(false);
-      refetch();
-    }
-  };
-
-  // Bulk categorize removed - category column no longer exists
-
-  const handleClearSelection = () => {
-    setSelectedSongIds(new Set());
-    setSelectionMode(false);
-    setBulkEditMode(false);
-    setEditedSongs({});
-  };
 
   const handleToggleCart = (song: any) => {
     toggleCart({ 
