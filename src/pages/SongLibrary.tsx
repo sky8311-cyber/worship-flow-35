@@ -910,9 +910,6 @@ const SongLibrary = () => {
                   song={song}
                   onEdit={isWorshipLeader ? handleEditSong : undefined}
                   onDelete={isWorshipLeader ? () => refetch() : undefined}
-                  selectionMode={selectionMode}
-                  isSelected={selectedSongIds.has(song.id)}
-                  onToggleSelection={handleToggleSelection}
                   inCart={isWorshipLeader ? cartIds.has(song.id) : false}
                   onToggleCart={isWorshipLeader ? () => handleToggleCart(song) : undefined}
                   isFavorite={userFavorites?.has(song.id) || false}
