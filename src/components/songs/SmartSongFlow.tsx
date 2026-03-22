@@ -592,7 +592,17 @@ function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, se
   );
 }
 
-function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, manualArtistMode, setManualArtistMode }: any) {
+function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight }: any) {
+  const handleSelectAndScroll = (result: YouTubeResult) => {
+    onSelect(result);
+    // Scroll to artist section after selection
+    setTimeout(() => {
+      artistSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setArtistHighlight(true);
+      setTimeout(() => setArtistHighlight(false), 2000);
+    }, 100);
+  };
+
   return (
     <div className="space-y-4">
       {/* Search status */}
@@ -641,7 +651,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
                   ? "ring-2 ring-primary bg-primary/5"
                   : "hover:bg-muted/50"
               )}
-              onClick={() => onSelect(r)}
+              onClick={() => handleSelectAndScroll(r)}
             >
               <CardContent className="p-3 flex items-center gap-3">
                 <img src={r.thumbnailUrl} alt={r.title} className="w-24 h-16 object-cover rounded flex-shrink-0" />
@@ -666,28 +676,26 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
       )}
 
       {/* Artist */}
-      <div className="space-y-2 pt-2 border-t">
-        <Label>아티스트</Label>
-        {selectedResult && !manualArtistMode ? (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 p-2 bg-primary/5 rounded border border-primary/20 text-sm">
-              {artist}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setManualArtistMode(true)}>
-              <Pen className="w-3 h-3 mr-1" /> 수정
-            </Button>
-          </div>
-        ) : (
-          <ArtistSelector value={artist} onValueChange={setArtist} />
+      <div 
+        ref={artistSectionRef}
+        className={cn(
+          "space-y-2 pt-3 border-t transition-all duration-500",
+          artistHighlight && "bg-primary/10 -mx-2 px-2 py-3 rounded-lg ring-2 ring-primary/30"
+        )}
+      >
+        <Label>아티스트 <span className="text-destructive">*</span></Label>
+        {selectedResult && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1">
+            ℹ️ YouTube 채널: {selectedResult.channelTitle}
+          </p>
+        )}
+        <ArtistSelector value={artist} onValueChange={setArtist} />
+        {!artist && selectedResult && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            아티스트를 선택하거나 새로 입력해주세요
+          </p>
         )}
       </div>
-
-      {/* Skip option */}
-      {!selectedResult && !youtubeSearching && youtubeResults.length > 0 && (
-        <Button variant="ghost" size="sm" className="w-full" onClick={() => setManualArtistMode(true)}>
-          YouTube 선택 없이 직접 입력
-        </Button>
-      )}
     </div>
   );
 }
