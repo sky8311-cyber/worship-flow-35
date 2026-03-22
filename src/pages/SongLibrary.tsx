@@ -889,7 +889,10 @@ const SongLibrary = () => {
         ) : sortedAndFilteredSongs && sortedAndFilteredSongs.length > 0 ? (
           viewMode === "table" ? (
             <SongTable
-              songs={sortedAndFilteredSongs}
+              songs={sortedAndFilteredSongs.map(song => ({
+                ...song,
+                score_file_url: (song as any).song_scores?.[0]?.file_url || null
+              }))}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
               columnFilters={columnFilters}
