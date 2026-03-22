@@ -1392,8 +1392,8 @@ const [loading, setLoading] = useState(false);
             </div>
           </div>
 
-          {/* 6. Scores (Key / Sheet Music) */}
-          <div>
+          <div data-tutorial="song-score-section">
+            <Label>{t("songDialog.key")}</Label>
             <Label>{t("songDialog.key")}</Label>
             <p className="text-xs text-muted-foreground mb-2">
               악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
