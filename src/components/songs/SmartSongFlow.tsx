@@ -409,6 +409,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    triggerDraftSave: handleDraftSave,
+  }));
+
   // === RENDER ===
   const stepLabels = [
     t("songFlow.steps.songInfo"),
