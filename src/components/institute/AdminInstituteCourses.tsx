@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, FileText } from "lucide-react";
+import { AdminImageUpload } from "./AdminImageUpload";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const TIER_OPTIONS = [
@@ -401,12 +402,26 @@ export const AdminInstituteCourses = () => {
                           <Input defaultValue={course.instructor_name || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "instructor_name", value: e.target.value })} />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Thumbnail URL</label>
-                          <Input defaultValue={course.thumbnail_url || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "thumbnail_url", value: e.target.value || null })} />
+                          <AdminImageUpload
+                            currentUrl={course.thumbnail_url}
+                            onUploadSuccess={(url) => updateCourse.mutate({ id: course.id, field: "thumbnail_url", value: url })}
+                            folder="institute/thumbnails"
+                            label="썸네일 이미지"
+                            sizeGuide="권장: 1280×720px (16:9), 최대 5MB"
+                            aspectClass="aspect-video"
+                            maxSizeMB={5}
+                          />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Badge Image URL</label>
-                          <Input defaultValue={course.badge_image_url || ""} onBlur={(e) => updateCourse.mutate({ id: course.id, field: "badge_image_url", value: e.target.value || null })} />
+                          <AdminImageUpload
+                            currentUrl={course.badge_image_url}
+                            onUploadSuccess={(url) => updateCourse.mutate({ id: course.id, field: "badge_image_url", value: url })}
+                            folder="institute/badges"
+                            label="배지 이미지"
+                            sizeGuide="권장: 400×400px (1:1), 최대 2MB"
+                            aspectClass="aspect-square"
+                            maxSizeMB={2}
+                          />
                         </div>
                       </div>
 
