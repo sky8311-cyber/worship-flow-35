@@ -322,7 +322,12 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
     if (!canGoNext()) {
       if (currentStep === 1) toast.error(t("songFlow.enterTitle"));
       if (currentStep === 2) toast.error(t("songFlow.selectYoutubeAndArtist"));
-      if (currentStep === 3) toast.error(t("songFlow.uploadScoreRequired"));
+      if (currentStep === 3) {
+        const hasFiles = scoreVariations.some(v => v.files.length > 0);
+        const hasKey = scoreVariations.some(v => v.key);
+        if (!hasKey) toast.error(language === "ko" ? "키를 선택하세요" : "Please select a key");
+        if (!hasFiles) toast.error(t("songFlow.uploadScoreRequired"));
+      }
       if (currentStep === 5) {
         if (!songLanguage) toast.error(t("songFlow.selectLanguage"));
         else if (topics.length < 2) toast.error(t("songFlow.minTopics"));
