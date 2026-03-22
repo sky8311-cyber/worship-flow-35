@@ -161,8 +161,8 @@ export default function CommunitySearch() {
     return userMemberships?.includes(communityId);
   };
 
-  const hasPendingRequest = (communityId: string) => {
-    return userJoinRequests?.includes(communityId);
+  const getRequestStatus = (communityId: string) => {
+    return userJoinRequests?.[communityId] || null;
   };
 
   return (
