@@ -271,7 +271,6 @@ const handleDelete = async (song: any) => {
                         )}
                       </div>
                   </TableCell>
-                  </TableCell>
                   <TableCell>
                       <span>{song.artist || "-"}</span>
                   </TableCell>
