@@ -154,14 +154,24 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             </div>
             
             {/* Heart Icon - Always visible */}
-            <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=favorites")}>
-              <Heart className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=favorites")}>
+                  <Heart className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "즐겨찾기" : "Favorites"}</TooltipContent>
+            </Tooltip>
             
             {/* My Songs Icon - Always visible */}
-            <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
-              <Music2 className="h-5 w-5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/songs?filter=my-songs")}>
+                  <Music2 className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{language === "ko" ? "내 곡" : "My Songs"}</TooltipContent>
+            </Tooltip>
             
             {/* Share/Referral Icon */}
             <Button variant="ghost" size="icon" onClick={() => setShareDialogOpen(true)}>
