@@ -147,6 +147,7 @@ export function SlashCommandMenu({
   const { language } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [menuHeight, setMenuHeight] = useState(320);
   
   const filteredCommands = SLASH_COMMANDS.filter(cmd => {
     const query = searchQuery.toLowerCase();
@@ -164,6 +165,13 @@ export function SlashCommandMenu({
   useEffect(() => {
     setSelectedIndex(0);
   }, [searchQuery]);
+
+  // Measure menu height
+  useEffect(() => {
+    if (menuRef.current) {
+      setMenuHeight(menuRef.current.offsetHeight);
+    }
+  }, [filteredCommands.length, isOpen]);
   
   // Handle keyboard navigation
   useEffect(() => {
@@ -206,12 +214,17 @@ export function SlashCommandMenu({
   }, [isOpen, onClose]);
   
   if (!isOpen || filteredCommands.length === 0) return null;
+
+  // If menu would be cut off at bottom, open upward
+  const spaceBelow = window.innerHeight - position.top;
+  const shouldOpenUpward = spaceBelow < menuHeight + 100;
+  const finalTop = shouldOpenUpward ? position.top - menuHeight : position.top;
   
   return (
     <div
       ref={menuRef}
-      className="fixed z-50 w-72 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-      style={{ top: position.top, left: position.left }}
+      className="fixed z-[60] w-72 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+      style={{ top: finalTop, left: position.left }}
     >
       <div className="max-h-80 overflow-y-auto">
         {basicCommands.length > 0 && (
