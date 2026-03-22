@@ -551,21 +551,6 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
         </div>
       </div>
 
-      {/* Cancel Confirmation */}
-      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("songFlow.cancelTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("songFlow.cancelDesc")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("songFlow.continueWriting")}</AlertDialogCancel>
-            <AlertDialogAction onClick={onClose}>{t("songFlow.confirmCancel")}</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };

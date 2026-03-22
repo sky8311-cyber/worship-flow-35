@@ -1130,6 +1130,7 @@ const [loading, setLoading] = useState(false);
             onComplete={handleSmartFlowComplete}
             onDraftSave={handleSmartFlowDraftSave}
             onClose={() => { onOpenChange(false); onClose(); }}
+            onCancel={() => setShowCloseConfirm(true)}
           />
         ) : (
           <>
