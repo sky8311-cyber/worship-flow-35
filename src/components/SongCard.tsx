@@ -199,6 +199,7 @@ export const SongCard = memo(function SongCard({
                   size="sm"
                   onClick={() => openYouTubeUrl(song.youtube_url)}
                   className="flex-1 w-full group hover:bg-accent hover:text-white hover:border-accent"
+                  data-tutorial="song-youtube-btn"
                 >
                   <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
                   <span className="truncate">{t("songCard.viewYouTube")}</span>
