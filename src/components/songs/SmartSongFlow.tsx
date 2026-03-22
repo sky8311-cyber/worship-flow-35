@@ -55,6 +55,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const { t, language } = useTranslation();
   const { user } = useAuth();
   
+  const isKo = language === "ko";
+  
   // Current step (1-indexed)
   const [currentStep, setCurrentStep] = useState(draftSong?.draft_step || 1);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -120,7 +122,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     if (linksRes.data && linksRes.data.length > 0) {
       setYoutubeLinks(linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url })));
     } else if (draftSong?.youtube_url) {
-      setYoutubeLinks([{ label: "원곡", url: draftSong.youtube_url }]);
+      setYoutubeLinks([{ label: t("songFlow.original"), url: draftSong.youtube_url }]);
     } else {
       setYoutubeLinks([{ label: "", url: "" }]);
     }
@@ -155,11 +157,11 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       setYoutubeResults(data.results || []);
     } catch (err) {
       console.error("YouTube search error:", err);
-      toast.error("YouTube 검색 중 오류가 발생했습니다");
+      toast.error(t("songFlow.searchError"));
     } finally {
       setYoutubeSearching(false);
     }
-  }, [title, subtitle, youtubeSearchQuery]);
+  }, [title, subtitle, youtubeSearchQuery, t]);
 
   // Auto-search on Step 2 entry
   useEffect(() => {
@@ -175,8 +177,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     // Set first YouTube link
     setYoutubeLinks(prev => {
       const updated = [...prev];
-      if (updated.length === 0) updated.push({ label: "원곡", url: result.url });
-      else { updated[0] = { ...updated[0], label: updated[0].label || "원곡", url: result.url }; }
+      if (updated.length === 0) updated.push({ label: t("songFlow.original"), url: result.url });
+      else { updated[0] = { ...updated[0], label: updated[0].label || t("songFlow.original"), url: result.url }; }
       return updated;
     });
   };
@@ -208,22 +210,21 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       } else if (data?.candidates && data.candidates.length > 0) {
         setLyricsCandidates(data.candidates);
         if (!previousLyrics) {
-          toast.info("자동 검색에 실패했지만 후보를 찾았습니다. 아래에서 확인해주세요.");
+          toast.info(t("songFlow.candidatesFailed"));
         }
       } else {
         if (!previousLyrics) {
-          toast.info("가사를 찾지 못했습니다. 직접 입력해주세요.");
+          toast.info(`${t("songFlow.noLyricsFound")} ${t("songFlow.noLyricsFoundHint")}`);
         }
       }
       setLyricsSearchDone(true);
     } catch (err: any) {
       console.error("Lyrics search error:", err);
       if (err?.message === 'TIMEOUT') {
-        toast.error("검색 시간이 초과되었습니다. 직접 입력해주세요.");
+        toast.error(t("songFlow.searchTimeout"));
       } else {
-        toast.error("가사 검색 중 오류가 발생했습니다");
+        toast.error(t("songFlow.lyricsSearchError"));
       }
-      // Preserve existing lyrics on failure
       if (previousLyrics && !lyrics) {
         setLyrics(previousLyrics);
       }
@@ -235,7 +236,6 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
 
   // === Language Detection + Topic Suggestion (Step 4→5 transition) ===
   const detectLanguageAndSuggestTopics = async () => {
-    // Auto-detect language from lyrics
     if (lyrics.trim()) {
       const hasKorean = /[가-힣]/.test(lyrics);
       const hasEnglish = /[a-zA-Z]{2,}/.test(lyrics);
@@ -244,7 +244,6 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       else if (hasEnglish) setSongLanguage("EN");
     }
 
-    // Suggest topics via AI
     if (lyrics.trim() && !topicsSuggested) {
       setTopicsLoading(true);
       try {
@@ -278,9 +277,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         updated[variationIndex].files.push({ url: publicUrl, page: updated[variationIndex].files.length + 1 });
         return updated;
       });
-      toast.success("업로드 완료");
+      toast.success(t("songFlow.uploadComplete"));
     } catch (error: any) {
-      toast.error("업로드 오류: " + error.message);
+      toast.error(t("songFlow.uploadError").replace("{message}", error.message));
     } finally {
       setUploadingVariationIndex(null);
     }
@@ -298,9 +297,9 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         return updated;
       });
       setScoreUrlInput("");
-      toast.success("다운로드 완료");
+      toast.success(t("songFlow.downloadComplete"));
     } catch (error) {
-      toast.error("다운로드 실패");
+      toast.error(t("songFlow.downloadFailed"));
     } finally {
       setDownloadingScore(false);
     }
@@ -317,32 +316,29 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
 
   const handleNext = async () => {
     if (!canGoNext()) {
-      if (currentStep === 1) toast.error("곡 제목을 입력해주세요");
+      if (currentStep === 1) toast.error(t("songFlow.enterTitle"));
       if (currentStep === 5) {
-        if (!songLanguage) toast.error("언어를 선택해주세요");
-        else if (topics.length < 2) toast.error("주제를 최소 2개 선택해주세요");
+        if (!songLanguage) toast.error(t("songFlow.selectLanguage"));
+        else if (topics.length < 2) toast.error(t("songFlow.minTopics"));
       }
       return;
     }
 
     if (currentStep === 4) {
-      // Detect language + suggest topics before moving to step 5
       await detectLanguageAndSuggestTopics();
     }
 
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Final save
       handleFinalSave();
     }
   };
 
   const handleFinalSave = async () => {
-    // Validate
-    if (!title.trim()) { toast.error("곡 제목을 입력해주세요"); setCurrentStep(1); return; }
-    if (!songLanguage) { toast.error("언어를 선택해주세요"); setCurrentStep(5); return; }
-    if (topics.length < 2) { toast.error("주제를 최소 2개 선택해주세요"); setCurrentStep(5); return; }
+    if (!title.trim()) { toast.error(t("songFlow.enterTitle")); setCurrentStep(1); return; }
+    if (!songLanguage) { toast.error(t("songFlow.selectLanguage")); setCurrentStep(5); return; }
+    if (topics.length < 2) { toast.error(t("songFlow.minTopics")); setCurrentStep(5); return; }
 
     setLoading(true);
     try {
@@ -364,7 +360,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       };
       await onComplete(songData, scoreVariations, youtubeLinks);
     } catch (error: any) {
-      toast.error("저장 오류: " + error.message);
+      toast.error(t("songFlow.saveError").replace("{message}", error.message));
     } finally {
       setLoading(false);
     }
@@ -374,7 +370,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
     setDraftSaving(true);
     try {
       const songData = {
-        title: title.trim() || "제목 없음",
+        title: title.trim() || t("songFlow.untitled"),
         subtitle: subtitle.trim() || null,
         artist: artist.trim() || null,
         original_composer: originalComposer.trim() || null,
@@ -390,16 +386,23 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
         draft_step: currentStep,
       };
       await onDraftSave(songData, scoreVariations, youtubeLinks, currentStep);
-      toast.success("임시저장되었습니다");
+      toast.success(t("songFlow.draftSaved"));
     } catch (error: any) {
-      toast.error("임시저장 오류: " + error.message);
+      toast.error(t("songFlow.draftSaveError").replace("{message}", error.message));
     } finally {
       setDraftSaving(false);
     }
   };
 
   // === RENDER ===
-  const stepLabels = ["곡 정보", "YouTube", "악보·링크", "가사", "언어·주제", "리뷰"];
+  const stepLabels = [
+    t("songFlow.steps.songInfo"),
+    t("songFlow.steps.youtube"),
+    t("songFlow.steps.scoresLinks"),
+    t("songFlow.steps.lyrics"),
+    t("songFlow.steps.languageTopics"),
+    t("songFlow.steps.review"),
+  ];
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -407,7 +410,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold truncate">
-            {title.trim() || "새 곡 추가"}
+            {title.trim() || t("songFlow.newSong")}
           </h2>
           <p className="text-xs text-muted-foreground">
             {currentStep} / {TOTAL_STEPS} · {stepLabels[currentStep - 1]}
@@ -440,6 +443,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           title={title} setTitle={setTitle}
           subtitle={subtitle} setSubtitle={setSubtitle}
           isPrivate={isPrivate} setIsPrivate={setIsPrivate}
+          t={t}
         />}
         {currentStep === 2 && <Step2_YouTube
           youtubeResults={youtubeResults}
@@ -456,6 +460,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           artistSectionRef={artistSectionRef}
           artistHighlight={artistHighlight}
           setArtistHighlight={setArtistHighlight}
+          t={t}
         />}
         {currentStep === 3 && <Step3_LinksScores
           youtubeLinks={youtubeLinks}
@@ -468,6 +473,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           downloadingScore={downloadingScore}
           scoreUrlInput={scoreUrlInput}
           setScoreUrlInput={setScoreUrlInput}
+          t={t}
         />}
         {currentStep === 4 && <Step4_Lyrics
           originalComposer={originalComposer}
@@ -481,6 +487,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           lyricsSource={lyricsSource}
           lyricsSearchDone={lyricsSearchDone}
           lyricsCandidates={lyricsCandidates}
+          t={t}
         />}
         {currentStep === 5 && <Step5_LanguageTopics
           songLanguage={songLanguage}
@@ -488,6 +495,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           topics={topics}
           setTopics={setTopics}
           topicsLoading={topicsLoading}
+          t={t}
         />}
         {currentStep === 6 && <Step6_Review
           title={title} subtitle={subtitle} isPrivate={isPrivate}
@@ -496,6 +504,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
           lyrics={lyrics} notes={notes}
           songLanguage={songLanguage} topics={topics}
           onEditStep={setCurrentStep}
+          t={t}
         />}
       </div>
 
@@ -503,12 +512,12 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
-            취소
+            {t("songFlow.cancel")}
           </Button>
           {currentStep > 1 && (
             <Button variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
               <ChevronLeft className="w-4 h-4 mr-1" />
-              이전
+              {t("songFlow.previous")}
             </Button>
           )}
         </div>
@@ -520,7 +529,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
             disabled={draftSaving}
           >
             {draftSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
-            임시저장
+            {t("songFlow.draftSave")}
           </Button>
           <Button 
             size="sm" 
@@ -528,7 +537,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
             disabled={loading || !canGoNext()}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            {currentStep === TOTAL_STEPS ? "저장" : "다음"}
+            {currentStep === TOTAL_STEPS ? t("songFlow.save") : t("songFlow.next")}
             {currentStep < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
@@ -538,14 +547,14 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
       <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>작성을 취소하시겠습니까?</AlertDialogTitle>
+            <AlertDialogTitle>{t("songFlow.cancelTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              작성 중인 내용이 사라집니다. 임시저장하려면 "임시저장" 버튼을 눌러주세요.
+              {t("songFlow.cancelDesc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>계속 작성</AlertDialogCancel>
-            <AlertDialogAction onClick={onClose}>취소하기</AlertDialogAction>
+            <AlertDialogCancel>{t("songFlow.continueWriting")}</AlertDialogCancel>
+            <AlertDialogAction onClick={onClose}>{t("songFlow.confirmCancel")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -555,35 +564,35 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
 
 // ========== STEP COMPONENTS ==========
 
-function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, setIsPrivate }: any) {
+function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, setIsPrivate, t }: any) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="flow-title">곡 제목 <span className="text-destructive">*</span></Label>
+        <Label htmlFor="flow-title">{t("songFlow.songTitle")} <span className="text-destructive">*</span></Label>
         <Input
           id="flow-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="곡 제목을 입력하세요"
+          placeholder={t("songFlow.songTitlePlaceholder")}
           autoFocus
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="flow-subtitle">부제 (선택사항)</Label>
+        <Label htmlFor="flow-subtitle">{t("songFlow.subtitle")}</Label>
         <Input
           id="flow-subtitle"
           value={subtitle}
           onChange={(e) => setSubtitle(e.target.value)}
-          placeholder="동명이곡 구분이나 버전 표시"
+          placeholder={t("songFlow.subtitlePlaceholder")}
         />
-        <p className="text-xs text-muted-foreground">동명이곡 구분이나 버전 표시에 사용됩니다</p>
+        <p className="text-xs text-muted-foreground">{t("songFlow.subtitleHint")}</p>
       </div>
       <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
         <div className="flex items-center gap-3">
           <Lock className="w-4 h-4 text-muted-foreground" />
           <div>
-            <Label htmlFor="flow-private" className="font-medium">비공개 곡</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">비공개 곡은 본인만 볼 수 있습니다</p>
+            <Label htmlFor="flow-private" className="font-medium">{t("songFlow.privateSong")}</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">{t("songFlow.privateDesc")}</p>
           </div>
         </div>
         <Switch id="flow-private" checked={isPrivate} onCheckedChange={setIsPrivate} />
@@ -592,10 +601,9 @@ function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, se
   );
 }
 
-function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight }: any) {
+function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, t }: any) {
   const handleSelectAndScroll = (result: YouTubeResult) => {
     onSelect(result);
-    // Scroll to artist section after selection
     setTimeout(() => {
       artistSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       setArtistHighlight(true);
@@ -609,7 +617,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
       {youtubeSearching && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4 justify-center">
           <Loader2 className="w-4 h-4 animate-spin" />
-          YouTube에서 검색 중...
+          {t("songFlow.searchingYoutube")}
         </div>
       )}
 
@@ -621,7 +629,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
               <Input
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
-                placeholder="검색어를 입력하세요"
+                placeholder={t("songFlow.searchPlaceholder")}
                 onKeyDown={(e) => e.key === "Enter" && onSearch()}
                 className="flex-1"
               />
@@ -632,7 +640,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
           ) : (
             <Button variant="outline" size="sm" onClick={() => setShowCustomSearch(true)}>
               <Search className="w-4 h-4 mr-1" />
-              검색어 수정
+              {t("songFlow.editSearch")}
             </Button>
           )}
         </div>
@@ -641,7 +649,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
       {/* Results */}
       {youtubeResults.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">검색 결과 ({youtubeResults.length}개)</p>
+          <p className="text-sm text-muted-foreground">{t("songFlow.searchResults").replace("{count}", String(youtubeResults.length))}</p>
           {youtubeResults.map((r: YouTubeResult) => (
             <Card
               key={r.videoId}
@@ -661,11 +669,11 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={(e) => { e.stopPropagation(); window.open(r.url, "_blank"); }}>
-                    <ExternalLink className="w-3 h-3" /> 열기
+                    <ExternalLink className="w-3 h-3" /> {t("songFlow.open")}
                   </Button>
                   {selectedResult?.videoId === r.videoId && (
                     <span className="text-xs text-primary font-medium flex items-center gap-1 justify-center">
-                      <Check className="w-3 h-3" /> 선택됨
+                      <Check className="w-3 h-3" /> {t("songFlow.selected")}
                     </span>
                   )}
                 </div>
@@ -683,16 +691,16 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
           artistHighlight && "bg-primary/10 -mx-2 px-2 py-3 rounded-lg ring-2 ring-primary/30"
         )}
       >
-        <Label>아티스트 <span className="text-destructive">*</span></Label>
+        <Label>{t("songFlow.artist")} <span className="text-destructive">*</span></Label>
         {selectedResult && (
           <p className="text-xs text-muted-foreground flex items-center gap-1">
-            ℹ️ YouTube 채널: {selectedResult.channelTitle}
+            ℹ️ {t("songFlow.youtubeChannel").replace("{name}", selectedResult.channelTitle)}
           </p>
         )}
         <ArtistSelector value={artist} onValueChange={setArtist} />
         {!artist && selectedResult && (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            아티스트를 선택하거나 새로 입력해주세요
+            {t("songFlow.selectArtist")}
           </p>
         )}
       </div>
@@ -700,7 +708,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
   );
 }
 
-function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput }: any) {
+function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t }: any) {
   const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
@@ -713,12 +721,12 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
     <div className="space-y-6">
       {/* YouTube Links Section */}
       <div className="space-y-3">
-        <Label className="flex items-center gap-2"><Music className="w-4 h-4" /> YouTube 링크</Label>
+        <Label className="flex items-center gap-2"><Music className="w-4 h-4" /> {t("songFlow.youtubeLinks")}</Label>
         {youtubeLinks.map((link: YouTubeLink, index: number) => {
           const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
           return (
             <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
-              <Input placeholder="라벨 (예: 원곡, 라이브)" value={link.label} onChange={(e) => updateYoutubeLink(index, "label", e.target.value)} className="text-sm" />
+              <Input placeholder={t("songFlow.labelPlaceholder")} value={link.label} onChange={(e) => updateYoutubeLink(index, "label", e.target.value)} className="text-sm" />
               <div className="flex gap-2 items-center">
                 <Input type="url" placeholder="https://youtube.com/..." value={link.url} onChange={(e) => updateYoutubeLink(index, "url", e.target.value)} className="flex-1 text-sm" />
                 {youtubeLinks.length > 1 && (
@@ -736,13 +744,13 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
           );
         })}
         <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
-          <Plus className="h-4 w-4 mr-1" /> YouTube 링크 추가
+          <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addYoutubeLink")}
         </Button>
       </div>
 
       {/* Scores Section */}
       <div className="space-y-3">
-        <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> 악보</Label>
+        <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> {t("songFlow.scores")}</Label>
         {scoreVariations.map((variation: ScoreVariation, index: number) => (
           <div key={index} className="border rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2">
@@ -751,12 +759,12 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
                 updated[index].key = v;
                 setScoreVariations(updated);
               }}>
-                <SelectTrigger className="w-28"><SelectValue placeholder="키 선택" /></SelectTrigger>
+                <SelectTrigger className="w-28"><SelectValue placeholder={t("songFlow.keySelect")} /></SelectTrigger>
                 <SelectContent>{MUSICAL_KEYS.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
               </Select>
               <label htmlFor={`score-upload-${index}`} className="flex-1 cursor-pointer">
                 <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index} className="w-full">
-                  <span>{uploadingVariationIndex === index ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />업로드 중</> : "악보 업로드"}</span>
+                  <span>{uploadingVariationIndex === index ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{t("songFlow.uploading")}</> : t("songFlow.scoreUpload")}</span>
                 </Button>
               </label>
               <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={async (e) => {
@@ -768,9 +776,9 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
             </div>
             {/* URL download */}
             <div className="flex gap-2">
-              <Input type="url" placeholder="이미지 URL 붙여넣기" value={index === 0 ? scoreUrlInput : ""} onChange={(e) => index === 0 && setScoreUrlInput(e.target.value)} className="flex-1 text-sm" />
+              <Input type="url" placeholder={t("songFlow.imageUrlPaste")} value={index === 0 ? scoreUrlInput : ""} onChange={(e) => index === 0 && setScoreUrlInput(e.target.value)} className="flex-1 text-sm" />
               <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore}>
-                {downloadingScore ? <Loader2 className="w-4 h-4 animate-spin" /> : "다운로드"}
+                {downloadingScore ? <Loader2 className="w-4 h-4 animate-spin" /> : t("songFlow.download")}
               </Button>
             </div>
             {/* File thumbnails */}
@@ -798,29 +806,29 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={() => setScoreVariations([...scoreVariations, { key: "", files: [] }])}>
-          <Plus className="h-4 w-4 mr-1" /> 또 다른 악보 추가 (키 변주)
+          <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addScoreVariation")}
         </Button>
-        <p className="text-xs text-muted-foreground">🔜 악보 자동 스캔 (Phase 3) — 악보 이미지에서 키/코드 자동 추출 예정</p>
+        <p className="text-xs text-muted-foreground">{t("songFlow.autoScanNote")}</p>
       </div>
     </div>
   );
 }
 
-function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, notes, setNotes, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates }: any) {
+function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, notes, setNotes, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates, t }: any) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label>원곡자 (선택사항)</Label>
-        <Input value={originalComposer} onChange={(e: any) => setOriginalComposer(e.target.value)} placeholder="작곡가/작사가를 알면 입력하세요" />
-        <p className="text-xs text-muted-foreground">가사 검색 정확도가 높아집니다</p>
+        <Label>{t("songFlow.originalComposer")}</Label>
+        <Input value={originalComposer} onChange={(e: any) => setOriginalComposer(e.target.value)} placeholder={t("songFlow.composerPlaceholder")} />
+        <p className="text-xs text-muted-foreground">{t("songFlow.composerHint")}</p>
       </div>
 
       <Button type="button" variant="outline" onClick={onSearchLyrics} disabled={lyricsSearching} className="w-full">
-        {lyricsSearching ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />가사를 검색하고 있습니다...</> : <><Search className="w-4 h-4 mr-2" />가사 자동 검색</>}
+        {lyricsSearching ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />{t("songFlow.searchingLyrics")}</> : <><Search className="w-4 h-4 mr-2" />{t("songFlow.autoSearchLyrics")}</>}
       </Button>
 
       {lyricsSearchDone && lyrics && lyricsSource && (
-        <p className="text-sm text-primary flex items-center gap-1"><Check className="w-4 h-4" /> 가사를 찾았습니다 (출처: {lyricsSource})</p>
+        <p className="text-sm text-primary flex items-center gap-1"><Check className="w-4 h-4" /> {t("songFlow.lyricsFound").replace("{source}", lyricsSource)}</p>
       )}
       
       {/* Candidate links when auto-search fails */}
@@ -828,19 +836,19 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <ExternalLink className="w-4 h-4" />
-            관련 가사 페이지를 찾았습니다
+            {t("songFlow.candidatesFound")}
           </div>
-          <p className="text-xs text-muted-foreground">아래 링크에서 가사를 확인 후 복사하여 붙여넣어주세요.</p>
+          <p className="text-xs text-muted-foreground">{t("songFlow.candidatesHint")}</p>
           <div className="space-y-2">
             {lyricsCandidates.slice(0, 5).map((c: any, i: number) => (
               <Card key={i} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => window.open(c.url, '_blank')}>
                 <CardContent className="p-3 flex items-center justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{c.title || '가사 페이지'}</p>
+                    <p className="text-sm font-medium truncate">{c.title || t("songFlow.lyricsPage")}</p>
                     <p className="text-xs text-muted-foreground truncate">{c.source === 'gasazip' ? 'gasazip.com' : c.source === 'bugs' ? 'music.bugs.co.kr' : c.source}</p>
                   </div>
                   <Button variant="ghost" size="sm" className="flex-shrink-0 gap-1 text-xs">
-                    <ExternalLink className="w-3 h-3" /> 열기
+                    <ExternalLink className="w-3 h-3" /> {t("songFlow.open")}
                   </Button>
                 </CardContent>
               </Card>
@@ -851,41 +859,41 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
 
       {lyricsSearchDone && !lyrics && (!lyricsCandidates || lyricsCandidates.length === 0) && !originalComposer && (
         <div className="text-sm text-muted-foreground space-y-1">
-          <p>자동으로 가사를 찾지 못했습니다.</p>
-          <p className="text-primary">💡 원곡자를 입력하면 검색 정확도가 높아집니다. 입력 후 다시 검색해보세요.</p>
+          <p>{t("songFlow.noLyricsFound")}</p>
+          <p className="text-primary">{t("songFlow.composerTip")}</p>
         </div>
       )}
       {lyricsSearchDone && !lyrics && (!lyricsCandidates || lyricsCandidates.length === 0) && originalComposer && (
-        <p className="text-sm text-muted-foreground">가사를 찾지 못했습니다. 직접 입력해주세요.</p>
+        <p className="text-sm text-muted-foreground">{t("songFlow.noLyricsFound")} {t("songFlow.noLyricsFoundHint")}</p>
       )}
 
       <div className="space-y-2">
-        <Label>가사</Label>
-        <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder="가사를 입력하세요" rows={6} className="font-mono text-sm" />
+        <Label>{t("songFlow.lyricsLabel")}</Label>
+        <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder={t("songFlow.lyricsPlaceholder")} rows={6} className="font-mono text-sm" />
       </div>
 
       <div className="space-y-2">
-        <Label>노트</Label>
-        <Textarea value={notes} onChange={(e: any) => setNotes(e.target.value)} placeholder="메모, 연주 팁 등" rows={3} />
+        <Label>{t("songFlow.notesLabel")}</Label>
+        <Textarea value={notes} onChange={(e: any) => setNotes(e.target.value)} placeholder={t("songFlow.notesPlaceholder")} rows={3} />
       </div>
     </div>
   );
 }
 
-function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics, topicsLoading }: any) {
+function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics, topicsLoading, t }: any) {
   return (
     <div className="space-y-6">
       {topicsLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center py-4">
           <Loader2 className="w-4 h-4 animate-spin" />
-          AI가 주제를 분석하고 있습니다...
+          {t("songFlow.analyzingTopics")}
         </div>
       )}
 
       <div className="space-y-2">
-        <Label>언어 <span className="text-destructive">*</span></Label>
+        <Label>{t("songFlow.language")} <span className="text-destructive">*</span></Label>
         <Select value={songLanguage} onValueChange={setSongLanguage}>
-          <SelectTrigger><SelectValue placeholder="언어 선택" /></SelectTrigger>
+          <SelectTrigger><SelectValue placeholder={t("songFlow.languageSelect")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="KO">한국어</SelectItem>
             <SelectItem value="EN">English</SelectItem>
@@ -895,22 +903,22 @@ function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics
       </div>
 
       <div className="space-y-2">
-        <Label>주제 <span className="text-destructive">*</span> (2~3개 선택)</Label>
+        <Label>{t("songFlow.topicsLabel")} <span className="text-destructive">*</span> {t("songFlow.topicsHint")}</Label>
         <TopicSelector selectedTopics={topics} onTopicsChange={setTopics} minTopics={2} maxTopics={3} />
       </div>
     </div>
   );
 }
 
-function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, scoreVariations, lyrics, notes, songLanguage, topics, onEditStep }: any) {
-  const langLabel = songLanguage === "KO" ? "한국어" : songLanguage === "EN" ? "English" : songLanguage === "KO/EN" ? "한국어/English" : "미선택";
+function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, scoreVariations, lyrics, notes, songLanguage, topics, onEditStep, t }: any) {
+  const langLabel = songLanguage === "KO" ? "한국어" : songLanguage === "EN" ? "English" : songLanguage === "KO/EN" ? "한국어/English" : t("songFlow.notEntered");
 
   const Section = ({ label, step, children }: { label: string; step: number; children: React.ReactNode }) => (
     <div className="py-3 border-b last:border-0">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => onEditStep(step)}>
-          수정 <ChevronRight className="w-3 h-3 ml-0.5" />
+          {t("songFlow.edit")} <ChevronRight className="w-3 h-3 ml-0.5" />
         </Button>
       </div>
       {children}
@@ -919,48 +927,48 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
 
   return (
     <div className="space-y-0">
-      <Section label="곡 정보" step={1}>
+      <Section label={t("songFlow.reviewSongInfo")} step={1}>
         <p className="text-sm font-medium">{title}</p>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-        {isPrivate && <Badge variant="outline" className="mt-1 text-xs">비공개</Badge>}
+        {isPrivate && <Badge variant="outline" className="mt-1 text-xs">{t("songFlow.private")}</Badge>}
       </Section>
 
-      <Section label="아티스트 & 원곡자" step={2}>
-        <p className="text-sm">{artist || "미입력"}</p>
-        {originalComposer && <p className="text-xs text-muted-foreground">원곡자: {originalComposer}</p>}
+      <Section label={t("songFlow.reviewArtistComposer")} step={2}>
+        <p className="text-sm">{artist || t("songFlow.notEntered")}</p>
+        {originalComposer && <p className="text-xs text-muted-foreground">{t("songFlow.reviewComposer").replace("{name}", originalComposer)}</p>}
       </Section>
 
       <Section label="YouTube" step={3}>
         {youtubeLinks.filter((l: any) => l.url.trim()).length > 0 ? (
           youtubeLinks.filter((l: any) => l.url.trim()).map((link: any, i: number) => (
-            <p key={i} className="text-xs text-muted-foreground truncate">{link.label || "링크"}: {link.url}</p>
+            <p key={i} className="text-xs text-muted-foreground truncate">{link.label || t("songFlow.link")}: {link.url}</p>
           ))
-        ) : <p className="text-xs text-muted-foreground">없음</p>}
+        ) : <p className="text-xs text-muted-foreground">{t("songFlow.none")}</p>}
       </Section>
 
-      <Section label="악보" step={3}>
+      <Section label={t("songFlow.scores")} step={3}>
         {scoreVariations.some((v: any) => v.files.length > 0) ? (
           scoreVariations.filter((v: any) => v.files.length > 0).map((v: any, i: number) => (
-            <p key={i} className="text-xs text-muted-foreground">{v.key || "키 미설정"} · {v.files.length}페이지</p>
+            <p key={i} className="text-xs text-muted-foreground">{v.key || t("songFlow.noKey")} · {t("songFlow.pages").replace("{count}", String(v.files.length))}</p>
           ))
-        ) : <p className="text-xs text-muted-foreground">없음</p>}
+        ) : <p className="text-xs text-muted-foreground">{t("songFlow.none")}</p>}
       </Section>
 
-      <Section label="가사" step={4}>
+      <Section label={t("songFlow.lyricsLabel")} step={4}>
         {lyrics ? (
           <p className="text-xs text-muted-foreground line-clamp-3 whitespace-pre-line">{lyrics}</p>
-        ) : <p className="text-xs text-muted-foreground">미입력</p>}
+        ) : <p className="text-xs text-muted-foreground">{t("songFlow.notEntered")}</p>}
       </Section>
 
-      <Section label="언어 / 주제" step={5}>
+      <Section label={t("songFlow.languageTopicsLabel")} step={5}>
         <div className="flex flex-wrap gap-1 mt-1">
           <Badge variant="secondary" className="text-xs">{langLabel}</Badge>
-          {topics.map((t: string) => <Badge key={t} variant="outline" className="text-xs">{t}</Badge>)}
+          {topics.map((tp: string) => <Badge key={tp} variant="outline" className="text-xs">{tp}</Badge>)}
         </div>
       </Section>
 
       {notes && (
-        <Section label="노트" step={4}>
+        <Section label={t("songFlow.notesLabel")} step={4}>
           <p className="text-xs text-muted-foreground line-clamp-2">{notes}</p>
         </Section>
       )}
