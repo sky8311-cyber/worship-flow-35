@@ -1,50 +1,28 @@
 
 
-## 인터랙티브 튜토리얼 시스템 — 첫 접속 자동 시행
+## 튜토리얼 시스템 버그 & 성능 수정
 
-### 개요
-스텝별 스포트라이트 가이드 시스템 구현. 첫 접속 시 자동으로 시작되고, 이후에는 수동 트리거 가능.
+### 발견된 문제
 
-### 변경 사항
+1. **`close` 스테일 클로저 버그** (`useTutorial.ts` line 37): `next()` 함수가 `close()`를 호출하지만, `close`가 dependency array에 포함되지 않음 → 마지막 스텝에서 "완료" 클릭 시 `close`가 오래된 참조를 사용하여 예상대로 동작하지 않을 수 있음
 
-#### 1. 튜토리얼 엔진 (신규 3개)
+2. **스크롤 이벤트 과다 렌더링** (`TutorialOverlay.tsx`): `updatePosition`이 모든 scroll 이벤트마다 `setState`를 2개 호출 → 스크롤할 때마다 clip-path 재계산 + 리렌더 → 버벅임 원인. `transition-all duration-300` CSS가 매 프레임 clip-path 트랜지션을 유발하여 성능 악화.
 
-**`src/components/tutorial/TutorialOverlay.tsx`**
-- 풀스크린 반투명 backdrop (`bg-black/60 z-[80]`)
-- 현재 step의 `data-tutorial` target 요소 위치를 `getBoundingClientRect()`로 계산
-- CSS `clip-path` 또는 box-shadow로 spotlight 구멍 생성
-- 툴팁: 제목, 설명, "X / Y", 이전/다음/닫기 버튼
-- 마지막 스텝에서 "완료" 버튼
+3. **resize 이벤트도 동일** — throttle/debounce 없음
 
-**`src/components/tutorial/useTutorial.ts`**
-- `isOpen`, `currentStep`, `start()`, `next()`, `prev()`, `close()` 관리
-- `close()` 시 `localStorage`에 `tutorial_seen_{key}` 저장
-- `shouldAutoStart(key)` — localStorage에 기록 없으면 true 반환
+### 수정 계획
 
-**`src/components/tutorial/tutorialSteps.ts`**
-- `SET_BUILDER_STEPS` (5~6스텝): 예배 정보 → 곡 추가 → 예배 요소 → 순서 변경 → 저장
-- `SONG_ADD_STEPS` (4~5스텝): 곡 제목 → 미디어 → 악보 → 가사 → 저장
+#### 1. `useTutorial.ts` — dependency 수정
+- `next`의 dependency array에 `close` 추가
+- `close`를 `next`보다 먼저 선언하도록 순서 변경
 
-#### 2. SetBuilder.tsx 통합
-- 주요 UI 요소에 `data-tutorial="set-*"` 속성 추가
-- 페이지 마운트 시 `shouldAutoStart("set-builder")` 체크 → 자동 시작
-- 헤더에 `?` 아이콘 버튼으로 수동 재시작 가능
+#### 2. `TutorialOverlay.tsx` — 성능 최적화
+- scroll/resize 핸들러에 `requestAnimationFrame` 기반 throttle 적용
+- clip-path에서 `transition-all duration-300` 제거 (매 프레임 트랜지션 불필요)
+- spotlight ring의 `transition-all` → `transition-none` (scroll 중 지연 방지)
+- tooltip에도 동일하게 불필요한 transition 제거
 
-#### 3. SongLibrary.tsx + SongDialog.tsx 통합
-- SongLibrary의 "곡 추가" 버튼에 `data-tutorial` 속성
-- SongDialog 열릴 때 `shouldAutoStart("song-add")` 체크 → 자동 시작
-- SongDialog 내부 주요 필드에 `data-tutorial="song-*"` 속성
-- 다이얼로그 헤더에 `?` 아이콘으로 수동 재시작
-
-#### 4. 첫 접속 자동 시행 로직
-- localStorage 키: `tutorial_seen_set_builder`, `tutorial_seen_song_add`
-- 해당 키가 없으면 컴포넌트 마운트 후 500ms 딜레이 → 자동 시작
-- 완료 또는 닫기 시 키 저장 → 다시 자동 시작 안 됨
-
-### 수정 파일 (5개)
-1. `src/components/tutorial/TutorialOverlay.tsx` — 신규
-2. `src/components/tutorial/useTutorial.ts` — 신규
-3. `src/components/tutorial/tutorialSteps.ts` — 신규
-4. `src/pages/SetBuilder.tsx` — data-tutorial 속성 + 자동 시작 연동
-5. `src/components/SongDialog.tsx` — data-tutorial 속성 + 자동 시작 연동
+### 수정 파일 (2개)
+1. `src/components/tutorial/useTutorial.ts` — close dependency 수정 + 선언 순서
+2. `src/components/tutorial/TutorialOverlay.tsx` — rAF throttle + transition 제거
 
