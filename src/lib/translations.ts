@@ -4418,7 +4418,7 @@ songCard: {
       selectArtist: "아티스트를 선택하거나 새로 입력해주세요",
       youtubeChannel: "YouTube 채널: {name}",
       youtubeLinks: "YouTube 링크",
-      labelPlaceholder: "라벨 (예: 원곡, 라이브)",
+      labelPlaceholder: "예: 베이스 연주, 드럼 연주, 라이브 버전, 스튜디오 버전",
       addYoutubeLink: "YouTube 링크 추가",
       scores: "악보",
       keySelect: "키 선택",
