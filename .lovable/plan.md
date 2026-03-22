@@ -1,42 +1,52 @@
 
 
-## 곡 추가 UI 개선 (4가지 수정)
+## Step 2에 제목 수정 기회 추가 + Step 3 악보 필수 검증
 
-### 1. YouTube 링크 라벨 기본값을 아티스트명으로
+### 변경 사항
 
-**파일: `SmartSongFlow.tsx`** — `handleSelectYoutubeResult` (line 174-184)
-- 첫 번째 YouTube 링크의 label에 `artist` 값을 기본으로 세팅 (기존에는 `t("songFlow.original")`)
-- Step3에서도 첫 번째 링크의 label이 비어있으면 artist 이름을 placeholder로 표시
+#### 1. Step 2에 제목 수정 필드 추가 (`SmartSongFlow.tsx`)
 
-### 2. YouTube 링크 추가 시 placeholder 개선
+유튜브 선택 후, 아티스트 선택 바로 위에 **제목 확인/수정 영역** 추가:
 
-**파일: `SmartSongFlow.tsx`** — Step3 라벨 placeholder (line 729)
-- 현재: `t("songFlow.labelPlaceholder")` → "라벨 (예: 원곡, 라이브)"
-- 변경: placeholder를 더 구체적으로: "예: 베이스 연주, 드럼 연주, 라이브 버전, 스튜디오 버전"
-- `translations.ts`에 해당 키 업데이트
+```text
+[YouTube 검색 결과...]
 
-### 3. 악보 자동 스캔 문구 제거
+─── 제목 확인 ──────────────────────
+"은혜 아니면" [수정 버튼]
+  → 수정 클릭 시 Input으로 변환, 편집 가능
 
-**파일: `SmartSongFlow.tsx`** — line ~800 부근
-- `{t("songFlow.autoScanNote")}` 라인 삭제
-- `translations.ts`에서 `autoScanNote` 키 유지 (다른 곳에서 참조할 수 있으므로)
+─── 아티스트 ───────────────────────
+ℹ️ YouTube 채널: 마커스워십
+[ArtistSelector 드롭다운]
+```
 
-### 4. ArtistSelector 드롭다운 스크롤 수정
+- 유튜브 결과 선택 후 `selectedResult`가 있을 때만 표시
+- 기본: 현재 `title` 값을 텍스트로 표시 + "수정" 버튼
+- 수정 클릭 → Input으로 전환, 수정 완료 후 "확인" 버튼으로 저장
+- `title` state를 직접 수정하므로 Step 1으로 돌아가지 않아도 됨
 
-**파일: `ArtistSelector.tsx`** — CommandGroup (line 98)
-- 현재: `<CommandGroup className="max-h-64 overflow-y-auto">` — CommandList가 이미 스크롤을 관리하므로 CommandGroup의 overflow가 충돌
-- 수정: `CommandList`에 `className="max-h-64 overflow-y-auto"` 적용, `CommandGroup`에서 스크롤 관련 클래스 제거
-- cmdk의 CommandList는 기본적으로 wheel scroll을 지원하므로, max-h를 CommandList 레벨에서 설정하면 wheel 스크롤 작동
+#### 2. Step 2 "다음" 조건 강화 (`canGoNext`)
 
-### 5. X 버튼 프리즈 수정
+- `case 2`: `selectedYoutubeResult`가 있고 `artist.trim()`이 있어야 다음 가능
+- 누락 시 toast 에러 메시지 표시
 
-**파일: `SongDialog.tsx`** — `handleOpenChange` (line 429-439)
-- **원인**: SmartSongFlow에서 X 클릭 → `setShowCancelConfirm(true)` → AlertDialog 열림. 그런데 `Dialog`의 overlay/escape 닫기도 `handleOpenChange`를 호출하고, `hasUnsavedChanges()`가 edit form의 `formData`를 체크하여 `showCloseConfirm` AlertDialog도 열림 → 두 AlertDialog 충돌로 프리즈
-- **수정**: `handleOpenChange`에서 SmartSongFlow 모드일 때 (`!song || song?.status === 'draft'`) 별도 처리 — unsaved changes 체크를 건너뛰고 SmartSongFlow 자체의 취소 확인에 위임
+#### 3. Step 3 악보 필수 검증 (`canGoNext`)
 
-### 수정 파일 목록
-1. `src/components/songs/SmartSongFlow.tsx` — label 기본값, placeholder 변경, autoScan 문구 제거
-2. `src/components/ArtistSelector.tsx` — 스크롤 수정
-3. `src/components/SongDialog.tsx` — X 버튼 프리즈 수정
-4. `src/lib/translations.ts` — labelPlaceholder 업데이트
+- `case 3`: `scoreVariations` 중 하나라도 `files.length > 0`인 것이 있어야 다음 가능
+- YouTube 링크는 Step 2에서 이미 선택되므로 별도 검증 불필요
+- 누락 시 toast: "악보를 최소 1개 업로드해주세요" / "Please upload at least one score"
+
+#### 4. `translations.ts` 키 추가
+
+| 키 | KO | EN |
+|---|---|---|
+| `songFlow.confirmTitle` | 제목 확인 | Confirm Title |
+| `songFlow.editTitle` | 수정 | Edit |
+| `songFlow.titleConfirmed` | 확인 | Confirm |
+| `songFlow.selectYoutubeAndArtist` | 유튜브를 선택하고 아티스트를 입력해주세요 | Please select a YouTube video and enter the artist |
+| `songFlow.uploadScoreRequired` | 악보를 최소 1개 업로드해주세요 | Please upload at least one score |
+
+### 수정 파일
+1. `src/components/songs/SmartSongFlow.tsx` — Step2에 제목 수정 UI, canGoNext 강화
+2. `src/lib/translations.ts` — 새 키 추가
 
