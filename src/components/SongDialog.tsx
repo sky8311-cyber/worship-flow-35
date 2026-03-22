@@ -239,6 +239,13 @@ const [loading, setLoading] = useState(false);
   // State for close confirmation dialog
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+
+  // Reset close confirm state when dialog closes to prevent stale overlay
+  useEffect(() => {
+    if (!open) {
+      setShowCloseConfirm(false);
+    }
+  }, [open]);
   
   // Track draft song ID for SmartSongFlow upsert
   const draftSongIdRef = useRef<string | null>(null);
@@ -1118,6 +1125,23 @@ const [loading, setLoading] = useState(false);
             : "max-h-[70vh] sm:max-h-[85vh] overflow-y-auto"
         )}
         hideCloseButton
+        onPointerDownOutside={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+            setShowCloseConfirm(true);
+          }
+        }}
+        onInteractOutside={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          if (!song || song?.status === 'draft') {
+            e.preventDefault();
+            setShowCloseConfirm(true);
+          }
+        }}
         style={{
           paddingTop: !song ? '0' : 'max(1rem, env(safe-area-inset-top, 0px))',
           paddingBottom: !song ? '0' : 'max(1rem, env(safe-area-inset-bottom, 0px))'
