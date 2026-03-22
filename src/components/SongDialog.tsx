@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Youtube, Loader2, Trash2, FileText, Plus, GripVertical, Sparkles, Calendar, Link as LinkIcon, Download, X, ListMusic, Lock, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { useTutorial } from "@/components/tutorial/useTutorial";
+import { SONG_ADD_STEPS } from "@/components/tutorial/tutorialSteps";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +50,14 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Tutorial for editing existing songs
+  const songTutorial = useTutorial({ 
+    key: "song-edit", 
+    steps: SONG_ADD_STEPS, 
+    autoStart: false, // Only manual trigger for edit dialog
+  });
+
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const submittingRef = useRef(false);
@@ -1117,6 +1128,7 @@ const [loading, setLoading] = useState(false);
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
@@ -1166,6 +1178,9 @@ const [loading, setLoading] = useState(false);
               {song ? t("songDialog.editSong") : t("songDialog.addSong")}
             </DialogTitle>
             <div className="flex items-center gap-1 shrink-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={songTutorial.start}>
+                <HelpCircle className="w-4 h-4 text-muted-foreground" />
+              </Button>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1249,8 +1264,8 @@ const [loading, setLoading] = useState(false);
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 1. Title */}
-          <div>
+          <div data-tutorial="song-title-input">
+            <Label htmlFor="title">{t("songDialog.title")} *</Label>
             <Label htmlFor="title">{t("songDialog.title")} *</Label>
             <Input
               id="title"
@@ -1307,8 +1322,8 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          {/* 5. YouTube Links */}
-          <div>
+          <div data-tutorial="song-youtube-section">
+            <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
             <Label>{t("songDialog.youtubeLinks")} <span className="text-destructive">*</span></Label>
             <p className="text-xs text-muted-foreground mb-2">{t("songDialog.youtubeLabelPlaceholder")}</p>
             
@@ -1378,8 +1393,8 @@ const [loading, setLoading] = useState(false);
             </div>
           </div>
 
-          {/* 6. Scores (Key / Sheet Music) */}
-          <div>
+          <div data-tutorial="song-score-section">
+            <Label>{t("songDialog.key")}</Label>
             <Label>{t("songDialog.key")}</Label>
             <p className="text-xs text-muted-foreground mb-2">
               악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
@@ -1426,8 +1441,8 @@ const [loading, setLoading] = useState(false);
             </Button>
           </div>
 
-          {/* 7. Lyrics */}
-          <div>
+          <div data-tutorial="song-lyrics-section">
+            <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
             <Label htmlFor="lyrics">{t("songDialog.lyrics")}</Label>
             <Textarea
               id="lyrics"
@@ -1476,7 +1491,7 @@ const [loading, setLoading] = useState(false);
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2" data-tutorial="song-save-button">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("common.cancel")}
             </Button>
@@ -1655,5 +1670,22 @@ const [loading, setLoading] = useState(false);
         </DialogContent>
       </Dialog>
     </Dialog>
+
+      {songTutorial.isOpen && songTutorial.currentStepData && (
+        <TutorialOverlay
+          isOpen={songTutorial.isOpen}
+          currentStep={songTutorial.currentStep}
+          totalSteps={songTutorial.totalSteps}
+          title={songTutorial.currentStepData.title}
+          description={songTutorial.currentStepData.description}
+          targetSelector={songTutorial.currentStepData.targetSelector}
+          isFirstStep={songTutorial.isFirstStep}
+          isLastStep={songTutorial.isLastStep}
+          onNext={songTutorial.next}
+          onPrev={songTutorial.prev}
+          onClose={songTutorial.close}
+        />
+      )}
+    </>
   );
 };

@@ -44,7 +44,10 @@ import { AISetBuilderPanel } from "@/components/AISetBuilderPanel";
 import { useTierFeature } from "@/hooks/useTierFeature";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { LockedFeatureBanner } from "@/components/LockedFeatureBanner";
-import { Sparkles } from "lucide-react";
+import { Sparkles, HelpCircle } from "lucide-react";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
+import { useTutorial } from "@/components/tutorial/useTutorial";
+import { SET_BUILDER_STEPS } from "@/components/tutorial/tutorialSteps";
 
 // Union type for items in the worship set (songs and components)
 type SetItem = 
@@ -60,6 +63,9 @@ const SetBuilder = () => {
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useTranslation();
   
+  // Tutorial system
+  const tutorial = useTutorial({ key: "set-builder", steps: SET_BUILDER_STEPS });
+
   // Remember scroll position per set
   useScrollPosition(id ? `set-builder-${id}` : "set-builder-new");
   const [formData, setFormData] = useState({
@@ -1550,10 +1556,15 @@ const SetBuilder = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Action Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/worship-sets")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            뒤로
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/worship-sets")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              뒤로
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={tutorial.start}>
+              <HelpCircle className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </div>
           
           <div className="flex items-center gap-3">
             {/* Collaborators Header */}
@@ -1837,7 +1848,7 @@ const SetBuilder = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Column - Worship Info */}
           <div className="lg:col-span-1 space-y-4">
-            <Card className="shadow-md">
+            <Card className="shadow-md" data-tutorial="set-worship-info">
               <CardHeader className="pb-3">
                 <div className="space-y-2">
                   <CardTitle>예배 정보</CardTitle>
@@ -2042,7 +2053,7 @@ const SetBuilder = () => {
             </Card>
 
             {/* Save & Delete buttons */}
-            <div className="flex gap-2">
+            <div className="flex gap-2" data-tutorial="set-save-buttons">
               <Button
                 onClick={() => saveSetMutation.mutate(undefined)}
                 disabled={saveSetMutation.isPending || isBlocked}
@@ -2103,6 +2114,7 @@ const SetBuilder = () => {
                         onClick={handleNavigateToSongs}
                         size="sm"
                         disabled={isBlocked}
+                        data-tutorial="set-add-song"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         곡 추가
@@ -2151,6 +2163,7 @@ const SetBuilder = () => {
                         variant="outline"
                         className="lg:hidden"
                         disabled={isBlocked}
+                        data-tutorial="set-add-component"
                       >
                         <Plus className="w-4 h-4 mr-2" />
                         순서 추가
@@ -2160,7 +2173,7 @@ const SetBuilder = () => {
                 </CardHeader>
                 
                 <TabsContent value="order" className="mt-0">
-                  <CardContent className="pt-4">
+                  <CardContent className="pt-4" data-tutorial="set-items-list">
                 {items.length === 0 ? (
                   <div className="text-center py-12">
                     <Music className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -2410,6 +2423,21 @@ const SetBuilder = () => {
           });
         }}
       />
+      {tutorial.isOpen && tutorial.currentStepData && (
+        <TutorialOverlay
+          isOpen={tutorial.isOpen}
+          currentStep={tutorial.currentStep}
+          totalSteps={tutorial.totalSteps}
+          title={tutorial.currentStepData.title}
+          description={tutorial.currentStepData.description}
+          targetSelector={tutorial.currentStepData.targetSelector}
+          isFirstStep={tutorial.isFirstStep}
+          isLastStep={tutorial.isLastStep}
+          onNext={tutorial.next}
+          onPrev={tutorial.prev}
+          onClose={tutorial.close}
+        />
+      )}
     </AppLayout>
     </>
   );
