@@ -8,20 +8,19 @@ interface FloatingSearchButtonProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  label?: string;
 }
 
-export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingSearchButtonProps) => {
+export const FloatingSearchButton = ({ value, onChange, placeholder, label }: FloatingSearchButtonProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input when expanded
   useEffect(() => {
     if (isExpanded && inputRef.current) {
       inputRef.current.focus();
     }
   }, [isExpanded]);
 
-  // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isExpanded) {
@@ -32,16 +31,12 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isExpanded]);
 
-  // Render the expanded overlay via portal to escape parent stacking context
   const expandedOverlay = isExpanded && createPortal(
     <>
-      {/* Backdrop overlay */}
       <div 
         className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
         onClick={() => setIsExpanded(false)}
       />
-      
-      {/* Top search bar */}
       <div className="fixed top-0 left-0 right-0 z-50 p-3 bg-background border-b shadow-lg animate-in slide-in-from-top duration-200">
         <div className="flex items-center gap-2">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -82,16 +77,21 @@ export const FloatingSearchButton = ({ value, onChange, placeholder }: FloatingS
     <>
       {expandedOverlay}
       {!isExpanded && (
-        <Button
-          size="icon"
-          className="h-14 w-14 rounded-full shadow-lg"
-          onClick={() => setIsExpanded(true)}
-        >
-          <Search className="h-6 w-6" />
-          {value && (
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-lg"
+            onClick={() => setIsExpanded(true)}
+          >
+            <Search className="h-6 w-6" />
+            {value && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full border-2 border-background" />
+            )}
+          </Button>
+          {label && (
+            <span className="text-[10px] font-medium text-muted-foreground">{label}</span>
           )}
-        </Button>
+        </div>
       )}
     </>
   );
