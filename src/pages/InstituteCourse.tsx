@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
-import { Lock, Check } from "lucide-react";
+import { Lock, Check, BookOpen, Users, Award, Layers } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,21 @@ const InstituteCourse = () => {
     enabled: !!courseId,
   });
 
+  // Fetch chapter counts per module
+  const { data: chapterCounts = {} as Record<string, number> } = useQuery({
+    queryKey: ["institute-chapter-counts", modules.map(m => m.id).join(",")],
+    queryFn: async () => {
+      const moduleIds = modules.map(m => m.id);
+      if (moduleIds.length === 0) return {};
+      const { data, error } = await supabase.from("institute_chapters").select("module_id").in("module_id", moduleIds);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data?.forEach((c) => { counts[c.module_id!] = (counts[c.module_id!] || 0) + 1; });
+      return counts;
+    },
+    enabled: modules.length > 0,
+  });
+
   const enroll = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("institute_enrollments").insert({ user_id: user!.id, course_id: courseId! });
@@ -103,32 +118,69 @@ const InstituteCourse = () => {
 
   const courseLocked = !canAccess(course.required_tier, userTier);
   const completedModules = enrollment?.completed_modules || 0;
+  const pct = modules.length > 0 ? Math.round((completedModules / modules.length) * 100) : 0;
 
   return (
     <InstituteLayout pageTitle={course.title_ko} showBackButton>
-      <div className="container mx-auto px-4 py-6 max-w-3xl">
-        {/* Hero */}
-        <Card className="mb-6">
-          <CardContent className="p-5 md:p-6">
+      <div className="container mx-auto max-w-3xl">
+        {/* ═══ Dark Hero Banner ═══ */}
+        <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: 240 }}>
+          {course.thumbnail_url ? (
+            <img src={course.thumbnail_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-foreground to-foreground/80" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-5">
             {certLink && (
-              <Badge variant="secondary" className="mb-3">
-                🎓 K-WORSHIP CERTIFIED
-              </Badge>
+              <Badge className="mb-2 text-[9px]">🎓 K-WORSHIP CERTIFIED</Badge>
             )}
-            <h1 className="text-xl md:text-2xl font-bold text-foreground leading-tight">
-              {course.title_ko}
-            </h1>
+            <h1 className="text-xl font-bold text-white leading-tight">{course.title_ko}</h1>
             {instructor?.display_name && (
-              <div className="text-xs text-muted-foreground mt-1.5">{instructor.display_name}</div>
+              <div className="text-xs text-white/70 mt-1">{instructor.display_name}</div>
             )}
-            {course.description_ko && (
-              <p className="text-sm text-muted-foreground leading-relaxed mt-2.5">{course.description_ko}</p>
-            )}
+          </div>
+        </div>
 
-            {/* CTA */}
-            <div className="mt-5">
-              {courseLocked ? (
-                <div className="bg-muted border border-border rounded-lg p-4">
+        <div className="px-4 py-5">
+          {/* ═══ Course Meta ═══ */}
+          <div className="flex items-center gap-4 mb-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              <span>{modules.length}개 모듈</span>
+            </div>
+            {instructor?.display_name && (
+              <div className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-primary" />
+                <span>{instructor.display_name}</span>
+              </div>
+            )}
+            {certLink && (
+              <div className="flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-primary" />
+                <span>수료증 발급</span>
+              </div>
+            )}
+          </div>
+
+          {/* Description */}
+          {course.description_ko && (
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4">{course.description_ko}</p>
+          )}
+
+          {/* Progress bar for enrolled users */}
+          {enrollment && (
+            <div className="flex items-center gap-3 mb-4">
+              <Progress value={pct} className="h-1.5 flex-1" />
+              <span className="text-xs text-primary font-semibold">{completedModules}/{modules.length}</span>
+            </div>
+          )}
+
+          {/* CTA */}
+          <div className="mb-6">
+            {courseLocked ? (
+              <Card className="bg-muted">
+                <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Lock className="w-4 h-4 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground leading-relaxed">
@@ -144,80 +196,85 @@ const InstituteCourse = () => {
                       {language === "ko" ? "자세히 보기" : "Learn more"}
                     </Button>
                   </Link>
-                </div>
-              ) : enrollment ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    const next = modules.find((m) => canAccess(m.required_tier, userTier));
-                    if (next) navigate(`/institute/${courseId}/${next.id}`);
-                  }}
-                >
-                  {language === "ko" ? "이어서 수강하기" : "Continue Learning"}
-                </Button>
-              ) : (
-                <Button className="w-full" onClick={() => enroll.mutate()} disabled={enroll.isPending}>
-                  {language === "ko" ? "수강 신청하기" : "Enroll Now"}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Module list */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground whitespace-nowrap">
-            {language === "ko" ? "커리큘럼" : "CURRICULUM"} ({modules.length})
-          </span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          {modules.map((mod, idx) => {
-            const accessible = canAccess(mod.required_tier, userTier);
-            const isCompleted = idx < completedModules;
-            const isCurrent = idx === completedModules && !!enrollment;
-            const isLocked = !accessible;
-
-            return (
-              <div
-                key={mod.id}
+                </CardContent>
+              </Card>
+            ) : enrollment ? (
+              <Button
+                className="w-full"
                 onClick={() => {
-                  if (accessible && enrollment) navigate(`/institute/${courseId}/${mod.id}`);
+                  const next = modules.find((m) => canAccess(m.required_tier, userTier));
+                  if (next) navigate(`/institute/${courseId}/${next.id}`);
                 }}
-                className={`flex items-center gap-3 py-3.5 border-b border-border ${
-                  accessible && enrollment ? "cursor-pointer hover:bg-muted/50" : ""
-                }`}
               >
-                {/* Status indicator */}
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
-                    isCompleted
-                      ? "bg-primary text-primary-foreground"
-                      : isCurrent
-                      ? "bg-foreground text-background"
-                      : isLocked
-                      ? "bg-muted text-muted-foreground border border-border opacity-40"
-                      : "bg-muted text-muted-foreground border border-border"
-                  }`}
-                >
-                  {isCompleted ? <Check className="w-3.5 h-3.5" /> : idx + 1}
-                </div>
+                {language === "ko" ? "이어서 수강하기" : "Continue Learning"}
+              </Button>
+            ) : (
+              <Button className="w-full" onClick={() => enroll.mutate()} disabled={enroll.isPending}>
+                {language === "ko" ? "수강 신청하기" : "Enroll Now"}
+              </Button>
+            )}
+          </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
-                    {language === "ko" ? mod.title_ko : mod.title}
-                  </div>
-                  {isLocked && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      {mod.required_tier === 2 ? "정식멤버 이상" : mod.required_tier === 1 ? "기본멤버 이상" : "공동체계정"}
+          {/* ═══ Curriculum ═══ */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <span className="text-xs font-semibold tracking-widest uppercase text-muted-foreground">
+              커리큘럼
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {modules.map((mod, idx) => {
+              const accessible = canAccess(mod.required_tier, userTier);
+              const isCompleted = idx < completedModules;
+              const isCurrent = idx === completedModules && !!enrollment;
+              const isLocked = !accessible;
+              const chapCount = chapterCounts[mod.id] || 0;
+
+              return (
+                <Card
+                  key={mod.id}
+                  onClick={() => {
+                    if (accessible && enrollment) navigate(`/institute/${courseId}/${mod.id}`);
+                  }}
+                  className={`transition-shadow ${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${isLocked ? "opacity-50" : ""}`}
+                >
+                  <CardContent className="p-3.5 flex items-center gap-3">
+                    {/* Status circle */}
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                        isCompleted
+                          ? "bg-primary text-primary-foreground"
+                          : isCurrent
+                          ? "bg-foreground text-background"
+                          : "bg-muted text-muted-foreground border border-border"
+                      }`}
+                    >
+                      {isCompleted ? <Check className="w-4 h-4" /> : isLocked ? <Lock className="w-3 h-3" /> : idx + 1}
                     </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-sm font-medium ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
+                        {language === "ko" ? mod.title_ko : mod.title}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        {chapCount > 0 ? `${chapCount}개 챕터` : ""}
+                        {isLocked && (
+                          <span className="ml-1">
+                            · {mod.required_tier === 2 ? "정식멤버 이상" : mod.required_tier === 1 ? "기본멤버 이상" : "공동체계정"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {isCompleted && (
+                      <span className="text-[10px] text-primary font-semibold">완료</span>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       </div>
     </InstituteLayout>
