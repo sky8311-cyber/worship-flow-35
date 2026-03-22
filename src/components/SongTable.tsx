@@ -273,15 +273,7 @@ const handleDelete = async (song: any) => {
                   </TableCell>
                   </TableCell>
                   <TableCell>
-                    {isEditable ? (
-                      <Input
-                        value={displaySong.artist || ''}
-                        onChange={(e) => onUpdateEditedSong?.(song.id, 'artist', e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                    ) : (
                       <span>{song.artist || "-"}</span>
-                    )}
                   </TableCell>
                   <TableCell>
                     {isEditable ? (
