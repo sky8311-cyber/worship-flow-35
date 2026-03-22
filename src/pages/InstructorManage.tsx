@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserTier } from "@/hooks/useUserTier";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "@/hooks/use-toast";
 import { Plus, Trash2, ChevronLeft, BookOpen, AlertCircle } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { InstituteInviteSection } from "@/components/institute/InstituteInviteSection";
 
 const TIER_OPTIONS = [
   { value: "0", label: "모든 멤버", labelEn: "All Members" },
