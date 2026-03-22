@@ -1,19 +1,16 @@
 
 
-## 워십세트 카드 액션 버튼 가로 정렬 (모바일)
+## SlashCommandMenu가 미니플레이어에 가려지는 문제 수정
 
-### 문제
-스크린샷에서 보기/공유/수정 버튼이 세로로 쌓여 카드 오른쪽 공간을 많이 차지함.
+### 원인
+- SlashCommandMenu: `fixed z-50`, 커서 위치 아래로 렌더링 → 하단 항목이 미니플레이어(`z-[55]`, `bottom-14`)에 가림
 
-### 수정 (1개 파일)
+### 해결 방법
+**`src/components/worship-studio/editor/SlashCommandMenu.tsx`** 수정:
+1. **z-index 상향**: `z-50` → `z-[60]` (미니플레이어 `z-[55]` 위)
+2. **메뉴 위치를 위로 열리게 변경**: 현재 커서 아래로 열리는데, 화면 하단 공간이 부족하면 위로 열리도록 viewport 체크 로직 추가
+   - `position.top + menuHeight > window.innerHeight - 100` 이면 메뉴를 위로 배치
 
-**`src/components/WorshipSetCard.tsx`** (line 110)
-
-현재: `flex flex-col` → 버튼이 세로 배치
-
-수정:
-- 액션 버튼들을 카드 하단으로 이동하여 가로 한 줄 배치
-- 기존 `flex flex-col gap-1` → `flex flex-row flex-wrap gap-1`
-- 버튼 레이아웃을 카드 콘텐츠 아래로 분리하여 텍스트 영역과 겹치지 않도록 함
-- 아이콘만 표시 (텍스트 숨김) 또는 아이콘+텍스트 가로 배치로 공간 절약
+### 수정 파일 (1개)
+- `src/components/worship-studio/editor/SlashCommandMenu.tsx`
 
