@@ -892,18 +892,6 @@ const SongLibrary = () => {
               songs={sortedAndFilteredSongs}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
-              selectionMode={selectionMode}
-              selectedSongs={selectedSongIds}
-              onToggleSelection={handleToggleSelection}
-              onSelectAll={handleSelectAll}
-              bulkEditMode={bulkEditMode}
-              editedSongs={editedSongs}
-              onUpdateEditedSong={(songId, field, value) => {
-                setEditedSongs(prev => ({
-                  ...prev,
-                  [songId]: { ...prev[songId], [field]: value }
-                }));
-              }}
               columnFilters={columnFilters}
               onColumnFilter={handleColumnFilter}
               columnSort={columnSort}
