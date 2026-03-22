@@ -99,7 +99,7 @@ export const AdminNav = () => {
     }] : []),
     {
       to: "/admin/topics",
-      label: language === "ko" ? "주제 관리" : "Topics",
+      label: language === "ko" ? "태그 관리" : "Tags",
       icon: LayoutList,
     },
     {

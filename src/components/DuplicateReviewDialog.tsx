@@ -682,14 +682,11 @@ export const DuplicateReviewDialog = ({ open, onClose, songs, onMergeComplete }:
         const tags = value.split(",").map((tag: string) => tag.trim());
         return (
           <div className="flex flex-wrap gap-1">
-            {tags.slice(0, 2).map((tag: string, idx: number) => (
+            {tags.map((tag: string, idx: number) => (
               <Badge key={idx} variant="outline" className="text-xs">
                 {tag}
               </Badge>
             ))}
-            {tags.length > 2 && (
-              <Badge variant="outline" className="text-xs">+{tags.length - 2}</Badge>
-            )}
           </div>
         );
       default:

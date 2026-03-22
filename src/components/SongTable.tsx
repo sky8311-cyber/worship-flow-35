@@ -283,16 +283,11 @@ const handleDelete = async (song: any) => {
                   <TableCell>
                       {song.tags ? (
                         <div className="flex flex-wrap gap-1 max-w-xs">
-                          {song.tags.split(',').slice(0, 2).map((tag: string, idx: number) => (
+                          {song.tags.split(',').map((tag: string, idx: number) => (
                             <Badge key={idx} variant="secondary" className="text-xs">
                               {tag.trim()}
                             </Badge>
                           ))}
-                          {song.tags.split(',').length > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{song.tags.split(',').length - 2}
-                            </span>
-                          )}
                         </div>
                       ) : "-"}
                   </TableCell>
