@@ -206,24 +206,29 @@ export const AppHeader = ({ showBackButton, backPath, breadcrumb }: AppHeaderPro
             
             {/* Profile Dropdown */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                  {profile ? (
-                    <AvatarWithLevel
-                      userId={profile.id}
-                      avatarUrl={profile.avatar_url}
-                      fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
-                      size="md"
-                      showLevel={false}
-                      className="h-10 w-10"
-                    />
-                  ) : (
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                      {profile ? (
+                        <AvatarWithLevel
+                          userId={profile.id}
+                          avatarUrl={profile.avatar_url}
+                          fallback={profile.full_name?.[0]?.toUpperCase() || profile.email?.[0]?.toUpperCase() || "U"}
+                          size="md"
+                          showLevel={false}
+                          className="h-10 w-10"
+                        />
+                      ) : (
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>{language === "ko" ? "프로필" : "Profile"}</TooltipContent>
+              </Tooltip>
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-2">
