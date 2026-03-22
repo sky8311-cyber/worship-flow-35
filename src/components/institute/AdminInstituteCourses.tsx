@@ -7,11 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, FileText } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 const TIER_OPTIONS = [
@@ -53,10 +52,24 @@ type Module = {
   created_at: string;
 };
 
+type Chapter = {
+  id: string;
+  module_id: string | null;
+  title: string | null;
+  title_ko: string | null;
+  content_ko: string | null;
+  video_url: string | null;
+  audio_url: string | null;
+  sort_order: number | null;
+  required_tier: number | null;
+  created_at: string | null;
+};
+
 export const AdminInstituteCourses = () => {
   const { language } = useTranslation();
   const queryClient = useQueryClient();
   const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
+  const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
 
   const { data: courses = [], isLoading } = useQuery({
     queryKey: ["admin-institute-courses"],
@@ -70,7 +83,6 @@ export const AdminInstituteCourses = () => {
     },
   });
 
-  // Fetch instructors for dropdown
   const { data: instructors = [] } = useQuery({
     queryKey: ["admin-institute-instructors"],
     queryFn: async () => {
@@ -96,6 +108,21 @@ export const AdminInstituteCourses = () => {
       return data as Module[];
     },
     enabled: !!expandedCourseId,
+  });
+
+  const { data: chapters = [] } = useQuery({
+    queryKey: ["admin-institute-chapters", expandedModuleId],
+    queryFn: async () => {
+      if (!expandedModuleId) return [];
+      const { data, error } = await supabase
+        .from("institute_chapters")
+        .select("*")
+        .eq("module_id", expandedModuleId)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data as Chapter[];
+    },
+    enabled: !!expandedModuleId,
   });
 
   const addCourse = useMutation({
@@ -175,6 +202,45 @@ export const AdminInstituteCourses = () => {
     },
   });
 
+  // Chapter mutations
+  const addChapter = useMutation({
+    mutationFn: async (moduleId: string) => {
+      const { error } = await supabase.from("institute_chapters").insert({
+        module_id: moduleId,
+        title: "New Chapter",
+        title_ko: "새 챕터",
+        sort_order: chapters.length,
+        required_tier: 0,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-institute-chapters", expandedModuleId] });
+      toast({ title: language === "ko" ? "챕터가 추가되었습니다" : "Chapter added" });
+    },
+  });
+
+  const updateChapter = useMutation({
+    mutationFn: async ({ id, field, value }: { id: string; field: string; value: any }) => {
+      const { error } = await supabase.from("institute_chapters").update({ [field]: value }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-institute-chapters", expandedModuleId] });
+    },
+  });
+
+  const deleteChapter = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("institute_chapters").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-institute-chapters", expandedModuleId] });
+      toast({ title: language === "ko" ? "챕터가 삭제되었습니다" : "Chapter deleted" });
+    },
+  });
+
   const getInstructorName = (userId: string | null) => {
     if (!userId) return "-";
     const inst = instructors.find(i => i.user_id === userId);
@@ -209,7 +275,10 @@ export const AdminInstituteCourses = () => {
               <Collapsible
                 key={course.id}
                 open={isExpanded}
-                onOpenChange={(open) => setExpandedCourseId(open ? course.id : null)}
+                onOpenChange={(open) => {
+                  setExpandedCourseId(open ? course.id : null);
+                  if (!open) setExpandedModuleId(null);
+                }}
               >
                 <Card className="overflow-hidden">
                   <div className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
@@ -354,58 +423,149 @@ export const AdminInstituteCourses = () => {
                         </div>
 
                         {modules.length > 0 ? (
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="w-16">#</TableHead>
-                                <TableHead>Title (EN)</TableHead>
-                                <TableHead>제목 (KO)</TableHead>
-                                <TableHead>Video URL</TableHead>
-                                <TableHead className="w-32">{language === "ko" ? "접근 레벨" : "Tier"}</TableHead>
-                                <TableHead className="w-12"></TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {modules.map((mod) => (
-                                <TableRow key={mod.id}>
-                                  <TableCell>
-                                    <Input type="number" className="w-14 h-7 text-xs" defaultValue={mod.sort_order} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Input className="h-7 text-sm" defaultValue={mod.title} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "title", value: e.target.value })} />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Input className="h-7 text-sm" defaultValue={mod.title_ko} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "title_ko", value: e.target.value })} />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Input className="h-7 text-sm" defaultValue={mod.video_url || ""} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "video_url", value: e.target.value || null })} />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Select
-                                      value={String(mod.required_tier)}
-                                      onValueChange={(v) => updateModule.mutate({ id: mod.id, field: "required_tier", value: parseInt(v) })}
-                                    >
-                                      <SelectTrigger className="h-7 text-xs">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {TIER_OPTIONS.map((opt) => (
-                                          <SelectItem key={opt.value} value={opt.value}>
-                                            {language === "ko" ? opt.label : opt.labelEn}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm("Delete this module?")) deleteModule.mutate(mod.id); }}>
-                                      <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                          <div className="space-y-1">
+                            {modules.map((mod) => {
+                              const isModExpanded = expandedModuleId === mod.id;
+                              return (
+                                <Collapsible
+                                  key={mod.id}
+                                  open={isModExpanded}
+                                  onOpenChange={(open) => setExpandedModuleId(open ? mod.id : null)}
+                                >
+                                  <div className="border rounded-lg overflow-hidden bg-background">
+                                    {/* Module row */}
+                                    <div className="flex items-center gap-2 p-2 hover:bg-muted/30 transition-colors">
+                                      <CollapsibleTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
+                                          {isModExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                                        </Button>
+                                      </CollapsibleTrigger>
+                                      <Input type="number" className="w-14 h-7 text-xs" defaultValue={mod.sort_order} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
+                                      <Input className="flex-1 h-7 text-sm" defaultValue={mod.title_ko} onBlur={(e) => updateModule.mutate({ id: mod.id, field: "title_ko", value: e.target.value })} />
+                                      <Input className="flex-1 h-7 text-sm" defaultValue={mod.title} placeholder="Title (EN)" onBlur={(e) => updateModule.mutate({ id: mod.id, field: "title", value: e.target.value })} />
+                                      <Input className="w-40 h-7 text-xs" defaultValue={mod.video_url || ""} placeholder="Video URL" onBlur={(e) => updateModule.mutate({ id: mod.id, field: "video_url", value: e.target.value || null })} />
+                                      <Select
+                                        value={String(mod.required_tier)}
+                                        onValueChange={(v) => updateModule.mutate({ id: mod.id, field: "required_tier", value: parseInt(v) })}
+                                      >
+                                        <SelectTrigger className="h-7 w-28 text-xs">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {TIER_OPTIONS.map((opt) => (
+                                            <SelectItem key={opt.value} value={opt.value}>
+                                              {language === "ko" ? opt.label : opt.labelEn}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm("Delete this module?")) deleteModule.mutate(mod.id); }}>
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+
+                                    {/* Chapters panel */}
+                                    <CollapsibleContent>
+                                      <div className="border-t px-4 py-3 bg-muted/10 space-y-3">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="text-xs font-semibold flex items-center gap-1.5 text-muted-foreground">
+                                            <FileText className="w-3.5 h-3.5" />
+                                            {language === "ko" ? "챕터" : "Chapters"} ({chapters.length})
+                                          </h4>
+                                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => addChapter.mutate(mod.id)} disabled={addChapter.isPending}>
+                                            <Plus className="w-3 h-3 mr-1" />
+                                            {language === "ko" ? "챕터 추가" : "Add Chapter"}
+                                          </Button>
+                                        </div>
+
+                                        {chapters.length === 0 ? (
+                                          <p className="text-xs text-muted-foreground text-center py-3">
+                                            {language === "ko" ? "챕터가 없습니다" : "No chapters yet"}
+                                          </p>
+                                        ) : (
+                                          <div className="space-y-2">
+                                            {chapters.map((ch) => (
+                                              <div key={ch.id} className="border rounded-md p-3 bg-background space-y-2">
+                                                <div className="flex items-center gap-2">
+                                                  <Input
+                                                    type="number"
+                                                    className="w-14 h-7 text-xs"
+                                                    defaultValue={ch.sort_order ?? 0}
+                                                    onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "sort_order", value: parseInt(e.target.value) || 0 })}
+                                                  />
+                                                  <Input
+                                                    className="flex-1 h-7 text-sm"
+                                                    defaultValue={ch.title_ko || ""}
+                                                    placeholder="제목 (KO)"
+                                                    onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "title_ko", value: e.target.value })}
+                                                  />
+                                                  <Input
+                                                    className="flex-1 h-7 text-sm"
+                                                    defaultValue={ch.title || ""}
+                                                    placeholder="Title (EN)"
+                                                    onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "title", value: e.target.value })}
+                                                  />
+                                                  <Select
+                                                    value={String(ch.required_tier ?? 0)}
+                                                    onValueChange={(v) => updateChapter.mutate({ id: ch.id, field: "required_tier", value: parseInt(v) })}
+                                                  >
+                                                    <SelectTrigger className="h-7 w-28 text-xs">
+                                                      <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                      {TIER_OPTIONS.map((opt) => (
+                                                        <SelectItem key={opt.value} value={opt.value}>
+                                                          {language === "ko" ? opt.label : opt.labelEn}
+                                                        </SelectItem>
+                                                      ))}
+                                                    </SelectContent>
+                                                  </Select>
+                                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => { if (confirm("Delete this chapter?")) deleteChapter.mutate(ch.id); }}>
+                                                    <Trash2 className="w-3 h-3" />
+                                                  </Button>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                  <div>
+                                                    <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Video URL</label>
+                                                    <Input
+                                                      className="h-7 text-xs"
+                                                      defaultValue={ch.video_url || ""}
+                                                      placeholder="https://youtu.be/..."
+                                                      onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "video_url", value: e.target.value || null })}
+                                                    />
+                                                  </div>
+                                                  <div>
+                                                    <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">Audio URL</label>
+                                                    <Input
+                                                      className="h-7 text-xs"
+                                                      defaultValue={ch.audio_url || ""}
+                                                      placeholder="https://..."
+                                                      onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "audio_url", value: e.target.value || null })}
+                                                    />
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <label className="text-[10px] font-medium text-muted-foreground mb-0.5 block">
+                                                    {language === "ko" ? "콘텐츠 (HTML)" : "Content (HTML)"}
+                                                  </label>
+                                                  <Textarea
+                                                    className="min-h-[200px] text-xs font-mono"
+                                                    defaultValue={ch.content_ko || ""}
+                                                    placeholder="HTML content..."
+                                                    onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "content_ko", value: e.target.value || null })}
+                                                  />
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </CollapsibleContent>
+                                  </div>
+                                </Collapsible>
+                              );
+                            })}
+                          </div>
                         ) : (
                           <p className="text-sm text-muted-foreground text-center py-4">
                             {language === "ko" ? "모듈이 없습니다" : "No modules yet"}
