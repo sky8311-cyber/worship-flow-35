@@ -17,7 +17,7 @@ import { TopicSelector } from "@/components/TopicSelector";
 import { toast } from "sonner";
 import { 
   Lock, Loader2, ExternalLink, Check, Search, Plus, 
-  Music, FileText, Pen, ChevronRight, Save, X
+  Music, FileText, Pen, ChevronRight, ChevronLeft, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -500,9 +500,17 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
 
       {/* Footer Buttons */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 border-t shrink-0 bg-background" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}>
-        <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
-          취소
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setShowCancelConfirm(true)}>
+            취소
+          </Button>
+          {currentStep > 1 && (
+            <Button variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              이전
+            </Button>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
