@@ -1128,6 +1128,7 @@ const [loading, setLoading] = useState(false);
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent 
         className={cn(
