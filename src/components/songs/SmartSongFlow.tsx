@@ -312,7 +312,7 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose, onC
     switch (currentStep) {
       case 1: return title.trim().length > 0;
       case 2: return !!selectedYoutubeResult && artist.trim().length > 0;
-      case 3: return scoreVariations.some(v => v.files.length > 0);
+      case 3: return scoreVariations.some(v => v.files.length > 0 && v.key);
       case 5: return songLanguage && topics.length >= 2;
       default: return true;
     }
