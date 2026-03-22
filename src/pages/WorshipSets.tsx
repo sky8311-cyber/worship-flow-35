@@ -704,7 +704,7 @@ export default function WorshipSets() {
               </TooltipProvider>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
             {/* Filters */}
             <div className="mb-6">
               <WorshipSetFilters
