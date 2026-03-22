@@ -1,43 +1,46 @@
 
 
-## Step 3 유효성 검사 개선 + 유튜브 라벨 확인
+## 닫기 확인 다이얼로그에 "임시저장" 옵션 추가
 
-### 1. Step 3 "다음" 버튼 — 키 미선택 시 에러 메시지 추가
+### 현재 상태
+`SongDialog.tsx` line 1573-1595: AlertDialog에 2개 버튼만 존재
+- "계속 작성" (Stay) — 다이얼로그 닫기 취소
+- "닫기" (Close) — 저장 없이 닫기
 
+### 문제
+"임시저장 후 닫기" 옵션이 없어서, 사용자가 닫기 전 반드시 수동으로 임시저장 버튼을 눌러야 함.
+
+### 해결 방법
+
+#### 1. SmartSongFlow에 `onDraftSaveAndClose` 콜백 노출
 **파일:** `src/components/songs/SmartSongFlow.tsx`
 
-**현재 (line 315):**
-```tsx
-case 3: return scoreVariations.some(v => v.files.length > 0);
+- 새 prop 추가: `onRequestDraftSave?: () => void`
+- 이 prop이 호출되면 내부 `handleDraftSave()`를 실행한 후 `onClose()` 호출
+- 실제로는 **`useImperativeHandle` + `forwardRef`**를 사용하여 SongDialog에서 SmartSongFlow의 `triggerDraftSave`를 호출할 수 있게 함
+
+#### 2. SongDialog에서 ref로 임시저장 트리거
+**파일:** `src/components/SongDialog.tsx`
+
+- `smartFlowRef`를 생성하여 SmartSongFlow에 전달
+- AlertDialog에 3번째 버튼 추가: "임시저장" (Save Draft)
+- 클릭 시 `smartFlowRef.current.triggerDraftSave()` 호출 → 저장 완료 후 다이얼로그 닫기
+
+#### 3. AlertDialog UI 변경
+```text
+┌─────────────────────────────────┐
+│  창을 닫으시겠습니까?              │
+│  작성 중인 내용이 저장되지 않습니다.  │
+│                                   │
+│  [계속 작성]  [임시저장]  [닫기]    │
+└─────────────────────────────────┘
 ```
-- 악보 파일만 체크, 키 선택 여부는 미검증
 
-**변경:**
-```tsx
-case 3: return scoreVariations.some(v => v.files.length > 0 && v.key);
-```
-
-**handleNext 에러 메시지 (line 325):**
-현재 하나의 메시지만 표시. 조건 분기 추가:
-```tsx
-if (currentStep === 3) {
-  const hasFiles = scoreVariations.some(v => v.files.length > 0);
-  const hasKey = scoreVariations.some(v => v.key);
-  if (!hasKey) toast.error("키를 선택하세요");
-  if (!hasFiles) toast.error("악보를 업로드하세요");
-}
-```
-→ 두 가지 모두 누락이면 두 메시지 순차 표시
-
-### 2. 유튜브 링크 라벨 — 현재 동작 설명
-
-**라벨을 안 넣으면:**
-- BandView (line 968): `youtubeLinks[0].label && (...)` → 빈 문자열이면 라벨 텍스트 자체가 표시되지 않음
-- iframe title은 `youtubeLinks[0].label || song?.title` → 곡 제목이 fallback으로 사용됨
-- **결론: 라벨 없으면 밴드뷰에서 유튜브 영상 위에 아무 텍스트도 안 뜸** (영상은 정상 재생)
-
-라벨이 없을 때 기본값을 자동으로 넣을지는 사용자 판단에 맡김 (현재는 선택사항).
+- "계속 작성" — AlertDialogCancel (기존)
+- "임시저장" — Button variant="outline", 임시저장 실행 후 닫기
+- "닫기" — AlertDialogAction destructive (기존)
 
 ### 수정 파일
-1. `src/components/songs/SmartSongFlow.tsx` — `canGoNext` 키 검증 추가 + 구체적 에러 메시지
+1. `src/components/songs/SmartSongFlow.tsx` — `forwardRef` + `useImperativeHandle`로 `triggerDraftSave` 노출
+2. `src/components/SongDialog.tsx` — ref 연결 + AlertDialog에 "임시저장" 버튼 추가
 
