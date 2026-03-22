@@ -1556,10 +1556,15 @@ const SetBuilder = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Action Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/worship-sets")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            뒤로
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/worship-sets")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              뒤로
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={tutorial.start}>
+              <HelpCircle className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </div>
           
           <div className="flex items-center gap-3">
             {/* Collaborators Header */}
