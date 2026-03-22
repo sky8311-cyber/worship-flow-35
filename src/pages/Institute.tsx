@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useTierFeature } from "@/hooks/useTierFeature";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { InstituteInvitationBanner } from "@/components/institute/InstituteInvitationBanner";
 import { Play, Sparkles } from "lucide-react";
 import { useState } from "react";
 
