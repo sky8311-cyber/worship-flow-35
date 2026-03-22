@@ -73,7 +73,8 @@ export const SmartSongFlow = ({ draftSong, onComplete, onDraftSave, onClose }: S
   const [youtubeSearching, setYoutubeSearching] = useState(false);
   const [youtubeSearchQuery, setYoutubeSearchQuery] = useState("");
   const [showCustomSearch, setShowCustomSearch] = useState(false);
-  const [manualArtistMode, setManualArtistMode] = useState(false);
+  const artistSectionRef = useRef<HTMLDivElement>(null);
+  const [artistHighlight, setArtistHighlight] = useState(false);
 
   // === STEP 3: Additional YouTube + Scores ===
   const [youtubeLinks, setYoutubeLinks] = useState<YouTubeLink[]>(
