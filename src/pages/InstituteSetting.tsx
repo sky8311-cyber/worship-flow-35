@@ -1,14 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Users, Award, UserCheck, Settings, ChevronLeft } from "lucide-react";
+import { BookOpen, Users, UserCheck, Settings } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useAuth } from "@/contexts/AuthContext";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { AdminInstituteInstructors } from "@/components/institute/AdminInstituteInstructors";
-import { AdminInstituteCourses } from "@/components/institute/AdminInstituteCourses";
-import { AdminInstituteCertifications } from "@/components/institute/AdminInstituteCertifications";
+import { AdminInstituteContentTree } from "@/components/institute/AdminInstituteContentTree";
 import { AdminInstituteEnrollments } from "@/components/institute/AdminInstituteEnrollments";
-import { Button } from "@/components/ui/button";
 
 const InstituteSetting = () => {
   const { language } = useTranslation();
