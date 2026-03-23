@@ -138,7 +138,7 @@ export const AdminNav = () => {
       icon: Newspaper,
     },
     {
-      to: "/admin/institute",
+      to: "/institute/setting",
       label: "Institute",
       icon: GraduationCap,
     },
