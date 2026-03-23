@@ -95,6 +95,7 @@ const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
 const AdminMembershipProducts = lazyWithRetry(() => import("./pages/AdminMembershipProducts"));
 const AdminInstitute = lazyWithRetry(() => import("./pages/AdminInstitute"));
 const AdminSongLibrary = lazyWithRetry(() => import("./pages/AdminSongLibrary"));
+const InstituteSetting = lazyWithRetry(() => import("./pages/InstituteSetting"));
 const InstructorManage = lazyWithRetry(() => import("./pages/InstructorManage"));
 const Institute = lazyWithRetry(() => import("./pages/Institute"));
 const InstituteCourse = lazyWithRetry(() => import("./pages/InstituteCourse"));
