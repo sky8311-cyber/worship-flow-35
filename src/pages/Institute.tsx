@@ -109,9 +109,22 @@ export default function Institute() {
         {/* ═══ Hero ═══ */}
         <Card className="mb-6 overflow-hidden">
           <CardContent className="p-5">
-            <Badge variant="secondary" className="mb-3 text-[10px]">
-              🎓 K-WORSHIP INSTITUTE
-            </Badge>
+            <div className="flex items-center justify-between mb-3">
+              <Badge variant="secondary" className="text-[10px]">
+                🎓 K-WORSHIP INSTITUTE
+              </Badge>
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs gap-1.5"
+                  onClick={() => navigate("/institute/setting")}
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  설정
+                </Button>
+              )}
+            </div>
             <h1 className="text-lg font-bold text-foreground leading-snug">
               예배 사역자를 위한 온라인 자격증 스쿨
             </h1>
