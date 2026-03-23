@@ -8,7 +8,7 @@ import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteInvitationBanner } from "@/components/institute/InstituteInvitationBanner";
 import { Sparkles, ChevronRight, Lock, BookOpen, Users, Award, Settings } from "lucide-react";
 import { useState } from "react";
-import { useIsAdmin } from "@/hooks/useIsAdmin";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
