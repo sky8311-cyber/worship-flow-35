@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 
 export default function Institute() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { userTier } = useUserTier();
   const { hasFeature } = useTierFeature();
   const [showAiLocked, setShowAiLocked] = useState(false);
