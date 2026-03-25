@@ -79,6 +79,7 @@ const [loading, setLoading] = useState(false);
     interpretation: "",
     lyrics: "",
     is_private: false,
+    tempo: "",
   });
 
 // Check how many worship sets use this song
@@ -112,6 +113,7 @@ const [loading, setLoading] = useState(false);
         interpretation: song.interpretation || "",
         lyrics: song.lyrics || "",
         is_private: song.is_private || false,
+        tempo: song.tempo || "",
       });
       
       // Load score variations and youtube links
@@ -133,6 +135,7 @@ const [loading, setLoading] = useState(false);
         interpretation: "",
         lyrics: "",
         is_private: false,
+        tempo: "",
       });
       setScoreVariations([{ key: "", files: [] }]);
       setYoutubeLinks([{ label: "", url: "" }]);
@@ -567,6 +570,8 @@ const [loading, setLoading] = useState(false);
       };
       // Remove topics from data since DB uses 'tags' column
       delete data.topics;
+      // Convert empty tempo to null for DB constraint
+      if (!data.tempo) data.tempo = null;
 
       let songId: string;
       let isNewSong = false;
@@ -1468,7 +1473,23 @@ const [loading, setLoading] = useState(false);
             </Select>
           </div>
 
-          {/* 10. Topics */}
+          {/* 10. Tempo */}
+          <div>
+            <Label>{language === "ko" ? "템포" : "Tempo"}</Label>
+            <Select value={formData.tempo} onValueChange={(value) => setFormData({ ...formData, tempo: value === "__none__" ? "" : value })}>
+              <SelectTrigger>
+                <SelectValue placeholder={language === "ko" ? "선택 안 함" : "Not selected"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{language === "ko" ? "선택 안 함" : "Not selected"}</SelectItem>
+                <SelectItem value="slow">{language === "ko" ? "느림 (Slow)" : "Slow"}</SelectItem>
+                <SelectItem value="mid">{language === "ko" ? "미드 (Mid)" : "Mid"}</SelectItem>
+                <SelectItem value="fast">{language === "ko" ? "빠름 (Fast)" : "Fast"}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 11. Topics */}
           <div>
             <Label htmlFor="topics">{t("songDialog.topics")}</Label>
             <TopicSelector 

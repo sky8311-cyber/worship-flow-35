@@ -104,8 +104,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const [lyricsSearchDone, setLyricsSearchDone] = useState(false);
   const [lyricsCandidates, setLyricsCandidates] = useState<Array<{ url: string; title: string; source: string }>>([]);
 
-  // === STEP 5: Language & Topics ===
+  // === STEP 5: Language, Tempo & Topics ===
   const [songLanguage, setSongLanguage] = useState(draftSong?.language || "");
+  const [tempo, setTempo] = useState(draftSong?.tempo || "");
   const [topics, setTopics] = useState<string[]>(
     draftSong?.tags ? draftSong.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : []
   );
@@ -404,6 +405,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         default_key: scoreVariations[0]?.key || "",
         score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
+        tempo: tempo || null,
         status: "published",
         draft_step: null,
       };
@@ -431,6 +433,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         default_key: scoreVariations[0]?.key || "",
         score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
+        tempo: tempo || null,
         status: "draft",
         draft_step: currentStep,
       };
@@ -547,19 +550,23 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         {currentStep === 5 && <Step5_LanguageTopics
           songLanguage={songLanguage}
           setSongLanguage={setSongLanguage}
+          tempo={tempo}
+          setTempo={setTempo}
           topics={topics}
           setTopics={setTopics}
           topicsLoading={topicsLoading}
           t={t}
+          language={language}
         />}
         {currentStep === 6 && <Step6_Review
           title={title} subtitle={subtitle} isPrivate={isPrivate}
           artist={artist} originalComposer={originalComposer}
           youtubeLinks={youtubeLinks} scoreVariations={scoreVariations}
           lyrics={lyrics} notes={notes}
-          songLanguage={songLanguage} topics={topics}
+          songLanguage={songLanguage} tempo={tempo} topics={topics}
           onEditStep={setCurrentStep}
           t={t}
+          language={language}
         />}
       </div>
 
@@ -958,7 +965,8 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
   );
 }
 
-function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics, topicsLoading, t }: any) {
+function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, topics, setTopics, topicsLoading, t, language }: any) {
+  const isKo = language === "ko";
   return (
     <div className="space-y-6">
       {topicsLoading && (
@@ -981,6 +989,19 @@ function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics
       </div>
 
       <div className="space-y-2">
+        <Label>{isKo ? "템포" : "Tempo"}</Label>
+        <Select value={tempo} onValueChange={(value) => setTempo(value === "__none__" ? "" : value)}>
+          <SelectTrigger><SelectValue placeholder={isKo ? "선택 안 함" : "Not selected"} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">{isKo ? "선택 안 함" : "Not selected"}</SelectItem>
+            <SelectItem value="slow">{isKo ? "느림 (Slow)" : "Slow"}</SelectItem>
+            <SelectItem value="mid">{isKo ? "미드 (Mid)" : "Mid"}</SelectItem>
+            <SelectItem value="fast">{isKo ? "빠름 (Fast)" : "Fast"}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
         <Label>{t("songFlow.topicsLabel")} <span className="text-destructive">*</span> {t("songFlow.topicsHint")}</Label>
         <TopicSelector selectedTopics={topics} onTopicsChange={setTopics} minTopics={2} maxTopics={3} />
       </div>
@@ -988,8 +1009,10 @@ function Step5_LanguageTopics({ songLanguage, setSongLanguage, topics, setTopics
   );
 }
 
-function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, scoreVariations, lyrics, notes, songLanguage, topics, onEditStep, t }: any) {
+function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, scoreVariations, lyrics, notes, songLanguage, tempo, topics, onEditStep, t, language }: any) {
   const langLabel = songLanguage === "KO" ? "한국어" : songLanguage === "EN" ? "English" : songLanguage === "KO/EN" ? "한국어/English" : t("songFlow.notEntered");
+  const isKo = language === "ko";
+  const tempoLabel = tempo === "slow" ? (isKo ? "느림" : "Slow") : tempo === "mid" ? (isKo ? "미드" : "Mid") : tempo === "fast" ? (isKo ? "빠름" : "Fast") : null;
 
   const Section = ({ label, step, children }: { label: string; step: number; children: React.ReactNode }) => (
     <div className="py-3 border-b last:border-0">
@@ -1041,6 +1064,7 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
       <Section label={t("songFlow.languageTopicsLabel")} step={5}>
         <div className="flex flex-wrap gap-1 mt-1">
           <Badge variant="secondary" className="text-xs">{langLabel}</Badge>
+          {tempoLabel && <Badge variant="outline" className="text-xs">{tempoLabel}</Badge>}
           {topics.map((tp: string) => <Badge key={tp} variant="outline" className="text-xs">{tp}</Badge>)}
         </div>
       </Section>

@@ -192,6 +192,17 @@ export const SongCard = memo(function SongCard({
                   {getLanguageTranslation(song.language)}
                 </span>
               )}
+              {song.tempo && (
+                <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                  song.tempo === 'slow' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                  song.tempo === 'mid' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300' :
+                  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                }`}>
+                  {song.tempo === 'slow' ? (language === 'ko' ? '느림' : 'Slow') :
+                   song.tempo === 'mid' ? (language === 'ko' ? '미드' : 'Mid') :
+                   (language === 'ko' ? '빠름' : 'Fast')}
+                </span>
+              )}
             </div>
           </div>
 

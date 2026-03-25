@@ -1,0 +1,1 @@
+ALTER TABLE public.songs ADD COLUMN tempo TEXT NULL CHECK (tempo IN ('slow', 'mid', 'fast'));
