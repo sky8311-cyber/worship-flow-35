@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -116,19 +116,26 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
     </Command>
   );
 
-  // Mobile: Use Drawer (bottom sheet) for better keyboard handling
+  // Mobile: Use full-screen overlay with input at top for keyboard compatibility
   if (isMobile) {
+    if (!open) {
+      return <div onClick={() => setOpen(true)}>{TriggerButton}</div>;
+    }
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          {TriggerButton}
-        </DrawerTrigger>
-        <DrawerContent className="max-h-[50dvh]">
-          <div className="p-2 pt-2">
+      <>
+        <div onClick={() => setOpen(true)}>{TriggerButton}</div>
+        <div className="fixed inset-0 z-[70] bg-background flex flex-col">
+          <div className="flex items-center gap-2 p-3 border-b">
+            <Button variant="ghost" size="icon" onClick={() => { setOpen(false); setSearchValue(""); }}>
+              <X className="h-5 w-5" />
+            </Button>
+            <span className="font-medium text-foreground">{t("artistSelector.selectArtist")}</span>
+          </div>
+          <div className="flex-1 overflow-hidden">
             {CommandContent}
           </div>
-        </DrawerContent>
-      </Drawer>
+        </div>
+      </>
     );
   }
 
