@@ -277,20 +277,27 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
       // PDF files: convert to images via edge function
       if (file.type === "application/pdf") {
-        const formData = new FormData();
-        formData.append("file", file);
+        // Convert PDF to images client-side (browser canvas)
+        const pageImages = await convertPdfToImages(file);
+        if (!pageImages.length) throw new Error("No pages found in PDF");
 
-        const { data, error } = await supabase.functions.invoke("convert-pdf-to-images", {
-          body: formData,
-        });
-        if (error) throw error;
-        if (!data?.images?.length) throw new Error("No images returned from PDF conversion");
+        const uploadedPages: Array<{ url: string; page: number }> = [];
+        for (const { blob, page } of pageImages) {
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-page-${page}.png`;
+          const { error: uploadError } = await supabase.storage.from("scores").upload(fileName, blob, {
+            contentType: "image/png",
+            upsert: false,
+          });
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
+          uploadedPages.push({ url: publicUrl, page });
+        }
 
         setScoreVariations(prev => {
           const updated = [...prev];
           const currentFiles = updated[variationIndex].files;
           const startPage = currentFiles.length + 1;
-          data.images.forEach((img: { url: string; page: number }, idx: number) => {
+          uploadedPages.forEach((img, idx) => {
             currentFiles.push({ url: img.url, page: startPage + idx });
           });
           return updated;
