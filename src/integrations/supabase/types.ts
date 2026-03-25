@@ -74,6 +74,39 @@ export type Database = {
           },
         ]
       }
+      ai_prompts: {
+        Row: {
+          content: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          key: string
+          updated_at: string | null
+          version: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key: string
+          updated_at?: string | null
+          version?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          key?: string
+          updated_at?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       ai_usage_log: {
         Row: {
           action_type: string
@@ -3110,11 +3143,14 @@ export type Database = {
       }
       service_sets: {
         Row: {
+          ai_generated: boolean | null
           band_name: string | null
           community_id: string | null
+          conductor_note: string | null
           created_at: string
           created_by: string | null
           date: string
+          emotional_journey: string | null
           id: string
           is_public: boolean | null
           notes: string | null
@@ -3125,18 +3161,23 @@ export type Database = {
           service_time: string | null
           status: Database["public"]["Enums"]["set_status"]
           target_audience: string | null
+          tempo_pattern: string | null
           theme: string | null
+          theological_proposition: string | null
           updated_at: string
           view_count: number | null
           worship_duration: number | null
           worship_leader: string | null
         }
         Insert: {
+          ai_generated?: boolean | null
           band_name?: string | null
           community_id?: string | null
+          conductor_note?: string | null
           created_at?: string
           created_by?: string | null
           date: string
+          emotional_journey?: string | null
           id?: string
           is_public?: boolean | null
           notes?: string | null
@@ -3147,18 +3188,23 @@ export type Database = {
           service_time?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
+          tempo_pattern?: string | null
           theme?: string | null
+          theological_proposition?: string | null
           updated_at?: string
           view_count?: number | null
           worship_duration?: number | null
           worship_leader?: string | null
         }
         Update: {
+          ai_generated?: boolean | null
           band_name?: string | null
           community_id?: string | null
+          conductor_note?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
+          emotional_journey?: string | null
           id?: string
           is_public?: boolean | null
           notes?: string | null
@@ -3169,7 +3215,9 @@ export type Database = {
           service_time?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
+          tempo_pattern?: string | null
           theme?: string | null
+          theological_proposition?: string | null
           updated_at?: string
           view_count?: number | null
           worship_duration?: number | null
