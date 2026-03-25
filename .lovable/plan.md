@@ -1,49 +1,54 @@
 
 
-## Institute 설정 — 통합 트리 구조 개편
+## 두 가지 수정: PDF 악보 업로드 + ArtistSelector 버그
 
-### 현재 문제
-- "과목(Courses)" 탭과 "자격증(Certifications)" 탭이 분리되어 있어 전체 계층 구조를 한눈에 볼 수 없음
-- Pathway → Course → Module → Chapter 관계가 직관적이지 않음
+### 1. PDF → 이미지 변환 악보 업로드
 
-### 변경 계획
+**현재**: `accept="image/*,.pdf"`로 PDF 선택은 가능하지만, PDF를 그대로 저장하여 썸네일 미리보기가 안 되고 다중 페이지를 처리하지 않음.
 
-**탭 구조 변경** (`InstituteSetting.tsx`):
-- "과목" + "자격증" 탭 → **"커리큘럼"** 탭 1개로 통합
-- 나머지 탭(강사, 수강생) 유지
+**수정 방법**:
 
-**새 컴포넌트** `AdminInstituteContentTree.tsx`:
-- 4단 폴더/트리 구조로 전체 hierarchy를 한 화면에 표시
+**A. Edge Function 생성**: `convert-pdf-to-images`
+- PDF 파일을 받아서 각 페이지를 이미지(PNG)로 변환
+- `pdf-lib` 또는 `pdfjs-dist`로 페이지 수 추출 후, 각 페이지를 렌더링
+- 실질적으로 Deno 환경에서는 `pdf.js` (pdfjs-dist)를 사용하여 각 페이지를 canvas로 렌더링 → PNG로 변환
+- 변환된 이미지들을 `scores` 버킷에 업로드
+- 각 이미지의 public URL 배열을 반환
 
-```text
-▼ 📂 Pathway: 워십 리부트 자격 과정     [+ Course] [Edit] [Delete]
-  ▼ 📘 Course: 워십 리부트               [+ Module] [Edit] [Delete]
-    ▼ 📄 Module: 1과 - 예배란 무엇인가   [+ Chapter] [Edit] [Delete]
-      📝 Chapter: 1-1 예배의 정의         [Edit] [Delete]
-      📝 Chapter: 1-2 성경적 예배         [Edit] [Delete]
-    ▶ 📄 Module: 2과 - 예배 인도의 원리
-  ▶ 📘 Course: 찬양 인도 기초
-▶ 📂 Pathway: 예배팀 리더십 과정
-── Unassigned Courses ──
-  ▶ 📘 Course: (패스웨이 미지정 코스)
+**B. `SmartSongFlow.tsx`의 `uploadScoreFile` 함수 수정**:
+- 파일이 PDF인 경우 (`file.type === 'application/pdf'`):
+  - Edge Function `convert-pdf-to-images` 호출
+  - 반환된 이미지 URL 배열을 해당 variation의 files에 순서대로 추가 (각각 page 번호 할당)
+- 이미지 파일인 경우: 기존 로직 유지 (직접 storage 업로드)
+
+**C. `SongDialog.tsx`에도 동일 로직 적용** (레거시 곡 편집 다이얼로그에도 PDF 지원)
+
+### 2. ArtistSelector "새 아티스트 추가" 버그 수정
+
+**원인**: `CommandEmpty`는 `CommandGroup` 안에 매칭 항목이 **0개**일 때만 표시됨. 검색어가 기존 아티스트와 부분 일치하면 `filteredArtists`가 비어있지 않아서 `CommandEmpty`가 안 보이고, "Add new" 버튼도 사라짐.
+
+**수정**: `CommandEmpty` 안에 넣지 말고, **항상 표시되는 별도 항목으로** "새 아티스트 추가" 옵션을 `CommandGroup` 안에 추가.
+
+```tsx
+<CommandGroup>
+  {showAddNew && (
+    <CommandItem value={`__add_new__${searchValue}`} onSelect={handleAddNew}>
+      <Plus className="mr-2 h-4 w-4" />
+      {t("artistSelector.addNew")}: "{searchValue}"
+    </CommandItem>
+  )}
+  {filteredArtists.map((artist) => (
+    <CommandItem key={artist} value={artist} onSelect={() => handleSelect(artist)}>
+      ...
+    </CommandItem>
+  ))}
+</CommandGroup>
 ```
 
-**각 레벨 기능**:
-- **Pathway**: 추가/삭제/이름 편집/published 토글. 클릭시 상세 편집 패널(배지, 템플릿, 설명)
-- **Course**: 추가/삭제/이름 편집. 드래그로 다른 Pathway로 이동 가능. 클릭시 상세(썸네일, 강사, tier 등)
-- **Module**: 추가/삭제/이름 편집/sort_order. 클릭시 상세(video_url, tier)
-- **Chapter**: 추가/삭제/이름 편집. 클릭시 상세(video, audio, content HTML)
+`CommandEmpty`는 검색 결과도 없고 추가할 것도 없을 때만 "아티스트를 찾을 수 없습니다" 표시.
 
-**상세 편집**: 트리 오른쪽에 선택된 항목의 편집 패널 표시 (현재 Certifications 탭의 left-right 레이아웃과 유사)
-
-### 수정 파일
-1. `src/components/institute/AdminInstituteContentTree.tsx` — 새 통합 트리 컴포넌트 (기존 AdminInstituteCourses + AdminInstituteCertifications 로직 통합)
-2. `src/pages/InstituteSetting.tsx` — 탭 구조 변경 (courses/certifications → curriculum 탭 1개)
-3. 기존 `AdminInstituteCourses.tsx`, `AdminInstituteCertifications.tsx` — 이 페이지에서는 더 이상 사용하지 않음 (삭제 또는 유지)
-
-### 기술 구현
-- Collapsible 컴포넌트로 각 레벨 접기/펼치기
-- 왼쪽: 트리 뷰 (~40% 너비), 오른쪽: 선택된 항목 상세 편집 패널 (~60%)
-- 기존 DB 테이블/쿼리 그대로 활용 (institute_certifications, institute_certification_courses, institute_courses, institute_modules, institute_chapters)
-- "미지정 코스" 섹션: 어떤 Pathway에도 속하지 않은 코스를 별도로 표시
+### 수정 파일 요약
+1. `supabase/functions/convert-pdf-to-images/index.ts` — 새 Edge Function
+2. `src/components/songs/SmartSongFlow.tsx` — `uploadScoreFile`에 PDF 분기 추가
+3. `src/components/ArtistSelector.tsx` — "Add new" 버튼을 `CommandGroup` 안으로 이동
 
