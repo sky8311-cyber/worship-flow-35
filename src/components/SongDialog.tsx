@@ -570,6 +570,8 @@ const [loading, setLoading] = useState(false);
       };
       // Remove topics from data since DB uses 'tags' column
       delete data.topics;
+      // Convert empty tempo to null for DB constraint
+      if (!data.tempo) data.tempo = null;
 
       let songId: string;
       let isNewSong = false;
