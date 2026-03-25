@@ -20,6 +20,7 @@ import {
   Music, FileText, Pen, ChevronRight, ChevronLeft, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { convertPdfToImages } from "@/utils/pdfToImages";
 
 const TOTAL_STEPS = 6;
 
