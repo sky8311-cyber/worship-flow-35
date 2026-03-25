@@ -550,19 +550,23 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         {currentStep === 5 && <Step5_LanguageTopics
           songLanguage={songLanguage}
           setSongLanguage={setSongLanguage}
+          tempo={tempo}
+          setTempo={setTempo}
           topics={topics}
           setTopics={setTopics}
           topicsLoading={topicsLoading}
           t={t}
+          language={language}
         />}
         {currentStep === 6 && <Step6_Review
           title={title} subtitle={subtitle} isPrivate={isPrivate}
           artist={artist} originalComposer={originalComposer}
           youtubeLinks={youtubeLinks} scoreVariations={scoreVariations}
           lyrics={lyrics} notes={notes}
-          songLanguage={songLanguage} topics={topics}
+          songLanguage={songLanguage} tempo={tempo} topics={topics}
           onEditStep={setCurrentStep}
           t={t}
+          language={language}
         />}
       </div>
 
