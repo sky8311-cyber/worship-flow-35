@@ -2,26 +2,25 @@
 
 ## Problem
 
-On mobile, the ArtistSelector uses a bottom drawer. When the keyboard opens, it pushes the drawer up but the search input and results get hidden behind the keyboard.
-
-## Solution
-
-Instead of using a bottom Drawer on mobile, switch to a **full-screen dialog/overlay that positions the search input at the top of the screen**. This way the keyboard appears below the input naturally, and results fill the space between.
+Draft song cards only show the "곡 등록 마무리" button but no delete button. Non-draft cards have a small icon-only delete button (`h-7 w-7`) with an `AlertDialog` confirmation. The draft delete button needs to match this same style and position.
 
 ## Changes
 
-**`src/components/ArtistSelector.tsx`** (lines 119-132):
-- Replace the `Drawer` approach on mobile with a fixed full-screen overlay (`fixed inset-0 z-[70] bg-background flex flex-col`)
-- Search input at the top, results list below filling remaining space
-- Add a close/back button at the top
-- The `CommandContent` already has the right structure (input + list), so wrap it in a full-screen container instead of a drawer
+**`src/components/SongCard.tsx`** (lines 226-237):
 
-The mobile block becomes:
-```tsx
-if (isMobile) {
-  if (!open) {
-    return <div onClick={() => setOpen(true)}>{TriggerButton}</div>;
-  }
-  return (
-    <>
-      <div>{T
+Add a delete icon button next to the "곡 등록 마무리" button in the draft branch, using the exact same pattern as the non-draft delete button (lines 323-353):
+
+- Same `variant="outline"` `size="icon"` with `h-7 w-7 sm:h-8 sm:w-8`
+- Same destructive styling: `text-destructive hover:bg-destructive hover:text-white hover:border-destructive`
+- Same `AlertDialog` confirmation wrapping
+- Uses the existing `handleDelete` function (which already handles the "used in worship sets" check)
+- Wrapped in `Tooltip` with delete label
+- Condition: show when `onDelete` is provided (same as non-draft)
+
+The draft action buttons section becomes:
+```
+[곡 등록 마무리 button] [🗑️ delete icon button with AlertDialog]
+```
+
+This is a single-file change affecting only the draft branch inside the action buttons section.
+
