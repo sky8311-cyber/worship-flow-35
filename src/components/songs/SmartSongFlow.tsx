@@ -1064,6 +1064,7 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
       <Section label={t("songFlow.languageTopicsLabel")} step={5}>
         <div className="flex flex-wrap gap-1 mt-1">
           <Badge variant="secondary" className="text-xs">{langLabel}</Badge>
+          {tempoLabel && <Badge variant="outline" className="text-xs">{tempoLabel}</Badge>}
           {topics.map((tp: string) => <Badge key={tp} variant="outline" className="text-xs">{tp}</Badge>)}
         </div>
       </Section>
