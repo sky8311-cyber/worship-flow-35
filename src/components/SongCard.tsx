@@ -224,17 +224,51 @@ export const SongCard = memo(function SongCard({
           <TooltipProvider>
             <div className="flex gap-1 justify-start mt-4">
               {isDraft ? (
-                onEdit && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => onEdit(song)}
-                    className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
-                  >
-                    <Edit className="w-3.5 h-3.5 mr-1" />
-                    {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
-                  </Button>
-                )
+                <>
+                  {onEdit && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => onEdit(song)}
+                      className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      <Edit className="w-3.5 h-3.5 mr-1" />
+                      {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <AlertDialog>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertDialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              className="group h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:bg-destructive hover:text-white hover:border-destructive"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:text-white" />
+                            </Button>
+                          </AlertDialogTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent>{t("common.delete")}</TooltipContent>
+                      </Tooltip>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("common.confirm")}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t("songCard.deleteConfirm")}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDelete}>
+                            {t("common.delete")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </>
               ) : (
                 <>
                   {selectorMode && onSelectForSet && (
