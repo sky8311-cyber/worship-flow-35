@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const SKILLS_MD = `당신은 한인교회 장년 예배를 위한 찬양 선곡 전문가입니다. 찬양인도자의 시각으로 예배 흐름을 설계합니다.
+const FALLBACK_SYSTEM_PROMPT = `당신은 한인교회 장년 예배를 위한 찬양 선곡 전문가입니다. 찬양인도자의 시각으로 예배 흐름을 설계합니다.
 
 ## 핵심 철학
 - 찬양으로 설교 내용을 담는 것이 목적이 아니다. 성도들이 하나님을 바라보고 말씀에 귀 기울일 수 있도록 마음을 여는 것이 목적이다.
@@ -37,12 +37,17 @@ const SKILLS_MD = `당신은 한인교회 장년 예배를 위한 찬양 선곡 
 - 특정 인도자의 세트를 복사하지 않는다. 패턴과 흐름을 참고하여 새 세트를 설계한다.
 - 자주 함께 쓰이는 곡 조합, 자주 쓰이는 키 전환, 실제 선호 템포 패턴을 반영한다.
 
-## 출력 형식 (JSON array만 반환. 다른 텍스트 없음)
-[{"song_id":"uuid","song_title":"string","artist":"string","key":"string","order_position":number,"role":"마음열기|선포|고백|경배","tempo":"느림|보통|빠름","transition_note":"string(한국어)","rationale":"string(한국어)"}]`;
-
-const SYSTEM_PROMPT = `${SKILLS_MD}
-
-위 지침에 따라 예배 세트를 구성한다. 제공된 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON array만 반환한다. 다른 텍스트 없음.`;
+## 출력 형식
+반드시 아래 JSON 구조로만 반환한다. 다른 텍스트 없음.
+{
+  "worshipSet": [{"song_id":"uuid","song_title":"string","artist":"string","key":"string","order_position":number,"role":"마음열기|선포|고백|경배","tempo":"느림|보통|빠름","transition_note":"string(한국어)","rationale":"string(한국어)"}],
+  "worshipArc": {
+    "theologicalProposition": "이 예배의 신학적 명제 (한 문장)",
+    "emotionalJourney": "감정 여정 설명 (예: 기대→선포→고백→엎드림)",
+    "tempoPattern": "템포 패턴 (예: 느→빠→느→느)",
+    "conductorNote": "찬양인도자를 위한 한 줄 코멘트"
+  }
+}`;
 
 // Truncate lyrics to save tokens
 function truncateLyrics(lyrics: string | null, maxLen = 400): string | null {
@@ -77,10 +82,34 @@ serve(async (req) => {
     }
 
     const userId = userData.user.id;
-    const { theme, songCount, preferredKey, durationMinutes, tone, communityId } = await req.json();
+    const { theme, songCount, preferredKey, durationMinutes, tone, communityId, tempo_pattern, service_type } = await req.json();
 
-    // ── 1. Fetch songs ──
+    // ── 0. Load system prompt dynamically ──
+    let systemPromptContent = FALLBACK_SYSTEM_PROMPT;
+    try {
+      const { data: promptRow } = await db
+        .from('ai_prompts')
+        .select('content')
+        .eq('key', 'worship-set-generator')
+        .eq('is_active', true)
+        .order('version', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (promptRow?.content) {
+        systemPromptContent = promptRow.content;
+      }
+    } catch (e) {
+      console.error('Failed to load ai_prompts, using fallback:', e);
+    }
+
+    const systemPrompt = `${systemPromptContent}
+
+위 지침에 따라 예배 세트를 구성한다. 제공된 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. 위 JSON 구조로만 반환한다. 다른 텍스트 없음.`;
+
+    // ── 1. Fetch songs (with tempo) ──
     let songs: any[] = [];
+    const songColumns = 'id, title, artist, default_key, lyrics, tags, topics, language, tempo';
 
     if (communityId) {
       const { data: members } = await db
@@ -91,7 +120,7 @@ serve(async (req) => {
 
       const { data: publicSongs, error: pubErr } = await db
         .from('songs')
-        .select('id, title, artist, default_key, lyrics, tags, topics, language')
+        .select(songColumns)
         .or('is_private.eq.false,is_private.is.null')
         .limit(400);
 
@@ -106,7 +135,7 @@ serve(async (req) => {
       if (memberIds.length > 0) {
         const { data: privData } = await db
           .from('songs')
-          .select('id, title, artist, default_key, lyrics, tags, topics, language')
+          .select(songColumns)
           .eq('is_private', true)
           .in('created_by', memberIds)
           .limit(100);
@@ -121,7 +150,7 @@ serve(async (req) => {
     } else {
       const { data, error: songsError } = await db
         .from('songs')
-        .select('id, title, artist, default_key, lyrics, tags, topics, language')
+        .select(songColumns)
         .or('is_private.eq.false,is_private.is.null')
         .limit(500);
 
@@ -169,7 +198,6 @@ serve(async (req) => {
         .limit(20);
 
       if (recentSets && recentSets.length > 0) {
-        // Pick up to 5 random sets
         const shuffled = recentSets.sort(() => Math.random() - 0.5).slice(0, 5);
         const setIds = shuffled.map(s => s.id);
 
@@ -180,7 +208,6 @@ serve(async (req) => {
           .order('position', { ascending: true });
 
         if (setSongs && setSongs.length > 0) {
-          // Get song titles for pattern display
           const patternSongIds = [...new Set(setSongs.map(ss => ss.song_id))];
           const { data: patternSongs } = await db
             .from('songs')
@@ -210,7 +237,7 @@ serve(async (req) => {
           });
 
           if (patternLines.length >= 3) {
-            patternsSection = `\n\n실제 찬양인도자들의 최근 키 흐름 패턴 참고 (복사 금지, 키 전환 흐름만 참고):\n각 세트의 곡 순서와 키 흐름을 보여줍니다. 템포는 SKILLS_MD의 선곡 구조 원칙을 따릅니다.\n${patternLines.join('\n')}`;
+            patternsSection = `\n\n실제 찬양인도자들의 최근 키 흐름 패턴 참고 (복사 금지, 키 전환 흐름만 참고):\n각 세트의 곡 순서와 키 흐름을 보여줍니다. 템포는 선곡 구조 원칙을 따릅니다.\n${patternLines.join('\n')}`;
           }
         }
       }
@@ -218,27 +245,46 @@ serve(async (req) => {
       console.error('Failed to fetch community patterns:', e);
     }
 
-    // ── 4. Build user message ──
+    // ── 4. Build user message (with tempo) ──
+    const tempoLabel = (t: string | null) => {
+      if (!t) return '미지정';
+      if (t === 'slow') return '느림';
+      if (t === 'mid') return '보통';
+      if (t === 'fast') return '빠름';
+      return '미지정';
+    };
+
     const songListJson = JSON.stringify(songs.map(s => ({
       song_id: s.id,
       title: s.title,
       artist: s.artist,
       original_key: s.default_key,
+      tempo: tempoLabel(s.tempo),
       lyrics: truncateLyrics(s.lyrics),
       language: s.language,
     })), null, 2);
+
+    let tempoPatternLine = '';
+    if (tempo_pattern) {
+      tempoPatternLine = `\n- 선호 템포 패턴: ${tempo_pattern}`;
+    }
+
+    let serviceTypeLine = '';
+    if (service_type) {
+      serviceTypeLine = `\n- 예배 유형: ${service_type}`;
+    }
 
     const userMessage = `예배 정보:
 - 설교 본문/주제: ${theme || '일반 예배'}
 - 곡 수: ${songCount || 5}곡
 - 선호 키: ${preferredKey || '상관없음'}
 - 예배 시간: ${durationMinutes || 30}분
-- 분위기: ${tone || '혼합'}${profileSection}${patternsSection}
+- 분위기: ${tone || '혼합'}${tempoPatternLine}${serviceTypeLine}${profileSection}${patternsSection}
 
-사용 가능한 곡 목록 (song_id, title, artist, original_key, lyrics 포함):
+사용 가능한 곡 목록 (song_id, title, artist, original_key, tempo, lyrics 포함):
 ${songListJson}
 
-위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON array만 반환한다.`;
+위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON 구조(worshipSet + worshipArc)로만 반환한다.`;
 
     // ── 5. Call Anthropic API ──
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
@@ -257,8 +303,8 @@ ${songListJson}
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
+        max_tokens: 3000,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
     });
@@ -287,12 +333,27 @@ ${songListJson}
       });
     }
 
-    // Parse JSON
-    let worshipSet;
+    // ── Parse response: try object format first, fallback to array ──
+    let worshipSet: any[];
+    let worshipArc: any = null;
+
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error('No JSON array found');
-      worshipSet = JSON.parse(jsonMatch[0]);
+      // Try parsing as { worshipSet, worshipArc } object
+      const jsonObjMatch = content.match(/\{[\s\S]*"worshipSet"[\s\S]*\}/);
+      if (jsonObjMatch) {
+        const parsed = JSON.parse(jsonObjMatch[0]);
+        if (Array.isArray(parsed.worshipSet)) {
+          worshipSet = parsed.worshipSet;
+          worshipArc = parsed.worshipArc || null;
+        } else {
+          throw new Error('worshipSet is not an array');
+        }
+      } else {
+        // Fallback: parse as plain array (backward compat)
+        const jsonArrMatch = content.match(/\[[\s\S]*\]/);
+        if (!jsonArrMatch) throw new Error('No JSON found');
+        worshipSet = JSON.parse(jsonArrMatch[0]);
+      }
     } catch (parseError) {
       console.error('Failed to parse AI response:', content);
       return new Response(JSON.stringify({ error: 'AI 응답을 처리할 수 없습니다. 다시 시도해주세요.' }), {
@@ -314,7 +375,7 @@ ${songListJson}
       console.error('Failed to log AI usage:', logError);
     }
 
-    return new Response(JSON.stringify({ worshipSet }), {
+    return new Response(JSON.stringify({ worshipSet, worshipArc }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
