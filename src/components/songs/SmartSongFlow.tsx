@@ -104,8 +104,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const [lyricsSearchDone, setLyricsSearchDone] = useState(false);
   const [lyricsCandidates, setLyricsCandidates] = useState<Array<{ url: string; title: string; source: string }>>([]);
 
-  // === STEP 5: Language & Topics ===
+  // === STEP 5: Language, Tempo & Topics ===
   const [songLanguage, setSongLanguage] = useState(draftSong?.language || "");
+  const [tempo, setTempo] = useState(draftSong?.tempo || "");
   const [topics, setTopics] = useState<string[]>(
     draftSong?.tags ? draftSong.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : []
   );
@@ -404,6 +405,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         default_key: scoreVariations[0]?.key || "",
         score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
+        tempo: tempo || null,
         status: "published",
         draft_step: null,
       };
@@ -431,6 +433,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         default_key: scoreVariations[0]?.key || "",
         score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
+        tempo: tempo || null,
         status: "draft",
         draft_step: currentStep,
       };
