@@ -81,7 +81,7 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
         onValueChange={setSearchValue}
         className="text-base"
       />
-      <CommandList className="max-h-64 overflow-y-auto">
+      <CommandList className="max-h-[40dvh] overflow-y-auto">
         <CommandEmpty>
           {t("artistSelector.noArtistFound")}
         </CommandEmpty>
@@ -123,8 +123,8 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
         <DrawerTrigger asChild>
           {TriggerButton}
         </DrawerTrigger>
-        <DrawerContent className="max-h-[60vh]">
-          <div className="p-4">
+        <DrawerContent className="max-h-[50dvh]">
+          <div className="p-2 pt-2">
             {CommandContent}
           </div>
         </DrawerContent>
