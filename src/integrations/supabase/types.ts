@@ -3755,6 +3755,7 @@ export type Database = {
           status: string
           subtitle: string | null
           tags: string | null
+          tempo: string | null
           title: string
           topics: string | null
           updated_at: string
@@ -3779,6 +3780,7 @@ export type Database = {
           status?: string
           subtitle?: string | null
           tags?: string | null
+          tempo?: string | null
           title: string
           topics?: string | null
           updated_at?: string
@@ -3803,6 +3805,7 @@ export type Database = {
           status?: string
           subtitle?: string | null
           tags?: string | null
+          tempo?: string | null
           title?: string
           topics?: string | null
           updated_at?: string
