@@ -72,6 +72,7 @@ export const SongCard = memo(function SongCard({
   const queryClient = useQueryClient();
   const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Fallback: use song_scores if score_file_url is not directly set
   const scoreUrl = song.score_file_url || song.song_scores?.[0]?.file_url || null;
@@ -79,6 +80,8 @@ export const SongCard = memo(function SongCard({
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
     try {
       const { count } = await supabase
         .from("set_songs")
@@ -107,6 +110,8 @@ export const SongCard = memo(function SongCard({
       onDelete?.();
     } catch (error: any) {
       toast.error("Error: " + error.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -265,7 +270,7 @@ export const SongCard = memo(function SongCard({
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete}>
+                          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
                             {t("common.delete")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -383,7 +388,7 @@ export const SongCard = memo(function SongCard({
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                          <AlertDialogAction onClick={handleDelete}>
+                          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
                             {t("common.delete")}
                           </AlertDialogAction>
                         </AlertDialogFooter>
