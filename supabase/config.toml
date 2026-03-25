@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.institute-ai-coach]
 verify_jwt = false
+
+[functions.convert-pdf-to-images]
+verify_jwt = false
