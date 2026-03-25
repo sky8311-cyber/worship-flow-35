@@ -226,15 +226,19 @@ export const SongCard = memo(function SongCard({
               {isDraft ? (
                 <>
                   {onEdit && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => onEdit(song)}
-                      className="h-8 px-3 bg-orange-500 hover:bg-orange-600 text-white"
-                    >
-                      <Edit className="w-3.5 h-3.5 mr-1" />
-                      {language === "ko" ? "곡 등록 마무리" : "Finish Registration"}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => onEdit(song)}
+                          className="h-7 w-7 sm:h-8 sm:w-8"
+                        >
+                          <Edit className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t("common.edit")}</TooltipContent>
+                    </Tooltip>
                   )}
                   {onDelete && (
                     <AlertDialog>
