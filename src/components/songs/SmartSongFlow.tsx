@@ -273,6 +273,32 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const uploadScoreFile = async (file: File, variationIndex: number) => {
     try {
       setUploadingVariationIndex(variationIndex);
+
+      // PDF files: convert to images via edge function
+      if (file.type === "application/pdf") {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const { data, error } = await supabase.functions.invoke("convert-pdf-to-images", {
+          body: formData,
+        });
+        if (error) throw error;
+        if (!data?.images?.length) throw new Error("No images returned from PDF conversion");
+
+        setScoreVariations(prev => {
+          const updated = [...prev];
+          const currentFiles = updated[variationIndex].files;
+          const startPage = currentFiles.length + 1;
+          data.images.forEach((img: { url: string; page: number }, idx: number) => {
+            currentFiles.push({ url: img.url, page: startPage + idx });
+          });
+          return updated;
+        });
+        toast.success(t("songFlow.uploadComplete"));
+        return;
+      }
+
+      // Image files: direct upload
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from("scores").upload(fileName, file);

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -83,19 +83,19 @@ export const ArtistSelector = ({ value, onValueChange }: ArtistSelectorProps) =>
       />
       <CommandList className="max-h-64 overflow-y-auto">
         <CommandEmpty>
-          {showAddNew ? (
-            <Button
-              variant="ghost"
-              className="w-full justify-start"
-              onClick={handleAddNew}
-            >
-              + {t("artistSelector.addNew")}: "{searchValue}"
-            </Button>
-          ) : (
-            t("artistSelector.noArtistFound")
-          )}
+          {t("artistSelector.noArtistFound")}
         </CommandEmpty>
         <CommandGroup>
+          {showAddNew && (
+            <CommandItem
+              value={`__add_new__${searchValue}`}
+              onSelect={handleAddNew}
+              className="text-primary"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {t("artistSelector.addNew")}: "{searchValue}"
+            </CommandItem>
+          )}
           {filteredArtists.map((artist) => (
             <CommandItem
               key={artist}
