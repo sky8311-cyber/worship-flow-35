@@ -7,7 +7,8 @@ import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteCompletionModal } from "@/components/institute/InstituteCompletionModal";
-import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle, BookOpen, Headphones } from "lucide-react";
+import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle, BookOpen, Headphones, HelpCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,6 +86,36 @@ const InstituteModule = () => {
     enabled: !!user?.id && chapters.length > 0,
   });
 
+  // Quiz data
+  const { data: moduleQuiz } = useQuery({
+    queryKey: ["institute-module-quiz", moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("institute_quizzes" as any)
+        .select("*")
+        .eq("module_id", moduleId!)
+        .eq("is_published", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!moduleId,
+  });
+
+  const { data: quizAttempts = [] } = useQuery({
+    queryKey: ["institute-quiz-attempts", moduleQuiz?.id, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("institute_quiz_attempts" as any)
+        .select("*")
+        .eq("quiz_id", moduleQuiz.id)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+    enabled: !!moduleQuiz?.id && !!user?.id,
+  });
+
   const currentModule = modules.find((m) => m.id === moduleId);
   const currentIndex = modules.findIndex((m) => m.id === moduleId);
   const prevModule = currentIndex > 0 ? modules[currentIndex - 1] : null;
@@ -94,6 +125,8 @@ const InstituteModule = () => {
   const hasChapters = chapters.length > 0;
   const completedChapterCount = chapterProgress.filter((p) => p.completed_at).length;
   const allChaptersCompleted = hasChapters && completedChapterCount === chapters.length;
+  const quizPassed = moduleQuiz ? quizAttempts.some((a: any) => a.passed) : true;
+  const moduleReady = allChaptersCompleted && quizPassed;
 
   useEffect(() => {
     if (enrollment === null && user) navigate(`/institute/${courseId}`, { replace: true });
