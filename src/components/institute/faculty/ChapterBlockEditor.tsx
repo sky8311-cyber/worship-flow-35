@@ -5,7 +5,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Save, GripVertical, Trash2, Plus, Image as ImageIcon, Youtube, Type, Heading1, Heading2, Heading3, Quote, BookOpen, AlertCircle, Minus } from "lucide-react";
+import { X, Save, GripVertical, Trash2, Plus, Image as ImageIcon, Youtube, Type, Heading1, Heading2, Heading3, Quote, BookOpen, AlertCircle, Minus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ContentBlock } from "../BlockRenderer";
 import { BlockEditorCommandMenu } from "./BlockEditorCommandMenu";
@@ -221,6 +221,9 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [showCommand, setShowCommand] = useState(false);
   const [commandInsertIdx, setCommandInsertIdx] = useState(-1);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoaded = useRef(false);
 
@@ -312,6 +315,43 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
   const handleSave = () => {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     saveMutation.mutate();
+  };
+
+  const handleAIGenerate = async () => {
+    if (!aiText.trim()) return;
+    setAiLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/institute-generate-content`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            module_title_ko: titleKo || "페이지",
+            file_content: aiText,
+            generate_quiz: false,
+          }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "AI failed");
+      const firstPage = result.data?.pages?.[0];
+      if (firstPage?.content_blocks) {
+        setBlocks(firstPage.content_blocks);
+        scheduleAutoSave();
+        toast.success(language === "ko" ? "AI 블록이 생성되었습니다" : "AI blocks generated");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "AI 생성 실패");
+    } finally {
+      setAiLoading(false);
+      setShowAIModal(false);
+      setAiText("");
+    }
   };
 
   return (
