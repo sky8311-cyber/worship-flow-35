@@ -194,6 +194,12 @@ ${truncated}
 
       console.log(`Attempt ${attempt}: stop_reason=${stopReason}, length=${rawText.length}`);
 
+      if (!rawText || rawText.trim().length === 0) {
+        console.error('AI response is empty');
+        if (attempt < MAX_ATTEMPTS) { continue; }
+        return new Response(JSON.stringify({ error: 'AI 응답이 비어있습니다. 다시 시도해주세요.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
       // Parse JSON from response (handle possible markdown fences)
       try {
         const jsonMatch = rawText.match(/\{[\s\S]*/);
