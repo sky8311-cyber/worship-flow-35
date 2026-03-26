@@ -6,6 +6,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { BlockRenderer } from "@/components/institute/BlockRenderer";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -205,12 +206,14 @@ const InstituteChapter = () => {
               )}
 
               {/* Content */}
-              {chapter.content_ko && (
+              {(chapter as any).content_type === "blocks" && (chapter as any).content_blocks ? (
+                <BlockRenderer blocks={(chapter as any).content_blocks} />
+              ) : chapter.content_ko ? (
                 <div
                   className="inst-prose"
                   dangerouslySetInnerHTML={{ __html: chapter.content_ko }}
                 />
-              )}
+              ) : null}
 
               {/* Audio */}
               {chapter.audio_url && (

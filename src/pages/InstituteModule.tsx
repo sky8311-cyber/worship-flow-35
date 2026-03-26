@@ -229,9 +229,10 @@ const InstituteModule = () => {
               )}
 
               {hasChapters && (currentModule.content_ko || currentModule.content) && (
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  {language === "ko" ? currentModule.content_ko : currentModule.content}
-                </p>
+                <div
+                  className="text-sm text-muted-foreground leading-relaxed mb-4"
+                  dangerouslySetInnerHTML={{ __html: (language === "ko" ? currentModule.content_ko : currentModule.content) || "" }}
+                />
               )}
 
               {/* Chapters list */}
