@@ -7,7 +7,8 @@ import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteCompletionModal } from "@/components/institute/InstituteCompletionModal";
-import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle, BookOpen, Headphones } from "lucide-react";
+import { Lock, Check, ChevronLeft, ChevronRight, PlayCircle, BookOpen, Headphones, HelpCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,6 +86,36 @@ const InstituteModule = () => {
     enabled: !!user?.id && chapters.length > 0,
   });
 
+  // Quiz data
+  const { data: moduleQuiz } = useQuery({
+    queryKey: ["institute-module-quiz", moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("institute_quizzes" as any)
+        .select("*")
+        .eq("module_id", moduleId!)
+        .eq("is_published", true)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+    enabled: !!moduleId,
+  });
+
+  const { data: quizAttempts = [] } = useQuery({
+    queryKey: ["institute-quiz-attempts", moduleQuiz?.id, user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("institute_quiz_attempts" as any)
+        .select("*")
+        .eq("quiz_id", moduleQuiz.id)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+    enabled: !!moduleQuiz?.id && !!user?.id,
+  });
+
   const currentModule = modules.find((m) => m.id === moduleId);
   const currentIndex = modules.findIndex((m) => m.id === moduleId);
   const prevModule = currentIndex > 0 ? modules[currentIndex - 1] : null;
@@ -94,6 +125,8 @@ const InstituteModule = () => {
   const hasChapters = chapters.length > 0;
   const completedChapterCount = chapterProgress.filter((p) => p.completed_at).length;
   const allChaptersCompleted = hasChapters && completedChapterCount === chapters.length;
+  const quizPassed = moduleQuiz ? quizAttempts.some((a: any) => a.passed) : true;
+  const moduleReady = allChaptersCompleted && quizPassed;
 
   useEffect(() => {
     if (enrollment === null && user) navigate(`/institute/${courseId}`, { replace: true });
@@ -294,6 +327,39 @@ const InstituteModule = () => {
                       );
                     })}
                   </div>
+
+                  {/* Quiz card */}
+                  {moduleQuiz && (
+                    <Card
+                      className={`mt-3 ${allChaptersCompleted && enrollment ? "cursor-pointer hover:shadow-sm" : "opacity-50"}`}
+                      onClick={() => {
+                        if (allChaptersCompleted && enrollment) navigate(`/institute/${courseId}/${moduleId}/quiz`);
+                      }}
+                    >
+                      <CardContent className="p-3.5 flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          quizPassed
+                            ? "bg-primary text-primary-foreground"
+                            : !allChaptersCompleted
+                            ? "bg-muted text-muted-foreground border border-border"
+                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-600"
+                        }`}>
+                          {quizPassed ? <Check className="w-4 h-4" /> : !allChaptersCompleted ? <Lock className="w-3 h-3" /> : <HelpCircle className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-foreground">{moduleQuiz.title_ko || "퀴즈"}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {!allChaptersCompleted
+                              ? (language === "ko" ? "모든 챕터 완료 후 풀 수 있습니다" : "Complete all chapters first")
+                              : quizPassed
+                              ? (language === "ko" ? "합격" : "Passed")
+                              : (language === "ko" ? `합격 기준 ${moduleQuiz.pass_threshold}%` : `Pass: ${moduleQuiz.pass_threshold}%`)}
+                          </div>
+                        </div>
+                        {quizPassed && <Badge className="bg-green-500/10 text-green-600 border-green-200 text-[9px]">✓</Badge>}
+                      </CardContent>
+                    </Card>
+                  )}
                 </>
               )}
             </div>
@@ -313,7 +379,7 @@ const InstituteModule = () => {
 
             <Button
               size="sm"
-              disabled={hasChapters ? (!allChaptersCompleted || completeAndNext.isPending) : (completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier)))}
+              disabled={hasChapters ? (!moduleReady || completeAndNext.isPending) : (completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier)))}
               onClick={() => completeAndNext.mutate()}
             >
               {isLastModule
