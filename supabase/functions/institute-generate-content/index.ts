@@ -160,41 +160,54 @@ ${truncated}
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const aiResponse = await fetch(AI_CONFIG.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': AI_CONFIG.anthropicVersion,
-      },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        max_tokens: 8192,
-        messages: [
-          { role: 'user', content: userPrompt },
-        ],
-        system: SYSTEM_PROMPT,
-      }),
-    });
+    const MAX_TOKENS = 16384;
+    const MAX_ATTEMPTS = 2;
+    let parsed: any = null;
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error('Anthropic API error:', errText);
-      return new Response(JSON.stringify({ error: 'AI generation failed', details: errText }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const aiResponse = await fetch(AI_CONFIG.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': AI_CONFIG.anthropicVersion,
+        },
+        body: JSON.stringify({
+          model: AI_CONFIG.model,
+          max_tokens: MAX_TOKENS,
+          messages: [
+            { role: 'user', content: attempt === 1 ? userPrompt : userPrompt + '\n\n중요: 응답이 잘리지 않도록 더 간결한 JSON을 생성하되, 원본 텍스트는 그대로 보존하십시오. 페이지 수를 줄여도 됩니다.' },
+          ],
+          system: SYSTEM_PROMPT,
+        }),
+      });
 
-    const aiJson = await aiResponse.json();
-    const rawText = aiJson.content?.[0]?.text || '';
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error('Anthropic API error:', errText);
+        return new Response(JSON.stringify({ error: 'AI generation failed', details: errText }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
 
-    // Parse JSON from response (handle possible markdown fences)
-    let parsed: any;
-    try {
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No JSON found in response');
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch (parseErr) {
-      console.error('Failed to parse AI response:', rawText.slice(0, 500));
-      return new Response(JSON.stringify({ error: 'Failed to parse AI response', raw: rawText.slice(0, 1000) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const aiJson = await aiResponse.json();
+      const rawText = aiJson.content?.[0]?.text || '';
+      const stopReason = aiJson.stop_reason;
+
+      console.log(`Attempt ${attempt}: stop_reason=${stopReason}, length=${rawText.length}`);
+
+      // Parse JSON from response (handle possible markdown fences)
+      try {
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
+        parsed = JSON.parse(jsonMatch[0]);
+        break; // Success
+      } catch (parseErr) {
+        if (stopReason === 'max_tokens' && attempt < MAX_ATTEMPTS) {
+          console.warn(`Response truncated (max_tokens), retrying with hint...`);
+          continue;
+        }
+        console.error('Failed to parse AI response:', rawText.slice(0, 500));
+        return new Response(JSON.stringify({ error: 'Failed to parse AI response', raw: rawText.slice(0, 1000) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
     // Replace image placeholders
