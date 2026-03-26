@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Wrench, Upload, Users, Layers } from "lucide-react";
+import { FacultyCourseBuilder } from "@/components/institute/faculty/FacultyCourseBuilder";
 
 const InstituteFaculty = () => {
   const { user } = useAuth();
