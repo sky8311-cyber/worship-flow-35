@@ -59,7 +59,7 @@ export const BulkUploadPanel = () => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     setFileName(file.name);
 
-    if (ext === "txt") {
+    if (ext === "txt" || ext === "md") {
       const text = await file.text();
       setExtractedText(text);
       return;
@@ -296,12 +296,12 @@ export const BulkUploadPanel = () => {
               {language === "ko" ? "파일을 끌어놓거나 클릭하세요" : "Drop a file or click to upload"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              PDF, DOCX, TXT · {language === "ko" ? "최대 10MB" : "Max 10MB"}
+              PDF, DOCX, TXT, MD · {language === "ko" ? "최대 10MB" : "Max 10MB"}
             </p>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.docx,.txt"
+              accept=".pdf,.docx,.txt,.md"
               className="hidden"
               onChange={handleFileSelect}
             />
