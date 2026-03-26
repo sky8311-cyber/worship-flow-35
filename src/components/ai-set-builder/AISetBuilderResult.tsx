@@ -1,0 +1,77 @@
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight } from "lucide-react";
+import { WorshipArcCard } from "./WorshipArcCard";
+import type { GeneratedSong, WorshipArc } from "./types";
+import { ROLE_COLORS, TEMPO_COLORS } from "./types";
+
+interface AISetBuilderResultProps {
+  result: GeneratedSong[];
+  songMap: Record<string, any>;
+  worshipArc: WorshipArc | null;
+}
+
+export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilderResultProps) {
+  return (
+    <div className="space-y-3 py-4">
+      {/* Worship Arc Card */}
+      {worshipArc && (
+        <WorshipArcCard worshipArc={worshipArc} />
+      )}
+
+      {/* Song cards */}
+      {result.map((item, idx) => {
+        const song = songMap[item.song_id];
+        return (
+          <div key={item.song_id} className="border rounded-lg p-3 space-y-2">
+            {item.transition_note && idx > 0 && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded p-2 -mt-1 mb-2">
+                <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
+                <span>{item.transition_note}</span>
+              </div>
+            )}
+
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
+                {item.order_position}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">
+                  {song?.title || item.song_title}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {item.artist || song?.artist || ""}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <Badge variant="outline" className="text-xs">
+                    Key: {item.key}
+                  </Badge>
+                  {item.role && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${ROLE_COLORS[item.role] || 'bg-muted text-muted-foreground'}`}>
+                      {item.role}
+                    </span>
+                  )}
+                  {item.tempo && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${TEMPO_COLORS[item.tempo] || 'bg-muted text-muted-foreground'}`}>
+                      {item.tempo}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {item.rationale && (
+              <p className="text-xs text-muted-foreground italic pl-10">
+                {item.rationale}
+              </p>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Branding */}
+      <p className="text-center text-xs text-muted-foreground pt-2">
+        Powered by <span className="font-semibold">Worship Arc™</span>
+      </p>
+    </div>
+  );
+}
