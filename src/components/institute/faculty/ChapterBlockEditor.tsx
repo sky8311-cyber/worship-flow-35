@@ -5,7 +5,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { X, Save, GripVertical, Trash2, Plus, Image as ImageIcon, Youtube, Type, Heading1, Heading2, Heading3, Quote, BookOpen, AlertCircle, Minus } from "lucide-react";
+import { X, Save, GripVertical, Trash2, Plus, Image as ImageIcon, Youtube, Type, Heading1, Heading2, Heading3, Quote, BookOpen, AlertCircle, Minus, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ContentBlock } from "../BlockRenderer";
 import { BlockEditorCommandMenu } from "./BlockEditorCommandMenu";
@@ -221,6 +221,9 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [showCommand, setShowCommand] = useState(false);
   const [commandInsertIdx, setCommandInsertIdx] = useState(-1);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiText, setAiText] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoaded = useRef(false);
 
@@ -314,6 +317,43 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
     saveMutation.mutate();
   };
 
+  const handleAIGenerate = async () => {
+    if (!aiText.trim()) return;
+    setAiLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/institute-generate-content`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            module_title_ko: titleKo || "페이지",
+            file_content: aiText,
+            generate_quiz: false,
+          }),
+        }
+      );
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "AI failed");
+      const firstPage = result.data?.pages?.[0];
+      if (firstPage?.content_blocks) {
+        setBlocks(firstPage.content_blocks);
+        scheduleAutoSave();
+        toast.success(language === "ko" ? "AI 블록이 생성되었습니다" : "AI blocks generated");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "AI 생성 실패");
+    } finally {
+      setAiLoading(false);
+      setShowAIModal(false);
+      setAiText("");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
       {/* Header */}
@@ -330,6 +370,10 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowAIModal(true)} disabled={aiLoading}>
+            <Sparkles className="w-3.5 h-3.5 mr-1" />
+            AI
+          </Button>
           <span className="text-[10px] text-muted-foreground">
             {saveMutation.isPending ? (language === "ko" ? "저장 중..." : "Saving...") : (language === "ko" ? "자동저장" : "Auto-save")}
           </span>
@@ -381,6 +425,40 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
           onSelect={(type, data) => insertBlock(type, commandInsertIdx, data)}
           onClose={() => setShowCommand(false)}
         />
+      )}
+
+      {/* AI Text Modal */}
+      {showAIModal && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl shadow-lg max-w-lg w-full p-6 space-y-4">
+            <h3 className="text-sm font-bold text-foreground">
+              {language === "ko" ? "AI로 콘텐츠 생성" : "Generate Content with AI"}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {language === "ko"
+                ? "강의 원고나 텍스트를 붙여넣으면 AI가 블록 콘텐츠로 변환합니다."
+                : "Paste lecture text and AI will convert it to content blocks."}
+            </p>
+            <Textarea
+              value={aiText}
+              onChange={(e) => setAiText(e.target.value)}
+              className="min-h-[200px] text-xs font-mono"
+              placeholder={language === "ko" ? "텍스트를 붙여넣으세요..." : "Paste text here..."}
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => { setShowAIModal(false); setAiText(""); }}>
+                {language === "ko" ? "취소" : "Cancel"}
+              </Button>
+              <Button size="sm" onClick={handleAIGenerate} disabled={!aiText.trim() || aiLoading}>
+                {aiLoading ? (
+                  <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />{language === "ko" ? "생성 중..." : "Generating..."}</>
+                ) : (
+                  <><Sparkles className="w-3.5 h-3.5 mr-1" />{language === "ko" ? "생성하기" : "Generate"}</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

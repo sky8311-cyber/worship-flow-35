@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Wrench, Upload, Users, Layers } from "lucide-react";
 import { FacultyCourseBuilder } from "@/components/institute/faculty/FacultyCourseBuilder";
+import { BulkUploadPanel } from "@/components/institute/faculty/BulkUploadPanel";
 
 const InstituteFaculty = () => {
   const { user } = useAuth();
@@ -137,15 +138,7 @@ const InstituteFaculty = () => {
           </TabsContent>
 
           <TabsContent value="bulk" className="mt-4">
-            <div className="text-center py-16 text-muted-foreground">
-              <Upload className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">
-                {language === "ko" ? "벌크 업로드" : "Bulk Upload"}
-              </p>
-              <p className="text-xs mt-1">
-                {language === "ko" ? "Phase 4에서 구현 예정" : "Coming in Phase 4"}
-              </p>
-            </div>
+            <BulkUploadPanel />
           </TabsContent>
         </Tabs>
       </div>
