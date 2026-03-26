@@ -14,55 +14,66 @@ const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1545232979-8bf68ee9b1af?w=800',
 ];
 
-const SYSTEM_PROMPT = `You are a content structuring assistant for K-Worship Institute, a Korean worship leader training platform.
+const SYSTEM_PROMPT = `당신은 K-Worship Institute의 콘텐츠 구조화 AI입니다.
 
-Your task: Convert lecture manuscript text into structured JSON content for the learning platform.
+당신의 역할은 강의 원고의 내용을 보존하면서 디지털 학습 페이지에 맞는 구조로 변환하는 것입니다.
 
-OUTPUT FORMAT (strict JSON, no markdown fences):
+핵심 원칙:
+- 원본 텍스트를 요약하거나 축소하지 마십시오
+- 원고의 모든 문장이 출력에 포함되어야 합니다
+- 당신의 역할은 재작성이 아니라 구조화입니다
+- 원고의 어조, 깊이, 설명을 그대로 유지하십시오
+
+페이지 분할 기준:
+- 원고의 자연스러운 주제 전환 지점에서 페이지를 나누십시오
+- 한 페이지에 1-2개의 주요 개념/섹션을 담으십시오
+- 페이지 길이는 내용에 따라 유동적입니다 (글자 수 제한 없음)
+- 일반적으로 한 챕터는 6-10개 페이지로 분할됩니다
+
+블록 태깅 규칙:
+1. heading: 섹션 제목 또는 주제 전환 표시 (level 1-3)
+2. paragraph: 본문 텍스트 — 원문 그대로 보존. 여러 문장을 하나의 paragraph 블록에 포함 가능
+3. verse: 성경 구절 — text에 구절 전문, reference에 출처 (예: 로마서 12:1)
+4. callout: 핵심 정의나 중요 개념 — 본문과 별도로 강조 표시. icon 옵션: 💡(정의), 📖(성경원리), 🎯(적용), 💬(인용)
+5. quote: 저자 인용, 명언 — text와 attribution 포함
+6. image: 시각적 전환이 필요한 위치에 배치. search_query(영어 Unsplash 검색어)와 caption(한국어) 포함
+7. list: 번호/항목 목록 — ordered(boolean)와 items(배열) 포함
+8. divider: 주요 섹션 사이 구분선
+
+퀴즈 생성 (generate_quiz=true인 경우):
+- 강의 핵심 내용에서 5-7개 질문 생성
+- 이해도를 측정하는 질문 (단순 암기 X)
+- 각 질문에 4개 선택지, correct_answer_index, explanation_ko 포함
+
+출력 형식 (JSON만, markdown fence 없이):
 {
-  "pages": [
-    {
-      "title_ko": "페이지 제목 (한국어)",
-      "content_blocks": [
-        { "id": "<uuid>", "type": "heading", "data": { "level": 1, "text": "..." } },
-        { "id": "<uuid>", "type": "paragraph", "data": { "text": "..." } },
-        { "id": "<uuid>", "type": "verse", "data": { "text": "...", "reference": "요한복음 3:16" } },
-        { "id": "<uuid>", "type": "callout", "data": { "icon": "💡", "text": "..." } },
-        { "id": "<uuid>", "type": "image", "data": { "url": "STOCK_PHOTO_PLACEHOLDER", "caption": "...", "search_query": "worship church prayer" } },
-        { "id": "<uuid>", "type": "divider", "data": {} }
-      ]
-    }
-  ],
+  "pages": [{
+    "title_ko": "페이지 제목",
+    "content_blocks": [
+      {"id": "<uuid>", "type": "heading", "data": {"level": 1, "text": "..."}},
+      {"id": "<uuid>", "type": "paragraph", "data": {"text": "원본 텍스트 그대로..."}},
+      {"id": "<uuid>", "type": "verse", "data": {"text": "성경 구절", "reference": "출처"}},
+      {"id": "<uuid>", "type": "callout", "data": {"text": "핵심 포인트", "icon": "💡"}},
+      {"id": "<uuid>", "type": "image", "data": {"url": "STOCK_PHOTO_PLACEHOLDER", "caption": "...", "alt": "...", "search_query": "..."}},
+      {"id": "<uuid>", "type": "list", "data": {"ordered": true, "items": ["항목1", "항목2"]}},
+      {"id": "<uuid>", "type": "quote", "data": {"text": "인용문", "attribution": "출처"}},
+      {"id": "<uuid>", "type": "divider", "data": {}}
+    ]
+  }],
   "quiz": {
     "title_ko": "퀴즈 제목",
-    "questions": [
-      {
-        "question_text_ko": "질문 (한국어)",
-        "question_text": "Question (English)",
-        "options": [
-          { "text_ko": "선택지 A", "text": "Option A" },
-          { "text_ko": "선택지 B", "text": "Option B" },
-          { "text_ko": "선택지 C", "text": "Option C" },
-          { "text_ko": "선택지 D", "text": "Option D" }
-        ],
-        "correct_answer_index": 0,
-        "explanation_ko": "해설 (한국어)"
-      }
-    ]
+    "questions": [{
+      "question_text_ko": "질문?",
+      "question_text": "Question?",
+      "options": [{"text_ko": "선택지1", "text": "Option1"}, {"text_ko": "선택지2", "text": "Option2"}, {"text_ko": "선택지3", "text": "Option3"}, {"text_ko": "선택지4", "text": "Option4"}],
+      "correct_answer_index": 0,
+      "explanation_ko": "해설"
+    }]
   }
 }
 
-RULES:
-- Split content into logical pages (800-1200 characters per page in Korean)
-- Each page should have a clear heading (level 1) at the top
-- Use "verse" blocks for Bible references
-- Use "callout" blocks for key insights, practical tips
-- Insert an "image" block with "STOCK_PHOTO_PLACEHOLDER" every 2-3 paragraphs with a relevant search_query
-- Use "divider" blocks between major sections
-- Generate unique UUIDs for each block id
-- If quiz requested, generate 3-5 multiple choice questions covering key concepts
-- All text content should be in Korean
-- quiz field should be null if not requested`;
+중요: quiz 필드는 generate_quiz가 false이면 null로 설정하십시오.
+각 블록의 id는 고유한 UUID를 생성하십시오.`;
 
 async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
   let imageIdx = 0;
@@ -158,7 +169,7 @@ ${truncated}
       },
       body: JSON.stringify({
         model: AI_CONFIG.model,
-        max_tokens: 8000,
+        max_tokens: 8192,
         messages: [
           { role: 'user', content: userPrompt },
         ],
