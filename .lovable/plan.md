@@ -1,49 +1,67 @@
 
 
-## PDF Upload & Auto-Conversion Audit
+## Fix: Edge Function Timeout During AI Content Generation
 
-### Current Architecture
+### Root Cause
 
-There are **3 places** where PDF files can be uploaded as scores:
+The Supabase Edge Function has a **platform-enforced execution time limit** (~60-150 seconds). The Anthropic API call generating 8-9 pages + quiz with `max_tokens: 16384` routinely exceeds this. The 300s client-side timeout is irrelevant — the **server kills the function** before it finishes, causing "Failed to fetch" on the client.
 
-1. **SmartSongFlow.tsx** — Has proper PDF→image conversion using `convertPdfToImages()` (client-side pdfjs-dist). Works correctly: converts each page to PNG, uploads individually.
+### Solution: Stream the Anthropic Response
 
-2. **SongDialog.tsx** — **BUG FOUND**: Uploads the raw PDF file directly to the `scores` bucket WITHOUT converting to images. The file is stored as `.pdf` and the URL points to a PDF file, not an image. This means score viewers will try to render a PDF URL as an `<img>` tag, which will show nothing.
+Enable Anthropic's streaming API in the edge function and pipe chunks directly to the client as they arrive. This keeps the HTTP connection alive with continuous data flow, preventing both the edge function wall-clock timeout and browser idle-connection timeouts.
 
-3. **CSVImportDialog.tsx** — **BUG FOUND**: Same issue. Accepts PDF files but uploads them raw without conversion. The `uploadScoreImage()` function just uploads the file as-is.
+### Changes
 
-### Edge Function (convert-pdf-to-images)
+**File 1: `supabase/functions/institute-generate-content/index.ts`**
 
-The edge function exists but is **never called** by any frontend code. All conversion is done client-side. The edge function itself has questionable reliability (pdfjs-dist + OffscreenCanvas in Deno is fragile). It can be removed or ignored.
+- Add `stream: true` to the Anthropic API request body
+- Read the SSE stream from Anthropic, accumulating `content_block_delta` text chunks
+- After the stream completes (`message_stop`), parse the full accumulated text as JSON (with existing repair logic)
+- Replace image placeholders and return the final JSON as before
+- Remove the retry loop (streaming eliminates truncation from edge function timeout; `max_tokens` truncation is still handled by repair logic)
 
-### Storage RLS
+Key streaming logic:
+```typescript
+// In the Anthropic fetch call:
+body: JSON.stringify({
+  model: AI_CONFIG.model,
+  max_tokens: MAX_TOKENS,
+  stream: true,  // <-- Enable streaming
+  messages: [...],
+  system: SYSTEM_PROMPT,
+})
 
-The `scores` bucket requires `worship_leader` or `admin` role to upload — this is correct and intentional.
+// Read the stream, accumulate text:
+const reader = aiResponse.body.getReader();
+const decoder = new TextDecoder();
+let fullText = '';
 
-### CDN Worker
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  const chunk = decoder.decode(value);
+  // Parse SSE events, extract text from content_block_delta
+  for (const line of chunk.split('\n')) {
+    if (line.startsWith('data: ')) {
+      const event = JSON.parse(line.slice(6));
+      if (event.type === 'content_block_delta') {
+        fullText += event.delta?.text || '';
+      }
+    }
+  }
+}
+// Then parse fullText as JSON using existing repair logic
+```
 
-The pdfjs-dist worker CDN URL (`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`) is valid and loads successfully.
+**File 2: `src/components/institute/faculty/BulkUploadPanel.tsx`** — No changes needed (already has 300s timeout which is sufficient for streaming).
 
----
+### Why Not Other Approaches
 
-### Fix Plan
+- **Queue-based**: Over-engineered for this case; requires new DB table, polling UI, background worker
+- **Splitting into parallel requests**: Complex prompt engineering to split/merge content coherently
+- **Streaming to client**: Not needed — we just need the edge function to stay alive; the final JSON response format stays the same
 
-**File 1: `src/components/SongDialog.tsx`** (line ~777)
-- In `uploadScoreFile()`, add PDF detection: if `file.type === "application/pdf"`, call `convertPdfToImages(file)` and upload each page as a separate PNG (same pattern as SmartSongFlow.tsx)
-- Import `convertPdfToImages` from `@/utils/pdfToImages`
-- For image files, keep the existing direct upload logic
+### Risk
 
-**File 2: `src/components/CSVImportDialog.tsx`** (line ~186)
-- In `uploadScoreImage()`, add the same PDF detection and conversion logic
-- Import `convertPdfToImages` from `@/utils/pdfToImages`
-- Return an array of URLs instead of a single URL for PDF files, or handle multi-page appropriately
-
-**No changes needed:**
-- `SmartSongFlow.tsx` — already works correctly
-- `pdfToImages.ts` — works correctly
-- Edge function — unused, leave as-is
-
-### Summary
-
-The root cause is that **SongDialog.tsx** (the main song editing dialog) uploads PDFs as raw files instead of converting them to images first. This is the most commonly used upload path, which explains the user report.
+- Minimal: streaming is a well-supported Anthropic feature. The edge function still returns the same JSON shape. No client changes needed.
 
