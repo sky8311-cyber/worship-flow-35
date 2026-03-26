@@ -1185,7 +1185,9 @@ export type Database = {
       institute_chapters: {
         Row: {
           audio_url: string | null
+          content_blocks: Json
           content_ko: string | null
+          content_type: string
           created_at: string | null
           id: string
           module_id: string | null
@@ -1197,7 +1199,9 @@ export type Database = {
         }
         Insert: {
           audio_url?: string | null
+          content_blocks?: Json
           content_ko?: string | null
+          content_type?: string
           created_at?: string | null
           id?: string
           module_id?: string | null
@@ -1209,7 +1213,9 @@ export type Database = {
         }
         Update: {
           audio_url?: string | null
+          content_blocks?: Json
           content_ko?: string | null
+          content_type?: string
           created_at?: string | null
           id?: string
           module_id?: string | null
@@ -1412,6 +1418,7 @@ export type Database = {
           content_ko: string | null
           course_id: string
           created_at: string | null
+          description_ko: string | null
           id: string
           required_tier: number
           sort_order: number | null
@@ -1424,6 +1431,7 @@ export type Database = {
           content_ko?: string | null
           course_id: string
           created_at?: string | null
+          description_ko?: string | null
           id?: string
           required_tier?: number
           sort_order?: number | null
@@ -1436,6 +1444,7 @@ export type Database = {
           content_ko?: string | null
           course_id?: string
           created_at?: string | null
+          description_ko?: string | null
           id?: string
           required_tier?: number
           sort_order?: number | null
@@ -1521,6 +1530,148 @@ export type Database = {
           title_ko?: string | null
         }
         Relationships: []
+      }
+      institute_quiz_attempts: {
+        Row: {
+          answers: Json
+          id: string
+          passed: boolean
+          quiz_id: string
+          score: number
+          submitted_at: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          id?: string
+          passed?: boolean
+          quiz_id: string
+          score?: number
+          submitted_at?: string
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          id?: string
+          passed?: boolean
+          quiz_id?: string
+          score?: number
+          submitted_at?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "institute_quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "institute_quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_quiz_questions: {
+        Row: {
+          correct_answer_index: number
+          created_at: string
+          explanation_ko: string | null
+          id: string
+          options: Json
+          question_text: string
+          question_text_ko: string
+          quiz_id: string
+          sort_order: number
+        }
+        Insert: {
+          correct_answer_index: number
+          created_at?: string
+          explanation_ko?: string | null
+          id?: string
+          options?: Json
+          question_text: string
+          question_text_ko: string
+          quiz_id: string
+          sort_order?: number
+        }
+        Update: {
+          correct_answer_index?: number
+          created_at?: string
+          explanation_ko?: string | null
+          id?: string
+          options?: Json
+          question_text?: string
+          question_text_ko?: string
+          quiz_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "institute_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institute_quizzes: {
+        Row: {
+          created_at: string
+          description_ko: string | null
+          id: string
+          is_published: boolean
+          max_attempts: number
+          module_id: string
+          pass_threshold: number
+          sort_order: number
+          time_limit_minutes: number | null
+          title: string | null
+          title_ko: string | null
+        }
+        Insert: {
+          created_at?: string
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean
+          max_attempts?: number
+          module_id: string
+          pass_threshold?: number
+          sort_order?: number
+          time_limit_minutes?: number | null
+          title?: string | null
+          title_ko?: string | null
+        }
+        Update: {
+          created_at?: string
+          description_ko?: string | null
+          id?: string
+          is_published?: boolean
+          max_attempts?: number
+          module_id?: string
+          pass_threshold?: number
+          sort_order?: number
+          time_limit_minutes?: number | null
+          title?: string | null
+          title_ko?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institute_quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "institute_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       legal_acceptances: {
         Row: {
