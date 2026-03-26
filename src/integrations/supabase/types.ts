@@ -2143,6 +2143,7 @@ export type Database = {
           referral_code: string | null
           serving_position: string | null
           timezone: string | null
+          tutorial_completed: Json | null
           updated_at: string | null
           wl_onboarding_dismissed_at: string | null
           worship_leader_intro: string | null
@@ -2175,6 +2176,7 @@ export type Database = {
           referral_code?: string | null
           serving_position?: string | null
           timezone?: string | null
+          tutorial_completed?: Json | null
           updated_at?: string | null
           wl_onboarding_dismissed_at?: string | null
           worship_leader_intro?: string | null
@@ -2207,6 +2209,7 @@ export type Database = {
           referral_code?: string | null
           serving_position?: string | null
           timezone?: string | null
+          tutorial_completed?: Json | null
           updated_at?: string | null
           wl_onboarding_dismissed_at?: string | null
           worship_leader_intro?: string | null
