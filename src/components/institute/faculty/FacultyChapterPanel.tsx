@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit2, Trash2, HelpCircle, Check, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { ChapterBlockEditor } from "./ChapterBlockEditor";
+import { QuizBuilder } from "./QuizBuilder";
 
 interface Props {
   courseId: string;
@@ -17,9 +18,13 @@ interface Props {
 }
 
 export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
+
+export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
   const { language } = useTranslation();
   const queryClient = useQueryClient();
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [editingQuizId, setEditingQuizId] = useState<string | null>(null);
+  const [creatingQuiz, setCreatingQuiz] = useState(false);
 
   const { data: mod } = useQuery({
     queryKey: ["faculty-module-detail", moduleId],
@@ -212,9 +217,9 @@ export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
           </span>
         </div>
         {quizzes.length === 0 ? (
-          <Button size="sm" variant="outline" className="w-full" disabled>
+          <Button size="sm" variant="outline" className="w-full" onClick={() => setCreatingQuiz(true)}>
             <Plus className="w-3.5 h-3.5 mr-1" />
-            {language === "ko" ? "퀴즈 추가 (Phase 5)" : "Add Quiz (Phase 5)"}
+            {language === "ko" ? "퀴즈 추가" : "Add Quiz"}
           </Button>
         ) : (
           quizzes.map((q: any) => (
@@ -227,8 +232,8 @@ export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
                     {language === "ko" ? ` 합격 ${q.pass_threshold}%` : ` Pass ${q.pass_threshold}%`}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" disabled>
-                  {language === "ko" ? "편집 (Phase 5)" : "Edit (Phase 5)"}
+                <Button size="sm" variant="outline" onClick={() => setEditingQuizId(q.id)}>
+                  {language === "ko" ? "편집" : "Edit"}
                 </Button>
               </div>
             </Card>
@@ -243,6 +248,19 @@ export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
           onClose={() => {
             setEditingChapterId(null);
             queryClient.invalidateQueries({ queryKey: ["faculty-chapters", moduleId] });
+          }}
+        />
+      )}
+
+      {/* Quiz Builder Modal */}
+      {(editingQuizId || creatingQuiz) && (
+        <QuizBuilder
+          moduleId={moduleId}
+          quizId={editingQuizId || undefined}
+          onClose={() => {
+            setEditingQuizId(null);
+            setCreatingQuiz(false);
+            queryClient.invalidateQueries({ queryKey: ["faculty-quizzes", moduleId] });
           }}
         />
       )}
