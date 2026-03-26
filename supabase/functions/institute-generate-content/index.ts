@@ -196,13 +196,44 @@ ${truncated}
 
       // Parse JSON from response (handle possible markdown fences)
       try {
-        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        const jsonMatch = rawText.match(/\{[\s\S]*/);
         if (!jsonMatch) throw new Error('No JSON found in response');
-        parsed = JSON.parse(jsonMatch[0]);
+        let jsonStr = jsonMatch[0];
+
+        // Attempt to repair truncated JSON
+        try {
+          parsed = JSON.parse(jsonStr);
+        } catch (_) {
+          console.warn('JSON parse failed, attempting repair...');
+          // Remove any trailing incomplete string value
+          jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
+          jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
+          jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
+          // Count unclosed brackets and braces
+          let openBraces = 0, openBrackets = 0;
+          let inString = false, escape = false;
+          for (const ch of jsonStr) {
+            if (escape) { escape = false; continue; }
+            if (ch === '\\') { escape = true; continue; }
+            if (ch === '"') { inString = !inString; continue; }
+            if (inString) continue;
+            if (ch === '{') openBraces++;
+            if (ch === '}') openBraces--;
+            if (ch === '[') openBrackets++;
+            if (ch === ']') openBrackets--;
+          }
+          // Close any open string
+          if (inString) jsonStr += '"';
+          // Append closing brackets/braces
+          for (let i = 0; i < openBrackets; i++) jsonStr += ']';
+          for (let i = 0; i < openBraces; i++) jsonStr += '}';
+          parsed = JSON.parse(jsonStr);
+          console.log('JSON repair successful');
+        }
         break; // Success
       } catch (parseErr) {
         if (stopReason === 'max_tokens' && attempt < MAX_ATTEMPTS) {
-          console.warn(`Response truncated (max_tokens), retrying with hint...`);
+          console.warn(`Response truncated and repair failed, retrying...`);
           continue;
         }
         console.error('Failed to parse AI response:', rawText.slice(0, 500));
