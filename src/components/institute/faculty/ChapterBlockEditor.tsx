@@ -426,6 +426,40 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
           onClose={() => setShowCommand(false)}
         />
       )}
+
+      {/* AI Text Modal */}
+      {showAIModal && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl shadow-lg max-w-lg w-full p-6 space-y-4">
+            <h3 className="text-sm font-bold text-foreground">
+              {language === "ko" ? "AI로 콘텐츠 생성" : "Generate Content with AI"}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {language === "ko"
+                ? "강의 원고나 텍스트를 붙여넣으면 AI가 블록 콘텐츠로 변환합니다."
+                : "Paste lecture text and AI will convert it to content blocks."}
+            </p>
+            <Textarea
+              value={aiText}
+              onChange={(e) => setAiText(e.target.value)}
+              className="min-h-[200px] text-xs font-mono"
+              placeholder={language === "ko" ? "텍스트를 붙여넣으세요..." : "Paste text here..."}
+            />
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => { setShowAIModal(false); setAiText(""); }}>
+                {language === "ko" ? "취소" : "Cancel"}
+              </Button>
+              <Button size="sm" onClick={handleAIGenerate} disabled={!aiText.trim() || aiLoading}>
+                {aiLoading ? (
+                  <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />{language === "ko" ? "생성 중..." : "Generating..."}</>
+                ) : (
+                  <><Sparkles className="w-3.5 h-3.5 mr-1" />{language === "ko" ? "생성하기" : "Generate"}</>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
