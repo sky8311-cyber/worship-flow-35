@@ -165,3 +165,35 @@ input[type="time"]::-webkit-date-and-time-value {
     font-size: 14px;
   }
 }
+
+/* ═══ Institute Prose Styles ═══ */
+.inst-prose {
+  font-size: 15px;
+  line-height: 1.8;
+  color: hsl(var(--foreground) / 0.9);
+}
+
+.inst-prose h1,
+.inst-prose h2,
+.inst-prose h3 {
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+}
+
+.inst-prose p {
+  margin-bottom: 1em;
+}
+
+.inst-prose img {
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.inst-prose blockquote {
+  font-style: italic;
+}
+
+.inst-prose hr {
+  border-color: hsl(var(--border));
+  margin: 2rem 0;
+}
