@@ -204,31 +204,42 @@ ${truncated}
         try {
           parsed = JSON.parse(jsonStr);
         } catch (_) {
-          console.warn('JSON parse failed, attempting repair...');
-          // Remove any trailing incomplete string value
-          jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
-          jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
-          jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
-          // Count unclosed brackets and braces
-          let openBraces = 0, openBrackets = 0;
-          let inString = false, escape = false;
-          for (const ch of jsonStr) {
-            if (escape) { escape = false; continue; }
-            if (ch === '\\') { escape = true; continue; }
-            if (ch === '"') { inString = !inString; continue; }
-            if (inString) continue;
-            if (ch === '{') openBraces++;
-            if (ch === '}') openBraces--;
-            if (ch === '[') openBrackets++;
-            if (ch === ']') openBrackets--;
+          console.warn('JSON parse failed, attempting truncation-safe repair...');
+
+          // Strategy: find the last complete page object in the "pages" array
+          // Look for the last complete page boundary: },\n    { or }\n  ]
+          const lastCompletePageMatch = jsonStr.match(
+            /("pages"\s*:\s*\[[\s\S]*\})\s*,\s*\{[^]*$/
+          );
+          if (lastCompletePageMatch) {
+            // Rebuild with only complete pages, drop quiz if truncated
+            jsonStr = lastCompletePageMatch[1] + '], "quiz": null}';
+            console.log('Repaired by truncating to last complete page');
+          } else {
+            // Fallback: generic bracket repair
+            // Remove trailing incomplete values
+            jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
+            jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
+            jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
+            // Count unclosed brackets and braces
+            let openBraces = 0, openBrackets = 0;
+            let inString = false, escape = false;
+            for (const ch of jsonStr) {
+              if (escape) { escape = false; continue; }
+              if (ch === '\\') { escape = true; continue; }
+              if (ch === '"') { inString = !inString; continue; }
+              if (inString) continue;
+              if (ch === '{') openBraces++;
+              if (ch === '}') openBraces--;
+              if (ch === '[') openBrackets++;
+              if (ch === ']') openBrackets--;
+            }
+            if (inString) jsonStr += '"';
+            for (let i = 0; i < openBrackets; i++) jsonStr += ']';
+            for (let i = 0; i < openBraces; i++) jsonStr += '}';
           }
-          // Close any open string
-          if (inString) jsonStr += '"';
-          // Append closing brackets/braces
-          for (let i = 0; i < openBrackets; i++) jsonStr += ']';
-          for (let i = 0; i < openBraces; i++) jsonStr += '}';
           parsed = JSON.parse(jsonStr);
-          console.log('JSON repair successful');
+          console.log(`JSON repair successful — ${parsed.pages?.length || 0} pages recovered`);
         }
         break; // Success
       } catch (parseErr) {
