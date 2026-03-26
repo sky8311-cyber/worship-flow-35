@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
-import { Lock, Check, BookOpen, Users, Award, Layers } from "lucide-react";
+import { Lock, Check, BookOpen, Users, Award, Layers, HelpCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,25 @@ const InstituteCourse = () => {
       const counts: Record<string, number> = {};
       data?.forEach((c) => { counts[c.module_id!] = (counts[c.module_id!] || 0) + 1; });
       return counts;
+    },
+    enabled: modules.length > 0,
+  });
+
+  // Fetch quiz info per module
+  const { data: moduleQuizzes = {} as Record<string, boolean> } = useQuery({
+    queryKey: ["institute-module-quizzes", modules.map(m => m.id).join(",")],
+    queryFn: async () => {
+      const moduleIds = modules.map(m => m.id);
+      if (moduleIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("institute_quizzes")
+        .select("module_id")
+        .in("module_id", moduleIds)
+        .eq("is_published", true);
+      if (error) throw error;
+      const map: Record<string, boolean> = {};
+      data?.forEach((q) => { map[q.module_id] = true; });
+      return map;
     },
     enabled: modules.length > 0,
   });

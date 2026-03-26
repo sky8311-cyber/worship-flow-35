@@ -6,7 +6,7 @@ import { useUserTier, canAccess } from "@/hooks/useUserTier";
 import { useTierFeature } from "@/hooks/useTierFeature";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { InstituteInvitationBanner } from "@/components/institute/InstituteInvitationBanner";
-import { Sparkles, ChevronRight, Lock, BookOpen, Users, Award, Settings } from "lucide-react";
+import { Sparkles, ChevronRight, Lock, BookOpen, Users, Award, Settings, Wrench } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -114,15 +114,26 @@ export default function Institute() {
                 🎓 K-WORSHIP INSTITUTE
               </Badge>
               {isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={() => navigate("/institute/setting")}
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  설정
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5"
+                    onClick={() => navigate("/institute/faculty")}
+                  >
+                    <Wrench className="w-3.5 h-3.5" />
+                    Faculty
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5"
+                    onClick={() => navigate("/institute/setting")}
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    설정
+                  </Button>
+                </div>
               )}
             </div>
             <h1 className="text-lg font-bold text-foreground leading-snug">
@@ -238,8 +249,12 @@ export default function Institute() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
-                          <BookOpen className="w-10 h-10 text-primary-foreground/60" />
+                        <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary/30 flex items-center justify-center relative">
+                          <BookOpen className="w-10 h-10 text-primary-foreground/40" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          <div className="absolute bottom-3 left-4 right-4">
+                            <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">{course.title_ko}</h3>
+                          </div>
                         </div>
                       )}
                       {/* Overlay */}
@@ -262,8 +277,11 @@ export default function Institute() {
                       </div>
                     </div>
 
-                    {/* Progress footer */}
+                    {/* Description + Progress footer */}
                     <CardContent className="p-3">
+                      {course.description_ko && (
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2 leading-relaxed">{course.description_ko}</p>
+                      )}
                       <div className="flex items-center gap-2">
                         <Progress value={pct} className="h-1.5 flex-1" />
                         <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">

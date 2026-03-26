@@ -19,19 +19,19 @@ const HeadingBlock = ({ data }: { data: Record<string, any> }) => {
 };
 
 const ParagraphBlock = ({ data }: { data: Record<string, any> }) => (
-  <p className="text-[15px] leading-relaxed text-foreground/90 mb-3 whitespace-pre-wrap">{data.text || ""}</p>
+  <p className="text-[15px] leading-[1.8] text-foreground/90 mb-4 whitespace-pre-wrap">{data.text || ""}</p>
 );
 
 const ImageBlock = ({ data }: { data: Record<string, any> }) => (
-  <figure className="my-5">
+  <figure className="my-6">
     <img
       src={data.url}
       alt={data.alt || data.caption || ""}
-      className="w-full rounded-xl object-cover"
+      className="w-full rounded-lg shadow-sm object-cover max-h-[400px]"
       loading="lazy"
     />
     {data.caption && (
-      <figcaption className="text-xs text-muted-foreground text-center mt-2">{data.caption}</figcaption>
+      <figcaption className="text-xs text-muted-foreground text-center mt-2.5 italic">{data.caption}</figcaption>
     )}
   </figure>
 );
@@ -46,8 +46,8 @@ const VideoBlock = ({ data }: { data: Record<string, any> }) => {
   if (!embedUrl) return null;
 
   return (
-    <figure className="my-5">
-      <div className="relative rounded-xl overflow-hidden bg-foreground" style={{ paddingTop: "56.25%" }}>
+    <figure className="my-6">
+      <div className="relative rounded-lg overflow-hidden shadow-sm" style={{ paddingTop: "56.25%" }}>
         <iframe
           src={embedUrl}
           className="absolute inset-0 w-full h-full"
@@ -56,24 +56,24 @@ const VideoBlock = ({ data }: { data: Record<string, any> }) => {
         />
       </div>
       {data.caption && (
-        <figcaption className="text-xs text-muted-foreground text-center mt-2">{data.caption}</figcaption>
+        <figcaption className="text-xs text-muted-foreground text-center mt-2.5 italic">{data.caption}</figcaption>
       )}
     </figure>
   );
 };
 
 const QuoteBlock = ({ data }: { data: Record<string, any> }) => (
-  <blockquote className="border-l-4 border-amber-400/60 pl-4 py-2 my-4 italic text-foreground/80">
+  <blockquote className="border-l-4 border-primary/30 pl-4 py-2 my-5 italic text-foreground/80">
     <p className="text-[15px] leading-relaxed">{data.text || ""}</p>
-    {data.source && <cite className="text-xs text-muted-foreground mt-1 block not-italic">— {data.source}</cite>}
+    {data.source && <cite className="text-xs text-muted-foreground mt-1.5 block not-italic">— {data.source}</cite>}
   </blockquote>
 );
 
 const VerseBlock = ({ data }: { data: Record<string, any> }) => (
-  <div className="my-5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/40 dark:border-amber-800/30 p-4">
-    <p className="text-[15px] leading-relaxed text-foreground/90 italic">{data.text || ""}</p>
+  <div className="my-6 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border-l-4 border-amber-500/70 dark:border-amber-400/50 p-4 pl-5">
+    <p className="text-[15px] leading-[1.8] text-foreground/90 italic">{data.text || ""}</p>
     {data.reference && (
-      <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mt-2">{data.reference}</p>
+      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mt-2.5 tracking-wide">{data.reference}</p>
     )}
   </div>
 );
@@ -81,15 +81,17 @@ const VerseBlock = ({ data }: { data: Record<string, any> }) => (
 const CalloutBlock = ({ data }: { data: Record<string, any> }) => {
   const icon = data.icon || "💡";
   return (
-    <div className="my-5 rounded-xl bg-primary/5 border border-primary/10 p-4 flex gap-3">
-      <span className="text-lg flex-shrink-0">{icon}</span>
-      <p className="text-[15px] leading-relaxed text-foreground/90">{data.text || ""}</p>
+    <div className="my-6 rounded-xl bg-primary/5 border border-primary/15 p-4 flex gap-3 shadow-sm">
+      <span className="text-xl flex-shrink-0 mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[15px] leading-[1.8] text-foreground/90">{data.text || ""}</p>
+      </div>
     </div>
   );
 };
 
 const DividerBlock = () => (
-  <hr className="my-6 border-border" />
+  <hr className="my-8 border-border" />
 );
 
 const blockComponents: Record<string, React.FC<{ data: Record<string, any> }>> = {
