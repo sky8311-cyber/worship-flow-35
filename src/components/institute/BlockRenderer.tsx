@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 export interface ContentBlock {
   id: string;
-  type: "heading" | "paragraph" | "image" | "video" | "quote" | "verse" | "callout" | "divider";
+  type: "heading" | "paragraph" | "image" | "video" | "quote" | "verse" | "callout" | "divider" | "list";
   data: Record<string, any>;
 }
 
@@ -65,9 +65,23 @@ const VideoBlock = ({ data }: { data: Record<string, any> }) => {
 const QuoteBlock = ({ data }: { data: Record<string, any> }) => (
   <blockquote className="border-l-4 border-primary/30 pl-4 py-2 my-5 italic text-foreground/80">
     <p className="text-[15px] leading-relaxed">{data.text || ""}</p>
-    {data.source && <cite className="text-xs text-muted-foreground mt-1.5 block not-italic">— {data.source}</cite>}
+    {(data.attribution || data.source) && (
+      <cite className="text-xs text-muted-foreground mt-1.5 block not-italic">— {data.attribution || data.source}</cite>
+    )}
   </blockquote>
 );
+
+const ListBlock = ({ data }: { data: Record<string, any> }) => {
+  const items: string[] = data.items || [];
+  const Tag = data.ordered ? "ol" : "ul";
+  return (
+    <Tag className={`my-4 pl-6 space-y-1.5 text-[15px] leading-[1.8] text-foreground/90 ${data.ordered ? "list-decimal" : "list-disc"}`}>
+      {items.map((item, idx) => (
+        <li key={idx}>{item}</li>
+      ))}
+    </Tag>
+  );
+};
 
 const VerseBlock = ({ data }: { data: Record<string, any> }) => (
   <div className="my-6 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border-l-4 border-amber-500/70 dark:border-amber-400/50 p-4 pl-5">
@@ -103,6 +117,7 @@ const blockComponents: Record<string, React.FC<{ data: Record<string, any> }>> =
   verse: VerseBlock,
   callout: CalloutBlock,
   divider: DividerBlock,
+  list: ListBlock,
 };
 
 export const BlockRenderer = ({ blocks }: BlockRendererProps) => {
