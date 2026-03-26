@@ -1,70 +1,39 @@
 
 
-# K-Worship Institute 100% Blueprint
+## Fix: Institute AI Content Generation "Failed to Fetch" Error
 
-I'll generate a comprehensive Markdown blueprint document covering the entire Institute system architecture, database schema, page flows, Edge Functions, access control, and admin management. This document will be saved to `/mnt/documents/` for download.
+### Problem
+The `BulkUploadPanel.tsx` and `ChapterBlockEditor.tsx` components call the edge function without refreshing the auth session first, and without a fetch timeout/abort controller. This causes "Failed to fetch" errors.
 
-## Document Structure
+### Changes
 
-The blueprint will include:
+**1. Add session refresh before fetch in `BulkUploadPanel.tsx`**
+- Replace `supabase.auth.getSession()` with `supabase.auth.refreshSession()` to get a fresh access token before calling the edge function
+- Add an `AbortController` with a 120-second timeout to prevent silent hangs
+- Improve error messaging to distinguish between timeout, network, and server errors
 
-1. **System Overview** — What Institute is, its purpose, current status (Worship Re:boot as primary course)
+**2. Apply the same fix to `ChapterBlockEditor.tsx`**
+- Same session refresh pattern
+- Same timeout/abort pattern
 
-2. **Data Architecture (4-Layer Hierarchy)**
-   - Pathways (institute_certifications) → Courses → Modules → Chapters
-   - Junction tables (institute_certification_courses, institute_pathway_courses)
-   - Complete DB schema for all 12 tables with columns, types, defaults, constraints
+### Technical Details
 
-3. **Database Tables (Full Schema)**
-   - institute_courses, institute_modules, institute_chapters
-   - institute_enrollments, institute_chapter_progress
-   - institute_certifications, institute_certification_courses
-   - institute_pathways, institute_pathway_courses
-   - institute_badges, institute_instructors, institute_invitations
-   - RLS policies for each table
+```typescript
+// Before (broken)
+const { data: sessionData } = await supabase.auth.getSession();
+const token = sessionData?.session?.access_token;
 
-4. **Access Control / Tier System**
-   - Tier hierarchy: member(0) → worship_leader(1) → premium(2) → church(3)
-   - `required_tier` column on courses, modules, chapters
-   - `useTierFeature` hook and `canAccess()` logic
-   - AI Coach gated by `institute_ai_coach` feature flag
+// After (fixed)
+const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+if (refreshError || !refreshData?.session) throw new Error("Not authenticated");
+const token = refreshData.session.access_token;
 
-5. **Page Routes & Components**
-   - `/institute` — Landing (certifications carousel + course cards with thumbnails)
-   - `/institute/:courseId` — Course detail (dark hero banner, enrollment CTA, curriculum list)
-   - `/institute/:courseId/:moduleId` — Module viewer (sidebar nav, chapter list)
-   - `/institute/:courseId/:moduleId/:chapterId` — Chapter viewer (video/text/audio, completion)
-   - `/institute/certification/:certId` — Certification detail + badge request
-   - `/institute/setting` — Admin hub (curriculum tree, instructors, enrollments)
-   - `/institute/manage` — Instructor manage page
+// Add timeout
+const controller = new AbortController();
+const timeout = setTimeout(() => controller.abort(), 120000);
+const response = await fetch(url, { ...options, signal: controller.signal });
+clearTimeout(timeout);
+```
 
-6. **Edge Functions**
-   - `institute-ai-coach` — Anthropic Claude-based learning coach
-   - `award-institute-badge` — Badge issuance after all courses completed
-
-7. **UI/UX Design Standards**
-   - Platform-unified blue/coral design system
-   - 16:9 thumbnail cards, dark hero banners
-   - Chapter icons (PlayCircle/BookOpen/Headphones)
-   - `.inst-prose` content rendering
-   - `InstituteLayout` with feature gate (FeatureComingSoon)
-
-8. **Admin Management**
-   - AdminInstituteContentTree — 4-layer tree CRUD
-   - AdminInstituteInstructors — Instructor management
-   - AdminInstituteEnrollments — Enrollment monitoring
-   - Invitation system (invite/accept/decline)
-
-9. **Student Journey Flow**
-   - Browse → Enroll → Learn chapters → Complete modules → Earn badge
-   - Progress tracking (chapter-level + module-level)
-
-10. **AI Integration**
-    - AI Coach system prompt structure
-    - Anthropic API configuration (ai-config.ts)
-    - Usage logging via `log-ai-usage`
-
-## Implementation
-
-Single script execution to generate the Markdown file at `/mnt/documents/kworship-institute-blueprint.md` containing all gathered information from the codebase analysis.
+Both files need identical fixes. No database or edge function changes required.
 
