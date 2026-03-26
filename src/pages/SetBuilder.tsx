@@ -2418,7 +2418,7 @@ const SetBuilder = () => {
         communityId={formData.community_id || undefined}
         initialTheme={[formData.theme, formData.scripture_reference].filter(Boolean).join(", ")}
         initialDuration={formData.worship_duration ? parseInt(formData.worship_duration) : undefined}
-        onAddSongs={async (songs) => {
+        onAddSongs={async (songs, worshipArcData) => {
           if (!isEditMode) {
             const acquired = await acquireLock();
             if (!acquired) {
@@ -2429,6 +2429,23 @@ const SetBuilder = () => {
           songs.forEach(({ song, key }) => {
             handleAddSong(song, key);
           });
+          // Save worship arc metadata to the set
+          if (worshipArcData && id) {
+            try {
+              await supabase
+                .from("service_sets")
+                .update({
+                  theological_proposition: worshipArcData.theologicalProposition || null,
+                  emotional_journey: worshipArcData.emotionalJourney || null,
+                  tempo_pattern: worshipArcData.tempoPattern || null,
+                  conductor_note: worshipArcData.conductorNote || null,
+                  ai_generated: true,
+                } as any)
+                .eq("id", id);
+            } catch (err) {
+              console.error("Failed to save worship arc metadata:", err);
+            }
+          }
         }}
       />
       {tutorial.isOpen && tutorial.currentStepData && (
