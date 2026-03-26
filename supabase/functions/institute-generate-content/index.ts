@@ -252,8 +252,15 @@ ${truncated}
       }
     }
 
+    // Ensure parsed has pages array even if quiz was truncated
+    if (!parsed) {
+      return new Response(JSON.stringify({ error: 'AI generation produced no usable output' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    if (!parsed.pages) parsed.pages = [];
+    if (!parsed.quiz) parsed.quiz = null;
+
     // Replace image placeholders
-    if (parsed.pages) {
+    if (parsed.pages.length > 0) {
       parsed.pages = await replaceImagePlaceholders(parsed.pages);
     }
 
