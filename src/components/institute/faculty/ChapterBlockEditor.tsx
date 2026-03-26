@@ -370,6 +370,10 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
           />
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setShowAIModal(true)} disabled={aiLoading}>
+            <Sparkles className="w-3.5 h-3.5 mr-1" />
+            AI
+          </Button>
           <span className="text-[10px] text-muted-foreground">
             {saveMutation.isPending ? (language === "ko" ? "저장 중..." : "Saving...") : (language === "ko" ? "자동저장" : "Auto-save")}
           </span>
