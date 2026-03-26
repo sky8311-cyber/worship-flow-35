@@ -97,7 +97,6 @@ async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
             }
           } catch (_) { /* fall through to fallback */ }
         }
-        // Use fallback images in rotation
         block.data.url = FALLBACK_IMAGES[imageIdx % FALLBACK_IMAGES.length];
         imageIdx++;
       }
@@ -106,13 +105,54 @@ async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
   return pages;
 }
 
+function repairAndParseJSON(rawText: string): any {
+  const jsonMatch = rawText.match(/\{[\s\S]*/);
+  if (!jsonMatch) throw new Error('No JSON found in response');
+  let jsonStr = jsonMatch[0];
+
+  try {
+    return JSON.parse(jsonStr);
+  } catch (_) {
+    console.warn('JSON parse failed, attempting truncation-safe repair...');
+
+    const lastCompletePageMatch = jsonStr.match(
+      /("pages"\s*:\s*\[[\s\S]*\})\s*,\s*\{[^]*$/
+    );
+    if (lastCompletePageMatch) {
+      jsonStr = lastCompletePageMatch[1] + '], "quiz": null}';
+      console.log('Repaired by truncating to last complete page');
+    } else {
+      jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
+      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
+      jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
+      let openBraces = 0, openBrackets = 0;
+      let inString = false, escape = false;
+      for (const ch of jsonStr) {
+        if (escape) { escape = false; continue; }
+        if (ch === '\\') { escape = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '{') openBraces++;
+        if (ch === '}') openBraces--;
+        if (ch === '[') openBrackets++;
+        if (ch === ']') openBrackets--;
+      }
+      if (inString) jsonStr += '"';
+      for (let i = 0; i < openBrackets; i++) jsonStr += ']';
+      for (let i = 0; i < openBraces; i++) jsonStr += '}';
+    }
+    const parsed = JSON.parse(jsonStr);
+    console.log(`JSON repair successful — ${parsed.pages?.length || 0} pages recovered`);
+    return parsed;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Auth
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -129,7 +169,6 @@ serve(async (req) => {
     }
     const userId = userData.user.id;
 
-    // Check admin role
     const { data: roleData } = await adminSupabase.from('user_roles').select('role').eq('user_id', userId).eq('role', 'admin');
     if (!roleData || roleData.length === 0) {
       return new Response(JSON.stringify({ error: 'Forbidden: admin role required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -141,7 +180,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'file_content and module_title_ko are required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Truncate to ~30k chars to fit within context
     const truncated = file_content.slice(0, 30000);
 
     const userPrompt = `다음 강의 원고를 K-Worship Institute 학습 페이지로 변환해주세요.
@@ -161,111 +199,81 @@ ${truncated}
     }
 
     const MAX_TOKENS = 16384;
-    const MAX_ATTEMPTS = 2;
-    let parsed: any = null;
 
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const aiResponse = await fetch(AI_CONFIG.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': anthropicKey,
-          'anthropic-version': AI_CONFIG.anthropicVersion,
-        },
-        body: JSON.stringify({
-          model: AI_CONFIG.model,
-          max_tokens: MAX_TOKENS,
-          messages: [
-            { role: 'user', content: attempt === 1 ? userPrompt : userPrompt + '\n\n중요: 응답이 잘리지 않도록 더 간결한 JSON을 생성하되, 원본 텍스트는 그대로 보존하십시오. 페이지 수를 줄여도 됩니다.' },
-          ],
-          system: SYSTEM_PROMPT,
-        }),
-      });
+    // Use streaming to keep the edge function connection alive
+    const aiResponse = await fetch(AI_CONFIG.endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicKey,
+        'anthropic-version': AI_CONFIG.anthropicVersion,
+      },
+      body: JSON.stringify({
+        model: AI_CONFIG.model,
+        max_tokens: MAX_TOKENS,
+        stream: true,
+        messages: [
+          { role: 'user', content: userPrompt },
+        ],
+        system: SYSTEM_PROMPT,
+      }),
+    });
 
-      if (!aiResponse.ok) {
-        const errText = await aiResponse.text();
-        console.error('Anthropic API error:', errText);
-        return new Response(JSON.stringify({ error: 'AI generation failed', details: errText }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error('Anthropic API error:', errText);
+      return new Response(JSON.stringify({ error: 'AI generation failed', details: errText }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
-      const aiJson = await aiResponse.json();
-      const rawText = aiJson.content?.[0]?.text || '';
-      const stopReason = aiJson.stop_reason;
+    // Read the SSE stream and accumulate text
+    const reader = aiResponse.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
 
-      console.log(`Attempt ${attempt}: stop_reason=${stopReason}, length=${rawText.length}`);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      if (!rawText || rawText.trim().length === 0) {
-        console.error('AI response is empty');
-        if (attempt < MAX_ATTEMPTS) { continue; }
-        return new Response(JSON.stringify({ error: 'AI 응답이 비어있습니다. 다시 시도해주세요.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      // Keep the last potentially incomplete line in the buffer
+      buffer = lines.pop() || '';
 
-      // Parse JSON from response (handle possible markdown fences)
-      try {
-        const jsonMatch = rawText.match(/\{[\s\S]*/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
-        let jsonStr = jsonMatch[0];
-
-        // Attempt to repair truncated JSON
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
         try {
-          parsed = JSON.parse(jsonStr);
-        } catch (_) {
-          console.warn('JSON parse failed, attempting truncation-safe repair...');
-
-          // Strategy: find the last complete page object in the "pages" array
-          // Look for the last complete page boundary: },\n    { or }\n  ]
-          const lastCompletePageMatch = jsonStr.match(
-            /("pages"\s*:\s*\[[\s\S]*\})\s*,\s*\{[^]*$/
-          );
-          if (lastCompletePageMatch) {
-            // Rebuild with only complete pages, drop quiz if truncated
-            jsonStr = lastCompletePageMatch[1] + '], "quiz": null}';
-            console.log('Repaired by truncating to last complete page');
-          } else {
-            // Fallback: generic bracket repair
-            // Remove trailing incomplete values
-            jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
-            jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
-            jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
-            // Count unclosed brackets and braces
-            let openBraces = 0, openBrackets = 0;
-            let inString = false, escape = false;
-            for (const ch of jsonStr) {
-              if (escape) { escape = false; continue; }
-              if (ch === '\\') { escape = true; continue; }
-              if (ch === '"') { inString = !inString; continue; }
-              if (inString) continue;
-              if (ch === '{') openBraces++;
-              if (ch === '}') openBraces--;
-              if (ch === '[') openBrackets++;
-              if (ch === ']') openBrackets--;
-            }
-            if (inString) jsonStr += '"';
-            for (let i = 0; i < openBrackets; i++) jsonStr += ']';
-            for (let i = 0; i < openBraces; i++) jsonStr += '}';
+          const event = JSON.parse(dataStr);
+          if (event.type === 'content_block_delta' && event.delta?.text) {
+            fullText += event.delta.text;
           }
-          parsed = JSON.parse(jsonStr);
-          console.log(`JSON repair successful — ${parsed.pages?.length || 0} pages recovered`);
+        } catch (_) {
+          // Skip unparseable SSE lines
         }
-        break; // Success
-      } catch (parseErr) {
-        if (stopReason === 'max_tokens' && attempt < MAX_ATTEMPTS) {
-          console.warn(`Response truncated and repair failed, retrying...`);
-          continue;
-        }
-        console.error('Failed to parse AI response:', rawText.slice(0, 500));
-        return new Response(JSON.stringify({ error: 'Failed to parse AI response', raw: rawText.slice(0, 1000) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
 
-    // Ensure parsed has pages array even if quiz was truncated
-    if (!parsed) {
-      return new Response(JSON.stringify({ error: 'AI generation produced no usable output' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.log(`Stream complete: accumulated ${fullText.length} chars`);
+
+    if (!fullText || fullText.trim().length === 0) {
+      console.error('AI streaming response produced no text');
+      return new Response(JSON.stringify({ error: 'AI 응답이 비어있습니다. 다시 시도해주세요.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+
+    // Parse JSON using existing repair logic
+    let parsed: any;
+    try {
+      parsed = repairAndParseJSON(fullText);
+    } catch (parseErr) {
+      console.error('Failed to parse AI response:', fullText.slice(0, 500));
+      return new Response(JSON.stringify({ error: 'Failed to parse AI response', raw: fullText.slice(0, 1000) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     if (!parsed.pages) parsed.pages = [];
     if (!parsed.quiz) parsed.quiz = null;
 
-    // Replace image placeholders
     if (parsed.pages.length > 0) {
       parsed.pages = await replaceImagePlaceholders(parsed.pages);
     }
