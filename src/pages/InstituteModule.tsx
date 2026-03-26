@@ -327,6 +327,39 @@ const InstituteModule = () => {
                       );
                     })}
                   </div>
+
+                  {/* Quiz card */}
+                  {moduleQuiz && (
+                    <Card
+                      className={`mt-3 ${allChaptersCompleted && enrollment ? "cursor-pointer hover:shadow-sm" : "opacity-50"}`}
+                      onClick={() => {
+                        if (allChaptersCompleted && enrollment) navigate(`/institute/${courseId}/${moduleId}/quiz`);
+                      }}
+                    >
+                      <CardContent className="p-3.5 flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          quizPassed
+                            ? "bg-primary text-primary-foreground"
+                            : !allChaptersCompleted
+                            ? "bg-muted text-muted-foreground border border-border"
+                            : "bg-amber-100 dark:bg-amber-900/30 text-amber-600"
+                        }`}>
+                          {quizPassed ? <Check className="w-4 h-4" /> : !allChaptersCompleted ? <Lock className="w-3 h-3" /> : <HelpCircle className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-foreground">{moduleQuiz.title_ko || "퀴즈"}</div>
+                          <div className="text-[10px] text-muted-foreground mt-0.5">
+                            {!allChaptersCompleted
+                              ? (language === "ko" ? "모든 챕터 완료 후 풀 수 있습니다" : "Complete all chapters first")
+                              : quizPassed
+                              ? (language === "ko" ? "합격" : "Passed")
+                              : (language === "ko" ? `합격 기준 ${moduleQuiz.pass_threshold}%` : `Pass: ${moduleQuiz.pass_threshold}%`)}
+                          </div>
+                        </div>
+                        {quizPassed && <Badge className="bg-green-500/10 text-green-600 border-green-200 text-[9px]">✓</Badge>}
+                      </CardContent>
+                    </Card>
+                  )}
                 </>
               )}
             </div>
@@ -346,7 +379,7 @@ const InstituteModule = () => {
 
             <Button
               size="sm"
-              disabled={hasChapters ? (!allChaptersCompleted || completeAndNext.isPending) : (completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier)))}
+              disabled={hasChapters ? (!moduleReady || completeAndNext.isPending) : (completeAndNext.isPending || (!isLastModule && nextModule != null && !canAccess(nextModule.required_tier, userTier)))}
               onClick={() => completeAndNext.mutate()}
             >
               {isLastModule
