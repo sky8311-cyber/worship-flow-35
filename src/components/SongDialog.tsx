@@ -28,6 +28,7 @@ import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { SmartSongFlow, type SmartSongFlowRef } from "@/components/songs/SmartSongFlow";
+import { convertPdfToImages } from "@/utils/pdfToImages";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -778,27 +779,48 @@ const [loading, setLoading] = useState(false);
     try {
       setUploadingVariationIndex(variationIndex);
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${fileName}`;
+      if (file.type === "application/pdf") {
+        // Convert PDF pages to PNG images first
+        const pageImages = await convertPdfToImages(file);
+        const updated = [...scoreVariations];
 
-      const { error: uploadError } = await supabase.storage
-        .from("scores")
-        .upload(filePath, file);
+        for (const { blob, page } of pageImages) {
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-p${page}.png`;
+          const { error: uploadError } = await supabase.storage
+            .from("scores")
+            .upload(fileName, blob, { contentType: "image/png" });
 
-      if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("scores").getPublicUrl(filePath);
+          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
 
-      // Add file to variation
-      const updated = [...scoreVariations];
-      updated[variationIndex].files.push({
-        url: publicUrl,
-        page: updated[variationIndex].files.length + 1,
-      });
-      setScoreVariations(updated);
+          updated[variationIndex].files.push({
+            url: publicUrl,
+            page: updated[variationIndex].files.length + 1,
+          });
+        }
+
+        setScoreVariations(updated);
+      } else {
+        // Direct upload for image files
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("scores")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
+
+        const updated = [...scoreVariations];
+        updated[variationIndex].files.push({
+          url: publicUrl,
+          page: updated[variationIndex].files.length + 1,
+        });
+        setScoreVariations(updated);
+      }
 
       toast.success(t("songDialog.fileUploaded"));
     } catch (error: any) {
