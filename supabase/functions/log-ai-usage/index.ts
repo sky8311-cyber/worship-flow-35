@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const VALID_ACTION_TYPES = ['set_generation', 'institute_coach'];
+const VALID_ACTION_TYPES = ['set_generation', 'institute_coach', 'institute_content_gen'];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
