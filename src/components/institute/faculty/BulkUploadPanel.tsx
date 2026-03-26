@@ -136,11 +136,14 @@ export const BulkUploadPanel = () => {
     }, 1500);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData?.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshData?.session) throw new Error("인증이 만료되었습니다. 다시 로그인해주세요.");
+      const token = refreshData.session.access_token;
 
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 120000);
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/institute-generate-content`,
         {
@@ -155,8 +158,10 @@ export const BulkUploadPanel = () => {
             file_content: extractedText,
             generate_quiz: generateQuiz,
           }),
+          signal: controller.signal,
         }
       );
+      clearTimeout(fetchTimeout);
 
       const result = await response.json();
       if (!response.ok || !result.success) {
@@ -168,7 +173,11 @@ export const BulkUploadPanel = () => {
       setTimeout(() => setStep("preview"), 500);
     } catch (err: any) {
       console.error("Generation error:", err);
-      toast.error(err.message || "AI 생성 실패");
+      if (err.name === 'AbortError') {
+        toast.error(language === "ko" ? "요청 시간이 초과되었습니다. 다시 시도해주세요." : "Request timed out. Please try again.");
+      } else {
+        toast.error(err.message || "AI 생성 실패");
+      }
       setStep("upload");
     } finally {
       clearInterval(progressInterval);
