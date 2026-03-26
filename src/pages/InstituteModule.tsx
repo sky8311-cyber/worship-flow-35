@@ -282,11 +282,15 @@ const InstituteModule = () => {
                     {chapters.map((ch, idx) => {
                       const accessible = canAccess(ch.required_tier ?? 0, userTier);
                       const done = chapterProgress.some((p) => p.chapter_id === ch.id && p.completed_at);
+                      // First incomplete chapter is the "current" one
+                      const isCurrentPage = !done && !chapters.slice(0, idx).some(
+                        (prev) => !chapterProgress.some((p) => p.chapter_id === prev.id && p.completed_at)
+                      );
 
                       return (
                         <Card
                           key={ch.id}
-                          className={`${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${!accessible ? "opacity-50" : ""}`}
+                          className={`${accessible && enrollment ? "cursor-pointer hover:shadow-sm" : ""} ${!accessible ? "opacity-50" : ""} ${isCurrentPage ? "ring-2 ring-primary/30 border-primary/20" : ""}`}
                           onClick={() => {
                             if (accessible && enrollment) navigate(`/institute/${courseId}/${moduleId}/${ch.id}`);
                           }}
@@ -297,20 +301,23 @@ const InstituteModule = () => {
                               className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                                 done
                                   ? "bg-primary text-primary-foreground"
+                                  : isCurrentPage
+                                  ? "bg-foreground text-background"
                                   : !accessible
                                   ? "bg-muted text-muted-foreground border border-border"
                                   : "bg-muted text-muted-foreground border border-border"
                               }`}
                             >
-                              {done ? <Check className="w-4 h-4" /> : !accessible ? <Lock className="w-3 h-3" /> : getChapterIcon(ch)}
+                              {done ? <Check className="w-4 h-4" /> : !accessible ? <Lock className="w-3 h-3" /> : isCurrentPage ? (idx + 1) : getChapterIcon(ch)}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <div className={`text-sm font-medium ${!accessible ? "text-muted-foreground" : "text-foreground"}`}>
+                              <div className={`text-sm font-medium ${!accessible ? "text-muted-foreground" : isCurrentPage ? "text-foreground font-semibold" : "text-foreground"}`}>
                                 {language === "ko" ? ch.title_ko || ch.title : ch.title || ch.title_ko}
                               </div>
                               <div className="text-[10px] text-muted-foreground mt-0.5">
                                 {ch.video_url ? "영상" : ch.audio_url ? "오디오" : "텍스트"}
+                                {isCurrentPage && <span className="ml-1 text-primary font-medium">· 현재</span>}
                                 {!accessible && (
                                   <span className="ml-1">
                                     · {(ch.required_tier ?? 0) === 2 ? "정식멤버 이상" : (ch.required_tier ?? 0) === 1 ? "기본멤버 이상" : "공동체계정"}
