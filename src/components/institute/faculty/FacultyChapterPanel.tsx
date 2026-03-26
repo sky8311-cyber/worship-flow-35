@@ -18,8 +18,6 @@ interface Props {
 }
 
 export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
-
-export const FacultyChapterPanel = ({ courseId, moduleId }: Props) => {
   const { language } = useTranslation();
   const queryClient = useQueryClient();
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
