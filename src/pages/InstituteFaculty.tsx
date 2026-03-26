@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Wrench, Upload, Users, Layers } from "lucide-react";
+import { FacultyCourseBuilder } from "@/components/institute/faculty/FacultyCourseBuilder";
 
 const InstituteFaculty = () => {
   const { user } = useAuth();
@@ -132,15 +133,7 @@ const InstituteFaculty = () => {
           </TabsContent>
 
           <TabsContent value="builder" className="mt-4">
-            <div className="text-center py-16 text-muted-foreground">
-              <Layers className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-medium">
-                {language === "ko" ? "코스 빌더" : "Course Builder"}
-              </p>
-              <p className="text-xs mt-1">
-                {language === "ko" ? "Phase 3에서 구현 예정" : "Coming in Phase 3"}
-              </p>
-            </div>
+            <FacultyCourseBuilder />
           </TabsContent>
 
           <TabsContent value="bulk" className="mt-4">
