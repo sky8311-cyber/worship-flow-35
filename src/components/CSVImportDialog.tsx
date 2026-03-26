@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { convertPdfToImages } from "@/utils/pdfToImages";
 interface CSVImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -185,19 +186,39 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
 
   const uploadScoreImage = async (file: File): Promise<string | null> => {
     try {
+      if (file.type === "application/pdf") {
+        // Convert PDF to images; return first page URL (CSV import uses single score_file_url)
+        const pageImages = await convertPdfToImages(file);
+        if (pageImages.length === 0) return null;
+
+        const urls: string[] = [];
+        for (const { blob, page } of pageImages) {
+          const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}-p${page}.png`;
+          const { error: uploadError } = await supabase.storage
+            .from("scores")
+            .upload(fileName, blob, { contentType: "image/png" });
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
+          urls.push(publicUrl);
+        }
+        // Return first page URL for score_file_url field
+        return urls[0] ?? null;
+      }
+
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("scores")
-        .upload(filePath, file);
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from("scores")
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       return publicUrl;
     } catch (error) {
