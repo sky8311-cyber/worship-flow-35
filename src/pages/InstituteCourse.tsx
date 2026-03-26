@@ -249,6 +249,7 @@ const InstituteCourse = () => {
               const isCurrent = idx === completedModules && !!enrollment;
               const isLocked = !accessible;
               const chapCount = chapterCounts[mod.id] || 0;
+              const hasQuiz = moduleQuizzes[mod.id] || false;
 
               return (
                 <Card
@@ -276,10 +277,16 @@ const InstituteCourse = () => {
                       <div className={`text-sm font-medium ${isLocked ? "text-muted-foreground" : "text-foreground"}`}>
                         {language === "ko" ? mod.title_ko : mod.title}
                       </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        {chapCount > 0 ? `${chapCount}개 챕터` : ""}
+                      <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                        {chapCount > 0 && <span>{chapCount}개 페이지</span>}
+                        {hasQuiz && (
+                          <span className="flex items-center gap-0.5">
+                            {chapCount > 0 && "·"}
+                            <HelpCircle className="w-3 h-3" /> 퀴즈
+                          </span>
+                        )}
                         {isLocked && (
-                          <span className="ml-1">
+                          <span>
                             · {mod.required_tier === 2 ? "정식멤버 이상" : mod.required_tier === 1 ? "기본멤버 이상" : "공동체계정"}
                           </span>
                         )}
