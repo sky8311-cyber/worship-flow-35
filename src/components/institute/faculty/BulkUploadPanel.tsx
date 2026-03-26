@@ -142,7 +142,7 @@ export const BulkUploadPanel = () => {
 
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const controller = new AbortController();
-      const fetchTimeout = setTimeout(() => controller.abort(), 120000);
+      const fetchTimeout = setTimeout(() => controller.abort(), 300000);
 
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/institute-generate-content`,
