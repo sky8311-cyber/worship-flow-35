@@ -184,8 +184,8 @@ export function AISetBuilderForm({
           <Button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full"
-            size="lg"
+            className="w-full max-w-full"
+            size="default"
           >
             {isLoading ? (
               <>
