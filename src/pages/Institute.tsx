@@ -468,12 +468,8 @@ export default function Institute() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary/30 flex items-center justify-center relative">
+                        <div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary/30 flex items-center justify-center">
                           <BookOpen className="w-10 h-10 text-primary-foreground/40" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                          <div className="absolute bottom-3 left-4 right-4">
-                            <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">{course.title_ko}</h3>
-                          </div>
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
