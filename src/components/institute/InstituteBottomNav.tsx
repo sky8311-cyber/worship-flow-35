@@ -12,7 +12,7 @@ const isIOS = () => {
 const tabs = [
   { key: "home", label: "홈", icon: Home, path: "/dashboard", match: "/dashboard" },
   { key: "dashboard", label: "대시보드", icon: GraduationCap, path: "/institute", match: "/institute", exact: true },
-  { key: "courses", label: "과목", icon: BookOpen, path: "/institute#courses", match: "/institute#courses" },
+  { key: "courses", label: "과목", icon: BookOpen, path: "/institute/courses", match: "/institute/courses" },
   { key: "ai-coach", label: "AI 코치", icon: Sparkles, path: "/institute/ai-coach", match: "/institute/ai-coach" },
   { key: "info", label: "소개", icon: Info, path: "/kworship-info", match: "/kworship-info" },
 ];
@@ -53,7 +53,7 @@ export const InstituteBottomNav = () => {
       return location.pathname === "/institute" && !location.hash;
     }
     if (tab.key === "courses") {
-      return location.hash === "#courses";
+      return location.pathname === "/institute/courses";
     }
     return location.pathname.startsWith(tab.match);
   };
