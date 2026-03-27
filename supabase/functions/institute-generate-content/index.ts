@@ -110,45 +110,112 @@ async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
 }
 
 function repairAndParseJSON(rawText: string): any {
-  const jsonMatch = rawText.match(/\{[\s\S]*/);
-  if (!jsonMatch) throw new Error('No JSON found in response');
-  let jsonStr = jsonMatch[0];
+  // Strip markdown fences (```json ... ```)
+  let cleaned = rawText
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '')
+    .trim();
 
+  // Find the first { which starts the JSON object
+  const jsonStart = cleaned.indexOf('{');
+  if (jsonStart === -1) throw new Error('No JSON found in response');
+  cleaned = cleaned.slice(jsonStart);
+
+  // 1) Try direct parse first
   try {
-    return JSON.parse(jsonStr);
+    return JSON.parse(cleaned);
   } catch (_) {
     console.warn('JSON parse failed, attempting truncation-safe repair...');
-
-    const lastCompletePageMatch = jsonStr.match(
-      /("pages"\s*:\s*\[[\s\S]*\})\s*,\s*\{[^]*$/
-    );
-    if (lastCompletePageMatch) {
-      jsonStr = lastCompletePageMatch[1] + '], "quiz": null}';
-      console.log('Repaired by truncating to last complete page');
-    } else {
-      jsonStr = jsonStr.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
-      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, '');
-      jsonStr = jsonStr.replace(/,\s*"[^"]*$/, '');
-      let openBraces = 0, openBrackets = 0;
-      let inString = false, escape = false;
-      for (const ch of jsonStr) {
-        if (escape) { escape = false; continue; }
-        if (ch === '\\') { escape = true; continue; }
-        if (ch === '"') { inString = !inString; continue; }
-        if (inString) continue;
-        if (ch === '{') openBraces++;
-        if (ch === '}') openBraces--;
-        if (ch === '[') openBrackets++;
-        if (ch === ']') openBrackets--;
-      }
-      if (inString) jsonStr += '"';
-      for (let i = 0; i < openBrackets; i++) jsonStr += ']';
-      for (let i = 0; i < openBraces; i++) jsonStr += '}';
-    }
-    const parsed = JSON.parse(jsonStr);
-    console.log(`JSON repair successful — ${parsed.pages?.length || 0} pages recovered`);
-    return parsed;
   }
+
+  // 2) Find last complete page object using brace-depth tracking
+  //    Strategy: locate the "pages" array, then find each complete top-level
+  //    object within it by tracking brace depth.
+  const pagesStart = cleaned.indexOf('"pages"');
+  if (pagesStart === -1) throw new Error('No "pages" key found in response');
+
+  // Find the opening '[' of the pages array
+  const arrStart = cleaned.indexOf('[', pagesStart);
+  if (arrStart === -1) throw new Error('No pages array found');
+
+  // Walk through chars tracking depth to find complete page objects
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  let lastCompleteObjectEnd = -1; // position of '}' that closes a top-level page object
+  let pageCount = 0;
+
+  for (let i = arrStart + 1; i < cleaned.length; i++) {
+    const ch = cleaned[i];
+    if (esc) { esc = false; continue; }
+    if (ch === '\\' && inStr) { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+
+    if (ch === '{') depth++;
+    if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        // We just closed a top-level object inside the pages array
+        lastCompleteObjectEnd = i;
+        pageCount++;
+      }
+    }
+    if (ch === ']' && depth === 0) {
+      // We reached the end of the pages array properly
+      // Try to parse from here — the quiz part might be truncated
+      const pagesComplete = cleaned.slice(0, i + 1);
+      // Close the root object with quiz: null
+      const repaired = pagesComplete + ', "quiz": null}';
+      try {
+        const parsed = JSON.parse(repaired);
+        console.log(`JSON repair: pages array complete (${parsed.pages?.length} pages), quiz may be truncated`);
+        return parsed;
+      } catch (_) {
+        // Fall through to truncation approach
+      }
+      break;
+    }
+  }
+
+  // 3) Truncate to last complete page object
+  if (lastCompleteObjectEnd > 0 && pageCount > 0) {
+    const truncated = cleaned.slice(0, lastCompleteObjectEnd + 1) + '], "quiz": null}';
+    try {
+      const parsed = JSON.parse(truncated);
+      console.log(`JSON repair: truncated to ${parsed.pages?.length} complete pages (discarded incomplete page + quiz)`);
+      return parsed;
+    } catch (e2) {
+      console.error('Truncation repair also failed:', (e2 as Error).message);
+    }
+  }
+
+  // 4) Last resort: brute-force close all open brackets/braces
+  let bf = cleaned;
+  // Remove trailing incomplete key-value pairs
+  bf = bf.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
+  bf = bf.replace(/,\s*\{[^}]*$/, '');
+  bf = bf.replace(/,\s*"[^"]*$/, '');
+
+  let openBraces = 0, openBrackets = 0;
+  let bfInStr = false, bfEsc = false;
+  for (const ch of bf) {
+    if (bfEsc) { bfEsc = false; continue; }
+    if (ch === '\\') { bfEsc = true; continue; }
+    if (ch === '"') { bfInStr = !bfInStr; continue; }
+    if (bfInStr) continue;
+    if (ch === '{') openBraces++;
+    if (ch === '}') openBraces--;
+    if (ch === '[') openBrackets++;
+    if (ch === ']') openBrackets--;
+  }
+  if (bfInStr) bf += '"';
+  for (let i = 0; i < openBrackets; i++) bf += ']';
+  for (let i = 0; i < openBraces; i++) bf += '}';
+
+  const parsed = JSON.parse(bf);
+  console.log(`JSON repair (brute-force): recovered ${parsed.pages?.length || 0} pages`);
+  return parsed;
 }
 
 serve(async (req) => {
