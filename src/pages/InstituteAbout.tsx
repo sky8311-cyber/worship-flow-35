@@ -328,6 +328,26 @@ const InstituteAbout = () => {
             >
               {count}+
             </motion.div>
+            {randomAvatars && randomAvatars.length > 0 && (
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="flex justify-center items-center mb-6"
+              >
+                {randomAvatars.slice(0, 8).map((profile, i) => (
+                  <Avatar
+                    key={i}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 border-2 border-background ${i > 0 ? '-ml-3' : ''}`}
+                  >
+                    <AvatarImage src={profile.avatar_url!} alt="Member" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">♪</AvatarFallback>
+                  </Avatar>
+                ))}
+              </motion.div>
+            )}
             <p className="text-lg text-muted-foreground mb-12">
               K-Worship 예배팀원들이 함께하고 있습니다
             </p>
