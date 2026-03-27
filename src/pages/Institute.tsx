@@ -22,7 +22,20 @@ export default function Institute() {
 
   const canUseCoach = hasFeature("institute_ai_coach");
 
-  // ─── Data queries (unchanged) ───
+  // ─── Data queries ───
+  const { data: randomAvatars } = useQuery({
+    queryKey: ["random-profile-avatars"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .not("avatar_url", "is", null)
+        .limit(10);
+      return (data || []).map((p) => p.avatar_url).filter(Boolean).sort(() => Math.random() - 0.5);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: certifications = [] } = useQuery({
     queryKey: ["institute-certifications"],
     queryFn: async () => {
