@@ -203,7 +203,7 @@ ${truncated}
     }
 
     const MAX_TOKENS = 16384;
-    const INSTITUTE_FAST_MODEL = 'claude-haiku-3-5-20251001';
+    const INSTITUTE_FAST_MODEL = 'claude-haiku-4-5-20251001';
 
     const accept = req.headers.get('Accept') || '';
     const wantsSSE = accept.includes('text/event-stream');
