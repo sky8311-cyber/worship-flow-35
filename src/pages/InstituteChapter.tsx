@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
 const InstituteChapter = () => {
   const { courseId, moduleId, chapterId } = useParams<{
@@ -122,8 +123,30 @@ const InstituteChapter = () => {
     );
   }
 
+  const chapterBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to={`/institute/${courseId}`}>{course.title_ko}</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to={`/institute/${courseId}/${moduleId}`}>{currentModule?.title_ko || ""}</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? chapter.title_ko || chapter.title : chapter.title || chapter.title_ko}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <InstituteLayout pageTitle={chapter.title_ko || chapter.title || ""} showBackButton>
+    <InstituteLayout pageTitle={chapter.title_ko || chapter.title || ""} showBackButton breadcrumb={chapterBreadcrumb} fullHeight>
       <div className="flex min-h-0">
         {/* Sidebar — desktop only */}
         {!isMobile && (

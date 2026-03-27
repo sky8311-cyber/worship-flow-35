@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -139,8 +140,22 @@ const InstituteCourse = () => {
   const completedModules = enrollment?.completed_modules || 0;
   const pct = modules.length > 0 ? Math.round((completedModules / modules.length) * 100) : 0;
 
+  const courseBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{course.title_ko}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <InstituteLayout pageTitle={course.title_ko} showBackButton>
+    <InstituteLayout pageTitle={course.title_ko} showBackButton breadcrumb={courseBreadcrumb}>
       <div className="container mx-auto max-w-3xl">
         {/* ═══ Dark Hero Banner ═══ */}
         <div className="relative w-full" style={{ aspectRatio: "16/9", maxHeight: 240 }}>
