@@ -65,6 +65,20 @@ const InstituteAbout = () => {
 
   const { ref: counterRef, count } = useCounter(200);
 
+  const { data: randomAvatars } = useQuery({
+    queryKey: ['random-profile-avatars', Date.now()],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .not('avatar_url', 'is', null)
+        .limit(10);
+      return (data ?? []).sort(() => Math.random() - 0.5);
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+
   const audience = [
     { icon: "🎤", title: "찬양인도자", desc: "예배를 더 깊이 이해하고 팀을 이끌고 싶은" },
     { icon: "🎵", title: "보컬·악기 주자", desc: "내가 왜 여기 서는지 알고 싶은" },
