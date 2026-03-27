@@ -1,39 +1,24 @@
 
 
-## K-Worship Institute About One-Pager
+## Plan: Add Rotating Profile Avatars to the "200+" Counter Section
 
-### Overview
-Create a premium, Apple-style scroll-animated about page at `/institute/about` with 8 sections using `framer-motion` (already installed). Update bottom nav and routing.
+### What
+Add a row of profile avatar images below the "200+" counter that randomly rotate on every page load/refresh, fetched from the `profiles` table.
 
-### Changes
+### How
 
-**1. `src/components/institute/InstituteBottomNav.tsx`**
-- Change "소개" tab path from `/kworship-info` to `/institute/about`
-- Update match accordingly
+**File: `src/pages/InstituteAbout.tsx`**
 
-**2. `src/App.tsx`**
-- Add lazy import: `const InstituteAbout = lazyWithRetry(() => import("./pages/InstituteAbout"));`
-- Add route before the catch-all `/:courseId` route: `<Route path="/institute/about" element={<ProtectedRoute><InstituteAbout /></ProtectedRoute>} />`
-
-**3. Create `src/pages/InstituteAbout.tsx`**
-
-Full page with `overflow-x-hidden` wrapper, wrapped in `InstituteLayout`. Uses `framer-motion` `motion` components with `whileInView` for scroll reveals. 8 sections as specified:
-
-1. **Hero** — Fullscreen with parallax background (scrollY * 0.4), fade-up title/subtitle, scroll indicator with bounce animation
-2. **Why** — Three staggered text reveals, large centered typography
-3. **Who** — 4 audience cards (찬양인도자, 보컬·악기, 음향·미디어, 교역자) with grid layout
-4. **What** — Photo + 4 feature items with scale-in photo and staggered list
-5. **Badges** — 3 badge cards (Essential/Core/Practitioner) with active/inactive states
-6. **Dream** — Animated counter (200+) with vision statement lines
-7. **Testimonials** — 3 testimonial cards with avatar, name, role, quote
-8. **CTA** — Two buttons: "훈련 과정 보기" → `/institute/courses`, "AI 코치에게 질문하기" → `/institute/ai-coach`
+1. **Add imports**: `useQuery` from `@tanstack/react-query`, `supabase` client
+2. **Add query** (same pattern as Institute.tsx) to fetch ~10 random avatars with `staleTime: 0` and `refetchOnMount: 'always'` so every visit gets fresh random profiles
+3. **Render avatars** between the counter number and the subtitle text (line ~314), showing 5-7 overlapping circular avatars in a horizontal stack with negative margins (like a social proof strip)
 
 ### Technical Details
-- **Animation**: `framer-motion` `motion.div` with `initial`, `whileInView`, `viewport={{ once: true }}` — no custom hook needed
-- **Parallax**: `useState` + `window.scrollY` listener with `{ passive: true }`
-- **Counter**: Custom `useCounter` hook with `setInterval` triggered by intersection observer
-- **Images**: Unsplash for hero/feature photo, pravatar.cc for testimonials
-- **Bottom padding**: `pb-24` + safe-area-inset for nav overlap
-- **No color/design token changes**
-- **No new packages** — framer-motion already present
+- Query: `SELECT avatar_url FROM profiles WHERE avatar_url IS NOT NULL ORDER BY random() LIMIT 10`
+- `staleTime: 0` + `refetchOnMount: 'always'` ensures fresh rotation every time
+- Display: overlapping circles with `-ml-2` stacking, `ring-2 ring-background` for separation
+- Fallback: hide avatar strip if no results
+
+### Single file edit
+`src/pages/InstituteAbout.tsx` — ~20 lines added
 
