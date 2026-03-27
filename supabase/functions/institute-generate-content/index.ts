@@ -110,16 +110,27 @@ async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
 }
 
 function repairAndParseJSON(rawText: string): any {
-  // Strip markdown fences (```json ... ```)
-  let cleaned = rawText
+  // Debug log of raw assembled SSE text
+  console.log('Raw AI response text:', rawText);
+
+  // Clean before parse:
+  // (a) strip anything before first { and after last }
+  const firstBrace = rawText.indexOf('{');
+  const lastBrace = rawText.lastIndexOf('}');
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) {
+    throw new Error(`Could not locate JSON object boundaries. Raw preview: ${rawText.slice(0, 200)}`);
+  }
+
+  let cleaned = rawText.slice(firstBrace, lastBrace + 1);
+
+  // (b) remove control chars except \n and \t
+  cleaned = cleaned.replace(/[\x00-\x08\x0B\x0C\x0D\x0E-\x1F\x7F]/g, '').trim();
+
+  // Also strip markdown fences if any remain inside the trimmed payload
+  cleaned = cleaned
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/```\s*$/, '')
     .trim();
-
-  // Find the first { which starts the JSON object
-  const jsonStart = cleaned.indexOf('{');
-  if (jsonStart === -1) throw new Error('No JSON found in response');
-  cleaned = cleaned.slice(jsonStart);
 
   // 1) Try direct parse first
   try {
@@ -129,20 +140,20 @@ function repairAndParseJSON(rawText: string): any {
   }
 
   // 2) Find last complete page object using brace-depth tracking
-  //    Strategy: locate the "pages" array, then find each complete top-level
-  //    object within it by tracking brace depth.
   const pagesStart = cleaned.indexOf('"pages"');
-  if (pagesStart === -1) throw new Error('No "pages" key found in response');
+  if (pagesStart === -1) {
+    throw new Error(`No "pages" key found in response. Raw preview: ${rawText.slice(0, 200)}`);
+  }
 
-  // Find the opening '[' of the pages array
   const arrStart = cleaned.indexOf('[', pagesStart);
-  if (arrStart === -1) throw new Error('No pages array found');
+  if (arrStart === -1) {
+    throw new Error(`No pages array found in response. Raw preview: ${rawText.slice(0, 200)}`);
+  }
 
-  // Walk through chars tracking depth to find complete page objects
   let depth = 0;
   let inStr = false;
   let esc = false;
-  let lastCompleteObjectEnd = -1; // position of '}' that closes a top-level page object
+  let lastCompleteObjectEnd = -1;
   let pageCount = 0;
 
   for (let i = arrStart + 1; i < cleaned.length; i++) {
@@ -156,25 +167,21 @@ function repairAndParseJSON(rawText: string): any {
     if (ch === '}') {
       depth--;
       if (depth === 0) {
-        // We just closed a top-level object inside the pages array
         lastCompleteObjectEnd = i;
         pageCount++;
       }
     }
+
     if (ch === ']' && depth === 0) {
-      // We reached the end of the pages array properly
-      // Try to parse from here — the quiz part might be truncated
       const pagesComplete = cleaned.slice(0, i + 1);
-      // Close the root object with quiz: null
       const repaired = pagesComplete + ', "quiz": null}';
       try {
         const parsed = JSON.parse(repaired);
         console.log(`JSON repair: pages array complete (${parsed.pages?.length} pages), quiz may be truncated`);
         return parsed;
       } catch (_) {
-        // Fall through to truncation approach
+        break;
       }
-      break;
     }
   }
 
@@ -192,7 +199,6 @@ function repairAndParseJSON(rawText: string): any {
 
   // 4) Last resort: brute-force close all open brackets/braces
   let bf = cleaned;
-  // Remove trailing incomplete key-value pairs
   bf = bf.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, '');
   bf = bf.replace(/,\s*\{[^}]*$/, '');
   bf = bf.replace(/,\s*"[^"]*$/, '');
@@ -213,9 +219,15 @@ function repairAndParseJSON(rawText: string): any {
   for (let i = 0; i < openBrackets; i++) bf += ']';
   for (let i = 0; i < openBraces; i++) bf += '}';
 
-  const parsed = JSON.parse(bf);
-  console.log(`JSON repair (brute-force): recovered ${parsed.pages?.length || 0} pages`);
-  return parsed;
+  try {
+    const parsed = JSON.parse(bf);
+    console.log(`JSON repair (brute-force): recovered ${parsed.pages?.length || 0} pages`);
+    return parsed;
+  } catch (finalErr) {
+    throw new Error(
+      `Could not parse AI JSON after repair attempts: ${(finalErr as Error).message}. Raw preview: ${rawText.slice(0, 200)}`
+    );
+  }
 }
 
 serve(async (req) => {
