@@ -467,7 +467,7 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
           <div
             className="min-h-[120px] cursor-text"
             onClick={() => {
-              const newBlock: ContentBlock = { id: crypto.randomUUID(), type: 'paragraph', content: '', data: {} };
+              const newBlock: ContentBlock = { id: crypto.randomUUID(), type: 'paragraph', data: { text: '' } };
               setBlocks(prev => [...prev, newBlock]);
             }}
           />
