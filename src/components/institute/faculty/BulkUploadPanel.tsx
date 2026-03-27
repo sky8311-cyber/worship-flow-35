@@ -150,6 +150,7 @@ export const BulkUploadPanel = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Accept: "text/event-stream",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -163,9 +164,83 @@ export const BulkUploadPanel = () => {
       );
       clearTimeout(fetchTimeout);
 
-      const result = await response.json();
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || "Generation failed");
+      const contentType = response.headers.get("Content-Type") || "";
+
+      const readSSE = async () => {
+        if (!response.body) throw new Error("스트림 응답이 없습니다.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        let buffer = "";
+        let finished = false;
+        let finalResult: any = null;
+
+        while (!finished) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split("\n\n");
+          buffer = frames.pop() || "";
+
+          for (const frame of frames) {
+            const lines = frame.split("\n");
+            let eventName = "message";
+            const dataLines: string[] = [];
+
+            for (const rawLine of lines) {
+              const line = rawLine.trimEnd();
+              if (!line) continue;
+              if (line.startsWith(":")) continue; // comment / keepalive
+              if (line.startsWith("event:")) eventName = line.slice(6).trim();
+              if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+            }
+
+            if (dataLines.length === 0) continue;
+            const dataStr = dataLines.join("\n");
+
+            let payload: any;
+            try {
+              payload = JSON.parse(dataStr);
+            } catch {
+              payload = { raw: dataStr };
+            }
+
+            if (eventName === "delta") {
+              // Use delta count to make progress feel real (caps at 95 until final result)
+              setProgress((p) => Math.min(Math.max(p, 5) + 0.4, 95));
+            }
+
+            if (eventName === "error") {
+              throw new Error(payload?.error || payload?.details || "AI 생성 실패");
+            }
+
+            if (eventName === "result") {
+              finalResult = payload;
+            }
+
+            if (eventName === "done") {
+              finished = true;
+              break;
+            }
+          }
+        }
+
+        if (!finalResult) {
+          throw new Error("SSE 스트림이 완료되었지만 결과가 없습니다.");
+        }
+        return finalResult;
+      };
+
+      let result: any;
+      if (contentType.includes("text/event-stream")) {
+        result = await readSSE();
+      } else {
+        result = await response.json();
+      }
+
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.error || "Generation failed");
       }
 
       setGeneratedData(result.data);
