@@ -17,6 +17,22 @@ import {
 } from "lucide-react";
 import { AdminImageUpload } from "./AdminImageUpload";
 import { useTranslation } from "@/hooks/useTranslation";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+// restrictToVerticalAxis removed - not installed
 
 const TIER_OPTIONS = [
   { value: "0", label: "모든 멤버", labelEn: "All Members" },
@@ -30,11 +46,119 @@ type SelectedItem = {
   id: string;
 };
 
+// ── Sortable Tree Node ──
+const SortableTreeNode = ({
+  sortId,
+  icon: Icon,
+  label,
+  nodeKey,
+  type,
+  id,
+  hasChildren,
+  depth,
+  badge: badgeText,
+  onAdd,
+  onDelete,
+  addLabel,
+  published,
+  isExpanded,
+  onToggle,
+  isSelected,
+  onSelect,
+}: {
+  sortId: string;
+  icon: any;
+  label: string;
+  nodeKey: string;
+  type: SelectedItem["type"];
+  id: string;
+  hasChildren: boolean;
+  depth: number;
+  badge?: string;
+  onAdd?: () => void;
+  onDelete?: () => void;
+  addLabel?: string;
+  published?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
+  isSelected: boolean;
+  onSelect: () => void;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sortId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    paddingLeft: `${depth * 16 + 8}px`,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-1 py-1.5 px-2 rounded-md cursor-pointer transition-colors group text-sm ${
+        isSelected ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/50"
+      }`}
+      onClick={onSelect}
+    >
+      <button
+        className="p-0.5 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="w-3.5 h-3.5" />
+      </button>
+      {hasChildren ? (
+        <button
+          className="p-0.5 hover:bg-muted rounded"
+          onClick={(e) => { e.stopPropagation(); onToggle(); }}
+        >
+          {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+        </button>
+      ) : (
+        <span className="w-4.5" />
+      )}
+      <Icon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
+      <span className="truncate flex-1">{label}</span>
+      {published !== undefined && published && (
+        <Badge variant="default" className="text-[10px] px-1.5 py-0">Live</Badge>
+      )}
+      {badgeText && <span className="text-[10px] text-muted-foreground">{badgeText}</span>}
+      <div className="hidden group-hover:flex items-center gap-0.5">
+        {onAdd && (
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onAdd(); }} title={addLabel}>
+            <Plus className="w-3 h-3" />
+          </Button>
+        )}
+        {onDelete && (
+          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("삭제하시겠습니까?")) onDelete(); }}>
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const AdminInstituteContentTree = () => {
   const { language } = useTranslation();
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<SelectedItem | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  );
 
   const toggle = (key: string) => {
     setExpanded((prev) => {
@@ -224,12 +348,9 @@ export const AdminInstituteContentTree = () => {
     onSuccess: () => { inv("inst-chapters"); toast({ title: "챕터 삭제됨" }); },
   });
 
-  // Move course to a different pathway
   const moveCourse = useMutation({
     mutationFn: async ({ courseId, newPathwayId }: { courseId: string; newPathwayId: string | null }) => {
-      // Remove from current pathway
       await supabase.from("institute_certification_courses").delete().eq("course_id", courseId);
-      // Add to new pathway
       if (newPathwayId) {
         const count = certCourses.filter((cc) => cc.certification_id === newPathwayId).length;
         await supabase.from("institute_certification_courses").insert({
@@ -240,6 +361,95 @@ export const AdminInstituteContentTree = () => {
     onSuccess: () => { inv("inst-cert-courses"); toast({ title: "코스 이동됨" }); },
   });
 
+  // ── Reorder mutation ──
+  const reorderMutation = useMutation({
+    mutationFn: async ({ table, items }: { table: string; items: { id: string; sort_order: number }[] }) => {
+      await Promise.all(
+        items.map((item) =>
+          supabase.from(table as any).update({ sort_order: item.sort_order }).eq("id", item.id)
+        )
+      );
+    },
+    onSuccess: () => {
+      inv("inst-pathways", "inst-cert-courses", "inst-courses", "inst-modules", "inst-chapters");
+    },
+  });
+
+  // ── Drag end handler ──
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    // Determine type by prefix
+    if (activeId.startsWith("pw-") && overId.startsWith("pw-")) {
+      const aId = activeId.slice(3);
+      const oId = overId.slice(3);
+      const items = [...pathways];
+      const oldIdx = items.findIndex((p) => p.id === aId);
+      const newIdx = items.findIndex((p) => p.id === oId);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const [moved] = items.splice(oldIdx, 1);
+      items.splice(newIdx, 0, moved);
+      reorderMutation.mutate({
+        table: "institute_certifications",
+        items: items.map((item, i) => ({ id: item.id, sort_order: i })),
+      });
+    } else if (activeId.startsWith("cc-") && overId.startsWith("cc-")) {
+      // cert_courses within a pathway
+      const aId = activeId.slice(3);
+      const oId = overId.slice(3);
+      const activeCC = certCourses.find((cc) => cc.id === aId);
+      if (!activeCC) return;
+      const parentId = activeCC.certification_id;
+      const siblings = certCourses.filter((cc) => cc.certification_id === parentId);
+      const oldIdx = siblings.findIndex((cc) => cc.id === aId);
+      const newIdx = siblings.findIndex((cc) => cc.id === oId);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = [...siblings];
+      const [moved] = reordered.splice(oldIdx, 1);
+      reordered.splice(newIdx, 0, moved);
+      reorderMutation.mutate({
+        table: "institute_certification_courses",
+        items: reordered.map((item, i) => ({ id: item.id, sort_order: i })),
+      });
+    } else if (activeId.startsWith("m-") && overId.startsWith("m-")) {
+      const aId = activeId.slice(2);
+      const oId = overId.slice(2);
+      const activeMod = modules.find((m) => m.id === aId);
+      if (!activeMod) return;
+      const siblings = modules.filter((m) => m.course_id === activeMod.course_id);
+      const oldIdx = siblings.findIndex((m) => m.id === aId);
+      const newIdx = siblings.findIndex((m) => m.id === oId);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = [...siblings];
+      const [moved] = reordered.splice(oldIdx, 1);
+      reordered.splice(newIdx, 0, moved);
+      reorderMutation.mutate({
+        table: "institute_modules",
+        items: reordered.map((item, i) => ({ id: item.id, sort_order: i })),
+      });
+    } else if (activeId.startsWith("ch-") && overId.startsWith("ch-")) {
+      const aId = activeId.slice(3);
+      const oId = overId.slice(3);
+      const activeCh = chapters.find((c) => c.id === aId);
+      if (!activeCh) return;
+      const siblings = chapters.filter((c) => c.module_id === activeCh.module_id);
+      const oldIdx = siblings.findIndex((c) => c.id === aId);
+      const newIdx = siblings.findIndex((c) => c.id === oId);
+      if (oldIdx === -1 || newIdx === -1) return;
+      const reordered = [...siblings];
+      const [moved] = reordered.splice(oldIdx, 1);
+      reordered.splice(newIdx, 0, moved);
+      reorderMutation.mutate({
+        table: "institute_chapters",
+        items: reordered.map((item, i) => ({ id: item.id, sort_order: i })),
+      });
+    }
+  };
+
   // ── Derived data ──
   const assignedCourseIds = new Set(certCourses.map((cc) => cc.course_id));
   const unassignedCourses = courses.filter((c) => !assignedCourseIds.has(c.id));
@@ -249,81 +459,13 @@ export const AdminInstituteContentTree = () => {
     return ids.map((id) => courses.find((c) => c.id === id)).filter(Boolean) as typeof courses;
   };
 
+  const getCertCoursesForPathway = (pathwayId: string) =>
+    certCourses.filter((cc) => cc.certification_id === pathwayId);
+
   const getModulesForCourse = (courseId: string) => modules.filter((m) => m.course_id === courseId);
   const getChaptersForModule = (moduleId: string) => chapters.filter((c) => c.module_id === moduleId);
 
-  const isSelected = (type: string, id: string) => selected?.type === type && selected?.id === id;
-
-  // ── Tree node renderer ──
-  const TreeNode = ({
-    icon: Icon,
-    label,
-    nodeKey,
-    type,
-    id,
-    hasChildren,
-    depth,
-    badge: badgeText,
-    onAdd,
-    onDelete,
-    addLabel,
-    published,
-  }: {
-    icon: any;
-    label: string;
-    nodeKey: string;
-    type: SelectedItem["type"];
-    id: string;
-    hasChildren: boolean;
-    depth: number;
-    badge?: string;
-    onAdd?: () => void;
-    onDelete?: () => void;
-    addLabel?: string;
-    published?: boolean;
-  }) => {
-    const isExp = expanded.has(nodeKey);
-    const isSel = isSelected(type, id);
-
-    return (
-      <div
-        className={`flex items-center gap-1 py-1.5 px-2 rounded-md cursor-pointer transition-colors group text-sm ${
-          isSel ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/50"
-        }`}
-        style={{ paddingLeft: `${depth * 16 + 8}px` }}
-        onClick={() => setSelected({ type, id })}
-      >
-        {hasChildren ? (
-          <button
-            className="p-0.5 hover:bg-muted rounded"
-            onClick={(e) => { e.stopPropagation(); toggle(nodeKey); }}
-          >
-            {isExp ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          </button>
-        ) : (
-          <span className="w-4.5" />
-        )}
-        <Icon className="w-4 h-4 flex-shrink-0 text-muted-foreground" />
-        <span className="truncate flex-1">{label}</span>
-        {published !== undefined && published && (
-          <Badge variant="default" className="text-[10px] px-1.5 py-0">Live</Badge>
-        )}
-        {badgeText && <span className="text-[10px] text-muted-foreground">{badgeText}</span>}
-        <div className="hidden group-hover:flex items-center gap-0.5">
-          {onAdd && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); onAdd(); }} title={addLabel}>
-              <Plus className="w-3 h-3" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); if (confirm("삭제하시겠습니까?")) onDelete(); }}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const isSelectedItem = (type: string, id: string) => selected?.type === type && selected?.id === id;
 
   // ── Edit Panel ──
   const renderEditPanel = () => {
@@ -359,10 +501,6 @@ export const AdminInstituteContentTree = () => {
             <div className="flex items-center gap-2">
               <Switch checked={p.is_published ?? false} onCheckedChange={(v) => updatePathway.mutate({ id: p.id, field: "is_published", value: v })} />
               <span className="text-sm">Published</span>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort Order</label>
-              <Input type="number" defaultValue={p.sort_order ?? 0} key={p.id + "-sort"} onBlur={(e) => updatePathway.mutate({ id: p.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
             </div>
             <div>
               <AdminImageUpload currentUrl={p.badge_image_url} onUploadSuccess={(url) => updatePathway.mutate({ id: p.id, field: "badge_image_url", value: url })} folder="institute/cert-badges" label="배지 이미지" sizeGuide="400×400px (1:1)" aspectClass="aspect-square" maxSizeMB={2} />
@@ -436,10 +574,6 @@ export const AdminInstituteContentTree = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort Order</label>
-              <Input type="number" defaultValue={c.sort_order ?? 0} key={c.id + "-sort"} onBlur={(e) => updateCourse.mutate({ id: c.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
-            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Switch checked={c.is_published ?? false} onCheckedChange={(v) => updateCourse.mutate({ id: c.id, field: "is_published", value: v })} />
@@ -493,10 +627,6 @@ export const AdminInstituteContentTree = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort Order</label>
-              <Input type="number" defaultValue={m.sort_order ?? 0} key={m.id + "-sort"} onBlur={(e) => updateModule.mutate({ id: m.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
-            </div>
           </div>
         </div>
       );
@@ -538,10 +668,6 @@ export const AdminInstituteContentTree = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Sort Order</label>
-              <Input type="number" defaultValue={ch.sort_order ?? 0} key={ch.id + "-sort"} onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "sort_order", value: parseInt(e.target.value) || 0 })} />
-            </div>
             <div className="col-span-2">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">콘텐츠 (HTML)</label>
               <Textarea className="min-h-[250px] font-mono text-xs" defaultValue={ch.content_ko || ""} key={ch.id + "-content"} onBlur={(e) => updateChapter.mutate({ id: ch.id, field: "content_ko", value: e.target.value || null })} />
@@ -566,152 +692,219 @@ export const AdminInstituteContentTree = () => {
         </div>
         <ScrollArea className="h-[550px]">
           <div className="p-2 space-y-0.5">
-            {pathways.map((pw) => {
-              const pwKey = `pw-${pw.id}`;
-              const pwCourses = getCoursesForPathway(pw.id);
-              return (
-                <div key={pw.id}>
-                  <TreeNode
-                    icon={expanded.has(pwKey) ? FolderOpen : Folder}
-                    label={pw.title_ko}
-                    nodeKey={pwKey}
-                    type="pathway"
-                    id={pw.id}
-                    hasChildren={pwCourses.length > 0}
-                    depth={0}
-                    badge={`${pwCourses.length}`}
-                    published={pw.is_published ?? false}
-                    onAdd={() => addCourse.mutate(pw.id)}
-                    onDelete={() => deletePathway.mutate(pw.id)}
-                    addLabel="코스 추가"
-                  />
-                  {expanded.has(pwKey) && pwCourses.map((course) => {
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              {/* Pathways sortable */}
+              <SortableContext items={pathways.map((pw) => `pw-${pw.id}`)} strategy={verticalListSortingStrategy}>
+                {pathways.map((pw) => {
+                  const pwKey = `pw-${pw.id}`;
+                  const pwCourses = getCoursesForPathway(pw.id);
+                  const pwCertCourses = getCertCoursesForPathway(pw.id);
+                  return (
+                    <div key={pw.id}>
+                      <SortableTreeNode
+                        sortId={pwKey}
+                        icon={expanded.has(pwKey) ? FolderOpen : Folder}
+                        label={pw.title_ko}
+                        nodeKey={pwKey}
+                        type="pathway"
+                        id={pw.id}
+                        hasChildren={pwCourses.length > 0}
+                        depth={0}
+                        badge={`${pwCourses.length}`}
+                        published={pw.is_published ?? false}
+                        onAdd={() => addCourse.mutate(pw.id)}
+                        onDelete={() => deletePathway.mutate(pw.id)}
+                        addLabel="코스 추가"
+                        isExpanded={expanded.has(pwKey)}
+                        onToggle={() => toggle(pwKey)}
+                        isSelected={isSelectedItem("pathway", pw.id)}
+                        onSelect={() => setSelected({ type: "pathway", id: pw.id })}
+                      />
+                      {expanded.has(pwKey) && (
+                        <SortableContext items={pwCertCourses.map((cc) => `cc-${cc.id}`)} strategy={verticalListSortingStrategy}>
+                          {pwCertCourses.map((cc) => {
+                            const course = courses.find((c) => c.id === cc.course_id);
+                            if (!course) return null;
+                            const cKey = `c-${course.id}`;
+                            const cModules = getModulesForCourse(course.id);
+                            return (
+                              <div key={cc.id}>
+                                <SortableTreeNode
+                                  sortId={`cc-${cc.id}`}
+                                  icon={BookOpen}
+                                  label={course.title_ko}
+                                  nodeKey={cKey}
+                                  type="course"
+                                  id={course.id}
+                                  hasChildren={cModules.length > 0}
+                                  depth={1}
+                                  badge={`${cModules.length}m`}
+                                  published={course.is_published ?? false}
+                                  onAdd={() => addModule.mutate(course.id)}
+                                  onDelete={() => deleteCourse.mutate(course.id)}
+                                  addLabel="모듈 추가"
+                                  isExpanded={expanded.has(cKey)}
+                                  onToggle={() => toggle(cKey)}
+                                  isSelected={isSelectedItem("course", course.id)}
+                                  onSelect={() => setSelected({ type: "course", id: course.id })}
+                                />
+                                {expanded.has(cKey) && (
+                                  <SortableContext items={cModules.map((m) => `m-${m.id}`)} strategy={verticalListSortingStrategy}>
+                                    {cModules.map((mod) => {
+                                      const mKey = `m-${mod.id}`;
+                                      const mChapters = getChaptersForModule(mod.id);
+                                      return (
+                                        <div key={mod.id}>
+                                          <SortableTreeNode
+                                            sortId={`m-${mod.id}`}
+                                            icon={FileText}
+                                            label={mod.title_ko}
+                                            nodeKey={mKey}
+                                            type="module"
+                                            id={mod.id}
+                                            hasChildren={mChapters.length > 0}
+                                            depth={2}
+                                            badge={`${mChapters.length}ch`}
+                                            onAdd={() => addChapter.mutate(mod.id)}
+                                            onDelete={() => deleteModule.mutate(mod.id)}
+                                            addLabel="챕터 추가"
+                                            isExpanded={expanded.has(mKey)}
+                                            onToggle={() => toggle(mKey)}
+                                            isSelected={isSelectedItem("module", mod.id)}
+                                            onSelect={() => setSelected({ type: "module", id: mod.id })}
+                                          />
+                                          {expanded.has(mKey) && (
+                                            <SortableContext items={mChapters.map((ch) => `ch-${ch.id}`)} strategy={verticalListSortingStrategy}>
+                                              {mChapters.map((ch) => (
+                                                <SortableTreeNode
+                                                  key={ch.id}
+                                                  sortId={`ch-${ch.id}`}
+                                                  icon={FileEdit}
+                                                  label={ch.title_ko || ch.title || "Untitled"}
+                                                  nodeKey={`ch-${ch.id}`}
+                                                  type="chapter"
+                                                  id={ch.id}
+                                                  hasChildren={false}
+                                                  depth={3}
+                                                  onDelete={() => deleteChapter.mutate(ch.id)}
+                                                  isExpanded={false}
+                                                  onToggle={() => {}}
+                                                  isSelected={isSelectedItem("chapter", ch.id)}
+                                                  onSelect={() => setSelected({ type: "chapter", id: ch.id })}
+                                                />
+                                              ))}
+                                            </SortableContext>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </SortableContext>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </SortableContext>
+                      )}
+                    </div>
+                  );
+                })}
+              </SortableContext>
+
+              {/* Unassigned courses */}
+              {unassignedCourses.length > 0 && (
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex items-center justify-between px-2 py-1">
+                    <span className="text-xs font-medium text-muted-foreground">미지정 코스</span>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => addCourse.mutate(undefined)}>
+                      <Plus className="w-3 h-3 mr-1" /> 코스
+                    </Button>
+                  </div>
+                  {unassignedCourses.map((course) => {
                     const cKey = `c-${course.id}`;
                     const cModules = getModulesForCourse(course.id);
                     return (
                       <div key={course.id}>
-                        <TreeNode
+                        <SortableTreeNode
+                          sortId={`unassigned-${course.id}`}
                           icon={BookOpen}
                           label={course.title_ko}
                           nodeKey={cKey}
                           type="course"
                           id={course.id}
                           hasChildren={cModules.length > 0}
-                          depth={1}
+                          depth={0}
                           badge={`${cModules.length}m`}
                           published={course.is_published ?? false}
                           onAdd={() => addModule.mutate(course.id)}
                           onDelete={() => deleteCourse.mutate(course.id)}
                           addLabel="모듈 추가"
+                          isExpanded={expanded.has(cKey)}
+                          onToggle={() => toggle(cKey)}
+                          isSelected={isSelectedItem("course", course.id)}
+                          onSelect={() => setSelected({ type: "course", id: course.id })}
                         />
-                        {expanded.has(cKey) && cModules.map((mod) => {
-                          const mKey = `m-${mod.id}`;
-                          const mChapters = getChaptersForModule(mod.id);
-                          return (
-                            <div key={mod.id}>
-                              <TreeNode
-                                icon={FileText}
-                                label={mod.title_ko}
-                                nodeKey={mKey}
-                                type="module"
-                                id={mod.id}
-                                hasChildren={mChapters.length > 0}
-                                depth={2}
-                                badge={`${mChapters.length}ch`}
-                                onAdd={() => addChapter.mutate(mod.id)}
-                                onDelete={() => deleteModule.mutate(mod.id)}
-                                addLabel="챕터 추가"
-                              />
-                              {expanded.has(mKey) && mChapters.map((ch) => (
-                                <TreeNode
-                                  key={ch.id}
-                                  icon={FileEdit}
-                                  label={ch.title_ko || ch.title || "Untitled"}
-                                  nodeKey={`ch-${ch.id}`}
-                                  type="chapter"
-                                  id={ch.id}
-                                  hasChildren={false}
-                                  depth={3}
-                                  onDelete={() => deleteChapter.mutate(ch.id)}
-                                />
-                              ))}
-                            </div>
-                          );
-                        })}
+                        {expanded.has(cKey) && (
+                          <SortableContext items={cModules.map((m) => `m-${m.id}`)} strategy={verticalListSortingStrategy}>
+                            {cModules.map((mod) => {
+                              const mKey = `m-${mod.id}`;
+                              const mChapters = getChaptersForModule(mod.id);
+                              return (
+                                <div key={mod.id}>
+                                  <SortableTreeNode
+                                    sortId={`m-${mod.id}`}
+                                    icon={FileText}
+                                    label={mod.title_ko}
+                                    nodeKey={mKey}
+                                    type="module"
+                                    id={mod.id}
+                                    hasChildren={mChapters.length > 0}
+                                    depth={1}
+                                    badge={`${mChapters.length}ch`}
+                                    onAdd={() => addChapter.mutate(mod.id)}
+                                    onDelete={() => deleteModule.mutate(mod.id)}
+                                    addLabel="챕터 추가"
+                                    isExpanded={expanded.has(mKey)}
+                                    onToggle={() => toggle(mKey)}
+                                    isSelected={isSelectedItem("module", mod.id)}
+                                    onSelect={() => setSelected({ type: "module", id: mod.id })}
+                                  />
+                                  {expanded.has(mKey) && (
+                                    <SortableContext items={mChapters.map((ch) => `ch-${ch.id}`)} strategy={verticalListSortingStrategy}>
+                                      {mChapters.map((ch) => (
+                                        <SortableTreeNode
+                                          key={ch.id}
+                                          sortId={`ch-${ch.id}`}
+                                          icon={FileEdit}
+                                          label={ch.title_ko || ch.title || "Untitled"}
+                                          nodeKey={`ch-${ch.id}`}
+                                          type="chapter"
+                                          id={ch.id}
+                                          hasChildren={false}
+                                          depth={2}
+                                          onDelete={() => deleteChapter.mutate(ch.id)}
+                                          isExpanded={false}
+                                          onToggle={() => {}}
+                                          isSelected={isSelectedItem("chapter", ch.id)}
+                                          onSelect={() => setSelected({ type: "chapter", id: ch.id })}
+                                        />
+                                      ))}
+                                    </SortableContext>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </SortableContext>
+                        )}
                       </div>
                     );
                   })}
                 </div>
-              );
-            })}
-
-            {/* Unassigned courses */}
-            {unassignedCourses.length > 0 && (
-              <div className="mt-3 pt-3 border-t">
-                <div className="flex items-center justify-between px-2 py-1">
-                  <span className="text-xs font-medium text-muted-foreground">미지정 코스</span>
-                  <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => addCourse.mutate(undefined)}>
-                    <Plus className="w-3 h-3 mr-1" /> 코스
-                  </Button>
-                </div>
-                {unassignedCourses.map((course) => {
-                  const cKey = `c-${course.id}`;
-                  const cModules = getModulesForCourse(course.id);
-                  return (
-                    <div key={course.id}>
-                      <TreeNode
-                        icon={BookOpen}
-                        label={course.title_ko}
-                        nodeKey={cKey}
-                        type="course"
-                        id={course.id}
-                        hasChildren={cModules.length > 0}
-                        depth={0}
-                        badge={`${cModules.length}m`}
-                        published={course.is_published ?? false}
-                        onAdd={() => addModule.mutate(course.id)}
-                        onDelete={() => deleteCourse.mutate(course.id)}
-                        addLabel="모듈 추가"
-                      />
-                      {expanded.has(cKey) && cModules.map((mod) => {
-                        const mKey = `m-${mod.id}`;
-                        const mChapters = getChaptersForModule(mod.id);
-                        return (
-                          <div key={mod.id}>
-                            <TreeNode
-                              icon={FileText}
-                              label={mod.title_ko}
-                              nodeKey={mKey}
-                              type="module"
-                              id={mod.id}
-                              hasChildren={mChapters.length > 0}
-                              depth={1}
-                              badge={`${mChapters.length}ch`}
-                              onAdd={() => addChapter.mutate(mod.id)}
-                              onDelete={() => deleteModule.mutate(mod.id)}
-                              addLabel="챕터 추가"
-                            />
-                            {expanded.has(mKey) && mChapters.map((ch) => (
-                              <TreeNode
-                                key={ch.id}
-                                icon={FileEdit}
-                                label={ch.title_ko || ch.title || "Untitled"}
-                                nodeKey={`ch-${ch.id}`}
-                                type="chapter"
-                                id={ch.id}
-                                hasChildren={false}
-                                depth={2}
-                                onDelete={() => deleteChapter.mutate(ch.id)}
-                              />
-                            ))}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+              )}
+            </DndContext>
 
             {pathways.length === 0 && unassignedCourses.length === 0 && (
               <div className="text-center text-sm text-muted-foreground py-8">
