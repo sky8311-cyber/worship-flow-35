@@ -1,14 +1,23 @@
 
 
-## Fix: AI 세트 생성 Button Cut Off
+## Fix: Block Editor - Empty Row for Cursor + Button Visibility
 
-The "AI 세트 생성" button overflows because it sits inside a `ScrollArea` with `-mx-6 px-6` class in `AISetBuilderPanel.tsx`. The negative margin expands the scroll container beyond the panel width, and the `w-full` button follows that expanded width.
+### Problem
+1. No empty space below the last block to place the cursor
+2. The "블록 추가" button is cut off at the bottom
 
-### Fix
+### Changes
 
-**File: `src/components/ai-set-builder/AISetBuilderForm.tsx`**
-- Change the generate button from `className="w-full" size="lg"` to `className="w-full max-w-full" size="default"` to constrain it within its parent.
+**File: `src/components/institute/faculty/ChapterBlockEditor.tsx`**
 
-**File: `src/components/AISetBuilderPanel.tsx`**
-- Add `overflow-hidden` to the ScrollArea wrapper or change `-mx-6 px-6` to avoid the negative margin causing content to bleed outside the panel bounds. Simplest fix: add `overflow-x-hidden` to the ScrollArea container.
+1. **Add clickable empty row** below the blocks (inside the editor scroll area, after `</DndContext>`): Add a `div` with `min-h-[120px]` that, when clicked, inserts a new paragraph block at the end. This gives a persistent cursor landing area.
+
+2. **Ensure sticky bar visibility**: The sticky bar at line 471 already uses `flex-shrink-0`, so it should not shrink. The issue is likely the parent `fixed inset-0 flex flex-col` layout combined with the scroll area. Add `min-h-0` to the `flex-1 overflow-y-auto` div (line 452) to ensure proper flex overflow behavior, preventing the sticky bar from being pushed off-screen.
+
+### Summary of Edits
+
+| Line | Change |
+|------|--------|
+| 452 | Add `min-h-0` to the scrollable editor div |
+| 466-467 | Add an empty clickable area (`min-h-[120px]`) after `</DndContext>` for cursor placement |
 
