@@ -1109,7 +1109,9 @@ export type Database = {
       }
       institute_certifications: {
         Row: {
+          badge_description: string | null
           badge_image_url: string | null
+          badge_name: string | null
           certificate_template_url: string | null
           created_at: string | null
           description_ko: string | null
@@ -1120,7 +1122,9 @@ export type Database = {
           title_ko: string
         }
         Insert: {
+          badge_description?: string | null
           badge_image_url?: string | null
+          badge_name?: string | null
           certificate_template_url?: string | null
           created_at?: string | null
           description_ko?: string | null
@@ -1131,7 +1135,9 @@ export type Database = {
           title_ko: string
         }
         Update: {
+          badge_description?: string | null
           badge_image_url?: string | null
+          badge_name?: string | null
           certificate_template_url?: string | null
           created_at?: string | null
           description_ko?: string | null

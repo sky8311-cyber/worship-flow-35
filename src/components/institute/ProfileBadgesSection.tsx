@@ -18,7 +18,7 @@ export function ProfileBadgesSection({ userId }: ProfileBadgesSectionProps) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("institute_badges")
-        .select("*, institute_certifications(title_ko, title, badge_image_url)")
+        .select("*, institute_certifications(title_ko, title, badge_name, badge_image_url)")
         .eq("user_id", userId);
       if (error) throw error;
       return data || [];
@@ -61,7 +61,7 @@ export function ProfileBadgesSection({ userId }: ProfileBadgesSectionProps) {
                 )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium line-clamp-1">
-                    {language === "ko" ? cert?.title_ko : cert?.title}
+                    {cert?.badge_name || (language === "ko" ? cert?.title_ko : cert?.title)}
                   </p>
                   <p className="text-xs text-muted-foreground">{awardedDate}</p>
                   <Badge variant="outline" className="text-[10px] mt-1 text-primary border-primary/30">

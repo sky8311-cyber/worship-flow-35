@@ -24,6 +24,7 @@ type CertRow = {
   title: string;
   title_ko: string;
   description_ko: string | null;
+  badge_name: string | null;
   badge_image_url: string | null;
   sort_order: number | null;
 };
@@ -375,15 +376,15 @@ export default function InstituteCourses() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-foreground">{cert.title_ko}</div>
+                      <div className="text-sm font-bold text-foreground">🏅 {cert.badge_name || cert.title_ko} 배지</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">
                         {completedCount}/{totalCount} 과목 완료
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
                         {allComplete
-                          ? "모든 과목 완료! 배지를 신청하세요 🎉"
+                          ? "배지 획득 완료! 🎉"
                           : completedCount === 0
-                            ? `지금 시작하면 ${cert.title_ko} 배지를 받을 수 있어요!`
+                            ? `지금 시작하면 ${cert.badge_name || cert.title_ko} 배지를 받을 수 있어요!`
                             : `배지까지 ${remaining}과목 남았어요! 🔥`}
                       </div>
                       {allComplete && (
