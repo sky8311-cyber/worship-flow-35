@@ -464,23 +464,23 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
               })}
             </SortableContext>
           </DndContext>
-
-          {/* Add block button */}
-          <div className="mt-4 flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground"
-              onClick={() => { setCommandInsertIdx(blocks.length - 1); setShowCommand(true); }}
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {language === "ko" ? "블록 추가" : "Add block"}
-            </Button>
-            <span className="text-[10px] text-muted-foreground">
-              {language === "ko" ? "또는 '/' 입력" : "or type '/'"}
-            </span>
-          </div>
         </div>
+      </div>
+
+      {/* Sticky Add Block Bar */}
+      <div className="border-t border-border px-4 py-2 bg-card flex items-center gap-2 flex-shrink-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-muted-foreground"
+          onClick={() => { setCommandInsertIdx(blocks.length - 1); setShowCommand(true); }}
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          {language === "ko" ? "블록 추가" : "Add block"}
+        </Button>
+        <span className="text-[10px] text-muted-foreground">
+          {language === "ko" ? "또는 '/' 입력" : "or type '/'"}
+        </span>
       </div>
 
       {/* Command Menu */}
