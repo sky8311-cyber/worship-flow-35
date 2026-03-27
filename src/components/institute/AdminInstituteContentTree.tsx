@@ -696,7 +696,7 @@ export const AdminInstituteContentTree = () => {
               sensors={sensors}
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
-              modifiers={[restrictToVerticalAxis]}
+              >
             >
               {/* Pathways sortable */}
               <SortableContext items={pathways.map((pw) => `pw-${pw.id}`)} strategy={verticalListSortingStrategy}>
