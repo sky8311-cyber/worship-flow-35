@@ -8,9 +8,10 @@ interface AppLayoutProps {
   showBackButton?: boolean;
   backPath?: string;
   breadcrumb?: React.ReactNode;
+  fullHeight?: boolean;
 }
 
-export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: AppLayoutProps) => {
+export const AppLayout = ({ children, showBackButton, backPath, breadcrumb, fullHeight }: AppLayoutProps) => {
   const { playerState } = useMusicPlayer();
 
   // Add extra bottom padding when mini player is visible
@@ -20,6 +21,18 @@ export const AppLayout = ({ children, showBackButton, backPath, breadcrumb }: Ap
     }
     return 'max(9rem, calc(6rem + env(safe-area-inset-bottom, 0px)))';
   };
+
+  if (fullHeight) {
+    return (
+      <div className="h-[100dvh] flex flex-col bg-gradient-soft">
+        <AppHeader showBackButton={showBackButton} backPath={backPath} breadcrumb={breadcrumb} />
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {children}
+        </main>
+        <BottomTabNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-gradient-soft">
