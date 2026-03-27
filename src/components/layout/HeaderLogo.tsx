@@ -9,7 +9,7 @@ export function HeaderLogo() {
 
   if (isInstitute) {
     return (
-      <img src={instituteLogo} alt="K-Worship Institute" className="h-[90px] md:h-[132px] cursor-pointer" />
+      <img src={instituteLogo} alt="K-Worship Institute" className="h-[60px] md:h-[88px] cursor-pointer" />
     );
   }
 
