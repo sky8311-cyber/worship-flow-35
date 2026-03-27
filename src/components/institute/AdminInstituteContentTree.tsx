@@ -356,6 +356,14 @@ export const AdminInstituteContentTree = () => {
               <label className="text-xs font-medium text-muted-foreground mb-1 block">설명 (KO)</label>
               <Textarea defaultValue={p.description_ko || ""} key={p.id + "-desc"} onBlur={(e) => updatePathway.mutate({ id: p.id, field: "description_ko", value: e.target.value || null })} />
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 이름</label>
+              <Input defaultValue={(p as any).badge_name || ""} key={p.id + "-badge_name"} placeholder="예: K-Worship Essential" onBlur={(e) => updatePathway.mutate({ id: p.id, field: "badge_name", value: e.target.value || null })} />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 설명</label>
+              <Textarea defaultValue={(p as any).badge_description || ""} key={p.id + "-badge_desc"} placeholder="배지에 대한 설명" onBlur={(e) => updatePathway.mutate({ id: p.id, field: "badge_description", value: e.target.value || null })} />
+            </div>
             <div className="flex items-center gap-2">
               <Switch checked={p.is_published ?? false} onCheckedChange={(v) => updatePathway.mutate({ id: p.id, field: "is_published", value: v })} />
               <span className="text-sm">Published</span>
