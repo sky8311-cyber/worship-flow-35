@@ -75,6 +75,10 @@ const SYSTEM_PROMPT = `당신은 K-Worship Institute의 콘텐츠 구조화 AI�
 중요: quiz 필드는 generate_quiz가 false이면 null로 설정하십시오.
 각 블록의 id는 고유한 UUID를 생성하십시오.`;
 
+function asSSE(event: string, data: unknown) {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
 async function replaceImagePlaceholders(pages: any[]): Promise<any[]> {
   let imageIdx = 0;
   for (const page of pages) {
@@ -200,60 +204,149 @@ ${truncated}
 
     const MAX_TOKENS = 16384;
 
-    // Use streaming to keep the edge function connection alive
-    const aiResponse = await fetch(AI_CONFIG.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicKey,
-        'anthropic-version': AI_CONFIG.anthropicVersion,
-      },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        max_tokens: MAX_TOKENS,
-        stream: true,
-        messages: [
-          { role: 'user', content: userPrompt },
-        ],
-        system: SYSTEM_PROMPT,
-      }),
-    });
+    const accept = req.headers.get('Accept') || '';
+    const wantsSSE = accept.includes('text/event-stream');
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error('Anthropic API error:', errText);
-      return new Response(JSON.stringify({ error: 'AI generation failed', details: errText }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    const runAnthropicStream = async (onDelta: (text: string) => void) => {
+      // Use streaming to keep the edge function connection alive
+      const aiResponse = await fetch(AI_CONFIG.endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicKey,
+          'anthropic-version': AI_CONFIG.anthropicVersion,
+        },
+        body: JSON.stringify({
+          model: AI_CONFIG.model,
+          max_tokens: MAX_TOKENS,
+          stream: true,
+          messages: [{ role: 'user', content: userPrompt }],
+          system: SYSTEM_PROMPT,
+        }),
+      });
 
-    // Read the SSE stream and accumulate text
-    const reader = aiResponse.body!.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let buffer = '';
+      if (!aiResponse.ok) {
+        const errText = await aiResponse.text();
+        console.error('Anthropic API error:', errText);
+        throw new Error(errText || 'Anthropic API error');
+      }
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      const reader = aiResponse.body!.getReader();
+      const decoder = new TextDecoder();
+      let fullText = '';
+      let buffer = '';
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      // Keep the last potentially incomplete line in the buffer
-      buffer = lines.pop() || '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const dataStr = line.slice(6).trim();
-        if (dataStr === '[DONE]') continue;
-        try {
-          const event = JSON.parse(dataStr);
-          if (event.type === 'content_block_delta' && event.delta?.text) {
-            fullText += event.delta.text;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const dataStr = line.slice(6).trim();
+          if (!dataStr || dataStr === '[DONE]') continue;
+          try {
+            const event = JSON.parse(dataStr);
+            if (event.type === 'content_block_delta' && event.delta?.text) {
+              const t = String(event.delta.text);
+              fullText += t;
+              onDelta(t);
+            }
+          } catch (_) {
+            // Skip unparseable SSE lines
           }
-        } catch (_) {
-          // Skip unparseable SSE lines
         }
       }
+
+      return fullText;
+    };
+
+    if (wantsSSE) {
+      const encoder = new TextEncoder();
+
+      const stream = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          // Send something immediately to avoid idle timeouts
+          controller.enqueue(encoder.encode(asSSE('start', { ok: true })));
+          const keepAlive = setInterval(() => {
+            try {
+              controller.enqueue(encoder.encode(': ping\n\n'));
+            } catch (_) {
+              // ignore
+            }
+          }, 15000);
+
+          try {
+            let fullText = '';
+            fullText = await runAnthropicStream((deltaText) => {
+              controller.enqueue(encoder.encode(asSSE('delta', { text: deltaText })));
+            });
+
+            console.log(`Stream complete: accumulated ${fullText.length} chars`);
+
+            if (!fullText || fullText.trim().length === 0) {
+              controller.enqueue(encoder.encode(asSSE('error', { error: 'AI 응답이 비어있습니다. 다시 시도해주세요.' })));
+              return;
+            }
+
+            let parsed: any;
+            try {
+              parsed = repairAndParseJSON(fullText);
+            } catch (parseErr) {
+              console.error('Failed to parse AI response:', fullText.slice(0, 500));
+              controller.enqueue(encoder.encode(asSSE('error', { error: 'Failed to parse AI response', raw: fullText.slice(0, 1000) })));
+              return;
+            }
+
+            if (!parsed.pages) parsed.pages = [];
+            if (!parsed.quiz) parsed.quiz = null;
+
+            if (parsed.pages.length > 0) {
+              parsed.pages = await replaceImagePlaceholders(parsed.pages);
+            }
+
+            // Log AI usage
+            try {
+              await adminSupabase.from('ai_usage_log').insert({ user_id: userId, action_type: 'institute_content_gen' });
+              await adminSupabase.rpc('increment_ai_usage', { p_user_id: userId });
+            } catch (logErr) {
+              console.error('Usage logging failed:', logErr);
+            }
+
+            controller.enqueue(encoder.encode(asSSE('result', { success: true, data: parsed })));
+            controller.enqueue(encoder.encode(asSSE('done', { ok: true })));
+          } catch (err) {
+            console.error('SSE generation error:', err);
+            controller.enqueue(encoder.encode(asSSE('error', { error: 'AI generation failed', details: String(err?.message || err) })));
+          } finally {
+            clearInterval(keepAlive);
+            try {
+              controller.close();
+            } catch (_) {
+              // ignore
+            }
+          }
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      });
     }
+
+    // Non-SSE (backwards compatible) path: run streaming upstream, return JSON at the end
+    const fullText = await runAnthropicStream(() => {
+      // no-op
+    });
 
     console.log(`Stream complete: accumulated ${fullText.length} chars`);
 
@@ -262,7 +355,6 @@ ${truncated}
       return new Response(JSON.stringify({ error: 'AI 응답이 비어있습니다. 다시 시도해주세요.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Parse JSON using existing repair logic
     let parsed: any;
     try {
       parsed = repairAndParseJSON(fullText);
@@ -278,7 +370,6 @@ ${truncated}
       parsed.pages = await replaceImagePlaceholders(parsed.pages);
     }
 
-    // Log AI usage
     try {
       await adminSupabase.from('ai_usage_log').insert({ user_id: userId, action_type: 'institute_content_gen' });
       await adminSupabase.rpc('increment_ai_usage', { p_user_id: userId });
