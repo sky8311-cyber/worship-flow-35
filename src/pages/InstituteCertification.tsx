@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -104,7 +105,22 @@ const InstituteCertification = () => {
   }
 
   return (
-    <InstituteLayout pageTitle={cert.title_ko} showBackButton>
+  const certBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{cert.title_ko}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
+  return (
+    <InstituteLayout pageTitle={cert.title_ko} showBackButton breadcrumb={certBreadcrumb}>
       <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* Hero */}
         <Card className="mb-6">

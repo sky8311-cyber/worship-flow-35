@@ -1,8 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Users, UserCheck, Settings } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { AdminInstituteInstructors } from "@/components/institute/AdminInstituteInstructors";
 import { AdminInstituteContentTree } from "@/components/institute/AdminInstituteContentTree";
 import { AdminInstituteEnrollments } from "@/components/institute/AdminInstituteEnrollments";

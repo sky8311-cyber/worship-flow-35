@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { HelpCircle, Clock, Target, RotateCcw, ChevronRight, CheckCircle2, XCircle } from "lucide-react";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 
 const InstituteQuiz = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -22,6 +23,26 @@ const InstituteQuiz = () => {
   const [phase, setPhase] = useState<"start" | "progress" | "result">("start");
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [result, setResult] = useState<{ score: number; total: number; passed: boolean; details: any[] } | null>(null);
+
+  const { data: course } = useQuery({
+    queryKey: ["institute-course", courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("institute_courses").select("title_ko").eq("id", courseId!).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!courseId,
+  });
+
+  const { data: currentModule } = useQuery({
+    queryKey: ["institute-module-single", moduleId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("institute_modules").select("title_ko").eq("id", moduleId!).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!moduleId,
+  });
 
   const { data: quiz } = useQuery({
     queryKey: ["student-quiz", moduleId],
@@ -119,8 +140,30 @@ const InstituteQuiz = () => {
     );
   }
 
+  const quizBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to={`/institute/${courseId}`}>{course?.title_ko || "..."}</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to={`/institute/${courseId}/${moduleId}`}>{currentModule?.title_ko || "..."}</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{quiz.title_ko || "퀴즈"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <InstituteLayout pageTitle={quiz.title_ko || "퀴즈"} showBackButton>
+    <InstituteLayout pageTitle={quiz.title_ko || "퀴즈"} showBackButton breadcrumb={quizBreadcrumb}>
       <div className="max-w-[680px] mx-auto px-5 py-6">
         {/* START */}
         {phase === "start" && (
