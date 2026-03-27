@@ -1,24 +1,39 @@
 
 
-## Fix: 패스웨이 편집 폼에 배지 이름/설명 필드 추가
+## K-Worship Institute About One-Pager
 
-### 문제
-배지 이름(`badge_name`)과 배지 설명(`badge_description`) 필드가 `AdminInstituteCertifications.tsx`에만 존재하고, 실제 사용하는 `AdminInstituteContentTree.tsx`의 패스웨이 편집 폼(lines 346-373)에는 없음.
+### Overview
+Create a premium, Apple-style scroll-animated about page at `/institute/about` with 8 sections using `framer-motion` (already installed). Update bottom nav and routing.
 
-### 수정 — `src/components/institute/AdminInstituteContentTree.tsx`
+### Changes
 
-패스웨이 편집 폼의 "설명 (KO)" 필드 아래, Published 스위치 위(line 358~359 사이)에 두 필드 추가:
+**1. `src/components/institute/InstituteBottomNav.tsx`**
+- Change "소개" tab path from `/kworship-info` to `/institute/about`
+- Update match accordingly
 
-```jsx
-<div>
-  <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 이름</label>
-  <Input defaultValue={p.badge_name || ""} key={p.id + "-badge_name"} placeholder="예: K-Worship Essential" onBlur={(e) => updatePathway.mutate({ id: p.id, field: "badge_name", value: e.target.value || null })} />
-</div>
-<div>
-  <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 설명</label>
-  <Textarea defaultValue={p.badge_description || ""} key={p.id + "-badge_desc"} placeholder="배지에 대한 설명" onBlur={(e) => updatePathway.mutate({ id: p.id, field: "badge_description", value: e.target.value || null })} />
-</div>
-```
+**2. `src/App.tsx`**
+- Add lazy import: `const InstituteAbout = lazyWithRetry(() => import("./pages/InstituteAbout"));`
+- Add route before the catch-all `/:courseId` route: `<Route path="/institute/about" element={<ProtectedRoute><InstituteAbout /></ProtectedRoute>} />`
 
-단일 파일 수정: `src/components/institute/AdminInstituteContentTree.tsx` (2개 필드 삽입)
+**3. Create `src/pages/InstituteAbout.tsx`**
+
+Full page with `overflow-x-hidden` wrapper, wrapped in `InstituteLayout`. Uses `framer-motion` `motion` components with `whileInView` for scroll reveals. 8 sections as specified:
+
+1. **Hero** — Fullscreen with parallax background (scrollY * 0.4), fade-up title/subtitle, scroll indicator with bounce animation
+2. **Why** — Three staggered text reveals, large centered typography
+3. **Who** — 4 audience cards (찬양인도자, 보컬·악기, 음향·미디어, 교역자) with grid layout
+4. **What** — Photo + 4 feature items with scale-in photo and staggered list
+5. **Badges** — 3 badge cards (Essential/Core/Practitioner) with active/inactive states
+6. **Dream** — Animated counter (200+) with vision statement lines
+7. **Testimonials** — 3 testimonial cards with avatar, name, role, quote
+8. **CTA** — Two buttons: "훈련 과정 보기" → `/institute/courses`, "AI 코치에게 질문하기" → `/institute/ai-coach`
+
+### Technical Details
+- **Animation**: `framer-motion` `motion.div` with `initial`, `whileInView`, `viewport={{ once: true }}` — no custom hook needed
+- **Parallax**: `useState` + `window.scrollY` listener with `{ passive: true }`
+- **Counter**: Custom `useCounter` hook with `setInterval` triggered by intersection observer
+- **Images**: Unsplash for hero/feature photo, pravatar.cc for testimonials
+- **Bottom padding**: `pb-24` + safe-area-inset for nav overlap
+- **No color/design token changes**
+- **No new packages** — framer-motion already present
 
