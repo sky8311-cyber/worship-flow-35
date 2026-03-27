@@ -104,7 +104,6 @@ const InstituteCertification = () => {
     );
   }
 
-  return (
   const certBreadcrumb = (
     <Breadcrumb>
       <BreadcrumbList>

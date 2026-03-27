@@ -13,7 +13,22 @@ const InstituteSetting = () => {
   const navigate = useNavigate();
 
   return (
-    <InstituteLayout showBackButton>
+  const settingsBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? "설정" : "Settings"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
+  return (
+    <InstituteLayout showBackButton breadcrumb={settingsBreadcrumb}>
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex items-center gap-3 mb-6">
           <Settings className="w-6 h-6 text-primary" />
