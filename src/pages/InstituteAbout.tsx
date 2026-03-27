@@ -4,6 +4,9 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Counter hook
 function useCounter(target: number, duration = 2000) {
@@ -61,6 +64,20 @@ const InstituteAbout = () => {
   }, []);
 
   const { ref: counterRef, count } = useCounter(200);
+
+  const { data: randomAvatars } = useQuery({
+    queryKey: ['random-profile-avatars', Date.now()],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .not('avatar_url', 'is', null)
+        .limit(10);
+      return (data ?? []).sort(() => Math.random() - 0.5);
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
 
   const audience = [
     { icon: "🎤", title: "찬양인도자", desc: "예배를 더 깊이 이해하고 팀을 이끌고 싶은" },
@@ -311,6 +328,26 @@ const InstituteAbout = () => {
             >
               {count}+
             </motion.div>
+            {randomAvatars && randomAvatars.length > 0 && (
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="flex justify-center items-center mb-6"
+              >
+                {randomAvatars.slice(0, 8).map((profile, i) => (
+                  <Avatar
+                    key={i}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 border-2 border-background ${i > 0 ? '-ml-3' : ''}`}
+                  >
+                    <AvatarImage src={profile.avatar_url!} alt="Member" />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">♪</AvatarFallback>
+                  </Avatar>
+                ))}
+              </motion.div>
+            )}
             <p className="text-lg text-muted-foreground mb-12">
               K-Worship 예배팀원들이 함께하고 있습니다
             </p>
