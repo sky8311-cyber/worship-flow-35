@@ -60,8 +60,13 @@ const HeadingEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b:
   />
 );
 
+const autoResizeRef = (el: HTMLTextAreaElement | null) => {
+  if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
+};
+
 const ParagraphEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
   <textarea
+    ref={autoResizeRef}
     value={block.data.text || ""}
     onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
     className="w-full bg-transparent border-none outline-none text-[15px] leading-relaxed resize-none min-h-[28px]"
@@ -147,6 +152,7 @@ const VideoEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
 const QuoteEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
   <div className="border-l-4 border-amber-400/60 pl-3 space-y-1">
     <textarea
+      ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
       className="w-full bg-transparent border-none outline-none italic text-[15px] resize-none min-h-[28px]"
@@ -166,6 +172,7 @@ const QuoteEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
 const VerseEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
   <div className="rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/40 p-3 space-y-1">
     <textarea
+      ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
       className="w-full bg-transparent border-none outline-none italic text-[15px] resize-none min-h-[28px]"
@@ -190,6 +197,7 @@ const CalloutEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b:
       className="w-10 h-8 text-center p-0 border-none shadow-none text-lg"
     />
     <textarea
+      ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
       className="flex-1 bg-transparent border-none outline-none text-[15px] resize-none min-h-[28px]"
