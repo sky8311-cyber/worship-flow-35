@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,8 +45,22 @@ const InstituteFaculty = () => {
     },
   });
 
+  const facultyBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>Faculty</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <InstituteLayout pageTitle="Faculty Dashboard">
+    <InstituteLayout pageTitle="Faculty Dashboard" breadcrumb={facultyBreadcrumb}>
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

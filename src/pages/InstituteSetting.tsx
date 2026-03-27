@@ -1,8 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Users, UserCheck, Settings } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { AdminInstituteInstructors } from "@/components/institute/AdminInstituteInstructors";
 import { AdminInstituteContentTree } from "@/components/institute/AdminInstituteContentTree";
 import { AdminInstituteEnrollments } from "@/components/institute/AdminInstituteEnrollments";
@@ -11,8 +12,22 @@ const InstituteSetting = () => {
   const { language } = useTranslation();
   const navigate = useNavigate();
 
+  const settingsBreadcrumb = (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild><Link to="/institute">Institute</Link></BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>{language === "ko" ? "설정" : "Settings"}</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+
   return (
-    <InstituteLayout showBackButton>
+    <InstituteLayout showBackButton breadcrumb={settingsBreadcrumb}>
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex items-center gap-3 mb-6">
           <Settings className="w-6 h-6 text-primary" />
