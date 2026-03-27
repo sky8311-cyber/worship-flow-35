@@ -203,6 +203,7 @@ ${truncated}
     }
 
     const MAX_TOKENS = 16384;
+    const INSTITUTE_FAST_MODEL = 'claude-haiku-3-5-20251001';
 
     const accept = req.headers.get('Accept') || '';
     const wantsSSE = accept.includes('text/event-stream');
@@ -217,7 +218,7 @@ ${truncated}
           'anthropic-version': AI_CONFIG.anthropicVersion,
         },
         body: JSON.stringify({
-          model: AI_CONFIG.model,
+          model: INSTITUTE_FAST_MODEL,
           max_tokens: MAX_TOKENS,
           stream: true,
           messages: [{ role: 'user', content: userPrompt }],
