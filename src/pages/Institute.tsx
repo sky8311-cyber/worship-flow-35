@@ -236,12 +236,15 @@ export default function Institute() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4, 5].map((i) => (
+                {(randomAvatars && randomAvatars.length > 0
+                  ? randomAvatars.slice(0, 5)
+                  : [1, 2, 3, 4, 5].map((i) => `https://i.pravatar.cc/40?img=${i}`)
+                ).map((url, i) => (
                   <img
                     key={i}
-                    src={`https://i.pravatar.cc/40?img=${i}`}
+                    src={url}
                     alt=""
-                    className="w-8 h-8 rounded-full border-2 border-background"
+                    className="w-8 h-8 rounded-full border-2 border-background object-cover"
                     loading="lazy"
                   />
                 ))}
