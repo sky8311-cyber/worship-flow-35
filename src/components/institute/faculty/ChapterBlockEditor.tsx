@@ -331,7 +331,7 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
         `https://${projectId}.supabase.co/functions/v1/institute-generate-content`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Accept: "text/event-stream", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             module_title_ko: titleKo || "페이지",
             file_content: aiText,
@@ -341,8 +341,56 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
         }
       );
       clearTimeout(fetchTimeout);
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "AI failed");
+      const contentType = response.headers.get("Content-Type") || "";
+
+      const readSSE = async () => {
+        if (!response.body) throw new Error("스트림 응답이 없습니다.");
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalResult: any = null;
+        let finished = false;
+
+        while (!finished) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const frames = buffer.split("\n\n");
+          buffer = frames.pop() || "";
+          for (const frame of frames) {
+            const lines = frame.split("\n");
+            let eventName = "message";
+            const dataLines: string[] = [];
+            for (const rawLine of lines) {
+              const line = rawLine.trimEnd();
+              if (!line) continue;
+              if (line.startsWith(":")) continue;
+              if (line.startsWith("event:")) eventName = line.slice(6).trim();
+              if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+            }
+            if (dataLines.length === 0) continue;
+            const dataStr = dataLines.join("\n");
+            let payload: any;
+            try {
+              payload = JSON.parse(dataStr);
+            } catch {
+              payload = { raw: dataStr };
+            }
+            if (eventName === "error") throw new Error(payload?.error || payload?.details || "AI 생성 실패");
+            if (eventName === "result") finalResult = payload;
+            if (eventName === "done") {
+              finished = true;
+              break;
+            }
+          }
+        }
+
+        if (!finalResult) throw new Error("SSE 스트림이 완료되었지만 결과가 없습니다.");
+        return finalResult;
+      };
+
+      const result = contentType.includes("text/event-stream") ? await readSSE() : await response.json();
+      if (!response.ok || !result?.success) throw new Error(result?.error || "AI failed");
       const firstPage = result.data?.pages?.[0];
       if (firstPage?.content_blocks) {
         setBlocks(firstPage.content_blocks);
