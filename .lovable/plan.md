@@ -1,38 +1,14 @@
 
 
-## Plan: AI Set Builder Song Preview Links + Logo Replacement
+## Fix: AI 세트 생성 Button Cut Off
 
-### 1. Add YouTube and Score Preview Links to AI Set Builder Result
+The "AI 세트 생성" button overflows because it sits inside a `ScrollArea` with `-mx-6 px-6` class in `AISetBuilderPanel.tsx`. The negative margin expands the scroll container beyond the panel width, and the `w-full` button follows that expanded width.
 
-**File: `src/components/ai-set-builder/AISetBuilderResult.tsx`**
+### Fix
 
-- For each song card, add small icon buttons for YouTube (▶) and Score (📄) next to the song title area.
-- Use `song.youtube_url` and `song.score_file_url` from `songMap[item.song_id]`.
-- YouTube link opens via `openYouTubeUrl()` (from `@/lib/youtubeHelper`).
-- Score link opens in a new tab (`window.open`).
-- Only show icons when the URL exists.
-- Icons placed in the right side of the song card row for easy tapping.
-
-### 2. Fix Bottom Button Bar Width Overflow
+**File: `src/components/ai-set-builder/AISetBuilderForm.tsx`**
+- Change the generate button from `className="w-full" size="lg"` to `className="w-full max-w-full" size="default"` to constrain it within its parent.
 
 **File: `src/components/AISetBuilderPanel.tsx`**
-
-- The `<div className="flex gap-2 pt-4 border-t">` footer bar overflows the Sheet width.
-- Fix by adding `min-w-0` to the flex container and `overflow-hidden` or constraining button text with `truncate`.
-- Also ensure the ScrollArea uses proper padding so content doesn't conflict with the fixed footer.
-
-### 3. Replace K-Worship Institute Logo
-
-**File: `src/assets/kworship-institute-logo.png`**
-
-- Replace the current file with the uploaded `Kworship_Institute_Logo.png`.
-- No code changes needed in `HeaderLogo.tsx` — it already imports from this path.
-
-### Files to Change
-
-| File | Change |
-|------|--------|
-| `src/assets/kworship-institute-logo.png` | Replace with uploaded logo |
-| `src/components/ai-set-builder/AISetBuilderResult.tsx` | Add YouTube/Score icon buttons per song |
-| `src/components/AISetBuilderPanel.tsx` | Fix button bar width overflow |
+- Add `overflow-hidden` to the ScrollArea wrapper or change `-mx-6 px-6` to avoid the negative margin causing content to bleed outside the panel bounds. Simplest fix: add `overflow-x-hidden` to the ScrollArea container.
 
