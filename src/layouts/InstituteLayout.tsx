@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom";
 import { GraduationCap } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
+import { InstituteHeader } from "@/components/institute/InstituteHeader";
+import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
 
 interface InstituteLayoutProps {
   children: React.ReactNode;
@@ -27,9 +27,28 @@ export function InstituteLayout({ children, pageTitle, showBackButton, breadcrum
     );
   }
 
+  if (fullHeight) {
+    return (
+      <div className="h-[100dvh] flex flex-col bg-gradient-soft">
+        <InstituteHeader breadcrumb={breadcrumb} />
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {children}
+        </main>
+        <InstituteBottomNav />
+      </div>
+    );
+  }
+
   return (
-    <AppLayout showBackButton={showBackButton} breadcrumb={breadcrumb} fullHeight={fullHeight}>
-      {children}
-    </AppLayout>
+    <div className="min-h-[100dvh] bg-gradient-soft">
+      <InstituteHeader breadcrumb={breadcrumb} />
+      <main
+        className="pb-36 lg:pb-8"
+        style={{ paddingBottom: "max(9rem, calc(6rem + env(safe-area-inset-bottom, 0px)))" }}
+      >
+        {children}
+      </main>
+      <InstituteBottomNav />
+    </div>
   );
 }
