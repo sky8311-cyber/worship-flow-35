@@ -173,6 +173,16 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
       return;
     }
 
+    // Warn if some songs were dropped
+    const droppedCount = result.length - songsToAdd.length;
+    if (droppedCount > 0) {
+      toast.warning(
+        language === "ko"
+          ? `${droppedCount}곡이 데이터베이스에서 찾을 수 없어 제외되었습니다.`
+          : `${droppedCount} song(s) were not found in the database and excluded.`
+      );
+    }
+
     onAddSongs(songsToAdd, worshipArc || undefined);
     toast.success(
       language === "ko"

@@ -2426,6 +2426,14 @@ const SetBuilder = () => {
               return;
             }
           }
+          
+          // If set already has song items, replace them instead of appending
+          const existingSongItems = items.filter(item => item.type === "song");
+          if (existingSongItems.length > 0) {
+            // Remove existing song items, keep components (기도, 성경봉독, etc.)
+            setItems(prev => prev.filter(item => item.type !== "song"));
+          }
+          
           songs.forEach(({ song, key }) => {
             handleAddSong(song, key);
           });

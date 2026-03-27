@@ -361,7 +361,28 @@ ${songListJson}
       });
     }
 
-    // ── 6. Log AI usage (fire and forget) ──
+    // ── 6. Validate song_ids and enforce songCount cap ──
+    const validSongIds = new Set(songs.map((s: any) => s.id));
+    const originalCount = worshipSet.length;
+    worshipSet = worshipSet.filter((item: any) => {
+      if (!validSongIds.has(item.song_id)) {
+        console.warn(`Invalid song_id filtered out: ${item.song_id} (title: ${item.song_title || '?'})`);
+        return false;
+      }
+      return true;
+    });
+    
+    const requestedCount = songCount || 5;
+    if (worshipSet.length > requestedCount) {
+      console.warn(`AI returned ${worshipSet.length} songs, truncating to requested ${requestedCount}`);
+      worshipSet = worshipSet.slice(0, requestedCount);
+    }
+
+    if (originalCount !== worshipSet.length) {
+      console.info(`Song validation: ${originalCount} → ${worshipSet.length} (removed ${originalCount - worshipSet.length} invalid)`);
+    }
+
+    // ── 7. Log AI usage (fire and forget) ──
     try {
       fetch(`${supabaseUrl}/functions/v1/log-ai-usage`, {
         method: 'POST',
