@@ -250,7 +250,7 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
             </ScrollArea>
 
             {result && (
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex gap-2 pt-4 border-t min-w-0 overflow-hidden">
                 <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="flex-1">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {language === "ko" ? "다시 생성" : "Regenerate"}
