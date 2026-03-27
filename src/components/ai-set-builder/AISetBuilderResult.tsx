@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Youtube, FileText } from "lucide-react";
 import { WorshipArcCard } from "./WorshipArcCard";
 import type { GeneratedSong, WorshipArc } from "./types";
 import { ROLE_COLORS, TEMPO_COLORS } from "./types";
+import { openYouTubeUrl } from "@/lib/youtubeHelper";
 
 interface AISetBuilderResultProps {
   result: GeneratedSong[];
@@ -56,6 +57,29 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
                     </span>
                   )}
                 </div>
+              </div>
+              {/* YouTube & Score preview buttons */}
+              <div className="flex items-center gap-1 shrink-0 pt-0.5">
+                {song?.youtube_url && (
+                  <button
+                    type="button"
+                    onClick={() => openYouTubeUrl(song.youtube_url)}
+                    className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-red-500 transition-colors"
+                    title="YouTube"
+                  >
+                    <Youtube className="w-4 h-4" />
+                  </button>
+                )}
+                {song?.score_file_url && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(song.score_file_url, "_blank")}
+                    className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                    title="악보"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
