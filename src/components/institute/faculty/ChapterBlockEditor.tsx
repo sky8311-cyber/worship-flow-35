@@ -449,7 +449,7 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         <div className="max-w-[680px] mx-auto px-6 py-8">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
@@ -464,6 +464,13 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
               })}
             </SortableContext>
           </DndContext>
+          <div
+            className="min-h-[120px] cursor-text"
+            onClick={() => {
+              const newBlock: ContentBlock = { id: crypto.randomUUID(), type: 'paragraph', data: { text: '' } };
+              setBlocks(prev => [...prev, newBlock]);
+            }}
+          />
         </div>
       </div>
 
