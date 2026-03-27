@@ -1,40 +1,38 @@
 
 
-## AI Worship Set: Song Loss and Duplication Issues
+## Plan: AI Set Builder Song Preview Links + Logo Replacement
 
-### Root Cause Analysis
+### 1. Add YouTube and Score Preview Links to AI Set Builder Result
 
-**Problem 1: Songs lost on first try**
-- In `AISetBuilderPanel.tsx` line 143-147, the AI returns `song_id` values, then the client fetches those songs from the `songs` table via `.in("id", songIds)`. If the AI hallucinates or returns an ID not in the original 500-song fetch (due to the DB limit), the song silently disappears from `songMap`.
-- At line 164-165, `result.filter(item => songMap[item.song_id])` silently drops any song whose ID wasn't found. No warning is shown to the user about dropped songs.
+**File: `src/components/ai-set-builder/AISetBuilderResult.tsx`**
 
-**Problem 2: Duplication / more songs than requested on second try**
-- In `SetBuilder.tsx` line 2429-2431, `onAddSongs` calls `handleAddSong` in a loop which does `setItems(prev => [...prev, newSetItem])` — it **appends** to existing items. There is no "replace" or "clear AI songs first" logic. Running AI generation twice stacks songs on top of each other.
-- The AI model sometimes returns more songs than the requested `songCount` (no server-side enforcement).
+- For each song card, add small icon buttons for YouTube (▶) and Score (📄) next to the song title area.
+- Use `song.youtube_url` and `song.score_file_url` from `songMap[item.song_id]`.
+- YouTube link opens via `openYouTubeUrl()` (from `@/lib/youtubeHelper`).
+- Score link opens in a new tab (`window.open`).
+- Only show icons when the URL exists.
+- Icons placed in the right side of the song card row for easy tapping.
 
-### Proposed Fixes
+### 2. Fix Bottom Button Bar Width Overflow
 
-**1. Edge Function: Enforce song count cap** (`generate-worship-set/index.ts`)
-- After parsing the AI response, truncate `worshipSet` to the requested `songCount`.
-- Validate that every returned `song_id` exists in the fetched song list before returning.
+**File: `src/components/AISetBuilderPanel.tsx`**
 
-**2. Client: Warn about dropped songs** (`AISetBuilderPanel.tsx`)
-- After building `songsToAdd`, if `songsToAdd.length < result.length`, show a warning toast indicating how many songs were not found in the database.
+- The `<div className="flex gap-2 pt-4 border-t">` footer bar overflows the Sheet width.
+- Fix by adding `min-w-0` to the flex container and `overflow-hidden` or constraining button text with `truncate`.
+- Also ensure the ScrollArea uses proper padding so content doesn't conflict with the fixed footer.
 
-**3. Client: Replace instead of append** (`SetBuilder.tsx`)
-- In `onAddSongs`, before adding AI-generated songs, remove any existing song items from the set (or ask the user whether to replace or append).
-- Add a confirmation dialog: "현재 세트에 곡이 있습니다. 교체하시겠습니까?" with Replace/Append options.
+### 3. Replace K-Worship Institute Logo
 
-**4. Edge Function: Validate song_ids against fetched list** (`generate-worship-set/index.ts`)
-- Build a `Set` of valid song IDs from the fetched songs.
-- Filter the AI's `worshipSet` to only include songs with valid IDs before returning the response.
-- Log any invalid IDs for debugging.
+**File: `src/assets/kworship-institute-logo.png`**
+
+- Replace the current file with the uploaded `Kworship_Institute_Logo.png`.
+- No code changes needed in `HeaderLogo.tsx` — it already imports from this path.
 
 ### Files to Change
 
 | File | Change |
 |------|--------|
-| `supabase/functions/generate-worship-set/index.ts` | Validate song_ids, enforce songCount cap |
-| `src/components/AISetBuilderPanel.tsx` | Warn user about dropped songs |
-| `src/pages/SetBuilder.tsx` | Replace-or-append dialog before adding AI songs |
+| `src/assets/kworship-institute-logo.png` | Replace with uploaded logo |
+| `src/components/ai-set-builder/AISetBuilderResult.tsx` | Add YouTube/Score icon buttons per song |
+| `src/components/AISetBuilderPanel.tsx` | Fix button bar width overflow |
 
