@@ -14,7 +14,7 @@ const tabs = [
   { key: "dashboard", label: "대시보드", icon: GraduationCap, path: "/institute", match: "/institute", exact: true },
   { key: "courses", label: "과목", icon: BookOpen, path: "/institute/courses", match: "/institute/courses" },
   { key: "ai-coach", label: "AI 코치", icon: Sparkles, path: "/institute/ai-coach", match: "/institute/ai-coach" },
-  { key: "info", label: "소개", icon: Info, path: "/kworship-info", match: "/kworship-info" },
+  { key: "info", label: "소개", icon: Info, path: "/institute/about", match: "/institute/about" },
 ];
 
 export const InstituteBottomNav = () => {

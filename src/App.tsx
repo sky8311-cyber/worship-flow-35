@@ -105,6 +105,7 @@ const InstituteChapter = lazyWithRetry(() => import("./pages/InstituteChapter"))
 const InstituteCertification = lazyWithRetry(() => import("./pages/InstituteCertification"));
 const InstituteQuiz = lazyWithRetry(() => import("./pages/InstituteQuiz"));
 const InstituteCourses = lazyWithRetry(() => import("./pages/InstituteCourses"));
+const InstituteAbout = lazyWithRetry(() => import("./pages/InstituteAbout"));
 
 // Public/invitation pages
 const PublicBandView = lazyWithRetry(() => import("./pages/PublicBandView"));
@@ -287,6 +288,7 @@ const App = () => {
               <Route path="/institute/manage" element={<ProtectedRoute><InstructorManage /></ProtectedRoute>} />
               <Route path="/institute" element={<ProtectedRoute><Institute /></ProtectedRoute>} />
               <Route path="/institute/courses" element={<ProtectedRoute><InstituteCourses /></ProtectedRoute>} />
+              <Route path="/institute/about" element={<ProtectedRoute><InstituteAbout /></ProtectedRoute>} />
               <Route path="/institute/certification/:certId" element={<ProtectedRoute><InstituteCertification /></ProtectedRoute>} />
               <Route path="/institute/:courseId/:moduleId/quiz" element={<ProtectedRoute><InstituteQuiz /></ProtectedRoute>} />
               <Route path="/institute/:courseId/:moduleId/:chapterId" element={<ProtectedRoute><InstituteChapter /></ProtectedRoute>} />
