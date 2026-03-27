@@ -12,7 +12,6 @@ const InstituteSetting = () => {
   const { language } = useTranslation();
   const navigate = useNavigate();
 
-  return (
   const settingsBreadcrumb = (
     <Breadcrumb>
       <BreadcrumbList>
