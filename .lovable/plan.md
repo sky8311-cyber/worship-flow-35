@@ -1,28 +1,31 @@
 
 
-## Fix: Course Card Title Overlap & Background Issue
+## Plan: Replace Placeholder Avatars with Real KWorship User Profile Photos
 
-### Problem
-In `src/pages/Institute.tsx` (lines 462-492), when a course has no `thumbnail_url`:
-1. The **fallback gradient div** (line 471-477) renders the course title inside itself
-2. The **outer overlay + title block** (lines 479-491) renders the title **again** on top
-3. Two gradient overlays stack (`from-black/60` + `from-black/70`), making it overly dark
+### What
+Replace the 5 static `pravatar.cc` placeholder images in the Social Proof strip (Section 2) with real profile photos fetched randomly from the `profiles` table.
 
-### Fix — `src/pages/Institute.tsx`
+### How
 
-**Remove the duplicate title from the fallback div** (lines 471-477):
-- Keep the gradient background and BookOpen icon
-- Remove the inner `from-black/60` overlay div and the inner `<h3>` title
-- The outer overlay (line 479) and outer title block (lines 480-491) already handle this correctly for both cases (with thumbnail and without)
+**File: `src/pages/Institute.tsx`**
 
-The fallback block becomes simply:
-```jsx
-<div className="w-full h-full bg-gradient-to-br from-primary/80 to-primary/30 flex items-center justify-center">
-  <BookOpen className="w-10 h-10 text-primary-foreground/40" />
-</div>
-```
+1. **Add a query** using `useQuery` to fetch ~10 random user profile photos:
+   ```sql
+   SELECT avatar_url FROM profiles
+   WHERE avatar_url IS NOT NULL
+   ORDER BY random()
+   LIMIT 10
+   ```
+   - Cache with a long `staleTime` (e.g. 5 min) so it doesn't refetch on every render
+   - The query returns more than needed (10) so we have a pool; display only 5
 
-The outer gradient overlay and title block (lines 479-491) remain unchanged — they already handle displaying the title, badge, lock icon, and module count for all cases.
+2. **Replace the static avatar loop** (lines 226–234):
+   - If query data exists and has results, render up to 5 real `avatar_url` images
+   - If query is loading or returns empty, fall back to the existing pravatar.cc URLs as placeholder
+   - Each `<img>` keeps the same classes: `w-8 h-8 rounded-full border-2 border-background`
 
-**Single file edit**: `src/pages/Institute.tsx` lines 471-477 only.
+3. **No other file changes needed** — the profiles table already has `avatar_url` and public read access.
+
+### Single file edit
+`src/pages/Institute.tsx` — ~15 lines changed (add query + update avatar rendering block)
 
