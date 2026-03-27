@@ -49,10 +49,17 @@ const SortableBlock = ({
 };
 
 /* ─── Block Editors ─── */
-const HeadingEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
+type BlockEditorProps = { block: ContentBlock; onChange: (b: ContentBlock) => void; onSlash?: () => void };
+
+const slashHandler = (e: React.KeyboardEvent, text: string, onSlash?: () => void) => {
+  if (e.key === '/' && !text) { e.preventDefault(); onSlash?.(); }
+};
+
+const HeadingEditor = ({ block, onChange, onSlash }: BlockEditorProps) => (
   <input
     value={block.data.text || ""}
     onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
+    onKeyDown={(e) => slashHandler(e, block.data.text || '', onSlash)}
     className={`w-full bg-transparent border-none outline-none font-bold ${
       block.data.level === 1 ? "text-2xl" : block.data.level === 2 ? "text-xl" : "text-lg"
     }`}
@@ -64,11 +71,12 @@ const autoResizeRef = (el: HTMLTextAreaElement | null) => {
   if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }
 };
 
-const ParagraphEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
+const ParagraphEditor = ({ block, onChange, onSlash }: BlockEditorProps) => (
   <textarea
     ref={autoResizeRef}
     value={block.data.text || ""}
     onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
+    onKeyDown={(e) => slashHandler(e, block.data.text || '', onSlash)}
     className="w-full bg-transparent border-none outline-none text-[15px] leading-relaxed resize-none min-h-[28px]"
     placeholder="Type something..."
     rows={1}
@@ -149,12 +157,13 @@ const VideoEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
   );
 };
 
-const QuoteEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
+const QuoteEditor = ({ block, onChange, onSlash }: BlockEditorProps) => (
   <div className="border-l-4 border-amber-400/60 pl-3 space-y-1">
     <textarea
       ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
+      onKeyDown={(e) => slashHandler(e, block.data.text || '', onSlash)}
       className="w-full bg-transparent border-none outline-none italic text-[15px] resize-none min-h-[28px]"
       placeholder="Quote text..."
       rows={1}
@@ -169,12 +178,13 @@ const QuoteEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
   </div>
 );
 
-const VerseEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
+const VerseEditor = ({ block, onChange, onSlash }: BlockEditorProps) => (
   <div className="rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/40 p-3 space-y-1">
     <textarea
       ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
+      onKeyDown={(e) => slashHandler(e, block.data.text || '', onSlash)}
       className="w-full bg-transparent border-none outline-none italic text-[15px] resize-none min-h-[28px]"
       placeholder="Bible verse..."
       rows={1}
@@ -189,7 +199,7 @@ const VerseEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
   </div>
 );
 
-const CalloutEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => (
+const CalloutEditor = ({ block, onChange, onSlash }: BlockEditorProps) => (
   <div className="rounded-lg bg-primary/5 border border-primary/10 p-3 flex gap-2">
     <Input
       value={block.data.icon || "💡"}
@@ -200,6 +210,7 @@ const CalloutEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b:
       ref={autoResizeRef}
       value={block.data.text || ""}
       onChange={(e) => onChange({ ...block, data: { ...block.data, text: e.target.value } })}
+      onKeyDown={(e) => slashHandler(e, block.data.text || '', onSlash)}
       className="flex-1 bg-transparent border-none outline-none text-[15px] resize-none min-h-[28px]"
       placeholder="Callout text..."
       rows={1}
@@ -210,7 +221,7 @@ const CalloutEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b:
 
 const DividerEditor = () => <hr className="my-2 border-border" />;
 
-const blockEditors: Record<string, React.FC<{ block: ContentBlock; onChange: (b: ContentBlock) => void }>> = {
+const blockEditors: Record<string, React.FC<BlockEditorProps>> = {
   heading: HeadingEditor,
   paragraph: ParagraphEditor,
   image: ImageEditor,
@@ -458,7 +469,7 @@ export const ChapterBlockEditor = ({ chapterId, onClose }: Props) => {
                 if (!Editor) return null;
                 return (
                   <SortableBlock key={block.id} block={block} onDelete={() => deleteBlock(block.id)}>
-                    <Editor block={block} onChange={updateBlock} />
+                    <Editor block={block} onChange={updateBlock} onSlash={() => { setCommandInsertIdx(idx); setShowCommand(true); }} />
                   </SortableBlock>
                 );
               })}
