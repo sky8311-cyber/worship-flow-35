@@ -1,39 +1,49 @@
 
 
-## Plan: Drag-and-Drop Curriculum Tree + Logo Update
+## Plan: Cross-Parent Drag-and-Drop in Curriculum Tree
 
-### 1. Logo Replacement and Resize
+### What Changes
+Enable moving items freely between parent nodes in the curriculum tree — chapters can move to any module, modules to any course, courses to any pathway — via both drag-and-drop and edit panel dropdowns.
 
-**File: `src/assets/`**
-- Copy the uploaded `Kworship_Institute_Logo_horizontal.png` to `src/assets/kworship-institute-logo.png` (replacing the existing file).
+### Current Limitation
+Drag-and-drop only reorders within the same parent (same-prefix matching in `handleDragEnd`). No parent selectors exist for modules or chapters in the edit panel.
 
-**File: `src/components/layout/HeaderLogo.tsx`**
-- Increase logo size by 1.5x: from `h-[60px] md:h-[88px]` to `h-[90px] md:h-[132px]`.
-
-### 2. Drag-and-Drop Curriculum Tree
+### Implementation
 
 **File: `src/components/institute/AdminInstituteContentTree.tsx`**
 
-The current tree uses static rendering with manual sort_order inputs. Restructure to support drag-and-drop reordering using `@dnd-kit` (already in the project).
+#### 1. New Mutations for Cross-Parent Moves
 
-**Approach — per-level sortable lists:**
-- Wrap each group of sibling nodes (pathways list, courses within a pathway, modules within a course, chapters within a module) in its own `<SortableContext>`.
-- Add a `<DndContext>` at the top level with a custom `onDragEnd` that determines which table and parent to update based on the dragged item's prefix (`pw-`, `c-`, `m-`, `ch-`).
-- Convert `TreeNode` into a sortable item using `useSortable`, adding a drag handle (`GripVertical` icon, already imported).
-- On drop, compute new `sort_order` values for all siblings and batch-update the corresponding database table.
-- Optimistically reorder in the query cache for instant feedback.
+- **`moveModule`**: Updates `institute_modules.course_id` to move a module to a different course. Also resets `sort_order` to append at end of new parent.
+- **`moveChapter`**: Updates `institute_chapters.module_id` to move a chapter to a different module. Same sort_order logic.
+- Existing `moveCourse` already handles course↔pathway reassignment.
 
-**Key constraints:**
-- Items can only be reordered within their sibling group (same parent). Cross-parent moves remain via the edit panel's pathway selector.
-- The `GripVertical` icon serves as the drag handle; clicking the row still selects it for editing.
+#### 2. Enhanced `handleDragEnd` — Cross-Parent Detection
 
-**Reorder mutation pattern (same as `FacultyModulePanel`):**
-```
-const updates = reordered.map((item, i) => 
-  supabase.from(tableName).update({ sort_order: i }).eq("id", item.id)
-);
-await Promise.all(updates);
-```
+Change collision/drop logic so that:
+- **Chapter (`ch-`) dropped on a Module node (`m-`)**: Call `moveChapter` to reassign `module_id`
+- **Module (`m-`) dropped on a Course node (`cc-` or `c-`)**: Call `moveModule` to reassign `course_id`  
+- **Course (`cc-`) dropped on a Pathway node (`pw-`)**: Call `moveCourse` to reassign pathway
+- Same-parent reorder continues to work as before (when both active and over share the same prefix and parent)
 
-Applied to 4 tables: `institute_certifications`, `institute_certification_courses` (sort_order for courses within pathway), `institute_modules`, `institute_chapters`.
+The key change: instead of requiring both `active` and `over` to have the same prefix, we check if `over` is a valid parent type for `active`. We extract the real entity ID from the prefix to perform the update.
+
+#### 3. Edit Panel — Add Parent Selectors
+
+- **Module edit panel** (line ~598): Add a "코스" dropdown listing all courses, calling `moveModule` on change
+- **Chapter edit panel** (line ~635): Add a "모듈" dropdown listing all modules (grouped by course for clarity), calling `moveChapter` on change
+
+#### 4. Visual Drop Indicator
+
+Add a highlight style when dragging over a valid parent node (e.g., light blue background on a module node when a chapter is being dragged over it). This uses `useDroppable` or checking `over` state from DndContext.
+
+### Summary of Changes
+
+| Area | Change |
+|------|--------|
+| Mutations | Add `moveModule`, `moveChapter` |
+| `handleDragEnd` | Allow cross-prefix drops: `ch→m`, `m→cc/c`, `cc→pw` |
+| Module edit panel | Add course selector dropdown |
+| Chapter edit panel | Add module selector dropdown |
+| Visual feedback | Highlight valid drop targets during drag |
 
