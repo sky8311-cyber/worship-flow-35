@@ -21,6 +21,8 @@ type Certification = {
   title: string;
   title_ko: string;
   description_ko: string | null;
+  badge_name: string | null;
+  badge_description: string | null;
   badge_image_url: string | null;
   certificate_template_url: string | null;
   is_published: boolean;
@@ -374,6 +376,14 @@ export const AdminInstituteCertifications = () => {
                 <div className="col-span-2">
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">설명 (KO)</label>
                   <Textarea defaultValue={selectedCert.description_ko || ""} onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "description_ko", value: e.target.value || null })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 이름</label>
+                  <Input defaultValue={selectedCert.badge_name || ""} placeholder="예: K-Worship Essential" onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "badge_name", value: e.target.value || null })} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">배지 설명</label>
+                  <Textarea defaultValue={selectedCert.badge_description || ""} placeholder="배지에 대한 설명" onBlur={(e) => updateCert.mutate({ id: selectedCert.id, field: "badge_description", value: e.target.value || null })} />
                 </div>
                 <div>
                   <AdminImageUpload
