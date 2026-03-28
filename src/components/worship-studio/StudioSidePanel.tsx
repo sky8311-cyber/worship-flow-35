@@ -30,7 +30,7 @@ interface StudioSidePanelProps {
   myStudioId?: string;
   onStudioSelect: (roomId: string) => void;
   onMyStudioSelect: () => void;
-  mode?: "sidebar" | "sheet";
+  mode?: "sidebar" | "sheet" | "mobile";
 }
 
 export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, mode = "sidebar" }: StudioSidePanelProps) {
@@ -40,6 +40,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
+  const isMobile = mode === "mobile";
 
   // Fetch current user's profile avatar (covers email signups who set avatar via settings)
   const { data: profileAvatar } = useQuery({
@@ -86,7 +87,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {myStudio && (
         <div className={collapsed ? "" : ""}>
           <StudioUnit
-            compact={isSheet}
+            compact={isSheet || isMobile}
             avatarUrl={myAvatarUrl}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
@@ -103,7 +104,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* FRIENDS — real or placeholder */}
       {friendStudios.length > 0 ? (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "친구" : "Friends"}
@@ -112,7 +113,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           )}
           {friendStudios.map(s => (
             <StudioUnit
-              compact={isSheet}
+              compact={isSheet || isMobile}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -128,7 +129,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
@@ -138,7 +139,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_FRIENDS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet}
+                compact={isSheet || isMobile}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
@@ -159,7 +160,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
@@ -168,7 +169,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           )}
           {ambassadorStudios.map(s => (
             <StudioUnit
-              compact={isSheet}
+              compact={isSheet || isMobile}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -184,7 +185,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
@@ -194,7 +195,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_AMBASSADORS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet}
+                compact={isSheet || isMobile}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
@@ -212,31 +213,41 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
     </>
   );
 
+  const showBuilding = mode === "sidebar" || isMobile;
+
   return (
     <>
       {/* Panel container */}
       <div className={cn(
         "relative",
-        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
+        isSheet ? "w-full" : isMobile
+          ? "w-full flex flex-col h-full"
+          : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
         {/* Sky background */}
-        {!isSheet && (
+        {showBuilding && (
           <div
             className="absolute inset-0 z-0 overflow-hidden"
             style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #b8d9f0 40%, #daeeff 100%)' }}
           >
-            {!collapsed && (
+            {(!collapsed || isMobile) && (
               <>
                 <div className="absolute top-3 left-3 text-2xl opacity-80 select-none pointer-events-none">☁️</div>
                 <div className="absolute top-8 right-2 text-lg opacity-60 select-none pointer-events-none">☁️</div>
                 <div className="absolute top-16 left-8 text-sm opacity-40 select-none pointer-events-none">☁️</div>
+                {isMobile && (
+                  <>
+                    <div className="absolute top-5 right-16 text-xl opacity-50 select-none pointer-events-none">☁️</div>
+                    <div className="absolute top-12 left-24 text-base opacity-35 select-none pointer-events-none">☁️</div>
+                  </>
+                )}
               </>
             )}
           </div>
         )}
 
-        {/* Collapse toggle */}
-        {!isSheet && (
+        {/* Collapse toggle — sidebar only */}
+        {mode === "sidebar" && (
           <button
             onClick={() => setCollapsed(c => !c)}
             className="absolute top-2 right-0 translate-x-1/2 z-40 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
@@ -252,8 +263,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Rooftop sign — floating above building */}
-            <div className="relative z-10 h-12 shrink-0 flex flex-col items-center justify-end">
-              {!collapsed && (
+            <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-10" : "h-12")}>
+              {(!collapsed || isMobile) && (
                 <>
                   <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
                     K-Worship Studio
@@ -265,11 +276,11 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                   </div>
                 </>
               )}
-              {collapsed && <div className="h-2" />}
+              {collapsed && !isMobile && <div className="h-2" />}
             </div>
 
-            {/* Building wrapper with mx-3 to reveal sky on sides */}
-            <div className="relative z-10 mx-3 flex flex-col flex-1 min-h-0">
+            {/* Building wrapper */}
+            <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
               {/* Building body */}
               <div
                 className="flex-1 min-h-0 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
@@ -287,7 +298,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* 1F Ground Floor */}
               <div className="shrink-0 bg-[#e8ddd0] border-x border-[#d8cfc4] px-2 pt-3 pb-0">
-                {!collapsed ? (
+                {(!collapsed || isMobile) ? (
                   <>
                     {/* Badges row */}
                     <div className="flex justify-between items-center mb-1">
@@ -331,15 +342,21 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* Lawn / garden strip */}
               <div
-                className="h-4 shrink-0 flex items-center justify-around px-1 select-none pointer-events-none border-x border-[#d8cfc4]"
+                className={cn("shrink-0 flex items-center justify-around px-1 select-none pointer-events-none border-x border-[#d8cfc4]", isMobile ? "h-3" : "h-4")}
                 style={{ background: 'linear-gradient(to bottom, #6aaf50, #4a8f35)' }}
               >
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <>
                     <span className="text-[8px]">🌷</span>
                     <span className="text-[8px]">🌿</span>
                     <span className="text-[8px]">🌷</span>
                     <span className="text-[8px]">🌿</span>
+                    {isMobile && (
+                      <>
+                        <span className="text-[8px]">🌷</span>
+                        <span className="text-[8px]">🌿</span>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -349,16 +366,19 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* Road bar */}
               <div
-                className="h-8 shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden relative"
+                className={cn("shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden relative", isMobile ? "h-6" : "h-8")}
                 style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
               >
                 <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
                 <span className="absolute left-1 text-[11px]">🚗</span>
                 <span className="absolute left-8 text-[9px]">🚙</span>
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <>
                     <span className="absolute right-6 text-[10px]">🚕</span>
                     <span className="absolute right-1 text-[12px]">🚌</span>
+                    {isMobile && (
+                      <span className="absolute left-20 text-[10px]">🚐</span>
+                    )}
                   </>
                 )}
               </div>
