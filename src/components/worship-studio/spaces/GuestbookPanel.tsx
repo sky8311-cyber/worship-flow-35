@@ -28,7 +28,7 @@ export function GuestbookPanel({ open, onOpenChange, spaceId, roomOwnerId }: Gue
   const handleSubmit = () => {
     if (!user || !body.trim()) return;
     createEntry.mutate(
-      { space_id: spaceId, author_user_id: user.id, body: body.trim() },
+      { spaceId, body: body.trim() },
       { onSuccess: () => setBody("") }
     );
   };
