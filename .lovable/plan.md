@@ -1,95 +1,111 @@
 
 
-## Worship Studio Top Area Redesign
+## Phase 3A: Material Blocks & Workflow Stages
 
-### Overview
-Three interconnected changes: (1) Instagram-style Story Bar below the header, (2) Mini BGM player embedded in the header, (3) Remove bottom BGM bar rendering.
+### 1. Database Migration
+Add two columns to `room_posts`:
+- `workflow_stage text NOT NULL DEFAULT 'draft'` with CHECK constraint for `draft/in_progress/refined/published`
+- `block_type text NOT NULL DEFAULT 'note'` with CHECK constraint for `song/worship_set/scripture/prayer_note/audio/note`
+- Backfill: `UPDATE room_posts SET workflow_stage = CASE WHEN is_draft THEN 'draft' ELSE 'published' END`
 
----
+Note: Using validation triggers instead of CHECK constraints per Supabase guidelines.
 
-### Changes
+### 2. Typography — Playfair Display
+- Add Google Fonts `<link>` to `index.html` for Playfair Display (400, 600, italic)
+- Add `fontFamily: { serif: ['Playfair Display', 'Georgia', 'serif'] }` to `tailwind.config.ts`
 
-#### 1. New hook: `src/hooks/useStoryBarStudios.ts`
-Aggregates data for the story bar from existing hooks/queries:
-- Fetch own room (already via `useWorshipRoom`)
-- Fetch friend studios via `useFriendStudios()` (already returns `owner`, `bgm_song`, `latestPostAt`, `hasNewPosts`)
-- Fetch ambassador rooms via `useAmbassadorRooms()` (returns `owner`)
-- For each studio, fetch latest published post title (single query: `room_posts` WHERE `room_id IN (...)`, `is_draft = false`, ordered by `created_at DESC`)
-- Enrich with `status_emoji`, `status_text` from `worship_rooms` (already in the select)
-- Sort: own studio first, then active-in-24h friends, then by localStorage visit counter (`studio-visit-counts` key), then ambassadors
-- Return unified `StoryStudio[]` array
+### 3. Material Block Card — Redesign `PostDisplayCard.tsx`
+The card view (lines 84-147) gets a complete visual overhaul:
+- Background: `bg-[#fefcf8]`, left border 4px solid colored by `block_type`
+- Color map: song=#7c6a9e, worship_set=#b8902a, scripture=#4a7c6a, prayer_note=#8b5e52, audio=#3a6b8a, note=#6b6560
+- Top row: block type icon + label (left), workflow stage badge (right)
+- Title: `font-serif text-lg text-[#2c2416]`
+- Content: `line-clamp-2`
+- Footer: date in `text-[11px]`
+- Stage badges: draft=gray, in_progress=amber, refined=warm gold bg, published=gold text
+- List and gallery views get similar subtle refinements
 
-#### 2. New component: `src/components/worship-studio/StoryBar.tsx`
-Horizontally scrollable row of avatar bubbles:
-- Uses `useStoryBarStudios()` hook
-- Each bubble: `Avatar` component with conditional ring classes (active = `ring-2 ring-primary`, unseen = `ring-2 ring-primary/70`, default = `ring-2 ring-border`)
-- Own studio bubble labeled "나" below
-- Music note badge (🎵) if `bgm_song` exists — small absolute-positioned span
-- Status emoji badge bottom-right of avatar if `status_emoji` set
-- On tap: opens story card overlay, increments localStorage visit counter
-- Scroll container: `overflow-x-auto scrollbar-hide flex gap-3 px-4 py-3`
+### 4. Paper Grain Texture
+- Add `'noise'` key to `backgroundImage` in `tailwind.config.ts` using an SVG feTurbulence data URI
+- Add `<div className="absolute inset-0 pointer-events-none bg-noise opacity-[0.025]" />` to `WorshipStudio.tsx` main wrapper
 
-#### 3. New component: `src/components/worship-studio/StoryCard.tsx`
-Full-screen overlay triggered by tapping a story bubble:
-- Fixed overlay with backdrop blur
-- Background: studio `cover_image_url` with dark overlay, or gradient fallback
-- Top: avatar + full_name + time ago (use `formatDistanceToNow`)
-- Middle: latest post title (large bold) + first 100 chars of content (extracted from JSONB blocks)
-- If BGM: show `♪ songTitle`
-- If status: show `status_emoji + status_text`
-- Bottom: "스튜디오 방문하기 →" button navigating to `/studio/{roomId}`
-- Close: click backdrop or X button
-- Auto-advance timer: 4 second `setTimeout`, advances to next studio in the list, calls `onNext(index+1)`
-- Progress bar at top (thin animated bar like Instagram)
-- Props: `studios: StoryStudio[]`, `initialIndex: number`, `onClose`, `onVisit(roomId)`
+### 5. Gold Accent (#b8902a) Application
+- `StoryBar.tsx`: own studio bubble ring → `ring-[#b8902a]`
+- `StudioMainPanel.tsx`: active tab underline → `border-b-2 border-[#b8902a]`
+- `StudioEmptyState.tsx`: CTA button → `border-[#b8902a] text-[#b8902a] hover:bg-[#b8902a] hover:text-white`
+- `StudioHeader.tsx`: mini BGM ♪ icon → `text-[#b8902a]`
 
-#### 4. Edit: `src/components/worship-studio/StudioHeader.tsx`
-Add mini BGM player between title and right icons:
-- New props: `bgmSongTitle?: string`, `bgmSongArtist?: string`, `bgmVideoId?: string`, `bgmRoomId?: string`, `bgmOwnerName?: string`
-- When BGM props present, render a compact player element:
-  - Container: `flex items-center gap-1.5 bg-muted/50 rounded-full px-3 py-1 max-w-[200px]`
-  - Music icon (small)
-  - Song title with CSS marquee animation (keyframes `marquee` scrolling text left if > 15 chars, else static truncate)
-  - Play/Pause icon button (uses `useMusicPlayer` context same as StudioBGMBar)
-- When no BGM: nothing rendered, no space taken
-- Marquee CSS: `@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }` applied via inline style or a utility class
+### 6. Post Editor — Block Type & Stage Selectors (`StudioPostEditor.tsx`)
+- Add `blockType` and `workflowStage` state variables
+- Top of editor: 6-button group for block_type selection (♩곡 / ✦워십셋 / 📖말씀 / ✦기도노트 / ◉오디오 / ▪노트)
+- Bottom display settings: workflow_stage segmented control (초안/진행중/완성)
+- Active selection style: `border-[#b8902a] bg-[#b8902a]/10`
+- Pass `block_type` and `workflow_stage` to `createPost.mutate()`
 
-#### 5. Edit: `src/pages/WorshipStudio.tsx`
-- Import `StoryBar` component
-- Place `<StoryBar onStudioSelect={handleStudioSelect} myStudioId={myStudio?.id} />` between `<StudioHeader>` and the main content `<div>`
-- Pass BGM props to `StudioHeader`: `bgmSongTitle`, `bgmVideoId`, `bgmRoomId`, `bgmOwnerName` from `currentStudio`
-- Remove the `<StudioBGMBar>` rendering block (lines 131-139) — keep the import for backward compat but don't render it
+### 7. Type Updates
+- `StudioPost` interface in `useStudioPosts.ts`: add `workflow_stage` and `block_type` fields
+- `useCreateStudioPost`: accept and insert `block_type` and `workflow_stage`
+- `useUpdateStudioPost`: accept these in updates partial
 
-#### 6. Edit: `src/components/worship-studio/StudioBGMBar.tsx`
-- Keep file intact for backward compatibility
-- No changes needed since we simply stop rendering it in WorshipStudio.tsx
+### 8. Dark Mode — Prayer Room Theme
+Update `.dark` in `src/index.css`:
+- `--background: 25 20% 8%`
+- `--card: 25 18% 11%`
+- `--foreground: 38 25% 85%`
+- `--muted-foreground: 35 15% 55%`
+- `--border: 30 15% 20%`
 
----
+No dark mode toggle label changes (no toggle component found in scope).
 
-### Technical Details
+### Files Modified
+- `index.html` — Google Fonts link
+- `tailwind.config.ts` — serif font family, noise background
+- `src/index.css` — dark mode CSS vars
+- `src/hooks/useStudioPosts.ts` — types + mutation updates
+- `src/components/worship-studio/PostDisplayCard.tsx` — Material Block card redesign
+- `src/components/worship-studio/StudioPostEditor.tsx` — block type + stage selectors
+- `src/components/worship-studio/StoryBar.tsx` — gold ring on own bubble
+- `src/components/worship-studio/StudioMainPanel.tsx` — gold tab underline
+- `src/components/worship-studio/StudioEmptyState.tsx` — gold CTA
+- `src/components/worship-studio/StudioHeader.tsx` — gold music icon
+- `src/pages/WorshipStudio.tsx` — paper grain overlay
 
-**Story Bar data flow:**
-```text
-useStoryBarStudios() 
-  ├─ useFriendStudios()    → friend rooms + owner + bgm + latestPostAt
-  ├─ useAmbassadorRooms()  → ambassador rooms + owner
-  ├─ supabase query        → latest post per room (title, content blocks)
-  ├─ worship_rooms fields  → status_emoji, status_text, cover_image_url
-  └─ localStorage          → visit frequency counter for sorting
+### Migration (executed first)
+```sql
+-- Add columns with validation triggers (not CHECK constraints)
+ALTER TABLE public.room_posts
+  ADD COLUMN workflow_stage text NOT NULL DEFAULT 'draft';
+ALTER TABLE public.room_posts
+  ADD COLUMN block_type text NOT NULL DEFAULT 'note';
+
+-- Validation trigger for workflow_stage
+CREATE OR REPLACE FUNCTION validate_workflow_stage() RETURNS trigger AS $$
+BEGIN
+  IF NEW.workflow_stage NOT IN ('draft','in_progress','refined','published') THEN
+    RAISE EXCEPTION 'Invalid workflow_stage: %', NEW.workflow_stage;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_validate_workflow_stage
+  BEFORE INSERT OR UPDATE ON public.room_posts
+  FOR EACH ROW EXECUTE FUNCTION validate_workflow_stage();
+
+-- Validation trigger for block_type
+CREATE OR REPLACE FUNCTION validate_block_type() RETURNS trigger AS $$
+BEGIN
+  IF NEW.block_type NOT IN ('song','worship_set','scripture','prayer_note','audio','note') THEN
+    RAISE EXCEPTION 'Invalid block_type: %', NEW.block_type;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_validate_block_type
+  BEFORE INSERT OR UPDATE ON public.room_posts
+  FOR EACH ROW EXECUTE FUNCTION validate_block_type();
+
+-- Backfill existing data
+UPDATE public.room_posts
+SET workflow_stage = CASE WHEN is_draft = true THEN 'draft' ELSE 'published' END;
 ```
-
-**Marquee animation** (CSS-only, no packages):
-```css
-@keyframes marquee {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-100%); }
-}
-```
-Applied conditionally when song title length > 15 characters.
-
-**Story Card auto-advance**: Simple `useEffect` with `setTimeout(4000)` that increments the active index, reset on user interaction (tap to pause, swipe to advance).
-
-**Files created:** 3 (`useStoryBarStudios.ts`, `StoryBar.tsx`, `StoryCard.tsx`)
-**Files edited:** 2 (`StudioHeader.tsx`, `WorshipStudio.tsx`)
-**Files unchanged:** `StudioBGMBar.tsx` (kept, just not rendered)
 
