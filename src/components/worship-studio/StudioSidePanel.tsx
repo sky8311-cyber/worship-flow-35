@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const PLACEHOLDER_TENANTS = [
   { id: 'ph1', name: '김찬양', initials: '김', floor: '6F', icon: '🎵', windowsOn: true,  variant: 'friend' as const },
