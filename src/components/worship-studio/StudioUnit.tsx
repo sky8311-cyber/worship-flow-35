@@ -10,18 +10,22 @@ export interface StudioUnitProps {
   hasUnseenStory: boolean;
   variant: "penthouse" | "friend" | "ambassador";
   collapsed?: boolean;
+  placeholderInitials?: string;
+  forceWindowsOn?: boolean;
   onStoryClick: () => void;
   onVisit: () => void;
 }
 
-function WindowLights({ variant }: { variant: StudioUnitProps["variant"] }) {
+function WindowLights({ variant, forceOn }: { variant: StudioUnitProps["variant"]; forceOn?: boolean }) {
   const colors = useMemo(() => {
     if (variant === "penthouse") return ["bg-amber-300", "bg-amber-200"];
     if (variant === "ambassador") return ["bg-violet-100", "bg-violet-50"];
-    // friend: random lit/unlit
+    if (forceOn !== undefined) {
+      return forceOn ? ["bg-amber-200", "bg-amber-100"] : ["bg-slate-200", "bg-slate-100"];
+    }
     const lit = Math.random() > 0.4;
     return lit ? ["bg-amber-200", "bg-amber-100"] : ["bg-slate-200", "bg-slate-100"];
-  }, [variant]);
+  }, [variant, forceOn]);
 
   return (
     <div className="flex gap-0.5 ml-auto shrink-0 self-start mt-1 select-none pointer-events-none">
@@ -56,6 +60,8 @@ export function StudioUnit({
   hasUnseenStory,
   variant,
   collapsed = false,
+  placeholderInitials,
+  forceWindowsOn,
   onStoryClick,
   onVisit,
 }: StudioUnitProps) {
