@@ -10,7 +10,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { StudioHeader } from "@/components/worship-studio/StudioHeader";
 import { CollapsibleSidebar } from "@/components/worship-studio/CollapsibleSidebar";
 import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
-import { StudioBGMBar } from "@/components/worship-studio/StudioBGMBar";
+import { StoryBar } from "@/components/worship-studio/StoryBar";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
@@ -98,11 +98,22 @@ export default function WorshipStudio() {
         description={t("studio.description")} 
       />
       
-      {/* Header with avatar dropdown */}
+      {/* Header with avatar dropdown + mini BGM */}
       <StudioHeader 
         onBack={handleBack}
         onSettings={() => setShowSettings(true)}
         onShare={() => setShowShare(true)}
+        bgmSongTitle={currentStudio?.bgm_song?.title}
+        bgmSongArtist={currentStudio?.bgm_song?.artist}
+        bgmVideoId={bgmVideoId}
+        bgmRoomId={currentStudio?.id}
+        bgmOwnerName={currentStudio?.owner?.full_name}
+      />
+      
+      {/* Story Bar */}
+      <StoryBar 
+        onStudioSelect={handleStudioSelect}
+        myStudioId={myStudio?.id}
       />
       
       {/* Main content area */}
@@ -127,16 +138,7 @@ export default function WorshipStudio() {
         />
       </div>
       
-      {/* BGM Bar - shows when viewing a studio with BGM */}
-      {bgmVideoId && currentStudio?.bgm_song && (
-        <StudioBGMBar
-          songTitle={currentStudio.bgm_song.title}
-          songArtist={currentStudio.bgm_song.artist}
-          videoId={bgmVideoId}
-          roomId={currentStudio.id}
-          ownerName={currentStudio.owner?.full_name || undefined}
-        />
-      )}
+      {/* BGM moved to header mini player */}
       
       {/* Settings Dialog */}
       {myStudio && (
