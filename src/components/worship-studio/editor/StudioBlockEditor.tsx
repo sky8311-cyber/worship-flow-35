@@ -74,8 +74,8 @@ export function StudioBlockEditor({
       }),
       Placeholder.configure({
         placeholder: placeholder || (language === "ko" 
-          ? "'/'를 입력하여 블록 추가..." 
-          : "Type '/' for commands..."),
+          ? "하나님과 나 사이에 있었던 것을 기록하세요..." 
+          : "Record what happened between you and God..."),
       }),
     ],
     content: getInitialContent(),
