@@ -67,11 +67,13 @@ export default function WorshipStudio() {
   
   const handleStudioSelect = (studioId: string) => {
     setSelectedStudioId(studioId);
+    setMobileAptOpen(false);
     window.history.replaceState(null, '', `/studio/${studioId}`);
   };
   
   const handleMyStudioSelect = () => {
     setSelectedStudioId(null);
+    setMobileAptOpen(false);
     window.history.replaceState(null, '', '/studio');
   };
 
