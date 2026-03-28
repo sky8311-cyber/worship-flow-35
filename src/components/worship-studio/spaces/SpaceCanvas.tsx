@@ -4,7 +4,9 @@ import { SpaceBlock } from "./SpaceBlock";
 import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { ZoomIn, ZoomOut, Maximize2, Music, Play, Pause } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const CANVAS_WIDTH = 430;
@@ -20,12 +22,18 @@ interface SpaceCanvasProps {
   onCancelEdits: () => void;
   pendingUpdates: Map<string, Partial<SpaceBlockType>>;
   onPendingUpdate: (id: string, updates: Partial<SpaceBlockType>) => void;
+  bgmSongTitle?: string | null;
+  bgmSongArtist?: string | null;
+  bgmVideoId?: string | null;
+  bgmRoomId?: string | null;
+  bgmOwnerName?: string | null;
 }
 
 export function SpaceCanvas({
   spaceId, isOwner, selectedBlockId, onSelectBlock,
   isEditMode, onToggleEditMode, onSaveEdits, onCancelEdits,
   pendingUpdates, onPendingUpdate,
+  bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
