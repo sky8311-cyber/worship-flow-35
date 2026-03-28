@@ -109,6 +109,38 @@ export default function WorshipStudio() {
           onStudioSelect={handleStudioSelect}
         />
       </div>
+
+      {/* Mobile FAB for apartment view */}
+      {isMobile && (
+        <button
+          onClick={() => setMobileAptOpen(true)}
+          className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center hover:bg-[#a07d24] transition-colors"
+        >
+          <Building2 size={22} />
+        </button>
+      )}
+
+      {/* Mobile apartment Sheet */}
+      {isMobile && (
+        <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
+          <SheetContent side="bottom" className="h-[70vh] p-0 rounded-t-2xl">
+            <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/40">
+              <SheetTitle className="text-sm font-semibold flex items-center gap-2">
+                <Building2 size={16} className="text-[#b8902a]" />
+                {language === "ko" ? "아파트" : "Apartment"}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 overflow-auto h-full">
+              <StudioSidePanel
+                myStudioId={myStudio?.id}
+                onStudioSelect={handleStudioSelect}
+                onMyStudioSelect={handleMyStudioSelect}
+                mode="sheet"
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       
       {myStudio && (
         <StudioSettingsDialog
