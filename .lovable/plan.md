@@ -1,64 +1,56 @@
 
 
-# Studio v2 Phase A: Database Foundation
+# Studio v2 Phase B: Space Tab System
 
 ## Overview
-Create 3 new tables (`studio_spaces`, `space_blocks`, `space_guestbook`) with RLS policies and 3 React Query hook files. This is a database + hooks-only phase — no UI changes.
+Replace the existing Worktable/Board/Archive tabs in `StudioMainPanel` with a dynamic Space tab system backed by `studio_spaces`. Remove `StudioCoverEditor` usage. Create two new components: `SpaceTabBar` and `SpaceCreateDialog`.
 
-## Step 1 — Database Migration
+## Changes
 
-Single migration creating all 3 tables, indexes, and RLS policies as specified:
+### 1. Create `src/components/worship-studio/spaces/SpaceTabBar.tsx`
+- Load spaces via `useStudioSpaces(roomId)`
+- Render horizontal tab strip with `@dnd-kit/sortable` for drag reorder (owner only)
+- Each tab: `space.icon + space.name`, active tab gets `border-b-2` in `space.color`
+- Double-click tab → inline rename input (Enter/blur saves via `useUpdateSpace`)
+- "+ 새 공간" button visible when `spaces.length < 10` and `isOwner`
+- If zero spaces exist, auto-open `SpaceCreateDialog`
+- Props: `roomId`, `activeSpaceId`, `onSpaceSelect`, `isOwner`
 
-- **`studio_spaces`**: Room sub-sections with icon/color/visibility/guestbook settings
-- **`space_blocks`**: Figma-style free-position blocks (pos_x/y, size_w/h, z_index, content jsonb)
-- **`space_guestbook`**: Per-space guestbook entries with author reference
+### 2. Create `src/components/worship-studio/spaces/SpaceCreateDialog.tsx`
+- Dialog with 4 fields: name input, emoji icon grid (3 categories × 10), color swatches (10 colors), visibility radio
+- First space rule: when `existingCount === 0`, force visibility to `public`, disable radio, show yellow info box
+- On save: `useCreateSpace()` with `sort_order = existingCount`
+- Props: `open`, `onOpenChange`, `roomId`, `existingCount`
 
-RLS rules:
-- Spaces/blocks: owner full access, public rooms readable by all authenticated
-- Guestbook: public read, authenticated insert (own author_id), delete by author or room owner
+### 3. Rewrite `src/components/worship-studio/StudioMainPanel.tsx`
+- Remove all `Tabs`/`TabsContent` imports and old tab logic (Worktable/Board/Archive/Discover)
+- Remove `BlockTypeSelector`, `useCanvas`, `StudioView`, `StudioBoardView`, `StudioArchiveView`, `StudioDiscover` imports
+- New structure:
+  - State: `activeSpaceId` (auto-set to first space on load)
+  - Top bar: `<SpaceTabBar />`
+  - Body: if `activeSpaceId` → Muji dot grid placeholder div; if no spaces → empty state triggering `SpaceCreateDialog`
+  - Muji grid CSS: `bg-[#faf7f2]` with `radial-gradient(circle, #c8bfb0 1px, transparent 1px)` at `20px 20px`, `min-h-screen`
 
-**Note**: Will use validation triggers instead of CHECK constraints for `visibility` and `guestbook_permission` columns per project guidelines.
+### 4. Update `src/components/worship-studio/StudioView.tsx`
+- Remove `StudioCoverEditor` import and usage (line 108)
 
-## Step 2 — Hook: `useStudioSpaces.ts`
-
-Pattern follows existing `useStudioWidgets.ts` (React Query + Supabase client).
-
-Exports:
-- `useStudioSpaces(roomId)` — query spaces ordered by `sort_order`
-- `useCreateSpace()` — insert with room_id, name, icon, color
-- `useUpdateSpace()` — partial update (name/icon/color/visibility/guestbook fields)
-- `useDeleteSpace()` — delete by id (cascade handles blocks)
-- `useReorderSpaces()` — batch update sort_order via Promise.all
-
-Query key: `['studio-spaces', roomId]`
-
-## Step 3 — Hook: `useSpaceBlocks.ts`
-
-Exports:
-- `useSpaceBlocks(spaceId)` — query all blocks for a space
-- `useCreateBlock()` — insert with space_id, block_type, pos_x/y, size_w/h, content
-- `useUpdateBlock()` — partial update (position, size, content, z_index)
-- `useDeleteBlock()` — delete by id
-
-Query key: `['space-blocks', spaceId]`
-
-## Step 4 — Hook: `useGuestbook.ts`
-
-Exports:
-- `useGuestbook(spaceId)` — query entries ordered by created_at DESC, joined with profiles for author info
-- `useCreateGuestbookEntry()` — insert with space_id, body, author_user_id from auth
-- `useDeleteGuestbookEntry()` — delete by id
-
-Query key: `['space-guestbook', spaceId]`
+### 5. Update `src/components/worship-studio/index.ts`
+- Remove `StudioCoverEditor` export
+- Add exports for `SpaceTabBar` and `SpaceCreateDialog`
 
 ## Files
 
 | Action | File |
 |--------|------|
-| Migration | `supabase/migrations/…_studio_v2_foundation.sql` |
-| Create | `src/hooks/useStudioSpaces.ts` |
-| Create | `src/hooks/useSpaceBlocks.ts` |
-| Create | `src/hooks/useGuestbook.ts` |
+| Create | `src/components/worship-studio/spaces/SpaceTabBar.tsx` |
+| Create | `src/components/worship-studio/spaces/SpaceCreateDialog.tsx` |
+| Rewrite | `src/components/worship-studio/StudioMainPanel.tsx` |
+| Edit | `src/components/worship-studio/StudioView.tsx` |
+| Edit | `src/components/worship-studio/index.ts` |
 
-No existing files modified. No UI changes in this phase.
+## Technical Notes
+- `@dnd-kit/sortable` already in project (used by CanvasBlockList)
+- `useStudioSpaces` hooks already created in Phase A
+- Mobile: tabs scroll horizontally with `overflow-x-auto`; SpaceCreateDialog uses existing shadcn Dialog (responsive by default)
+- No database changes needed — tables created in Phase A
 
