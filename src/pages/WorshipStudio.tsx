@@ -32,6 +32,14 @@ export default function WorshipStudio() {
   const [showShare, setShowShare] = useState(false);
   const { room: myStudio } = useWorshipRoom(user?.id);
   const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
+  
+  useEffect(() => {
+    if (roomId) setSelectedStudioId(roomId);
+  }, [roomId]);
+  
+  const { room: selectedStudio } = useWorshipRoomById(
+    selectedStudioId && selectedStudioId !== myStudio?.id ? selectedStudioId : undefined
+  );
 
   if (!settingsLoading && !isStudioEnabled) {
     return (
@@ -44,14 +52,6 @@ export default function WorshipStudio() {
       />
     );
   }
-  
-  useEffect(() => {
-    if (roomId) setSelectedStudioId(roomId);
-  }, [roomId]);
-  
-  const { room: selectedStudio } = useWorshipRoomById(
-    selectedStudioId && selectedStudioId !== myStudio?.id ? selectedStudioId : undefined
-  );
   
   const currentStudio = selectedStudioId 
     ? (selectedStudioId === myStudio?.id ? myStudio : selectedStudio)
