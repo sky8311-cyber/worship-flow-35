@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Palette } from "lucide-react";
+import { Palette, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorshipRoom, useWorshipRoomById } from "@/hooks/useWorshipRoom";
@@ -13,6 +13,7 @@ import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 function extractVideoId(url: string | null): string | null {
   if (!url) return null;
