@@ -1,33 +1,28 @@
 import { useRef, useCallback, useState } from "react";
-import {
-  Type, StickyNote, ListOrdered, CheckSquare, Image, Youtube,
-  Music, Calendar, Link, FileText, Contact,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ResizeHandle } from "./ResizeHandle";
+import { BlockRenderer } from "./blocks/BlockRenderer";
+import { useBlockContent } from "@/hooks/useBlockContent";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const GRID_SNAP = 20;
 const snap = (v: number) => Math.round(v / GRID_SNAP) * GRID_SNAP;
 
-const BLOCK_META: Record<string, { icon: React.ComponentType<{ className?: string }>; label: string; color: string }> = {
-  title: { icon: Type, label: "제목", color: "#4a4a4a" },
-  subtitle: { icon: Type, label: "부제목", color: "#6b6b6b" },
-  sticky_note: { icon: StickyNote, label: "포스트잇", color: "#e8c840" },
-  numbered_list: { icon: ListOrdered, label: "번호목록", color: "#5a7a5a" },
-  checklist: { icon: CheckSquare, label: "체크리스트", color: "#4a7c6a" },
-  photo: { icon: Image, label: "사진", color: "#7c6a9e" },
-  youtube: { icon: Youtube, label: "유튜브", color: "#cc3333" },
-  song: { icon: Music, label: "음악", color: "#7c6a9e" },
-  worship_set: { icon: Calendar, label: "예배셋", color: "#b8902a" },
-  link: { icon: Link, label: "링크", color: "#3a6b8a" },
-  file: { icon: FileText, label: "파일", color: "#6b6560" },
-  business_card: { icon: Contact, label: "명함", color: "#8b5e52" },
-  note: { icon: StickyNote, label: "노트", color: "#6b6560" },
-  scripture: { icon: FileText, label: "말씀", color: "#4a7c6a" },
-  prayer_note: { icon: Type, label: "기도", color: "#8b5e52" },
-  audio: { icon: Music, label: "오디오", color: "#3a6b8a" },
+const BLOCK_COLORS: Record<string, string> = {
+  title: "#4a4a4a", subtitle: "#6b6b6b", sticky_note: "#e8c840",
+  numbered_list: "#5a7a5a", checklist: "#4a7c6a", photo: "#7c6a9e",
+  youtube: "#cc3333", song: "#7c6a9e", worship_set: "#b8902a",
+  link: "#3a6b8a", file: "#6b6560", business_card: "#8b5e52",
 };
+
+function isInteractiveElement(el: EventTarget | null): boolean {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName.toLowerCase();
+  if (tag === "input" || tag === "textarea" || tag === "button" || tag === "select") return true;
+  if (el.isContentEditable) return true;
+  if (el.closest("iframe")) return true;
+  return false;
+}
 
 interface SpaceBlockProps {
   block: SpaceBlockType;
@@ -35,11 +30,12 @@ interface SpaceBlockProps {
   isSelected: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
+  spaceId: string;
 }
 
-export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate }: SpaceBlockProps) {
-  const meta = BLOCK_META[block.block_type] || BLOCK_META.note;
-  const Icon = meta.icon;
+export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
+  const color = BLOCK_COLORS[block.block_type] || "#6b6560";
+  const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
 
   // Local optimistic state for drag
   const [localPos, setLocalPos] = useState<{ x: number; y: number } | null>(null);
@@ -53,6 +49,7 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate }: S
     e.stopPropagation();
     onSelect();
     if (!isOwner) return;
+    if (isInteractiveElement(e.target)) return;
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: block.pos_x, origY: block.pos_y };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
@@ -84,10 +81,10 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate }: S
   return (
     <div
       className={cn(
-        "absolute rounded-lg bg-white dark:bg-card border overflow-visible select-none transition-shadow",
-        isSelected && "ring-2 ring-[#b8902a] shadow-lg",
+        "absolute rounded-lg bg-white dark:bg-card border overflow-hidden select-none transition-shadow",
+        isSelected && "ring-2 ring-[#b8902a] shadow-lg overflow-visible",
         !isSelected && "shadow-sm",
-        isOwner && "cursor-grab",
+        isOwner && !isDragging && "cursor-grab",
         isDragging && "cursor-grabbing"
       )}
       style={{
@@ -99,19 +96,19 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate }: S
         opacity: isDragging ? 0.85 : 1,
         transform: isDragging ? "rotate(0.3deg) scale(1.02)" : undefined,
         borderLeftWidth: 4,
-        borderLeftColor: meta.color,
+        borderLeftColor: color,
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      {/* Block content placeholder */}
-      <div className="flex flex-col items-center justify-center h-full gap-2 p-3" style={{ color: meta.color }}>
-        <Icon className="h-6 w-6" />
-        <span className="text-xs font-medium">{meta.label}</span>
-      </div>
+      <BlockRenderer
+        blockType={block.block_type}
+        content={content}
+        isOwner={isOwner}
+        onContentChange={setContent}
+      />
 
-      {/* Resize handles — only when selected & owner */}
       {isSelected && isOwner && (
         <ResizeHandle
           posX={block.pos_x}
