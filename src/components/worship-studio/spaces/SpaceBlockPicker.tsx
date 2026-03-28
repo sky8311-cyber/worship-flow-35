@@ -25,6 +25,7 @@ interface SpaceBlockPickerProps {
   spaceId: string;
   selectedBlock: SpaceBlock | null;
   onBlockDeleted: () => void;
+  isEditMode: boolean;
 }
 
 function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBlock; spaceId: string; onBlockDeleted: () => void }) {
@@ -48,7 +49,7 @@ function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBl
   );
 }
 
-export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted }: SpaceBlockPickerProps) {
+export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEditMode }: SpaceBlockPickerProps) {
   const { language } = useTranslation();
   const createBlock = useCreateBlock();
 
@@ -79,15 +80,15 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted }: Spa
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                 {language === "ko" ? "블록 추가" : "Add Block"}
               </h3>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-2.5">
                 {BLOCK_TYPES.map(({ value, icon: Icon, label, labelEn, color }) => (
                   <button
                     key={value}
                     onClick={() => handleAddBlock(value)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg hover:bg-accent/50 transition-colors border border-transparent hover:border-border/30"
+                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-16 rounded-xl hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group"
                   >
-                    <Icon className="h-5 w-5" style={{ color }} />
-                    <span className="text-[10px] text-muted-foreground leading-tight">
+                    <Icon className="h-7 w-7 group-hover:scale-110 transition-transform" style={{ color }} />
+                    <span className="text-[10px] text-muted-foreground font-medium leading-tight">
                       {language === "ko" ? label : labelEn}
                     </span>
                   </button>

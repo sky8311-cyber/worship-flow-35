@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { LayoutGrid } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
-import { useSpaceBlocks } from "@/hooks/useSpaceBlocks";
+import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
 import { SpaceCanvas } from "./spaces/SpaceCanvas";
 import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
+import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 interface StudioMainPanelProps {
   myStudioId?: string | null;
@@ -25,9 +26,11 @@ export function StudioMainPanel({
 
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<Map<string, Partial<SpaceBlockType>>>(new Map());
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
+  const updateBlock = useUpdateBlock();
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
 
@@ -35,6 +38,8 @@ export function StudioMainPanel({
   useEffect(() => {
     setActiveSpaceId(null);
     setSelectedBlockId(null);
+    setIsEditMode(false);
+    setPendingUpdates(new Map());
   }, [currentRoomId]);
 
   // Auto-select first space
@@ -47,7 +52,35 @@ export function StudioMainPanel({
   // Clear selection on space change
   useEffect(() => {
     setSelectedBlockId(null);
+    setIsEditMode(false);
+    setPendingUpdates(new Map());
   }, [activeSpaceId]);
+
+  const handlePendingUpdate = useCallback((id: string, updates: Partial<SpaceBlockType>) => {
+    setPendingUpdates(prev => {
+      const next = new Map(prev);
+      next.set(id, { ...(prev.get(id) || {}), ...updates });
+      return next;
+    });
+  }, []);
+
+  const handleSaveEdits = useCallback(() => {
+    if (!activeSpaceId) return;
+    pendingUpdates.forEach((updates, id) => {
+      updateBlock.mutate({ id, spaceId: activeSpaceId, ...updates });
+    });
+    setPendingUpdates(new Map());
+    setIsEditMode(false);
+  }, [activeSpaceId, pendingUpdates, updateBlock]);
+
+  const handleCancelEdits = useCallback(() => {
+    setPendingUpdates(new Map());
+    setIsEditMode(false);
+  }, []);
+
+  const handleToggleEditMode = useCallback(() => {
+    setIsEditMode(true);
+  }, []);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[hsl(var(--background))] relative">
@@ -66,25 +99,21 @@ export function StudioMainPanel({
               isOwner={isOwnStudio}
               selectedBlockId={selectedBlockId}
               onSelectBlock={setSelectedBlockId}
+              isEditMode={isEditMode}
+              onToggleEditMode={handleToggleEditMode}
+              onSaveEdits={handleSaveEdits}
+              onCancelEdits={handleCancelEdits}
+              pendingUpdates={pendingUpdates}
+              onPendingUpdate={handlePendingUpdate}
             />
 
-            {/* Right panel toggle button */}
-            {isOwnStudio && (
-              <button
-                onClick={() => setRightPanelOpen(o => !o)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[hsl(var(--background))] border border-border rounded-l-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent shadow-sm transition-colors"
-                style={{ right: rightPanelOpen ? undefined : 0, ...(rightPanelOpen ? { right: '240px' } : {}) }}
-              >
-                {rightPanelOpen ? <ChevronRight size={14} /> : <LayoutGrid size={14} />}
-              </button>
-            )}
-
-            {/* Right panel */}
-            {isOwnStudio && rightPanelOpen && (
+            {/* Right panel — only in edit mode */}
+            {isOwnStudio && isEditMode && (
               <SpaceBlockPicker
                 spaceId={activeSpaceId}
                 selectedBlock={selectedBlock}
                 onBlockDeleted={() => setSelectedBlockId(null)}
+                isEditMode={isEditMode}
               />
             )}
           </>
