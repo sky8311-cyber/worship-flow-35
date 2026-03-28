@@ -104,7 +104,7 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
     <div className="w-72 border-l border-border/40 bg-[hsl(var(--background))] flex flex-col shrink-0">
       <ScrollArea className="flex-1">
         <div className="p-4">
-          {selectedBlock ? (
+          {selectedBlock && isEditMode ? (
             <SelectedBlockPanel
               key={selectedBlock.id}
               block={selectedBlock}
@@ -121,7 +121,8 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
                   <button
                     key={value}
                     onClick={() => handleAddBlock(value)}
-                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-16 rounded-xl hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group"
+                    disabled={!isEditMode}
+                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-16 rounded-xl hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group disabled:opacity-40 disabled:pointer-events-none"
                   >
                     <Icon className="h-7 w-7 group-hover:scale-110 transition-transform" style={{ color }} />
                     <span className="text-[10px] text-muted-foreground font-medium leading-tight">
