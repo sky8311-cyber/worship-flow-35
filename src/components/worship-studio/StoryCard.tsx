@@ -63,6 +63,8 @@ export function StoryCard({ studios, initialIndex, onClose, onVisit }: StoryCard
     setProgress(0);
   }, [currentIndex]);
 
+  if (!studio) return null;
+
   const timeAgo = studio.latestPostAt
     ? formatDistanceToNow(new Date(studio.latestPostAt), {
         addSuffix: true,
