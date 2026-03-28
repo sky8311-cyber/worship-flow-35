@@ -5003,6 +5003,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           layout_type: string | null
+          marquee_bg_color: string | null
+          marquee_speed: number | null
+          marquee_text: string | null
+          marquee_text_color: string | null
           max_widgets: number | null
           owner_user_id: string
           status_emoji: string | null
@@ -5020,6 +5024,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           layout_type?: string | null
+          marquee_bg_color?: string | null
+          marquee_speed?: number | null
+          marquee_text?: string | null
+          marquee_text_color?: string | null
           max_widgets?: number | null
           owner_user_id: string
           status_emoji?: string | null
@@ -5037,6 +5045,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           layout_type?: string | null
+          marquee_bg_color?: string | null
+          marquee_speed?: number | null
+          marquee_text?: string | null
+          marquee_text_color?: string | null
           max_widgets?: number | null
           owner_user_id?: string
           status_emoji?: string | null
