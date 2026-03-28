@@ -11,6 +11,7 @@ import { StudioHeader } from "@/components/worship-studio/StudioHeader";
 import { StudioSidePanel } from "@/components/worship-studio/StudioSidePanel";
 import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
+import { NeighborActionHandler } from "@/components/worship-studio/NeighborActionHandler";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -58,6 +59,10 @@ export default function WorshipStudio() {
   const currentStudio = selectedStudioId 
     ? (selectedStudioId === myStudio?.id ? myStudio : selectedStudio)
     : myStudio;
+
+  const isOwnStudio = !selectedStudioId || selectedStudioId === myStudio?.id;
+  const studioOwnerUserId = currentStudio?.owner_user_id;
+  const studioOwnerName = currentStudio?.owner?.full_name || null;
   
   const bgmVideoId = currentStudio?.bgm_song?.youtube_url 
     ? extractVideoId(currentStudio.bgm_song.youtube_url)
@@ -78,80 +83,86 @@ export default function WorshipStudio() {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden relative">
-      <div className="absolute inset-0 pointer-events-none bg-noise opacity-[0.025] z-0" />
-      <SEOHead title={t("studio.title")} description={t("studio.description")} />
-      
-      <StudioHeader 
-        onBack={handleBack}
-        onShare={() => setShowShare(true)}
-      />
-      
-      {/* Main content: Side panel + Canvas */}
-      <div className="flex-1 h-0 overflow-hidden flex">
-        {!isMobile && (
-          <StudioSidePanel
-            myStudioId={myStudio?.id}
-            onStudioSelect={handleStudioSelect}
-            onMyStudioSelect={handleMyStudioSelect}
+    <NeighborActionHandler
+      targetUserId={!isOwnStudio ? studioOwnerUserId : undefined}
+      targetName={studioOwnerName || undefined}
+    >
+      {({ status: neighborStatus, onAction: onAddNeighbor }) => (
+        <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden relative">
+          <div className="absolute inset-0 pointer-events-none bg-noise opacity-[0.025] z-0" />
+          <SEOHead title={t("studio.title")} description={t("studio.description")} />
+          
+          <StudioHeader 
+            onBack={handleBack}
+            onShare={() => setShowShare(true)}
           />
-        )}
-        
-        <StudioMainPanel
-          myStudioId={myStudio?.id}
-          selectedStudioId={selectedStudioId}
-          onStudioSelect={handleStudioSelect}
-          bgmSongTitle={currentStudio?.bgm_song?.title || null}
-          bgmSongArtist={currentStudio?.bgm_song?.artist || null}
-          bgmVideoId={bgmVideoId || null}
-          bgmRoomId={currentStudio?.id || null}
-          bgmOwnerName={currentStudio?.owner?.full_name || null}
-          marqueeText={currentStudio?.marquee_text}
-          marqueeTextColor={currentStudio?.marquee_text_color}
-          marqueeBgColor={currentStudio?.marquee_bg_color}
-          marqueeSpeed={currentStudio?.marquee_speed}
-          onOpenSettings={() => setShowSettings(true)}
-        />
-      </div>
-
-      {/* Mobile FAB for apartment view */}
-      {isMobile && (
-        <button
-          onClick={() => setMobileAptOpen(true)}
-          className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center hover:bg-[#a07d24] transition-colors"
-        >
-          <Building2 size={22} />
-        </button>
-      )}
-
-      {/* Mobile apartment Sheet */}
-      {isMobile && (
-        <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-          <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-2xl overflow-hidden">
-            <SheetHeader className="sr-only">
-              <SheetTitle>K-Worship Studio</SheetTitle>
-            </SheetHeader>
-            <div className="h-full overflow-hidden">
+          
+          <div className="flex-1 h-0 overflow-hidden flex">
+            {!isMobile && (
               <StudioSidePanel
                 myStudioId={myStudio?.id}
                 onStudioSelect={handleStudioSelect}
                 onMyStudioSelect={handleMyStudioSelect}
-                mode="mobile"
               />
-            </div>
-          </SheetContent>
-        </Sheet>
+            )}
+            
+            <StudioMainPanel
+              myStudioId={myStudio?.id}
+              selectedStudioId={selectedStudioId}
+              onStudioSelect={handleStudioSelect}
+              bgmSongTitle={currentStudio?.bgm_song?.title || null}
+              bgmSongArtist={currentStudio?.bgm_song?.artist || null}
+              bgmVideoId={bgmVideoId || null}
+              bgmRoomId={currentStudio?.id || null}
+              bgmOwnerName={currentStudio?.owner?.full_name || null}
+              marqueeText={currentStudio?.marquee_text}
+              marqueeTextColor={currentStudio?.marquee_text_color}
+              marqueeBgColor={currentStudio?.marquee_bg_color}
+              marqueeSpeed={currentStudio?.marquee_speed}
+              onOpenSettings={() => setShowSettings(true)}
+              onAddNeighbor={!isOwnStudio ? onAddNeighbor : undefined}
+              neighborStatus={!isOwnStudio ? neighborStatus : undefined}
+            />
+          </div>
+
+          {isMobile && (
+            <button
+              onClick={() => setMobileAptOpen(true)}
+              className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center hover:bg-[#a07d24] transition-colors"
+            >
+              <Building2 size={22} />
+            </button>
+          )}
+
+          {isMobile && (
+            <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
+              <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-2xl overflow-hidden">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>K-Worship Studio</SheetTitle>
+                </SheetHeader>
+                <div className="h-full overflow-hidden">
+                  <StudioSidePanel
+                    myStudioId={myStudio?.id}
+                    onStudioSelect={handleStudioSelect}
+                    onMyStudioSelect={handleMyStudioSelect}
+                    mode="mobile"
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
+          
+          {myStudio && (
+            <StudioSettingsDialog
+              open={showSettings}
+              onOpenChange={setShowSettings}
+              room={myStudio}
+            />
+          )}
+          
+          <ShareReferralDialog open={showShare} onOpenChange={setShowShare} />
+        </div>
       )}
-      
-      {myStudio && (
-        <StudioSettingsDialog
-          open={showSettings}
-          onOpenChange={setShowSettings}
-          room={myStudio}
-        />
-      )}
-      
-      <ShareReferralDialog open={showShare} onOpenChange={setShowShare} />
-    </div>
+    </NeighborActionHandler>
   );
 }
