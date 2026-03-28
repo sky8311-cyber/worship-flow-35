@@ -233,3 +233,66 @@ export function SpaceCanvas({
     </div>
   );
 }
+
+// --- Cyworld-style BGM Button ---
+interface BGMButtonProps {
+  bgmSongTitle?: string | null;
+  bgmSongArtist?: string | null;
+  bgmVideoId?: string | null;
+  bgmRoomId?: string | null;
+  bgmOwnerName?: string | null;
+}
+
+function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongArtist }: BGMButtonProps) {
+  const { startPlaylist, closePlayer, isPlaying, setPlayerState, playlist } = useMusicPlayer();
+  const [hasStarted, setHasStarted] = useState(false);
+
+  if (!bgmSongTitle || !bgmVideoId || !bgmRoomId) return null;
+
+  const isBGMPlaying = hasStarted && isPlaying && playlist.some(t => t.videoId === bgmVideoId);
+  const needsMarquee = bgmSongTitle.length > 12;
+
+  const handleToggle = () => {
+    if (!hasStarted || !isBGMPlaying) {
+      startPlaylist(
+        [{
+          videoId: bgmVideoId,
+          title: bgmSongTitle,
+          artist: bgmSongArtist || "",
+          position: 0,
+        }],
+        `${bgmOwnerName || "Studio"} BGM`,
+        bgmRoomId
+      );
+      setPlayerState("hidden");
+      setHasStarted(true);
+    } else {
+      closePlayer();
+      setHasStarted(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="flex items-center gap-1.5 bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] rounded-full px-2.5 py-1 max-w-[180px] transition-colors"
+    >
+      <Music className="h-3.5 w-3.5 shrink-0 text-[#b8902a]" />
+      <div className="overflow-hidden max-w-[100px]">
+        <span
+          className={cn(
+            "text-[11px] whitespace-nowrap block text-foreground",
+            needsMarquee && "animate-marquee"
+          )}
+        >
+          {bgmSongTitle}
+        </span>
+      </div>
+      {isBGMPlaying ? (
+        <Pause className="h-3 w-3 shrink-0 text-foreground" />
+      ) : (
+        <Play className="h-3 w-3 shrink-0 text-foreground" />
+      )}
+    </button>
+  );
+}
