@@ -111,8 +111,8 @@ export function StudioMainPanel({
               onPendingUpdate={handlePendingUpdate}
             />
 
-            {/* Desktop: side panel */}
-            {!isMobile && isOwnStudio && isEditMode && (
+            {/* Desktop: always-visible side panel */}
+            {!isMobile && isOwnStudio && (
               <SpaceBlockPicker
                 spaceId={activeSpaceId}
                 selectedBlock={selectedBlock}
