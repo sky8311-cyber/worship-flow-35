@@ -1,54 +1,60 @@
 
 
-## Worship Studio — Mobile Optimization
+## Bug: Auto-Save Safety Guard Blocks FormData Persistence
 
-### Problems Identified
+### Root Cause
 
-1. **CanvasEditor**: Right panel (280px) is completely hidden on mobile — no way to add blocks or edit properties
-2. **CanvasHeader**: Stage selector buttons + publish button + title input all squeeze into one row on 430px viewport — overflows
-3. **StudioBoardView**: 3-column board grid renders as single column on mobile but columns are too cramped
-4. **StoryBar**: Works well (horizontal scroll), no changes needed
-5. **Tab bar**: 4 tabs (with Discover on mobile) + "새 블록" button compete for space in 430px
-6. **CanvasBlockList**: Empty state says "오른쪽 패널에서 블록을 추가하세요" — misleading on mobile since panel is hidden
-7. **SortableCanvasBlock**: Drag handle uses hover (invisible on touch devices)
+In `useAutoSaveDraft.ts` (lines 226-242), when `items` array is empty (e.g., items haven't loaded yet from DB), the safety guard returns `null` **entirely** — skipping both items AND formData saves.
 
-### Changes
+**Timeline of the bug:**
+1. User unpublishes a set → navigates to SetBuilder
+2. `existingSet` loads quickly (cached) → formData populated
+3. User starts editing metadata (title, leader, etc.)
+4. Auto-save triggers after 2s debounce
+5. BUT `items` array is still `[]` (songs/components query still fetching)
+6. Safety guard: "DB has items but local is empty" → **SKIP ENTIRE SAVE** (including formData)
+7. User thinks auto-save handled it, navigates away
+8. Returns → DB has old formData values → **data appears "reset"**
 
-#### 1. CanvasEditor — Mobile Bottom Sheet for Right Panel
-- On mobile, add a floating "+" button (bottom-right, `bg-[#b8902a]`) that opens a bottom drawer/sheet
-- The sheet contains the same content as `CanvasRightPanel` (add blocks grid + selected block properties)
-- Update empty state text on mobile: "하단 + 버튼으로 블록을 추가하세요" / "Tap + below to add blocks"
+The safety guard correctly prevents items from being wiped, but incorrectly also blocks the `service_sets` metadata update.
 
-#### 2. CanvasHeader — Mobile Layout
-- On mobile, split into two rows:
-  - Row 1: Back button + title input + publish button
-  - Row 2: Stage selector pills (full width, centered)
-- Publish button: icon-only on mobile (`<Send />` without text)
+### Fix
 
-#### 3. StudioMainPanel Tab Bar — Mobile Compact
-- On mobile, hide tab text labels and show icons only (already small but the "새 블록" button text can shrink)
-- "새 블록" button: icon-only (`<Plus />`) on mobile with a round shape
+**File: `src/hooks/useAutoSaveDraft.ts`**
 
-#### 4. SortableCanvasBlock — Touch-Friendly
-- On mobile, always show drag handle (remove `opacity-0 group-hover:opacity-100`)
-- Add touch sensor alongside pointer sensor in `CanvasBlockList` for better mobile DnD
-- Delete button: always visible on mobile too
+Change the empty-items guard (lines 226-242) to still save formData (service_sets metadata) but skip the items upsert:
 
-#### 5. StudioBoardView — Mobile Horizontal Scroll
-- On mobile, render columns as horizontal scroll (each column min-width ~260px) instead of stacked vertically
-- This gives the "kanban wall" feel on mobile
+```typescript
+// Safety check: If editing existing set with empty items, check DB first
+let skipItemsUpsert = false;
+if (id && currentItems.length === 0) {
+  const [{ data: dbSongs }, { data: dbComponents }] = await Promise.all([
+    supabase.from("set_songs").select("id").eq("service_set_id", id).limit(1),
+    supabase.from("set_components").select("id").eq("service_set_id", id).limit(1),
+  ]);
+  
+  const dbHasItems = (dbSongs && dbSongs.length > 0) || (dbComponents && dbComponents.length > 0);
+  
+  if (dbHasItems) {
+    console.log('AutoSave: DB has items but local is empty - saving formData only, skipping items');
+    skipItemsUpsert = true;
+  } else {
+    console.log('AutoSave: Skipping - editing existing set with empty items and DB is also empty');
+    return null;
+  }
+}
+```
+
+Then wrap the items upsert (lines 281-293):
+```typescript
+if (setId && !skipItemsUpsert) {
+  const dbIdUpdates = await upsertSongsAndComponents(...);
+  // ...
+}
+```
+
+This way, formData (service_sets row) is always persisted even when items haven't loaded yet, while items remain protected from accidental deletion.
 
 ### Files Modified
-- `src/pages/CanvasEditor.tsx` — mobile FAB + bottom sheet
-- `src/components/worship-studio/canvas/CanvasHeader.tsx` — 2-row mobile layout
-- `src/components/worship-studio/canvas/CanvasBlockList.tsx` — touch sensor + mobile empty state
-- `src/components/worship-studio/canvas/SortableCanvasBlock.tsx` — always-visible handles on mobile
-- `src/components/worship-studio/StudioMainPanel.tsx` — compact mobile tab bar
-- `src/components/worship-studio/StudioBoardView.tsx` — horizontal scroll on mobile
-
-### Technical Details
-- Use `@dnd-kit/core` `TouchSensor` alongside `PointerSensor` with `activationConstraint: { delay: 250, tolerance: 5 }` for mobile
-- Bottom sheet uses shadcn `Drawer` component (already available via vaul)
-- Mobile detection via existing `useIsMobile()` hook
-- No new dependencies needed
+- `src/hooks/useAutoSaveDraft.ts` — split empty-items guard to allow formData-only saves
 
