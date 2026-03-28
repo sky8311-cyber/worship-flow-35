@@ -24,9 +24,10 @@ type RoomVisibility = Database["public"]["Enums"]["room_visibility"];
 interface StudioPostEditorProps {
   onBack?: () => void;
   onSuccess?: () => void;
+  initialBlockType?: BlockType;
 }
 
-export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
+export function StudioPostEditor({ onBack, onSuccess, initialBlockType }: StudioPostEditorProps) {
   const { language } = useTranslation();
   const { user } = useAuth();
   const { room } = useWorshipRoom(user?.id);
@@ -37,7 +38,7 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [displayType, setDisplayType] = useState<DisplayType>("card");
   const [coverUrl, setCoverUrl] = useState("");
-  const [blockType, setBlockType] = useState<BlockType>("note");
+  const [blockType, setBlockType] = useState<BlockType>(initialBlockType || "note");
   const [workflowStage, setWorkflowStage] = useState<WorkflowStage>("draft");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     (room?.visibility as RoomVisibility) || "friends"
