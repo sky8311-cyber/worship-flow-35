@@ -86,17 +86,15 @@ export function useUpdateBlock() {
       }
       delete payload.spaceId;
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("space_blocks")
         .update(payload)
-        .eq("id", id)
-        .select()
-        .single();
+        .eq("id", id);
       if (error) throw error;
-      return { ...(data as unknown as SpaceBlock), spaceId };
+      return spaceId;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["space-blocks", data.spaceId] });
+    onSuccess: (spaceId) => {
+      queryClient.invalidateQueries({ queryKey: ["space-blocks", spaceId] });
     },
   });
 }
