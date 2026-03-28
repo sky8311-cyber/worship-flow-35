@@ -41,6 +41,25 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
 
+  // Fetch current user's profile avatar (covers email signups who set avatar via settings)
+  const { data: profileAvatar } = useQuery({
+    queryKey: ["my-profile-avatar", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .single();
+      return data?.avatar_url || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const myAvatarUrl = user?.user_metadata?.avatar_url || profileAvatar || undefined;
+  const isSheet = mode === "sheet";
+
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
   const ambassadorStudios = studios.filter(s => s.isAmbassador);
