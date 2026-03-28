@@ -123,14 +123,11 @@ export default function WorshipStudio() {
       {/* Mobile apartment Sheet */}
       {isMobile && (
         <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-          <SheetContent side="bottom" className="h-[70vh] p-0 rounded-t-2xl">
-            <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/40">
-              <SheetTitle className="text-sm font-semibold flex items-center gap-2">
-                <Building2 size={16} className="text-[#b8902a]" />
-                K-Worship Studio
-              </SheetTitle>
+          <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-2xl overflow-hidden">
+            <SheetHeader className="sr-only">
+              <SheetTitle>K-Worship Studio</SheetTitle>
             </SheetHeader>
-            <div className="flex-1 overflow-auto h-full">
+            <div className="h-full overflow-hidden">
               <StudioSidePanel
                 myStudioId={myStudio?.id}
                 onStudioSelect={handleStudioSelect}
