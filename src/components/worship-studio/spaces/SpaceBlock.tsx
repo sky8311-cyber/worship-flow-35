@@ -28,16 +28,16 @@ interface SpaceBlockProps {
   block: SpaceBlockType;
   isOwner: boolean;
   isSelected: boolean;
+  isEditMode: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
   spaceId: string;
 }
 
-export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
+export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
   const color = BLOCK_COLORS[block.block_type] || "#6b6560";
   const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
 
-  // Local optimistic state for drag
   const [localPos, setLocalPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -45,15 +45,17 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate, spa
   const posX = localPos?.x ?? block.pos_x;
   const posY = localPos?.y ?? block.pos_y;
 
+  const canDrag = isOwner && isEditMode;
+
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     onSelect();
-    if (!isOwner) return;
+    if (!canDrag) return;
     if (isInteractiveElement(e.target)) return;
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: block.pos_x, origY: block.pos_y };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
-  }, [isOwner, block.pos_x, block.pos_y, onSelect]);
+  }, [canDrag, block.pos_x, block.pos_y, onSelect]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragRef.current) return;
@@ -84,7 +86,7 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate, spa
         "absolute rounded-lg bg-white dark:bg-card border overflow-hidden select-none transition-shadow",
         isSelected && "ring-2 ring-[#b8902a] shadow-lg overflow-visible",
         !isSelected && "shadow-sm",
-        isOwner && !isDragging && "cursor-grab",
+        canDrag && !isDragging && "cursor-grab",
         isDragging && "cursor-grabbing"
       )}
       style={{
@@ -109,7 +111,7 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate, spa
         onContentChange={setContent}
       />
 
-      {isSelected && isOwner && (
+      {isSelected && isOwner && isEditMode && (
         <ResizeHandle
           posX={block.pos_x}
           posY={block.pos_y}

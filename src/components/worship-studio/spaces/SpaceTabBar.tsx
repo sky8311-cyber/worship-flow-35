@@ -147,7 +147,13 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
   );
 
   useEffect(() => {
-    if (spaces.length === 0 && roomId && isOwner) setCreateOpen(true);
+    if (spaces.length === 0 && roomId && isOwner) {
+      const key = `kworship-studio-setup-seen-${roomId}`;
+      if (!localStorage.getItem(key)) {
+        setCreateOpen(true);
+        localStorage.setItem(key, 'true');
+      }
+    }
   }, [spaces.length, roomId, isOwner]);
 
   useEffect(() => {
