@@ -131,14 +131,16 @@ export function StudioMainPanel({
                     <Plus className="h-6 w-6" />
                   </button>
                 </DrawerTrigger>
-                <DrawerContent className="max-h-[60vh]">
-                  <SpaceBlockPicker
-                    spaceId={activeSpaceId}
-                    selectedBlock={selectedBlock}
-                    onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
-                    isEditMode={isEditMode}
-                    compact
-                  />
+                <DrawerContent className="max-h-[60vh] pb-6">
+                  <div className="p-4">
+                    <SpaceBlockPicker
+                      spaceId={activeSpaceId}
+                      selectedBlock={selectedBlock}
+                      onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
+                      isEditMode={isEditMode}
+                      compact
+                    />
+                  </div>
                 </DrawerContent>
               </Drawer>
             )}

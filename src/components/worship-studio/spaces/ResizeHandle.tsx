@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const GRID_SNAP = 20;
 const MIN_W = 80;
@@ -28,6 +29,10 @@ interface ResizeHandleProps {
 }
 
 export function ResizeHandle({ posX, posY, sizeW, sizeH, onResize }: ResizeHandleProps) {
+  const isMobile = useIsMobile();
+  const dotSize = isMobile ? 14 : 8;
+  const dotOffset = isMobile ? -7 : -4;
+
   const ref = useRef<{
     dir: Dir;
     startX: number;
@@ -79,20 +84,33 @@ export function ResizeHandle({ posX, posY, sizeW, sizeH, onResize }: ResizeHandl
     ref.current = null;
   }, []);
 
+  // Compute mobile-adjusted handle positions
+  const mobileHandles = HANDLES.map(({ dir, cursor, style }) => {
+    const adjusted: React.CSSProperties = { ...style };
+    if ('top' in adjusted && typeof adjusted.top === 'number') adjusted.top = dotOffset;
+    if ('bottom' in adjusted && typeof adjusted.bottom === 'number') adjusted.bottom = dotOffset;
+    if ('left' in adjusted && typeof adjusted.left === 'number') adjusted.left = dotOffset;
+    if ('right' in adjusted && typeof adjusted.right === 'number') adjusted.right = dotOffset;
+    if (adjusted.marginLeft) adjusted.marginLeft = -(dotSize / 2);
+    if (adjusted.marginTop) adjusted.marginTop = -(dotSize / 2);
+    return { dir, cursor, style: adjusted };
+  });
+
   return (
     <>
-      {HANDLES.map(({ dir, cursor, style }) => (
+      {mobileHandles.map(({ dir, cursor, style }) => (
         <div
           key={dir}
           className="absolute z-10"
           style={{
             ...style,
-            width: 8,
-            height: 8,
+            width: dotSize,
+            height: dotSize,
             borderRadius: "50%",
             backgroundColor: "white",
             border: "2px solid #b8902a",
             cursor,
+            touchAction: "none",
           }}
           onPointerDown={(e) => handlePointerDown(e, dir)}
           onPointerMove={handlePointerMove}
