@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks } from "@/hooks/useSpaceBlocks";
