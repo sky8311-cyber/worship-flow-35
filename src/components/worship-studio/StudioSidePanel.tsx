@@ -248,7 +248,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* Panel container — flex column so children fill height */}
       <div className={cn(
         "relative",
-        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-48"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
+        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
         {/* Sky background — absolute inset-0, removed from flex flow */}
         {!isSheet && (
@@ -285,38 +285,41 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
             {/* Rooftop spacer */}
             <div className="relative z-10 h-7 shrink-0" />
 
-            {/* Building body — flex-1 takes remaining space */}
-            <div
-              className="relative z-10 flex-1 min-h-0 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
-              style={{
-                boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              <ScrollArea className="flex-1 min-h-0">
-                {buildingContent}
-              </ScrollArea>
-            </div>
+            {/* Building wrapper with mx-3 to reveal sky on sides */}
+            <div className="relative z-10 mx-3 flex flex-col flex-1 min-h-0">
+              {/* Building body */}
+              <div
+                className="flex-1 min-h-0 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
+                style={{
+                  boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                <ScrollArea className="flex-1 min-h-0">
+                  {buildingContent}
+                </ScrollArea>
+              </div>
 
-            {/* Sidewalk */}
-            <div className="relative z-10 h-3 shrink-0 flex items-end justify-around px-1 select-none pointer-events-none" style={{ background: '#a89070' }}>
-              <span className="text-[10px]">🌳</span>
-              <span className="text-[10px]">🌳</span>
-              {!collapsed && <span className="text-[10px]">🌳</span>}
-            </div>
-            {/* Road bar */}
-            <div
-              className="relative z-10 h-8 shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden"
-              style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
-            >
-              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-              <span className="absolute left-1 text-[11px]">🚗</span>
-              <span className="absolute left-8 text-[9px]">🚙</span>
-              {!collapsed && (
-                <>
-                  <span className="absolute right-6 text-[10px]">🚕</span>
-                  <span className="absolute right-1 text-[12px]">🚌</span>
-                </>
-              )}
+              {/* Sidewalk */}
+              <div className="h-3 shrink-0 flex items-end justify-around px-1 select-none pointer-events-none" style={{ background: '#a89070' }}>
+                <span className="text-[10px]">🌳</span>
+                <span className="text-[10px]">🌳</span>
+                {!collapsed && <span className="text-[10px]">🌳</span>}
+              </div>
+              {/* Road bar */}
+              <div
+                className="h-8 shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden relative"
+                style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
+              >
+                <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
+                <span className="absolute left-1 text-[11px]">🚗</span>
+                <span className="absolute left-8 text-[9px]">🚙</span>
+                {!collapsed && (
+                  <>
+                    <span className="absolute right-6 text-[10px]">🚕</span>
+                    <span className="absolute right-1 text-[12px]">🚌</span>
+                  </>
+                )}
+              </div>
             </div>
           </>
         )}
