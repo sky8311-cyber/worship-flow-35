@@ -15,8 +15,9 @@ interface InstituteLayoutProps {
 
 export function InstituteLayout({ children, pageTitle, showBackButton, breadcrumb, fullHeight }: InstituteLayoutProps) {
   const { isInstituteEnabled, isLoading } = useAppSettings();
+  const { isAdmin } = useAuth();
 
-  if (!isLoading && !isInstituteEnabled) {
+  if (!isLoading && !isInstituteEnabled && !isAdmin) {
     return (
       <FeatureComingSoon
         featureName="K-Worship Institute"
