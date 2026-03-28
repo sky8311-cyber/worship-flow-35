@@ -36,6 +36,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const studios = useStoryBarStudios(myStudioId);
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const isSheet = mode === "sheet";
 
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
