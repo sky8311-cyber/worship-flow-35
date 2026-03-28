@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
 import { SpaceCanvas } from "./spaces/SpaceCanvas";
 import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 interface StudioMainPanelProps {
@@ -20,6 +22,7 @@ export function StudioMainPanel({
   onStudioSelect,
 }: StudioMainPanelProps) {
   const { language } = useTranslation();
+  const isMobile = useIsMobile();
 
   const isOwnStudio = !selectedStudioId || selectedStudioId === myStudioId;
   const currentRoomId = selectedStudioId || myStudioId || undefined;
@@ -28,6 +31,7 @@ export function StudioMainPanel({
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, Partial<SpaceBlockType>>>(new Map());
+  const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
@@ -107,14 +111,36 @@ export function StudioMainPanel({
               onPendingUpdate={handlePendingUpdate}
             />
 
-            {/* Right panel — only in edit mode */}
-            {isOwnStudio && isEditMode && (
+            {/* Desktop: side panel */}
+            {!isMobile && isOwnStudio && isEditMode && (
               <SpaceBlockPicker
                 spaceId={activeSpaceId}
                 selectedBlock={selectedBlock}
                 onBlockDeleted={() => setSelectedBlockId(null)}
                 isEditMode={isEditMode}
               />
+            )}
+
+            {/* Mobile: FAB + bottom drawer */}
+            {isMobile && isOwnStudio && isEditMode && (
+              <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
+                <DrawerTrigger asChild>
+                  <button
+                    className="fixed right-4 bottom-20 z-50 w-12 h-12 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg flex items-center justify-center hover:opacity-90 transition"
+                  >
+                    <Plus className="h-6 w-6" />
+                  </button>
+                </DrawerTrigger>
+                <DrawerContent className="max-h-[60vh]">
+                  <SpaceBlockPicker
+                    spaceId={activeSpaceId}
+                    selectedBlock={selectedBlock}
+                    onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
+                    isEditMode={isEditMode}
+                    compact
+                  />
+                </DrawerContent>
+              </Drawer>
             )}
           </>
         ) : (

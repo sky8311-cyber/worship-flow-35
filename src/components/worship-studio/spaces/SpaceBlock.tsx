@@ -30,12 +30,13 @@ interface SpaceBlockProps {
   isOwner: boolean;
   isSelected: boolean;
   isEditMode: boolean;
+  mobileLayout?: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
   spaceId: string;
 }
 
-export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
+export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayout, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
   const color = BLOCK_COLORS[block.block_type] || "#6b6560";
   const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
 
@@ -46,7 +47,7 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
   const posX = localPos?.x ?? block.pos_x;
   const posY = localPos?.y ?? block.pos_y;
 
-  const canDrag = isOwner && isEditMode;
+  const canDrag = isOwner && isEditMode && !mobileLayout;
 
   const handleDragPointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
@@ -84,6 +85,32 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
   const handleResize = useCallback((updates: Partial<SpaceBlockType>) => {
     onUpdate(updates);
   }, [onUpdate]);
+
+  // Mobile stacked layout
+  if (mobileLayout) {
+    return (
+      <div
+        className={cn(
+          "relative rounded-lg bg-white dark:bg-card border overflow-hidden shadow-sm",
+          isSelected && "ring-2 ring-[#b8902a] shadow-lg"
+        )}
+        style={{
+          width: "100%",
+          minHeight: Math.min(block.size_h, 200),
+          borderLeftWidth: 4,
+          borderLeftColor: color,
+        }}
+        onPointerDown={handlePointerDown}
+      >
+        <BlockRenderer
+          blockType={block.block_type}
+          content={content}
+          isOwner={isOwner}
+          onContentChange={setContent}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
