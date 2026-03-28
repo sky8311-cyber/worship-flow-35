@@ -131,11 +131,13 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
     setIsDragging(false);
   }, [clearLongPress]);
 
+  const handleW = isMobile ? 28 : 24;
+
   return (
     <div
       className={cn(
-        "absolute rounded-lg bg-white dark:bg-card border overflow-hidden select-none transition-shadow",
-        isSelected && "ring-2 ring-[#b8902a] shadow-lg overflow-visible",
+        "absolute rounded-lg bg-white dark:bg-card border select-none transition-shadow overflow-visible",
+        isSelected && "ring-2 ring-[#b8902a] shadow-lg",
         !isSelected && "shadow-sm",
         isDragging && "cursor-grabbing"
       )}
@@ -147,8 +149,8 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
         zIndex: isDragging ? 9999 : block.z_index,
         opacity: isDragging ? 0.85 : 1,
         transform: isDragging ? "rotate(0.3deg) scale(1.02)" : undefined,
-        borderLeftWidth: 4,
-        borderLeftColor: color,
+        borderLeftWidth: canDrag ? 0 : 4,
+        borderLeftColor: canDrag ? undefined : color,
         touchAction: canDrag ? "none" : undefined,
       }}
       onPointerDown={handlePointerDown}
@@ -156,23 +158,29 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
-      {/* Drag handle — desktop only in edit mode */}
-      {canDrag && !isMobile && (
+      {/* Drag handle — OUTSIDE block on both mobile and desktop in edit mode */}
+      {canDrag && (
         <div
-          className="absolute left-0 top-0 bottom-0 w-5 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing hover:brightness-110 transition-colors"
-          style={{ backgroundColor: color + "33" }}
+          className="absolute top-0 bottom-0 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing rounded-l-md"
+          style={{
+            left: -handleW,
+            width: handleW,
+            backgroundColor: color,
+          }}
           onPointerDown={handleDragPointerDown}
         >
-          <GripVertical className="h-3.5 w-3.5 text-white/80" />
+          <GripVertical className="text-white/90" size={isMobile ? 18 : 14} />
         </div>
       )}
 
-      <BlockRenderer
-        blockType={block.block_type}
-        content={content}
-        isOwner={isOwner}
-        onContentChange={setContent}
-      />
+      <div className="w-full h-full overflow-hidden rounded-lg">
+        <BlockRenderer
+          blockType={block.block_type}
+          content={content}
+          isOwner={isOwner}
+          onContentChange={setContent}
+        />
+      </div>
 
       {isSelected && isOwner && isEditMode && (
         <ResizeHandle
