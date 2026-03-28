@@ -223,9 +223,9 @@ export const useAutoSaveDraft = ({
       }
       if (!currentForm.date || !currentForm.service_time || !currentForm.service_name?.trim() || !currentForm.community_id || !currentForm.worship_leader?.trim()) return null;
 
-      // Safety check: If editing existing set with empty items, check DB first
+      // Safety check: If editing existing set with empty items, save formData only (skip items upsert)
+      let skipItemsUpsert = false;
       if (id && currentItems.length === 0) {
-        // Check if DB actually has songs/components before skipping
         const [{ data: dbSongs }, { data: dbComponents }] = await Promise.all([
           supabase.from("set_songs").select("id").eq("service_set_id", id).limit(1),
           supabase.from("set_components").select("id").eq("service_set_id", id).limit(1),
@@ -234,11 +234,12 @@ export const useAutoSaveDraft = ({
         const dbHasItems = (dbSongs && dbSongs.length > 0) || (dbComponents && dbComponents.length > 0);
         
         if (dbHasItems) {
-          console.log('AutoSave: Skipping - DB has items but local is empty, preventing data loss');
+          console.log('AutoSave: DB has items but local is empty - saving formData only, skipping items');
+          skipItemsUpsert = true;
+        } else {
+          console.log('AutoSave: Skipping - editing existing set with empty items and DB is also empty');
           return null;
         }
-        console.log('AutoSave: Skipping - editing existing set with empty items');
-        return null;
       }
 
       let setId = id;
@@ -279,7 +280,7 @@ export const useAutoSaveDraft = ({
       }
 
       // UPSERT songs and components instead of DELETE + INSERT
-      if (setId) {
+      if (setId && !skipItemsUpsert) {
         const dbIdUpdates = await upsertSongsAndComponents(
           setId,
           currentItems,
