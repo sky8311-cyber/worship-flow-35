@@ -9,16 +9,16 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLACEHOLDER_TENANTS = [
-  { id: 'ph1', name: '김찬양', initials: '김', floor: '6F', icon: '🎵', windowsOn: true,  variant: 'friend' as const },
-  { id: 'ph2', name: '박워십', initials: '박', floor: '5F', icon: '🎹', windowsOn: false, variant: 'friend' as const },
-  { id: 'ph3', name: '이예배', initials: '이', floor: '5F', icon: '🙏', windowsOn: true,  variant: 'friend' as const },
-  { id: 'ph4', name: '최성령', initials: '최', floor: '4F', icon: '🕊️', windowsOn: true,  variant: 'friend' as const },
-  { id: 'ph5', name: '정은혜', initials: '정', floor: '4F', icon: '✝️', windowsOn: false, variant: 'friend' as const },
-  { id: 'ph6', name: '한찬미', initials: '한', floor: '3F', icon: '🎶', windowsOn: true,  variant: 'friend' as const },
-  { id: 'ph7', name: '오다윗', initials: '오', floor: '3F', icon: '🎸', windowsOn: false, variant: 'friend' as const },
-  { id: 'ph8', name: '새벽이슬 워십',   initials: '새', floor: '2F', icon: '🌅', windowsOn: true,  variant: 'ambassador' as const },
-  { id: 'ph9', name: '시온찬양단',       initials: '시', floor: '2F', icon: '🏛️', windowsOn: true,  variant: 'ambassador' as const },
-  { id: 'ph10', name: '다윗의장막 밴드', initials: '다', floor: '1F', icon: '🎺', windowsOn: false, variant: 'ambassador' as const },
+  { id: 'ph1', name: '김찬양', initials: '김', icon: '🎵', variant: 'friend' as const },
+  { id: 'ph2', name: '박워십', initials: '박', icon: '🎹', variant: 'friend' as const },
+  { id: 'ph3', name: '이예배', initials: '이', icon: '🙏', variant: 'friend' as const },
+  { id: 'ph4', name: '최성령', initials: '최', icon: '🕊️', variant: 'friend' as const },
+  { id: 'ph5', name: '정은혜', initials: '정', icon: '✝️', variant: 'friend' as const },
+  { id: 'ph6', name: '한찬미', initials: '한', icon: '🎶', variant: 'friend' as const },
+  { id: 'ph7', name: '오다윗', initials: '오', icon: '🎸', variant: 'friend' as const },
+  { id: 'ph8', name: '새벽이슬 워십',   initials: '새', icon: '🌅', variant: 'ambassador' as const },
+  { id: 'ph9', name: '시온찬양단',       initials: '시', icon: '🏛️', variant: 'ambassador' as const },
+  { id: 'ph10', name: '다윗의장막 밴드', initials: '다', icon: '🎺', variant: 'ambassador' as const },
 ];
 
 const PLACEHOLDER_FRIENDS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'friend');
@@ -59,34 +59,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
     onStudioSelect(roomId);
   };
 
-  const groupedPlaceholderFriends = PLACEHOLDER_FRIENDS.reduce<Record<string, typeof PLACEHOLDER_FRIENDS>>((acc, t) => {
-    (acc[t.floor] ??= []).push(t);
-    return acc;
-  }, {});
-
-  const groupedPlaceholderAmbassadors = PLACEHOLDER_AMBASSADORS.reduce<Record<string, typeof PLACEHOLDER_AMBASSADORS>>((acc, t) => {
-    (acc[t.floor] ??= []).push(t);
-    return acc;
-  }, {});
-
   /* ─── Building interior content ─── */
   const buildingContent = (
     <>
-      {/* BUILDING SIGN */}
-      {!collapsed && (
-        <div className="text-[9px] font-bold tracking-widest text-amber-800/70 text-center py-1.5 border-b border-amber-300/30 select-none">
-          K-Worship Studio
-        </div>
-      )}
-
       {/* PENTHOUSE — My Studio */}
       {myStudio && (
-        <div className={collapsed ? "" : "mx-3"}>
-          {!collapsed && (
-            <div className="flex items-center justify-between px-1 pb-0.5">
-              <span className="text-[9px] font-mono text-amber-500 bg-amber-100 px-1 rounded">PH</span>
-            </div>
-          )}
+        <div className={collapsed ? "" : ""}>
           <StudioUnit
             compact={isSheet}
             avatarUrl={user?.user_metadata?.avatar_url}
@@ -104,16 +82,14 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
       {/* FRIENDS — real or placeholder */}
       {friendStudios.length > 0 ? (
-        <div className={collapsed ? "" : "mx-1"}>
+        <div>
           {!collapsed && (
-            <div className="flex items-center justify-between px-2 pt-2 pb-1">
+            <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "친구" : "Friends"}
               </p>
-              <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 rounded">2F</span>
             </div>
           )}
-          <div className="border-t border-border/30" />
           {friendStudios.map(s => (
             <StudioUnit
               compact={isSheet}
@@ -131,59 +107,43 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           ))}
         </div>
       ) : (
-        <div className={collapsed ? "" : "mx-1"}>
-          {Object.entries(groupedPlaceholderFriends)
-            .sort(([a], [b]) => parseInt(b) - parseInt(a))
-            .map(([floor, tenants], gi) => (
-              <div key={floor}>
-                {!collapsed && (
-                  <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
-                    {gi === 0 && (
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                        {language === "ko" ? "이웃" : "Neighbors"}
-                      </p>
-                    )}
-                    {gi !== 0 && <span />}
-                    <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 rounded">{floor}</span>
-                  </div>
-                )}
-                {gi === 0 && <div className="border-t border-border/30" />}
-                {tenants.map(t => (
-                  <div key={t.id} className="opacity-60 pointer-events-none select-none">
-                    <StudioUnit
-                      compact={isSheet}
-                      studioName={`${t.icon} ${t.name}`}
-                      ownerName={t.name}
-                      roomId={t.id}
-                      hasUnseenStory={false}
-                      variant="friend"
-                      collapsed={collapsed}
-                      placeholderInitials={t.initials}
-                      forceWindowsOn={t.windowsOn}
-                      onStoryClick={() => {}}
-                      onVisit={() => {}}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
+        <div>
+          {!collapsed && (
+            <div className="px-2 pt-2 pb-0.5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                {language === "ko" ? "이웃" : "Neighbors"}
+              </p>
+            </div>
+          )}
+          {PLACEHOLDER_FRIENDS.map(t => (
+            <div key={t.id} className="opacity-60 pointer-events-none select-none">
+              <StudioUnit
+                compact={isSheet}
+                studioName={`${t.icon} ${t.name}`}
+                ownerName={t.name}
+                roomId={t.id}
+                hasUnseenStory={false}
+                variant="friend"
+                collapsed={collapsed}
+                placeholderInitials={t.initials}
+                onStoryClick={() => {}}
+                onVisit={() => {}}
+              />
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="flex-1 min-h-[40px]" />
-
-      {/* Separator between friends and ambassadors */}
-      <div className="mx-2 my-1 border-t border-dashed border-[#e0d8cc]" />
+      <div className="flex-1 min-h-[24px]" />
 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (
-        <div className="mx-0">
+        <div>
           {!collapsed && (
-            <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
+            <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
               </p>
-              <span className="text-[9px] font-mono text-slate-300 bg-slate-50 px-1 rounded">1F</span>
             </div>
           )}
           {ambassadorStudios.map(s => (
@@ -203,41 +163,30 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           ))}
         </div>
       ) : (
-        <div className="mx-0">
-          {Object.entries(groupedPlaceholderAmbassadors)
-            .sort(([a], [b]) => parseInt(b) - parseInt(a))
-            .map(([floor, tenants], gi) => (
-              <div key={floor}>
-                {!collapsed && (
-                  <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
-                    {gi === 0 && (
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                        {language === "ko" ? "앰배서더" : "Ambassadors"}
-                      </p>
-                    )}
-                    {gi !== 0 && <span />}
-                    <span className="text-[9px] font-mono text-slate-300 bg-slate-50 px-1 rounded">{floor}</span>
-                  </div>
-                )}
-                {tenants.map(t => (
-                  <div key={t.id} className="opacity-60 pointer-events-none select-none">
-                    <StudioUnit
-                      compact={isSheet}
-                      studioName={`${t.icon} ${t.name}`}
-                      ownerName={t.name}
-                      roomId={t.id}
-                      hasUnseenStory={false}
-                      variant="ambassador"
-                      collapsed={collapsed}
-                      placeholderInitials={t.initials}
-                      forceWindowsOn={t.windowsOn}
-                      onStoryClick={() => {}}
-                      onVisit={() => {}}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
+        <div>
+          {!collapsed && (
+            <div className="px-2 pt-1.5 pb-0.5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                {language === "ko" ? "앰배서더" : "Ambassadors"}
+              </p>
+            </div>
+          )}
+          {PLACEHOLDER_AMBASSADORS.map(t => (
+            <div key={t.id} className="opacity-60 pointer-events-none select-none">
+              <StudioUnit
+                compact={isSheet}
+                studioName={`${t.icon} ${t.name}`}
+                ownerName={t.name}
+                roomId={t.id}
+                hasUnseenStory={false}
+                variant="ambassador"
+                collapsed={collapsed}
+                placeholderInitials={t.initials}
+                onStoryClick={() => {}}
+                onVisit={() => {}}
+              />
+            </div>
+          ))}
         </div>
       )}
     </>
@@ -245,12 +194,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
   return (
     <>
-      {/* Panel container — flex column so children fill height */}
+      {/* Panel container */}
       <div className={cn(
         "relative",
         isSheet ? "w-full" : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
-        {/* Sky background — absolute inset-0, removed from flex flow */}
+        {/* Sky background */}
         {!isSheet && (
           <div
             className="absolute inset-0 z-0 overflow-hidden"
@@ -266,7 +215,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </div>
         )}
 
-        {/* Collapse toggle — absolute, no layout impact */}
+        {/* Collapse toggle */}
         {!isSheet && (
           <button
             onClick={() => setCollapsed(c => !c)}
@@ -282,8 +231,22 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Rooftop spacer */}
-            <div className="relative z-10 h-7 shrink-0" />
+            {/* Rooftop sign — floating above building */}
+            <div className="relative z-10 h-12 shrink-0 flex flex-col items-center justify-end">
+              {!collapsed && (
+                <>
+                  <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
+                    K-Worship Studio
+                  </div>
+                  {/* Poles */}
+                  <div className="flex gap-6">
+                    <div className="w-px h-2 bg-[#555]" />
+                    <div className="w-px h-2 bg-[#555]" />
+                  </div>
+                </>
+              )}
+              {collapsed && <div className="h-2" />}
+            </div>
 
             {/* Building wrapper with mx-3 to reveal sky on sides */}
             <div className="relative z-10 mx-3 flex flex-col flex-1 min-h-0">
@@ -299,12 +262,47 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 </ScrollArea>
               </div>
 
-              {/* Sidewalk */}
-              <div className="h-3 shrink-0 flex items-end justify-around px-1 select-none pointer-events-none" style={{ background: '#a89070' }}>
-                <span className="text-[10px]">🌳</span>
-                <span className="text-[10px]">🌳</span>
-                {!collapsed && <span className="text-[10px]">🌳</span>}
+              {/* Entrance door */}
+              <div className="shrink-0 bg-stone-100 border-x border-[#d8cfc4] px-2 py-1.5 flex items-center gap-1">
+                {!collapsed ? (
+                  <>
+                    <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm whitespace-nowrap">
+                      K-Worship Studio
+                    </div>
+                    <div className="flex-1 flex gap-px justify-center">
+                      <div className="w-6 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                      <div className="w-6 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                    </div>
+                    <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm whitespace-nowrap">
+                      kworship.app
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex gap-px justify-center">
+                    <div className="w-4 h-8 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                    <div className="w-4 h-8 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                  </div>
+                )}
               </div>
+
+              {/* Lawn / garden strip */}
+              <div
+                className="h-4 shrink-0 flex items-center justify-around px-1 select-none pointer-events-none border-x border-[#d8cfc4]"
+                style={{ background: 'linear-gradient(to bottom, #6aaf50, #4a8f35)' }}
+              >
+                {!collapsed && (
+                  <>
+                    <span className="text-[8px]">🌷</span>
+                    <span className="text-[8px]">🌿</span>
+                    <span className="text-[8px]">🌷</span>
+                    <span className="text-[8px]">🌿</span>
+                  </>
+                )}
+              </div>
+
+              {/* Sidewalk */}
+              <div className="h-2 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
+
               {/* Road bar */}
               <div
                 className="h-8 shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden relative"
