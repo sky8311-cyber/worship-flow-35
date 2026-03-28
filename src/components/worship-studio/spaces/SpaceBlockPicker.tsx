@@ -26,6 +26,7 @@ interface SpaceBlockPickerProps {
   selectedBlock: SpaceBlock | null;
   onBlockDeleted: () => void;
   isEditMode: boolean;
+  compact?: boolean;
 }
 
 function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBlock; spaceId: string; onBlockDeleted: () => void }) {
