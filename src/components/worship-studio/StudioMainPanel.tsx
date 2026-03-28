@@ -25,6 +25,7 @@ export function StudioMainPanel({
 
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
 
