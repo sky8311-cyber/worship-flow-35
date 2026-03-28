@@ -108,6 +108,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 </div>
               )}
               <StudioUnit
+                compact={isSheet}
                 avatarUrl={user?.user_metadata?.avatar_url}
                 studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
                 ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
@@ -135,6 +136,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               <div className="border-t border-border/30" />
               {friendStudios.map(s => (
                 <StudioUnit
+                  compact={isSheet}
                   key={s.id}
                   avatarUrl={s.avatarUrl || undefined}
                   studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -169,6 +171,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                     {tenants.map(t => (
                       <div key={t.id} className="opacity-60 pointer-events-none select-none">
                         <StudioUnit
+                          compact={isSheet}
                           studioName={`${t.icon} ${t.name}`}
                           ownerName={t.name}
                           roomId={t.id}
@@ -206,6 +209,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
             )}
             {ambassadorStudios.map(s => (
               <StudioUnit
+                compact={isSheet}
                 key={s.id}
                 avatarUrl={s.avatarUrl || undefined}
                 studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -239,6 +243,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                   {tenants.map(t => (
                     <div key={t.id} className="opacity-60 pointer-events-none select-none">
                       <StudioUnit
+                          compact={isSheet}
                         studioName={`${t.icon} ${t.name}`}
                         ownerName={t.name}
                         roomId={t.id}
