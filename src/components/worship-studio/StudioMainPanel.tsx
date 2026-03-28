@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { LayoutGrid } from "lucide-react";
+import { LayoutGrid, Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
 import { SpaceCanvas } from "./spaces/SpaceCanvas";
 import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 interface StudioMainPanelProps {

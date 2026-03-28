@@ -30,6 +30,7 @@ interface SpaceBlockProps {
   isOwner: boolean;
   isSelected: boolean;
   isEditMode: boolean;
+  mobileLayout?: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
   spaceId: string;
