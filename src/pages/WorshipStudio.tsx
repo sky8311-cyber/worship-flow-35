@@ -28,6 +28,11 @@ export default function WorshipStudio() {
   const isMobile = useIsMobile();
   const { isStudioEnabled, isLoading: settingsLoading } = useAppSettings();
   
+  const [showSettings, setShowSettings] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const { room: myStudio } = useWorshipRoom(user?.id);
+  const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
+
   if (!settingsLoading && !isStudioEnabled) {
     return (
       <FeatureComingSoon
@@ -39,11 +44,6 @@ export default function WorshipStudio() {
       />
     );
   }
-  
-  const [showSettings, setShowSettings] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  const { room: myStudio } = useWorshipRoom(user?.id);
-  const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
   
   useEffect(() => {
     if (roomId) setSelectedStudioId(roomId);
