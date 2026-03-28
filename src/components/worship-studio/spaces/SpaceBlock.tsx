@@ -3,11 +3,14 @@ import { cn } from "@/lib/utils";
 import { ResizeHandle } from "./ResizeHandle";
 import { BlockRenderer } from "./blocks/BlockRenderer";
 import { useBlockContent } from "@/hooks/useBlockContent";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { GripVertical } from "lucide-react";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const GRID_SNAP = 20;
 const snap = (v: number) => Math.round(v / GRID_SNAP) * GRID_SNAP;
+const LONG_PRESS_MS = 500;
+const MOVE_THRESHOLD = 8;
 
 const BLOCK_COLORS: Record<string, string> = {
   title: "#4a4a4a", subtitle: "#6b6b6b", sticky_note: "#e8c840",
@@ -30,25 +33,36 @@ interface SpaceBlockProps {
   isOwner: boolean;
   isSelected: boolean;
   isEditMode: boolean;
-  mobileLayout?: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
   spaceId: string;
 }
 
-export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayout, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
+export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
   const color = BLOCK_COLORS[block.block_type] || "#6b6560";
   const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
+  const isMobile = useIsMobile();
 
   const [localPos, setLocalPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressPointerRef = useRef<{ pointerId: number; startX: number; startY: number; target: HTMLElement } | null>(null);
 
   const posX = localPos?.x ?? block.pos_x;
   const posY = localPos?.y ?? block.pos_y;
 
-  const canDrag = isOwner && isEditMode && !mobileLayout;
+  const canDrag = isOwner && isEditMode;
 
+  const clearLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    longPressPointerRef.current = null;
+  }, []);
+
+  // Desktop grip-handle drag
   const handleDragPointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     onSelect();
@@ -58,12 +72,39 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayou
     setIsDragging(true);
   }, [canDrag, block.pos_x, block.pos_y, onSelect]);
 
+  // Pointer down on the block itself
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     onSelect();
-  }, [onSelect]);
+
+    if (!canDrag || !isMobile) return;
+    if (isInteractiveElement(e.target)) return;
+
+    // Start long-press timer for mobile drag
+    const el = e.currentTarget as HTMLElement;
+    longPressPointerRef.current = { pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, target: el };
+
+    longPressTimer.current = setTimeout(() => {
+      if (!longPressPointerRef.current) return;
+      const ref = longPressPointerRef.current;
+      // Activate drag
+      el.setPointerCapture(ref.pointerId);
+      dragRef.current = { startX: ref.startX, startY: ref.startY, origX: block.pos_x, origY: block.pos_y };
+      setIsDragging(true);
+      longPressPointerRef.current = null;
+    }, LONG_PRESS_MS);
+  }, [canDrag, isMobile, block.pos_x, block.pos_y, onSelect]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    // Cancel long-press if finger moved too much
+    if (longPressPointerRef.current) {
+      const dx = Math.abs(e.clientX - longPressPointerRef.current.startX);
+      const dy = Math.abs(e.clientY - longPressPointerRef.current.startY);
+      if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+        clearLongPress();
+      }
+    }
+
     if (!dragRef.current) return;
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
@@ -71,46 +112,24 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayou
       x: Math.max(0, snap(dragRef.current.origX + dx)),
       y: Math.max(0, snap(dragRef.current.origY + dy)),
     });
-  }, []);
+  }, [clearLongPress]);
 
   const handlePointerUp = useCallback(() => {
+    clearLongPress();
     if (dragRef.current && localPos) {
       onUpdate({ pos_x: localPos.x, pos_y: localPos.y });
       setLocalPos(null);
     }
     dragRef.current = null;
     setIsDragging(false);
-  }, [localPos, onUpdate]);
+  }, [localPos, onUpdate, clearLongPress]);
 
-  const handleResize = useCallback((updates: Partial<SpaceBlockType>) => {
-    onUpdate(updates);
-  }, [onUpdate]);
-
-  // Mobile stacked layout
-  if (mobileLayout) {
-    return (
-      <div
-        className={cn(
-          "relative rounded-lg bg-white dark:bg-card border overflow-hidden shadow-sm",
-          isSelected && "ring-2 ring-[#b8902a] shadow-lg"
-        )}
-        style={{
-          width: "100%",
-          minHeight: Math.min(block.size_h, 200),
-          borderLeftWidth: 4,
-          borderLeftColor: color,
-        }}
-        onPointerDown={handlePointerDown}
-      >
-        <BlockRenderer
-          blockType={block.block_type}
-          content={content}
-          isOwner={isOwner}
-          onContentChange={setContent}
-        />
-      </div>
-    );
-  }
+  const handlePointerCancel = useCallback(() => {
+    clearLongPress();
+    dragRef.current = null;
+    setLocalPos(null);
+    setIsDragging(false);
+  }, [clearLongPress]);
 
   return (
     <div
@@ -130,13 +149,15 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayou
         transform: isDragging ? "rotate(0.3deg) scale(1.02)" : undefined,
         borderLeftWidth: 4,
         borderLeftColor: color,
+        touchAction: canDrag ? "none" : undefined,
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
     >
-      {/* Drag handle — only in edit mode */}
-      {canDrag && (
+      {/* Drag handle — desktop only in edit mode */}
+      {canDrag && !isMobile && (
         <div
           className="absolute left-0 top-0 bottom-0 w-5 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing hover:brightness-110 transition-colors"
           style={{ backgroundColor: color + "33" }}
@@ -159,7 +180,7 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, mobileLayou
           posY={block.pos_y}
           sizeW={block.size_w}
           sizeH={block.size_h}
-          onResize={handleResize}
+          onResize={(updates) => onUpdate(updates)}
         />
       )}
     </div>

@@ -34,12 +34,11 @@ export function SpaceCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [zoom, setZoom] = useState(1.0);
-  const mobileLayout = isMobile && !isEditMode;
 
   // Auto-fit zoom on mount / resize (desktop only)
   const fitZoom = useCallback(() => {
     if (!containerRef.current || isMobile) return;
-    const available = containerRef.current.clientWidth - 32; // padding
+    const available = containerRef.current.clientWidth - 32;
     const fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 2.0);
     setZoom(Math.round(fit * 100) / 100);
   }, [isMobile]);
@@ -53,7 +52,7 @@ export function SpaceCanvas({
   }, [isMobile, fitZoom]);
 
   const canvasHeight = useMemo(() => {
-    if (mobileLayout || blocks.length === 0) return "100vh";
+    if (blocks.length === 0) return "100vh";
     const maxBottom = Math.max(...blocks.map(b => {
       const pending = pendingUpdates.get(b.id);
       const posY = pending?.pos_y ?? b.pos_y;
@@ -61,15 +60,7 @@ export function SpaceCanvas({
       return posY + sizeH;
     }));
     return maxBottom + 400 + "px";
-  }, [blocks, pendingUpdates, mobileLayout]);
-
-  const sortedBlocks = useMemo(() => {
-    if (!mobileLayout) return blocks;
-    return [...blocks].sort((a, b) => {
-      const dy = a.pos_y - b.pos_y;
-      return dy !== 0 ? dy : a.pos_x - b.pos_x;
-    });
-  }, [blocks, mobileLayout]);
+  }, [blocks, pendingUpdates]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -93,7 +84,6 @@ export function SpaceCanvas({
       {/* Desktop toolbar: zoom + edit controls */}
       {isOwner && !isMobile && (
         <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
-          {/* Zoom controls */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
@@ -121,7 +111,6 @@ export function SpaceCanvas({
             </button>
           </div>
 
-          {/* Edit controls */}
           <div className="flex items-center gap-2">
             {isEditMode ? (
               <>
@@ -179,9 +168,20 @@ export function SpaceCanvas({
         </div>
       )}
 
-      {mobileLayout ? (
-        <div className="flex flex-col gap-3 p-3" onClick={handleCanvasClick}>
-          {sortedBlocks.map(block => {
+      {/* Always use absolute-positioned canvas */}
+      <div className="flex justify-center py-4">
+        <div
+          className="relative"
+          style={{
+            width: `${CANVAS_WIDTH}px`,
+            height: canvasHeight,
+            transform: isMobile ? undefined : `scale(${zoom})`,
+            transformOrigin: 'top center',
+          }}
+          onClick={handleCanvasClick}
+        >
+          <MujiGridBackground />
+          {blocks.map(block => {
             const pending = pendingUpdates.get(block.id);
             const mergedBlock = pending ? { ...block, ...pending } : block;
             return (
@@ -191,7 +191,6 @@ export function SpaceCanvas({
                 isOwner={isOwner}
                 isSelected={block.id === selectedBlockId}
                 isEditMode={isEditMode}
-                mobileLayout
                 onSelect={() => onSelectBlock(block.id)}
                 onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
                 spaceId={spaceId}
@@ -199,38 +198,7 @@ export function SpaceCanvas({
             );
           })}
         </div>
-      ) : (
-        <div className="flex justify-center py-4">
-          <div
-            className="relative"
-            style={{
-              width: `${CANVAS_WIDTH}px`,
-              height: canvasHeight,
-              transform: isMobile ? undefined : `scale(${zoom})`,
-              transformOrigin: 'top center',
-            }}
-            onClick={handleCanvasClick}
-          >
-            <MujiGridBackground />
-            {blocks.map(block => {
-              const pending = pendingUpdates.get(block.id);
-              const mergedBlock = pending ? { ...block, ...pending } : block;
-              return (
-                <SpaceBlock
-                  key={block.id}
-                  block={mergedBlock}
-                  isOwner={isOwner}
-                  isSelected={block.id === selectedBlockId}
-                  isEditMode={isEditMode}
-                  onSelect={() => onSelectBlock(block.id)}
-                  onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
-                  spaceId={spaceId}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
