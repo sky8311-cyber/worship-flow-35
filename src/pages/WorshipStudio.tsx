@@ -8,9 +8,8 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StudioHeader } from "@/components/worship-studio/StudioHeader";
-import { CollapsibleSidebar } from "@/components/worship-studio/CollapsibleSidebar";
+import { StudioSidePanel } from "@/components/worship-studio/StudioSidePanel";
 import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
-import { StoryBar } from "@/components/worship-studio/StoryBar";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
@@ -29,7 +28,19 @@ export default function WorshipStudio() {
   const isMobile = useIsMobile();
   const { isStudioEnabled, isLoading: settingsLoading } = useAppSettings();
   
-  // Gate: show coming soon if disabled
+  const [showSettings, setShowSettings] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const { room: myStudio } = useWorshipRoom(user?.id);
+  const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
+  
+  useEffect(() => {
+    if (roomId) setSelectedStudioId(roomId);
+  }, [roomId]);
+  
+  const { room: selectedStudio } = useWorshipRoomById(
+    selectedStudioId && selectedStudioId !== myStudio?.id ? selectedStudioId : undefined
+  );
+
   if (!settingsLoading && !isStudioEnabled) {
     return (
       <FeatureComingSoon
@@ -42,44 +53,15 @@ export default function WorshipStudio() {
     );
   }
   
-  // Dialog states
-  const [showSettings, setShowSettings] = useState(false);
-  const [showShare, setShowShare] = useState(false);
-  
-  // Sidebar collapsed state (default: collapsed)
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  
-  // Get user's own studio
-  const { room: myStudio, isLoading: myStudioLoading } = useWorshipRoom(user?.id);
-  
-  // Track selected studio for viewing others
-  const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
-  
-  // Sync URL roomId to selected studio
-  useEffect(() => {
-    if (roomId) {
-      setSelectedStudioId(roomId);
-    }
-  }, [roomId]);
-  
-  // Fetch selected studio if different from own
-  const { room: selectedStudio } = useWorshipRoomById(
-    selectedStudioId && selectedStudioId !== myStudio?.id ? selectedStudioId : undefined
-  );
-  
-  // Current studio being viewed (for BGM bar)
   const currentStudio = selectedStudioId 
     ? (selectedStudioId === myStudio?.id ? myStudio : selectedStudio)
     : myStudio;
   
-  // BGM info extraction
   const bgmVideoId = currentStudio?.bgm_song?.youtube_url 
     ? extractVideoId(currentStudio.bgm_song.youtube_url)
     : null;
   
-  const handleBack = () => {
-    navigate('/dashboard');
-  };
+  const handleBack = () => navigate('/dashboard');
   
   const handleStudioSelect = (studioId: string) => {
     setSelectedStudioId(studioId);
@@ -93,14 +75,9 @@ export default function WorshipStudio() {
 
   return (
     <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden relative">
-      {/* Paper grain texture */}
       <div className="absolute inset-0 pointer-events-none bg-noise opacity-[0.025] z-0" />
-      <SEOHead 
-        title={t("studio.title")} 
-        description={t("studio.description")} 
-      />
+      <SEOHead title={t("studio.title")} description={t("studio.description")} />
       
-      {/* Header with avatar dropdown + mini BGM */}
       <StudioHeader 
         onBack={handleBack}
         onSettings={() => setShowSettings(true)}
@@ -112,27 +89,16 @@ export default function WorshipStudio() {
         bgmOwnerName={currentStudio?.owner?.full_name}
       />
       
-      {/* Story Bar */}
-      <StoryBar 
-        onStudioSelect={handleStudioSelect}
-        myStudioId={myStudio?.id}
-      />
-      
-      {/* Main content area */}
+      {/* Main content: Side panel + Canvas */}
       <div className="flex-1 h-0 overflow-hidden flex">
-        {/* Desktop: Show collapsible sidebar */}
         {!isMobile && (
-          <CollapsibleSidebar
-            isExpanded={sidebarExpanded}
-            onExpandedChange={setSidebarExpanded}
+          <StudioSidePanel
+            myStudioId={myStudio?.id}
             onStudioSelect={handleStudioSelect}
             onMyStudioSelect={handleMyStudioSelect}
-            selectedStudioId={selectedStudioId}
-            myStudioId={myStudio?.id}
           />
         )}
         
-        {/* Main panel with tabs */}
         <StudioMainPanel
           myStudioId={myStudio?.id}
           selectedStudioId={selectedStudioId}
@@ -140,9 +106,6 @@ export default function WorshipStudio() {
         />
       </div>
       
-      {/* BGM moved to header mini player */}
-      
-      {/* Settings Dialog */}
       {myStudio && (
         <StudioSettingsDialog
           open={showSettings}
@@ -151,11 +114,7 @@ export default function WorshipStudio() {
         />
       )}
       
-      {/* Share Dialog */}
-      <ShareReferralDialog
-        open={showShare}
-        onOpenChange={setShowShare}
-      />
+      <ShareReferralDialog open={showShare} onOpenChange={setShowShare} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // Worship Studio - Main exports
 export { StudioHeader } from "./StudioHeader";
 export { StudioSidebar } from "./StudioSidebar";
-export { CollapsibleSidebar } from "./CollapsibleSidebar";
+export { StudioSidePanel } from "./StudioSidePanel";
 export { StudioMainPanel } from "./StudioMainPanel";
 export { StudioFeed } from "./StudioFeed";
 export { StudioFeedCard } from "./StudioFeedCard";
