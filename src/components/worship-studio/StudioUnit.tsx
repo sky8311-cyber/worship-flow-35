@@ -17,25 +17,6 @@ export interface StudioUnitProps {
   onVisit: () => void;
 }
 
-function WindowLights({ variant, forceOn }: { variant: StudioUnitProps["variant"]; forceOn?: boolean }) {
-  const colors = useMemo(() => {
-    if (variant === "penthouse") return ["bg-amber-300", "bg-amber-200"];
-    if (variant === "ambassador") return ["bg-violet-100", "bg-violet-50"];
-    if (forceOn !== undefined) {
-      return forceOn ? ["bg-amber-200", "bg-amber-100"] : ["bg-slate-200", "bg-slate-100"];
-    }
-    const lit = Math.random() > 0.4;
-    return lit ? ["bg-amber-200", "bg-amber-100"] : ["bg-slate-200", "bg-slate-100"];
-  }, [variant, forceOn]);
-
-  return (
-    <div className="flex gap-px shrink-0 select-none pointer-events-none">
-      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[0])} />
-      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[1])} />
-      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[0])} />
-    </div>
-  );
-}
 
 const visitConfig = {
   penthouse: {
@@ -104,7 +85,7 @@ export function StudioUnit({
         <Avatar
           className={cn(
             "ring-2 ring-offset-1 ring-offset-background transition-all",
-            compact ? "h-7 w-7" : "h-8 w-8",
+            compact ? "h-7 w-7" : "h-7 w-7",
             hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
           )}
         >
@@ -120,12 +101,7 @@ export function StudioUnit({
           {variant === "ambassador" && <span className="text-violet-500 mr-0.5">✦</span>}
           {studioName}
         </p>
-        {!compact && (
-          <p className="text-[10px] text-muted-foreground truncate">{ownerName}</p>
-        )}
       </div>
-
-      <WindowLights variant={variant} forceOn={forceWindowsOn} />
 
       <button
         onClick={(e) => { e.stopPropagation(); onVisit(); }}
