@@ -2,46 +2,47 @@
 
 # Apartment Panel Polish — 3 Changes
 
-## 1. Window Frame Corners — `rounded-sm`
-**File**: `StudioUnit.tsx`
+## 1. Avatar Fix (StudioSidePanel.tsx + useStoryBarStudios.ts)
 
-The `windowFrame` constant (line 19) already uses `rounded-sm`. No change needed — confirmed correct.
+**Root cause**: In `useStoryBarStudios.ts` line 165, own studio is built with `avatarUrl: null`. The fallback on line 70 of StudioSidePanel (`user?.user_metadata?.avatar_url || myStudio.avatarUrl`) only works if the user signed up via OAuth (Google etc.) which populates `user_metadata.avatar_url`. For email/password signups, this is empty.
 
-## 2. Entrance Door — Taller + Stairs
-**File**: `StudioSidePanel.tsx` (lines 265-286)
+**Fix**: Query the user's profile avatar from the profiles table in `useStoryBarStudios.ts` and pass it when building the own studio. Alternatively, add a simple query for the current user's profile avatar in `StudioSidePanel.tsx` using supabase and pass it directly.
 
-- Increase door glass panels from `h-10` to `h-12`
-- Insert stairs block between entrance door and lawn strip:
-
+Simplest approach — in `StudioSidePanel.tsx`, add a query for the user's profile avatar:
 ```tsx
-{/* Stairs */}
-<div className="shrink-0 flex flex-col items-center border-x border-[#d8cfc4] bg-stone-100">
-  <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-  <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-  <div className="w-24 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-</div>
+const { data: myProfile } = useQuery({
+  queryKey: ['my-profile-avatar', user?.id],
+  queryFn: async () => {
+    const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user!.id).single();
+    return data;
+  },
+  enabled: !!user?.id,
+});
+```
+Then on line 70:
+```tsx
+avatarUrl={user?.user_metadata?.avatar_url || myProfile?.avatar_url || myStudio.avatarUrl || undefined}
 ```
 
-Order: building body → entrance door → stairs → lawn → sidewalk → road.
+## 2. Window Frame Corners — `rounded-none` (StudioUnit.tsx)
 
-## 3. Current User Avatar Fix
-**File**: `StudioSidePanel.tsx` (line 70)
+**File**: `StudioUnit.tsx` line 19
 
-Already passing `user?.user_metadata?.avatar_url` — this is correct. However, need to also check `myStudio.avatarUrl` as fallback and query from profiles if needed.
+Change `windowFrame` from `"rounded-sm border border-[#8a7a6a] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"` to `"rounded-none border border-[#8a7a6a] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]"`.
 
-Let me check what `useAuth` provides and what `myStudio` contains.
+Also update collapsed mode avatar frame (line 43) and entrance door panels in StudioSidePanel (lines 273-274, 282-283) from `rounded-sm` to `rounded-none`.
 
-After review: Line 70 already passes `avatarUrl={user?.user_metadata?.avatar_url}`. The issue is likely that `user_metadata.avatar_url` is not set for email/password signups. Fix by also checking the profiles table avatar:
+## 3. Entrance Door + Stairs Restructure (StudioSidePanel.tsx)
 
-```tsx
-avatarUrl={user?.user_metadata?.avatar_url || myStudio.avatarUrl || undefined}
-```
+- Door glass panels: `h-12` (already correct), change `rounded-sm` to `rounded-none`
+- Stairs already exist (lines 288-293) with widths `w-16`, `w-20`, `w-24`
+- Per user's request, update stair widths to `w-20`, `w-24`, `w-28` for wider steps
 
-This uses the auth metadata first, then falls back to the studio's profile avatar from the `useStoryBarStudios` hook which queries profiles.
+Current order is already: building body → entrance door → stairs → lawn → sidewalk → road. No reordering needed.
 
 ## Files Modified
 | File | Change |
 |---|---|
-| `StudioSidePanel.tsx` | Taller door (h-12), stairs block, avatar fallback chain |
-| `StudioUnit.tsx` | No changes needed (already `rounded-sm`) |
+| `StudioSidePanel.tsx` | Profile avatar query, door `rounded-none` |
+| `StudioUnit.tsx` | `rounded-sm` → `rounded-none` in windowFrame |
 
