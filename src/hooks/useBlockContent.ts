@@ -8,8 +8,15 @@ export function useBlockContent(
 ) {
   const [content, setContentState] = useState<Record<string, any>>(initialContent);
   const updateBlock = useUpdateBlock();
+  const updateBlockRef = useRef(updateBlock);
+  updateBlockRef.current = updateBlock;
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestRef = useRef(content);
+  const blockIdRef = useRef(blockId);
+  const spaceIdRef = useRef(spaceId);
+  blockIdRef.current = blockId;
+  spaceIdRef.current = spaceId;
 
   // Sync when initialContent changes from server
   useEffect(() => {
@@ -25,10 +32,10 @@ export function useBlockContent(
 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
-        updateBlock.mutate({ id: blockId, spaceId, content: latestRef.current });
+        updateBlockRef.current.mutate({ id: blockIdRef.current, spaceId: spaceIdRef.current, content: latestRef.current });
       }, 500);
     },
-    [blockId, spaceId, updateBlock]
+    []
   );
 
   // Flush on unmount
@@ -36,10 +43,10 @@ export function useBlockContent(
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
-        updateBlock.mutate({ id: blockId, spaceId, content: latestRef.current });
+        updateBlockRef.current.mutate({ id: blockIdRef.current, spaceId: spaceIdRef.current, content: latestRef.current });
       }
     };
-  }, [blockId, spaceId, updateBlock]);
+  }, []);
 
   return { content, setContent };
 }
