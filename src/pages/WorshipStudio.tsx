@@ -31,6 +31,7 @@ export default function WorshipStudio() {
   
   const [showSettings, setShowSettings] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [mobileAptOpen, setMobileAptOpen] = useState(false);
   const { room: myStudio } = useWorshipRoom(user?.id);
   const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
   
