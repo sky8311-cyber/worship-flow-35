@@ -1,50 +1,68 @@
 
 
-# K-Seed 잔고 복구 및 데이터 무결성 수정
+# 스튜디오 BGM 미니플레이어 재설계
 
-## 문제 진단 결과
+## 현재 문제
+1. **StudioHeader 상단 nav**에 MiniBGMPlayer가 위치 → 공간 부족, 충돌 가능
+2. **RoomView**에서 BGM 자동 재생 + 퇴장 시 `closePlayer()` → 플랫폼 음악까지 강제 종료
+3. **GlobalMusicPlayer**에서 `/institute/` 경로를 PUBLIC_ROUTES로 차단 → 인스티튜트 접속 시 플레이어 사라짐
 
-**심각한 데이터 불일치 발견:**
-- `seed_transactions` 테이블에 트랜잭션 기록이 있지만 `user_seeds` 테이블에 잔고 레코드가 **없는** 유저: **72명**
-- 유실된 총 시드 합계: **8,201 K-Seeds**
-- 영향 받는 기간: 2026-01-15 ~ 2026-03-15 (이 기간 내 시드를 받은 유저들)
+## 변경 계획
 
-**원인:** `award_seeds()` 함수에 `user_seeds` 동기화 로직이 늦게 추가되어, 이전에 시드를 받은 유저들의 잔고 레코드가 생성되지 않았습니다. 현재 `award_seeds()` 함수는 이미 수정되어 있어 **신규 트랜잭션은 정상 동기화**되지만, 기존 72명은 여전히 누락 상태입니다.
+### 1. StudioHeader에서 BGM 미니플레이어 제거
+**파일: `StudioHeader.tsx`**
+- `MiniBGMPlayer` 컴포넌트 및 관련 props (`bgmSongTitle`, `bgmSongArtist`, `bgmVideoId`, `bgmRoomId`, `bgmOwnerName`) 전부 삭제
+- header는 뒤로가기 + 타이틀 + 알림 + 프로필 메뉴만 남김
 
-**기존 79명의 정상 유저:** `total_seeds`와 `seed_transactions` 합계가 모두 일치함을 확인했습니다.
+**파일: `WorshipStudio.tsx`**
+- `StudioHeader`에 전달하던 BGM 관련 props 제거
 
-## 해결 방안
+### 2. SpaceCanvas 편집 툴바 라인에 BGM 미니플레이어 배치
+**파일: `SpaceCanvas.tsx`**
+- props에 `bgmSongTitle`, `bgmVideoId`, `bgmRoomId`, `bgmOwnerName`, `bgmSongArtist` 추가
+- 모바일/데스크톱 sticky toolbar에 편집 버튼 옆에 싸이월드 스타일 BGM 버튼 렌더
+- BGM이 있는 경우: ♪ 아이콘 + 곡명 (마퀴) + Play/Pause 버튼
+- 자동 재생 아님 — 유저가 Play 버튼을 눌러야만 재생 시작
 
-### 1단계: 누락된 user_seeds 레코드 일괄 복구 (DB 마이그레이션)
+**파일: `StudioMainPanel.tsx`**
+- BGM 정보를 `SpaceCanvas`에 전달하도록 props 추가 (WorshipStudio → StudioMainPanel → SpaceCanvas)
 
-`seed_transactions`에서 실제 합산값을 계산하여 `user_seeds`에 INSERT:
+### 3. RoomView 자동 재생 및 강제 종료 제거
+**파일: `RoomView.tsx`**
+- `useEffect` 내 자동 `startPlaylist()` 호출 삭제
+- cleanup 함수의 `closePlayer()` 삭제
+- 이렇게 하면 플랫폼에서 음악 재생 중 스튜디오/룸 접속 시 기존 음악이 계속 재생됨
 
-```sql
-INSERT INTO user_seeds (user_id, total_seeds, current_level, created_at, updated_at)
-SELECT 
-  st.user_id,
-  SUM(st.seeds_earned) as total_seeds,
-  COALESCE(
-    (SELECT sl.level FROM seed_levels sl 
-     WHERE sl.min_seeds <= SUM(st.seeds_earned) 
-     ORDER BY sl.level DESC LIMIT 1),
-    1
-  ) as current_level,
-  now(),
-  now()
-FROM seed_transactions st
-LEFT JOIN user_seeds us ON us.user_id = st.user_id
-WHERE us.user_id IS NULL
-GROUP BY st.user_id
-ON CONFLICT (user_id) DO UPDATE 
-SET total_seeds = EXCLUDED.total_seeds, 
-    current_level = EXCLUDED.current_level, 
-    updated_at = now();
+### 4. 인스티튜트에서 플랫폼 음악 계속 재생
+**파일: `GlobalMusicPlayer.tsx`**
+- PUBLIC_ROUTES에서 `'/institute'` 제거
+- `location.pathname.startsWith('/institute/')` 조건 제거
+- 이렇게 하면 인스티튜트 페이지에서도 GlobalMiniPlayer가 계속 표시됨
+
+### 5. StudioBGMBar 정리
+**파일: `StudioBGMBar.tsx`**
+- 더 이상 사용되지 않으므로 삭제 (이미 미사용 상태)
+
+## 동작 흐름
+
+```text
+[밴드뷰에서 음악 재생 중]
+  → 스튜디오 접속 → 플랫폼 음악 계속 재생
+  → 스튜디오 내 BGM Play 클릭 → 플랫폼 음악 대체 (동일 MusicPlayerContext 사용)
+  → 스튜디오 퇴장 → 마지막 재생 상태 유지 (closePlayer 안 함)
+
+[인스티튜트 접속]
+  → 음악 계속 재생 (GlobalMusicPlayer가 더 이상 숨기지 않음)
 ```
 
-이 한 번의 마이그레이션으로 72명 전원의 잔고가 복구됩니다.
-
-### 변경 파일
-- **DB 마이그레이션 1개** (위 SQL 실행)
-- 코드 변경 없음 (`award_seeds()` 함수는 이미 수정 완료)
+## 변경 파일 요약
+| 파일 | 작업 |
+|------|------|
+| `StudioHeader.tsx` | MiniBGMPlayer 및 BGM props 제거 |
+| `WorshipStudio.tsx` | StudioHeader BGM props 제거, StudioMainPanel에 BGM props 전달 |
+| `StudioMainPanel.tsx` | BGM props 받아서 SpaceCanvas에 전달 |
+| `SpaceCanvas.tsx` | 편집 버튼 옆에 BGM 미니플레이어 추가 |
+| `RoomView.tsx` | 자동 재생 / 퇴장 시 closePlayer 삭제 |
+| `GlobalMusicPlayer.tsx` | institute 경로 차단 제거 |
+| `StudioBGMBar.tsx` | 삭제 |
 
