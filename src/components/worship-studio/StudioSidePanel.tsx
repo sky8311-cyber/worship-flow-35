@@ -248,7 +248,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* Panel container — flex column so children fill height */}
       <div className={cn(
         "relative",
-        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
+        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-48"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
         {/* Sky background — absolute inset-0, removed from flex flow */}
         {!isSheet && (
