@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStoryBarStudios, incrementVisitCount, type StoryStudio } from "@/hooks/useStoryBarStudios";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
@@ -41,15 +39,6 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
 
-  const { data: myProfile } = useQuery({
-    queryKey: ['my-profile-avatar', user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user!.id).single();
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
   const ambassadorStudios = studios.filter(s => s.isAmbassador);
@@ -78,7 +67,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className={collapsed ? "" : ""}>
           <StudioUnit
             compact={isSheet}
-            avatarUrl={user?.user_metadata?.avatar_url || myProfile?.avatar_url || myStudio.avatarUrl || undefined}
+            avatarUrl={user?.user_metadata?.avatar_url || myStudio.avatarUrl || undefined}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
             roomId={myStudio.id}
@@ -281,8 +270,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                       K-Worship Studio
                     </div>
                     <div className="flex-1 flex gap-px justify-center">
-                    <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60" />
-                    <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60" />
+                    <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                    <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
                     </div>
                     <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm whitespace-nowrap">
                       kworship.app
@@ -290,17 +279,17 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                   </>
                 ) : (
                   <div className="flex-1 flex gap-px justify-center">
-                    <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60" />
-                    <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60" />
+                    <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                    <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
                   </div>
                 )}
               </div>
 
               {/* Stairs */}
               <div className="shrink-0 flex flex-col items-center border-x border-[#d8cfc4] bg-stone-100">
+                <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                 <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                 <div className="w-24 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-                <div className="w-28 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
               </div>
 
               {/* Lawn / garden strip */}

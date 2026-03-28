@@ -16,7 +16,7 @@ export interface StudioUnitProps {
   onVisit: () => void;
 }
 
-const windowFrame = "rounded-none border border-[#8a7a6a] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]";
+const windowFrame = "rounded-sm border border-[#8a7a6a] shadow-[inset_0_1px_2px_rgba(0,0,0,0.1)]";
 
 const visitBg: Record<string, string> = {
   penthouse: "bg-amber-50 hover:bg-amber-100",
