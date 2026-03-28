@@ -50,7 +50,7 @@ function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBl
   );
 }
 
-export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEditMode }: SpaceBlockPickerProps) {
+export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEditMode, compact }: SpaceBlockPickerProps) {
   const { language } = useTranslation();
   const createBlock = useCreateBlock();
 
@@ -64,6 +64,41 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
       size_h: 150,
     });
   };
+
+  if (compact) {
+    return (
+      <div className="w-full">
+        {selectedBlock ? (
+          <SelectedBlockPanel
+            key={selectedBlock.id}
+            block={selectedBlock}
+            spaceId={spaceId}
+            onBlockDeleted={onBlockDeleted}
+          />
+        ) : (
+          <div className="p-3">
+            <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              {language === "ko" ? "블록 추가" : "Add Block"}
+            </h3>
+            <div className="grid grid-cols-4 gap-2">
+              {BLOCK_TYPES.map(({ value, icon: Icon, label, labelEn, color }) => (
+                <button
+                  key={value}
+                  onClick={() => handleAddBlock(value)}
+                  className="flex flex-col items-center justify-center gap-1 w-full py-2 rounded-lg hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group"
+                >
+                  <Icon className="h-5 w-5 group-hover:scale-110 transition-transform" style={{ color }} />
+                  <span className="text-[9px] text-muted-foreground font-medium leading-tight">
+                    {language === "ko" ? label : labelEn}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="w-72 border-l border-border/40 bg-[hsl(var(--background))] flex flex-col shrink-0">
