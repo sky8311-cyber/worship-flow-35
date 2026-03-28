@@ -10,6 +10,7 @@ import { StudioDiscover } from "./StudioDiscover";
 import { BlockTypeSelector } from "./BlockTypeSelector";
 import { Button } from "@/components/ui/button";
 import { PenSquare, Columns3, Archive, Compass, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useCanvas } from "@/hooks/useCanvas";
 import type { StudioPost, BlockType } from "@/hooks/useStudioPosts";
 
@@ -53,30 +54,29 @@ export function StudioMainPanel({
               value="worktable"
               className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
             >
-              <PenSquare className="h-4 w-4 mr-1.5" />
-              {language === "ko" ? "작업대" : "Worktable"}
+              <PenSquare className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline">{language === "ko" ? "작업대" : "Worktable"}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="board" 
               className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
             >
-              <Columns3 className="h-4 w-4 mr-1.5" />
-              {language === "ko" ? "진행중의 벽" : "Board"}
+              <Columns3 className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline">{language === "ko" ? "진행중의 벽" : "Board"}</span>
             </TabsTrigger>
             <TabsTrigger 
               value="archive"
               className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
             >
-              <Archive className="h-4 w-4 mr-1.5" />
-              {language === "ko" ? "보관함" : "Archive"}
+              <Archive className="h-4 w-4 md:mr-1.5" />
+              <span className="hidden md:inline">{language === "ko" ? "보관함" : "Archive"}</span>
             </TabsTrigger>
             {isMobile && (
               <TabsTrigger 
                 value="discover"
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
               >
-                <Compass className="h-4 w-4 mr-1.5" />
-                {language === "ko" ? "탐색" : "Discover"}
+                <Compass className="h-4 w-4" />
               </TabsTrigger>
             )}
           </TabsList>
@@ -84,14 +84,17 @@ export function StudioMainPanel({
           {/* New block button */}
           {isOwnStudio && myStudioId && (
             <Button
-              size="sm"
+              size={isMobile ? "icon" : "sm"}
               variant="outline"
               onClick={() => setShowBlockSelector(true)}
               disabled={isCreating}
-              className="border-[#b8902a] text-[#b8902a] hover:bg-[#b8902a] hover:text-white h-8 gap-1.5"
+              className={cn(
+                "border-[#b8902a] text-[#b8902a] hover:bg-[#b8902a] hover:text-white",
+                isMobile ? "h-8 w-8 rounded-full" : "h-8 gap-1.5"
+              )}
             >
               <Plus className="h-3.5 w-3.5" />
-              {language === "ko" ? "새 블록" : "New Block"}
+              {!isMobile && (language === "ko" ? "새 블록" : "New Block")}
             </Button>
           )}
         </div>
