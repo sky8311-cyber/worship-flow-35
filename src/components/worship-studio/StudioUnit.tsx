@@ -29,9 +29,10 @@ function WindowLights({ variant, forceOn }: { variant: StudioUnitProps["variant"
   }, [variant, forceOn]);
 
   return (
-    <div className="flex gap-0.5 shrink-0 select-none pointer-events-none">
-      <div className={cn("w-2 h-1.5 rounded-sm", colors[0])} />
-      <div className={cn("w-2 h-1.5 rounded-sm", colors[1])} />
+    <div className="flex gap-px shrink-0 select-none pointer-events-none">
+      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[0])} />
+      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[1])} />
+      <div className={cn("w-1.5 h-1.5 rounded-sm", colors[0])} />
     </div>
   );
 }

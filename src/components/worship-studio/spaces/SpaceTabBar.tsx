@@ -130,7 +130,7 @@ function SortableTab({
 
 export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roomOwnerId }: SpaceTabBarProps) {
   const { language } = useTranslation();
-  const { data: spaces = [] } = useStudioSpaces(roomId);
+  const { data: spaces = [], isLoading: isSpacesLoading } = useStudioSpaces(roomId);
   const updateSpace = useUpdateSpace();
   const reorderSpaces = useReorderSpaces();
   const [createOpen, setCreateOpen] = useState(false);
@@ -147,14 +147,14 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
   );
 
   useEffect(() => {
-    if (spaces.length === 0 && roomId && isOwner) {
-      const key = `kworship-studio-setup-seen-${roomId}`;
-      if (!localStorage.getItem(key)) {
-        setCreateOpen(true);
-        localStorage.setItem(key, 'true');
-      }
+    if (isSpacesLoading || !roomId || !isOwner) return;
+    if (spaces.length > 0) return;
+    const key = `kworship-studio-setup-seen-${roomId}`;
+    if (!localStorage.getItem(key)) {
+      setCreateOpen(true);
+      localStorage.setItem(key, 'true');
     }
-  }, [spaces.length, roomId, isOwner]);
+  }, [spaces.length, roomId, isOwner, isSpacesLoading]);
 
   useEffect(() => {
     if (spaces.length > 0 && !activeSpaceId) onSpaceSelect(spaces[0].id);
