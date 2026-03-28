@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
+import { useSpaceBlocks } from "@/hooks/useSpaceBlocks";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
-import { SpaceCreateDialog } from "./spaces/SpaceCreateDialog";
 import { SpaceCanvas } from "./spaces/SpaceCanvas";
-import { cn } from "@/lib/utils";
+import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
 
 interface StudioMainPanelProps {
   myStudioId?: string | null;
@@ -19,17 +18,21 @@ export function StudioMainPanel({
   onStudioSelect,
 }: StudioMainPanelProps) {
   const { language } = useTranslation();
-  const isMobile = useIsMobile();
 
   const isOwnStudio = !selectedStudioId || selectedStudioId === myStudioId;
   const currentRoomId = selectedStudioId || myStudioId || undefined;
 
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
+  const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
 
-  // Reset active space when room changes
+  const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
+
+  // Reset on room change
   useEffect(() => {
     setActiveSpaceId(null);
+    setSelectedBlockId(null);
   }, [currentRoomId]);
 
   // Auto-select first space
@@ -39,9 +42,13 @@ export function StudioMainPanel({
     }
   }, [spaces, activeSpaceId]);
 
+  // Clear selection on space change
+  useEffect(() => {
+    setSelectedBlockId(null);
+  }, [activeSpaceId]);
+
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[hsl(var(--background))] relative">
-      {/* Space Tab Bar */}
       <SpaceTabBar
         roomId={currentRoomId}
         activeSpaceId={activeSpaceId}
@@ -49,10 +56,23 @@ export function StudioMainPanel({
         isOwner={isOwnStudio}
       />
 
-      {/* Canvas area */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {activeSpaceId ? (
-          <SpaceCanvas spaceId={activeSpaceId} isOwner={isOwnStudio} />
+          <>
+            <SpaceCanvas
+              spaceId={activeSpaceId}
+              isOwner={isOwnStudio}
+              selectedBlockId={selectedBlockId}
+              onSelectBlock={setSelectedBlockId}
+            />
+            {isOwnStudio && (
+              <SpaceBlockPicker
+                spaceId={activeSpaceId}
+                selectedBlock={selectedBlock}
+                onBlockDeleted={() => setSelectedBlockId(null)}
+              />
+            )}
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-center h-full py-20 text-muted-foreground text-sm">
             {language === "ko"
