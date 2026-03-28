@@ -119,6 +119,36 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       {/* Editor content */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="max-w-2xl mx-auto p-4 space-y-6 border-t border-border/30">
+          {/* Block Type Selector */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {language === "ko" ? "블록 유형" : "Block Type"}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                { value: "note" as BlockType, label: "▪ 노트", labelEn: "▪ Note" },
+                { value: "song" as BlockType, label: "♩ 곡", labelEn: "♩ Song" },
+                { value: "worship_set" as BlockType, label: "✦ 워십셋", labelEn: "✦ Set" },
+                { value: "scripture" as BlockType, label: "📖 말씀", labelEn: "📖 Scripture" },
+                { value: "prayer_note" as BlockType, label: "✦ 기도노트", labelEn: "✦ Prayer" },
+                { value: "audio" as BlockType, label: "◉ 오디오", labelEn: "◉ Audio" },
+              ]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setBlockType(opt.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    blockType === opt.value
+                      ? "border-[#b8902a] bg-[#b8902a]/10 text-[#b8902a]"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {language === "ko" ? opt.label : opt.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Title */}
           <div>
             <Input
