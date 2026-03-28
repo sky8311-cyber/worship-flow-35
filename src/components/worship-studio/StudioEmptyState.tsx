@@ -1,6 +1,6 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
-import { PenLine, Users, Sparkles, HelpCircle } from "lucide-react";
+import { PenLine, Users } from "lucide-react";
 
 interface StudioEmptyStateProps {
   type: "studio" | "feed";
@@ -13,48 +13,45 @@ export function StudioEmptyState({ type, onAction, onHelp }: StudioEmptyStatePro
   
   if (type === "studio") {
     return (
-      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6">
-          <Sparkles className="h-10 w-10 text-primary" />
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center min-h-[60vh]">
+        <span className="text-lg text-muted-foreground mb-8">✦</span>
+        
+        <div className="space-y-1 mb-3">
+          <p className="text-xl font-light tracking-wide text-foreground/80 italic">
+            {language === "ko" ? "예배는 무대가 아닌 삶입니다." : "Worship is not a stage, it is life."}
+          </p>
+          <p className="text-xl font-light tracking-wide text-foreground/80 italic">
+            {language === "ko" ? "삶이 예배가 될 때 사역이 빚어집니다." : "As life becomes worship, ministry takes shape."}
+          </p>
         </div>
-        <h3 className="text-xl font-semibold mb-3">
-          {language === "ko" ? "예배는 일상에서 빚어집니다" : "Worship is shaped in daily life"}
-        </h3>
-        <p className="text-muted-foreground max-w-md mb-8 leading-relaxed">
+        
+        <p className="text-sm text-muted-foreground text-center mt-2 mb-10 max-w-sm">
           {language === "ko"
-            ? "하나님이 오늘 빚어가시는 것들을 이곳에 하나씩 모아보세요—기도, 묵상, 노래, 감사. 이 공간은 당신만의 예배 아카이브입니다."
-            : "Collect what God is forming in you—one prayer, one thought, one song, one thanksgiving at a time. This space is your personal worship archive."}
+            ? "이 스튜디오는 그 여정이 기록되고 나눠지는 곳입니다."
+            : "This studio is where that journey is written and shared."}
         </p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          {onAction && (
-            <Button onClick={onAction} className="gap-2">
-              <PenLine className="h-4 w-4" />
-              {language === "ko" ? "공간 꾸미기 시작" : "Start decorating"}
-            </Button>
-          )}
-          {onHelp && (
-            <Button variant="outline" onClick={onHelp} className="gap-2">
-              <HelpCircle className="h-4 w-4" />
-              {language === "ko" ? "어떻게 쓸까요?" : "How to use?"}
-            </Button>
-          )}
-        </div>
+        
+        {onAction && (
+          <Button variant="outline" onClick={onAction} className="gap-2">
+            {language === "ko" ? "첫 기록 시작하기 →" : "Start your first entry →"}
+          </Button>
+        )}
       </div>
     );
   }
   
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <Users className="h-8 w-8 text-muted-foreground" />
-      </div>
-      <h3 className="text-xl font-semibold mb-2">
-        {language === "ko" ? "아직 새 소식이 없습니다." : "No updates yet."}
-      </h3>
-      <p className="text-muted-foreground max-w-sm">
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center min-h-[60vh]">
+      <span className="text-lg text-muted-foreground mb-8">✦</span>
+      
+      <p className="text-xl font-light tracking-wide text-foreground/80 italic mb-3">
+        {language === "ko" ? "아직 흐름이 시작되지 않았습니다." : "The flow hasn't started yet."}
+      </p>
+      
+      <p className="text-sm text-muted-foreground max-w-sm">
         {language === "ko"
-          ? "친구와 앰버서더를 팔로우하여 최신 노트, 기도, 배움을 확인하세요."
-          : "Follow friends and ambassadors to see their latest notes, prayers, and learnings."}
+          ? "친구와 앰버서더를 팔로우하여 그들의 기록, 기도, 배움을 만나보세요."
+          : "Follow friends and ambassadors to discover their records, prayers, and learnings."}
       </p>
     </div>
   );

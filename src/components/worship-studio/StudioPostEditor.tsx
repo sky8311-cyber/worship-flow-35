@@ -77,9 +77,9 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
   ];
   
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#faf7f2] dark:bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
         <div className="flex items-center gap-2">
           {onBack && (
             <Button variant="ghost" size="icon" onClick={onBack}>
@@ -114,13 +114,13 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       
       {/* Editor content */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="max-w-2xl mx-auto p-4 space-y-6">
+        <div className="max-w-2xl mx-auto p-4 space-y-6 border-t border-border/30">
           {/* Title */}
           <div>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={language === "ko" ? "제목 (선택사항)" : "Title (optional)"}
+              placeholder={language === "ko" ? "오늘의 묵상 제목..." : "Today's meditation title..."}
               className="text-xl font-semibold border-none px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
             />
           </div>
