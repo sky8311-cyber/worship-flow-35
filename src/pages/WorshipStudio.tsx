@@ -24,7 +24,7 @@ function extractVideoId(url: string | null): string | null {
 export default function WorshipStudio() {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t, language } = useTranslation();
   const isMobile = useIsMobile();
   const { isStudioEnabled, isLoading: settingsLoading } = useAppSettings();
