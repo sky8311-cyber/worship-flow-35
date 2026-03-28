@@ -3058,6 +3058,7 @@ export type Database = {
       room_posts: {
         Row: {
           author_user_id: string
+          block_type: string
           blocks: Json | null
           content: string
           cover_image_url: string | null
@@ -3071,9 +3072,11 @@ export type Database = {
           title: string | null
           updated_at: string | null
           visibility: Database["public"]["Enums"]["room_visibility"] | null
+          workflow_stage: string
         }
         Insert: {
           author_user_id: string
+          block_type?: string
           blocks?: Json | null
           content: string
           cover_image_url?: string | null
@@ -3087,9 +3090,11 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"] | null
+          workflow_stage?: string
         }
         Update: {
           author_user_id?: string
+          block_type?: string
           blocks?: Json | null
           content?: string
           cover_image_url?: string | null
@@ -3103,6 +3108,7 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           visibility?: Database["public"]["Enums"]["room_visibility"] | null
+          workflow_stage?: string
         }
         Relationships: [
           {
