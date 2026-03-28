@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { ResizeHandle } from "./ResizeHandle";
 import { BlockRenderer } from "./blocks/BlockRenderer";
 import { useBlockContent } from "@/hooks/useBlockContent";
+import { GripVertical } from "lucide-react";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const GRID_SNAP = 20;
@@ -47,15 +48,19 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
 
   const canDrag = isOwner && isEditMode;
 
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+  const handleDragPointerDown = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
     onSelect();
     if (!canDrag) return;
-    if (isInteractiveElement(e.target)) return;
     dragRef.current = { startX: e.clientX, startY: e.clientY, origX: block.pos_x, origY: block.pos_y };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     setIsDragging(true);
   }, [canDrag, block.pos_x, block.pos_y, onSelect]);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.stopPropagation();
+    onSelect();
+  }, [onSelect]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!dragRef.current) return;
@@ -86,7 +91,6 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
         "absolute rounded-lg bg-white dark:bg-card border overflow-hidden select-none transition-shadow",
         isSelected && "ring-2 ring-[#b8902a] shadow-lg overflow-visible",
         !isSelected && "shadow-sm",
-        canDrag && !isDragging && "cursor-grab",
         isDragging && "cursor-grabbing"
       )}
       style={{
@@ -104,6 +108,17 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
+      {/* Drag handle — only in edit mode */}
+      {canDrag && (
+        <div
+          className="absolute left-0 top-0 bottom-0 w-5 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing hover:brightness-110 transition-colors"
+          style={{ backgroundColor: color + "33" }}
+          onPointerDown={handleDragPointerDown}
+        >
+          <GripVertical className="h-3.5 w-3.5 text-white/80" />
+        </div>
+      )}
+
       <BlockRenderer
         blockType={block.block_type}
         content={content}

@@ -146,15 +146,17 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
+  const { isLoading: isSpacesLoading } = useStudioSpaces(roomId);
+
   useEffect(() => {
-    if (spaces.length === 0 && roomId && isOwner) {
-      const key = `kworship-studio-setup-seen-${roomId}`;
-      if (!localStorage.getItem(key)) {
-        setCreateOpen(true);
-        localStorage.setItem(key, 'true');
-      }
+    if (isSpacesLoading || !roomId || !isOwner) return;
+    if (spaces.length > 0) return;
+    const key = `kworship-studio-setup-seen-${roomId}`;
+    if (!localStorage.getItem(key)) {
+      setCreateOpen(true);
+      localStorage.setItem(key, 'true');
     }
-  }, [spaces.length, roomId, isOwner]);
+  }, [spaces.length, roomId, isOwner, isSpacesLoading]);
 
   useEffect(() => {
     if (spaces.length > 0 && !activeSpaceId) onSpaceSelect(spaces[0].id);

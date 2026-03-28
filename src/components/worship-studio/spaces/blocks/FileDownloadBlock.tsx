@@ -33,6 +33,11 @@ export function FileDownloadBlock({ content }: Props) {
     >
       <Icon className="h-10 w-10 text-muted-foreground" />
       <span className="text-xs font-medium text-foreground text-center truncate max-w-full">{filename}</span>
+      {content.file_size && (
+        <span className="text-[10px] text-muted-foreground">
+          {content.file_size < 1024 * 1024 ? `${(content.file_size / 1024).toFixed(1)} KB` : `${(content.file_size / (1024 * 1024)).toFixed(1)} MB`}
+        </span>
+      )}
       {fileUrl && <Download className="h-3.5 w-3.5 text-muted-foreground" />}
     </div>
   );

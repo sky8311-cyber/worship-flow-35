@@ -7,6 +7,17 @@ function extractVideoId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function buildEmbedUrl(videoId: string, content: Record<string, any>): string {
+  const params = new URLSearchParams();
+  if (content.autoplay) { params.set("autoplay", "1"); params.set("mute", "1"); }
+  if (content.mute) params.set("mute", "1");
+  if (content.hideControls) params.set("controls", "0");
+  if (content.hideRelated) params.set("rel", "0");
+  if (content.loop) { params.set("loop", "1"); params.set("playlist", videoId); }
+  const qs = params.toString();
+  return `https://www.youtube.com/embed/${videoId}${qs ? `?${qs}` : ""}`;
+}
+
 interface Props {
   content: Record<string, any>;
   isOwner: boolean;
@@ -47,7 +58,7 @@ export function YoutubeBlock({ content, isOwner, onContentChange }: Props) {
 
   return (
     <iframe
-      src={`https://www.youtube.com/embed/${videoId}`}
+      src={buildEmbedUrl(videoId, content)}
       className="w-full h-full rounded"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen

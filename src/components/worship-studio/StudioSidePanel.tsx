@@ -72,12 +72,10 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   /* ─── Building interior content ─── */
   const buildingContent = (
     <>
-      {/* ROOFTOP GARDEN */}
+      {/* BUILDING SIGN */}
       {!collapsed && (
-        <div className="flex items-end justify-center gap-0.5 py-1 select-none pointer-events-none">
-          <span className="text-xs">🌿</span>
-          <span className="text-base">🌳</span>
-          <span className="text-xs">🌿</span>
+        <div className="text-[9px] font-bold tracking-widest text-amber-800/70 text-center py-1.5 border-b border-amber-300/30 select-none">
+          K-Worship Studio
         </div>
       )}
 
@@ -250,7 +248,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* Panel container — flex column so children fill height */}
       <div className={cn(
         "relative",
-        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-56"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
+        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
         {/* Sky background — absolute inset-0, removed from flex flow */}
         {!isSheet && (
@@ -299,13 +297,26 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               </ScrollArea>
             </div>
 
-            {/* Road bar — fixed height at bottom */}
+            {/* Sidewalk */}
+            <div className="relative z-10 h-3 shrink-0 flex items-end justify-around px-1 select-none pointer-events-none" style={{ background: '#a89070' }}>
+              <span className="text-[10px]">🌳</span>
+              <span className="text-[10px]">🌳</span>
+              {!collapsed && <span className="text-[10px]">🌳</span>}
+            </div>
+            {/* Road bar */}
             <div
-              className="relative z-10 h-6 shrink-0 flex items-center px-2 select-none pointer-events-none"
-              style={{ background: '#555', borderTop: '2px solid #444' }}
+              className="relative z-10 h-8 shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden"
+              style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
             >
-              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/30" />
-              <span className="absolute right-2 text-xs">🚗</span>
+              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
+              <span className="absolute left-1 text-[11px]">🚗</span>
+              <span className="absolute left-8 text-[9px]">🚙</span>
+              {!collapsed && (
+                <>
+                  <span className="absolute right-6 text-[10px]">🚕</span>
+                  <span className="absolute right-1 text-[12px]">🚌</span>
+                </>
+              )}
             </div>
           </>
         )}
