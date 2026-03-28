@@ -222,12 +222,13 @@ function TypeSettings({ blockType, content, onChange }: { blockType: string; con
           <Button size="sm" variant="outline" className="w-full text-xs" onClick={async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
-            const { data } = await supabase.from("profiles").select("display_name, email, avatar_url").eq("id", user.id).single();
+            const { data } = await supabase.from("profiles").select("full_name, email, avatar_url, phone").eq("id", user.id).single();
             if (data) {
               onChange({
-                name: data.display_name || "",
+                name: data.full_name || "",
                 email: data.email || user.email || "",
                 photo_url: data.avatar_url || "",
+                phone: data.phone || "",
               });
             }
           }}>
