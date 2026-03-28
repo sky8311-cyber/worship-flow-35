@@ -58,7 +58,6 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   });
 
   const myAvatarUrl = user?.user_metadata?.avatar_url || profileAvatar || undefined;
-  const isSheet = mode === "sheet";
 
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
