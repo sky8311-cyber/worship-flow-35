@@ -1,60 +1,64 @@
 
 
-## Bug: Auto-Save Safety Guard Blocks FormData Persistence
+# Studio v2 Phase A: Database Foundation
 
-### Root Cause
+## Overview
+Create 3 new tables (`studio_spaces`, `space_blocks`, `space_guestbook`) with RLS policies and 3 React Query hook files. This is a database + hooks-only phase — no UI changes.
 
-In `useAutoSaveDraft.ts` (lines 226-242), when `items` array is empty (e.g., items haven't loaded yet from DB), the safety guard returns `null` **entirely** — skipping both items AND formData saves.
+## Step 1 — Database Migration
 
-**Timeline of the bug:**
-1. User unpublishes a set → navigates to SetBuilder
-2. `existingSet` loads quickly (cached) → formData populated
-3. User starts editing metadata (title, leader, etc.)
-4. Auto-save triggers after 2s debounce
-5. BUT `items` array is still `[]` (songs/components query still fetching)
-6. Safety guard: "DB has items but local is empty" → **SKIP ENTIRE SAVE** (including formData)
-7. User thinks auto-save handled it, navigates away
-8. Returns → DB has old formData values → **data appears "reset"**
+Single migration creating all 3 tables, indexes, and RLS policies as specified:
 
-The safety guard correctly prevents items from being wiped, but incorrectly also blocks the `service_sets` metadata update.
+- **`studio_spaces`**: Room sub-sections with icon/color/visibility/guestbook settings
+- **`space_blocks`**: Figma-style free-position blocks (pos_x/y, size_w/h, z_index, content jsonb)
+- **`space_guestbook`**: Per-space guestbook entries with author reference
 
-### Fix
+RLS rules:
+- Spaces/blocks: owner full access, public rooms readable by all authenticated
+- Guestbook: public read, authenticated insert (own author_id), delete by author or room owner
 
-**File: `src/hooks/useAutoSaveDraft.ts`**
+**Note**: Will use validation triggers instead of CHECK constraints for `visibility` and `guestbook_permission` columns per project guidelines.
 
-Change the empty-items guard (lines 226-242) to still save formData (service_sets metadata) but skip the items upsert:
+## Step 2 — Hook: `useStudioSpaces.ts`
 
-```typescript
-// Safety check: If editing existing set with empty items, check DB first
-let skipItemsUpsert = false;
-if (id && currentItems.length === 0) {
-  const [{ data: dbSongs }, { data: dbComponents }] = await Promise.all([
-    supabase.from("set_songs").select("id").eq("service_set_id", id).limit(1),
-    supabase.from("set_components").select("id").eq("service_set_id", id).limit(1),
-  ]);
-  
-  const dbHasItems = (dbSongs && dbSongs.length > 0) || (dbComponents && dbComponents.length > 0);
-  
-  if (dbHasItems) {
-    console.log('AutoSave: DB has items but local is empty - saving formData only, skipping items');
-    skipItemsUpsert = true;
-  } else {
-    console.log('AutoSave: Skipping - editing existing set with empty items and DB is also empty');
-    return null;
-  }
-}
-```
+Pattern follows existing `useStudioWidgets.ts` (React Query + Supabase client).
 
-Then wrap the items upsert (lines 281-293):
-```typescript
-if (setId && !skipItemsUpsert) {
-  const dbIdUpdates = await upsertSongsAndComponents(...);
-  // ...
-}
-```
+Exports:
+- `useStudioSpaces(roomId)` — query spaces ordered by `sort_order`
+- `useCreateSpace()` — insert with room_id, name, icon, color
+- `useUpdateSpace()` — partial update (name/icon/color/visibility/guestbook fields)
+- `useDeleteSpace()` — delete by id (cascade handles blocks)
+- `useReorderSpaces()` — batch update sort_order via Promise.all
 
-This way, formData (service_sets row) is always persisted even when items haven't loaded yet, while items remain protected from accidental deletion.
+Query key: `['studio-spaces', roomId]`
 
-### Files Modified
-- `src/hooks/useAutoSaveDraft.ts` — split empty-items guard to allow formData-only saves
+## Step 3 — Hook: `useSpaceBlocks.ts`
+
+Exports:
+- `useSpaceBlocks(spaceId)` — query all blocks for a space
+- `useCreateBlock()` — insert with space_id, block_type, pos_x/y, size_w/h, content
+- `useUpdateBlock()` — partial update (position, size, content, z_index)
+- `useDeleteBlock()` — delete by id
+
+Query key: `['space-blocks', spaceId]`
+
+## Step 4 — Hook: `useGuestbook.ts`
+
+Exports:
+- `useGuestbook(spaceId)` — query entries ordered by created_at DESC, joined with profiles for author info
+- `useCreateGuestbookEntry()` — insert with space_id, body, author_user_id from auth
+- `useDeleteGuestbookEntry()` — delete by id
+
+Query key: `['space-guestbook', spaceId]`
+
+## Files
+
+| Action | File |
+|--------|------|
+| Migration | `supabase/migrations/…_studio_v2_foundation.sql` |
+| Create | `src/hooks/useStudioSpaces.ts` |
+| Create | `src/hooks/useSpaceBlocks.ts` |
+| Create | `src/hooks/useGuestbook.ts` |
+
+No existing files modified. No UI changes in this phase.
 
