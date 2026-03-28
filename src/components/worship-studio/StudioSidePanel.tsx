@@ -7,6 +7,22 @@ import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+const PLACEHOLDER_TENANTS = [
+  { id: 'ph1', name: '김찬양', initials: '김', floor: '6F', icon: '🎵', windowsOn: true,  variant: 'friend' as const },
+  { id: 'ph2', name: '박워십', initials: '박', floor: '5F', icon: '🎹', windowsOn: false, variant: 'friend' as const },
+  { id: 'ph3', name: '이예배', initials: '이', floor: '5F', icon: '🙏', windowsOn: true,  variant: 'friend' as const },
+  { id: 'ph4', name: '최성령', initials: '최', floor: '4F', icon: '🕊️', windowsOn: true,  variant: 'friend' as const },
+  { id: 'ph5', name: '정은혜', initials: '정', floor: '4F', icon: '✝️', windowsOn: false, variant: 'friend' as const },
+  { id: 'ph6', name: '한찬미', initials: '한', floor: '3F', icon: '🎶', windowsOn: true,  variant: 'friend' as const },
+  { id: 'ph7', name: '오다윗', initials: '오', floor: '3F', icon: '🎸', windowsOn: false, variant: 'friend' as const },
+  { id: 'ph8', name: '새벽이슬 워십',   initials: '새', floor: '2F', icon: '🌅', windowsOn: true,  variant: 'ambassador' as const },
+  { id: 'ph9', name: '시온찬양단',       initials: '시', floor: '2F', icon: '🏛️', windowsOn: true,  variant: 'ambassador' as const },
+  { id: 'ph10', name: '다윗의장막 밴드', initials: '다', floor: '1F', icon: '🎺', windowsOn: false, variant: 'ambassador' as const },
+];
+
+const PLACEHOLDER_FRIENDS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'friend');
+const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'ambassador');
+
 interface StudioSidePanelProps {
   myStudioId?: string;
   onStudioSelect: (roomId: string) => void;
@@ -24,6 +40,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
   const ambassadorStudios = studios.filter(s => s.isAmbassador);
 
+  const usePlaceholderFriends = friendStudios.length === 0;
+  const usePlaceholderAmbassadors = ambassadorStudios.length === 0;
+
   const handleStoryClick = (studio: StoryStudio) => {
     const idx = studios.findIndex(s => s.id === studio.id);
     if (idx >= 0) {
@@ -36,6 +55,17 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
     setStoryIndex(null);
     onStudioSelect(roomId);
   };
+
+  // Group placeholder friends by floor for floor labels
+  const groupedPlaceholderFriends = PLACEHOLDER_FRIENDS.reduce<Record<string, typeof PLACEHOLDER_FRIENDS>>((acc, t) => {
+    (acc[t.floor] ??= []).push(t);
+    return acc;
+  }, {});
+
+  const groupedPlaceholderAmbassadors = PLACEHOLDER_AMBASSADORS.reduce<Record<string, typeof PLACEHOLDER_AMBASSADORS>>((acc, t) => {
+    (acc[t.floor] ??= []).push(t);
+    return acc;
+  }, {});
 
   return (
     <>
@@ -82,8 +112,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
             </div>
           )}
 
-          {/* FRIENDS */}
-          {friendStudios.length > 0 && (
+          {/* FRIENDS — real or placeholder */}
+          {friendStudios.length > 0 ? (
             <div className={collapsed ? "" : "mx-1"}>
               {!collapsed && (
                 <div className="flex items-center justify-between px-2 pt-2 pb-1">
@@ -109,13 +139,53 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
                 />
               ))}
             </div>
+          ) : (
+            <div className={collapsed ? "" : "mx-1"}>
+              {Object.entries(groupedPlaceholderFriends)
+                .sort(([a], [b]) => parseInt(b) - parseInt(a)) // 6F first, then 5F, etc.
+                .map(([floor, tenants], gi) => (
+                  <div key={floor}>
+                    {!collapsed && (
+                      <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
+                        {gi === 0 && (
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                            {language === "ko" ? "이웃" : "Neighbors"}
+                          </p>
+                        )}
+                        {gi !== 0 && <span />}
+                        <span className="text-[9px] font-mono text-slate-400 bg-slate-100 px-1 rounded">{floor}</span>
+                      </div>
+                    )}
+                    {gi === 0 && <div className="border-t border-border/30" />}
+                    {tenants.map(t => (
+                      <div key={t.id} className="opacity-60 pointer-events-none select-none">
+                        <StudioUnit
+                          studioName={`${t.icon} ${t.name}`}
+                          ownerName={t.name}
+                          roomId={t.id}
+                          hasUnseenStory={false}
+                          variant="friend"
+                          collapsed={collapsed}
+                          placeholderInitials={t.initials}
+                          forceWindowsOn={t.windowsOn}
+                          onStoryClick={() => {}}
+                          onVisit={() => {}}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+            </div>
           )}
 
           <div className="flex-1 min-h-[40px]" />
         </ScrollArea>
 
-        {/* COMMERCIAL — Ambassadors pinned to bottom */}
-        {ambassadorStudios.length > 0 && (
+        {/* Separator between friends and ambassadors */}
+        <div className="mx-2 my-1 border-t border-dashed border-[#e0d8cc]" />
+
+        {/* COMMERCIAL — Ambassadors: real or placeholder */}
+        {ambassadorStudios.length > 0 ? (
           <div className="mt-auto border-t border-border/40 mx-0">
             {!collapsed && (
               <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
@@ -139,6 +209,42 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
                 onVisit={() => handleVisit(s.id)}
               />
             ))}
+          </div>
+        ) : (
+          <div className="mt-auto mx-0">
+            {Object.entries(groupedPlaceholderAmbassadors)
+              .sort(([a], [b]) => parseInt(b) - parseInt(a))
+              .map(([floor, tenants], gi) => (
+                <div key={floor}>
+                  {!collapsed && (
+                    <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
+                      {gi === 0 && (
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                          {language === "ko" ? "앰배서더" : "Ambassadors"}
+                        </p>
+                      )}
+                      {gi !== 0 && <span />}
+                      <span className="text-[9px] font-mono text-slate-300 bg-slate-50 px-1 rounded">{floor}</span>
+                    </div>
+                  )}
+                  {tenants.map(t => (
+                    <div key={t.id} className="opacity-60 pointer-events-none select-none">
+                      <StudioUnit
+                        studioName={`${t.icon} ${t.name}`}
+                        ownerName={t.name}
+                        roomId={t.id}
+                        hasUnseenStory={false}
+                        variant="ambassador"
+                        collapsed={collapsed}
+                        placeholderInitials={t.initials}
+                        forceWindowsOn={t.windowsOn}
+                        onStoryClick={() => {}}
+                        onVisit={() => {}}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
           </div>
         )}
       </div>
