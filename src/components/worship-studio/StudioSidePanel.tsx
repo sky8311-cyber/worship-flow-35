@@ -87,7 +87,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className={collapsed ? "" : ""}>
           <StudioUnit
             compact={isSheet}
-            avatarUrl={user?.user_metadata?.avatar_url || myStudio.avatarUrl || undefined}
+            avatarUrl={myAvatarUrl}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
             roomId={myStudio.id}
