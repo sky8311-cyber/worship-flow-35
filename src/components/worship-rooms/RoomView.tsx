@@ -1,6 +1,4 @@
-import { useEffect } from "react";
 import { useWorshipRoomById } from "@/hooks/useWorshipRoom";
-import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import { useRoomPosts } from "@/hooks/useRoomPosts";
 import { RoomHeader } from "./RoomHeader";
 import { RoomPostCard } from "./RoomPostCard";
