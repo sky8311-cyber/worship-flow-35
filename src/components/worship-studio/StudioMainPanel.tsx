@@ -4,8 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
 import { SpaceCreateDialog } from "./spaces/SpaceCreateDialog";
-import { StudioDiscover } from "./StudioDiscover";
-import { Compass } from "lucide-react";
+import { SpaceCanvas } from "./spaces/SpaceCanvas";
 import { cn } from "@/lib/utils";
 
 interface StudioMainPanelProps {
@@ -51,16 +50,9 @@ export function StudioMainPanel({
       />
 
       {/* Canvas area */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {activeSpaceId ? (
-          <div
-            className="min-h-screen w-full"
-            style={{
-              backgroundColor: "#faf7f2",
-              backgroundImage: "radial-gradient(circle, #c8bfb0 1px, transparent 1px)",
-              backgroundSize: "20px 20px",
-            }}
-          />
+          <SpaceCanvas spaceId={activeSpaceId} isOwner={isOwnStudio} />
         ) : (
           <div className="flex-1 flex items-center justify-center h-full py-20 text-muted-foreground text-sm">
             {language === "ko"
