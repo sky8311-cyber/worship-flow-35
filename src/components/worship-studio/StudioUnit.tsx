@@ -10,6 +10,7 @@ export interface StudioUnitProps {
   hasUnseenStory: boolean;
   variant: "penthouse" | "friend" | "ambassador";
   collapsed?: boolean;
+  compact?: boolean;
   placeholderInitials?: string;
   forceWindowsOn?: boolean;
   onStoryClick: () => void;
@@ -28,7 +29,7 @@ function WindowLights({ variant, forceOn }: { variant: StudioUnitProps["variant"
   }, [variant, forceOn]);
 
   return (
-    <div className="flex gap-0.5 ml-auto shrink-0 self-start mt-1 select-none pointer-events-none">
+    <div className="flex gap-0.5 shrink-0 select-none pointer-events-none">
       <div className={cn("w-2 h-1.5 rounded-sm", colors[0])} />
       <div className={cn("w-2 h-1.5 rounded-sm", colors[1])} />
     </div>
@@ -60,6 +61,7 @@ export function StudioUnit({
   hasUnseenStory,
   variant,
   collapsed = false,
+  compact = false,
   placeholderInitials,
   forceWindowsOn,
   onStoryClick,
@@ -90,48 +92,48 @@ export function StudioUnit({
   return (
     <div
       className={cn(
-        "py-2 px-2 transition-colors",
+        "flex items-center gap-1.5 transition-colors",
+        compact ? "py-1 px-1.5" : "py-1.5 px-2",
         variant === "penthouse" && "bg-gradient-to-b from-sky-50/60 to-amber-50/70 border-t-2 border-[#b8902a]",
         variant === "ambassador" && "bg-muted/30",
         variant === "friend" && "hover:bg-muted/40"
       )}
     >
-      {/* Top row: avatar + info + windows */}
-      <div className="flex items-center gap-2">
-        <button onClick={onStoryClick} className="flex-shrink-0">
-          <Avatar
-            className={cn(
-              "h-8 w-8 ring-2 ring-offset-1 ring-offset-background transition-all",
-              hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
-            )}
-          >
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback className={cn("text-[10px]", placeholderInitials && variant === "ambassador" && "bg-indigo-100 text-indigo-400", placeholderInitials && variant === "friend" && "bg-slate-200 text-slate-500")}>
-              {placeholderInitials || (variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?"))}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+      <button onClick={onStoryClick} className="flex-shrink-0">
+        <Avatar
+          className={cn(
+            "ring-2 ring-offset-1 ring-offset-background transition-all",
+            compact ? "h-7 w-7" : "h-8 w-8",
+            hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
+          )}
+        >
+          <AvatarImage src={avatarUrl} />
+          <AvatarFallback className={cn("text-[10px]", placeholderInitials && variant === "ambassador" && "bg-indigo-100 text-indigo-400", placeholderInitials && variant === "friend" && "bg-slate-200 text-slate-500")}>
+            {placeholderInitials || (variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?"))}
+          </AvatarFallback>
+        </Avatar>
+      </button>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium truncate text-foreground">
-            {variant === "ambassador" && <span className="text-violet-500 mr-0.5">✦</span>}
-            {studioName}
-          </p>
+      <div className="flex-1 min-w-0">
+        <p className={cn("font-medium truncate text-foreground", compact ? "text-[11px]" : "text-xs")}>
+          {variant === "ambassador" && <span className="text-violet-500 mr-0.5">✦</span>}
+          {studioName}
+        </p>
+        {!compact && (
           <p className="text-[10px] text-muted-foreground truncate">{ownerName}</p>
-        </div>
-
-        <WindowLights variant={variant} forceOn={forceWindowsOn} />
+        )}
       </div>
 
-      {/* Visit pill button */}
+      <WindowLights variant={variant} forceOn={forceWindowsOn} />
+
       <button
         onClick={(e) => { e.stopPropagation(); onVisit(); }}
         className={cn(
-          "w-full py-1 mt-1.5 rounded-full border text-xs font-medium flex items-center justify-center gap-1 transition-colors",
+          "h-6 px-2 shrink-0 rounded-full border text-[10px] font-medium inline-flex items-center gap-0.5 whitespace-nowrap transition-colors",
           visit.classes
         )}
       >
-        <span className="text-[10px]">{visit.icon}</span>
+        <span className="text-[9px]">{visit.icon}</span>
         {visit.label}
       </button>
     </div>
