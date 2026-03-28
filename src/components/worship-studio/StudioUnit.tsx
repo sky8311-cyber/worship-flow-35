@@ -78,8 +78,8 @@ export function StudioUnit({
             )}
           >
             <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="text-[10px]">
-              {variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?")}
+            <AvatarFallback className={cn("text-[10px]", placeholderInitials && variant === "ambassador" && "bg-indigo-100 text-indigo-400", placeholderInitials && variant === "friend" && "bg-slate-200 text-slate-500")}>
+              {placeholderInitials || (variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?"))}
             </AvatarFallback>
           </Avatar>
         </button>
@@ -106,8 +106,8 @@ export function StudioUnit({
             )}
           >
             <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="text-[10px]">
-              {variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?")}
+            <AvatarFallback className={cn("text-[10px]", placeholderInitials && variant === "ambassador" && "bg-indigo-100 text-indigo-400", placeholderInitials && variant === "friend" && "bg-slate-200 text-slate-500")}>
+              {placeholderInitials || (variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?"))}
             </AvatarFallback>
           </Avatar>
         </button>
@@ -120,7 +120,7 @@ export function StudioUnit({
           <p className="text-[10px] text-muted-foreground truncate">{ownerName}</p>
         </div>
 
-        <WindowLights variant={variant} />
+        <WindowLights variant={variant} forceOn={forceWindowsOn} />
       </div>
 
       {/* Visit pill button */}
