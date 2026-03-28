@@ -332,6 +332,44 @@ export type Database = {
           },
         ]
       }
+      canvas_blocks: {
+        Row: {
+          block_type: string
+          canvas_id: string
+          content: Json
+          created_at: string | null
+          id: string
+          position: number
+          updated_at: string | null
+        }
+        Insert: {
+          block_type?: string
+          canvas_id: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          position?: number
+          updated_at?: string | null
+        }
+        Update: {
+          block_type?: string
+          canvas_id?: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          position?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_blocks_canvas_id_fkey"
+            columns: ["canvas_id"]
+            isOneToOne: false
+            referencedRelation: "room_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       church_account_members: {
         Row: {
           church_account_id: string
