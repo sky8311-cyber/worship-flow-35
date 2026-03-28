@@ -262,34 +262,43 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 </ScrollArea>
               </div>
 
-              {/* Entrance door */}
-              <div className="shrink-0 bg-stone-100 border-x border-[#d8cfc4] px-2 py-1.5 flex items-center gap-1">
+              {/* Divider between tenants and ground floor */}
+              <div className="shrink-0 border-t border-[#8a7a6a]/60 mx-0" />
+
+              {/* 1F Ground Floor */}
+              <div className="shrink-0 bg-[#e8ddd0] border-x border-[#d8cfc4] px-2 pt-1.5 pb-0">
                 {!collapsed ? (
                   <>
-                    <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm whitespace-nowrap">
-                      K-Worship Studio
+                    {/* Badges row */}
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
+                        K-Worship Studio
+                      </div>
+                      <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
+                        kworship.app
+                      </div>
                     </div>
-                    <div className="flex-1 flex gap-px justify-center">
-                    <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
-                    <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
-                    </div>
-                    <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm whitespace-nowrap">
-                      kworship.app
+                    {/* Door + Stairs centered */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex gap-px">
+                        <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                        <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                      </div>
+                      <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                      <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                      <div className="w-24 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex gap-px justify-center">
-                    <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
-                    <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                  <div className="flex flex-col items-center">
+                    <div className="flex gap-px">
+                      <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                      <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                    </div>
+                    <div className="w-10 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                    <div className="w-12 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                   </div>
                 )}
-              </div>
-
-              {/* Stairs */}
-              <div className="shrink-0 flex flex-col items-center border-x border-[#d8cfc4] bg-stone-100">
-                <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-                <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
-                <div className="w-24 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
               </div>
 
               {/* Lawn / garden strip */}
