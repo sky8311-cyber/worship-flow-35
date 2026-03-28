@@ -46,9 +46,11 @@ export function StoryBar({ onStudioSelect, myStudioId }: StoryBarProps) {
                   <div
                     className={cn(
                       "rounded-full p-[2px]",
-                      studio.hasNewPosts
-                        ? "bg-gradient-to-tr from-primary to-primary/70"
-                        : "bg-border"
+                      studio.isSelf
+                        ? "ring-2 ring-[#b8902a] ring-offset-1"
+                        : studio.hasNewPosts
+                          ? "bg-gradient-to-tr from-primary to-primary/70"
+                          : "bg-border"
                     )}
                   >
                     <Avatar className="h-12 w-12 border-2 border-background">

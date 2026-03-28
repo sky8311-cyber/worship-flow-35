@@ -131,7 +131,7 @@ function MiniBGMPlayer({ songTitle, songArtist, videoId, roomId, ownerName }: Mi
       onClick={handleToggle}
       className="flex items-center gap-1.5 bg-muted/50 hover:bg-muted rounded-full px-3 py-1 max-w-[200px] transition-colors"
     >
-      <Music className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      <Music className="h-3.5 w-3.5 shrink-0 text-[#b8902a]" />
       
       <div className="overflow-hidden max-w-[120px]">
         <span
