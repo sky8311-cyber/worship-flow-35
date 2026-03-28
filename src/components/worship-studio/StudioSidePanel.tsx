@@ -107,7 +107,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {!collapsed && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-                {language === "ko" ? "친구" : "Friends"}
+                {language === "ko" ? "이웃" : "Neighbors"}
               </p>
             </div>
           )}
