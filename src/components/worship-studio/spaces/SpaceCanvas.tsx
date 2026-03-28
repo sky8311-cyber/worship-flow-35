@@ -4,7 +4,9 @@ import { SpaceBlock } from "./SpaceBlock";
 import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
+import { ZoomIn, ZoomOut, Maximize2, Music, Play, Pause } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const CANVAS_WIDTH = 430;
@@ -20,12 +22,18 @@ interface SpaceCanvasProps {
   onCancelEdits: () => void;
   pendingUpdates: Map<string, Partial<SpaceBlockType>>;
   onPendingUpdate: (id: string, updates: Partial<SpaceBlockType>) => void;
+  bgmSongTitle?: string | null;
+  bgmSongArtist?: string | null;
+  bgmVideoId?: string | null;
+  bgmRoomId?: string | null;
+  bgmOwnerName?: string | null;
 }
 
 export function SpaceCanvas({
   spaceId, isOwner, selectedBlockId, onSelectBlock,
   isEditMode, onToggleEditMode, onSaveEdits, onCancelEdits,
   pendingUpdates, onPendingUpdate,
+  bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
@@ -81,48 +89,100 @@ export function SpaceCanvas({
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
-      {/* Desktop toolbar: zoom + edit controls */}
-      {isOwner && !isMobile && (
+      {/* Desktop toolbar: zoom + edit controls + BGM */}
+      {!isMobile && (
         <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Zoom out"
-            >
-              <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom(z => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Zoom in"
-            >
-              <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <button
-              onClick={fitZoom}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Fit to width"
-            >
-              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            {isOwner && (
+              <>
+                <button
+                  onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Zoom out"
+                >
+                  <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoom(z => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Zoom in"
+                >
+                  <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <button
+                  onClick={fitZoom}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Fit to width"
+                >
+                  <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            {isEditMode ? (
+            <BGMButton
+              bgmSongTitle={bgmSongTitle}
+              bgmVideoId={bgmVideoId}
+              bgmRoomId={bgmRoomId}
+              bgmOwnerName={bgmOwnerName}
+              bgmSongArtist={bgmSongArtist}
+            />
+            {isOwner && (
+              isEditMode ? (
+                <>
+                  <button
+                    onClick={onSaveEdits}
+                    className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  >
+                    💾 {language === "ko" ? "저장" : "Save"}
+                  </button>
+                  <button
+                    onClick={onCancelEdits}
+                    className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  >
+                    {language === "ko" ? "취소" : "Cancel"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={onToggleEditMode}
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+                >
+                  ✏️ {language === "ko" ? "편집" : "Edit"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile sticky toolbar */}
+      {isMobile && (
+        <div className="sticky top-0 z-30 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
+          <BGMButton
+            bgmSongTitle={bgmSongTitle}
+            bgmVideoId={bgmVideoId}
+            bgmRoomId={bgmRoomId}
+            bgmOwnerName={bgmOwnerName}
+            bgmSongArtist={bgmSongArtist}
+          />
+          <div className="flex-1" />
+          {isOwner && (
+            isEditMode ? (
               <>
                 <button
                   onClick={onSaveEdits}
-                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-[11px] font-medium shadow"
                 >
                   💾 {language === "ko" ? "저장" : "Save"}
                 </button>
                 <button
                   onClick={onCancelEdits}
-                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[11px] font-medium shadow"
                 >
                   {language === "ko" ? "취소" : "Cancel"}
                 </button>
@@ -130,40 +190,11 @@ export function SpaceCanvas({
             ) : (
               <button
                 onClick={onToggleEditMode}
-                className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+                className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-[11px] font-medium shadow"
               >
                 ✏️ {language === "ko" ? "편집" : "Edit"}
               </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile sticky toolbar */}
-      {isOwner && isMobile && (
-        <div className="sticky top-0 z-30 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
-          {isEditMode ? (
-            <>
-              <button
-                onClick={onSaveEdits}
-                className="flex-1 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-[11px] font-medium shadow"
-              >
-                💾 {language === "ko" ? "저장" : "Save"}
-              </button>
-              <button
-                onClick={onCancelEdits}
-                className="flex-1 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[11px] font-medium shadow"
-              >
-                {language === "ko" ? "취소" : "Cancel"}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={onToggleEditMode}
-              className="ml-auto px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-[11px] font-medium shadow"
-            >
-              ✏️ {language === "ko" ? "편집" : "Edit"}
-            </button>
+            )
           )}
         </div>
       )}
@@ -200,5 +231,68 @@ export function SpaceCanvas({
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Cyworld-style BGM Button ---
+interface BGMButtonProps {
+  bgmSongTitle?: string | null;
+  bgmSongArtist?: string | null;
+  bgmVideoId?: string | null;
+  bgmRoomId?: string | null;
+  bgmOwnerName?: string | null;
+}
+
+function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongArtist }: BGMButtonProps) {
+  const { startPlaylist, closePlayer, isPlaying, setPlayerState, playlist } = useMusicPlayer();
+  const [hasStarted, setHasStarted] = useState(false);
+
+  if (!bgmSongTitle || !bgmVideoId || !bgmRoomId) return null;
+
+  const isBGMPlaying = hasStarted && isPlaying && playlist.some(t => t.videoId === bgmVideoId);
+  const needsMarquee = bgmSongTitle.length > 12;
+
+  const handleToggle = () => {
+    if (!hasStarted || !isBGMPlaying) {
+      startPlaylist(
+        [{
+          videoId: bgmVideoId,
+          title: bgmSongTitle,
+          artist: bgmSongArtist || "",
+          position: 0,
+        }],
+        `${bgmOwnerName || "Studio"} BGM`,
+        bgmRoomId
+      );
+      setPlayerState("hidden");
+      setHasStarted(true);
+    } else {
+      closePlayer();
+      setHasStarted(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="flex items-center gap-1.5 bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] rounded-full px-2.5 py-1 max-w-[180px] transition-colors"
+    >
+      <Music className="h-3.5 w-3.5 shrink-0 text-[#b8902a]" />
+      <div className="overflow-hidden max-w-[100px]">
+        <span
+          className={cn(
+            "text-[11px] whitespace-nowrap block text-foreground",
+            needsMarquee && "animate-marquee"
+          )}
+        >
+          {bgmSongTitle}
+        </span>
+      </div>
+      {isBGMPlaying ? (
+        <Pause className="h-3 w-3 shrink-0 text-foreground" />
+      ) : (
+        <Play className="h-3 w-3 shrink-0 text-foreground" />
+      )}
+    </button>
   );
 }

@@ -10,7 +10,7 @@ export { StudioViewHeader } from "./StudioViewHeader";
 export { StudioModules } from "./StudioModules";
 export { StudioPostComposer } from "./StudioPostComposer";
 export { StudioSettingsDialog } from "./StudioSettingsDialog";
-export { StudioBGMBar } from "./StudioBGMBar";
+
 export { StudioBGMSelector } from "./StudioBGMSelector";
 export { StudioEmptyState } from "./StudioEmptyState";
 export { StudioLockedState } from "./StudioLockedState";

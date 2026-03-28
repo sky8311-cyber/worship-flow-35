@@ -14,12 +14,22 @@ interface StudioMainPanelProps {
   myStudioId?: string | null;
   selectedStudioId?: string | null;
   onStudioSelect?: (roomId: string) => void;
+  bgmSongTitle?: string | null;
+  bgmSongArtist?: string | null;
+  bgmVideoId?: string | null;
+  bgmRoomId?: string | null;
+  bgmOwnerName?: string | null;
 }
 
 export function StudioMainPanel({
   myStudioId,
   selectedStudioId,
   onStudioSelect,
+  bgmSongTitle,
+  bgmSongArtist,
+  bgmVideoId,
+  bgmRoomId,
+  bgmOwnerName,
 }: StudioMainPanelProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
@@ -109,6 +119,11 @@ export function StudioMainPanel({
               onCancelEdits={handleCancelEdits}
               pendingUpdates={pendingUpdates}
               onPendingUpdate={handlePendingUpdate}
+              bgmSongTitle={bgmSongTitle}
+              bgmSongArtist={bgmSongArtist}
+              bgmVideoId={bgmVideoId}
+              bgmRoomId={bgmRoomId}
+              bgmOwnerName={bgmOwnerName}
             />
 
             {/* Desktop: always-visible side panel */}
