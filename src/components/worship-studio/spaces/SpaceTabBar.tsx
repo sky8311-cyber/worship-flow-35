@@ -57,7 +57,6 @@ function SortableTab({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    borderBottomColor: isActive ? space.color : "transparent",
   };
 
   useEffect(() => {
@@ -85,10 +84,11 @@ function SortableTab({
         if (isOwner) { setEditName(space.name); setEditing(true); }
       }}
       className={cn(
-        "px-3 py-2 rounded-t-lg text-sm flex items-center gap-1.5 cursor-pointer",
-        "border-b-2 transition-colors select-none whitespace-nowrap shrink-0",
+        "px-3 text-[12px] flex items-center gap-1 cursor-pointer select-none whitespace-nowrap shrink-0 rounded-t-md border transition-colors",
         isDragging && "opacity-50",
-        isActive ? "bg-background font-medium text-foreground" : "border-transparent hover:bg-accent/30"
+        isActive
+          ? "bg-white border-[#d0c8bc] border-b-0 -mb-px z-10 font-semibold text-foreground py-2"
+          : "bg-[#e8e0d5] border-[#d0c8bc] text-muted-foreground hover:bg-[#f0e8dd] py-1.5"
       )}
     >
       <span>{space.icon}</span>
@@ -174,10 +174,11 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
 
   return (
     <>
-      <div className="border-b border-border/40 px-4 bg-[hsl(var(--background))] flex items-center gap-1 overflow-x-auto">
+      {/* Tab bar with folder-tab style */}
+      <div className="relative px-4 pt-1 bg-[hsl(var(--background))] flex items-end gap-0.5 overflow-x-auto border-b border-[#d0c8bc]">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={spaces.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
-            {spaces.map((space, idx) => (
+            {spaces.map((space) => (
               <SortableTab
                 key={space.id}
                 space={space}
@@ -195,21 +196,21 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
           <Button
             size="sm" variant="ghost"
             onClick={() => setCreateOpen(true)}
-            className="h-8 gap-1 text-muted-foreground hover:text-foreground shrink-0"
+            className="h-7 gap-1 text-muted-foreground hover:text-foreground shrink-0 mb-px"
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="text-xs">{language === "ko" ? "새 공간" : "New Space"}</span>
           </Button>
         )}
 
-        {/* Guestbook button — spacer + right aligned */}
+        {/* Guestbook button — right aligned */}
         {activeSpace?.guestbook_enabled && (
           <>
             <div className="flex-1" />
             <Button
               size="sm" variant="ghost"
               onClick={() => setGuestbookOpen(true)}
-              className="h-8 gap-1 text-muted-foreground hover:text-foreground shrink-0"
+              className="h-7 gap-1 text-muted-foreground hover:text-foreground shrink-0 mb-px"
             >
               <Mail className="h-3.5 w-3.5" />
               <span className="text-xs">
