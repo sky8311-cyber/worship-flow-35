@@ -27,9 +27,10 @@ interface StudioSidePanelProps {
   myStudioId?: string;
   onStudioSelect: (roomId: string) => void;
   onMyStudioSelect: () => void;
+  mode?: "sidebar" | "sheet";
 }
 
-export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }: StudioSidePanelProps) {
+export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, mode = "sidebar" }: StudioSidePanelProps) {
   const { language } = useTranslation();
   const { user } = useAuth();
   const studios = useStoryBarStudios(myStudioId);
