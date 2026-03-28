@@ -104,7 +104,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* FRIENDS — real or placeholder */}
       {friendStudios.length > 0 ? (
         <div>
-          {!collapsed && !isMobile && (
+          {!collapsed && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "친구" : "Friends"}
@@ -129,7 +129,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && !isMobile && (
+          {!collapsed && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
@@ -160,7 +160,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (
         <div>
-          {!collapsed && !isMobile && (
+          {!collapsed && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
@@ -185,7 +185,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && !isMobile && (
+          {!collapsed && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
