@@ -37,14 +37,14 @@ export function StudioMainPanel({
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger 
               value="studio"
-              className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
+              className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
             >
               <User className="h-4 w-4 mr-1.5" />
               {language === "ko" ? "작업실" : "Studio"}
             </TabsTrigger>
             <TabsTrigger 
               value="feed" 
-              className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
+              className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
             >
               <Newspaper className="h-4 w-4 mr-1.5" />
               {language === "ko" ? "흐름" : "Feed"}
@@ -52,7 +52,7 @@ export function StudioMainPanel({
             {isOwnStudio && myStudioId && (
               <TabsTrigger 
                 value="newpost"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
               >
                 <PenLine className="h-4 w-4 mr-1.5" />
                 {language === "ko" ? "기록" : "New Post"}
@@ -61,9 +61,9 @@ export function StudioMainPanel({
             {isMobile && (
               <TabsTrigger 
                 value="discover"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
-              >
-                <Compass className="h-4 w-4 mr-1.5" />
+              className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-[#b8902a] rounded-none px-3 text-sm"
+            >
+              <Compass className="h-4 w-4 mr-1.5" />
                 {language === "ko" ? "탐색" : "Discover"}
               </TabsTrigger>
             )}

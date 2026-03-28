@@ -11,6 +11,8 @@ type RoomVisibility = Database["public"]["Enums"]["room_visibility"];
 type RoomReactionType = Database["public"]["Enums"]["room_reaction_type"];
 
 export type DisplayType = "list" | "card" | "gallery";
+export type WorkflowStage = "draft" | "in_progress" | "refined" | "published";
+export type BlockType = "song" | "worship_set" | "scripture" | "prayer_note" | "audio" | "note";
 
 export interface BlockContent {
   id: string;
@@ -37,6 +39,8 @@ export interface StudioPost {
   is_draft: boolean;
   visibility: RoomVisibility | null;
   is_pinned: boolean;
+  workflow_stage: WorkflowStage;
+  block_type: BlockType;
   created_at: string;
   updated_at: string;
   author?: {
@@ -109,6 +113,8 @@ export function useStudioPosts(roomId?: string, includeDrafts = false) {
           ...post,
           blocks: parsedBlocks,
           display_type: (post.display_type as DisplayType) || "card",
+          workflow_stage: (post.workflow_stage as WorkflowStage) || "draft",
+          block_type: (post.block_type as BlockType) || "note",
           reactions: reactionTypes.map(type => ({
             reaction_type: type,
             count: postReactions.filter((r: any) => r.reaction_type === type).length,
@@ -138,6 +144,8 @@ export function useCreateStudioPost() {
       is_draft?: boolean;
       post_type?: RoomPostType;
       visibility?: RoomVisibility | null;
+      workflow_stage?: WorkflowStage;
+      block_type?: BlockType;
     }) => {
       if (!user) throw new Error("Not authenticated");
       
@@ -154,6 +162,8 @@ export function useCreateStudioPost() {
           is_draft: post.is_draft ?? false,
           post_type: post.post_type || "general",
           visibility: post.visibility || null,
+          workflow_stage: post.workflow_stage || "draft",
+          block_type: post.block_type || "note",
         })
         .select()
         .single();
@@ -192,6 +202,8 @@ export function useUpdateStudioPost() {
         display_type: DisplayType;
         cover_image_url: string;
         is_draft: boolean;
+        workflow_stage: WorkflowStage;
+        block_type: BlockType;
       }>;
     }) => {
       const { error } = await supabase

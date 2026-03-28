@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateStudioPost, type BlockContent, type DisplayType } from "@/hooks/useStudioPosts";
+import { useCreateStudioPost, type BlockContent, type DisplayType, type WorkflowStage, type BlockType } from "@/hooks/useStudioPosts";
 import { StudioBlockEditor } from "./editor/StudioBlockEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [displayType, setDisplayType] = useState<DisplayType>("card");
   const [coverUrl, setCoverUrl] = useState("");
+  const [blockType, setBlockType] = useState<BlockType>("note");
+  const [workflowStage, setWorkflowStage] = useState<WorkflowStage>("draft");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     (room?.visibility as RoomVisibility) || "friends"
   );
@@ -63,6 +65,8 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       cover_image_url: coverUrl || undefined,
       is_draft: isDraft,
       visibility,
+      block_type: blockType,
+      workflow_stage: isDraft ? "draft" : workflowStage === "draft" ? "published" : workflowStage,
     }, {
       onSuccess: () => {
         onSuccess?.();
@@ -115,6 +119,36 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       {/* Editor content */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="max-w-2xl mx-auto p-4 space-y-6 border-t border-border/30">
+          {/* Block Type Selector */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {language === "ko" ? "블록 유형" : "Block Type"}
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                { value: "note" as BlockType, label: "▪ 노트", labelEn: "▪ Note" },
+                { value: "song" as BlockType, label: "♩ 곡", labelEn: "♩ Song" },
+                { value: "worship_set" as BlockType, label: "✦ 워십셋", labelEn: "✦ Set" },
+                { value: "scripture" as BlockType, label: "📖 말씀", labelEn: "📖 Scripture" },
+                { value: "prayer_note" as BlockType, label: "✦ 기도노트", labelEn: "✦ Prayer" },
+                { value: "audio" as BlockType, label: "◉ 오디오", labelEn: "◉ Audio" },
+              ]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setBlockType(opt.value)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    blockType === opt.value
+                      ? "border-[#b8902a] bg-[#b8902a]/10 text-[#b8902a]"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {language === "ko" ? opt.label : opt.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Title */}
           <div>
             <Input
@@ -210,6 +244,33 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
                   );
                 })}
               </div>
+            </div>
+          </div>
+
+          {/* Workflow Stage Selector */}
+          <div className="border-t border-border pt-6 space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {language === "ko" ? "작업 단계" : "Workflow Stage"}
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "draft" as WorkflowStage, label_ko: "초안", label_en: "Draft" },
+                { value: "in_progress" as WorkflowStage, label_ko: "진행중", label_en: "In Progress" },
+                { value: "refined" as WorkflowStage, label_ko: "완성", label_en: "Refined" },
+              ]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setWorkflowStage(opt.value)}
+                  className={cn(
+                    "px-3 py-2.5 rounded-lg border text-sm transition-colors",
+                    workflowStage === opt.value
+                      ? "border-[#b8902a] bg-[#b8902a]/10 text-[#b8902a] font-medium"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {language === "ko" ? opt.label_ko : opt.label_en}
+                </button>
+              ))}
             </div>
           </div>
           

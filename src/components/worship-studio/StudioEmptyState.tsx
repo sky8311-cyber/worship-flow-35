@@ -32,7 +32,7 @@ export function StudioEmptyState({ type, onAction, onHelp }: StudioEmptyStatePro
         </p>
         
         {onAction && (
-          <Button variant="outline" onClick={onAction} className="gap-2">
+          <Button variant="outline" onClick={onAction} className="gap-2 border-[#b8902a] text-[#b8902a] hover:bg-[#b8902a] hover:text-white">
             {language === "ko" ? "첫 기록 시작하기 →" : "Start your first entry →"}
           </Button>
         )}
