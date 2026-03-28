@@ -246,6 +246,33 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
               </div>
             </div>
           </div>
+
+          {/* Workflow Stage Selector */}
+          <div className="border-t border-border pt-6 space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              {language === "ko" ? "작업 단계" : "Workflow Stage"}
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "draft" as WorkflowStage, label_ko: "초안", label_en: "Draft" },
+                { value: "in_progress" as WorkflowStage, label_ko: "진행중", label_en: "In Progress" },
+                { value: "refined" as WorkflowStage, label_ko: "완성", label_en: "Refined" },
+              ]).map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setWorkflowStage(opt.value)}
+                  className={cn(
+                    "px-3 py-2.5 rounded-lg border text-sm transition-colors",
+                    workflowStage === opt.value
+                      ? "border-[#b8902a] bg-[#b8902a]/10 text-[#b8902a] font-medium"
+                      : "border-border text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {language === "ko" ? opt.label_ko : opt.label_en}
+                </button>
+              ))}
+            </div>
+          </div>
           
           {/* Philosophy quote */}
           <div className="text-center py-8 text-muted-foreground/60 text-sm italic border-t border-border">
