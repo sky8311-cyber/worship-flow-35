@@ -247,64 +247,69 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
   return (
     <>
-      <div
-        className={cn(
-          isSheet
-            ? "w-full overflow-auto"
-            : `${collapsed ? "w-14" : "w-56"} relative overflow-visible flex flex-col shrink-0 h-full transition-all duration-300 ease-in-out`
-        )}
-        style={!isSheet ? { background: 'linear-gradient(to bottom, #87CEEB 0%, #b8d9f0 40%, #daeeff 100%)' } : undefined}
-      >
-        {/* Collapse toggle — sidebar only */}
+      {/* Outer wrapper — relative so collapse button can overflow */}
+      <div className={cn(
+        "relative",
+        isSheet ? "w-full" : `${collapsed ? "w-14" : "w-56"} shrink-0 h-full transition-all duration-300 ease-in-out`
+      )}>
+        {/* Collapse toggle — outside overflow-hidden container */}
         {!isSheet && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="absolute top-2 right-0 translate-x-1/2 z-30 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
+            className="absolute top-2 right-0 translate-x-1/2 z-40 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
           >
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
         )}
 
-        {/* Cloud decorations — visible when expanded, sidebar only */}
-        {!isSheet && !collapsed && (
-          <>
-            <div className="absolute top-3 left-3 text-2xl opacity-80 select-none pointer-events-none z-0">☁️</div>
-            <div className="absolute top-8 right-2 text-lg opacity-60 select-none pointer-events-none z-0">☁️</div>
-            <div className="absolute top-16 left-8 text-sm opacity-40 select-none pointer-events-none z-0">☁️</div>
-          </>
-        )}
+        {/* Sky wrapper — overflow-hidden so absolute children get proper height */}
+        <div
+          className={cn(
+            "h-full w-full",
+            isSheet ? "overflow-auto" : "relative overflow-hidden"
+          )}
+          style={!isSheet ? { background: 'linear-gradient(to bottom, #87CEEB 0%, #b8d9f0 40%, #daeeff 100%)' } : undefined}
+        >
+          {/* Cloud decorations — visible when expanded, sidebar only */}
+          {!isSheet && !collapsed && (
+            <>
+              <div className="absolute top-3 left-3 text-2xl opacity-80 select-none pointer-events-none z-0">☁️</div>
+              <div className="absolute top-8 right-2 text-lg opacity-60 select-none pointer-events-none z-0">☁️</div>
+              <div className="absolute top-16 left-8 text-sm opacity-40 select-none pointer-events-none z-0">☁️</div>
+            </>
+          )}
 
-        {isSheet ? (
-          /* Sheet mode — no decorations, flat layout */
-          <ScrollArea className="flex-1">
-            {buildingContent}
-          </ScrollArea>
-        ) : (
-          <>
-            {/* Building body — apartment sitting on the sky */}
-            <div
-              className="absolute left-0 right-0 z-10 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
-              style={{
-                top: 28,
-                bottom: 24,
-                boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              <ScrollArea className="flex-1">
-                {buildingContent}
-              </ScrollArea>
-            </div>
+          {isSheet ? (
+            <ScrollArea className="flex-1">
+              {buildingContent}
+            </ScrollArea>
+          ) : (
+            <>
+              {/* Building body — apartment sitting on the sky */}
+              <div
+                className="absolute left-0 right-0 z-10 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
+                style={{
+                  top: 28,
+                  bottom: 24,
+                  boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
+                }}
+              >
+                <ScrollArea className="flex-1 min-h-0">
+                  {buildingContent}
+                </ScrollArea>
+              </div>
 
-            {/* Road bar — bottom */}
-            <div
-              className="absolute bottom-0 left-0 right-0 h-6 z-20 flex items-center px-2 select-none pointer-events-none"
-              style={{ background: '#555', borderTop: '2px solid #444' }}
-            >
-              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/30" />
-              <span className="absolute right-2 text-xs">🚗</span>
-            </div>
-          </>
-        )}
+              {/* Road bar — bottom */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-6 z-20 flex items-center px-2 select-none pointer-events-none"
+                style={{ background: '#555', borderTop: '2px solid #444' }}
+              >
+                <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/30" />
+                <span className="absolute right-2 text-xs">🚗</span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Story Card Overlay */}
