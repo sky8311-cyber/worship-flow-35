@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStoryBarStudios, incrementVisitCount, type StoryStudio } from "@/hooks/useStoryBarStudios";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
@@ -39,6 +41,24 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
 
+  // Fetch current user's profile avatar (covers email signups who set avatar via settings)
+  const { data: profileAvatar } = useQuery({
+    queryKey: ["my-profile-avatar", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .single();
+      return data?.avatar_url || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const myAvatarUrl = user?.user_metadata?.avatar_url || profileAvatar || undefined;
+
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
   const ambassadorStudios = studios.filter(s => s.isAmbassador);
@@ -67,7 +87,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className={collapsed ? "" : ""}>
           <StudioUnit
             compact={isSheet}
-            avatarUrl={user?.user_metadata?.avatar_url || myStudio.avatarUrl || undefined}
+            avatarUrl={myAvatarUrl}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
             roomId={myStudio.id}
