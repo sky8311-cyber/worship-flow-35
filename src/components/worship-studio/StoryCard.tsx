@@ -25,10 +25,6 @@ export function StoryCard({ studios, initialIndex, onClose, onVisit }: StoryCard
   const [paused, setPaused] = useState(false);
 
   const studio = studios[currentIndex];
-  if (!studio) {
-    onClose();
-    return null;
-  }
 
   const goNext = useCallback(() => {
     if (currentIndex < studios.length - 1) {
