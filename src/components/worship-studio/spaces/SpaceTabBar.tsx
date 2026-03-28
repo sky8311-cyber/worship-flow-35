@@ -130,7 +130,7 @@ function SortableTab({
 
 export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roomOwnerId }: SpaceTabBarProps) {
   const { language } = useTranslation();
-  const { data: spaces = [] } = useStudioSpaces(roomId);
+  const { data: spaces = [], isLoading: isSpacesLoading } = useStudioSpaces(roomId);
   const updateSpace = useUpdateSpace();
   const reorderSpaces = useReorderSpaces();
   const [createOpen, setCreateOpen] = useState(false);
@@ -145,8 +145,6 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-
-  const { isLoading: isSpacesLoading } = useStudioSpaces(roomId);
 
   useEffect(() => {
     if (isSpacesLoading || !roomId || !isOwner) return;
