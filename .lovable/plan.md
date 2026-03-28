@@ -1,90 +1,82 @@
 
 
-# Studio v2 Phase C: Figma-style Space Canvas
+# Studio v2 Phase C — Canvas Components Implementation
 
 ## Overview
-Replace the Muji dot grid placeholder in `StudioMainPanel` with a fully interactive Figma-style infinite canvas. Blocks can be freely placed, dragged, resized, and selected on a pan/zoom grid surface.
+Rewrite the canvas system with 5 components: MujiGridBackground, SpaceCanvas, SpaceBlock, ResizeHandle, SpaceBlockPicker. Remove old BlockAddMenu and BlockPropertyPanel. Remove pan/zoom — use simple scrollable canvas with absolute-positioned blocks.
 
-## Components to Create
+## Files to Create/Edit
 
-### 1. `src/components/worship-studio/spaces/SpaceCanvas.tsx`
-Main canvas container:
-- Load blocks via `useSpaceBlocks(spaceId)`
-- Render Muji dot grid background (existing CSS)
-- Pan: mouse drag on background (middle-click or hold Space+drag), touch two-finger
-- State: `offset` (pan x/y), `zoom` (scale 0.25–2.0, default 1.0)
-- Transform wrapper: `transform: scale(${zoom}) translate(${offset.x}px, ${offset.y}px)`
-- Click on empty area → deselect all blocks
-- Owner: right-click or double-click on empty area → open `BlockAddMenu` at cursor position
-- Props: `spaceId`, `isOwner`
+### 1. Create `MujiGridBackground.tsx`
+- Simple div with Muji dot grid: `radial-gradient(circle, #c8bfb0 1px, transparent 1px)`, bg `#faf7f2`, size 20px
+- `width: 100%`, `height: 100%`, absolute inset-0, pointer-events-none
 
-### 2. `src/components/worship-studio/spaces/SpaceBlock.tsx`
-Individual block on canvas:
-- Absolute positioned at `pos_x, pos_y` with `size_w × size_h`
-- Draggable (mouse/touch) → `useUpdateBlock` on drag end (debounced)
-- Resizable via bottom-right corner handle (8×8 dot) → update `size_w/size_h`
-- Click → select (blue outline `ring-2 ring-blue-400`)
-- Owner only: drag + resize enabled
-- Content rendering by `block_type` (reuse color scheme from `SortableCanvasBlock`)
-- Z-index from `block.z_index`
-- Min size: 100×80
+### 2. Rewrite `SpaceCanvas.tsx`
+- Remove pan/zoom/wheel logic entirely
+- Structure: scrollable div with dynamic height
+- Height calc: `blocks.length === 0 ? '100vh' : max(block.pos_y + block.size_h) + 400 + 'px'`
+- Render `<MujiGridBackground />` + blocks via `<SpaceBlock>`
+- Click empty area → deselect (`selectedId = null`)
+- Props: `spaceId`, `isOwner`; expose `selectedBlockId` state for picker
 
-### 3. `src/components/worship-studio/spaces/BlockAddMenu.tsx`
-Floating menu for adding blocks:
-- Appears at cursor/tap position on canvas
-- Grid of block type buttons (same 6 types: song, worship_set, scripture, prayer_note, audio, note)
-- On select: `useCreateBlock` with `pos_x/pos_y` at menu position, default `size_w=200, size_h=150`
-- Click outside → dismiss
-- Reuses icon/color scheme from `CanvasRightPanel`
+### 3. Rewrite `SpaceBlock.tsx`
+- `position: absolute`, `left/top/width/height` from block data
+- Selection ring: `ring-2 ring-[#b8902a] shadow-lg`
+- Interior: colored placeholder with icon + type name (from 12-type map)
+- **Drag** via Pointer Events + `setPointerCapture`:
+  - `GRID_SNAP = 20`, snap via `Math.round(v/20)*20`
+  - Optimistic local state during drag
+  - Drag visual: `opacity-85`, `rotate(0.3deg) scale(1.02)`, enhanced shadow, `cursor: grabbing`
+  - Boundary clamp: `pos_x >= 0`, `pos_y >= 0`
+  - `onPointerUp` → call `useUpdateBlock()` to persist
+- Owner-only drag
 
-### 4. `src/components/worship-studio/spaces/BlockPropertyPanel.tsx`
-Right-side property panel (desktop) / Bottom sheet (mobile):
-- Shows when a block is selected
-- Reuses `BlockPropertyForm` logic from `CanvasRightPanel.tsx`
-- Additional controls: delete block button, z-index up/down
-- Width: 260px fixed on desktop, full-width Drawer on mobile
-- Updates via `useUpdateBlock`
+### 4. Create `ResizeHandle.tsx`
+- Renders 8 handles (4 corners + 4 edges) around selected block
+- Each handle: 8×8px white circle, `border: 2px solid #b8902a`
+- Pointer events for resize with `GRID_SNAP = 20`
+- Min size: 80×60
+- Appropriate cursors per direction (nw-resize, ne-resize, etc.)
+- Handles adjust both position and size depending on direction
 
-## Changes to Existing Files
+### 5. Create `SpaceBlockPicker.tsx` (right panel, w-72)
+**State A — No block selected:**
+- Title: "블록 추가"
+- 3-column grid with 12 block types: 제목/부제목/포스트잇/번호목록/체크리스트/사진/유튜브/음악/예배셋/링크/파일/명함
+- Click → `useCreateBlock()` at canvas center
 
-### `StudioMainPanel.tsx`
-- Replace the Muji placeholder `<div>` with `<SpaceCanvas spaceId={activeSpaceId} isOwner={isOwnStudio} />`
+**State B — Block selected:**
+- Top: position/size readout `X: pos_x  Y: pos_y  W: size_w  H: size_h`
+- Middle: placeholder text "Phase D에서 settings 구현 예정"
+- Bottom: red "블록 삭제" button with confirm dialog → `useDeleteBlock()`
 
-## Technical Details
+### 6. Update `StudioMainPanel.tsx`
+- Layout: `flex row` — `SpaceCanvas` (flex-1) + `SpaceBlockPicker` (w-72 fixed right)
+- Pass `selectedBlockId` and setter between canvas and picker
+- Remove old BlockAddMenu/BlockPropertyPanel imports
 
-### Drag implementation
-- Use native `onPointerDown/Move/Up` for block dragging (not @dnd-kit — free positioning, not list sorting)
-- Track `dragStart` position and block's initial `pos_x/pos_y`
-- On pointer up: call `useUpdateBlock` to persist final position
-- Optimistic local state during drag for smooth UX
+### 7. Delete old files
+- `BlockAddMenu.tsx` — replaced by SpaceBlockPicker
+- `BlockPropertyPanel.tsx` — replaced by SpaceBlockPicker
 
-### Resize implementation
-- Bottom-right handle: same pointer event approach
-- Constrain min 100×80, snap to 10px grid optional
-- Persist on pointer up via `useUpdateBlock`
+## Block Types (12 total, expanded from 6)
+| Type | Icon | Label | Color |
+|------|------|-------|-------|
+| title | Type | 제목 | #4a4a4a |
+| subtitle | Type | 부제목 | #6b6b6b |
+| sticky_note | StickyNote | 포스트잇 | #e8c840 |
+| numbered_list | ListOrdered | 번호목록 | #5a7a5a |
+| checklist | CheckSquare | 체크리스트 | #4a7c6a |
+| photo | Image | 사진 | #7c6a9e |
+| youtube | Youtube | 유튜브 | #cc3333 |
+| song | Music | 음악 | #7c6a9e |
+| worship_set | Calendar | 예배셋 | #b8902a |
+| link | Link | 링크 | #3a6b8a |
+| file | FileText | 파일 | #6b6560 |
+| business_card | Contact | 명함 | #8b5e52 |
 
-### Pan & Zoom
-- Pan: track `isPanning` state, update `offset` on pointer move
-- Zoom: wheel event with `e.deltaY`, centered on cursor position
-- Mobile: pinch-to-zoom via touch events (two-finger distance delta)
-- Store offset/zoom per space in component state (reset on space switch)
-
-### Block type rendering
-Color scheme (from existing codebase):
-- song: `#7c6a9e` | worship_set: `#b8902a` | scripture: `#4a7c6a`
-- prayer_note: `#8b5e52` | audio: `#3a6b8a` | note: `#6b6560`
-
-Each block shows: 4px left border in type color, type icon + label badge, content preview text
-
-## Files
-
-| Action | File |
-|--------|------|
-| Create | `src/components/worship-studio/spaces/SpaceCanvas.tsx` |
-| Create | `src/components/worship-studio/spaces/SpaceBlock.tsx` |
-| Create | `src/components/worship-studio/spaces/BlockAddMenu.tsx` |
-| Create | `src/components/worship-studio/spaces/BlockPropertyPanel.tsx` |
-| Edit | `src/components/worship-studio/StudioMainPanel.tsx` |
-
-No database changes — uses `space_blocks` table and hooks from Phase A.
+## Technical Notes
+- `useSpaceBlocks`, `useCreateBlock`, `useUpdateBlock`, `useDeleteBlock` hooks remain unchanged
+- No pan/zoom — canvas scrolls naturally via `overflow-y: auto` on parent
+- `selectedBlockId` state lives in SpaceCanvas, passed to picker via props or lifted to StudioMainPanel
 
