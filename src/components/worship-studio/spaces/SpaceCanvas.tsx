@@ -89,48 +89,100 @@ export function SpaceCanvas({
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
-      {/* Desktop toolbar: zoom + edit controls */}
-      {isOwner && !isMobile && (
+      {/* Desktop toolbar: zoom + edit controls + BGM */}
+      {!isMobile && (
         <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Zoom out"
-            >
-              <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom(z => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Zoom in"
-            >
-              <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <button
-              onClick={fitZoom}
-              className="p-1.5 rounded-md hover:bg-accent transition"
-              title="Fit to width"
-            >
-              <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            {isOwner && (
+              <>
+                <button
+                  onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Zoom out"
+                >
+                  <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoom(z => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Zoom in"
+                >
+                  <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+                <button
+                  onClick={fitZoom}
+                  className="p-1.5 rounded-md hover:bg-accent transition"
+                  title="Fit to width"
+                >
+                  <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
-            {isEditMode ? (
+            <BGMButton
+              bgmSongTitle={bgmSongTitle}
+              bgmVideoId={bgmVideoId}
+              bgmRoomId={bgmRoomId}
+              bgmOwnerName={bgmOwnerName}
+              bgmSongArtist={bgmSongArtist}
+            />
+            {isOwner && (
+              isEditMode ? (
+                <>
+                  <button
+                    onClick={onSaveEdits}
+                    className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  >
+                    💾 {language === "ko" ? "저장" : "Save"}
+                  </button>
+                  <button
+                    onClick={onCancelEdits}
+                    className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  >
+                    {language === "ko" ? "취소" : "Cancel"}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={onToggleEditMode}
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+                >
+                  ✏️ {language === "ko" ? "편집" : "Edit"}
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile sticky toolbar */}
+      {isMobile && (
+        <div className="sticky top-0 z-30 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
+          <BGMButton
+            bgmSongTitle={bgmSongTitle}
+            bgmVideoId={bgmVideoId}
+            bgmRoomId={bgmRoomId}
+            bgmOwnerName={bgmOwnerName}
+            bgmSongArtist={bgmSongArtist}
+          />
+          <div className="flex-1" />
+          {isOwner && (
+            isEditMode ? (
               <>
                 <button
                   onClick={onSaveEdits}
-                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-[11px] font-medium shadow"
                 >
                   💾 {language === "ko" ? "저장" : "Save"}
                 </button>
                 <button
                   onClick={onCancelEdits}
-                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                  className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[11px] font-medium shadow"
                 >
                   {language === "ko" ? "취소" : "Cancel"}
                 </button>
@@ -138,40 +190,11 @@ export function SpaceCanvas({
             ) : (
               <button
                 onClick={onToggleEditMode}
-                className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+                className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-[11px] font-medium shadow"
               >
                 ✏️ {language === "ko" ? "편집" : "Edit"}
               </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Mobile sticky toolbar */}
-      {isOwner && isMobile && (
-        <div className="sticky top-0 z-30 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
-          {isEditMode ? (
-            <>
-              <button
-                onClick={onSaveEdits}
-                className="flex-1 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-[11px] font-medium shadow"
-              >
-                💾 {language === "ko" ? "저장" : "Save"}
-              </button>
-              <button
-                onClick={onCancelEdits}
-                className="flex-1 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-[11px] font-medium shadow"
-              >
-                {language === "ko" ? "취소" : "Cancel"}
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={onToggleEditMode}
-              className="ml-auto px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-[11px] font-medium shadow"
-            >
-              ✏️ {language === "ko" ? "편집" : "Edit"}
-            </button>
+            )
           )}
         </div>
       )}
