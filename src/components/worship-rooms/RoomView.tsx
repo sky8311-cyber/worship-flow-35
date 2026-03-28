@@ -23,32 +23,7 @@ export function RoomView({ roomId, isOwnRoom = false }: RoomViewProps) {
   const { t } = useTranslation();
   const { room, isLoading } = useWorshipRoomById(roomId);
   const { data: posts, isLoading: postsLoading } = useRoomPosts(roomId);
-  const { startPlaylist, closePlayer, setPlayerState } = useMusicPlayer();
-
-  // Auto-play BGM when entering the room
-  useEffect(() => {
-    if (room?.bgm_song && room.bgm_song.youtube_url) {
-      const videoId = extractVideoId(room.bgm_song.youtube_url);
-      if (videoId) {
-        startPlaylist(
-          [{
-            videoId,
-            title: room.bgm_song.title,
-            artist: room.bgm_song.artist || "",
-            position: 0,
-          }],
-          `${room.owner?.full_name || "Room"} BGM`,
-          room.id
-        );
-        setPlayerState("mini");
-      }
-    }
-
-    // Stop music when leaving the room
-    return () => {
-      closePlayer();
-    };
-  }, [room?.bgm_song?.id, room?.id]);
+  // BGM no longer auto-plays or force-closes on navigation
 
   if (isLoading) {
     return (

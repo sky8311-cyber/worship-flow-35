@@ -86,11 +86,6 @@ export default function WorshipStudio() {
         onBack={handleBack}
         onSettings={() => setShowSettings(true)}
         onShare={() => setShowShare(true)}
-        bgmSongTitle={currentStudio?.bgm_song?.title}
-        bgmSongArtist={currentStudio?.bgm_song?.artist}
-        bgmVideoId={bgmVideoId}
-        bgmRoomId={currentStudio?.id}
-        bgmOwnerName={currentStudio?.owner?.full_name}
       />
       
       {/* Main content: Side panel + Canvas */}
@@ -107,6 +102,11 @@ export default function WorshipStudio() {
           myStudioId={myStudio?.id}
           selectedStudioId={selectedStudioId}
           onStudioSelect={handleStudioSelect}
+          bgmSongTitle={currentStudio?.bgm_song?.title || null}
+          bgmSongArtist={currentStudio?.bgm_song?.artist || null}
+          bgmVideoId={bgmVideoId || null}
+          bgmRoomId={currentStudio?.id || null}
+          bgmOwnerName={currentStudio?.owner?.full_name || null}
         />
       </div>
 
