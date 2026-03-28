@@ -19,6 +19,16 @@ interface StudioMainPanelProps {
   bgmVideoId?: string | null;
   bgmRoomId?: string | null;
   bgmOwnerName?: string | null;
+  // Marquee
+  marqueeText?: string | null;
+  marqueeTextColor?: string | null;
+  marqueeBgColor?: string | null;
+  marqueeSpeed?: number | null;
+  // Settings
+  onOpenSettings?: () => void;
+  // Neighbor
+  onAddNeighbor?: () => void;
+  neighborStatus?: "none" | "pending" | "accepted" | null;
 }
 
 export function StudioMainPanel({
@@ -30,6 +40,13 @@ export function StudioMainPanel({
   bgmVideoId,
   bgmRoomId,
   bgmOwnerName,
+  marqueeText,
+  marqueeTextColor,
+  marqueeBgColor,
+  marqueeSpeed,
+  onOpenSettings,
+  onAddNeighbor,
+  neighborStatus,
 }: StudioMainPanelProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
@@ -48,7 +65,6 @@ export function StudioMainPanel({
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
 
-  // Reset on room change
   useEffect(() => {
     setActiveSpaceId(null);
     setSelectedBlockId(null);
@@ -56,14 +72,12 @@ export function StudioMainPanel({
     setPendingUpdates(new Map());
   }, [currentRoomId]);
 
-  // Auto-select first space
   useEffect(() => {
     if (spaces.length > 0 && !activeSpaceId) {
       setActiveSpaceId(spaces[0].id);
     }
   }, [spaces, activeSpaceId]);
 
-  // Clear selection on space change
   useEffect(() => {
     setSelectedBlockId(null);
     setIsEditMode(false);
@@ -124,9 +138,15 @@ export function StudioMainPanel({
               bgmVideoId={bgmVideoId}
               bgmRoomId={bgmRoomId}
               bgmOwnerName={bgmOwnerName}
+              marqueeText={marqueeText}
+              marqueeTextColor={marqueeTextColor}
+              marqueeBgColor={marqueeBgColor}
+              marqueeSpeed={marqueeSpeed}
+              onOpenSettings={isOwnStudio ? onOpenSettings : undefined}
+              onAddNeighbor={onAddNeighbor}
+              neighborStatus={neighborStatus}
             />
 
-            {/* Desktop: always-visible side panel */}
             {!isMobile && isOwnStudio && (
               <SpaceBlockPicker
                 spaceId={activeSpaceId}
@@ -136,7 +156,6 @@ export function StudioMainPanel({
               />
             )}
 
-            {/* Mobile: FAB + bottom drawer */}
             {isMobile && isOwnStudio && isEditMode && (
               <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
                 <DrawerTrigger asChild>
