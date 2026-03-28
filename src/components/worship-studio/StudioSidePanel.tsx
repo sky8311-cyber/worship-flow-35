@@ -87,7 +87,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {myStudio && (
         <div className={collapsed ? "" : ""}>
           <StudioUnit
-            compact={isSheet}
+            compact={isSheet || isMobile}
             avatarUrl={myAvatarUrl}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
@@ -104,7 +104,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* FRIENDS — real or placeholder */}
       {friendStudios.length > 0 ? (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "친구" : "Friends"}
@@ -113,7 +113,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           )}
           {friendStudios.map(s => (
             <StudioUnit
-              compact={isSheet}
+              compact={isSheet || isMobile}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -129,7 +129,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
@@ -139,7 +139,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_FRIENDS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet}
+                compact={isSheet || isMobile}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
@@ -160,7 +160,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
@@ -169,7 +169,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           )}
           {ambassadorStudios.map(s => (
             <StudioUnit
-              compact={isSheet}
+              compact={isSheet || isMobile}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -185,7 +185,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       ) : (
         <div>
-          {!collapsed && (
+          {!collapsed && !isMobile && (
             <div className="px-2 pt-1.5 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "앰배서더" : "Ambassadors"}
@@ -195,7 +195,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_AMBASSADORS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet}
+                compact={isSheet || isMobile}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
