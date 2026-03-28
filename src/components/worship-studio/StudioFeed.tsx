@@ -40,9 +40,9 @@ export function StudioFeed({ onStudioClick }: StudioFeedProps) {
   }
   
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#faf7f2] dark:bg-background">
       {/* Filter tabs */}
-      <div className="px-4 py-3 border-b border-border overflow-x-auto">
+      <div className="px-4 py-3 border-b border-border/40 overflow-x-auto">
         <div className="flex gap-2">
           {filterOptions.map((option) => (
             <Button

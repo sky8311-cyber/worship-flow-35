@@ -92,7 +92,7 @@ export default function WorshipStudio() {
   };
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden">
       <SEOHead 
         title={t("studio.title")} 
         description={t("studio.description")} 

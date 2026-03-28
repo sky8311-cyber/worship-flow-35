@@ -121,7 +121,7 @@ export function StudioCoverEditor({ room, isOwner = false }: StudioCoverEditorPr
       </div>
       
       {/* Profile section */}
-      <div className="px-4 -mt-10 relative z-10">
+      <div className="px-4 -mt-10 relative z-10 pb-4 border-b border-border/20">
         <div className="flex items-end gap-4">
           {/* Avatar */}
           <Avatar className="h-20 w-20 border-4 border-background shadow-lg">

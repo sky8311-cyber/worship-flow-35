@@ -31,23 +31,23 @@ export function StudioMainPanel({
   };
   
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#faf7f2] dark:bg-background">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="border-b border-border px-4">
+        <div className="border-b border-border/40 px-4 bg-[#faf7f2] dark:bg-background">
           <TabsList className="h-11 bg-transparent gap-1">
             <TabsTrigger 
               value="studio"
               className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
             >
               <User className="h-4 w-4 mr-1.5" />
-              {language === "ko" ? "스튜디오" : "Studio"}
+              {language === "ko" ? "작업실" : "Studio"}
             </TabsTrigger>
             <TabsTrigger 
               value="feed" 
               className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
             >
               <Newspaper className="h-4 w-4 mr-1.5" />
-              {language === "ko" ? "피드" : "Feed"}
+              {language === "ko" ? "흐름" : "Feed"}
             </TabsTrigger>
             {isOwnStudio && myStudioId && (
               <TabsTrigger 
@@ -55,7 +55,7 @@ export function StudioMainPanel({
                 className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-3 text-sm"
               >
                 <PenLine className="h-4 w-4 mr-1.5" />
-                {language === "ko" ? "새 글" : "New Post"}
+                {language === "ko" ? "기록" : "New Post"}
               </TabsTrigger>
             )}
             {isMobile && (

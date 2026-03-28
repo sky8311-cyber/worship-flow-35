@@ -33,7 +33,7 @@ export function StoryBar({ onStudioSelect, myStudioId }: StoryBarProps) {
 
   return (
     <>
-      <div className="border-b border-border bg-background/80 backdrop-blur-sm">
+      <div className="border-b border-border/40 bg-[#faf7f2] dark:bg-background/80 backdrop-blur-sm">
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-3 px-4 py-3 min-w-max">
             {studios.map((studio, i) => (
