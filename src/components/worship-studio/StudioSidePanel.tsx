@@ -30,7 +30,7 @@ interface StudioSidePanelProps {
   myStudioId?: string;
   onStudioSelect: (roomId: string) => void;
   onMyStudioSelect: () => void;
-  mode?: "sidebar" | "sheet";
+  mode?: "sidebar" | "sheet" | "mobile";
 }
 
 export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, mode = "sidebar" }: StudioSidePanelProps) {
@@ -40,6 +40,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
+  const isMobile = mode === "mobile";
 
   // Fetch current user's profile avatar (covers email signups who set avatar via settings)
   const { data: profileAvatar } = useQuery({

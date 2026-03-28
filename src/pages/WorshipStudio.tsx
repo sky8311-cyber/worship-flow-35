@@ -127,7 +127,7 @@ export default function WorshipStudio() {
             <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/40">
               <SheetTitle className="text-sm font-semibold flex items-center gap-2">
                 <Building2 size={16} className="text-[#b8902a]" />
-                {language === "ko" ? "아파트" : "Apartment"}
+                K-Worship Studio
               </SheetTitle>
             </SheetHeader>
             <div className="flex-1 overflow-auto h-full">
@@ -135,7 +135,7 @@ export default function WorshipStudio() {
                 myStudioId={myStudio?.id}
                 onStudioSelect={handleStudioSelect}
                 onMyStudioSelect={handleMyStudioSelect}
-                mode="sheet"
+                mode="mobile"
               />
             </div>
           </SheetContent>
