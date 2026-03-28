@@ -115,6 +115,7 @@ const AcceptInvitation = lazyWithRetry(() => import("./pages/AcceptInvitation"))
 const InvitedSignUp = lazyWithRetry(() => import("./pages/InvitedSignUp"));
 const JoinCommunity = lazyWithRetry(() => import("./pages/JoinCommunity"));
 const WorshipStudio = lazyWithRetry(() => import("./pages/WorshipStudio"));
+const CanvasEditor = lazyWithRetry(() => import("./pages/CanvasEditor"));
 const EmailPreferencesPage = lazyWithRetry(() => import("./pages/EmailPreferences"));
 
 // Page loader component for Suspense fallback
@@ -255,6 +256,7 @@ const App = () => {
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
               <Route path="/studio" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
               <Route path="/studio/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
+              <Route path="/studio/canvas/:canvasId" element={<ProtectedRoute><CanvasEditor /></ProtectedRoute>} />
               <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
