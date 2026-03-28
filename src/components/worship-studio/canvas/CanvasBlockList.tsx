@@ -3,6 +3,7 @@ import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -35,7 +36,8 @@ export function CanvasBlockList({
 }: CanvasBlockListProps) {
   const { language } = useTranslation();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   );
 
   const handleDragEnd = useCallback(
@@ -60,8 +62,8 @@ export function CanvasBlockList({
         <span className="text-2xl text-muted-foreground/30 mb-4">✦</span>
         <p className="text-sm text-muted-foreground italic">
           {language === "ko"
-            ? "오른쪽 패널에서 블록을 추가하세요"
-            : "Add blocks from the right panel"}
+            ? (window.innerWidth < 768 ? "하단 + 버튼으로 블록을 추가하세요" : "오른쪽 패널에서 블록을 추가하세요")
+            : (window.innerWidth < 768 ? "Tap + below to add blocks" : "Add blocks from the right panel")}
         </p>
       </div>
     );

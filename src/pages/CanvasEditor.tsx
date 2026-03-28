@@ -7,6 +7,8 @@ import { CanvasHeader } from "@/components/worship-studio/canvas/CanvasHeader";
 import { CanvasBlockList } from "@/components/worship-studio/canvas/CanvasBlockList";
 import { CanvasRightPanel } from "@/components/worship-studio/canvas/CanvasRightPanel";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { Plus } from "lucide-react";
 import type { CanvasBlock } from "@/hooks/useCanvas";
 
 export default function CanvasEditor() {
@@ -92,6 +94,27 @@ export default function CanvasEditor() {
           />
         )}
       </div>
+
+      {/* Mobile FAB + Bottom Sheet */}
+      {isMobile && (
+        <Drawer>
+          <DrawerTrigger asChild>
+            <button className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform">
+              <Plus className="h-6 w-6" />
+            </button>
+          </DrawerTrigger>
+          <DrawerContent className="max-h-[80vh]">
+            <div className="overflow-y-auto">
+              <CanvasRightPanel
+                selectedBlock={selectedBlock}
+                onAddBlock={addBlock}
+                onUpdateBlock={(id, content, blockType) => updateBlock({ blockId: id, content, blockType })}
+                isMobile
+              />
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
 }

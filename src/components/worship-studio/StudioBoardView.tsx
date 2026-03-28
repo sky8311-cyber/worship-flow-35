@@ -46,9 +46,9 @@ export function StudioBoardView({ roomId, onPostClick }: StudioBoardViewProps) {
   return (
     <ScrollArea className="flex-1">
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[400px]">
+        <div className="flex md:grid md:grid-cols-3 gap-4 min-h-[400px] overflow-x-auto md:overflow-x-visible snap-x snap-mandatory md:snap-none">
           {columns.map(col => (
-            <div key={col.stage} className={`rounded-xl p-3 ${col.bg}`}>
+            <div key={col.stage} className={`rounded-xl p-3 min-w-[260px] md:min-w-0 snap-center ${col.bg}`}>
               <h3 className="text-sm font-medium text-muted-foreground mb-3">
                 {language === "ko" ? col.labelKo : col.labelEn}
                 <span className="ml-1.5 text-xs opacity-60">{col.posts.length}</span>

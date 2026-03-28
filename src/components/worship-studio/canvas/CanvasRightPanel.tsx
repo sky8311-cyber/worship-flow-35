@@ -22,13 +22,17 @@ interface CanvasRightPanelProps {
   selectedBlock: CanvasBlock | null;
   onAddBlock: (blockType: BlockType) => void;
   onUpdateBlock: (id: string, content: Record<string, any>, blockType?: BlockType) => void;
+  isMobile?: boolean;
 }
 
-export function CanvasRightPanel({ selectedBlock, onAddBlock, onUpdateBlock }: CanvasRightPanelProps) {
+export function CanvasRightPanel({ selectedBlock, onAddBlock, onUpdateBlock, isMobile }: CanvasRightPanelProps) {
   const { language } = useTranslation();
 
   return (
-    <div className="w-[280px] border-l border-border/40 bg-[#faf7f2] dark:bg-background flex flex-col shrink-0">
+    <div className={cn(
+      "bg-[#faf7f2] dark:bg-background flex flex-col shrink-0",
+      isMobile ? "w-full" : "w-[280px] border-l border-border/40"
+    )}>
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
           {/* Section 1: Add blocks */}
