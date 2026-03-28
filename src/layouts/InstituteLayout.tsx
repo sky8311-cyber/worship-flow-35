@@ -1,5 +1,6 @@
 import { GraduationCap } from "lucide-react";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useAuth } from "@/contexts/AuthContext";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import { InstituteHeader } from "@/components/institute/InstituteHeader";
 import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";
@@ -14,8 +15,9 @@ interface InstituteLayoutProps {
 
 export function InstituteLayout({ children, pageTitle, showBackButton, breadcrumb, fullHeight }: InstituteLayoutProps) {
   const { isInstituteEnabled, isLoading } = useAppSettings();
+  const { isAdmin } = useAuth();
 
-  if (!isLoading && !isInstituteEnabled) {
+  if (!isLoading && !isInstituteEnabled && !isAdmin) {
     return (
       <FeatureComingSoon
         featureName="K-Worship Institute"
