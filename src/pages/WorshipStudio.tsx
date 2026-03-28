@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Palette } from "lucide-react";
+import { Palette, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorshipRoom, useWorshipRoomById } from "@/hooks/useWorshipRoom";
@@ -13,6 +13,7 @@ import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 function extractVideoId(url: string | null): string | null {
   if (!url) return null;
@@ -24,12 +25,13 @@ export default function WorshipStudio() {
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const isMobile = useIsMobile();
   const { isStudioEnabled, isLoading: settingsLoading } = useAppSettings();
   
   const [showSettings, setShowSettings] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [mobileAptOpen, setMobileAptOpen] = useState(false);
   const { room: myStudio } = useWorshipRoom(user?.id);
   const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
   
@@ -65,11 +67,13 @@ export default function WorshipStudio() {
   
   const handleStudioSelect = (studioId: string) => {
     setSelectedStudioId(studioId);
+    setMobileAptOpen(false);
     window.history.replaceState(null, '', `/studio/${studioId}`);
   };
   
   const handleMyStudioSelect = () => {
     setSelectedStudioId(null);
+    setMobileAptOpen(false);
     window.history.replaceState(null, '', '/studio');
   };
 
@@ -105,6 +109,38 @@ export default function WorshipStudio() {
           onStudioSelect={handleStudioSelect}
         />
       </div>
+
+      {/* Mobile FAB for apartment view */}
+      {isMobile && (
+        <button
+          onClick={() => setMobileAptOpen(true)}
+          className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center hover:bg-[#a07d24] transition-colors"
+        >
+          <Building2 size={22} />
+        </button>
+      )}
+
+      {/* Mobile apartment Sheet */}
+      {isMobile && (
+        <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
+          <SheetContent side="bottom" className="h-[70vh] p-0 rounded-t-2xl">
+            <SheetHeader className="px-4 pt-4 pb-2 border-b border-border/40">
+              <SheetTitle className="text-sm font-semibold flex items-center gap-2">
+                <Building2 size={16} className="text-[#b8902a]" />
+                {language === "ko" ? "아파트" : "Apartment"}
+              </SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 overflow-auto h-full">
+              <StudioSidePanel
+                myStudioId={myStudio?.id}
+                onStudioSelect={handleStudioSelect}
+                onMyStudioSelect={handleMyStudioSelect}
+                mode="sheet"
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       
       {myStudio && (
         <StudioSettingsDialog

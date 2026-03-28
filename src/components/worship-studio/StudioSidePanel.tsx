@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const PLACEHOLDER_TENANTS = [
   { id: 'ph1', name: '김찬양', initials: '김', floor: '6F', icon: '🎵', windowsOn: true,  variant: 'friend' as const },
@@ -27,14 +28,16 @@ interface StudioSidePanelProps {
   myStudioId?: string;
   onStudioSelect: (roomId: string) => void;
   onMyStudioSelect: () => void;
+  mode?: "sidebar" | "sheet";
 }
 
-export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }: StudioSidePanelProps) {
+export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, mode = "sidebar" }: StudioSidePanelProps) {
   const { language } = useTranslation();
   const { user } = useAuth();
   const studios = useStoryBarStudios(myStudioId);
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const isSheet = mode === "sheet";
 
   const myStudio = studios.find(s => s.isSelf);
   const friendStudios = studios.filter(s => !s.isSelf && !s.isAmbassador);
@@ -70,15 +73,21 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect }
   return (
     <>
       <div
-        className={`${collapsed ? "w-14" : "w-56"} relative overflow-visible border-r border-[#e8e0d5] bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-50 shadow-[inset_-2px_0_4px_rgba(184,144,42,0.06)] flex flex-col shrink-0 h-full transition-all duration-300 ease-in-out`}
+        className={cn(
+          isSheet
+            ? "w-full overflow-auto"
+            : `${collapsed ? "w-14" : "w-56"} relative overflow-visible border-r border-[#e8e0d5] bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-50 shadow-[inset_-2px_0_4px_rgba(184,144,42,0.06)] flex flex-col shrink-0 h-full transition-all duration-300 ease-in-out`
+        )}
       >
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          className="absolute top-2 right-0 translate-x-1/2 z-20 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
-        >
-          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-        </button>
+        {/* Collapse toggle — sidebar only */}
+        {!isSheet && (
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="absolute top-2 right-0 translate-x-1/2 z-20 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
+          >
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        )}
 
         <ScrollArea className="flex-1">
           {/* ROOFTOP GARDEN */}

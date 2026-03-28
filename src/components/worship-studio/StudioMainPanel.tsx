@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks } from "@/hooks/useSpaceBlocks";
@@ -24,6 +25,7 @@ export function StudioMainPanel({
 
   const [activeSpaceId, setActiveSpaceId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
 
@@ -56,7 +58,7 @@ export function StudioMainPanel({
         isOwner={isOwnStudio}
       />
 
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden relative">
         {activeSpaceId ? (
           <>
             <SpaceCanvas
@@ -65,7 +67,20 @@ export function StudioMainPanel({
               selectedBlockId={selectedBlockId}
               onSelectBlock={setSelectedBlockId}
             />
+
+            {/* Right panel toggle button */}
             {isOwnStudio && (
+              <button
+                onClick={() => setRightPanelOpen(o => !o)}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-[hsl(var(--background))] border border-border rounded-l-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent shadow-sm transition-colors"
+                style={{ right: rightPanelOpen ? undefined : 0, ...(rightPanelOpen ? { right: '240px' } : {}) }}
+              >
+                {rightPanelOpen ? <ChevronRight size={14} /> : <LayoutGrid size={14} />}
+              </button>
+            )}
+
+            {/* Right panel */}
+            {isOwnStudio && rightPanelOpen && (
               <SpaceBlockPicker
                 spaceId={activeSpaceId}
                 selectedBlock={selectedBlock}
