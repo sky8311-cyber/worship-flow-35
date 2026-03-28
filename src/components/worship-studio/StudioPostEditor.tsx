@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateStudioPost, type BlockContent, type DisplayType } from "@/hooks/useStudioPosts";
+import { useCreateStudioPost, type BlockContent, type DisplayType, type WorkflowStage, type BlockType } from "@/hooks/useStudioPosts";
 import { StudioBlockEditor } from "./editor/StudioBlockEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
   const [htmlContent, setHtmlContent] = useState("");
   const [displayType, setDisplayType] = useState<DisplayType>("card");
   const [coverUrl, setCoverUrl] = useState("");
+  const [blockType, setBlockType] = useState<BlockType>("note");
+  const [workflowStage, setWorkflowStage] = useState<WorkflowStage>("draft");
   const [visibility, setVisibility] = useState<RoomVisibility>(
     (room?.visibility as RoomVisibility) || "friends"
   );
@@ -63,6 +65,8 @@ export function StudioPostEditor({ onBack, onSuccess }: StudioPostEditorProps) {
       cover_image_url: coverUrl || undefined,
       is_draft: isDraft,
       visibility,
+      block_type: blockType,
+      workflow_stage: isDraft ? "draft" : workflowStage === "draft" ? "published" : workflowStage,
     }, {
       onSuccess: () => {
         onSuccess?.();

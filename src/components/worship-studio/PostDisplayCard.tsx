@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useStudioPosts, type StudioPost, type DisplayType } from "@/hooks/useStudioPosts";
+import { useStudioPosts, type StudioPost, type DisplayType, type WorkflowStage, type BlockType } from "@/hooks/useStudioPosts";
 import { useEnabledCategories } from "@/hooks/useStudioCategories";
 import { SongBlock } from "./editor/blocks/SongBlock";
 import { WorshipSetBlock } from "./editor/blocks/WorshipSetBlock";
@@ -10,8 +10,50 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SearchInput } from "@/components/ui/search-input";
 import { formatDistanceToNow } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
-import { FileText, Music, Calendar, Image as ImageIcon } from "lucide-react";
+import { FileText, Music, Calendar, Image as ImageIcon, BookOpen, Heart, Mic, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const BLOCK_TYPE_COLORS: Record<BlockType, string> = {
+  song: "#7c6a9e",
+  worship_set: "#b8902a",
+  scripture: "#4a7c6a",
+  prayer_note: "#8b5e52",
+  audio: "#3a6b8a",
+  note: "#6b6560",
+};
+
+const BLOCK_TYPE_ICONS: Record<BlockType, React.ReactNode> = {
+  song: <Music className="h-3.5 w-3.5" />,
+  worship_set: <Calendar className="h-3.5 w-3.5" />,
+  scripture: <BookOpen className="h-3.5 w-3.5" />,
+  prayer_note: <Heart className="h-3.5 w-3.5" />,
+  audio: <Mic className="h-3.5 w-3.5" />,
+  note: <StickyNote className="h-3.5 w-3.5" />,
+};
+
+const BLOCK_TYPE_LABELS: Record<BlockType, { ko: string; en: string }> = {
+  song: { ko: "곡", en: "Song" },
+  worship_set: { ko: "워십셋", en: "Set" },
+  scripture: { ko: "말씀", en: "Scripture" },
+  prayer_note: { ko: "기도노트", en: "Prayer" },
+  audio: { ko: "오디오", en: "Audio" },
+  note: { ko: "노트", en: "Note" },
+};
+
+function StageBadge({ stage, language }: { stage: WorkflowStage; language: string }) {
+  const config: Record<WorkflowStage, { bg: string; text: string; label: { ko: string; en: string } }> = {
+    draft: { bg: "bg-gray-100 dark:bg-gray-800", text: "text-gray-500 dark:text-gray-400", label: { ko: "초안", en: "Draft" } },
+    in_progress: { bg: "bg-amber-50 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", label: { ko: "진행중", en: "In Progress" } },
+    refined: { bg: "bg-[#f0e8d5] dark:bg-[#3d3520]", text: "text-[#8b6914] dark:text-[#c9a033]", label: { ko: "완성", en: "Refined" } },
+    published: { bg: "bg-[#b8902a]/10", text: "text-[#b8902a] font-medium", label: { ko: "발행", en: "Published" } },
+  };
+  const c = config[stage];
+  return (
+    <span className={cn("px-2 py-0.5 rounded-full text-[10px]", c.bg, c.text)}>
+      {language === "ko" ? c.label.ko : c.label.en}
+    </span>
+  );
+}
 
 interface PostDisplayCardProps {
   post: StudioPost;
@@ -22,9 +64,9 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
   const { language } = useTranslation();
   
   const displayType = post.display_type || "card";
-  
-  const songCount = post.blocks.filter(b => b.type === "song").length;
-  const setCount = post.blocks.filter(b => b.type === "worship-set").length;
+  const blockType: BlockType = post.block_type || "note";
+  const workflowStage: WorkflowStage = post.workflow_stage || "draft";
+  const borderColor = BLOCK_TYPE_COLORS[blockType];
   
   const textBlocks = post.blocks.filter(b => 
     b.type === "paragraph" || b.type === "heading"
@@ -40,18 +82,22 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
     return (
       <button
         onClick={onClick}
-        className="w-full flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors text-left"
+        className="w-full flex items-center gap-4 p-4 rounded-lg bg-[#fefcf8] dark:bg-card hover:shadow-md transition-all text-left"
+        style={{ borderLeft: `4px solid ${borderColor}` }}
       >
-        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-          <FileText className="h-5 w-5 text-muted-foreground" />
+        <div className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center" style={{ color: borderColor, backgroundColor: `${borderColor}15` }}>
+          {BLOCK_TYPE_ICONS[blockType]}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium truncate">
+          <h3 className="font-serif font-medium truncate text-[#2c2416] dark:text-foreground">
             {post.title || (language === "ko" ? "제목 없음" : "Untitled")}
           </h3>
           <p className="text-sm text-muted-foreground truncate">{preview || "..."}</p>
         </div>
-        <span className="text-xs text-muted-foreground flex-shrink-0">{timeAgo}</span>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <StageBadge stage={workflowStage} language={language} />
+          <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+        </div>
       </button>
     );
   }
@@ -60,18 +106,19 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
     return (
       <button
         onClick={onClick}
-        className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-colors"
+        className="group relative aspect-square rounded-lg overflow-hidden hover:shadow-md transition-all"
+        style={{ borderLeft: `4px solid ${borderColor}` }}
       >
         {post.cover_image_url ? (
           <img src={post.cover_image_url} alt="" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
+          <div className="w-full h-full bg-[#fefcf8] dark:bg-card flex items-center justify-center">
+            <div style={{ color: borderColor }}>{BLOCK_TYPE_ICONS[blockType]}</div>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
           <div className="absolute bottom-0 left-0 right-0 p-3">
-            <h3 className="text-white font-medium truncate text-sm">
+            <h3 className="text-white font-serif font-medium truncate text-sm">
               {post.title || (language === "ko" ? "제목 없음" : "Untitled")}
             </h3>
           </div>
@@ -80,59 +127,42 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
     );
   }
   
-  // Card view (default)
+  // Card view (default) — Material Block
   return (
-    <Card 
-      className="cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden"
+    <button
       onClick={onClick}
+      className="w-full text-left rounded-lg bg-[#fefcf8] dark:bg-card shadow-sm hover:shadow-md transition-all overflow-hidden"
+      style={{ borderLeft: `4px solid ${borderColor}` }}
     >
       {post.cover_image_url && (
         <div className="aspect-video overflow-hidden">
           <img src={post.cover_image_url} alt="" className="w-full h-full object-cover" />
         </div>
       )}
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={post.author?.avatar_url || undefined} />
-            <AvatarFallback className="text-xs">
-              {post.author?.full_name?.charAt(0) || "?"}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm text-muted-foreground">
-            {post.author?.full_name || (language === "ko" ? "익명" : "Anonymous")}
-          </span>
-          <span className="text-xs text-muted-foreground">•</span>
-          <span className="text-xs text-muted-foreground">{timeAgo}</span>
+      <div className="p-4">
+        {/* Top row: block type + stage */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: borderColor }}>
+            {BLOCK_TYPE_ICONS[blockType]}
+            <span>{language === "ko" ? BLOCK_TYPE_LABELS[blockType].ko : BLOCK_TYPE_LABELS[blockType].en}</span>
+          </div>
+          <StageBadge stage={workflowStage} language={language} />
         </div>
         
-        <h3 className="font-medium mb-1">
+        {/* Title */}
+        <h3 className="font-serif text-lg text-[#2c2416] dark:text-foreground mb-1">
           {post.title || (language === "ko" ? "제목 없음" : "Untitled")}
         </h3>
+        
+        {/* Preview */}
         {preview && (
           <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{preview}</p>
         )}
         
-        {(songCount > 0 || setCount > 0) && (
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            {songCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Music className="h-3 w-3" />
-                {songCount} {language === "ko" ? "곡" : "songs"}
-              </span>
-            )}
-            {setCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                {setCount} {language === "ko" ? "셋" : "sets"}
-              </span>
-            )}
-          </div>
-        )}
-        
-        {post.reactions && post.reactions.length > 0 && (
-          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-            {post.reactions.map(r => (
+        {/* Reactions */}
+        {post.reactions && post.reactions.some(r => r.count > 0) && (
+          <div className="flex items-center gap-3 mb-3 text-xs text-muted-foreground">
+            {post.reactions.filter(r => r.count > 0).map(r => (
               <span key={r.reaction_type} className="flex items-center gap-1">
                 {r.reaction_type === "amen" && "🙏"}
                 {r.reaction_type === "praying" && "❤️"}
@@ -142,8 +172,11 @@ export function PostDisplayCard({ post, onClick }: PostDisplayCardProps) {
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+        
+        {/* Footer: date */}
+        <span className="text-[11px] text-muted-foreground">{timeAgo}</span>
+      </div>
+    </button>
   );
 }
 
