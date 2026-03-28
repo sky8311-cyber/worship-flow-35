@@ -1,5 +1,6 @@
 import { GraduationCap } from "lucide-react";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useAuth } from "@/contexts/AuthContext";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import { InstituteHeader } from "@/components/institute/InstituteHeader";
 import { InstituteBottomNav } from "@/components/institute/InstituteBottomNav";

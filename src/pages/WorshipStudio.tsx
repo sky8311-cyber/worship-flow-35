@@ -43,7 +43,7 @@ export default function WorshipStudio() {
     selectedStudioId && selectedStudioId !== myStudio?.id ? selectedStudioId : undefined
   );
 
-  if (!settingsLoading && !isStudioEnabled) {
+  if (!settingsLoading && !isStudioEnabled && !isAdmin) {
     return (
       <FeatureComingSoon
         featureName="Worship Studio"
