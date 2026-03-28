@@ -263,10 +263,10 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               </div>
 
               {/* Divider between tenants and ground floor */}
-              <div className="shrink-0 border-t border-[#8a7a6a]/60 mx-0" />
+              <div className="shrink-0 border-t-2 border-[#8a7a6a] mx-0" />
 
               {/* 1F Ground Floor */}
-              <div className="shrink-0 bg-[#e8ddd0] border-x border-[#d8cfc4] px-2 pt-1.5 pb-0">
+              <div className="shrink-0 bg-[#e8ddd0] border-x border-[#d8cfc4] px-2 pt-3 pb-0">
                 {!collapsed ? (
                   <>
                     {/* Badges row */}
@@ -281,10 +281,10 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                     {/* Door + Stairs centered */}
                     <div className="flex flex-col items-center">
                       <div className="flex gap-px">
-                        <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="w-6 h-8 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
                           <div className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
                         </div>
-                        <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="w-6 h-8 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
                           <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
                         </div>
                       </div>
