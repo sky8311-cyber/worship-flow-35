@@ -4098,6 +4098,95 @@ export type Database = {
         }
         Relationships: []
       }
+      space_blocks: {
+        Row: {
+          block_type: string
+          content: Json
+          created_at: string | null
+          id: string
+          pos_x: number
+          pos_y: number
+          size_h: number
+          size_w: number
+          space_id: string
+          updated_at: string | null
+          z_index: number
+        }
+        Insert: {
+          block_type: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          pos_x?: number
+          pos_y?: number
+          size_h?: number
+          size_w?: number
+          space_id: string
+          updated_at?: string | null
+          z_index?: number
+        }
+        Update: {
+          block_type?: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          pos_x?: number
+          pos_y?: number
+          size_h?: number
+          size_w?: number
+          space_id?: string
+          updated_at?: string | null
+          z_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_blocks_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "studio_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      space_guestbook: {
+        Row: {
+          author_user_id: string
+          body: string
+          created_at: string | null
+          id: string
+          space_id: string
+        }
+        Insert: {
+          author_user_id: string
+          body: string
+          created_at?: string | null
+          id?: string
+          space_id: string
+        }
+        Update: {
+          author_user_id?: string
+          body?: string
+          created_at?: string | null
+          id?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "space_guestbook_author_user_id_fkey"
+            columns: ["author_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "space_guestbook_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "studio_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_post_categories: {
         Row: {
           color: string
@@ -4136,6 +4225,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      studio_spaces: {
+        Row: {
+          color: string
+          created_at: string | null
+          guestbook_enabled: boolean
+          guestbook_permission: string
+          icon: string
+          id: string
+          name: string
+          room_id: string
+          sort_order: number
+          updated_at: string | null
+          visibility: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          guestbook_enabled?: boolean
+          guestbook_permission?: string
+          icon?: string
+          id?: string
+          name?: string
+          room_id: string
+          sort_order?: number
+          updated_at?: string | null
+          visibility?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          guestbook_enabled?: boolean
+          guestbook_permission?: string
+          icon?: string
+          id?: string
+          name?: string
+          room_id?: string
+          sort_order?: number
+          updated_at?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_spaces_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "worship_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       studio_widgets: {
         Row: {
