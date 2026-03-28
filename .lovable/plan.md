@@ -1,50 +1,47 @@
 
 
-# Mobile Edit Mode Redesign
+# Fixed-Width Canvas + Always-On Picker + Zoom Controls
 
-## Problems
-1. **Side panel covers canvas**: `SpaceBlockPicker` (w-72) renders beside canvas on edit mode, but on mobile (430px) it takes most of the screen
-2. **Blocks don't auto-reflow on mobile**: Blocks use absolute positioning (`pos_x`, `pos_y`) which doesn't adapt to narrow screens
+## Concept
+Set a fixed canvas width (e.g. **430px**) that matches the mobile viewport. On desktop, the canvas is centered within its available area with the block picker always visible on the right. Add **zoom controls** (CSS `transform: scale()`) so users can zoom in/out on desktop. This makes block coordinates identical between mobile and desktop -- what you see on desktop is exactly what mobile users see.
 
-## Solution
+## Changes
 
-### 1. Mobile Block Picker → Bottom Sheet
-Instead of rendering `SpaceBlockPicker` as a side panel on mobile, show it as a bottom drawer/sheet.
+### 1. `StudioMainPanel.tsx`
+- **Always show** `SpaceBlockPicker` on desktop when `isOwnStudio` (remove the `isEditMode` condition)
+- Remove the mobile drawer FAB (keep the Drawer for mobile edit mode only)
 
-**StudioMainPanel.tsx**:
-- Import `useIsMobile`, `Drawer`/`DrawerContent`/`DrawerTrigger` (or `Sheet`)
-- On desktop: keep current side panel behavior
-- On mobile: hide the side panel, add a floating action button (e.g. `+` or toolbox icon) that opens a bottom Drawer containing `SpaceBlockPicker`
-- Pass `isMobile` prop to `SpaceBlockPicker` for compact styling
+### 2. `SpaceCanvas.tsx` -- Fixed-width canvas + zoom
+- Add `zoom` state (default `1.0`) with `+`, `-`, reset buttons in the toolbar
+- Wrap the absolute-positioned canvas in a **fixed-width container** (`width: 430px`) centered with `mx-auto`
+- Apply `transform: scale(zoom)` with `transform-origin: top center` to the canvas container
+- On mobile: no zoom controls, canvas is naturally 430px (full width)
+- The outer scrollable div stays `flex-1` and scrolls the zoomed content
+- Adjust `canvasHeight` calculation to account for zoom
 
-**SpaceBlockPicker.tsx**:
-- Accept optional `isMobile` prop
-- When mobile: use a horizontal scrolling strip or compact 4-column grid with smaller icons (`h-5 w-5`) and smaller text (`text-[9px]`)
-- Remove the `w-72 border-l` wrapper on mobile, use `w-full` instead
+### 3. `SpaceBlock.tsx`
+- No changes needed -- blocks already use absolute positioning with pixel coords that will now be consistent across devices
 
-### 2. Mobile Auto-Layout for Blocks
-Blocks are absolutely positioned using `pos_x`/`pos_y`/`size_w`/`size_h`. On mobile screens, these pixel coordinates don't work well.
+### 4. `SpaceBlockPicker.tsx`
+- Minor: always visible on desktop means it needs to show the "Add Block" grid even outside edit mode (or show a read-only state when not editing). In non-edit mode, show a collapsed/minimal version or keep the full grid but disable adding.
 
-**SpaceCanvas.tsx** + **SpaceBlock.tsx**:
-- Detect mobile via `useIsMobile()`
-- On mobile (non-edit mode): render blocks in a **vertical stack layout** instead of absolute positioning
-  - Wrap blocks in a `flex flex-col gap-3 p-3` container
-  - Each block becomes `position: relative; width: 100%` with auto height
-  - Sort blocks by `pos_y` then `pos_x` to maintain logical reading order
-- On mobile (edit mode): keep absolute positioning so drag/resize still works, but scale coordinates to fit viewport width (e.g. scale factor = `viewportWidth / canvasWidth`)
+## Layout Math (Desktop)
+```text
+[Sidebar ~256px] [Canvas area: flex-1] [Picker 288px]
 
-**SpaceBlock.tsx**:
-- Accept `mobileLayout` prop
-- When `mobileLayout === true`: don't use absolute positioning, render as a flow block with `w-full` and min-height based on `size_h`
+Canvas area ≈ 1400 - 256 - 288 = ~856px
+Inside: centered 430px canvas at zoom 1.0
+Zoom range: 0.5x to 2.0x
+At 2.0x: canvas appears 860px (fills the area perfectly)
+```
 
-### 3. Edit Mode Toolbar (Mobile)
-**SpaceCanvas.tsx**:
-- Move the Save/Cancel buttons to a sticky bottom bar on mobile instead of `absolute top-3 right-3`
-- Compact styling: smaller text, full-width bar
+## Zoom Controls UI
+- Small floating controls in top-left of canvas area: `[-]  100%  [+]  [fit]`
+- "Fit" button auto-calculates zoom to fill available width
+- Zoom stored in local state (resets on navigation)
 
-## Files to Change
-1. **`src/components/worship-studio/StudioMainPanel.tsx`** — mobile Drawer for block picker
-2. **`src/components/worship-studio/spaces/SpaceBlockPicker.tsx`** — compact mobile variant
-3. **`src/components/worship-studio/spaces/SpaceCanvas.tsx`** — mobile stacked layout + bottom toolbar
-4. **`src/components/worship-studio/spaces/SpaceBlock.tsx`** — `mobileLayout` prop for flow positioning
+## Files
+1. **`StudioMainPanel.tsx`** -- always show picker on desktop
+2. **`SpaceCanvas.tsx`** -- fixed 430px canvas, zoom state + controls, centered layout
+3. **`SpaceBlockPicker.tsx`** -- handle non-edit-mode display
 
