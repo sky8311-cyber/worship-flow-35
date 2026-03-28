@@ -281,8 +281,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                     {/* Door + Stairs centered */}
                     <div className="flex flex-col items-center">
                       <div className="flex gap-px">
-                        <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
-                        <div className="w-6 h-12 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                        <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                          <div className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
+                        </div>
+                        <div className="w-6 h-12 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
+                        </div>
                       </div>
                       <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                       <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
@@ -292,8 +296,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 ) : (
                   <div className="flex flex-col items-center">
                     <div className="flex gap-px">
-                      <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
-                      <div className="w-4 h-10 rounded-sm border border-[#5a5a5a] bg-sky-100/60" />
+                      <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-[#5a5a5a]" />
+                      </div>
+                      <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-[#5a5a5a]" />
+                      </div>
                     </div>
                     <div className="w-10 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
                     <div className="w-12 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
