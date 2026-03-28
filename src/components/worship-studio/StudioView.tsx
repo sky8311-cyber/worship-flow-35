@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioContractPrompt } from "./StudioContractPrompt";
 import { StudioLockedState } from "./StudioLockedState";
-import { StudioCoverEditor } from "./StudioCoverEditor";
+
 import { StudioPostList } from "./PostDisplayCard";
 import { PostDetailDialog } from "./PostDetailDialog";
 import { Skeleton } from "@/components/ui/skeleton";

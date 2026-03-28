@@ -17,7 +17,8 @@ export { StudioLockedState } from "./StudioLockedState";
 export { StudioContractPrompt } from "./StudioContractPrompt";
 export { StudioDiscover } from "./StudioDiscover";
 export { StudioDraftsTab } from "./StudioDraftsTab";
-export { StudioCoverEditor } from "./StudioCoverEditor";
+export { SpaceTabBar } from "./spaces/SpaceTabBar";
+export { SpaceCreateDialog } from "./spaces/SpaceCreateDialog";
 export { ProfileDropdownMenu } from "./ProfileDropdownMenu";
 export { FriendStudioList } from "./FriendStudioList";
 // New block editor exports
