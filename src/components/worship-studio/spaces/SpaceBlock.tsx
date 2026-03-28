@@ -106,9 +106,9 @@ export function SpaceBlock({ block, isOwner, isSelected, onSelect, onUpdate }: S
       onPointerUp={handlePointerUp}
     >
       {/* Block content placeholder */}
-      <div className="flex flex-col items-center justify-center h-full gap-2 p-3">
-        <Icon className="h-6 w-6" style={{ color: meta.color }} />
-        <span className="text-xs font-medium" style={{ color: meta.color }}>{meta.label}</span>
+      <div className="flex flex-col items-center justify-center h-full gap-2 p-3" style={{ color: meta.color }}>
+        <Icon className="h-6 w-6" />
+        <span className="text-xs font-medium">{meta.label}</span>
       </div>
 
       {/* Resize handles — only when selected & owner */}
