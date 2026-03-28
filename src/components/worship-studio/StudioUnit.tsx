@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +9,45 @@ export interface StudioUnitProps {
   roomId: string;
   hasUnseenStory: boolean;
   variant: "penthouse" | "friend" | "ambassador";
+  collapsed?: boolean;
   onStoryClick: () => void;
   onVisit: () => void;
 }
+
+function WindowLights({ variant }: { variant: StudioUnitProps["variant"] }) {
+  const colors = useMemo(() => {
+    if (variant === "penthouse") return ["bg-amber-300", "bg-amber-200"];
+    if (variant === "ambassador") return ["bg-violet-100", "bg-violet-50"];
+    // friend: random lit/unlit
+    const lit = Math.random() > 0.4;
+    return lit ? ["bg-amber-200", "bg-amber-100"] : ["bg-slate-200", "bg-slate-100"];
+  }, [variant]);
+
+  return (
+    <div className="flex gap-0.5 ml-auto shrink-0 self-start mt-1 select-none pointer-events-none">
+      <div className={cn("w-2 h-1.5 rounded-sm", colors[0])} />
+      <div className={cn("w-2 h-1.5 rounded-sm", colors[1])} />
+    </div>
+  );
+}
+
+const visitConfig = {
+  penthouse: {
+    classes: "bg-amber-100 hover:bg-amber-200 border-amber-300 text-amber-800",
+    icon: "🔔",
+    label: "방문",
+  },
+  friend: {
+    classes: "bg-sky-50 hover:bg-sky-100 border-sky-200 text-sky-700",
+    icon: "🚪",
+    label: "방문",
+  },
+  ambassador: {
+    classes: "bg-violet-50 hover:bg-violet-100 border-violet-200 text-violet-700",
+    icon: "✦",
+    label: "방문",
+  },
+};
 
 export function StudioUnit({
   avatarUrl,
@@ -18,49 +55,78 @@ export function StudioUnit({
   ownerName,
   hasUnseenStory,
   variant,
+  collapsed = false,
   onStoryClick,
   onVisit,
 }: StudioUnitProps) {
+  const visit = visitConfig[variant];
+
+  if (collapsed) {
+    return (
+      <div className="flex justify-center py-2">
+        <button onClick={onStoryClick} className="flex-shrink-0">
+          <Avatar
+            className={cn(
+              "h-8 w-8 ring-2 ring-offset-1 ring-offset-background transition-all",
+              hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
+            )}
+          >
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="text-[10px]">
+              {variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?")}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 py-2 px-3 transition-colors",
-        variant === "penthouse" && "bg-amber-50/70 dark:bg-amber-950/20 border-l-2 border-[#b8902a]",
+        "py-2 px-2 transition-colors",
+        variant === "penthouse" && "bg-gradient-to-b from-sky-50/60 to-amber-50/70 border-t-2 border-[#b8902a]",
         variant === "ambassador" && "bg-muted/30",
         variant === "friend" && "hover:bg-muted/40"
       )}
     >
-      {/* Story circle */}
-      <button onClick={onStoryClick} className="flex-shrink-0">
-        <Avatar
-          className={cn(
-            "h-8 w-8 ring-2 ring-offset-1 ring-offset-background transition-all",
-            hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
-          )}
-        >
-          <AvatarImage src={avatarUrl} />
-          <AvatarFallback className="text-[10px]">
-            {variant === "ambassador" && "✦"}
-            {variant !== "ambassador" && (ownerName?.charAt(0) || "?")}
-          </AvatarFallback>
-        </Avatar>
-      </button>
+      {/* Top row: avatar + info + windows */}
+      <div className="flex items-center gap-2">
+        <button onClick={onStoryClick} className="flex-shrink-0">
+          <Avatar
+            className={cn(
+              "h-8 w-8 ring-2 ring-offset-1 ring-offset-background transition-all",
+              hasUnseenStory ? "ring-[#b8902a]" : "ring-transparent"
+            )}
+          >
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="text-[10px]">
+              {variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?")}
+            </AvatarFallback>
+          </Avatar>
+        </button>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium truncate text-foreground">
-          {variant === "ambassador" && <span className="text-[#b8902a] mr-0.5">✦</span>}
-          {studioName}
-        </p>
-        <p className="text-[10px] text-muted-foreground truncate">{ownerName}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium truncate text-foreground">
+            {variant === "ambassador" && <span className="text-violet-500 mr-0.5">✦</span>}
+            {studioName}
+          </p>
+          <p className="text-[10px] text-muted-foreground truncate">{ownerName}</p>
+        </div>
+
+        <WindowLights variant={variant} />
       </div>
 
-      {/* Visit button */}
+      {/* Visit pill button */}
       <button
         onClick={(e) => { e.stopPropagation(); onVisit(); }}
-        className="text-[10px] h-6 px-2 rounded text-[#b8902a] hover:bg-[#b8902a]/10 transition-colors flex-shrink-0 font-medium"
+        className={cn(
+          "w-full py-1 mt-1.5 rounded-full border text-xs font-medium flex items-center justify-center gap-1 transition-colors",
+          visit.classes
+        )}
       >
-        방문
+        <span className="text-[10px]">{visit.icon}</span>
+        {visit.label}
       </button>
     </div>
   );
