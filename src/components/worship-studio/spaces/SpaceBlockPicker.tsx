@@ -1,8 +1,9 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { useCreateBlock, useDeleteBlock } from "@/hooks/useSpaceBlocks";
-import { Button } from "@/components/ui/button";
+import { useBlockContent } from "@/hooks/useBlockContent";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Trash2, Type, StickyNote, ListOrdered, CheckSquare, Image, Youtube, Music, Calendar, Link, FileText, Contact } from "lucide-react";
+import { Type, StickyNote, ListOrdered, CheckSquare, Image, Youtube, Music, Calendar, Link, FileText, Contact } from "lucide-react";
+import { BlockSettingsPanel } from "./blocks/BlockSettingsPanel";
 import type { SpaceBlock } from "@/hooks/useSpaceBlocks";
 
 const BLOCK_TYPES = [
@@ -26,10 +27,30 @@ interface SpaceBlockPickerProps {
   onBlockDeleted: () => void;
 }
 
+function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBlock; spaceId: string; onBlockDeleted: () => void }) {
+  const { language } = useTranslation();
+  const deleteBlock = useDeleteBlock();
+  const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
+
+  const handleDelete = () => {
+    if (!window.confirm(language === "ko" ? "이 블록을 삭제하시겠습니까?" : "Delete this block?")) return;
+    deleteBlock.mutate({ id: block.id, spaceId });
+    onBlockDeleted();
+  };
+
+  return (
+    <BlockSettingsPanel
+      block={block}
+      content={content}
+      onContentChange={setContent}
+      onDelete={handleDelete}
+    />
+  );
+}
+
 export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted }: SpaceBlockPickerProps) {
   const { language } = useTranslation();
   const createBlock = useCreateBlock();
-  const deleteBlock = useDeleteBlock();
 
   const handleAddBlock = (blockType: string) => {
     createBlock.mutate({
@@ -42,56 +63,17 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted }: Spa
     });
   };
 
-  const handleDelete = () => {
-    if (!selectedBlock) return;
-    if (!window.confirm(language === "ko" ? "이 블록을 삭제하시겠습니까?" : "Delete this block?")) return;
-    deleteBlock.mutate({ id: selectedBlock.id, spaceId });
-    onBlockDeleted();
-  };
-
   return (
     <div className="w-72 border-l border-border/40 bg-[hsl(var(--background))] flex flex-col shrink-0">
       <ScrollArea className="flex-1">
         <div className="p-4">
           {selectedBlock ? (
-            <div className="space-y-6">
-              {/* Position/size readout */}
-              <div>
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  {language === "ko" ? "블록 정보" : "Block Info"}
-                </h3>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-muted/50 rounded px-2 py-1.5">
-                    <span className="text-muted-foreground">X:</span> {selectedBlock.pos_x}
-                  </div>
-                  <div className="bg-muted/50 rounded px-2 py-1.5">
-                    <span className="text-muted-foreground">Y:</span> {selectedBlock.pos_y}
-                  </div>
-                  <div className="bg-muted/50 rounded px-2 py-1.5">
-                    <span className="text-muted-foreground">W:</span> {selectedBlock.size_w}
-                  </div>
-                  <div className="bg-muted/50 rounded px-2 py-1.5">
-                    <span className="text-muted-foreground">H:</span> {selectedBlock.size_h}
-                  </div>
-                </div>
-              </div>
-
-              {/* Placeholder for Phase D */}
-              <div className="text-xs text-muted-foreground italic text-center py-6 border border-dashed border-border/50 rounded-lg">
-                Phase D에서 settings 구현 예정
-              </div>
-
-              {/* Delete */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                {language === "ko" ? "블록 삭제" : "Delete Block"}
-              </Button>
-            </div>
+            <SelectedBlockPanel
+              key={selectedBlock.id}
+              block={selectedBlock}
+              spaceId={spaceId}
+              onBlockDeleted={onBlockDeleted}
+            />
           ) : (
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">

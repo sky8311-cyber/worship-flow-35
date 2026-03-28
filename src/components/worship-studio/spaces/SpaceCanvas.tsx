@@ -47,6 +47,7 @@ export function SpaceCanvas({ spaceId, isOwner, selectedBlockId, onSelectBlock }
             isSelected={block.id === selectedBlockId}
             onSelect={() => onSelectBlock(block.id)}
             onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
+            spaceId={spaceId}
           />
         ))}
       </div>
