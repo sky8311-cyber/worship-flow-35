@@ -265,13 +265,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Rooftop sign — floating above building */}
-            {/* Gothic Roof — Triple Lancet Arches */}
-            <div className="relative z-10 shrink-0">
-              <GothicRoof collapsed={collapsed && !isMobile} isMobile={isMobile} />
-            </div>
-
-            {/* Building wrapper */}
+            {/* Building wrapper — roof + body share same margins */}
             <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
+              {/* Gothic Roof — Triple Lancet Arches */}
+              <div className="shrink-0">
+                <GothicRoof collapsed={collapsed && !isMobile} isMobile={isMobile} />
+              </div>
               {/* Building body — Sandstone Gothic facade */}
               <div
                 className="flex-1 min-h-0 flex flex-col border-x border-[#b8a88a] overflow-hidden"
