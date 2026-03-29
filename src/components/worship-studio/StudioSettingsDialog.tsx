@@ -1,12 +1,30 @@
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUpdateRoom, type WorshipRoom } from "@/hooks/useWorshipRoom";
+import { useStudioSpaces, useUpdateSpace, useReorderSpaces } from "@/hooks/useStudioSpaces";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StudioBGMSelector } from "./StudioBGMSelector";
-import { Lock, Users, Globe, Music } from "lucide-react";
+import { Lock, Users, Globe, Music, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext, verticalListSortingStrategy, useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import type { StudioSpace } from "@/hooks/useStudioSpaces";
+
+const ICONS = ["🎵", "🎹", "🎸", "📖", "🙏", "✝️", "🕊️", "💡", "📝", "🎤"];
+const COLORS = [
+  "#b8902a", "#cc3333", "#3a6b8a", "#5a7a5a", "#7c6a9e",
+  "#e8c840", "#4a7c6a", "#8b5e52", "#6b6b6b", "#4a4a4a",
+];
 
 interface StudioSettingsDialogProps {
   room: WorshipRoom;
@@ -16,12 +34,174 @@ interface StudioSettingsDialogProps {
 
 type RoomVisibility = "private" | "friends" | "public";
 
+// Sortable space item
+function SortableSpaceItem({
+  space,
+  isFirst,
+  isExpanded,
+  onToggleExpand,
+  onUpdate,
+  language,
+}: {
+  space: StudioSpace;
+  isFirst: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onUpdate: (updates: Partial<StudioSpace>) => void;
+  language: string;
+}) {
+  const t = (ko: string, en: string) => (language === "ko" ? ko : en);
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: space.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const visLabel = space.visibility === "public" ? t("공개", "Public")
+    : space.visibility === "friends" ? t("이웃", "Friends")
+    : t("비공개", "Private");
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border rounded-lg overflow-hidden ${isDragging ? "opacity-50 shadow-lg" : ""}`}
+    >
+      {/* Header row */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-muted/30">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing touch-none">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <span className="text-base">{space.icon}</span>
+        <span className="text-sm font-medium flex-1 truncate">{space.name}</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+          {visLabel}
+        </span>
+        <button onClick={onToggleExpand} className="p-0.5 hover:bg-accent rounded">
+          {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+
+      {/* Expanded settings */}
+      {isExpanded && (
+        <div className="px-3 py-3 space-y-4 border-t">
+          {/* Name */}
+          <div className="space-y-1">
+            <Label className="text-xs">{t("이름", "Name")}</Label>
+            <Input
+              value={space.name}
+              onChange={(e) => onUpdate({ name: e.target.value })}
+              className="text-sm h-8"
+            />
+          </div>
+
+          {/* Icon */}
+          <div className="space-y-1">
+            <Label className="text-xs">{t("아이콘", "Icon")}</Label>
+            <div className="flex gap-1.5 flex-wrap">
+              {ICONS.map((ic) => (
+                <button
+                  key={ic}
+                  onClick={() => onUpdate({ icon: ic })}
+                  className={`h-8 w-8 rounded-md flex items-center justify-center text-lg border-2 transition-colors ${space.icon === ic ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/10" : "border-transparent hover:bg-muted/50"}`}
+                >
+                  {ic}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color */}
+          <div className="space-y-1">
+            <Label className="text-xs">{t("색깔", "Color")}</Label>
+            <div className="flex gap-1.5 flex-wrap">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => onUpdate({ color: c })}
+                  className={`h-7 w-7 rounded-full border-2 transition-all ${space.color === c ? "border-foreground scale-110" : "border-transparent"}`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Visibility */}
+          <div className="space-y-1">
+            <Label className="text-xs">{t("공개 설정", "Visibility")}</Label>
+            {isFirst ? (
+              <p className="text-xs text-muted-foreground">{t("첫 번째 공간은 항상 공개입니다", "First space is always public")}</p>
+            ) : (
+              <RadioGroup
+                value={space.visibility}
+                onValueChange={(v) => onUpdate({ visibility: v as any })}
+                className="flex gap-3"
+              >
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="public" id={`vis-pub-${space.id}`} />
+                  <Label htmlFor={`vis-pub-${space.id}`} className="text-xs">{t("전체공개", "Public")}</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="friends" id={`vis-fri-${space.id}`} />
+                  <Label htmlFor={`vis-fri-${space.id}`} className="text-xs">{t("친구만", "Friends")}</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="private" id={`vis-pri-${space.id}`} />
+                  <Label htmlFor={`vis-pri-${space.id}`} className="text-xs">{t("비공개", "Private")}</Label>
+                </div>
+              </RadioGroup>
+            )}
+          </div>
+
+          {/* Guestbook */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">{t("방명록 활성화", "Enable Guestbook")}</Label>
+              <Switch
+                checked={space.guestbook_enabled}
+                onCheckedChange={(v) => onUpdate({ guestbook_enabled: v })}
+              />
+            </div>
+            {space.guestbook_enabled && (
+              <RadioGroup
+                value={space.guestbook_permission}
+                onValueChange={(v) => onUpdate({ guestbook_permission: v as any })}
+                className="flex gap-3 pl-1"
+              >
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="all" id={`gb-all-${space.id}`} />
+                  <Label htmlFor={`gb-all-${space.id}`} className="text-xs">{t("전체", "Everyone")}</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="friends" id={`gb-fri-${space.id}`} />
+                  <Label htmlFor={`gb-fri-${space.id}`} className="text-xs">{t("친구만", "Friends only")}</Label>
+                </div>
+              </RadioGroup>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSettingsDialogProps) {
   const { language } = useTranslation();
   const updateRoom = useUpdateRoom();
+  const { data: spaces = [] } = useStudioSpaces(room.id);
+  const updateSpace = useUpdateSpace();
+  const reorderSpaces = useReorderSpaces();
   
   const [visibility, setVisibility] = useState<RoomVisibility>(room.visibility);
   const [selectedBgmId, setSelectedBgmId] = useState<string | null>(room.bgm_song_id);
+  const [expandedSpaceId, setExpandedSpaceId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
   
   const handleSave = () => {
     updateRoom.mutate({
@@ -33,6 +213,22 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
         onOpenChange(false);
       },
     });
+  };
+
+  const handleSpaceUpdate = (spaceId: string, updates: Partial<StudioSpace>) => {
+    updateSpace.mutate({ id: spaceId, ...updates });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = spaces.findIndex((s) => s.id === active.id);
+    const newIndex = spaces.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = [...spaces];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+    reorderSpaces.mutate({ roomId: room.id, orderedIds: reordered.map((s) => s.id) });
   };
   
   const visibilityOptions = [
@@ -109,6 +305,35 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
                 : "BGM sets the atmosphere of your Studio."}
             </p>
           </div>
+
+          {/* Space Management */}
+          {spaces.length > 0 && (
+            <div className="space-y-3">
+              <Label>{language === "ko" ? "공간 관리" : "Space Management"}</Label>
+              <p className="text-xs text-muted-foreground">
+                {language === "ko"
+                  ? "드래그하여 순서를 변경하고, 펼쳐서 설정을 변경하세요."
+                  : "Drag to reorder, expand to edit settings."}
+              </p>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={spaces.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {spaces.map((space, idx) => (
+                      <SortableSpaceItem
+                        key={space.id}
+                        space={space}
+                        isFirst={idx === 0}
+                        isExpanded={expandedSpaceId === space.id}
+                        onToggleExpand={() => setExpandedSpaceId(expandedSpaceId === space.id ? null : space.id)}
+                        onUpdate={(updates) => handleSpaceUpdate(space.id, updates)}
+                        language={language}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
         </div>
         
         <div className="flex justify-end gap-2">

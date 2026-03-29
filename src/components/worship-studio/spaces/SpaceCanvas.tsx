@@ -5,7 +5,7 @@ import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
-import { Music, Play, Pause, UserPlus, Settings } from "lucide-react";
+import { Music, Play, Pause, UserPlus, Settings, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
@@ -34,6 +34,9 @@ interface SpaceCanvasProps {
   onPageChange: (page: number) => void;
   pageCount: number;
   onPageNavInfo?: (info: { pageCount: number; canGoNext: boolean; canGoPrev: boolean; pageIndicator: string; navigatePage: (dir: "left" | "right") => void }) => void;
+  guestbookEnabled?: boolean;
+  guestbookCount?: number;
+  onOpenGuestbook?: () => void;
 }
 
 export function SpaceCanvas({
@@ -43,6 +46,7 @@ export function SpaceCanvas({
   bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
   onOpenSettings, onAddNeighbor, neighborStatus,
   currentPage, onPageChange, pageCount, onPageNavInfo,
+  guestbookEnabled, guestbookCount, onOpenGuestbook,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
@@ -200,6 +204,16 @@ export function SpaceCanvas({
             title={language === "ko" ? "아틀리에 설정" : "Atelier Settings"}
           >
             <Settings className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
+        {guestbookEnabled && onOpenGuestbook && (
+          <button
+            onClick={onOpenGuestbook}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+          >
+            <Mail className="h-3 w-3" />
+            {language === "ko" ? "방명록" : "Guestbook"}
+            {(guestbookCount ?? 0) > 0 && ` (${guestbookCount})`}
           </button>
         )}
       </div>

@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
+import { useGuestbook } from "@/hooks/useGuestbook";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
 import { SpaceCanvas } from "./spaces/SpaceCanvas";
+import { GuestbookPanel } from "./spaces/GuestbookPanel";
 import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
@@ -60,6 +62,7 @@ export function StudioMainPanel({
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, Partial<SpaceBlockType>>>(new Map());
   const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [guestbookOpen, setGuestbookOpen] = useState(false);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
@@ -67,6 +70,10 @@ export function StudioMainPanel({
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId);
   const activePageCount = activeSpace?.page_count ?? 2;
+
+  const { data: guestbookEntries = [] } = useGuestbook(
+    activeSpace?.guestbook_enabled ? activeSpaceId || undefined : undefined
+  );
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
 
@@ -157,6 +164,9 @@ export function StudioMainPanel({
               onPageChange={setCurrentPage}
               pageCount={activePageCount}
               onPageNavInfo={(info) => onPageNavInfo?.(info ? { ...info, handleAddPage } : null)}
+              guestbookEnabled={activeSpace?.guestbook_enabled}
+              guestbookCount={guestbookEntries.length}
+              onOpenGuestbook={() => setGuestbookOpen(true)}
             />
 
             {!isMobile && isOwnStudio && (
@@ -173,9 +183,18 @@ export function StudioMainPanel({
               <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
                 <DrawerTrigger asChild>
                   <button
-                    className="fixed right-4 bottom-20 z-50 w-12 h-12 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg flex items-center justify-center hover:opacity-90 transition"
+                    className="fixed right-4 bottom-20 z-50 flex flex-col items-center justify-center gap-0.5 w-14 h-16 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg hover:opacity-90 transition"
                   >
-                    <Plus className="h-6 w-6" />
+                    {selectedBlockId ? (
+                      <Pencil className="h-5 w-5" />
+                    ) : (
+                      <Plus className="h-6 w-6" />
+                    )}
+                    <span className="text-[9px] font-medium leading-none">
+                      {selectedBlockId
+                        ? (language === "ko" ? "블록 수정" : "Edit Block")
+                        : (language === "ko" ? "블록 추가" : "Add Block")}
+                    </span>
                   </button>
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[60vh] pb-6">
@@ -201,6 +220,14 @@ export function StudioMainPanel({
           </div>
         )}
       </div>
+
+      {activeSpaceId && (
+        <GuestbookPanel
+          open={guestbookOpen}
+          onOpenChange={setGuestbookOpen}
+          spaceId={activeSpaceId}
+        />
+      )}
     </div>
   );
 }
