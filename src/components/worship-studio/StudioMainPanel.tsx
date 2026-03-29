@@ -220,6 +220,14 @@ export function StudioMainPanel({
           </div>
         )}
       </div>
+
+      {activeSpaceId && (
+        <GuestbookPanel
+          open={guestbookOpen}
+          onOpenChange={setGuestbookOpen}
+          spaceId={activeSpaceId}
+        />
+      )}
     </div>
   );
 }
