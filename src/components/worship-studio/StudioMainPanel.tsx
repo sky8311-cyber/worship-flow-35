@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { LayoutGrid, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
@@ -19,14 +19,7 @@ interface StudioMainPanelProps {
   bgmVideoId?: string | null;
   bgmRoomId?: string | null;
   bgmOwnerName?: string | null;
-  // Marquee
-  marqueeText?: string | null;
-  marqueeTextColor?: string | null;
-  marqueeBgColor?: string | null;
-  marqueeSpeed?: number | null;
-  // Settings
   onOpenSettings?: () => void;
-  // Neighbor
   onAddNeighbor?: () => void;
   neighborStatus?: "none" | "pending" | "accepted" | null;
 }
@@ -40,10 +33,6 @@ export function StudioMainPanel({
   bgmVideoId,
   bgmRoomId,
   bgmOwnerName,
-  marqueeText,
-  marqueeTextColor,
-  marqueeBgColor,
-  marqueeSpeed,
   onOpenSettings,
   onAddNeighbor,
   neighborStatus,
@@ -59,6 +48,7 @@ export function StudioMainPanel({
   const [isEditMode, setIsEditMode] = useState(false);
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, Partial<SpaceBlockType>>>(new Map());
   const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
@@ -70,6 +60,7 @@ export function StudioMainPanel({
     setSelectedBlockId(null);
     setIsEditMode(false);
     setPendingUpdates(new Map());
+    setCurrentPage(0);
   }, [currentRoomId]);
 
   useEffect(() => {
@@ -82,6 +73,7 @@ export function StudioMainPanel({
     setSelectedBlockId(null);
     setIsEditMode(false);
     setPendingUpdates(new Map());
+    setCurrentPage(0);
   }, [activeSpaceId]);
 
   const handlePendingUpdate = useCallback((id: string, updates: Partial<SpaceBlockType>) => {
@@ -138,13 +130,11 @@ export function StudioMainPanel({
               bgmVideoId={bgmVideoId}
               bgmRoomId={bgmRoomId}
               bgmOwnerName={bgmOwnerName}
-              marqueeText={marqueeText}
-              marqueeTextColor={marqueeTextColor}
-              marqueeBgColor={marqueeBgColor}
-              marqueeSpeed={marqueeSpeed}
               onOpenSettings={isOwnStudio ? onOpenSettings : undefined}
               onAddNeighbor={onAddNeighbor}
               neighborStatus={neighborStatus}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
             />
 
             {!isMobile && isOwnStudio && (
@@ -153,6 +143,7 @@ export function StudioMainPanel({
                 selectedBlock={selectedBlock}
                 onBlockDeleted={() => setSelectedBlockId(null)}
                 isEditMode={isEditMode}
+                currentPage={currentPage}
               />
             )}
 
@@ -173,6 +164,7 @@ export function StudioMainPanel({
                       onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
                       isEditMode={isEditMode}
                       compact
+                      currentPage={currentPage}
                     />
                   </div>
                 </DrawerContent>

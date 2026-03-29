@@ -116,10 +116,6 @@ export function useUpdateRoom() {
       visibility?: RoomVisibility;
       theme_config?: ThemeConfig;
       bgm_song_id?: string | null;
-      marquee_text?: string | null;
-      marquee_text_color?: string | null;
-      marquee_bg_color?: string | null;
-      marquee_speed?: number | null;
     }) => {
       const { roomId, ...data } = updates;
       
@@ -127,10 +123,6 @@ export function useUpdateRoom() {
       if (data.visibility !== undefined) updateData.visibility = data.visibility;
       if (data.theme_config !== undefined) updateData.theme_config = data.theme_config;
       if (data.bgm_song_id !== undefined) updateData.bgm_song_id = data.bgm_song_id;
-      if (data.marquee_text !== undefined) updateData.marquee_text = data.marquee_text;
-      if (data.marquee_text_color !== undefined) updateData.marquee_text_color = data.marquee_text_color;
-      if (data.marquee_bg_color !== undefined) updateData.marquee_bg_color = data.marquee_bg_color;
-      if (data.marquee_speed !== undefined) updateData.marquee_speed = data.marquee_speed;
       
       const { error } = await supabase
         .from("worship_rooms")

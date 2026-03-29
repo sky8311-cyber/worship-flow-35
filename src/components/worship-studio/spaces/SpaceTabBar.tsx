@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useStudioSpaces, useUpdateSpace, useReorderSpaces } from "@/hooks/useStudioSpaces";
 import { useGuestbook } from "@/hooks/useGuestbook";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -137,6 +137,12 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
   const [guestbookOpen, setGuestbookOpen] = useState(false);
   const [settingsSpace, setSettingsSpace] = useState<StudioSpace | null>(null);
 
+  // Swipe/drag scroll refs
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isDraggingScroll = useRef(false);
+  const startX = useRef(0);
+  const scrollStart = useRef(0);
+
   const activeSpace = spaces.find(s => s.id === activeSpaceId);
   const { data: guestbookEntries = [] } = useGuestbook(
     activeSpace?.guestbook_enabled ? activeSpaceId || undefined : undefined
@@ -172,54 +178,104 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
     reorderSpaces.mutate({ roomId, orderedIds: reordered.map((s) => s.id) });
   };
 
+  // Touch swipe handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    isDraggingScroll.current = true;
+    startX.current = e.touches[0].clientX;
+    scrollStart.current = scrollRef.current?.scrollLeft ?? 0;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDraggingScroll.current || !scrollRef.current) return;
+    const dx = startX.current - e.touches[0].clientX;
+    scrollRef.current.scrollLeft = scrollStart.current + dx;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    isDraggingScroll.current = false;
+  }, []);
+
+  // Mouse drag handlers (desktop)
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only handle direct clicks on the scroll container, not on tabs
+    if ((e.target as HTMLElement).closest('[data-tab]')) return;
+    isDraggingScroll.current = true;
+    startX.current = e.clientX;
+    scrollStart.current = scrollRef.current?.scrollLeft ?? 0;
+    e.preventDefault();
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDraggingScroll.current || !scrollRef.current) return;
+    const dx = startX.current - e.clientX;
+    scrollRef.current.scrollLeft = scrollStart.current + dx;
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    isDraggingScroll.current = false;
+  }, []);
+
   return (
     <>
-      {/* Tab bar with folder-tab style */}
-      <div className="relative px-4 pt-1 bg-[hsl(var(--background))] flex items-end gap-0.5 overflow-x-auto border-b border-[#d0c8bc]">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={spaces.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
-            {spaces.map((space) => (
-              <SortableTab
-                key={space.id}
-                space={space}
-                isActive={activeSpaceId === space.id}
-                isOwner={isOwner}
-                onSelect={() => onSpaceSelect(space.id)}
-                onRename={(name) => updateSpace.mutate({ id: space.id, name })}
-                onOpenSettings={() => setSettingsSpace(space)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+      {/* Tab bar with folder-tab style — no vertical scroll, horizontal swipe only */}
+      <div
+        ref={scrollRef}
+        className="relative px-4 pt-1 bg-[hsl(var(--background))] flex items-end gap-0.5 border-b border-[#d0c8bc] overflow-hidden"
+        style={{ overflowX: 'hidden', overflowY: 'hidden', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <div className="flex items-end gap-0.5 min-w-max">
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={spaces.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
+              {spaces.map((space) => (
+                <SortableTab
+                  key={space.id}
+                  space={space}
+                  isActive={activeSpaceId === space.id}
+                  isOwner={isOwner}
+                  onSelect={() => onSpaceSelect(space.id)}
+                  onRename={(name) => updateSpace.mutate({ id: space.id, name })}
+                  onOpenSettings={() => setSettingsSpace(space)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
-        {isOwner && spaces.length < 10 && (
-          <Button
-            size="sm" variant="ghost"
-            onClick={() => setCreateOpen(true)}
-            className="h-7 gap-1 text-muted-foreground hover:text-foreground shrink-0 mb-px"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="text-xs">{language === "ko" ? "새 공간" : "New Space"}</span>
-          </Button>
-        )}
-
-        {/* Guestbook button — right aligned */}
-        {activeSpace?.guestbook_enabled && (
-          <>
-            <div className="flex-1" />
+          {isOwner && spaces.length < 10 && (
             <Button
               size="sm" variant="ghost"
-              onClick={() => setGuestbookOpen(true)}
+              onClick={() => setCreateOpen(true)}
               className="h-7 gap-1 text-muted-foreground hover:text-foreground shrink-0 mb-px"
             >
-              <Mail className="h-3.5 w-3.5" />
-              <span className="text-xs">
-                {language === "ko" ? "방명록" : "Guestbook"}
-                {guestbookEntries.length > 0 && ` (${guestbookEntries.length})`}
-              </span>
+              <Plus className="h-3.5 w-3.5" />
+              <span className="text-xs">{language === "ko" ? "새 공간" : "New Space"}</span>
             </Button>
-          </>
-        )}
+          )}
+
+          {/* Guestbook button — right aligned */}
+          {activeSpace?.guestbook_enabled && (
+            <>
+              <div className="flex-1 min-w-4" />
+              <Button
+                size="sm" variant="ghost"
+                onClick={() => setGuestbookOpen(true)}
+                className="h-7 gap-1 text-muted-foreground hover:text-foreground shrink-0 mb-px"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span className="text-xs">
+                  {language === "ko" ? "방명록" : "Guestbook"}
+                  {guestbookEntries.length > 0 && ` (${guestbookEntries.length})`}
+                </span>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <SpaceCreateDialog

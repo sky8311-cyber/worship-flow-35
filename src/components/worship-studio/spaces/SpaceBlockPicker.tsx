@@ -27,6 +27,7 @@ interface SpaceBlockPickerProps {
   onBlockDeleted: () => void;
   isEditMode: boolean;
   compact?: boolean;
+  currentPage?: number;
 }
 
 function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBlock; spaceId: string; onBlockDeleted: () => void }) {
@@ -50,7 +51,7 @@ function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBl
   );
 }
 
-export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEditMode, compact }: SpaceBlockPickerProps) {
+export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEditMode, compact, currentPage = 0 }: SpaceBlockPickerProps) {
   const { language } = useTranslation();
   const createBlock = useCreateBlock();
 
@@ -62,6 +63,7 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
       pos_y: 100,
       size_w: 200,
       size_h: 150,
+      page_number: currentPage,
     });
   };
 
@@ -101,9 +103,9 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
   }
 
   return (
-    <div className="w-72 border-l border-border/40 bg-[hsl(var(--background))] flex flex-col shrink-0">
+    <div className="w-56 border-l border-border/40 bg-[hsl(var(--background))] flex flex-col shrink-0">
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="p-3">
           {selectedBlock && isEditMode ? (
             <SelectedBlockPanel
               key={selectedBlock.id}
@@ -116,15 +118,15 @@ export function SpaceBlockPicker({ spaceId, selectedBlock, onBlockDeleted, isEdi
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                 {language === "ko" ? "블록 추가" : "Add Block"}
               </h3>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 gap-2">
                 {BLOCK_TYPES.map(({ value, icon: Icon, label, labelEn, color }) => (
                   <button
                     key={value}
                     onClick={() => handleAddBlock(value)}
                     disabled={!isEditMode}
-                    className="flex flex-col items-center justify-center gap-1.5 w-16 h-16 rounded-xl hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group disabled:opacity-40 disabled:pointer-events-none"
+                    className="flex flex-col items-center justify-center gap-1.5 w-full h-16 rounded-xl hover:bg-accent/50 transition-all border border-transparent hover:border-border/30 group disabled:opacity-40 disabled:pointer-events-none"
                   >
-                    <Icon className="h-7 w-7 group-hover:scale-110 transition-transform" style={{ color }} />
+                    <Icon className="h-6 w-6 group-hover:scale-110 transition-transform" style={{ color }} />
                     <span className="text-[10px] text-muted-foreground font-medium leading-tight">
                       {language === "ko" ? label : labelEn}
                     </span>

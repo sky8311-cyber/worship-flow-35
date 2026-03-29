@@ -115,10 +115,6 @@ export default function WorshipStudio() {
               bgmVideoId={bgmVideoId || null}
               bgmRoomId={currentStudio?.id || null}
               bgmOwnerName={currentStudio?.owner?.full_name || null}
-              marqueeText={currentStudio?.marquee_text}
-              marqueeTextColor={currentStudio?.marquee_text_color}
-              marqueeBgColor={currentStudio?.marquee_bg_color}
-              marqueeSpeed={currentStudio?.marquee_speed}
               onOpenSettings={() => setShowSettings(true)}
               onAddNeighbor={!isOwnStudio ? onAddNeighbor : undefined}
               neighborStatus={!isOwnStudio ? neighborStatus : undefined}
