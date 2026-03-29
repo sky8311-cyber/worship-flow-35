@@ -10,6 +10,15 @@ import { SpaceBlockPicker } from "./spaces/SpaceBlockPicker";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
+export interface PageNavInfo {
+  pageCount: number;
+  canGoNext: boolean;
+  canGoPrev: boolean;
+  pageIndicator: string;
+  navigatePage: (dir: "left" | "right") => void;
+  handleAddPage: () => void;
+}
+
 interface StudioMainPanelProps {
   myStudioId?: string | null;
   selectedStudioId?: string | null;
@@ -22,6 +31,7 @@ interface StudioMainPanelProps {
   onOpenSettings?: () => void;
   onAddNeighbor?: () => void;
   neighborStatus?: "none" | "pending" | "accepted" | null;
+  onPageNavInfo?: (info: PageNavInfo | null) => void;
 }
 
 export function StudioMainPanel({
@@ -36,6 +46,7 @@ export function StudioMainPanel({
   onOpenSettings,
   onAddNeighbor,
   neighborStatus,
+  onPageNavInfo,
 }: StudioMainPanelProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
