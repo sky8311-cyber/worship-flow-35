@@ -213,7 +213,7 @@ export function SpaceCanvas({
   };
 
   return (
-    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+    <div ref={containerRef} className="flex flex-col overflow-hidden relative" style={{ height: 'calc(100dvh - 48px - 40px)' }}>
       {/* Toolbar */}
       <div className="shrink-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30 gap-2">
         <div className="flex items-center gap-2 min-w-0">
