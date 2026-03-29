@@ -1,55 +1,71 @@
 
 
-# 아치 지붕 너비 = 건물 너비 정확히 일치 + 참조 이미지 기반 개선
+# 프랑스 고딕 3단 아치 지붕 재설계
 
-## 문제 원인
-현재 `preserveAspectRatio="xMidYMax meet"` 설정으로 인해 SVG가 고정 비율을 유지하면서 컨테이너보다 좁게 렌더링됨. viewBox 비율(360:160 = 2.25:1)과 실제 컨테이너 비율(~232:96 = 2.42:1)이 불일치.
+## 참조 이미지 분석
 
-## 해결 방법
+첨부된 이미지는 프랑스 고딕 양식의 **3련 아치 (triple lancet arcade)**:
+- 중앙 아치가 가장 높고 뾰족함
+- 좌우 아치는 낮고 대칭
+- 각 아치 꼭대기에 **트레포일(trefoil/quatrefoil)** 장식 창문
+- 아치 사이에 기둥(column/pillar)
+- 아치 가장자리에 **크로켓(crocket)** 장식 — 뾰족한 잎 모양 반복 패턴
+- 각 꼭대기에 **피니얼(finial)** — 뾰족한 꽃봉오리 장식
 
-### `GothicArchTop.tsx` 재설계
+## 구현 계획
 
-**핵심 변경: 아치를 "배경 fill + 장식 stroke" 분리**
-
-1. **배경 fill path**: `preserveAspectRatio="none"`으로 강제 가로 꽉 채움
-2. **장식 아치 stroke + 별 + 텍스트**: 별도 SVG 레이어로 `preserveAspectRatio="xMidYMax meet"` 유지 (비율 왜곡 방지)
-
-또는 더 단순한 접근:
-
-**viewBox 비율을 컨테이너에 맞추고 높이를 auto로 변경**
-- 고정 높이(`h-[96px]`) 제거 → `aspect-ratio` CSS 활용
-- 또는 viewBox 가로를 넓혀서 비율 일치시킴
-
-**참조 이미지 기반 개선** (첨부된 고딕 아치 도면 참조):
-- 아치 하단에 **pillar base (기둥 받침대)** 추가 — 건물 벽과 자연스럽게 연결
-- 기둥 받침대가 건물 border-x와 정확히 정렬
-- 외부 아치 + 내부 아치 사이 간격을 더 벌려 이중 아치 느낌 강화
+### `GothicArchTop.tsx` 전면 재설계
 
 ```text
-현재:                    개선 후:
-    ╱╲                      ╱╲
-  ╱    ╲                  ╱ ╱╲ ╲
- ╱      ╲               ╱ ╱    ╲ ╲
-│        │             ┃│ │      │ │┃  ← pillar base
-┊ (gap)  ┊             ┃└─┘      └─┘┃  ← 건물 벽과 정렬
-├────────┤             ├────────────┤
-│building│             │  building  │
+    ⚜           ⚜           ⚜     ← finials (3개)
+   ╱╲          ╱╲          ╱╲
+  ╱◇◇╲       ╱◇◇╲       ╱◇◇╲    ← crocket 장식
+ ╱ ╱╲  ╲    ╱  ╱╲  ╲    ╱ ╱╲ ╲
+╱ ╱ ✿╲  ╲ ╱  ╱ ✿╲  ╲  ╱ ╱ ✿╲ ╲  ← quatrefoil 창문
+│ │    │  ││  │    │  ││ │    │ │
+│ │    │  ││  │    │  ││ │    │ │  ← 이중 아치 기둥
+┃ └────┘  ┃┃  └────┘  ┃┃ └────┘ ┃
+├─────────┴┴──────────┴┴────────┤  ← 건물 벽과 정렬
+│         building body          │
 ```
 
-### 구체적 SVG 변경
+**SVG 구조 (viewBox: `0 0 300 200`):**
 
-**Expanded 모드:**
-- viewBox: `0 0 100 50` (비율을 2:1로 단순화)
-- 아치 path가 x=0 ~ x=100 전체 사용
-- `preserveAspectRatio="none"` 적용하되, 별과 텍스트는 HTML overlay로 분리
-- 또는: viewBox `0 -20 100 70`, height auto, width 100%
+1. **Layer 1 — 배경 fill** (`preserveAspectRatio="none"`)
+   - 3개 아치 실루엣을 하나의 합쳐진 path로 → 건물 배경색(`#f8f6f0`)으로 채움
+   - 가로 0~300 전체 사용 → 컨테이너 너비와 정확히 일치
 
-**Collapsed 모드:**
-- 동일 원리로 viewBox 조정
+2. **Layer 2 — 장식 디테일** (`preserveAspectRatio="xMidYMax meet"`)
+   - **중앙 아치** (x: 90~210, 높이 ~180): 가장 높고 뾰족한 lancet
+   - **좌측 아치** (x: 0~110, 높이 ~140): 중앙보다 낮음
+   - **우측 아치** (x: 190~300, 높이 ~140): 좌측과 대칭
+   - 각 아치는 **외부 + 내부 이중선**
+   - 아치 사이 **기둥(columns)** — 세로선 + 작은 주두(capital) 장식
+   - 각 아치 상단에 **quatrefoil 창문** — 4잎 클로버 형태의 SVG path
+   - 아치 외곽선에 **crocket 장식** — 작은 삼각/잎 형태 반복
+   - 3개 꼭대기에 **finial** — 뾰족한 꽃봉오리/십자가 장식
+   - 중앙 finial 우측에 기존 **금색 별(★)** 유지
 
-### 파일 변경
+3. **브랜드 텍스트** — 중앙 아치 내부에 "WORSHIP ATELIER" / "by K-Worship"
+
+**높이 변경:**
+- Expanded: `96px` → `140px` (모바일 `120px`) — 3단 아치의 디테일을 충분히 표현
+- Collapsed: `40px` → `52px` — 단순화된 3개 뾰족한 실루엣만
+
+### `StudioSidePanel.tsx` 변경
+
+- 건물 높이를 더 높이기 위해 road/lawn 영역은 유지하되, 빌딩 body의 `flex-1` 비율이 자연스럽게 늘어남 (아치가 커지면 전체 빌딩이 더 임팩트 있어짐)
+- 변경 최소화 — GothicArchTop의 높이만 늘어나므로 레이아웃은 자동 적용
+
+### Collapsed 모드
+
+- 3개의 작은 뾰족한 삼각형 실루엣 (중앙 높고 양쪽 낮게)
+- quatrefoil/crocket 생략, finial만 간략 표현
+
+## 파일 변경
 
 | 파일 | 변경 |
 |------|------|
-| `GothicArchTop.tsx` | SVG path 재설계: pillar base 추가, preserveAspectRatio 수정으로 가로 100% 보장, 참조 이미지 스타일 반영 |
+| `GothicArchTop.tsx` | 전면 재설계: 3단 아치 + quatrefoil 창문 + crocket + finial + 기둥 |
+| `StudioSidePanel.tsx` | 변경 없음 (아치 높이 증가는 자동 반영) |
 
