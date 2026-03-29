@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { SpaceBlock } from "./SpaceBlock";
 import { MujiGridBackground } from "./MujiGridBackground";
@@ -321,27 +321,34 @@ interface BGMButtonProps {
 }
 
 function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongArtist }: BGMButtonProps) {
-  const { startPlaylist, closePlayer, isPlaying, setPlayerState, setIsPlaying, sendCommand, playerReady, playlist } = useMusicPlayer();
-  const [hasStarted, setHasStarted] = useState(false);
-
-  // Fix: after starting BGM, wait for playerReady then force play
-  useEffect(() => {
-    if (hasStarted && playerReady && !isPlaying) {
-      const timer = setTimeout(() => {
-        sendCommand('play');
-        setIsPlaying(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [hasStarted, playerReady, isPlaying, sendCommand, setIsPlaying]);
+  const {
+    startPlaylist,
+    isPlaying,
+    setPlayerState,
+    setIsPlaying,
+    sendCommand,
+    playlist,
+    setId,
+    pendingPlayIntent,
+    setPendingPlayIntent,
+  } = useMusicPlayer();
 
   if (!bgmSongTitle || !bgmVideoId || !bgmRoomId) return null;
 
-  const isBGMPlaying = hasStarted && isPlaying && playlist.some(t => t.videoId === bgmVideoId);
+  const isCurrentBGMLoaded = setId === bgmRoomId || playlist.some((track) => track.videoId === bgmVideoId);
+  const isBGMPlaying = isCurrentBGMLoaded && isPlaying;
   const needsMarquee = bgmSongTitle.length > 12;
 
   const handleToggle = () => {
-    if (!hasStarted || !isBGMPlaying) {
+    console.log('[SpaceCanvas:BGMButton] Toggle', {
+      loaded: isCurrentBGMLoaded,
+      playing: isBGMPlaying,
+      pending: pendingPlayIntent,
+      bgmVideoId,
+    });
+
+    if (!isCurrentBGMLoaded) {
+      setPendingPlayIntent(true);
       startPlaylist(
         [{
           videoId: bgmVideoId,
@@ -353,11 +360,19 @@ function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongA
         bgmRoomId
       );
       setPlayerState("hidden");
-      setHasStarted(true);
-    } else {
-      closePlayer();
-      setHasStarted(false);
+      return;
     }
+
+    if (isBGMPlaying) {
+      sendCommand('pause');
+      setIsPlaying(false);
+      setPendingPlayIntent(false);
+      return;
+    }
+
+    setPendingPlayIntent(true);
+    sendCommand('play');
+    setIsPlaying(true);
   };
 
   return (
@@ -365,7 +380,7 @@ function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongA
       onClick={handleToggle}
       className="flex items-center gap-1.5 bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] rounded-full px-2.5 py-1 max-w-[180px] transition-colors"
     >
-      <Music className="h-3.5 w-3.5 shrink-0 text-[#b8902a]" />
+      <Music className="h-3.5 w-3.5 shrink-0 text-primary" />
       <div className="overflow-hidden max-w-[100px]">
         <span
           className={cn(

@@ -41,11 +41,21 @@ export const GlobalMusicPlayerDialog = () => {
     playerReady,
     setPlayerReady,
     setTitle,
+    pendingPlayIntent,
+    setPendingPlayIntent,
   } = useMusicPlayer();
 
   const [isSeeking, setIsSeeking] = useState(false);
   const seekValueRef = useRef<number>(0);
+  const playRetryTimeoutRef = useRef<number | null>(null);
   const currentTrack = playlist[currentIndex];
+
+  const clearPlayRetry = useCallback(() => {
+    if (playRetryTimeoutRef.current !== null) {
+      window.clearTimeout(playRetryTimeoutRef.current);
+      playRetryTimeoutRef.current = null;
+    }
+  }, []);
 
   // Apply player state from proxy messages
   const applyPlayerState = useCallback((state: number | undefined, time: number | undefined, dur: number | undefined) => {
@@ -58,18 +68,23 @@ export const GlobalMusicPlayerDialog = () => {
     if (state !== undefined) {
       // YT.PlayerState: PLAYING = 1, PAUSED = 2, ENDED = 0
       if (state === 1) {
+        console.log('[GlobalMusicPlayerDialog] stateChange=1 (PLAYING)');
         setIsPlaying(true);
+        setPendingPlayIntent(false);
+        clearPlayRetry();
       } else if (state === 2 || state === 0) {
+        console.log(`[GlobalMusicPlayerDialog] stateChange=${state}`);
         setIsPlaying(false);
       }
     }
-  }, [setDuration, setCurrentTime, setIsPlaying, isSeeking]);
+  }, [setDuration, setCurrentTime, setIsPlaying, setPendingPlayIntent, clearPlayRetry, isSeeking]);
 
   // Handle video ended
   const handleVideoEnded = useCallback(() => {
     if (currentIndex < playlist.length - 1) {
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
+      setPendingPlayIntent(true);
       sendCommand('loadVideo', { videoId: playlist[nextIndex]?.videoId });
       setTimeout(() => {
         sendCommand('play');
@@ -80,7 +95,7 @@ export const GlobalMusicPlayerDialog = () => {
       setIsPlaying(false);
       setCurrentTime(0);
     }
-  }, [currentIndex, playlist, setCurrentIndex, sendCommand, setIsPlaying, setCurrentTime]);
+  }, [currentIndex, playlist, setCurrentIndex, sendCommand, setIsPlaying, setCurrentTime, setPendingPlayIntent]);
 
   // Listen to messages from the proxy iframe
   useEffect(() => {
@@ -100,8 +115,13 @@ export const GlobalMusicPlayerDialog = () => {
         console.log('[GlobalMusicPlayerDialog] Player ready');
         setPlayerReady(true);
       } else if (type === 'error') {
-        console.error('[GlobalMusicPlayerDialog] Player error:', error);
-        toast.error(language === 'ko' ? '영상을 재생할 수 없습니다.' : 'Cannot play this video.');
+        const errorCode = typeof error === 'object' && error !== null ? (error.code ?? error.message) : error;
+        console.error('[GlobalMusicPlayerDialog] Player error:', errorCode);
+        toast.error(
+          language === 'ko'
+            ? `영상을 재생할 수 없습니다. (${String(errorCode ?? 'unknown')})`
+            : `Cannot play this video. (${String(errorCode ?? 'unknown')})`
+        );
       }
     };
     
@@ -134,8 +154,35 @@ export const GlobalMusicPlayerDialog = () => {
     // Reset when player closes
     if (playerState === 'closed') {
       hasLoadedFirstVideoRef.current = false;
+      clearPlayRetry();
     }
-  }, [playerReady, playerState, playlist, currentIndex, sendCommand]);
+  }, [playerReady, playerState, playlist, currentIndex, sendCommand, clearPlayRetry]);
+
+  // Consume pending play intent with bounded retries after ready
+  useEffect(() => {
+    if (!pendingPlayIntent || !playerReady || playerState === 'closed' || playlist.length === 0) return;
+
+    let attempt = 0;
+    const maxAttempts = 4;
+
+    const attemptPlay = () => {
+      attempt += 1;
+      console.log(`[GlobalMusicPlayerDialog] pendingPlayIntent play attempt ${attempt}/${maxAttempts}`);
+      sendCommand('play');
+
+      if (attempt < maxAttempts) {
+        playRetryTimeoutRef.current = window.setTimeout(attemptPlay, 250);
+      } else {
+        playRetryTimeoutRef.current = null;
+      }
+    };
+
+    playRetryTimeoutRef.current = window.setTimeout(attemptPlay, 120);
+
+    return () => {
+      clearPlayRetry();
+    };
+  }, [pendingPlayIntent, playerReady, playerState, playlist.length, sendCommand, clearPlayRetry]);
 
   // Periodically get current state while playing
   useEffect(() => {
@@ -150,12 +197,13 @@ export const GlobalMusicPlayerDialog = () => {
 
   const playTrack = useCallback((index: number) => {
     setCurrentIndex(index);
+    setPendingPlayIntent(true);
     sendCommand('loadVideo', { videoId: playlist[index]?.videoId });
     setTimeout(() => {
       sendCommand('play');
     }, 150);
     setIsPlaying(true);
-  }, [playlist, setCurrentIndex, sendCommand, setIsPlaying]);
+  }, [playlist, setCurrentIndex, sendCommand, setIsPlaying, setPendingPlayIntent]);
 
   const playNext = () => {
     const nextIndex = (currentIndex + 1) % playlist.length;
@@ -171,7 +219,9 @@ export const GlobalMusicPlayerDialog = () => {
     if (isPlaying) {
       sendCommand('pause');
       setIsPlaying(false);
+      setPendingPlayIntent(false);
     } else {
+      setPendingPlayIntent(true);
       sendCommand('play');
       setIsPlaying(true);
     }
