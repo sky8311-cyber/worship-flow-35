@@ -5,7 +5,7 @@ import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
-import { Music, Play, Pause, UserPlus, Settings, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Music, Play, Pause, UserPlus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
@@ -33,6 +33,7 @@ interface SpaceCanvasProps {
   neighborStatus?: "none" | "pending" | "accepted" | null;
   currentPage: number;
   onPageChange: (page: number) => void;
+  onPageNavInfo?: (info: { pageCount: number; canGoNext: boolean; canGoPrev: boolean; pageIndicator: string; navigatePage: (dir: "left" | "right") => void; handleAddPage: () => void }) => void;
 }
 
 export function SpaceCanvas({
