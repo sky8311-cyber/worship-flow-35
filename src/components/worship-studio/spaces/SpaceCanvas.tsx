@@ -57,22 +57,6 @@ export function SpaceCanvas({
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [pageHeight, setPageHeight] = useState(500);
-
-  // Measure available height for pages
-  useEffect(() => {
-    const measure = () => {
-      if (containerRef.current) {
-        // Subtract toolbar (~48px) and page nav (~40px) 
-        const available = containerRef.current.clientHeight - 4;
-        setPageHeight(Math.max(300, available));
-      }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
 
   // Desktop shows 2 pages, mobile shows 1
   const pagesPerView = isMobile ? 1 : 2;
@@ -198,13 +182,12 @@ export function SpaceCanvas({
       <div
         key={pageNum}
         className={cn(
-          "relative shrink-0 overflow-hidden",
+          "relative shrink-0 overflow-hidden h-full",
           !isMobile && side === "left" && "border-r-0",
           !isMobile && side === "right" && "border-l-0",
         )}
         style={{
           width: `${CANVAS_WIDTH}px`,
-          height: `${pageHeight}px`,
         }}
         onClick={handleCanvasClick}
       >
@@ -240,10 +223,10 @@ export function SpaceCanvas({
       </div>
 
       {/* Page area */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-0">
         <div
           className={cn(
-            "flex items-stretch transition-transform duration-350 ease-in-out",
+            "flex items-stretch h-full transition-transform duration-350 ease-in-out",
             slideDirection === "right" && "-translate-x-4 opacity-80",
             slideDirection === "left" && "translate-x-4 opacity-80",
           )}
@@ -254,7 +237,7 @@ export function SpaceCanvas({
             visiblePages.map(p => renderPage(p))
           ) : (
             // Desktop: book spread with fold
-            <div className="flex items-stretch relative">
+            <div className="flex items-stretch relative h-full">
               {visiblePages[0] !== undefined && renderPage(visiblePages[0], "left")}
               {/* Book fold / spine */}
               {visiblePages.length === 2 && (
