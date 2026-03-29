@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
+import { GothicArchTop } from "./GothicArchTop";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -262,30 +263,18 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Rooftop sign — floating above building */}
-            <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-10" : "h-12")}>
-              {(!collapsed || isMobile) && (
-                <>
-                  <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
-                    Worship Atelier by K-Worship
-                  </div>
-                  {/* Poles */}
-                  <div className="flex gap-6">
-                    <div className="w-px h-2 bg-[#555]" />
-                    <div className="w-px h-2 bg-[#555]" />
-                  </div>
-                </>
-              )}
-              {collapsed && !isMobile && <div className="h-2" />}
-            </div>
-
             {/* Building wrapper */}
             <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
+              {/* Gothic arch top — replaces old rooftop sign + rounded-t-xl */}
+              <div className="shrink-0">
+                <GothicArchTop collapsed={collapsed} isMobile={isMobile} />
+              </div>
+
               {/* Building body */}
               <div
-                className="flex-1 min-h-0 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
+                className="flex-1 min-h-0 flex flex-col bg-gradient-to-b from-[#f8f6f0] via-[#faf7f2] to-stone-100 border-x border-[#d8cfc4] overflow-hidden"
                 style={{
-                  boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
+                  boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
                 }}
               >
                 <ScrollArea className="flex-1 min-h-0">
