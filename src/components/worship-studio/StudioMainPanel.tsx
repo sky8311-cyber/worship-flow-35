@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useDeleteBlock } from "@/hooks/useSpaceBlocks";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
@@ -202,36 +202,50 @@ export function StudioMainPanel({
             )}
 
             {isMobile && isOwnStudio && isEditMode && (
-              <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
-                <DrawerTrigger asChild>
+              <>
+                {/* Page delete FAB */}
+                {activePageCount > 1 && (
                   <button
-                    className="fixed right-4 bottom-20 z-50 flex flex-col items-center justify-center gap-0.5 w-14 h-16 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg hover:opacity-90 transition"
+                    onClick={() => handleDeletePage(currentPage)}
+                    className="fixed right-4 bottom-[152px] z-50 flex flex-col items-center justify-center gap-0.5 w-14 h-16 rounded-2xl bg-destructive text-destructive-foreground shadow-lg hover:opacity-90 transition"
                   >
-                    {selectedBlockId ? (
-                      <Pencil className="h-5 w-5" />
-                    ) : (
-                      <Plus className="h-6 w-6" />
-                    )}
+                    <Trash2 className="h-5 w-5" />
                     <span className="text-[9px] font-medium leading-none">
-                      {selectedBlockId
-                        ? (language === "ko" ? "블록 수정" : "Edit Block")
-                        : (language === "ko" ? "블록 추가" : "Add Block")}
+                      {language === "ko" ? "페이지 삭제" : "Del Page"}
                     </span>
                   </button>
-                </DrawerTrigger>
-                <DrawerContent className="max-h-[60vh] pb-6">
-                  <div className="p-4">
-                    <SpaceBlockPicker
-                      spaceId={activeSpaceId}
-                      selectedBlock={selectedBlock}
-                      onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
-                      isEditMode={isEditMode}
-                      compact
-                      currentPage={currentPage}
-                    />
-                  </div>
-                </DrawerContent>
-              </Drawer>
+                )}
+                <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
+                  <DrawerTrigger asChild>
+                    <button
+                      className="fixed right-4 bottom-20 z-50 flex flex-col items-center justify-center gap-0.5 w-14 h-16 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg hover:opacity-90 transition"
+                    >
+                      {selectedBlockId ? (
+                        <Pencil className="h-5 w-5" />
+                      ) : (
+                        <Plus className="h-6 w-6" />
+                      )}
+                      <span className="text-[9px] font-medium leading-none">
+                        {selectedBlockId
+                          ? (language === "ko" ? "블록 수정" : "Edit Block")
+                          : (language === "ko" ? "블록 추가" : "Add Block")}
+                      </span>
+                    </button>
+                  </DrawerTrigger>
+                  <DrawerContent className="max-h-[60vh] pb-6">
+                    <div className="p-4">
+                      <SpaceBlockPicker
+                        spaceId={activeSpaceId}
+                        selectedBlock={selectedBlock}
+                        onBlockDeleted={() => { setSelectedBlockId(null); setMobilePickerOpen(false); }}
+                        isEditMode={isEditMode}
+                        compact
+                        currentPage={currentPage}
+                      />
+                    </div>
+                  </DrawerContent>
+                </Drawer>
+              </>
             )}
           </>
         ) : (

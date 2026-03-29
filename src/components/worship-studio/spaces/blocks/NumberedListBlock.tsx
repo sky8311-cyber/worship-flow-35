@@ -33,14 +33,14 @@ export function NumberedListBlock({ content, isOwner, onContentChange }: Props) 
   }, [items, onContentChange]);
 
   return (
-    <ol className="h-full p-3 space-y-1 list-decimal list-inside text-sm text-foreground overflow-auto">
+    <ol className="h-full p-3 space-y-1 list-decimal list-inside text-xs text-foreground overflow-auto">
       {items.map((item, idx) => (
         <li key={idx} className="flex items-start gap-1">
           <span className="text-muted-foreground select-none min-w-[1.2em]">{idx + 1}.</span>
           {isOwner ? (
             <input
               ref={(el) => { inputRefs.current[idx] = el; }}
-              className="flex-1 bg-transparent border-none outline-none text-sm"
+              className="flex-1 bg-transparent border-none outline-none text-xs"
               value={item}
               onChange={(e) => updateItem(idx, e.target.value)}
               onKeyDown={(e) => handleKeyDown(e, idx)}

@@ -19,14 +19,14 @@ export function StickyNoteBlock({ content, isOwner, onContentChange }: Props) {
     >
       {isOwner ? (
         <textarea
-          className="flex-1 w-full bg-transparent border-none outline-none resize-none text-sm text-gray-800 leading-relaxed"
+          className="flex-1 w-full bg-transparent border-none outline-none resize-none text-xs text-gray-800 leading-relaxed"
           value={text}
           placeholder="메모를 입력하세요..."
           onChange={(e) => onContentChange({ text: e.target.value })}
           onPointerDown={(e) => e.stopPropagation()}
         />
       ) : (
-        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+        <p className="text-xs text-gray-800 whitespace-pre-wrap leading-relaxed">
           {text || "메모"}
         </p>
       )}
