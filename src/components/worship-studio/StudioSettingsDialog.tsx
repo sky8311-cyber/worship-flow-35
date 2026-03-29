@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StudioBGMSelector } from "./StudioBGMSelector";
-import { Lock, Users, Globe, Music, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { Lock, Users, Globe, Music, GripVertical, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
