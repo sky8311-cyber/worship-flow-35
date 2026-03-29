@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="2400" height="700" viewBox="0 0 2400 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Worship Atelier Horizontal Logo</title>
+  <desc>Transparent SVG logo with pointed arch symbol on the left and one-line wordmark on the right.</desc>
+
+  <!-- Symbol -->
+  <g transform="translate(120,90)">
+    <!-- Outer arch -->
+    <path d="M120 410 L120 170
+             Q120 112 160 78
+             L220 28
+             Q260 -4 300 28
+             L360 78
+             Q400 112 400 170
+             L400 410"
+          stroke="#1F1F1F" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Inner arch -->
+    <path d="M158 410 L158 194
+             Q158 148 188 122
+             L229 86
+             Q260 60 291 86
+             L332 122
+             Q362 148 362 194
+             L362 410"
+          stroke="#1F1F1F" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Sparkle -->
+    <g transform="translate(392,18)">
+      <path d="M0 18 C9 18 18 9 18 0 C18 9 27 18 36 18 C27 18 18 27 18 36 C18 27 9 18 0 18Z" fill="#B8902A"/>
+    </g>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(620,365)">
+    <text x="0" y="0"
+          fill="#1F1F1F"
+          font-family="Georgia, 'Times New Roman', serif"
+          font-size="108"
+          letter-spacing="8">WORSHIP ATELIER</text>
+  </g>
+</svg>
