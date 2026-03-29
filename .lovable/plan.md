@@ -1,64 +1,54 @@
 
 
-# 페이지 삭제 버튼 수정 + 블록 폰트 전체 표준화
+# 방명록 스튜디오 레벨로 변경 + 탭 배지 superscript 스타일
 
-## 문제 1: 페이지 삭제 버튼이 세팅 버튼에 가려져 클릭 불가
-현재 페이지 삭제 버튼이 `absolute top-2 right-2 z-20`으로 각 페이지 내부에 배치되어 있으나, 캔버스 상단 컨트롤 바(`z-30`)에 가려짐.
+## 1. 방명록을 스튜디오(Room) 단위로 변경
 
-## 해결: 삭제 버튼 위치 변경
+### 현재 문제
+- `space_guestbook` 테이블이 `space_id` FK로 각 공간마다 방명록 존재
+- 설정에서 각 공간마다 `guestbook_enabled` / `guestbook_permission` 토글 존재
+- 실제로는 스튜디오당 방명록 1개만 필요
 
-### 데스크탑 (각 페이지마다 삭제 버튼)
-- 각 페이지 내부의 삭제 버튼을 제거하고, **캔버스 상단 컨트롤 바**에 편집 모드일 때 "저장" → "취소" → **"🗑️ 삭제"** 순서로 배치
-- 2페이지 스프레드에서는 좌측/우측 페이지 각각에 대한 삭제 버튼 2개를 표시: "P{n+1} 삭제", "P{n+2} 삭제"
-- 삭제 시 `onDeletePage(해당 페이지 번호)` 호출
+### 해결: 새 `room_guestbook` 테이블 생성
 
-### 모바일
-- 편집 모드에서 FAB 영역에 기존 "블록 추가/수정" 버튼 위에 "🗑️ 캔버스 삭제" 버튼을 같은 크기로 추가
-- 클릭 시 현재 `currentPage`를 삭제
+**DB 마이그레이션:**
+- `room_guestbook` 테이블 생성 (`id`, `room_id` FK → `worship_rooms`, `author_user_id` FK → `auth.users`, `body`, `created_at`)
+- `worship_rooms`에 `guestbook_enabled boolean default true`, `guestbook_permission text default 'all'` 컬럼 추가
+- 기존 `space_guestbook` 데이터를 `room_guestbook`으로 마이그레이션 (space → room 매핑)
+- RLS: 읽기는 모두 허용, 쓰기는 인증 사용자, 삭제는 작성자 또는 room 소유자
 
-**파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
-- `renderPage` 내부의 페이지 삭제 버튼 제거
-- 상단 컨트롤 바에서 편집 모드일 때 저장/취소 뒤에 각 visible 페이지에 대한 삭제 버튼 추가
-- `pageCount > 1` 조건 유지
-
-**파일:** `src/components/worship-studio/StudioMainPanel.tsx`
-- 모바일 FAB 영역에 "캔버스 삭제" 버튼 추가 (편집 모드 + `pageCount > 1` 조건)
-- `currentPage`를 `handleDeletePage`에 전달
-
-## 문제 2: 블록 폰트가 전체적으로 너무 큼
-
-### 현재 → 변경 (전체 표준화: text-xs 기반, 강조만 text-sm~base)
-
-| 블록 | 현재 | 변경 |
-|------|------|------|
-| **TitleBlock** | default `2xl`, options `xl/2xl/3xl` | default `lg`, options `sm/base/lg` |
-| **SubtitleBlock** | default `md`(=base), options `sm/md/lg` | default `sm`, options `xs/sm/base` |
-| **StickyNoteBlock** | `text-sm` | `text-xs` |
-| **NumberedListBlock** | `text-sm` | `text-xs` |
-| **ChecklistBlock** | `text-sm` | `text-xs` |
-| **MusicBlock** | title `text-sm`, artist `text-xs` | title `text-xs font-medium`, artist `text-[10px]` |
-| **BusinessCardBlock** | name `text-base`, role/email/phone `text-xs` | name `text-sm`, 나머지 `text-[10px]` |
-| **LinkButtonBlock** | `text-sm` | `text-xs` |
-| **FileDownloadBlock** | filename `text-xs`, size `text-[10px]` | 유지 (이미 작음) |
-| **PhotoBlock** | placeholder `text-xs` | 유지 |
-| **YoutubeBlock** | placeholder `text-xs` | 유지 |
-| **SpaceWorshipSetBlock** | `text-xs` | 유지 |
-| **BlockSettingsPanel** | title fontSize options `xl/2xl/3xl` | `sm/base/lg` |
-| **BlockSettingsPanel** | subtitle fontSize options `sm/md/lg` | `xs/sm/base` |
-
-### 파일 변경
+**파일 변경:**
 
 | 파일 | 변경 |
 |------|------|
-| `SpaceCanvas.tsx` | 페이지 내부 삭제 버튼 제거, 상단 바에 삭제 버튼 추가 |
-| `StudioMainPanel.tsx` | 모바일 FAB에 캔버스 삭제 버튼 추가 |
-| `TitleBlock.tsx` | FONT_MAP → `{sm: "text-sm", base: "text-base", lg: "text-lg"}`, default `lg` |
-| `SubtitleBlock.tsx` | FONT_MAP → `{xs: "text-xs", sm: "text-sm", base: "text-base"}`, default `sm` |
-| `StickyNoteBlock.tsx` | text-sm → text-xs |
-| `NumberedListBlock.tsx` | text-sm → text-xs |
-| `ChecklistBlock.tsx` | text-sm → text-xs |
-| `MusicBlock.tsx` | title text-sm → text-xs, artist text-xs → text-[10px] |
-| `BusinessCardBlock.tsx` | name text-base → text-sm, role/email/phone text-xs → text-[10px] |
-| `LinkButtonBlock.tsx` | text-sm → text-xs |
-| `BlockSettingsPanel.tsx` | title options `xl/2xl/3xl` → `sm/base/lg`, subtitle options `sm/md/lg` → `xs/sm/base` |
+| `useGuestbook.ts` | `space_guestbook` → `room_guestbook`, `space_id` → `room_id`, query key 변경 |
+| `GuestbookPanel.tsx` | props `spaceId` → `roomId` |
+| `GuestbookEntry.tsx` | 변경 없음 (entry 구조 동일) |
+| `StudioSettingsDialog.tsx` | 각 공간의 방명록 토글 제거, room 레벨로 방명록 설정 이동 (BGM 섹션 아래에 1개의 토글 + permission 라디오) |
+| `SpaceCanvas.tsx` | `guestbookEnabled` prop을 room 레벨에서 받음 (변경 최소) |
+| `StudioMainPanel.tsx` | 방명록 데이터를 room 기준으로 fetch, `useGuestbook(roomId)` |
+| `SpaceTabBar.tsx` | space별 guestbook 참조 제거 |
+
+### 설정 UI 변경 (StudioSettingsDialog)
+- 각 공간의 "방명록 활성화" 스위치 + permission 라디오 **제거**
+- BGM 섹션 아래에 새 "방명록" 섹션 추가:
+  - `Switch`: 방명록 활성화 (room.guestbook_enabled)
+  - `RadioGroup`: 전체/친구만 (room.guestbook_permission)
+- `handleSave`에 `guestbook_enabled`, `guestbook_permission` 포함
+
+## 2. 탭 배지를 superscript 스타일로 변경
+
+### 현재 문제
+- "비공개" / "친구만" 배지가 탭 내부에 있어 탭이 너무 길어짐
+
+### 해결
+- 탭을 `relative` + `overflow-visible`로 설정
+- 배지를 `absolute -top-1.5 -right-2` 위치에 superscript로 배치
+- 크기: `text-[7px] px-1 py-0 leading-tight rounded-full`
+- 비공개: 🔒 아이콘만 (텍스트 없이), friends: 👥 아이콘만
+- 탭 본문에서 배지 제거
+
+**파일:** `SpaceTabBar.tsx`
+- 각 탭 `div`에 `relative overflow-visible` 추가
+- 배지를 `absolute` 위치의 작은 원형 아이콘으로 변경
 
