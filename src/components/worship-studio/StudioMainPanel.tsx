@@ -146,6 +146,7 @@ export function StudioMainPanel({
               neighborStatus={neighborStatus}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
+              onPageNavInfo={(info) => onPageNavInfo?.(info)}
             />
 
             {!isMobile && isOwnStudio && (
