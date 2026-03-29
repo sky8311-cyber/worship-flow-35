@@ -11,14 +11,14 @@ import { GuestbookEntry } from "./GuestbookEntry";
 interface GuestbookPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  spaceId: string;
+  roomId: string;
   roomOwnerId?: string;
 }
 
-export function GuestbookPanel({ open, onOpenChange, spaceId, roomOwnerId }: GuestbookPanelProps) {
+export function GuestbookPanel({ open, onOpenChange, roomId, roomOwnerId }: GuestbookPanelProps) {
   const { user } = useAuth();
   const { language } = useTranslation();
-  const { data: entries = [] } = useGuestbook(spaceId);
+  const { data: entries = [] } = useGuestbook(roomId);
   const createEntry = useCreateGuestbookEntry();
   const deleteEntry = useDeleteGuestbookEntry();
   const [body, setBody] = useState("");
@@ -28,14 +28,14 @@ export function GuestbookPanel({ open, onOpenChange, spaceId, roomOwnerId }: Gue
   const handleSubmit = () => {
     if (!user || !body.trim()) return;
     createEntry.mutate(
-      { spaceId, body: body.trim() },
+      { roomId, body: body.trim() },
       { onSuccess: () => setBody("") }
     );
   };
 
   const handleDelete = (entryId: string) => {
     if (!window.confirm(t("삭제하시겠습니까?", "Delete this entry?"))) return;
-    deleteEntry.mutate({ id: entryId, spaceId });
+    deleteEntry.mutate({ id: entryId, roomId });
   };
 
   return (
