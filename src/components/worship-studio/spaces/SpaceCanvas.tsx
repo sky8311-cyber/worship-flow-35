@@ -5,7 +5,7 @@ import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
-import { Music, Play, Pause, UserPlus, Settings } from "lucide-react";
+import { Music, Play, Pause, UserPlus, Settings, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 

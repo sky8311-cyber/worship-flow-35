@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
@@ -173,9 +173,18 @@ export function StudioMainPanel({
               <Drawer open={mobilePickerOpen} onOpenChange={setMobilePickerOpen}>
                 <DrawerTrigger asChild>
                   <button
-                    className="fixed right-4 bottom-20 z-50 w-12 h-12 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg flex items-center justify-center hover:opacity-90 transition"
+                    className="fixed right-4 bottom-20 z-50 flex flex-col items-center justify-center gap-0.5 w-14 h-16 rounded-2xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg hover:opacity-90 transition"
                   >
-                    <Plus className="h-6 w-6" />
+                    {selectedBlockId ? (
+                      <Pencil className="h-5 w-5" />
+                    ) : (
+                      <Plus className="h-6 w-6" />
+                    )}
+                    <span className="text-[9px] font-medium leading-none">
+                      {selectedBlockId
+                        ? (language === "ko" ? "블록 수정" : "Edit Block")
+                        : (language === "ko" ? "블록 추가" : "Add Block")}
+                    </span>
                   </button>
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[60vh] pb-6">

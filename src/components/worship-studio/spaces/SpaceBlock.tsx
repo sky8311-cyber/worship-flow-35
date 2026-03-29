@@ -4,7 +4,7 @@ import { ResizeHandle } from "./ResizeHandle";
 import { BlockRenderer } from "./blocks/BlockRenderer";
 import { useBlockContent } from "@/hooks/useBlockContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { GripVertical } from "lucide-react";
+import { GripHorizontal } from "lucide-react";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const GRID_SNAP = 20;
@@ -131,7 +131,7 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
     setIsDragging(false);
   }, [clearLongPress]);
 
-  const handleW = isMobile ? 28 : 24;
+  const handleH = isMobile ? 24 : 20;
 
   return (
     <div
@@ -149,8 +149,8 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
         zIndex: isDragging ? 9999 : block.z_index,
         opacity: isDragging ? 0.85 : 1,
         transform: isDragging ? "rotate(0.3deg) scale(1.02)" : undefined,
-        borderLeftWidth: canDrag ? 0 : 4,
-        borderLeftColor: canDrag ? undefined : color,
+        borderTopWidth: canDrag ? 0 : 4,
+        borderTopColor: canDrag ? undefined : color,
         touchAction: canDrag ? "none" : undefined,
       }}
       onPointerDown={handlePointerDown}
@@ -158,18 +158,18 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
     >
-      {/* Drag handle — OUTSIDE block on both mobile and desktop in edit mode */}
+      {/* Drag handle — OUTSIDE block on TOP in edit mode */}
       {canDrag && (
         <div
-          className="absolute top-0 bottom-0 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing rounded-l-md"
+          className="absolute left-0 right-0 z-20 flex items-center justify-center cursor-grab active:cursor-grabbing rounded-t-md"
           style={{
-            left: -handleW,
-            width: handleW,
+            top: -handleH,
+            height: handleH,
             backgroundColor: color,
           }}
           onPointerDown={handleDragPointerDown}
         >
-          <GripVertical className="text-white/90" size={isMobile ? 18 : 14} />
+          <GripHorizontal className="text-white/90" size={isMobile ? 18 : 14} />
         </div>
       )}
 
