@@ -1,0 +1,5 @@
+ALTER TABLE public.worship_rooms
+  ADD COLUMN IF NOT EXISTS marquee_text TEXT DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS marquee_text_color TEXT DEFAULT '#333333',
+  ADD COLUMN IF NOT EXISTS marquee_bg_color TEXT DEFAULT '#f5f0e8',
+  ADD COLUMN IF NOT EXISTS marquee_speed INTEGER DEFAULT 50;

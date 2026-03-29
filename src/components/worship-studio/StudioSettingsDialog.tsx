@@ -5,8 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+import { Textarea } from "@/components/ui/textarea";
 import { StudioBGMSelector } from "./StudioBGMSelector";
-import { Lock, Users, Globe, Music } from "lucide-react";
+import { Lock, Users, Globe, Music, Type } from "lucide-react";
 
 interface StudioSettingsDialogProps {
   room: WorshipRoom;
@@ -22,12 +24,20 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
   
   const [visibility, setVisibility] = useState<RoomVisibility>(room.visibility);
   const [selectedBgmId, setSelectedBgmId] = useState<string | null>(room.bgm_song_id);
+  const [marqueeText, setMarqueeText] = useState(room.marquee_text || "");
+  const [marqueeTextColor, setMarqueeTextColor] = useState(room.marquee_text_color || "#333333");
+  const [marqueeBgColor, setMarqueeBgColor] = useState(room.marquee_bg_color || "#f5f0e8");
+  const [marqueeSpeed, setMarqueeSpeed] = useState(room.marquee_speed || 50);
   
   const handleSave = () => {
     updateRoom.mutate({
       roomId: room.id,
       visibility,
       bgm_song_id: selectedBgmId,
+      marquee_text: marqueeText || null,
+      marquee_text_color: marqueeTextColor,
+      marquee_bg_color: marqueeBgColor,
+      marquee_speed: marqueeSpeed,
     }, {
       onSuccess: () => {
         onOpenChange(false);
@@ -45,8 +55,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
     {
       value: "friends" as const,
       icon: Users,
-      label: language === "ko" ? "친구 공개" : "Friends Only",
-      desc: language === "ko" ? "친구만 볼 수 있음" : "Only friends can see",
+      label: language === "ko" ? "이웃 공개" : "Neighbors Only",
+      desc: language === "ko" ? "이웃만 볼 수 있음" : "Only neighbors can see",
     },
     {
       value: "public" as const,
@@ -55,6 +65,12 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
       desc: language === "ko" ? "모두 볼 수 있음" : "Everyone can see",
     },
   ];
+
+  const speedLabel = marqueeSpeed <= 30 
+    ? (language === "ko" ? "느림" : "Slow")
+    : marqueeSpeed <= 60 
+      ? (language === "ko" ? "보통" : "Normal")
+      : (language === "ko" ? "빠름" : "Fast");
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,6 +82,71 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
         </DialogHeader>
         
         <div className="space-y-6 py-4">
+          {/* Marquee Text Bar Settings */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Type className="h-4 w-4 text-muted-foreground" />
+              <Label>{language === "ko" ? "소개 텍스트 (흐르는 글)" : "Introduction Text (Marquee)"}</Label>
+            </div>
+            <Textarea
+              placeholder={language === "ko" ? "나를 소개하는 한 줄을 적어보세요..." : "Write a short introduction about yourself..."}
+              value={marqueeText}
+              onChange={(e) => setMarqueeText(e.target.value)}
+              className="resize-none h-20"
+              maxLength={200}
+            />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Label className="text-xs whitespace-nowrap">{language === "ko" ? "글자 색" : "Text"}</Label>
+                <input 
+                  type="color" 
+                  value={marqueeTextColor} 
+                  onChange={(e) => setMarqueeTextColor(e.target.value)}
+                  className="w-7 h-7 rounded border border-border cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs whitespace-nowrap">{language === "ko" ? "배경 색" : "BG"}</Label>
+                <input 
+                  type="color" 
+                  value={marqueeBgColor} 
+                  onChange={(e) => setMarqueeBgColor(e.target.value)}
+                  className="w-7 h-7 rounded border border-border cursor-pointer"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">{language === "ko" ? "속도" : "Speed"}</Label>
+                <span className="text-xs text-muted-foreground">{speedLabel}</span>
+              </div>
+              <Slider
+                value={[marqueeSpeed]}
+                onValueChange={([v]) => setMarqueeSpeed(v)}
+                min={15}
+                max={100}
+                step={5}
+                className="w-full"
+              />
+            </div>
+            {marqueeText && (
+              <div 
+                className="rounded-lg overflow-hidden h-7 flex items-center"
+                style={{ backgroundColor: marqueeBgColor }}
+              >
+                <div 
+                  className="whitespace-nowrap text-xs font-medium animate-marquee px-4"
+                  style={{ 
+                    color: marqueeTextColor,
+                    animationDuration: `${Math.max(3, 200 / marqueeSpeed)}s`,
+                  }}
+                >
+                  {marqueeText}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Visibility */}
           <div className="space-y-3">
             <Label>{language === "ko" ? "공개 설정" : "Visibility"}</Label>

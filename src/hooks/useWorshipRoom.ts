@@ -25,6 +25,10 @@ export interface WorshipRoom {
   cover_image_url?: string | null;
   studio_name?: string | null;
   grid_columns?: number | null;
+  marquee_text?: string | null;
+  marquee_text_color?: string | null;
+  marquee_bg_color?: string | null;
+  marquee_speed?: number | null;
   owner?: {
     id: string;
     full_name: string | null;
@@ -112,6 +116,10 @@ export function useUpdateRoom() {
       visibility?: RoomVisibility;
       theme_config?: ThemeConfig;
       bgm_song_id?: string | null;
+      marquee_text?: string | null;
+      marquee_text_color?: string | null;
+      marquee_bg_color?: string | null;
+      marquee_speed?: number | null;
     }) => {
       const { roomId, ...data } = updates;
       
@@ -119,6 +127,10 @@ export function useUpdateRoom() {
       if (data.visibility !== undefined) updateData.visibility = data.visibility;
       if (data.theme_config !== undefined) updateData.theme_config = data.theme_config;
       if (data.bgm_song_id !== undefined) updateData.bgm_song_id = data.bgm_song_id;
+      if (data.marquee_text !== undefined) updateData.marquee_text = data.marquee_text;
+      if (data.marquee_text_color !== undefined) updateData.marquee_text_color = data.marquee_text_color;
+      if (data.marquee_bg_color !== undefined) updateData.marquee_bg_color = data.marquee_bg_color;
+      if (data.marquee_speed !== undefined) updateData.marquee_speed = data.marquee_speed;
       
       const { error } = await supabase
         .from("worship_rooms")
@@ -164,7 +176,6 @@ export function useAmbassadorRooms() {
   return useQuery({
     queryKey: ["ambassador-rooms"],
     queryFn: async () => {
-      // Single query with join - filter in JS since Supabase doesn't support filtering on joined tables easily
       const { data, error } = await supabase
         .from("worship_rooms")
         .select(`
@@ -175,9 +186,8 @@ export function useAmbassadorRooms() {
       
       if (error) throw error;
       
-      // Filter to only ambassador-owned rooms
       return (data?.filter(room => room.owner?.is_ambassador === true) || []) as unknown as WorshipRoom[];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }

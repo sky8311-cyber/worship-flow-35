@@ -5,19 +5,13 @@ import { ProfileDropdownMenu } from "./ProfileDropdownMenu";
 
 interface StudioHeaderProps {
   onBack: () => void;
-  onSettings?: () => void;
   onShare?: () => void;
-  onBGM?: () => void;
-  onVisibility?: () => void;
   onNotifications?: () => void;
 }
 
 export function StudioHeader({ 
   onBack, 
-  onSettings, 
   onShare,
-  onBGM,
-  onVisibility,
   onNotifications,
 }: StudioHeaderProps) {
   const { language } = useTranslation();
@@ -45,10 +39,7 @@ export function StudioHeader({
         )}
         
         <ProfileDropdownMenu
-          onSettings={onSettings}
           onShare={onShare}
-          onBGM={onBGM}
-          onVisibility={onVisibility}
           onExit={onBack}
         />
       </div>
