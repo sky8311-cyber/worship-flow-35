@@ -116,6 +116,8 @@ export function useUpdateRoom() {
       visibility?: RoomVisibility;
       theme_config?: ThemeConfig;
       bgm_song_id?: string | null;
+      guestbook_enabled?: boolean;
+      guestbook_permission?: string;
     }) => {
       const { roomId, ...data } = updates;
       
@@ -123,6 +125,8 @@ export function useUpdateRoom() {
       if (data.visibility !== undefined) updateData.visibility = data.visibility;
       if (data.theme_config !== undefined) updateData.theme_config = data.theme_config;
       if (data.bgm_song_id !== undefined) updateData.bgm_song_id = data.bgm_song_id;
+      if (data.guestbook_enabled !== undefined) updateData.guestbook_enabled = data.guestbook_enabled;
+      if (data.guestbook_permission !== undefined) updateData.guestbook_permission = data.guestbook_permission;
       
       const { error } = await supabase
         .from("worship_rooms")

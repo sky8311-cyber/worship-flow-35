@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { StudioBGMSelector } from "./StudioBGMSelector";
-import { Lock, Users, Globe, Music, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { Lock, Users, Globe, Music, GripVertical, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -167,32 +167,6 @@ function SortableSpaceItem({
             )}
           </div>
 
-          {/* Guestbook */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">{t("방명록 활성화", "Enable Guestbook")}</Label>
-              <Switch
-                checked={space.guestbook_enabled}
-                onCheckedChange={(v) => onUpdate({ guestbook_enabled: v })}
-              />
-            </div>
-            {space.guestbook_enabled && (
-              <RadioGroup
-                value={space.guestbook_permission}
-                onValueChange={(v) => onUpdate({ guestbook_permission: v as any })}
-                className="flex gap-3 pl-1"
-              >
-                <div className="flex items-center gap-1.5">
-                  <RadioGroupItem value="all" id={`gb-all-${space.id}`} />
-                  <Label htmlFor={`gb-all-${space.id}`} className="text-xs">{t("전체", "Everyone")}</Label>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <RadioGroupItem value="friends" id={`gb-fri-${space.id}`} />
-                  <Label htmlFor={`gb-fri-${space.id}`} className="text-xs">{t("친구만", "Friends only")}</Label>
-                </div>
-              </RadioGroup>
-            )}
-          </div>
         </div>
       )}
     </div>
@@ -209,6 +183,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
   const [visibility, setVisibility] = useState<RoomVisibility>(room.visibility);
   const [selectedBgmId, setSelectedBgmId] = useState<string | null>(room.bgm_song_id);
   const [expandedSpaceId, setExpandedSpaceId] = useState<string | null>(null);
+  const [guestbookEnabled, setGuestbookEnabled] = useState<boolean>((room as any).guestbook_enabled ?? true);
+  const [guestbookPermission, setGuestbookPermission] = useState<string>((room as any).guestbook_permission ?? 'all');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -219,6 +195,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
       roomId: room.id,
       visibility,
       bgm_song_id: selectedBgmId,
+      guestbook_enabled: guestbookEnabled,
+      guestbook_permission: guestbookPermission,
     }, {
       onSuccess: () => {
         onOpenChange(false);
@@ -317,7 +295,39 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
             </p>
           </div>
 
-          {/* Space Management */}
+          {/* Guestbook (Room-level) */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Label>{language === "ko" ? "방명록" : "Guestbook"}</Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">{language === "ko" ? "방명록 활성화" : "Enable Guestbook"}</Label>
+              <Switch checked={guestbookEnabled} onCheckedChange={setGuestbookEnabled} />
+            </div>
+            {guestbookEnabled && (
+              <RadioGroup
+                value={guestbookPermission}
+                onValueChange={setGuestbookPermission}
+                className="flex gap-3 pl-1"
+              >
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="all" id="gb-all" />
+                  <Label htmlFor="gb-all" className="text-xs">{language === "ko" ? "전체" : "Everyone"}</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="friends" id="gb-friends" />
+                  <Label htmlFor="gb-friends" className="text-xs">{language === "ko" ? "친구만" : "Friends only"}</Label>
+                </div>
+              </RadioGroup>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {language === "ko"
+                ? "방명록은 스튜디오당 1개이며, 모든 공간에서 표시됩니다."
+                : "One guestbook per studio, visible across all spaces."}
+            </p>
+          </div>
+
           {spaces.length > 0 && (
             <div className="space-y-3">
               <Label>{language === "ko" ? "공간 관리" : "Space Management"}</Label>

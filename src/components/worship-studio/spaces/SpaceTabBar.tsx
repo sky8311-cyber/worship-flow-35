@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useStudioSpaces } from "@/hooks/useStudioSpaces";
-import { useGuestbook } from "@/hooks/useGuestbook";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Plus } from "lucide-react";
+import { Plus, Lock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SpaceCreateDialog } from "./SpaceCreateDialog";
-import { GuestbookPanel } from "./GuestbookPanel";
 import type { StudioSpace } from "@/hooks/useStudioSpaces";
 
 interface SpaceTabBarProps {
@@ -14,25 +12,18 @@ interface SpaceTabBarProps {
   activeSpaceId: string | null;
   onSpaceSelect: (spaceId: string) => void;
   isOwner: boolean;
-  roomOwnerId?: string;
 }
 
-export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roomOwnerId }: SpaceTabBarProps) {
+export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner }: SpaceTabBarProps) {
   const { language } = useTranslation();
   const { data: spaces = [], isLoading: isSpacesLoading } = useStudioSpaces(roomId);
   const [createOpen, setCreateOpen] = useState(false);
-  const [guestbookOpen, setGuestbookOpen] = useState(false);
 
   // Swipe/drag scroll refs
   const scrollRef = useRef<HTMLDivElement>(null);
   const isDraggingScroll = useRef(false);
   const startX = useRef(0);
   const scrollStart = useRef(0);
-
-  const activeSpace = spaces.find(s => s.id === activeSpaceId);
-  const { data: guestbookEntries = [] } = useGuestbook(
-    activeSpace?.guestbook_enabled ? activeSpaceId || undefined : undefined
-  );
 
   useEffect(() => {
     if (isSpacesLoading || !roomId || !isOwner) return;
@@ -106,7 +97,7 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
               data-tab
               onClick={() => onSpaceSelect(space.id)}
               className={cn(
-                "px-3 text-[12px] flex items-center gap-1 cursor-pointer select-none whitespace-nowrap shrink-0 rounded-t-md border transition-colors",
+                "relative px-3 text-[12px] flex items-center gap-1 cursor-pointer select-none whitespace-nowrap shrink-0 rounded-t-md border transition-colors overflow-visible",
                 activeSpaceId === space.id
                   ? "bg-white border-[#d0c8bc] border-b-0 -mb-px z-10 font-semibold text-foreground py-2"
                   : "bg-[#e8e0d5] border-[#d0c8bc] text-muted-foreground hover:bg-[#f0e8dd] py-1.5"
@@ -114,14 +105,15 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
             >
               <span>{space.icon}</span>
               <span>{space.name}</span>
+              {/* Superscript badges */}
               {space.visibility === "private" && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-muted text-muted-foreground leading-none">
-                  {language === "ko" ? "비공개" : "Private"}
+                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center h-3.5 w-3.5 rounded-full bg-muted-foreground/80 text-white">
+                  <Lock className="h-2 w-2" />
                 </span>
               )}
               {space.visibility === "friends" && (
-                <span className="text-[8px] px-1 py-0.5 rounded bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300 leading-none">
-                  {language === "ko" ? "친구만" : "Friends"}
+                <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center h-3.5 w-3.5 rounded-full bg-blue-500 text-white">
+                  <Users className="h-2 w-2" />
                 </span>
               )}
             </div>
@@ -147,15 +139,6 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
         existingCount={spaces.length}
         onCreated={(id) => onSpaceSelect(id)}
       />
-
-      {activeSpaceId && (
-        <GuestbookPanel
-          open={guestbookOpen}
-          onOpenChange={setGuestbookOpen}
-          spaceId={activeSpaceId}
-          roomOwnerId={roomOwnerId}
-        />
-      )}
     </>
   );
 }
