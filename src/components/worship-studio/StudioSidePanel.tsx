@@ -265,8 +265,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           <>
             {/* Building wrapper */}
             <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
-              {/* Gothic arch top — replaces old rooftop sign + rounded-t-xl */}
-              <div className="shrink-0">
+              {/* Gothic arch top — seamless with building body */}
+              <div className="shrink-0 -mb-px">
                 <GothicArchTop collapsed={collapsed} isMobile={isMobile} />
               </div>
 
