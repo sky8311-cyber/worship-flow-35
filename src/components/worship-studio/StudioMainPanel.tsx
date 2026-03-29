@@ -164,6 +164,9 @@ export function StudioMainPanel({
               onPageChange={setCurrentPage}
               pageCount={activePageCount}
               onPageNavInfo={(info) => onPageNavInfo?.(info ? { ...info, handleAddPage } : null)}
+              guestbookEnabled={activeSpace?.guestbook_enabled}
+              guestbookCount={guestbookEntries.length}
+              onOpenGuestbook={() => setGuestbookOpen(true)}
             />
 
             {!isMobile && isOwnStudio && (
