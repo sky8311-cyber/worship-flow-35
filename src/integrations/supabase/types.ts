@@ -3054,6 +3054,38 @@ export type Database = {
           },
         ]
       }
+      room_guestbook: {
+        Row: {
+          author_user_id: string
+          body: string
+          created_at: string | null
+          id: string
+          room_id: string
+        }
+        Insert: {
+          author_user_id: string
+          body: string
+          created_at?: string | null
+          id?: string
+          room_id: string
+        }
+        Update: {
+          author_user_id?: string
+          body?: string
+          created_at?: string | null
+          id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_guestbook_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "worship_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_post_comments: {
         Row: {
           author_user_id: string
@@ -5006,6 +5038,8 @@ export type Database = {
           cover_image_url: string | null
           created_at: string | null
           grid_columns: number | null
+          guestbook_enabled: boolean
+          guestbook_permission: string
           id: string
           is_active: boolean | null
           layout_type: string | null
@@ -5027,6 +5061,8 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           grid_columns?: number | null
+          guestbook_enabled?: boolean
+          guestbook_permission?: string
           id?: string
           is_active?: boolean | null
           layout_type?: string | null
@@ -5048,6 +5084,8 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           grid_columns?: number | null
+          guestbook_enabled?: boolean
+          guestbook_permission?: string
           id?: string
           is_active?: boolean | null
           layout_type?: string | null
