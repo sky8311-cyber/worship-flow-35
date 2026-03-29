@@ -242,17 +242,18 @@ export function SpaceCanvas({
 function MarqueeBar({ text, textColor, bgColor, speed }: {
   text: string; textColor: string; bgColor: string; speed: number;
 }) {
-  const duration = Math.max(3, 200 / speed);
+  const duration = Math.max(5, 300 / speed);
   return (
     <div
-      className="rounded-full overflow-hidden h-7 flex items-center"
+      className="w-full rounded-md overflow-hidden h-7 flex items-center"
       style={{ backgroundColor: bgColor }}
     >
       <div
-        className="whitespace-nowrap text-[11px] font-medium animate-marquee px-4"
+        className="flex whitespace-nowrap animate-marquee"
         style={{ color: textColor, animationDuration: `${duration}s` }}
       >
-        {text}
+        <span className="text-[11px] font-medium px-4">{text}</span>
+        <span className="text-[11px] font-medium px-4">{text}</span>
       </div>
     </div>
   );

@@ -122,7 +122,7 @@ export const GlobalMusicPlayerDialog = () => {
     }
     
     // Load the first video when ready (cued state - not playing)
-    if (playerReady && playerState === 'full' && playlist.length > 0 && !hasLoadedFirstVideoRef.current) {
+    if (playerReady && playerState !== 'closed' && playlist.length > 0 && !hasLoadedFirstVideoRef.current) {
       const videoId = playlist[currentIndex]?.videoId;
       if (videoId) {
         console.log('[GlobalMusicPlayerDialog] Loading first video (waiting for user tap):', videoId);
