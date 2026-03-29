@@ -16,8 +16,8 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
     return (
       <div className="w-full flex justify-center">
         <svg
-          viewBox="0 0 60 40"
-          className="w-full h-[28px]"
+          viewBox="0 -12 60 52"
+          className="w-full h-[36px]"
           preserveAspectRatio="xMidYMax meet"
           xmlns="http://www.w3.org/2000/svg"
         >
@@ -58,8 +58,8 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
   return (
     <div className="w-full flex justify-center">
       <svg
-        viewBox="0 0 360 120"
-        className={cn("w-full", isMobile ? "h-[60px]" : "h-[72px]")}
+        viewBox="0 -40 360 160"
+        className={cn("w-full", isMobile ? "h-[80px]" : "h-[96px]")}
         preserveAspectRatio="xMidYMax meet"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -91,7 +91,7 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
         />
 
         {/* Gold 4-pointed star at top-right */}
-        <g transform="translate(310,-8)">
+        <g transform="translate(305,-30)">
           <path
             d="M0,14 C7,14 14,7 14,0 C14,7 21,14 28,14 C21,14 14,21 14,28 C14,21 7,14 0,14Z"
             fill="#B8902A"
