@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { SpaceBlock } from "./SpaceBlock";
 import { MujiGridBackground } from "./MujiGridBackground";
@@ -42,7 +42,7 @@ export function SpaceCanvas({
   pendingUpdates, onPendingUpdate,
   bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
   onOpenSettings, onAddNeighbor, neighborStatus,
-  currentPage, onPageChange,
+  currentPage, onPageChange, onPageNavInfo,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
