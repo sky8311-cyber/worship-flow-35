@@ -6,47 +6,55 @@ interface GothicArchTopProps {
 }
 
 /**
- * Gothic arch top for the Atelier building, matching the brand logo symbol.
- * Uses SVG with a pointed (lancet) double arch + gold star decoration.
- * The arch interior is filled with building color; exterior is transparent.
+ * Gothic arch top for the Atelier building.
+ * Uses two-layer SVG approach:
+ * 1. Background fill with preserveAspectRatio="none" → always 100% width
+ * 2. Decorative overlay (arches, star, text) with proper aspect ratio
  */
 export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArchTopProps) {
   if (collapsed && !isMobile) {
-    // Collapsed: small simplified arch
     return (
-      <div className="w-full flex justify-center">
+      <div className="w-full relative" style={{ height: 40 }}>
+        {/* Background fill - stretches to full width */}
         <svg
-          viewBox="0 -12 60 52"
-          className="w-full h-[36px]"
-          preserveAspectRatio="xMidYMax meet"
+          viewBox="0 0 100 80"
+          className="absolute inset-0 w-full h-full"
+          preserveAspectRatio="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Fill shape - pointed arch */}
           <path
-            d="M0,40 L0,22 Q0,12 10,7 L25,1 Q30,-1 35,1 L50,7 Q60,12 60,22 L60,40 Z"
+            d="M0,80 L0,45 Q0,25 15,18 L42,4 Q50,0 58,4 L85,18 Q100,25 100,45 L100,80 Z"
             fill="#f8f6f0"
             stroke="none"
           />
-          {/* Outer arch stroke */}
+        </svg>
+        {/* Decorative strokes - maintain aspect ratio */}
+        <svg
+          viewBox="0 0 100 80"
+          className="absolute inset-0 w-full h-full"
+          preserveAspectRatio="xMidYMax meet"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Outer arch */}
           <path
-            d="M0,40 L0,22 Q0,12 10,7 L25,1 Q30,-1 35,1 L50,7 Q60,12 60,22 L60,40"
+            d="M10,80 L10,45 Q10,28 22,20 L44,6 Q50,2 56,6 L78,20 Q90,28 90,45 L90,80"
             fill="none"
             stroke="#d8cfc4"
             strokeWidth="1.5"
             strokeLinejoin="round"
           />
-          {/* Inner arch stroke */}
+          {/* Inner arch */}
           <path
-            d="M6,40 L6,24 Q6,15 14,10 L26,4 Q30,2 34,4 L46,10 Q54,15 54,24 L54,40"
+            d="M18,80 L18,48 Q18,34 28,26 L46,12 Q50,9 54,12 L72,26 Q82,34 82,48 L82,80"
             fill="none"
             stroke="#d8cfc4"
             strokeWidth="1"
             strokeLinejoin="round"
           />
           {/* Gold star */}
-          <g transform="translate(48,-2)">
+          <g transform="translate(76,2)">
             <path
-              d="M0,5 C2.5,5 5,2.5 5,0 C5,2.5 7.5,5 10,5 C7.5,5 5,7.5 5,10 C5,7.5 2.5,5 0,5Z"
+              d="M0,6 C3,6 6,3 6,0 C6,3 9,6 12,6 C9,6 6,9 6,12 C6,9 3,6 0,6Z"
               fill="#B8902A"
             />
           </g>
@@ -56,33 +64,39 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
   }
 
   return (
-    <div className="w-full flex justify-center">
+    <div className="w-full relative" style={{ height: isMobile ? 80 : 96 }}>
+      {/* Layer 1: Background fill - stretches to exact container width */}
       <svg
-        viewBox="0 -40 360 160"
-        className={cn("w-full", isMobile ? "h-[80px]" : "h-[96px]")}
-        preserveAspectRatio="xMidYMax meet"
+        viewBox="0 0 100 60"
+        className="absolute inset-0 w-full h-full"
+        preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Fill shape - building interior color */}
         <path
-          d="M0,120 L0,70 Q0,42 30,28 L155,3 Q180,-5 205,3 L330,28 Q360,42 360,70 L360,120 Z"
+          d="M0,60 L0,32 Q0,18 8,12 L43,2 Q50,-1 57,2 L92,12 Q100,18 100,32 L100,60 Z"
           fill="#f8f6f0"
           stroke="none"
         />
+      </svg>
+
+      {/* Layer 2: Decorative arches + star + text - maintain proportions */}
+      <svg
+        viewBox="0 0 200 100"
+        className="absolute inset-0 w-full h-full"
+        preserveAspectRatio="xMidYMax meet"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Pillar bases - left */}
+        <line x1="8" y1="100" x2="8" y2="70" stroke="#d8cfc4" strokeWidth="1.8" />
+        <line x1="20" y1="100" x2="20" y2="74" stroke="#d8cfc4" strokeWidth="1.2" />
+
+        {/* Pillar bases - right */}
+        <line x1="192" y1="100" x2="192" y2="70" stroke="#d8cfc4" strokeWidth="1.8" />
+        <line x1="180" y1="100" x2="180" y2="74" stroke="#d8cfc4" strokeWidth="1.2" />
 
         {/* Outer arch */}
         <path
-          d="M0,120 L0,70 Q0,42 30,28 L155,3 Q180,-5 205,3 L330,28 Q360,42 360,70 L360,120"
-          fill="none"
-          stroke="#d8cfc4"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Inner arch */}
-        <path
-          d="M24,120 L24,74 Q24,50 48,38 L158,10 Q180,2 202,10 L312,38 Q336,50 336,74 L336,120"
+          d="M8,100 L8,52 Q8,32 28,22 L88,4 Q100,-1 112,4 L172,22 Q192,32 192,52 L192,100"
           fill="none"
           stroke="#d8cfc4"
           strokeWidth="1.8"
@@ -90,35 +104,45 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
           strokeLinejoin="round"
         />
 
+        {/* Inner arch */}
+        <path
+          d="M20,100 L20,56 Q20,38 36,28 L90,10 Q100,6 110,10 L164,28 Q180,38 180,56 L180,100"
+          fill="none"
+          stroke="#d8cfc4"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
         {/* Gold 4-pointed star at top-right */}
-        <g transform="translate(305,-30)">
+        <g transform="translate(165,-2)">
           <path
-            d="M0,14 C7,14 14,7 14,0 C14,7 21,14 28,14 C21,14 14,21 14,28 C14,21 7,14 0,14Z"
+            d="M0,12 C6,12 12,6 12,0 C12,6 18,12 24,12 C18,12 12,18 12,24 C12,18 6,12 0,12Z"
             fill="#B8902A"
           />
         </g>
 
-        {/* Optional: building name inside arch */}
+        {/* Building name */}
         <text
-          x="180"
-          y="82"
+          x="100"
+          y="68"
           textAnchor="middle"
           fill="#1F1F1F"
           fontFamily="Georgia, 'Times New Roman', serif"
-          fontSize="9"
-          letterSpacing="2"
+          fontSize="8"
+          letterSpacing="1.5"
           fontWeight="bold"
         >
           WORSHIP ATELIER
         </text>
         <text
-          x="180"
-          y="95"
+          x="100"
+          y="80"
           textAnchor="middle"
           fill="#8a7a6a"
           fontFamily="Georgia, 'Times New Roman', serif"
-          fontSize="6"
-          letterSpacing="1.5"
+          fontSize="5"
+          letterSpacing="1"
         >
           by K-Worship
         </text>
