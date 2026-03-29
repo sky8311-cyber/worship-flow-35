@@ -21,7 +21,7 @@ export function StudioHeader({
         <img 
           src={worshipAtelierLogo} 
           alt="Worship Atelier" 
-          className="h-14 object-contain"
+          className="h-28 object-contain"
         />
       </div>
       
