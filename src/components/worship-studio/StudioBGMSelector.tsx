@@ -34,8 +34,8 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
         .not("youtube_url", "is", null)
         .neq("youtube_url", "")
         .order("title")
-        .limit(50);
-      
+        .limit(500);
+
       if (debouncedSearch) {
         query = query.or(`title.ilike.%${debouncedSearch}%,artist.ilike.%${debouncedSearch}%`);
       }
@@ -84,7 +84,7 @@ export function StudioBGMSelector({ selectedSongId, onSelect }: StudioBGMSelecto
       </div>
       
       {/* Song list */}
-      <ScrollArea className="h-48 rounded-lg border">
+      <ScrollArea className="h-64 rounded-lg border">
         {isLoading ? (
           <div className="p-2 space-y-2">
             {[1, 2, 3].map(i => (

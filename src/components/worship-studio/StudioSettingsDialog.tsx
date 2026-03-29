@@ -20,10 +20,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { StudioSpace } from "@/hooks/useStudioSpaces";
 
-const ICONS = ["🎵", "🎹", "🎸", "📖", "🙏", "✝️", "🕊️", "💡", "📝", "🎤"];
-const COLORS = [
-  "#b8902a", "#cc3333", "#3a6b8a", "#5a7a5a", "#7c6a9e",
-  "#e8c840", "#4a7c6a", "#8b5e52", "#6b6b6b", "#4a4a4a",
+const ICON_CATEGORIES = [
+  { label: { ko: "예배/신앙", en: "Worship" }, icons: ["🙏", "✝️", "📖", "🕊️", "🎵", "🎶", "🌿", "🕯️", "🌸", "💒"] },
+  { label: { ko: "일상/감성", en: "Daily" }, icons: ["☕", "🍀", "📷", "✏️", "🎨", "🌙", "⭐", "🌈", "💌", "📝"] },
+  { label: { ko: "폴더/시스템", en: "System" }, icons: ["📁", "📂", "🗂️", "📋", "📌", "🔖", "💼", "🗃️", "📦", "🗄️"] },
+];
+const COLOR_SWATCHES = [
+  "#b8902a", "#6366f1", "#ec4899", "#10b981", "#f59e0b",
+  "#3b82f6", "#ef4444", "#8b5cf6", "#14b8a6", "#64748b",
 ];
 
 interface StudioSettingsDialogProps {
@@ -101,28 +105,35 @@ function SortableSpaceItem({
           {/* Icon */}
           <div className="space-y-1">
             <Label className="text-xs">{t("아이콘", "Icon")}</Label>
-            <div className="flex gap-1.5 flex-wrap">
-              {ICONS.map((ic) => (
-                <button
-                  key={ic}
-                  onClick={() => onUpdate({ icon: ic })}
-                  className={`h-8 w-8 rounded-md flex items-center justify-center text-lg border-2 transition-colors ${space.icon === ic ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary))]/10" : "border-transparent hover:bg-muted/50"}`}
-                >
-                  {ic}
-                </button>
-              ))}
-            </div>
+            {ICON_CATEGORIES.map((cat) => (
+              <div key={cat.label.en}>
+                <p className="text-[10px] text-muted-foreground mb-0.5">
+                  {language === "ko" ? cat.label.ko : cat.label.en}
+                </p>
+                <div className="flex gap-1 flex-wrap mb-1.5">
+                  {cat.icons.map((ic) => (
+                    <button
+                      key={ic}
+                      onClick={() => onUpdate({ icon: ic })}
+                      className={`h-7 w-7 rounded-md flex items-center justify-center text-base transition-colors ${space.icon === ic ? "bg-[hsl(var(--primary))]/10 ring-2 ring-[hsl(var(--primary))]" : "hover:bg-muted/50"}`}
+                    >
+                      {ic}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Color */}
           <div className="space-y-1">
             <Label className="text-xs">{t("색깔", "Color")}</Label>
             <div className="flex gap-1.5 flex-wrap">
-              {COLORS.map((c) => (
+              {COLOR_SWATCHES.map((c) => (
                 <button
                   key={c}
                   onClick={() => onUpdate({ color: c })}
-                  className={`h-7 w-7 rounded-full border-2 transition-all ${space.color === c ? "border-foreground scale-110" : "border-transparent"}`}
+                  className={`h-7 w-7 rounded-full transition-all ${space.color === c ? "ring-2 ring-offset-2 ring-foreground scale-110" : ""}`}
                   style={{ backgroundColor: c }}
                 />
               ))}

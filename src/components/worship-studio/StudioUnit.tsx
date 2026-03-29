@@ -1,5 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { DoorClosed, DoorOpen } from "lucide-react";
 
 export interface StudioUnitProps {
   avatarUrl?: string;
@@ -77,13 +78,28 @@ export function StudioUnit({
         </p>
       </div>
 
-      {/* Visit button window */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onVisit(); }}
-        className={cn("w-12 h-8 shrink-0 flex items-center justify-center text-[10px] font-medium transition-colors", windowFrame, visitBg[variant])}
-      >
-        방문
-      </button>
+      {/* Visit button window — door icon with hover animation */}
+      <VisitDoorButton variant={variant} onVisit={onVisit} />
     </div>
+  );
+}
+
+function VisitDoorButton({ variant, onVisit }: { variant: string; onVisit: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onVisit(); }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className={cn("w-10 h-8 shrink-0 flex items-center justify-center transition-colors", windowFrame, visitBg[variant])}
+    >
+      <div className="transition-transform duration-200" style={{ transform: hovered ? "scale(1.15)" : "scale(1)" }}>
+        {hovered ? (
+          <DoorOpen className="h-4 w-4 text-foreground" />
+        ) : (
+          <DoorClosed className="h-4 w-4 text-muted-foreground" />
+        )}
+      </div>
+    </button>
   );
 }

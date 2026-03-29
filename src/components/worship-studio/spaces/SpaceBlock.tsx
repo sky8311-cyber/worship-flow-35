@@ -4,7 +4,7 @@ import { ResizeHandle } from "./ResizeHandle";
 import { BlockRenderer } from "./blocks/BlockRenderer";
 import { useBlockContent } from "@/hooks/useBlockContent";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { GripHorizontal } from "lucide-react";
+import { GripHorizontal, Trash2 } from "lucide-react";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const GRID_SNAP = 20;
@@ -35,14 +35,16 @@ interface SpaceBlockProps {
   isEditMode: boolean;
   onSelect: () => void;
   onUpdate: (updates: Partial<SpaceBlockType>) => void;
+  onDelete?: () => void;
   spaceId: string;
 }
 
-export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, onUpdate, spaceId }: SpaceBlockProps) {
+export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, onUpdate, onDelete, spaceId }: SpaceBlockProps) {
   const color = BLOCK_COLORS[block.block_type] || "#6b6560";
   const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
   const isMobile = useIsMobile();
 
+  const [isHovered, setIsHovered] = useState(false);
   const [localPos, setLocalPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -157,6 +159,8 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
     >
       {/* Drag handle — OUTSIDE block on TOP in edit mode */}
       {canDrag && (
@@ -171,6 +175,16 @@ export function SpaceBlock({ block, isOwner, isSelected, isEditMode, onSelect, o
         >
           <GripHorizontal className="text-white/90" size={isMobile ? 18 : 14} />
         </div>
+      )}
+
+      {/* Delete button — always in edit mode, on hover otherwise */}
+      {isOwner && onDelete && (isEditMode || isHovered) && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="absolute -top-1 -right-1 z-30 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
       )}
 
       <div className="w-full h-full overflow-hidden rounded-lg">
