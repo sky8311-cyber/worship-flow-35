@@ -9,6 +9,8 @@ import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GothicRoof } from "./GothicRoof";
+import { GothicEntrance } from "./GothicEntrance";
 
 const PLACEHOLDER_TENANTS = [
   { id: 'ph1', name: '김찬양', initials: '김', icon: '🎵', variant: 'friend' as const },
