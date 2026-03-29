@@ -33,7 +33,7 @@ export function InstituteLayout({ children, pageTitle, showBackButton, breadcrum
     return (
       <div className="h-[100dvh] flex flex-col bg-gradient-soft">
         <InstituteHeader breadcrumb={breadcrumb} />
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden" style={{ paddingBottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}>
           {children}
         </main>
         <InstituteBottomNav />
