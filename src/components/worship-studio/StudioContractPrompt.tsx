@@ -44,7 +44,7 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
               <>
                 "예배는 무대가 아닌, 삶입니다.<br />
                 삶이 예배가 될 때, 사역이 빚어집니다.<br />
-                이 스튜디오는 그 여정이 기록되고 나눠지는 곳입니다."
+                이 아틀리에는 그 여정이 기록되고 나눠지는 곳입니다."
               </>
             ) : (
               <>
