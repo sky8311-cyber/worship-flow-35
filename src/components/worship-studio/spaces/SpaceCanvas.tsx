@@ -57,22 +57,6 @@ export function SpaceCanvas({
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [pageHeight, setPageHeight] = useState(500);
-
-  // Measure available height for pages
-  useEffect(() => {
-    const measure = () => {
-      if (containerRef.current) {
-        // Subtract toolbar (~48px) and page nav (~40px) 
-        const available = containerRef.current.clientHeight - 4;
-        setPageHeight(Math.max(300, available));
-      }
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
 
   // Desktop shows 2 pages, mobile shows 1
   const pagesPerView = isMobile ? 1 : 2;
@@ -198,13 +182,12 @@ export function SpaceCanvas({
       <div
         key={pageNum}
         className={cn(
-          "relative shrink-0 overflow-hidden",
+          "relative shrink-0 overflow-hidden h-full",
           !isMobile && side === "left" && "border-r-0",
           !isMobile && side === "right" && "border-l-0",
         )}
         style={{
           width: `${CANVAS_WIDTH}px`,
-          height: `${pageHeight}px`,
         }}
         onClick={handleCanvasClick}
       >
