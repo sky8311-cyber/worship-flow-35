@@ -223,10 +223,10 @@ export function SpaceCanvas({
       </div>
 
       {/* Page area */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden relative">
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-0">
         <div
           className={cn(
-            "flex items-stretch transition-transform duration-350 ease-in-out",
+            "flex items-stretch h-full transition-transform duration-350 ease-in-out",
             slideDirection === "right" && "-translate-x-4 opacity-80",
             slideDirection === "left" && "translate-x-4 opacity-80",
           )}
@@ -237,7 +237,7 @@ export function SpaceCanvas({
             visiblePages.map(p => renderPage(p))
           ) : (
             // Desktop: book spread with fold
-            <div className="flex items-stretch relative">
+            <div className="flex items-stretch relative h-full">
               {visiblePages[0] !== undefined && renderPage(visiblePages[0], "left")}
               {/* Book fold / spine */}
               {visiblePages.length === 2 && (
