@@ -1,41 +1,28 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="2400" height="700" viewBox="0 0 2400 700" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <title>Worship Atelier Horizontal Logo</title>
-  <desc>Transparent SVG logo with pointed arch symbol on the left and one-line wordmark on the right.</desc>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="3200" height="900" viewBox="0 0 3200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
 
   <!-- Symbol -->
-  <g transform="translate(120,90)">
+  <g transform="translate(150,120)">
     <!-- Outer arch -->
-    <path d="M120 410 L120 170
-             Q120 112 160 78
-             L220 28
-             Q260 -4 300 28
-             L360 78
-             Q400 112 400 170
-             L400 410"
-          stroke="#1F1F1F" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M150 520 L150 200 Q150 130 200 90 L280 20 Q330 -20 380 20 L460 90 Q510 130 510 200 L510 520"
+          stroke="#1F1F1F" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
     <!-- Inner arch -->
-    <path d="M158 410 L158 194
-             Q158 148 188 122
-             L229 86
-             Q260 60 291 86
-             L332 122
-             Q362 148 362 194
-             L362 410"
-          stroke="#1F1F1F" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M195 520 L195 230 Q195 170 230 140 L290 90 Q330 60 370 90 L430 140 Q465 170 465 230 L465 520"
+          stroke="#1F1F1F" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <!-- Sparkle -->
-    <g transform="translate(392,18)">
-      <path d="M0 18 C9 18 18 9 18 0 C18 9 27 18 36 18 C27 18 18 27 18 36 C18 27 9 18 0 18Z" fill="#B8902A"/>
+    <!-- Larger Gold Star -->
+    <g transform="translate(500,-10)">
+      <path d="M0 28 C14 28 28 14 28 0 C28 14 42 28 56 28 C42 28 28 42 28 56 C28 42 14 28 0 28Z" fill="#B8902A"/>
     </g>
   </g>
 
-  <!-- Wordmark -->
-  <g transform="translate(620,365)">
+  <!-- Text -->
+  <g transform="translate(800,520)">
     <text x="0" y="0"
           fill="#1F1F1F"
           font-family="Georgia, 'Times New Roman', serif"
-          font-size="108"
-          letter-spacing="8">WORSHIP ATELIER</text>
+          font-size="220"
+          letter-spacing="10">WORSHIP ATELIER</text>
   </g>
+
 </svg>
