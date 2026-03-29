@@ -1,61 +1,95 @@
 
 
-# 모바일 워크플로우 개선 + 탭 바 정리 + 캔버스 스크롤 비활성화
+# 9가지 개선 사항 구현 계획
 
-## 변경 사항 요약
+## 1. BGM 선택기 전체 곡 리스트 표시
+**파일:** `src/components/worship-studio/StudioBGMSelector.tsx`
+- `.limit(50)` 제거 또는 `.limit(500)`으로 변경
+- ScrollArea 높이를 `h-48` → `h-64`로 확대
+- 검색 없이도 전체 곡이 표시되도록 수정
 
-### 1. 모바일 FAB 아이콘/텍스트 동적 변경
-**파일:** `src/components/worship-studio/StudioMainPanel.tsx`
-- 현재: 편집 모드일 때만 FAB(+) 표시
-- 변경: 편집 모드에서 항상 FAB 표시. `selectedBlockId` 유무에 따라:
-  - 선택 없음 → `Plus` 아이콘 + "블록 추가" 텍스트 (아래 작게)
-  - 선택 있음 → `Pencil` 아이콘 + "블록 수정" 텍스트 (아래 작게)
-- FAB 아래에 `text-[9px]` 라벨 추가 (`flex-col` 레이아웃)
-
-### 2. 블록 드래그 핸들을 좌측 → 상단으로 이동
-**파일:** `src/components/worship-studio/spaces/SpaceBlock.tsx`
-- 현재: 왼쪽 외부에 세로 `GripVertical` 핸들
-- 변경: 상단 외부에 가로 핸들 배치
-  - `top: -handleH`, `left: 0`, `width: 100%`, `height: handleH` (20~24px)
-  - `GripVertical` → `GripHorizontal` 아이콘
-  - `rounded-l-md` → `rounded-t-md`
-  - `borderLeftWidth` 스타일 제거, 대신 `borderTopWidth: 4px` + `borderTopColor: color` (비편집 모드)
-
-### 3. 탭 바에서 DnD 드래그 정렬 제거
-**파일:** `src/components/worship-studio/spaces/SpaceTabBar.tsx`
-- `DndContext`, `SortableContext`, `useSortable` 관련 코드 모두 제거
-- `SortableTab` → 일반 탭 컴포넌트로 변경 (transform/listeners 제거)
-- `ContextMenu` 래퍼도 제거 (우클릭 버그 해결 + 설정이 스튜디오 설정으로 이동)
-- 방명록 버튼도 탭 바에서 제거 (캔버스 컨트롤로 이동)
-
-### 4. 스튜디오 설정에 "공간 탭 관리" 섹션 추가
+## 2. 설정의 공간관리 아이콘/색깔을 생성 다이얼로그와 일치시키기
 **파일:** `src/components/worship-studio/StudioSettingsDialog.tsx`
-- 기존 내용(공개 설정, BGM) 아래에 "공간 관리" 섹션 추가
-- 각 공간을 리스트 형태로 표시: 아이콘 | 이름 | 공개/비공개/친구 배지
-- 드래그 정렬 (dnd-kit sortable, 세로 리스트)
-- 각 공간 클릭/확장 시: 아이콘 픽커, 색깔 픽커, 공개 설정 (radio), 방명록 활성화 (switch)
-- Props에 `spaces` 데이터 + `reorderSpaces`/`updateSpace` 뮤테이션 전달 필요
-  - `StudioSettingsDialog`에서 `useStudioSpaces(room.id)`, `useUpdateSpace()`, `useReorderSpaces()` 직접 호출
+- 현재 `ICONS` (10개) → `SpaceCreateDialog`의 `ICON_CATEGORIES` (30개, 카테고리별 분류) 방식으로 교체
+- 현재 `COLORS` (10개) → `SpaceCreateDialog`의 `COLOR_SWATCHES` (10개, 다른 색상 세트) 로 통일
+- 카테고리 라벨 (예배/신앙, 일상/감성, 폴더/시스템) 포함
 
-### 5. 방명록 버튼을 캔버스 컨트롤 영역으로 이동
+## 3. 공간탭에 비공개/친구 배지 추가
+**파일:** `src/components/worship-studio/spaces/SpaceTabBar.tsx`
+- `useStudioSpaces`에서 가져온 `space.visibility` 확인
+- `"private"` → 작은 "비공개" 배지, `"friends"` → "친구만" 배지 표시
+- `"public"` → 배지 없음
+- 탭 이름 옆에 `text-[8px]` 크기의 배지
+
+## 4. 블록 삭제 버튼 (쓰레기통 아이콘)
+**파일:** `src/components/worship-studio/spaces/SpaceBlock.tsx`
+- Props에 `onDelete` 콜백 추가
+- **비편집 모드**: 마우스 hover 시 우측 상단 코너에 쓰레기통 아이콘 표시 → 클릭 시 즉시 삭제
+- **편집 모드**: 모든 블록에 항상 우측 상단 코너에 쓰레기통 아이콘 표시
+- `useState`로 hover 상태 관리, `onPointerEnter`/`onPointerLeave` 사용
+
 **파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
-- 편집 버튼 오른쪽에 방명록 버튼 추가
-- 이웃추가 버튼과 동일한 스타일 (rounded-full pill)
-- Props에 `guestbookEnabled`, `onOpenGuestbook`, `guestbookCount` 추가
-- `StudioMainPanel.tsx`에서 guestbook 데이터를 SpaceCanvas로 전달
+- `useDeleteBlock` import 및 `handleDeleteBlock` 함수 생성
+- `SpaceBlock`에 `onDelete` prop 전달
 
-### 6. 캔버스 수직 스크롤 비활성화
+## 5. 캔버스 상단 버튼 바 일관성 개선
 **파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
-- 컨테이너에 `overflow-hidden` 유지 (현재도 설정됨)
-- 내부 페이지 영역에 `overflow-y: hidden` 명시적 추가
+- 모든 버튼을 동일한 pill 스타일로 통일: `rounded-full`, `px-2.5 py-1`, `text-[11px]`
+- 편집 버튼도 같은 스타일 적용
+- 방명록 버튼을 이웃추가 버튼과 동일한 디자인으로 확인/수정
+- **설정 아이콘을 맨 오른쪽으로 이동**: 버튼 바를 `justify-between`으로 변경하거나, 설정을 별도 `absolute right-3`으로 배치
+- 버튼 순서: BGM | 이웃추가 | 편집(저장/취소) | 방명록 | (공간) ... | ⚙️설정(맨 우측)
 
-## 파일 변경 목록
+## 6. 방문 버튼 → 문 열림 애니메이션 홈 아이콘
+**파일:** `src/components/worship-studio/StudioUnit.tsx`
+- "방문" 텍스트 제거, 아이콘으로 대체
+- 기본: `DoorClosed` 아이콘 (lucide-react)
+- 마우스 hover 시: `DoorOpen` 아이콘으로 전환 (CSS transition으로 부드러운 전환)
+- `useState`로 hover 상태 관리
 
-| 파일 | 작업 |
+## 7. 페이지 삭제 기능 추가
+**파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
+- 편집 모드일 때 각 페이지 우측 상단에 "🗑️ 삭제" 버튼 표시
+- `renderPage` 함수 내에 조건부 렌더링
+- 클릭 시: 해당 페이지의 모든 블록 삭제 + `page_count - 1` 업데이트
+- 최소 1페이지는 유지 (1페이지일 때 삭제 비활성화)
+
+**파일:** `src/components/worship-studio/StudioMainPanel.tsx`
+- `handleDeletePage(pageNum)` 함수 생성 → SpaceCanvas에 prop 전달
+- 해당 페이지 블록 삭제 + 이후 페이지 블록들의 `page_number` 재조정
+
+## 8. 페이지 넘김 애니메이션 개선
+**파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
+- 현재: 단순 translate + opacity fade (350ms)
+- 개선: 3D perspective 회전 효과 (책 페이지 넘기는 느낌)
+  - `perspective(1200px) rotateY()`로 페이지 넘김 효과
+  - 그림자가 동적으로 변하는 효과 추가
+  - duration 400ms
+
+## 9. 두 페이지 가운데 접힘 디자인 개선
+**파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
+- 현재: `w-3` div에 단순 linear-gradient
+- 개선: 더 섬세한 책 바인딩 효과
+  - 중앙에 미세한 세로선 (spine)
+  - 양쪽으로 미세한 곡면 그림자
+  - `box-shadow: inset` 여러 겹으로 깊이감 추가
+  - 폭을 `w-4`로 약간 확대
+
+## 10. 페이지 추가 단위: 2 → 1
+**파일:** `src/components/worship-studio/StudioMainPanel.tsx`
+- `page_count: activePageCount + 2` → `page_count: activePageCount + 1`
+
+---
+
+## 파일 변경 요약
+
+| 파일 | 변경 |
 |------|------|
-| `StudioMainPanel.tsx` | FAB 동적 아이콘/텍스트, 방명록 데이터를 SpaceCanvas로 전달 |
-| `SpaceBlock.tsx` | 드래그 핸들 좌측→상단, 선택 인디케이터 상단 |
-| `SpaceTabBar.tsx` | DnD 제거, ContextMenu 제거, 방명록 버튼 제거 |
-| `StudioSettingsDialog.tsx` | 공간 관리 섹션 추가 (정렬, 아이콘/색/공개/방명록) |
-| `SpaceCanvas.tsx` | 방명록 버튼 추가, 스크롤 비활성화 확인 |
+| `StudioBGMSelector.tsx` | limit 제거, ScrollArea 확대 |
+| `StudioSettingsDialog.tsx` | 아이콘/색깔 피커를 SpaceCreateDialog과 동일하게 |
+| `SpaceTabBar.tsx` | 비공개/친구 배지 추가 |
+| `SpaceBlock.tsx` | hover/편집 시 삭제 버튼 추가 |
+| `SpaceCanvas.tsx` | 버튼바 일관성, 페이지 삭제, 애니메이션 개선, 바인딩 디자인 |
+| `StudioUnit.tsx` | 방문 → 문 열림 아이콘 애니메이션 |
+| `StudioMainPanel.tsx` | 페이지 삭제 로직, +1 페이지 |
 
