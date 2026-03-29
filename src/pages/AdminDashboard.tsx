@@ -648,12 +648,12 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">
-                        Worship Studio
+                        Worship Atelier
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         {language === "ko" 
-                          ? "예배공작소 기능 전체 표시"
-                          : "Show the Worship Studio feature"}
+                          ? "워십 아틀리에 기능 전체 표시"
+                          : "Show the Worship Atelier feature"}
                       </p>
                     </div>
                     <Switch

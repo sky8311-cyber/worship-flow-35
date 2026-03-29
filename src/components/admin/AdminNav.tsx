@@ -129,7 +129,7 @@ export const AdminNav = () => {
     },
     {
       to: "/admin/studio",
-      label: language === "ko" ? "예배공작소" : "Studio",
+      label: language === "ko" ? "아틀리에" : "Atelier",
       icon: Palette,
     },
     {

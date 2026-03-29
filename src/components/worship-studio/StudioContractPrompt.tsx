@@ -36,21 +36,21 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
           </div>
           <h2 className="text-2xl font-bold">
             {language === "ko" 
-              ? "나만의 예배공작소를 열어보세요" 
-              : "Open your own Worship Studio"}
+              ? "나만의 워십 아틀리에를 열어보세요" 
+              : "Open your own Worship Atelier"}
           </h2>
           <div className="text-muted-foreground mt-4 text-sm italic leading-relaxed">
             {language === "ko" ? (
               <>
                 "예배는 무대가 아닌, 삶입니다.<br />
                 삶이 예배가 될 때, 사역이 빚어집니다.<br />
-                이 스튜디오는 그 여정이 기록되고 나눠지는 곳입니다."
+                이 아틀리에는 그 여정이 기록되고 나눠지는 곳입니다."
               </>
             ) : (
               <>
                 "Worship is not a stage, it is life.<br />
                 As life becomes worship, ministry takes shape.<br />
-                This Studio is where that journey is written and shared."
+                This Atelier is where that journey is written and shared."
               </>
             )}
           </div>
@@ -75,7 +75,7 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
           >
             {createStudio.isPending 
               ? (language === "ko" ? "생성 중..." : "Creating...")
-              : (language === "ko" ? "예, 스튜디오를 오픈합니다" : "Yes, open my Studio")}
+              : (language === "ko" ? "예, 아틀리에를 오픈합니다" : "Yes, open my Atelier")}
           </Button>
           {onLater && (
             <Button variant="ghost" onClick={onLater} className="w-full">

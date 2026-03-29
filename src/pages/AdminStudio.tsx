@@ -214,7 +214,7 @@ const AdminStudio = () => {
           <Palette className="w-8 h-8 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">
-              {language === "ko" ? "예배공작소 관리" : "Worship Studio Management"}
+              {language === "ko" ? "워십 아틀리에 관리" : "Worship Atelier Management"}
             </h1>
             <p className="text-muted-foreground text-sm">
               {language === "ko" 

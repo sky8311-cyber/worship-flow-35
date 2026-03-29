@@ -267,7 +267,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               {(!collapsed || isMobile) && (
                 <>
                   <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
-                    K-Worship Studio
+                    Worship Atelier
                   </div>
                   {/* Poles */}
                   <div className="flex gap-6">
@@ -303,7 +303,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                     {/* Badges row */}
                     <div className="flex justify-between items-center mb-1">
                       <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
-                        K-Worship Studio
+                        Worship Atelier
                       </div>
                       <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
                         kworship.app
