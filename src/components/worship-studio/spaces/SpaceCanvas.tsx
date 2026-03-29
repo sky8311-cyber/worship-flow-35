@@ -5,8 +5,9 @@ import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
-import { ZoomIn, ZoomOut, Maximize2, Music, Play, Pause, UserPlus, Settings } from "lucide-react";
+import { Music, Play, Pause, UserPlus, Settings, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const CANVAS_WIDTH = 430;
@@ -27,16 +28,11 @@ interface SpaceCanvasProps {
   bgmVideoId?: string | null;
   bgmRoomId?: string | null;
   bgmOwnerName?: string | null;
-  // Marquee
-  marqueeText?: string | null;
-  marqueeTextColor?: string | null;
-  marqueeBgColor?: string | null;
-  marqueeSpeed?: number | null;
-  // Settings
   onOpenSettings?: () => void;
-  // Neighbor
   onAddNeighbor?: () => void;
   neighborStatus?: "none" | "pending" | "accepted" | null;
+  currentPage: number;
+  onPageChange: (page: number) => void;
 }
 
 export function SpaceCanvas({
@@ -44,47 +40,61 @@ export function SpaceCanvas({
   isEditMode, onToggleEditMode, onSaveEdits, onCancelEdits,
   pendingUpdates, onPendingUpdate,
   bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
-  marqueeText, marqueeTextColor, marqueeBgColor, marqueeSpeed,
   onOpenSettings, onAddNeighbor, neighborStatus,
+  currentPage, onPageChange,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
   const { data: blocks = [] } = useSpaceBlocks(spaceId);
   const updateBlock = useUpdateBlock();
   const containerRef = useRef<HTMLDivElement>(null);
+  const { data: spaces = [] } = useStudioSpaces(undefined);
+  const updateSpace = useUpdateSpace();
 
-  const [zoom, setZoom] = useState(1.0);
+  // Find the current space's page_count
+  const currentSpaceData = spaces.find(s => s.id === spaceId);
+  const pageCount = currentSpaceData?.page_count ?? 2;
 
-  const fitZoom = useCallback(() => {
-    if (!containerRef.current || isMobile) return;
-    const available = containerRef.current.clientWidth - 32;
-    const fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 1.0);
-    setZoom(Math.round(fit * 100) / 100);
-  }, [isMobile]);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [pageHeight, setPageHeight] = useState(500);
 
+  // Measure available height for pages
   useEffect(() => {
-    if (isMobile) { setZoom(1.0); return; }
-    fitZoom();
-    const ro = new ResizeObserver(fitZoom);
+    const measure = () => {
+      if (containerRef.current) {
+        // Subtract toolbar (~48px) and page nav (~40px) 
+        const available = containerRef.current.clientHeight - 4;
+        setPageHeight(Math.max(300, available));
+      }
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, [isMobile, fitZoom]);
+  }, []);
 
-  const canvasHeight = useMemo(() => {
-    if (blocks.length === 0) return "100vh";
-    const maxBottom = Math.max(...blocks.map(b => {
-      const pending = pendingUpdates.get(b.id);
-      const posY = pending?.pos_y ?? b.pos_y;
-      const sizeH = pending?.size_h ?? b.size_h;
-      return posY + sizeH;
-    }));
-    return maxBottom + 400 + "px";
-  }, [blocks, pendingUpdates]);
+  // Desktop shows 2 pages, mobile shows 1
+  const pagesPerView = isMobile ? 1 : 2;
+  // For desktop: current page should be even (0-indexed, show pairs 0-1, 2-3, etc.)
+  const startPage = isMobile ? currentPage : Math.floor(currentPage / 2) * 2;
+
+  const visiblePages = useMemo(() => {
+    const pages: number[] = [];
+    for (let i = 0; i < pagesPerView; i++) {
+      const p = startPage + i;
+      if (p < pageCount) pages.push(p);
+    }
+    return pages;
+  }, [startPage, pagesPerView, pageCount]);
+
+  // Filter blocks by page
+  const getPageBlocks = useCallback((pageNum: number) => {
+    return blocks.filter(b => (b.page_number ?? 0) === pageNum);
+  }, [blocks]);
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onSelectBlock(null);
-    }
+    if (e.target === e.currentTarget) onSelectBlock(null);
   }, [onSelectBlock]);
 
   const handleUpdateBlock = useCallback((id: string, updates: Partial<SpaceBlockType>) => {
@@ -98,17 +108,39 @@ export function SpaceCanvas({
     updateBlock.mutate({ id, spaceId, ...updates });
   }, [spaceId, updateBlock, isEditMode, onPendingUpdate]);
 
-  const showMarquee = !!marqueeText;
+  const canGoNext = startPage + pagesPerView < pageCount;
+  const canGoPrev = startPage > 0;
 
-  // Toolbar content (shared between mobile/desktop)
-  const marqueeBar = showMarquee ? (
-    <MarqueeBar
-      text={marqueeText!}
-      textColor={marqueeTextColor || "#333333"}
-      bgColor={marqueeBgColor || "#f5f0e8"}
-      speed={marqueeSpeed || 50}
-    />
-  ) : null;
+  const navigatePage = useCallback((direction: "left" | "right") => {
+    if (isAnimating) return;
+    if (direction === "right" && !canGoNext) return;
+    if (direction === "left" && !canGoPrev) return;
+
+    setSlideDirection(direction);
+    setIsAnimating(true);
+
+    setTimeout(() => {
+      if (direction === "right") {
+        onPageChange(startPage + pagesPerView);
+      } else {
+        onPageChange(Math.max(0, startPage - pagesPerView));
+      }
+      setSlideDirection(null);
+      setIsAnimating(false);
+    }, 350);
+  }, [isAnimating, canGoNext, canGoPrev, startPage, pagesPerView, onPageChange]);
+
+  const handleAddPage = useCallback(() => {
+    if (!currentSpaceData) return;
+    updateSpace.mutate({ id: spaceId, page_count: pageCount + 1 });
+  }, [spaceId, pageCount, currentSpaceData, updateSpace]);
+
+  // Page indicator text
+  const pageIndicator = isMobile
+    ? `${currentPage + 1}/${pageCount}`
+    : pageCount > 0
+      ? `${startPage + 1}-${Math.min(startPage + 2, pageCount)}/${pageCount}`
+      : "0/0";
 
   const actionButtons = (
     <div className="flex items-center gap-1.5">
@@ -159,101 +191,115 @@ export function SpaceCanvas({
     </div>
   );
 
+  // Render a single page
+  const renderPage = (pageNum: number, side?: "left" | "right") => {
+    const pageBlocks = getPageBlocks(pageNum);
+    return (
+      <div
+        key={pageNum}
+        className={cn(
+          "relative shrink-0 overflow-hidden",
+          !isMobile && side === "left" && "border-r-0",
+          !isMobile && side === "right" && "border-l-0",
+        )}
+        style={{
+          width: `${CANVAS_WIDTH}px`,
+          height: `${pageHeight}px`,
+        }}
+        onClick={handleCanvasClick}
+      >
+        <MujiGridBackground />
+        {pageBlocks.map(block => {
+          const pending = pendingUpdates.get(block.id);
+          const mergedBlock = pending ? { ...block, ...pending } : block;
+          return (
+            <SpaceBlock
+              key={block.id}
+              block={mergedBlock}
+              isOwner={isOwner}
+              isSelected={block.id === selectedBlockId}
+              isEditMode={isEditMode}
+              onSelect={() => onSelectBlock(block.id)}
+              onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
+              spaceId={spaceId}
+            />
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 relative">
-      {/* Desktop toolbar */}
-      {!isMobile && (
-        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30 gap-2">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            {isOwner && (
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => setZoom(z => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))}
-                  className="p-1.5 rounded-md hover:bg-accent transition"
-                >
-                  <ZoomOut className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-                <span className="text-[10px] text-muted-foreground font-mono w-10 text-center">
-                  {Math.round(zoom * 100)}%
-                </span>
-                <button
-                  onClick={() => setZoom(z => Math.min(1.5, Math.round((z + 0.1) * 10) / 10))}
-                  className="p-1.5 rounded-md hover:bg-accent transition"
-                >
-                  <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-                <button onClick={fitZoom} className="p-1.5 rounded-md hover:bg-accent transition">
-                  <Maximize2 className="h-3.5 w-3.5 text-muted-foreground" />
-                </button>
-              </div>
-            )}
-            {marqueeBar && <div className="min-w-0 flex-1 mx-2">{marqueeBar}</div>}
-          </div>
-          {actionButtons}
+    <div ref={containerRef} className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+      {/* Toolbar */}
+      <div className="shrink-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-xs font-mono text-muted-foreground shrink-0">{pageIndicator}</span>
         </div>
-      )}
+        {actionButtons}
+      </div>
 
-      {/* Mobile toolbar */}
-      {isMobile && (
-        <div className="sticky top-0 z-30 flex flex-col bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30">
-          {marqueeBar && <div className="px-3 pt-2">{marqueeBar}</div>}
-          <div className="flex items-center justify-end gap-1.5 px-3 py-2">
-            {actionButtons}
-          </div>
-        </div>
-      )}
-
-      {/* Canvas */}
-      <div className="flex justify-center py-4">
+      {/* Page area */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative">
         <div
-          className="relative"
-          style={{
-            width: `${CANVAS_WIDTH}px`,
-            height: canvasHeight,
-            transform: isMobile ? undefined : `scale(${zoom})`,
-            transformOrigin: 'top center',
-          }}
-          onClick={handleCanvasClick}
+          className={cn(
+            "flex items-stretch transition-transform duration-350 ease-in-out",
+            slideDirection === "right" && "-translate-x-4 opacity-80",
+            slideDirection === "left" && "translate-x-4 opacity-80",
+          )}
+          style={{ transition: isAnimating ? "transform 0.35s ease, opacity 0.35s ease" : "none" }}
         >
-          <MujiGridBackground />
-          {blocks.map(block => {
-            const pending = pendingUpdates.get(block.id);
-            const mergedBlock = pending ? { ...block, ...pending } : block;
-            return (
-              <SpaceBlock
-                key={block.id}
-                block={mergedBlock}
-                isOwner={isOwner}
-                isSelected={block.id === selectedBlockId}
-                isEditMode={isEditMode}
-                onSelect={() => onSelectBlock(block.id)}
-                onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
-                spaceId={spaceId}
-              />
-            );
-          })}
+          {isMobile ? (
+            // Mobile: single page
+            visiblePages.map(p => renderPage(p))
+          ) : (
+            // Desktop: book spread with fold
+            <div className="flex items-stretch relative">
+              {visiblePages[0] !== undefined && renderPage(visiblePages[0], "left")}
+              {/* Book fold / spine */}
+              {visiblePages.length === 2 && (
+                <div className="w-3 shrink-0 relative z-10"
+                  style={{
+                    background: "linear-gradient(to right, rgba(0,0,0,0.06), rgba(0,0,0,0.02) 30%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.06))",
+                    boxShadow: "inset 0 0 8px rgba(0,0,0,0.08)",
+                  }}
+                />
+              )}
+              {visiblePages[1] !== undefined && renderPage(visiblePages[1], "right")}
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  );
-}
 
-// --- Marquee Text Bar ---
-function MarqueeBar({ text, textColor, bgColor, speed }: {
-  text: string; textColor: string; bgColor: string; speed: number;
-}) {
-  const duration = Math.max(5, 300 / speed);
-  return (
-    <div
-      className="w-full rounded-md overflow-hidden h-7 flex items-center"
-      style={{ backgroundColor: bgColor }}
-    >
-      <div
-        className="flex whitespace-nowrap animate-marquee"
-        style={{ color: textColor, animationDuration: `${duration}s` }}
-      >
-        <span className="text-[11px] font-medium px-4">{text}</span>
-        <span className="text-[11px] font-medium px-4">{text}</span>
+      {/* Bottom navigation */}
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-t border-border/30">
+        <div>
+          {isOwner && isEditMode && (
+            <button
+              onClick={handleAddPage}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              {language === "ko" ? "새 페이지" : "New Page"}
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => navigatePage("left")}
+            disabled={!canGoPrev || isAnimating}
+            className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft className="h-4 w-4 text-foreground" />
+          </button>
+          <button
+            onClick={() => navigatePage("right")}
+            disabled={!canGoNext || isAnimating}
+            className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronRight className="h-4 w-4 text-foreground" />
+          </button>
+        </div>
       </div>
     </div>
   );

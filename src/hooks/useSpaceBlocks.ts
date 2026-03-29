@@ -12,6 +12,7 @@ export interface SpaceBlock {
   size_h: number;
   z_index: number;
   content: Record<string, any>;
+  page_number: number;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -44,6 +45,7 @@ export function useCreateBlock() {
       size_w?: number;
       size_h?: number;
       content?: Record<string, any>;
+      page_number?: number;
     }) => {
       const { data, error } = await supabase
         .from("space_blocks")
@@ -79,6 +81,7 @@ export function useUpdateBlock() {
       size_h?: number;
       z_index?: number;
       content?: Record<string, any>;
+      page_number?: number;
     }) => {
       const payload: Record<string, any> = { ...updates };
       if (updates.content) {

@@ -11,6 +11,7 @@ export interface StudioSpace {
   visibility: "private" | "friends" | "public";
   guestbook_enabled: boolean;
   guestbook_permission: "all" | "friends";
+  page_count: number;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -26,7 +27,7 @@ export function useStudioSpaces(roomId: string | undefined) {
         .eq("room_id", roomId)
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data as StudioSpace[];
+      return data as unknown as StudioSpace[];
     },
     enabled: !!roomId,
   });
@@ -49,7 +50,7 @@ export function useCreateSpace() {
         .select()
         .single();
       if (error) throw error;
-      return data as StudioSpace;
+      return data as unknown as StudioSpace;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["studio-spaces", data.room_id] });
@@ -72,6 +73,7 @@ export function useUpdateSpace() {
       visibility?: "private" | "friends" | "public";
       guestbook_enabled?: boolean;
       guestbook_permission?: "all" | "friends";
+      page_count?: number;
     }) => {
       const { data, error } = await supabase
         .from("studio_spaces")
@@ -80,7 +82,7 @@ export function useUpdateSpace() {
         .select()
         .single();
       if (error) throw error;
-      return data as StudioSpace;
+      return data as unknown as StudioSpace;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["studio-spaces", data.room_id] });
