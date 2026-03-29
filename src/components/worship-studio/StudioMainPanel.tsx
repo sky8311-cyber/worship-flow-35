@@ -4,6 +4,7 @@ import { useDeleteBlock } from "@/hooks/useSpaceBlocks";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import { useGuestbook } from "@/hooks/useGuestbook";
+import { useWorshipRoomById } from "@/hooks/useWorshipRoom";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
@@ -73,8 +74,11 @@ export function StudioMainPanel({
   const activeSpace = spaces.find(s => s.id === activeSpaceId);
   const activePageCount = activeSpace?.page_count ?? 2;
 
+  const { room } = useWorshipRoomById(currentRoomId);
+  const guestbookEnabled = (room as any)?.guestbook_enabled ?? true;
+
   const { data: guestbookEntries = [] } = useGuestbook(
-    activeSpace?.guestbook_enabled ? activeSpaceId || undefined : undefined
+    guestbookEnabled ? currentRoomId : undefined
   );
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
@@ -185,7 +189,7 @@ export function StudioMainPanel({
               onPageChange={setCurrentPage}
               pageCount={activePageCount}
               onPageNavInfo={(info) => onPageNavInfo?.(info ? { ...info, handleAddPage } : null)}
-              guestbookEnabled={activeSpace?.guestbook_enabled}
+              guestbookEnabled={guestbookEnabled}
               guestbookCount={guestbookEntries.length}
               onOpenGuestbook={() => setGuestbookOpen(true)}
               onDeletePage={handleDeletePage}
@@ -257,11 +261,12 @@ export function StudioMainPanel({
         )}
       </div>
 
-      {activeSpaceId && (
+      {currentRoomId && (
         <GuestbookPanel
           open={guestbookOpen}
           onOpenChange={setGuestbookOpen}
-          spaceId={activeSpaceId}
+          roomId={currentRoomId}
+          roomOwnerId={room?.owner_user_id}
         />
       )}
     </div>
