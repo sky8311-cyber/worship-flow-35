@@ -62,6 +62,7 @@ export function StudioMainPanel({
   const [pendingUpdates, setPendingUpdates] = useState<Map<string, Partial<SpaceBlockType>>>(new Map());
   const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [guestbookOpen, setGuestbookOpen] = useState(false);
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
