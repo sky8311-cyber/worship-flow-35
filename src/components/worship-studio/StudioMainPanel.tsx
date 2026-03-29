@@ -71,6 +71,10 @@ export function StudioMainPanel({
   const activeSpace = spaces.find(s => s.id === activeSpaceId);
   const activePageCount = activeSpace?.page_count ?? 2;
 
+  const { data: guestbookEntries = [] } = useGuestbook(
+    activeSpace?.guestbook_enabled ? activeSpaceId || undefined : undefined
+  );
+
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
 
   const handleAddPage = useCallback(() => {
