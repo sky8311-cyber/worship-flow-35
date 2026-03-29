@@ -34,6 +34,9 @@ interface SpaceCanvasProps {
   onPageChange: (page: number) => void;
   pageCount: number;
   onPageNavInfo?: (info: { pageCount: number; canGoNext: boolean; canGoPrev: boolean; pageIndicator: string; navigatePage: (dir: "left" | "right") => void }) => void;
+  guestbookEnabled?: boolean;
+  guestbookCount?: number;
+  onOpenGuestbook?: () => void;
 }
 
 export function SpaceCanvas({
@@ -43,6 +46,7 @@ export function SpaceCanvas({
   bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
   onOpenSettings, onAddNeighbor, neighborStatus,
   currentPage, onPageChange, pageCount, onPageNavInfo,
+  guestbookEnabled, guestbookCount, onOpenGuestbook,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
