@@ -265,20 +265,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Rooftop sign — floating above building */}
-            <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-10" : "h-12")}>
-              {(!collapsed || isMobile) && (
-                <>
-                  <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
-                    Worship Atelier by K-Worship
-                  </div>
-                  {/* Poles */}
-                  <div className="flex gap-6">
-                    <div className="w-px h-2 bg-[#555]" />
-                    <div className="w-px h-2 bg-[#555]" />
-                  </div>
-                </>
-              )}
-              {collapsed && !isMobile && <div className="h-2" />}
+            {/* Gothic Roof — Triple Lancet Arches */}
+            <div className="relative z-10 shrink-0">
+              <GothicRoof collapsed={collapsed && !isMobile} isMobile={isMobile} />
             </div>
 
             {/* Building wrapper */}
