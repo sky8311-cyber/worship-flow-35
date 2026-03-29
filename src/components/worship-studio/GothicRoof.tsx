@@ -96,8 +96,6 @@ export function GothicRoof({ collapsed = false, isMobile = false }: GothicRoofPr
         <g transform="translate(120,-5)">
           <line x1="0" y1="0" x2="0" y2="7" stroke="#8a7a6a" strokeWidth="1.2" />
           <line x1="-3.5" y1="2.5" x2="3.5" y2="2.5" stroke="#8a7a6a" strokeWidth="1.2" />
-          {/* Gold star */}
-          <text x="6" y="1" fontSize="5" fill="#b8902a">★</text>
         </g>
         {/* Right finial */}
         <g transform="translate(180,10)">
