@@ -1,189 +1,216 @@
-import { cn } from "@/lib/utils";
-
 interface GothicArchTopProps {
   collapsed?: boolean;
   isMobile?: boolean;
 }
 
 export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArchTopProps) {
+  const borderColor = "#d8cfc4";
+  const bgColor = "#f8f6f0";
+  const accentColor = "#8a7a6a";
+  const goldColor = "#B8902A";
+
   if (collapsed && !isMobile) {
     return (
-      <div className="w-full relative" style={{ height: 52 }}>
+      <div className="w-full" style={{ aspectRatio: "300 / 100" }}>
         <svg
-          viewBox="0 0 300 120"
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="none"
+          viewBox="0 0 300 100"
+          className="block w-full h-full"
+          preserveAspectRatio="xMidYMid meet"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Background fill */}
+          {/* Silhouette fill — covers from arches down to baseline */}
           <path
             d={`
-              M0,120 L0,70
-              Q0,60 10,55 L40,42 Q55,30 55,30 L55,30 Q55,30 70,42 L95,55
-              Q105,48 110,42 L140,20 Q150,8 160,20 L190,42 Q195,48 205,55
-              L230,42 Q245,30 245,30 L245,30 Q245,30 260,42 L290,55
-              Q300,60 300,70 L300,120 Z
+              M0,100 L0,65
+              Q0,58 8,54 L38,40 Q52,28 52,28 Q52,28 66,40 L92,54
+              Q98,50 104,44 L134,22 Q148,8 150,6 Q152,8 166,22 L196,44 Q202,50 208,54
+              L234,40 Q248,28 248,28 Q248,28 262,40 L292,54
+              Q300,58 300,65 L300,100 Z
             `}
-            fill="#f8f6f0"
+            fill={bgColor}
             stroke="none"
           />
-          {/* Left arch outline */}
+          {/* Left arch */}
           <path
-            d="M10,120 L10,68 Q10,50 30,40 L48,30 Q55,24 62,30 L80,40 Q100,50 100,68 L100,120"
-            fill="none" stroke="#d8cfc4" strokeWidth="1.2"
+            d="M4,100 L4,62 Q4,50 20,42 L42,30 Q52,22 52,22 Q52,22 62,30 L84,42 Q100,50 100,62 L100,100"
+            fill="none" stroke={borderColor} strokeWidth="1.2"
           />
-          {/* Center arch outline */}
+          {/* Center arch */}
           <path
-            d="M105,120 L105,55 Q105,35 125,22 L143,12 Q150,6 157,12 L175,22 Q195,35 195,55 L195,120"
-            fill="none" stroke="#d8cfc4" strokeWidth="1.5"
+            d="M104,100 L104,48 Q104,30 122,20 L142,10 Q150,4 150,4 Q150,4 158,10 L178,20 Q196,30 196,48 L196,100"
+            fill="none" stroke={borderColor} strokeWidth="1.5"
           />
-          {/* Right arch outline */}
+          {/* Right arch */}
           <path
-            d="M200,120 L200,68 Q200,50 220,40 L238,30 Q245,24 252,30 L270,40 Q290,50 290,68 L290,120"
-            fill="none" stroke="#d8cfc4" strokeWidth="1.2"
+            d="M200,100 L200,62 Q200,50 216,42 L238,30 Q248,22 248,22 Q248,22 258,30 L280,42 Q296,50 296,62 L296,100"
+            fill="none" stroke={borderColor} strokeWidth="1.2"
           />
           {/* Finials */}
-          <line x1="55" y1="26" x2="55" y2="18" stroke="#d8cfc4" strokeWidth="1" />
-          <circle cx="55" cy="17" r="2" fill="#d8cfc4" />
-          <line x1="150" y1="8" x2="150" y2="0" stroke="#d8cfc4" strokeWidth="1.2" />
-          <circle cx="150" cy="-1" r="2.5" fill="#B8902A" />
-          <line x1="245" y1="26" x2="245" y2="18" stroke="#d8cfc4" strokeWidth="1" />
-          <circle cx="245" cy="17" r="2" fill="#d8cfc4" />
+          <line x1="52" y1="22" x2="52" y2="14" stroke={borderColor} strokeWidth="1" />
+          <circle cx="52" cy="13" r="1.8" fill={borderColor} />
+          <line x1="150" y1="4" x2="150" y2="-4" stroke={borderColor} strokeWidth="1.2" />
+          <circle cx="150" cy="-5" r="2.2" fill={goldColor} />
+          <line x1="248" y1="22" x2="248" y2="14" stroke={borderColor} strokeWidth="1" />
+          <circle cx="248" cy="13" r="1.8" fill={borderColor} />
+          {/* Baseline — matches building border-x */}
+          <line x1="0" y1="100" x2="300" y2="100" stroke={borderColor} strokeWidth="1" />
+          {/* Left border */}
+          <line x1="0" y1="65" x2="0" y2="100" stroke={borderColor} strokeWidth="1" />
+          {/* Right border */}
+          <line x1="300" y1="65" x2="300" y2="100" stroke={borderColor} strokeWidth="1" />
         </svg>
       </div>
     );
   }
 
   return (
-    <div className="w-full relative" style={{ height: isMobile ? 120 : 140 }}>
+    <div className="w-full" style={{ aspectRatio: "300 / 200" }}>
       <svg
         viewBox="0 0 300 200"
-        className="absolute inset-0 w-full h-full"
-        preserveAspectRatio="none"
+        className="block w-full h-full"
+        preserveAspectRatio="xMidYMid meet"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Background silhouette fill */}
+        {/* ===== SILHOUETTE FILL ===== */}
         <path
           d={`
             M0,200 L0,130
-            Q0,110 15,100 L35,88 Q55,68 55,68 Q55,68 75,88 L95,100
-            Q100,95 105,88 L125,60 Q140,30 150,18 Q160,30 175,60 L195,88 Q200,95 205,100
-            L225,88 Q245,68 245,68 Q245,68 265,88 L285,100
-            Q300,110 300,130 L300,200 Z
+            Q0,118 10,110 L30,96 Q50,74 52,72 Q54,74 74,96 L90,108
+            Q96,102 102,94 L126,64 Q142,34 150,20 Q158,34 174,64 L198,94 Q204,102 210,108
+            L226,96 Q246,74 248,72 Q250,74 270,96 L290,110
+            Q300,118 300,130 L300,200 Z
           `}
-          fill="#f8f6f0"
+          fill={bgColor}
           stroke="none"
         />
 
+        {/* ===== LEFT/RIGHT BORDER LINES (match building border-x) ===== */}
+        <line x1="0" y1="130" x2="0" y2="200" stroke={borderColor} strokeWidth="1" />
+        <line x1="300" y1="130" x2="300" y2="200" stroke={borderColor} strokeWidth="1" />
+
         {/* ===== COLUMNS / PILLARS ===== */}
-        <line x1="8" y1="200" x2="8" y2="128" stroke="#d8cfc4" strokeWidth="1.8" />
-        <line x1="100" y1="200" x2="100" y2="100" stroke="#d8cfc4" strokeWidth="2" />
-        <line x1="97" y1="200" x2="97" y2="105" stroke="#d8cfc4" strokeWidth="0.8" />
-        <line x1="103" y1="200" x2="103" y2="105" stroke="#d8cfc4" strokeWidth="0.8" />
-        <rect x="94" y="98" width="12" height="4" rx="1" fill="none" stroke="#d8cfc4" strokeWidth="0.8" />
-        <line x1="200" y1="200" x2="200" y2="100" stroke="#d8cfc4" strokeWidth="2" />
-        <line x1="197" y1="200" x2="197" y2="105" stroke="#d8cfc4" strokeWidth="0.8" />
-        <line x1="203" y1="200" x2="203" y2="105" stroke="#d8cfc4" strokeWidth="0.8" />
-        <rect x="194" y="98" width="12" height="4" rx="1" fill="none" stroke="#d8cfc4" strokeWidth="0.8" />
-        <line x1="292" y1="200" x2="292" y2="128" stroke="#d8cfc4" strokeWidth="1.8" />
+        {/* Left wall pillar */}
+        <line x1="4" y1="200" x2="4" y2="128" stroke={borderColor} strokeWidth="1.5" />
+        {/* Left-center pillar */}
+        <line x1="98" y1="200" x2="98" y2="106" stroke={borderColor} strokeWidth="2" />
+        <line x1="95" y1="200" x2="95" y2="110" stroke={borderColor} strokeWidth="0.7" />
+        <line x1="101" y1="200" x2="101" y2="110" stroke={borderColor} strokeWidth="0.7" />
+        <rect x="92" y="104" width="12" height="3.5" rx="1" fill="none" stroke={borderColor} strokeWidth="0.7" />
+        {/* Right-center pillar */}
+        <line x1="202" y1="200" x2="202" y2="106" stroke={borderColor} strokeWidth="2" />
+        <line x1="199" y1="200" x2="199" y2="110" stroke={borderColor} strokeWidth="0.7" />
+        <line x1="205" y1="200" x2="205" y2="110" stroke={borderColor} strokeWidth="0.7" />
+        <rect x="196" y="104" width="12" height="3.5" rx="1" fill="none" stroke={borderColor} strokeWidth="0.7" />
+        {/* Right wall pillar */}
+        <line x1="296" y1="200" x2="296" y2="128" stroke={borderColor} strokeWidth="1.5" />
 
         {/* ===== LEFT ARCH ===== */}
         <path
-          d="M8,200 L8,128 Q8,105 22,92 L46,72 Q55,58 55,58 Q55,58 64,72 L88,92 Q100,105 100,128 L100,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="1.5" strokeLinejoin="round"
+          d="M4,200 L4,128 Q4,108 18,96 L40,78 Q52,64 52,64 Q52,64 64,78 L86,96 Q98,108 98,128 L98,200"
+          fill="none" stroke={borderColor} strokeWidth="1.4" strokeLinejoin="round"
         />
         <path
-          d="M18,200 L18,132 Q18,112 30,100 L48,80 Q55,68 55,68 Q55,68 62,80 L80,100 Q92,112 92,132 L92,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="0.8" strokeLinejoin="round"
+          d="M14,200 L14,132 Q14,114 26,104 L44,86 Q52,74 52,74 Q52,74 60,86 L78,104 Q90,114 90,132 L90,200"
+          fill="none" stroke={borderColor} strokeWidth="0.7" strokeLinejoin="round"
         />
-        <g transform="translate(55,88)">
-          <circle cx="0" cy="0" r="8" fill="none" stroke="#d8cfc4" strokeWidth="0.8" />
-          <circle cx="0" cy="-4" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="0" cy="4" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="-4" cy="0" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="4" cy="0" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
+        {/* Left quatrefoil */}
+        <g transform="translate(52,92)">
+          <circle cx="0" cy="0" r="7" fill="none" stroke={borderColor} strokeWidth="0.7" />
+          <circle cx="0" cy="-3.5" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="0" cy="3.5" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="-3.5" cy="0" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="3.5" cy="0" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
         </g>
-        <g stroke="#d8cfc4" strokeWidth="0.6" fill="none">
-          <path d="M30,95 Q26,92 28,88" />
-          <path d="M22,105 Q18,102 20,98" />
-          <path d="M80,95 Q84,92 82,88" />
-          <path d="M88,105 Q92,102 90,98" />
+        {/* Left crockets */}
+        <g stroke={borderColor} strokeWidth="0.5" fill="none">
+          <path d="M28,98 Q24,95 26,91" />
+          <path d="M20,108 Q16,105 18,101" />
+          <path d="M76,98 Q80,95 78,91" />
+          <path d="M84,108 Q88,105 86,101" />
         </g>
-        <line x1="55" y1="58" x2="55" y2="44" stroke="#d8cfc4" strokeWidth="1" />
-        <path d="M52,46 Q55,38 58,46" fill="#d8cfc4" stroke="none" />
+        {/* Left finial */}
+        <line x1="52" y1="64" x2="52" y2="50" stroke={borderColor} strokeWidth="0.9" />
+        <path d="M49,52 Q52,44 55,52" fill={borderColor} stroke="none" />
 
         {/* ===== CENTER ARCH ===== */}
         <path
-          d="M100,200 L100,105 Q100,75 118,58 L140,35 Q150,18 150,18 Q150,18 160,35 L182,58 Q200,75 200,105 L200,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="1.8" strokeLinejoin="round"
+          d="M98,200 L98,108 Q98,78 116,60 L138,38 Q150,20 150,20 Q150,20 162,38 L184,60 Q202,78 202,108 L202,200"
+          fill="none" stroke={borderColor} strokeWidth="1.6" strokeLinejoin="round"
         />
         <path
-          d="M112,200 L112,110 Q112,82 128,66 L142,45 Q150,30 150,30 Q150,30 158,45 L172,66 Q188,82 188,110 L188,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="1" strokeLinejoin="round"
+          d="M110,200 L110,112 Q110,86 126,70 L142,48 Q150,32 150,32 Q150,32 158,48 L174,70 Q190,86 190,112 L190,200"
+          fill="none" stroke={borderColor} strokeWidth="0.9" strokeLinejoin="round"
         />
-        <g transform="translate(150,68)">
-          <circle cx="0" cy="0" r="12" fill="none" stroke="#d8cfc4" strokeWidth="1" />
-          <circle cx="0" cy="-5.5" r="4" fill="none" stroke="#d8cfc4" strokeWidth="0.7" />
-          <circle cx="0" cy="5.5" r="4" fill="none" stroke="#d8cfc4" strokeWidth="0.7" />
-          <circle cx="-5.5" cy="0" r="4" fill="none" stroke="#d8cfc4" strokeWidth="0.7" />
-          <circle cx="5.5" cy="0" r="4" fill="none" stroke="#d8cfc4" strokeWidth="0.7" />
+        {/* Center quatrefoil */}
+        <g transform="translate(150,72)">
+          <circle cx="0" cy="0" r="10" fill="none" stroke={borderColor} strokeWidth="0.9" />
+          <circle cx="0" cy="-5" r="3.5" fill="none" stroke={borderColor} strokeWidth="0.6" />
+          <circle cx="0" cy="5" r="3.5" fill="none" stroke={borderColor} strokeWidth="0.6" />
+          <circle cx="-5" cy="0" r="3.5" fill="none" stroke={borderColor} strokeWidth="0.6" />
+          <circle cx="5" cy="0" r="3.5" fill="none" stroke={borderColor} strokeWidth="0.6" />
         </g>
+        {/* Center lancet sub-arches (lower portion of center arch) */}
         <path
-          d="M135,180 L135,150 Q135,140 140,136 Q145,130 145,130 Q145,130 150,136 Q155,140 155,150 L155,180"
-          fill="none" stroke="#d8cfc4" strokeWidth="0.6"
+          d="M132,185 L132,155 Q132,145 137,140 Q142,134 145,132 Q148,134 150,140"
+          fill="none" stroke={borderColor} strokeWidth="0.5"
         />
         <path
-          d="M155,180 L155,150 Q155,140 160,136 Q165,130 165,130 Q165,130 170,136 Q175,140 175,150 L175,180"
-          fill="none" stroke="#d8cfc4" strokeWidth="0.6"
+          d="M168,185 L168,155 Q168,145 163,140 Q158,134 155,132 Q152,134 150,140"
+          fill="none" stroke={borderColor} strokeWidth="0.5"
         />
-        <g stroke="#d8cfc4" strokeWidth="0.7" fill="none">
-          <path d="M125,70 Q120,66 123,62" />
-          <path d="M118,82 Q113,78 116,74" />
-          <path d="M112,94 Q107,90 110,86" />
-          <path d="M175,70 Q180,66 177,62" />
-          <path d="M182,82 Q187,78 184,74" />
-          <path d="M188,94 Q193,90 190,86" />
+        {/* Center crockets */}
+        <g stroke={borderColor} strokeWidth="0.6" fill="none">
+          <path d="M123,74 Q118,70 121,66" />
+          <path d="M116,86 Q111,82 114,78" />
+          <path d="M110,98 Q105,94 108,90" />
+          <path d="M177,74 Q182,70 179,66" />
+          <path d="M184,86 Q189,82 186,78" />
+          <path d="M190,98 Q195,94 192,90" />
         </g>
-        <line x1="150" y1="18" x2="150" y2="2" stroke="#d8cfc4" strokeWidth="1.2" />
-        <g transform="translate(144,-4)">
+        {/* Center finial + gold star */}
+        <line x1="150" y1="20" x2="150" y2="4" stroke={borderColor} strokeWidth="1.1" />
+        <g transform="translate(144,-2)">
           <path
             d="M0,6 C3,6 6,3 6,0 C6,3 9,6 12,6 C9,6 6,9 6,12 C6,9 3,6 0,6Z"
-            fill="#B8902A"
+            fill={goldColor}
           />
         </g>
 
         {/* ===== RIGHT ARCH ===== */}
         <path
-          d="M200,200 L200,128 Q200,105 212,92 L236,72 Q245,58 245,58 Q245,58 254,72 L278,92 Q292,105 292,128 L292,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="1.5" strokeLinejoin="round"
+          d="M202,200 L202,128 Q202,108 216,96 L238,78 Q248,64 248,64 Q248,64 260,78 L282,96 Q296,108 296,128 L296,200"
+          fill="none" stroke={borderColor} strokeWidth="1.4" strokeLinejoin="round"
         />
         <path
-          d="M208,200 L208,132 Q208,112 220,100 L238,80 Q245,68 245,68 Q245,68 252,80 L270,100 Q282,112 282,132 L282,200"
-          fill="none" stroke="#d8cfc4" strokeWidth="0.8" strokeLinejoin="round"
+          d="M210,200 L210,132 Q210,114 222,104 L240,86 Q248,74 248,74 Q248,74 256,86 L274,104 Q286,114 286,132 L286,200"
+          fill="none" stroke={borderColor} strokeWidth="0.7" strokeLinejoin="round"
         />
-        <g transform="translate(245,88)">
-          <circle cx="0" cy="0" r="8" fill="none" stroke="#d8cfc4" strokeWidth="0.8" />
-          <circle cx="0" cy="-4" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="0" cy="4" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="-4" cy="0" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
-          <circle cx="4" cy="0" r="3" fill="none" stroke="#d8cfc4" strokeWidth="0.6" />
+        {/* Right quatrefoil */}
+        <g transform="translate(248,92)">
+          <circle cx="0" cy="0" r="7" fill="none" stroke={borderColor} strokeWidth="0.7" />
+          <circle cx="0" cy="-3.5" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="0" cy="3.5" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="-3.5" cy="0" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
+          <circle cx="3.5" cy="0" r="2.5" fill="none" stroke={borderColor} strokeWidth="0.5" />
         </g>
-        <g stroke="#d8cfc4" strokeWidth="0.6" fill="none">
-          <path d="M220,95 Q216,92 218,88" />
-          <path d="M212,105 Q208,102 210,98" />
-          <path d="M270,95 Q274,92 272,88" />
-          <path d="M278,105 Q282,102 280,98" />
+        {/* Right crockets */}
+        <g stroke={borderColor} strokeWidth="0.5" fill="none">
+          <path d="M222,98 Q218,95 220,91" />
+          <path d="M214,108 Q210,105 212,101" />
+          <path d="M274,98 Q278,95 276,91" />
+          <path d="M282,108 Q286,105 284,101" />
         </g>
-        <line x1="245" y1="58" x2="245" y2="44" stroke="#d8cfc4" strokeWidth="1" />
-        <path d="M242,46 Q245,38 248,46" fill="#d8cfc4" stroke="none" />
+        {/* Right finial */}
+        <line x1="248" y1="64" x2="248" y2="50" stroke={borderColor} strokeWidth="0.9" />
+        <path d="M245,52 Q248,44 251,52" fill={borderColor} stroke="none" />
 
-        {/* ===== BASE LINE ===== */}
-        <line x1="0" y1="200" x2="300" y2="200" stroke="#d8cfc4" strokeWidth="0.5" />
+        {/* ===== BASELINE (hidden — flush with building top) ===== */}
+        <line x1="0" y1="200" x2="300" y2="200" stroke={borderColor} strokeWidth="1" />
 
         {/* ===== BRANDING TEXT ===== */}
         <text
           x="150"
-          y="120"
+          y="124"
           textAnchor="middle"
           fill="#1F1F1F"
           fontFamily="Georgia, 'Times New Roman', serif"
@@ -195,9 +222,9 @@ export function GothicArchTop({ collapsed = false, isMobile = false }: GothicArc
         </text>
         <text
           x="150"
-          y="132"
+          y="136"
           textAnchor="middle"
-          fill="#8a7a6a"
+          fill={accentColor}
           fontFamily="Georgia, 'Times New Roman', serif"
           fontSize="5"
           letterSpacing="1"
