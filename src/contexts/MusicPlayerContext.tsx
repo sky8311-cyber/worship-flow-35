@@ -26,6 +26,8 @@ interface MusicPlayerContextType extends MusicPlayerState {
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
+  pendingPlayIntent: boolean;
+  setPendingPlayIntent: (pending: boolean) => void;
   startPlaylist: (playlist: PlaylistItem[], setTitle: string, setId: string, startIndex?: number) => void;
   closePlayer: () => void;
   hidePlayer: () => void;
@@ -74,7 +76,10 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
   });
 
   const [playerReady, setPlayerReady] = useState(false);
+  const [pendingPlayIntent, setPendingPlayIntent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const isFetchingProxyRef = useRef(false);
+  const lastFetchedVideoIdRef = useRef<string | null>(null);
 
   // Persist to localStorage on state changes (except when closed)
   useEffect(() => {
@@ -96,19 +101,23 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
   // Fetch proxy HTML when player opens
   useEffect(() => {
     const fetchProxyHtml = async () => {
-      if (state.proxyHtml) return;
-      
       const videoId = state.playlist[state.currentIndex]?.videoId;
       if (!videoId) return;
+      if (isFetchingProxyRef.current) return;
+      if (state.proxyHtml && lastFetchedVideoIdRef.current === videoId) return;
 
       try {
+        isFetchingProxyRef.current = true;
         console.log('[MusicPlayerContext] Fetching proxy HTML with videoId:', videoId);
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
         const res = await fetch(url);
         const html = await res.text();
+        lastFetchedVideoIdRef.current = videoId;
         setState(prev => ({ ...prev, proxyHtml: html }));
       } catch (error) {
         console.error('[MusicPlayerContext] Failed to fetch proxy HTML:', error);
+      } finally {
+        isFetchingProxyRef.current = false;
       }
     };
 
@@ -123,6 +132,9 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
       const timer = setTimeout(() => {
         setState(prev => ({ ...prev, proxyHtml: null }));
         setPlayerReady(false);
+        setPendingPlayIntent(false);
+        isFetchingProxyRef.current = false;
+        lastFetchedVideoIdRef.current = null;
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -180,6 +192,9 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
       proxyHtml: null,
     });
     setPlayerReady(false);
+    setPendingPlayIntent(false);
+    isFetchingProxyRef.current = false;
+    lastFetchedVideoIdRef.current = null;
     localStorage.removeItem(STORAGE_KEY);
   }, [sendCommand]);
 
@@ -200,6 +215,8 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
         setIsPlaying,
         setCurrentTime,
         setDuration,
+        pendingPlayIntent,
+        setPendingPlayIntent,
         startPlaylist,
         closePlayer,
         hidePlayer,
