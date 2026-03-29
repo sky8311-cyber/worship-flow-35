@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
+import { useSpaceBlocks, useUpdateBlock, useDeleteBlock } from "@/hooks/useSpaceBlocks";
 import { SpaceBlock } from "./SpaceBlock";
 import { MujiGridBackground } from "./MujiGridBackground";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
-import { Music, Play, Pause, UserPlus, Settings, Mail } from "lucide-react";
+import { Music, Play, Pause, UserPlus, Settings, Mail, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
@@ -37,6 +37,7 @@ interface SpaceCanvasProps {
   guestbookEnabled?: boolean;
   guestbookCount?: number;
   onOpenGuestbook?: () => void;
+  onDeletePage?: (pageNum: number) => void;
 }
 
 export function SpaceCanvas({
@@ -47,11 +48,13 @@ export function SpaceCanvas({
   onOpenSettings, onAddNeighbor, neighborStatus,
   currentPage, onPageChange, pageCount, onPageNavInfo,
   guestbookEnabled, guestbookCount, onOpenGuestbook,
+  onDeletePage,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
   const { data: blocks = [] } = useSpaceBlocks(spaceId);
   const updateBlock = useUpdateBlock();
+  const deleteBlockMut = useDeleteBlock();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
@@ -88,6 +91,11 @@ export function SpaceCanvas({
     updateBlock.mutate({ id, spaceId, ...updates });
   }, [spaceId, updateBlock, isEditMode, onPendingUpdate]);
 
+  const handleDeleteBlock = useCallback((blockId: string) => {
+    deleteBlockMut.mutate({ id: blockId, spaceId });
+    if (selectedBlockId === blockId) onSelectBlock(null);
+  }, [deleteBlockMut, spaceId, selectedBlockId, onSelectBlock]);
+
   const canGoNext = startPage + pagesPerView < pageCount;
   const canGoPrev = startPage > 0;
 
@@ -107,7 +115,7 @@ export function SpaceCanvas({
       }
       setSlideDirection(null);
       setIsAnimating(false);
-    }, 350);
+    }, 400);
   }, [isAnimating, canGoNext, canGoPrev, startPage, pagesPerView, onPageChange]);
 
   const pageIndicator = isMobile
@@ -120,6 +128,8 @@ export function SpaceCanvas({
   useEffect(() => {
     onPageNavInfo?.({ pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage });
   }, [pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, onPageNavInfo]);
+
+  const pillBtn = "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors";
 
   // Render a single page
   const renderPage = (pageNum: number, side?: "left" | "right") => {
@@ -138,6 +148,18 @@ export function SpaceCanvas({
         onClick={handleCanvasClick}
       >
         <MujiGridBackground />
+
+        {/* Page delete button — edit mode only */}
+        {isEditMode && isOwner && onDeletePage && pageCount > 1 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onDeletePage(pageNum); }}
+            className="absolute top-2 right-2 z-20 flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/90 text-destructive-foreground text-[10px] font-medium shadow hover:bg-destructive transition"
+          >
+            <Trash2 className="h-3 w-3" />
+            {language === "ko" ? "삭제" : "Delete"}
+          </button>
+        )}
+
         {pageBlocks.map(block => {
           const pending = pendingUpdates.get(block.id);
           const mergedBlock = pending ? { ...block, ...pending } : block;
@@ -150,6 +172,7 @@ export function SpaceCanvas({
               isEditMode={isEditMode}
               onSelect={() => onSelectBlock(block.id)}
               onUpdate={(updates) => handleUpdateBlock(block.id, updates)}
+              onDelete={() => handleDeleteBlock(block.id)}
               spaceId={spaceId}
             />
           );
@@ -160,8 +183,8 @@ export function SpaceCanvas({
 
   return (
     <div ref={containerRef} className="flex flex-col overflow-hidden relative" style={{ height: 'calc(100dvh - 48px)' }}>
-      {/* Top action buttons — absolute inside canvas area */}
-      <div className="absolute top-2 left-3 z-30 flex items-center gap-1.5">
+      {/* Top action buttons — unified pill style, settings far right */}
+      <div className="absolute top-2 left-3 right-3 z-30 flex items-center gap-1.5">
         <BGMButton
           bgmSongTitle={bgmSongTitle}
           bgmVideoId={bgmVideoId}
@@ -177,13 +200,13 @@ export function SpaceCanvas({
             <>
               <button
                 onClick={onSaveEdits}
-                className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                className={cn(pillBtn, "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow hover:opacity-90")}
               >
                 💾 {language === "ko" ? "저장" : "Save"}
               </button>
               <button
                 onClick={onCancelEdits}
-                className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+                className={cn(pillBtn, "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] shadow hover:opacity-90")}
               >
                 {language === "ko" ? "취소" : "Cancel"}
               </button>
@@ -191,42 +214,51 @@ export function SpaceCanvas({
           ) : (
             <button
               onClick={onToggleEditMode}
-              className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+              className={cn(pillBtn, "bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] shadow hover:bg-accent backdrop-blur-sm")}
             >
               ✏️ {language === "ko" ? "편집" : "Edit"}
             </button>
           )
         )}
-        {isOwner && onOpenSettings && (
-          <button
-            onClick={onOpenSettings}
-            className="p-1.5 rounded-md hover:bg-accent transition"
-            title={language === "ko" ? "아틀리에 설정" : "Atelier Settings"}
-          >
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </button>
-        )}
         {guestbookEnabled && onOpenGuestbook && (
           <button
             onClick={onOpenGuestbook}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+            className={cn(pillBtn, "bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground")}
           >
             <Mail className="h-3 w-3" />
             {language === "ko" ? "방명록" : "Guestbook"}
             {(guestbookCount ?? 0) > 0 && ` (${guestbookCount})`}
           </button>
         )}
+
+        {/* Spacer to push settings to far right */}
+        <div className="flex-1" />
+
+        {isOwner && onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className={cn(pillBtn, "bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-muted-foreground px-1.5")}
+            title={language === "ko" ? "아틀리에 설정" : "Atelier Settings"}
+          >
+            <Settings className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       {/* Page area */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-0">
+      <div className="flex-1 flex items-center justify-center overflow-hidden relative min-h-0" style={{ perspective: "1200px" }}>
         <div
-          className={cn(
-            "flex items-stretch h-full transition-transform duration-350 ease-in-out",
-            slideDirection === "right" && "-translate-x-4 opacity-80",
-            slideDirection === "left" && "translate-x-4 opacity-80",
-          )}
-          style={{ transition: isAnimating ? "transform 0.35s ease, opacity 0.35s ease" : "none" }}
+          className="flex items-stretch h-full"
+          style={{
+            transition: isAnimating ? "transform 0.4s ease-in-out, opacity 0.4s ease-in-out" : "none",
+            transform: slideDirection === "right"
+              ? "perspective(1200px) rotateY(-3deg) translateX(-20px)"
+              : slideDirection === "left"
+                ? "perspective(1200px) rotateY(3deg) translateX(20px)"
+                : "perspective(1200px) rotateY(0deg)",
+            opacity: isAnimating ? 0.85 : 1,
+            transformOrigin: slideDirection === "right" ? "left center" : "right center",
+          }}
         >
           {isMobile ? (
             visiblePages.map(p => renderPage(p))
@@ -234,12 +266,15 @@ export function SpaceCanvas({
             <div className="flex items-stretch relative h-full">
               {visiblePages[0] !== undefined && renderPage(visiblePages[0], "left")}
               {visiblePages.length === 2 && (
-                <div className="w-3 shrink-0 relative z-10"
+                <div className="w-4 shrink-0 relative z-10"
                   style={{
-                    background: "linear-gradient(to right, rgba(0,0,0,0.06), rgba(0,0,0,0.02) 30%, rgba(255,255,255,0.1) 50%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.06))",
-                    boxShadow: "inset 0 0 8px rgba(0,0,0,0.08)",
+                    background: "linear-gradient(to right, rgba(0,0,0,0.07), rgba(0,0,0,0.03) 20%, rgba(0,0,0,0.01) 40%, rgba(255,255,255,0.15) 50%, rgba(0,0,0,0.01) 60%, rgba(0,0,0,0.03) 80%, rgba(0,0,0,0.07))",
+                    boxShadow: "inset 2px 0 4px rgba(0,0,0,0.06), inset -2px 0 4px rgba(0,0,0,0.06), inset 0 0 12px rgba(0,0,0,0.04)",
                   }}
-                />
+                >
+                  {/* Center spine line */}
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2" style={{ background: "rgba(0,0,0,0.12)" }} />
+                </div>
               )}
               {visiblePages[1] !== undefined && renderPage(visiblePages[1], "right")}
             </div>
@@ -254,11 +289,12 @@ export function SpaceCanvas({
 // --- Neighbor Button ---
 function NeighborButton({ status, onClick }: { status?: "none" | "pending" | "accepted" | null; onClick: () => void }) {
   const { language } = useTranslation();
+  const pillBtn = "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors";
   
   if (status === "accepted") {
     return (
       <button
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-[11px] font-medium"
+        className={cn(pillBtn, "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]")}
         onClick={onClick}
       >
         <UserPlus className="h-3 w-3" />
@@ -270,7 +306,7 @@ function NeighborButton({ status, onClick }: { status?: "none" | "pending" | "ac
   if (status === "pending") {
     return (
       <button
-        className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))] text-muted-foreground text-[11px] font-medium"
+        className={cn(pillBtn, "bg-[hsl(var(--muted))] text-muted-foreground")}
         onClick={onClick}
       >
         <UserPlus className="h-3 w-3" />
@@ -282,7 +318,7 @@ function NeighborButton({ status, onClick }: { status?: "none" | "pending" | "ac
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+      className={cn(pillBtn, "bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground")}
     >
       <UserPlus className="h-3 w-3" />
       {language === "ko" ? "이웃추가" : "Add Neighbor"}
@@ -319,13 +355,6 @@ function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongA
   const needsMarquee = bgmSongTitle.length > 12;
 
   const handleToggle = () => {
-    console.log('[SpaceCanvas:BGMButton] Toggle', {
-      loaded: isCurrentBGMLoaded,
-      playing: isBGMPlaying,
-      pending: pendingPlayIntent,
-      bgmVideoId,
-    });
-
     if (!isCurrentBGMLoaded) {
       setPendingPlayIntent(true);
       startPlaylist(
