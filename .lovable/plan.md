@@ -1,23 +1,24 @@
 
 
-# 데스크톱 캔버스 줌 자동 맞춤 수정
+# 이전/완료 & 다음 바 위치 수정
 
 ## 문제
-캔버스는 430px 고정 너비이고, 데스크톱에서 `fitZoom`이 가용 너비에 맞춰 `scale()`을 계산합니다. 넓은 화면에서는 줌이 200%+ 까지 올라가 글자와 블록이 비정상적으로 커집니다 (스크린샷에서 286%).
+`InstituteBottomNav`은 `fixed inset-x-0 bottom-0`으로 고정되어 있어, `fullHeight` 레이아웃의 `main` 영역 하단을 가립니다. 챕터 페이지의 "이전/완료 & 다음" 바가 이 고정 네비게이션 뒤에 숨겨집니다.
 
 ## 해결
-`fitZoom`의 **최대값을 1.0으로 제한**합니다. 즉, 데스크톱에서 캔버스가 원본 크기(430px)보다 크게 확대되지 않습니다. 좁은 화면에서는 축소(0.5~1.0)하여 맞추고, 넓은 화면에서는 1.0 유지.
+`InstituteLayout`의 `fullHeight` 모드에서 `main` 영역에 하단 패딩을 추가하여 고정된 `InstituteBottomNav`(h-14 + safe-area)만큼의 공간을 확보합니다.
 
 ## 변경 내용
 
-**파일: `SpaceCanvas.tsx`**
-- `fitZoom` 내 `Math.min(..., 2.0)` → `Math.min(..., 1.0)`
-- 수동 줌 최대값도 `2.0` → `1.5`로 조정 (필요 시 확대 가능하되 과도한 확대 방지)
+**파일: `src/layouts/InstituteLayout.tsx`**
+- `fullHeight` 분기의 `<main>` 태그에 `pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))]` 추가
+- 이렇게 하면 챕터 하단 네비 바가 InstituteBottomNav 바로 위에 항상 표시됨
 
 ```text
-Before: fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 2.0)
-After:  fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 1.0)
+Before: <main className="flex-1 flex flex-col overflow-hidden">
+After:  <main className="flex-1 flex flex-col overflow-hidden" 
+              style={{ paddingBottom: "calc(3.5rem + env(safe-area-inset-bottom, 0px))" }}>
 ```
 
-이렇게 하면 데스크톱에서 캔버스가 모바일과 동일한 1:1 비율로 표시되어 글자 크기가 일관됩니다.
+이 한 줄 변경으로 모든 Institute `fullHeight` 페이지에 일괄 적용됩니다.
 
