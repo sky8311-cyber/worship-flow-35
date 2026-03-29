@@ -259,7 +259,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         )}
 
         {isSheet ? (
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 pt-2">
             {buildingContent}
           </ScrollArea>
         ) : (
