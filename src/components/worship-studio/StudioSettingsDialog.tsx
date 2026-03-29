@@ -183,6 +183,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
   const [visibility, setVisibility] = useState<RoomVisibility>(room.visibility);
   const [selectedBgmId, setSelectedBgmId] = useState<string | null>(room.bgm_song_id);
   const [expandedSpaceId, setExpandedSpaceId] = useState<string | null>(null);
+  const [guestbookEnabled, setGuestbookEnabled] = useState<boolean>((room as any).guestbook_enabled ?? true);
+  const [guestbookPermission, setGuestbookPermission] = useState<string>((room as any).guestbook_permission ?? 'all');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -193,6 +195,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
       roomId: room.id,
       visibility,
       bgm_song_id: selectedBgmId,
+      guestbook_enabled: guestbookEnabled,
+      guestbook_permission: guestbookPermission,
     }, {
       onSuccess: () => {
         onOpenChange(false);
