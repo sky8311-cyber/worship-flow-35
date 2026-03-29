@@ -4104,6 +4104,7 @@ export type Database = {
           content: Json
           created_at: string | null
           id: string
+          page_number: number
           pos_x: number
           pos_y: number
           size_h: number
@@ -4117,6 +4118,7 @@ export type Database = {
           content?: Json
           created_at?: string | null
           id?: string
+          page_number?: number
           pos_x?: number
           pos_y?: number
           size_h?: number
@@ -4130,6 +4132,7 @@ export type Database = {
           content?: Json
           created_at?: string | null
           id?: string
+          page_number?: number
           pos_x?: number
           pos_y?: number
           size_h?: number
@@ -4235,6 +4238,7 @@ export type Database = {
           icon: string
           id: string
           name: string
+          page_count: number
           room_id: string
           sort_order: number
           updated_at: string | null
@@ -4248,6 +4252,7 @@ export type Database = {
           icon?: string
           id?: string
           name?: string
+          page_count?: number
           room_id: string
           sort_order?: number
           updated_at?: string | null
@@ -4261,6 +4266,7 @@ export type Database = {
           icon?: string
           id?: string
           name?: string
+          page_count?: number
           room_id?: string
           sort_order?: number
           updated_at?: string | null
