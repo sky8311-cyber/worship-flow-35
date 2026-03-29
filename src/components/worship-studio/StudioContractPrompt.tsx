@@ -36,8 +36,8 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
           </div>
           <h2 className="text-2xl font-bold">
             {language === "ko" 
-              ? "나만의 예배공작소를 열어보세요" 
-              : "Open your own Worship Studio"}
+              ? "나만의 워십 아틀리에를 열어보세요" 
+              : "Open your own Worship Atelier"}
           </h2>
           <div className="text-muted-foreground mt-4 text-sm italic leading-relaxed">
             {language === "ko" ? (
