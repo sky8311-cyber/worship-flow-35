@@ -56,7 +56,7 @@ export function StudioUnit({
   }
 
   return (
-    <div className={cn("flex items-center gap-1 px-1", compact ? "py-0.5" : "py-1")}>
+    <div className={cn("flex items-center gap-1 px-1 bg-[#d4c5a9]/20", compact ? "py-0.5" : "py-1")}>
       {/* Avatar window */}
       <button onClick={onStoryClick} className="flex-shrink-0">
         <div className={cn("w-8 h-8 overflow-hidden flex items-center justify-center bg-white", windowFrame, hasUnseenStory && "ring-2 ring-[#b8902a] ring-offset-1")}>
