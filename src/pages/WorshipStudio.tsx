@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Palette, Building2 } from "lucide-react";
+import { Palette, Building2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorshipRoom, useWorshipRoomById } from "@/hooks/useWorshipRoom";
@@ -9,7 +9,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StudioHeader } from "@/components/worship-studio/StudioHeader";
 import { StudioSidePanel } from "@/components/worship-studio/StudioSidePanel";
-import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
+import { StudioMainPanel, type PageNavInfo } from "@/components/worship-studio/StudioMainPanel";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { NeighborActionHandler } from "@/components/worship-studio/NeighborActionHandler";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
@@ -33,6 +33,7 @@ export default function WorshipStudio() {
   const [showSettings, setShowSettings] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [mobileAptOpen, setMobileAptOpen] = useState(false);
+  const [pageNavInfo, setPageNavInfo] = useState<PageNavInfo | null>(null);
   const { room: myStudio } = useWorshipRoom(user?.id);
   const [selectedStudioId, setSelectedStudioId] = useState<string | null>(roomId || null);
   
@@ -118,8 +119,41 @@ export default function WorshipStudio() {
               onOpenSettings={() => setShowSettings(true)}
               onAddNeighbor={!isOwnStudio ? onAddNeighbor : undefined}
               neighborStatus={!isOwnStudio ? neighborStatus : undefined}
+              onPageNavInfo={setPageNavInfo}
             />
           </div>
+
+          {/* Floating page navigation bar */}
+          {pageNavInfo && (
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-4 py-2">
+              <span className="text-xs font-mono text-muted-foreground">{pageNavInfo.pageIndicator}</span>
+              {isOwnStudio && (
+                <button
+                  onClick={pageNavInfo.handleAddPage}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+                >
+                  <Plus className="h-3 w-3" />
+                  {language === "ko" ? "새 페이지" : "New Page"}
+                </button>
+              )}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => pageNavInfo.navigatePage("left")}
+                  disabled={!pageNavInfo.canGoPrev}
+                  className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronLeft className="h-4 w-4 text-foreground" />
+                </button>
+                <button
+                  onClick={() => pageNavInfo.navigatePage("right")}
+                  disabled={!pageNavInfo.canGoNext}
+                  className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronRight className="h-4 w-4 text-foreground" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {isMobile && (
             <button
