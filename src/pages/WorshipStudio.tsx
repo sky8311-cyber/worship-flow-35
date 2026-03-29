@@ -47,8 +47,8 @@ export default function WorshipStudio() {
   if (!settingsLoading && !isStudioEnabled && !isAdmin) {
     return (
       <FeatureComingSoon
-        featureName="Worship Studio"
-        featureNameKo="예배공작소"
+        featureName="Worship Atelier"
+        featureNameKo="워십 아틀리에"
         description="A creative space for worship leaders to share and collaborate. Coming soon!"
         descriptionKo="예배 인도자를 위한 크리에이티브 공간이 곧 열립니다!"
         icon={Palette}
