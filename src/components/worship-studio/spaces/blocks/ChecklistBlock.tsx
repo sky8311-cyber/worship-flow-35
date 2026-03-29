@@ -49,7 +49,7 @@ export function ChecklistBlock({ content, isOwner, onContentChange }: Props) {
             <input
               ref={(el) => { inputRefs.current[idx] = el; }}
               className={cn(
-                "flex-1 bg-transparent border-none outline-none text-sm",
+                "flex-1 bg-transparent border-none outline-none text-xs",
                 item.checked && "line-through text-muted-foreground"
               )}
               value={item.text}
@@ -58,7 +58,7 @@ export function ChecklistBlock({ content, isOwner, onContentChange }: Props) {
               onPointerDown={(e) => e.stopPropagation()}
             />
           ) : (
-            <span className={cn("text-sm", item.checked && "line-through text-muted-foreground")}>
+            <span className={cn("text-xs", item.checked && "line-through text-muted-foreground")}>
               {item.text}
             </span>
           )}

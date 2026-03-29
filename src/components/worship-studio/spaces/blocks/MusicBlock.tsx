@@ -42,8 +42,8 @@ export function MusicBlock({ content }: Props) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate text-foreground">{title}</p>
-        {artist && <p className="text-xs text-muted-foreground truncate">{artist}</p>}
+        <p className="text-xs font-medium truncate text-foreground">{title}</p>
+        {artist && <p className="text-[10px] text-muted-foreground truncate">{artist}</p>}
       </div>
 
       {/* Play button (visual only, no actual YT player for simplicity) */}

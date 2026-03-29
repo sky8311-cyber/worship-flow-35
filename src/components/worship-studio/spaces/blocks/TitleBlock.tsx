@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
-const FONT_MAP = { xl: "text-xl", "2xl": "text-2xl", "3xl": "text-3xl" };
-const ALIGN_MAP = { left: "text-left", center: "text-center", right: "text-right" };
+const FONT_MAP: Record<string, string> = { sm: "text-sm", base: "text-base", lg: "text-lg" };
+const ALIGN_MAP: Record<string, string> = { left: "text-left", center: "text-center", right: "text-right" };
 
 interface Props {
   content: Record<string, any>;
@@ -11,7 +11,7 @@ interface Props {
 
 export function TitleBlock({ content, isOwner, onContentChange }: Props) {
   const text = (content.text as string) || "";
-  const fontSize = (content.fontSize as string) || "2xl";
+  const fontSize = (content.fontSize as string) || "lg";
   const align = (content.align as string) || "left";
 
   return (
@@ -20,7 +20,7 @@ export function TitleBlock({ content, isOwner, onContentChange }: Props) {
         <input
           className={cn(
             "w-full bg-transparent border-none outline-none font-bold text-foreground",
-            FONT_MAP[fontSize] || "text-2xl"
+            FONT_MAP[fontSize] || "text-lg"
           )}
           value={text}
           placeholder="제목을 입력하세요"
@@ -28,7 +28,7 @@ export function TitleBlock({ content, isOwner, onContentChange }: Props) {
           onPointerDown={(e) => e.stopPropagation()}
         />
       ) : (
-        <h1 className={cn("w-full font-bold text-foreground", FONT_MAP[fontSize] || "text-2xl")}>
+        <h1 className={cn("w-full font-bold text-foreground", FONT_MAP[fontSize] || "text-lg")}>
           {text || "제목"}
         </h1>
       )}

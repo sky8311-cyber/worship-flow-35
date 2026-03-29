@@ -149,16 +149,6 @@ export function SpaceCanvas({
       >
         <MujiGridBackground />
 
-        {/* Page delete button — edit mode only */}
-        {isEditMode && isOwner && onDeletePage && pageCount > 1 && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onDeletePage(pageNum); }}
-            className="absolute top-2 right-2 z-20 flex items-center gap-1 px-2 py-1 rounded-full bg-destructive/90 text-destructive-foreground text-[10px] font-medium shadow hover:bg-destructive transition"
-          >
-            <Trash2 className="h-3 w-3" />
-            {language === "ko" ? "삭제" : "Delete"}
-          </button>
-        )}
 
         {pageBlocks.map(block => {
           const pending = pendingUpdates.get(block.id);
@@ -210,6 +200,16 @@ export function SpaceCanvas({
               >
                 {language === "ko" ? "취소" : "Cancel"}
               </button>
+              {!isMobile && onDeletePage && pageCount > 1 && visiblePages.map(p => (
+                <button
+                  key={`del-${p}`}
+                  onClick={() => onDeletePage(p)}
+                  className={cn(pillBtn, "bg-destructive/90 text-destructive-foreground shadow hover:bg-destructive")}
+                >
+                  <Trash2 className="h-3 w-3" />
+                  {language === "ko" ? `P${p + 1} 삭제` : `Del P${p + 1}`}
+                </button>
+              ))}
             </>
           ) : (
             <button

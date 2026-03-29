@@ -131,7 +131,7 @@ function TypeSettings({ blockType, content, onChange }: { blockType: string; con
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground">Font Size</label>
           <div className="flex gap-1">
-            {(["xl", "2xl", "3xl"] as const).map(s => (
+            {(["sm", "base", "lg"] as const).map(s => (
               <button key={s} onClick={() => onChange({ fontSize: s })}
                 className={`px-2 py-1 text-xs rounded border ${content.fontSize === s ? "bg-primary text-primary-foreground" : "border-border"}`}>
                 {s}
@@ -155,7 +155,7 @@ function TypeSettings({ blockType, content, onChange }: { blockType: string; con
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground">Font Size</label>
           <div className="flex gap-1">
-            {(["sm", "md", "lg"] as const).map(s => (
+            {(["xs", "sm", "base"] as const).map(s => (
               <button key={s} onClick={() => onChange({ fontSize: s })}
                 className={`px-2 py-1 text-xs rounded border ${content.fontSize === s ? "bg-primary text-primary-foreground" : "border-border"}`}>
                 {s}
