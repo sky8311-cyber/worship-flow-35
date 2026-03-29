@@ -1,35 +1,18 @@
 
 
-# 로고 교체 + 페이지 네비 바 플로팅 전환
+# 변경 사항 3가지
 
-## 1. 로고 SVG 교체 & 사이즈 조정
-- `src/assets/worship-atelier-logo.svg` → 업로드된 `worship_atelier_final_v2.svg`로 교체
-- `StudioHeader.tsx`: `h-28` → `h-16`
+## 1. 빌딩 간판 텍스트 변경
+**파일:** `src/components/worship-studio/StudioSidePanel.tsx` (line 270)
+- `"Worship Atelier"` → `"Worship Atelier by K-Worship"`
 
-## 2. 페이지 네비게이션 바를 플로팅 바텀 바로 이동
+## 2. 새 페이지 추가 버튼 버그 수정
+**파일:** `src/components/worship-studio/spaces/SpaceCanvas.tsx`
+- **원인:** `useStudioSpaces(undefined)`로 호출하여 spaces 데이터가 항상 빈 배열 → `currentSpaceData`가 `undefined` → `handleAddPage`가 즉시 return
+- **수정:** `handleAddPage`에서 `currentSpaceData` 체크를 제거하고, `pageCount`만으로 동작하도록 변경 (이미 `pageCount`는 fallback `?? 2`로 안전)
 
-현재 구조: 페이지 넘김 바가 `SpaceCanvas` 컴포넌트 내부 하단에 존재 (3단 프레임 안).
-
-변경: 페이지 넘김 UI를 `WorshipStudio.tsx` 레벨로 끌어올려 전체 레이아웃 위에 플로팅.
-
-### 변경 파일
-
-| 파일 | 작업 |
-|------|------|
-| `src/assets/worship-atelier-logo.svg` | 새 SVG로 교체 |
-| `src/components/worship-studio/StudioHeader.tsx` | `h-28` → `h-16` |
-| `src/components/worship-studio/spaces/SpaceCanvas.tsx` | 하단 네비 바 JSX 제거, `pageIndicator`/`canGoNext`/`canGoPrev`/`navigatePage`/`handleAddPage` 등을 props로 노출하거나, 부모가 직접 계산 |
-| `src/pages/WorshipStudio.tsx` | 플로팅 바텀 바 컴포넌트 추가 — `fixed bottom-4 left-1/2 -translate-x-1/2 z-40` 스타일, 반투명 배경 + 라운딩 |
-| `src/components/worship-studio/StudioMainPanel.tsx` | 페이지 상태(`currentPage`, `pageCount`, 네비게이션 함수)를 상위로 전달하는 콜백 추가 |
-
-### 플로팅 바 디자인
-- 가운데 정렬, 좌측에 페이지 번호 + 새 페이지 버튼, 우측에 ◀▶
-- `rounded-full bg-background/90 backdrop-blur-sm border shadow-sm px-4 py-2`
-- 데스크톱/모바일 동일 위치 (화면 하단 중앙)
-- 모바일 미니플레이어/FAB 등과 겹치지 않도록 `bottom-20` 정도 조정
-
-### 상태 흐름
-현재 `currentPage`와 `onPageChange`는 `StudioMainPanel`에서 `useState`로 관리 → `SpaceCanvas`로 전달. 이 상태를 `WorshipStudio.tsx`로 끌어올리거나, `StudioMainPanel`이 플로팅 바에 필요한 정보(pageCount, canGoNext 등)를 콜백으로 올려줘야 함.
-
-가장 깔끔한 방법: `currentPage`/`onPageChange` 상태를 `WorshipStudio.tsx`로 리프트하고, `pageCount`/`isEditMode`/`isOwner` 등도 올려서 플로팅 바를 `WorshipStudio` 내에서 직접 렌더.
+## 3. Bottom bar 넓이 확장 + 모바일 텍스트 넘침 방지
+**파일:** `src/pages/WorshipStudio.tsx` (line 128-153)
+- 바 스타일: `px-4` → `px-5`, 전체에 `min-w-[280px]` 추가
+- "새 페이지" 버튼: `whitespace-nowrap` 추가하여 줄바꿈 방지
 
