@@ -2,7 +2,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { ProfileDropdownMenu } from "./ProfileDropdownMenu";
-import worshipAtelierLogo from "@/assets/worship-atelier-logo.png";
+import worshipAtelierLogo from "@/assets/worship-atelier-logo.svg";
 
 interface StudioHeaderProps {
   onBack: () => void;
@@ -21,7 +21,7 @@ export function StudioHeader({
         <img 
           src={worshipAtelierLogo} 
           alt="Worship Atelier" 
-          className="h-7 object-contain"
+          className="h-14 object-contain"
         />
       </div>
       
