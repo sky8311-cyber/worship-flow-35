@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Palette, Building2 } from "lucide-react";
+import { Palette, Building2, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useWorshipRoom, useWorshipRoomById } from "@/hooks/useWorshipRoom";
@@ -9,7 +9,7 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { StudioHeader } from "@/components/worship-studio/StudioHeader";
 import { StudioSidePanel } from "@/components/worship-studio/StudioSidePanel";
-import { StudioMainPanel } from "@/components/worship-studio/StudioMainPanel";
+import { StudioMainPanel, type PageNavInfo } from "@/components/worship-studio/StudioMainPanel";
 import { StudioSettingsDialog } from "@/components/worship-studio/StudioSettingsDialog";
 import { NeighborActionHandler } from "@/components/worship-studio/NeighborActionHandler";
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
