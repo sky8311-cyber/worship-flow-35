@@ -188,6 +188,7 @@ export function StudioMainPanel({
               guestbookEnabled={activeSpace?.guestbook_enabled}
               guestbookCount={guestbookEntries.length}
               onOpenGuestbook={() => setGuestbookOpen(true)}
+              onDeletePage={handleDeletePage}
             />
 
             {!isMobile && isOwnStudio && (
