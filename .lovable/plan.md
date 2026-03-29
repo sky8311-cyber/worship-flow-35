@@ -1,36 +1,55 @@
 
 
-# 아치 지붕 가로 너비 = 건물 너비 정확히 맞추기 + 아치/별 확대
+# 아치 지붕 너비 = 건물 너비 정확히 일치 + 참조 이미지 기반 개선
 
-## 현재 문제
-- 아치 SVG의 viewBox가 `0 0 360 120`으로 고정되어 있어 건물 너비와 정확히 맞지 않을 수 있음
-- 별(star)이 viewBox 바깥(`translate(310,-8)`)에 위치하여 잘릴 수 있음
-- 아치 높이가 `h-[72px]`로 제한되어 별이 보이지 않을 수 있음
+## 문제 원인
+현재 `preserveAspectRatio="xMidYMax meet"` 설정으로 인해 SVG가 고정 비율을 유지하면서 컨테이너보다 좁게 렌더링됨. viewBox 비율(360:160 = 2.25:1)과 실제 컨테이너 비율(~232:96 = 2.42:1)이 불일치.
 
-## 변경 계획
+## 해결 방법
 
-### `GothicArchTop.tsx`
+### `GothicArchTop.tsx` 재설계
 
-**확장 모드 (expanded):**
-- viewBox를 `0 -40 360 160`으로 변경 → 상단 여백 확보해서 별이 잘리지 않도록
-- 높이를 `h-[72px]` → `h-[96px]` (모바일 `h-[80px]`)으로 확대
-- 별 위치를 viewBox 안쪽으로 조정 (`translate(305, -30)` 등)
-- `preserveAspectRatio="xMidYMax meet"` 유지 → SVG가 항상 컨테이너 하단에 붙으면서 가로를 꽉 채움
-- 아치 path 좌우 끝이 `x=0`과 `x=360`에서 시작/끝나므로 건물 너비와 정확히 일치
+**핵심 변경: 아치를 "배경 fill + 장식 stroke" 분리**
 
-**축소 모드 (collapsed):**
-- viewBox를 `0 -12 60 52`로 변경 → 별 상단 공간 확보
-- 높이를 `h-[28px]` → `h-[36px]`으로 확대
+1. **배경 fill path**: `preserveAspectRatio="none"`으로 강제 가로 꽉 채움
+2. **장식 아치 stroke + 별 + 텍스트**: 별도 SVG 레이어로 `preserveAspectRatio="xMidYMax meet"` 유지 (비율 왜곡 방지)
 
-### `StudioSidePanel.tsx`
-- 변경 없음 (아치가 `w-full`이고 `mx-3`/`mx-6` 컨테이너 안에 있으므로 이미 건물과 동일 너비)
+또는 더 단순한 접근:
 
-## 핵심 포인트
-- `w-full` + `preserveAspectRatio="xMidYMax meet"` 조합으로 가로는 항상 부모(건물) 너비에 맞춤
-- viewBox 상단을 음수로 확장하여 별이 잘리지 않도록 함
-- 높이만 충분히 키우면 아치 + 별 모두 온전히 표시됨
+**viewBox 비율을 컨테이너에 맞추고 높이를 auto로 변경**
+- 고정 높이(`h-[96px]`) 제거 → `aspect-ratio` CSS 활용
+- 또는 viewBox 가로를 넓혀서 비율 일치시킴
+
+**참조 이미지 기반 개선** (첨부된 고딕 아치 도면 참조):
+- 아치 하단에 **pillar base (기둥 받침대)** 추가 — 건물 벽과 자연스럽게 연결
+- 기둥 받침대가 건물 border-x와 정확히 정렬
+- 외부 아치 + 내부 아치 사이 간격을 더 벌려 이중 아치 느낌 강화
+
+```text
+현재:                    개선 후:
+    ╱╲                      ╱╲
+  ╱    ╲                  ╱ ╱╲ ╲
+ ╱      ╲               ╱ ╱    ╲ ╲
+│        │             ┃│ │      │ │┃  ← pillar base
+┊ (gap)  ┊             ┃└─┘      └─┘┃  ← 건물 벽과 정렬
+├────────┤             ├────────────┤
+│building│             │  building  │
+```
+
+### 구체적 SVG 변경
+
+**Expanded 모드:**
+- viewBox: `0 0 100 50` (비율을 2:1로 단순화)
+- 아치 path가 x=0 ~ x=100 전체 사용
+- `preserveAspectRatio="none"` 적용하되, 별과 텍스트는 HTML overlay로 분리
+- 또는: viewBox `0 -20 100 70`, height auto, width 100%
+
+**Collapsed 모드:**
+- 동일 원리로 viewBox 조정
+
+### 파일 변경
 
 | 파일 | 변경 |
 |------|------|
-| `GothicArchTop.tsx` | viewBox 확장, 높이 증가, 별 위치 조정 |
+| `GothicArchTop.tsx` | SVG path 재설계: pillar base 추가, preserveAspectRatio 수정으로 가로 100% 보장, 참조 이미지 스타일 반영 |
 
