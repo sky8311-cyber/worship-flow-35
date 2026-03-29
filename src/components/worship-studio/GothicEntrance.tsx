@@ -29,7 +29,7 @@ export function GothicEntrance({ collapsed = false, isMobile = false }: GothicEn
   return (
     <div className="flex flex-col items-center px-2 pt-2 pb-0">
       <svg
-        viewBox="0 0 160 70"
+        viewBox="0 10 160 55"
         className="w-full h-auto"
         preserveAspectRatio="xMidYMax meet"
         fill="none"

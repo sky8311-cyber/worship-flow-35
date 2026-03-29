@@ -157,7 +157,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       )}
 
-      <div className="flex-1 min-h-[24px]" />
+      <div className="flex-1 min-h-[8px]" />
 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (

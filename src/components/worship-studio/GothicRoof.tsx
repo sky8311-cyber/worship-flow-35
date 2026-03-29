@@ -13,7 +13,7 @@ export function GothicRoof({ collapsed = false, isMobile = false }: GothicRoofPr
           {/* Finial cross */}
           <line x1="6" y1="0" x2="6" y2="16" stroke="#8a7a6a" strokeWidth="1.2" />
           <line x1="3" y1="4" x2="9" y2="4" stroke="#8a7a6a" strokeWidth="1.2" />
-          <circle cx="6" cy="1.5" r="1.5" fill="#b8902a" />
+          
           {/* Small base */}
           <path d="M3,16 L6,13 L9,16 Z" fill="#d4c5a9" stroke="#8a7a6a" strokeWidth="0.6" />
         </svg>
@@ -24,7 +24,7 @@ export function GothicRoof({ collapsed = false, isMobile = false }: GothicRoofPr
   return (
     <div className="w-full flex flex-col items-center">
       <svg
-        viewBox="0 0 240 110"
+        viewBox="0 -10 240 120"
         className={isMobile ? "w-full h-auto" : "w-full h-auto"}
         preserveAspectRatio="xMidYMax meet"
         fill="none"
@@ -91,13 +91,11 @@ export function GothicRoof({ collapsed = false, isMobile = false }: GothicRoofPr
         <g transform="translate(60,10)">
           <line x1="0" y1="0" x2="0" y2="8" stroke="#8a7a6a" strokeWidth="1" />
           <line x1="-3" y1="2.5" x2="3" y2="2.5" stroke="#8a7a6a" strokeWidth="1" />
-          <circle cx="0" cy="0" r="1.5" fill="#b8a88a" />
         </g>
         {/* Center finial (with gold star) */}
         <g transform="translate(120,-5)">
           <line x1="0" y1="0" x2="0" y2="7" stroke="#8a7a6a" strokeWidth="1.2" />
           <line x1="-3.5" y1="2.5" x2="3.5" y2="2.5" stroke="#8a7a6a" strokeWidth="1.2" />
-          <circle cx="0" cy="0" r="2" fill="#b8902a" />
           {/* Gold star */}
           <text x="6" y="1" fontSize="5" fill="#b8902a">★</text>
         </g>
@@ -105,7 +103,6 @@ export function GothicRoof({ collapsed = false, isMobile = false }: GothicRoofPr
         <g transform="translate(180,10)">
           <line x1="0" y1="0" x2="0" y2="8" stroke="#8a7a6a" strokeWidth="1" />
           <line x1="-3" y1="2.5" x2="3" y2="2.5" stroke="#8a7a6a" strokeWidth="1" />
-          <circle cx="0" cy="0" r="1.5" fill="#b8a88a" />
         </g>
 
         {/* ── Crocket decorations along arch edges ── */}
