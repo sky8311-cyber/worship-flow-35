@@ -107,7 +107,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {friendStudios.length > 0 ? (
         <div>
           {!collapsed && (
-            <div className="px-2 pt-2 pb-0.5">
+            <div className="px-2 pt-1 pb-0">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
               </p>
@@ -132,7 +132,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       ) : (
         <div>
           {!collapsed && (
-            <div className="px-2 pt-2 pb-0.5">
+            <div className="px-2 pt-1 pb-0">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
               </p>
