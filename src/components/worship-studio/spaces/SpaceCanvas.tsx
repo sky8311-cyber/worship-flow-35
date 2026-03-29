@@ -206,6 +206,16 @@ export function SpaceCanvas({
             <Settings className="h-4 w-4 text-muted-foreground" />
           </button>
         )}
+        {guestbookEnabled && onOpenGuestbook && (
+          <button
+            onClick={onOpenGuestbook}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+          >
+            <Mail className="h-3 w-3" />
+            {language === "ko" ? "방명록" : "Guestbook"}
+            {(guestbookCount ?? 0) > 0 && ` (${guestbookCount})`}
+          </button>
+        )}
       </div>
 
       {/* Page area */}
