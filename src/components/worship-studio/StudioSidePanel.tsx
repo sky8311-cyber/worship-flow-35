@@ -302,15 +302,15 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* Stone plinth */}
               <div
-                className="shrink-0 h-3 border-x border-[#b8a88a] select-none pointer-events-none"
+                className="shrink-0 h-2 border-x border-[#b8a88a] select-none pointer-events-none"
                 style={{
-                  background: '#a89070',
+                   background: '#a89070',
                   backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 11px, rgba(138,122,106,0.15) 11px, rgba(138,122,106,0.15) 12px), repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(138,122,106,0.1) 5px, rgba(138,122,106,0.1) 6px)',
                 }}
               />
 
               {/* Sidewalk */}
-              <div className="h-2 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
+              <div className="h-1 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
 
               {/* Road bar */}
               <div
