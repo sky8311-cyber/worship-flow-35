@@ -9,8 +9,6 @@ import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { GothicRoof } from "./GothicRoof";
-import { GothicEntrance } from "./GothicEntrance";
 
 const PLACEHOLDER_TENANTS = [
   { id: 'ph1', name: '김찬양', initials: '김', icon: '🎵', variant: 'friend' as const },
@@ -107,7 +105,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {friendStudios.length > 0 ? (
         <div>
           {!collapsed && (
-            <div className="px-2 pt-1 pb-0">
+            <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
               </p>
@@ -132,7 +130,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       ) : (
         <div>
           {!collapsed && (
-            <div className="px-2 pt-1 pb-0">
+            <div className="px-2 pt-2 pb-0.5">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
                 {language === "ko" ? "이웃" : "Neighbors"}
               </p>
@@ -157,7 +155,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       )}
 
-      <div className="flex-1 min-h-[8px]" />
+      <div className="flex-1 min-h-[24px]" />
 
       {/* COMMERCIAL — Ambassadors: real or placeholder */}
       {ambassadorStudios.length > 0 ? (
@@ -259,25 +257,35 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         )}
 
         {isSheet ? (
-          <ScrollArea className="flex-1 pt-2">
+          <ScrollArea className="flex-1">
             {buildingContent}
           </ScrollArea>
         ) : (
           <>
             {/* Rooftop sign — floating above building */}
-            {/* Building wrapper — roof + body share same margins */}
+            <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-10" : "h-12")}>
+              {(!collapsed || isMobile) && (
+                <>
+                  <div className="border border-black bg-white px-2 py-0.5 text-[8px] font-bold tracking-wider text-black rounded-sm shadow-sm">
+                    Worship Atelier by K-Worship
+                  </div>
+                  {/* Poles */}
+                  <div className="flex gap-6">
+                    <div className="w-px h-2 bg-[#555]" />
+                    <div className="w-px h-2 bg-[#555]" />
+                  </div>
+                </>
+              )}
+              {collapsed && !isMobile && <div className="h-2" />}
+            </div>
+
+            {/* Building wrapper */}
             <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
-              {/* Gothic Roof — Triple Lancet Arches */}
-              <div className="shrink-0">
-                <GothicRoof collapsed={collapsed && !isMobile} isMobile={isMobile} />
-              </div>
-              {/* Building body — Sandstone Gothic facade */}
+              {/* Building body */}
               <div
-                className="flex-1 min-h-0 flex flex-col border-x border-[#b8a88a] overflow-hidden"
+                className="flex-1 min-h-0 flex flex-col bg-gradient-to-b from-slate-50 via-[#faf7f2] to-stone-100 border-x border-t border-[#d8cfc4] rounded-t-xl overflow-hidden"
                 style={{
-                  background: 'linear-gradient(to bottom, #e8ddd0, #ddd2c0 50%, #d4c5a9)',
-                  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(138,122,106,0.08) 23px, rgba(138,122,106,0.08) 24px)',
-                  boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
+                  boxShadow: '0 -3px 0 0 #b8902a, 2px 0 8px rgba(0,0,0,0.08)',
                 }}
               >
                 <ScrollArea className="flex-1 min-h-0">
@@ -285,31 +293,76 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 </ScrollArea>
               </div>
 
-              {/* Stone cornice divider */}
-              <div className="shrink-0 h-2 border-x border-[#b8a88a]" style={{
-                background: 'linear-gradient(to right, #c8b89a, #d4c5a9, #c8b89a)',
-                borderTop: '1px solid #8a7a6a',
-                borderBottom: '1px solid #8a7a6a',
-              }} />
+              {/* Divider between tenants and ground floor */}
+              <div className="shrink-0 border-t-2 border-[#8a7a6a] mx-0" />
 
-              {/* 1F Ground Floor — Gothic Entrance */}
-              <div className="shrink-0 border-x border-[#b8a88a]" style={{
-                background: '#c8b89a',
-              }}>
-                <GothicEntrance collapsed={collapsed && !isMobile} isMobile={isMobile} />
+              {/* 1F Ground Floor */}
+              <div className="shrink-0 bg-[#e8ddd0] border-x border-[#d8cfc4] px-2 pt-3 pb-0">
+                {(!collapsed || isMobile) ? (
+                  <>
+                    {/* Badges row */}
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
+                        Worship Atelier by K-Worship
+                      </div>
+                      <div className="text-[7px] font-bold border border-black bg-white px-1 py-0.5 rounded-sm">
+                        kworship.app
+                      </div>
+                    </div>
+                    {/* Door + Stairs centered */}
+                    <div className="flex flex-col items-center">
+                      <div className="flex gap-px">
+                        <div className="w-6 h-8 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                          <div className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
+                        </div>
+                        <div className="w-6 h-8 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                          <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-[#5a5a5a]" />
+                        </div>
+                      </div>
+                      <div className="w-16 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                      <div className="w-20 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                      <div className="w-24 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <div className="flex gap-px">
+                      <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-[#5a5a5a]" />
+                      </div>
+                      <div className="w-4 h-10 rounded-none border border-[#5a5a5a] bg-sky-100/60 relative">
+                        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-[#5a5a5a]" />
+                      </div>
+                    </div>
+                    <div className="w-10 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                    <div className="w-12 h-1.5 bg-[#c8b89a] border-t border-[#a89070]" />
+                  </div>
+                )}
               </div>
 
-              {/* Stone plinth */}
+              {/* Lawn / garden strip */}
               <div
-                className="shrink-0 h-2 border-x border-[#b8a88a] select-none pointer-events-none"
-                style={{
-                   background: '#a89070',
-                  backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 11px, rgba(138,122,106,0.15) 11px, rgba(138,122,106,0.15) 12px), repeating-linear-gradient(0deg, transparent, transparent 5px, rgba(138,122,106,0.1) 5px, rgba(138,122,106,0.1) 6px)',
-                }}
-              />
+                className={cn("shrink-0 flex items-center justify-around px-1 select-none pointer-events-none border-x border-[#d8cfc4]", isMobile ? "h-3" : "h-4")}
+                style={{ background: 'linear-gradient(to bottom, #6aaf50, #4a8f35)' }}
+              >
+                {(!collapsed || isMobile) && (
+                  <>
+                    <span className="text-[8px]">🌷</span>
+                    <span className="text-[8px]">🌿</span>
+                    <span className="text-[8px]">🌷</span>
+                    <span className="text-[8px]">🌿</span>
+                    {isMobile && (
+                      <>
+                        <span className="text-[8px]">🌷</span>
+                        <span className="text-[8px]">🌿</span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
 
               {/* Sidewalk */}
-              <div className="h-1 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
+              <div className="h-2 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
 
               {/* Road bar */}
               <div

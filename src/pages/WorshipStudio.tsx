@@ -165,16 +165,12 @@ export default function WorshipStudio() {
           )}
 
           {isMobile && (
-          <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-              <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-2xl overflow-hidden">
+            <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
+              <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-2xl overflow-hidden">
                 <SheetHeader className="sr-only">
                   <SheetTitle>Worship Atelier</SheetTitle>
                 </SheetHeader>
-                {/* Drag handle indicator */}
-                <div className="flex justify-center pt-2 pb-1">
-                  <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-                </div>
-                <div className="h-[calc(100%-24px)] overflow-hidden">
+                <div className="h-full overflow-hidden">
                   <StudioSidePanel
                     myStudioId={myStudio?.id}
                     onStudioSelect={handleStudioSelect}
