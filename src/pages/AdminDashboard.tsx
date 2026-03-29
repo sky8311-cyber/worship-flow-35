@@ -652,8 +652,8 @@ const AdminDashboard = () => {
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         {language === "ko" 
-                          ? "예배공작소 기능 전체 표시"
-                          : "Show the Worship Studio feature"}
+                          ? "워십 아틀리에 기능 전체 표시"
+                          : "Show the Worship Atelier feature"}
                       </p>
                     </div>
                     <Switch
