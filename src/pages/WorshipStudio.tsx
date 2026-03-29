@@ -153,7 +153,7 @@ export default function WorshipStudio() {
                 </button>
               </div>
             </div>
-          )
+          )}
 
           {isMobile && (
             <button
