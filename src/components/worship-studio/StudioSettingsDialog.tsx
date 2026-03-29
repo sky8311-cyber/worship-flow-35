@@ -295,7 +295,39 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
             </p>
           </div>
 
-          {/* Space Management */}
+          {/* Guestbook (Room-level) */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-muted-foreground" />
+              <Label>{language === "ko" ? "방명록" : "Guestbook"}</Label>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">{language === "ko" ? "방명록 활성화" : "Enable Guestbook"}</Label>
+              <Switch checked={guestbookEnabled} onCheckedChange={setGuestbookEnabled} />
+            </div>
+            {guestbookEnabled && (
+              <RadioGroup
+                value={guestbookPermission}
+                onValueChange={setGuestbookPermission}
+                className="flex gap-3 pl-1"
+              >
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="all" id="gb-all" />
+                  <Label htmlFor="gb-all" className="text-xs">{language === "ko" ? "전체" : "Everyone"}</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <RadioGroupItem value="friends" id="gb-friends" />
+                  <Label htmlFor="gb-friends" className="text-xs">{language === "ko" ? "친구만" : "Friends only"}</Label>
+                </div>
+              </RadioGroup>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {language === "ko"
+                ? "방명록은 스튜디오당 1개이며, 모든 공간에서 표시됩니다."
+                : "One guestbook per studio, visible across all spaces."}
+            </p>
+          </div>
+
           {spaces.length > 0 && (
             <div className="space-y-3">
               <Label>{language === "ko" ? "공간 관리" : "Space Management"}</Label>
