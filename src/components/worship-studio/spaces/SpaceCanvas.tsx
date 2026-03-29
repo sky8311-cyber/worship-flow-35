@@ -7,7 +7,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import { Music, Play, Pause, UserPlus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import type { SpaceBlock as SpaceBlockType } from "@/hooks/useSpaceBlocks";
 
 const CANVAS_WIDTH = 430;
@@ -33,7 +32,8 @@ interface SpaceCanvasProps {
   neighborStatus?: "none" | "pending" | "accepted" | null;
   currentPage: number;
   onPageChange: (page: number) => void;
-  onPageNavInfo?: (info: { pageCount: number; canGoNext: boolean; canGoPrev: boolean; pageIndicator: string; navigatePage: (dir: "left" | "right") => void; handleAddPage: () => void }) => void;
+  pageCount: number;
+  onPageNavInfo?: (info: { pageCount: number; canGoNext: boolean; canGoPrev: boolean; pageIndicator: string; navigatePage: (dir: "left" | "right") => void }) => void;
 }
 
 export function SpaceCanvas({
@@ -42,19 +42,13 @@ export function SpaceCanvas({
   pendingUpdates, onPendingUpdate,
   bgmSongTitle, bgmSongArtist, bgmVideoId, bgmRoomId, bgmOwnerName,
   onOpenSettings, onAddNeighbor, neighborStatus,
-  currentPage, onPageChange, onPageNavInfo,
+  currentPage, onPageChange, pageCount, onPageNavInfo,
 }: SpaceCanvasProps) {
   const { language } = useTranslation();
   const isMobile = useIsMobile();
   const { data: blocks = [] } = useSpaceBlocks(spaceId);
   const updateBlock = useUpdateBlock();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { data: spaces = [] } = useStudioSpaces(undefined);
-  const updateSpace = useUpdateSpace();
-
-  const currentSpaceData = spaces.find(s => s.id === spaceId);
-  const pageCount = currentSpaceData?.page_count ?? 2;
-  const resolvedSpaceId = currentSpaceData?.id ?? spaceId;
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -112,10 +106,6 @@ export function SpaceCanvas({
     }, 350);
   }, [isAnimating, canGoNext, canGoPrev, startPage, pagesPerView, onPageChange]);
 
-  const handleAddPage = useCallback(() => {
-    updateSpace.mutate({ id: resolvedSpaceId, page_count: pageCount + 1 });
-  }, [resolvedSpaceId, pageCount, updateSpace]);
-
   const pageIndicator = isMobile
     ? `${currentPage + 1}/${pageCount}`
     : pageCount > 0
@@ -124,8 +114,8 @@ export function SpaceCanvas({
 
   // Report nav info to parent for floating bar
   useEffect(() => {
-    onPageNavInfo?.({ pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, handleAddPage });
-  }, [pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, handleAddPage, onPageNavInfo]);
+    onPageNavInfo?.({ pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage });
+  }, [pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, onPageNavInfo]);
 
   // Render a single page
   const renderPage = (pageNum: number, side?: "left" | "right") => {
