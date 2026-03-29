@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Pencil } from "lucide-react";
+import { useDeleteBlock } from "@/hooks/useSpaceBlocks";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import { useGuestbook } from "@/hooks/useGuestbook";
@@ -67,6 +68,7 @@ export function StudioMainPanel({
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
   const updateSpace = useUpdateSpace();
+  const deleteBlock = useDeleteBlock();
 
   const activeSpace = spaces.find(s => s.id === activeSpaceId);
   const activePageCount = activeSpace?.page_count ?? 2;
@@ -79,8 +81,27 @@ export function StudioMainPanel({
 
   const handleAddPage = useCallback(() => {
     if (!activeSpaceId) return;
-    updateSpace.mutate({ id: activeSpaceId, page_count: activePageCount + 2 });
+    updateSpace.mutate({ id: activeSpaceId, page_count: activePageCount + 1 });
   }, [activeSpaceId, activePageCount, updateSpace]);
+
+  const handleDeletePage = useCallback((pageNum: number) => {
+    if (!activeSpaceId || activePageCount <= 1) return;
+    // Delete all blocks on this page
+    const pageBlocks = blocks.filter(b => (b.page_number ?? 0) === pageNum);
+    pageBlocks.forEach(b => {
+      deleteBlock.mutate({ id: b.id, spaceId: activeSpaceId });
+    });
+    // Re-index blocks on later pages
+    blocks.filter(b => (b.page_number ?? 0) > pageNum).forEach(b => {
+      updateBlock.mutate({ id: b.id, spaceId: activeSpaceId, page_number: (b.page_number ?? 0) - 1 });
+    });
+    // Decrease page count
+    updateSpace.mutate({ id: activeSpaceId, page_count: activePageCount - 1 });
+    // Adjust current page if needed
+    if (currentPage >= activePageCount - 1) {
+      setCurrentPage(Math.max(0, activePageCount - 2));
+    }
+  }, [activeSpaceId, activePageCount, blocks, deleteBlock, updateBlock, updateSpace, currentPage]);
 
   useEffect(() => {
     setActiveSpaceId(null);
@@ -167,6 +188,7 @@ export function StudioMainPanel({
               guestbookEnabled={activeSpace?.guestbook_enabled}
               guestbookCount={guestbookEntries.length}
               onOpenGuestbook={() => setGuestbookOpen(true)}
+              onDeletePage={handleDeletePage}
             />
 
             {!isMobile && isOwnStudio && (

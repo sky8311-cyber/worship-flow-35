@@ -114,6 +114,16 @@ export function SpaceTabBar({ roomId, activeSpaceId, onSpaceSelect, isOwner, roo
             >
               <span>{space.icon}</span>
               <span>{space.name}</span>
+              {space.visibility === "private" && (
+                <span className="text-[8px] px-1 py-0.5 rounded bg-muted text-muted-foreground leading-none">
+                  {language === "ko" ? "비공개" : "Private"}
+                </span>
+              )}
+              {space.visibility === "friends" && (
+                <span className="text-[8px] px-1 py-0.5 rounded bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-300 leading-none">
+                  {language === "ko" ? "친구만" : "Friends"}
+                </span>
+              )}
             </div>
           ))}
 
