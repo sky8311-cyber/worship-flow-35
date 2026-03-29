@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useStudioSpaces } from "@/hooks/useStudioSpaces";
+import { useStudioSpaces, useUpdateSpace } from "@/hooks/useStudioSpaces";
 import { useSpaceBlocks, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SpaceTabBar } from "./spaces/SpaceTabBar";
@@ -63,8 +63,17 @@ export function StudioMainPanel({
   const { data: spaces = [] } = useStudioSpaces(currentRoomId);
   const { data: blocks = [] } = useSpaceBlocks(activeSpaceId || undefined);
   const updateBlock = useUpdateBlock();
+  const updateSpace = useUpdateSpace();
+
+  const activeSpace = spaces.find(s => s.id === activeSpaceId);
+  const activePageCount = activeSpace?.page_count ?? 2;
 
   const selectedBlock = blocks.find(b => b.id === selectedBlockId) || null;
+
+  const handleAddPage = useCallback(() => {
+    if (!activeSpaceId) return;
+    updateSpace.mutate({ id: activeSpaceId, page_count: activePageCount + 2 });
+  }, [activeSpaceId, activePageCount, updateSpace]);
 
   useEffect(() => {
     setActiveSpaceId(null);
@@ -146,7 +155,8 @@ export function StudioMainPanel({
               neighborStatus={neighborStatus}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
-              onPageNavInfo={(info) => onPageNavInfo?.(info)}
+              pageCount={activePageCount}
+              onPageNavInfo={(info) => onPageNavInfo?.(info ? { ...info, handleAddPage } : null)}
             />
 
             {!isMobile && isOwnStudio && (
