@@ -58,7 +58,7 @@ export function SpaceCanvas({
   const fitZoom = useCallback(() => {
     if (!containerRef.current || isMobile) return;
     const available = containerRef.current.clientWidth - 32;
-    const fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 2.0);
+    const fit = Math.min(Math.max(available / CANVAS_WIDTH, 0.5), 1.0);
     setZoom(Math.round(fit * 100) / 100);
   }, [isMobile]);
 
@@ -177,7 +177,7 @@ export function SpaceCanvas({
                   {Math.round(zoom * 100)}%
                 </span>
                 <button
-                  onClick={() => setZoom(z => Math.min(2.0, Math.round((z + 0.1) * 10) / 10))}
+                  onClick={() => setZoom(z => Math.min(1.5, Math.round((z + 0.1) * 10) / 10))}
                   className="p-1.5 rounded-md hover:bg-accent transition"
                 >
                   <ZoomIn className="h-3.5 w-3.5 text-muted-foreground" />
