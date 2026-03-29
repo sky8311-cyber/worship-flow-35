@@ -167,32 +167,6 @@ function SortableSpaceItem({
             )}
           </div>
 
-          {/* Guestbook */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs">{t("방명록 활성화", "Enable Guestbook")}</Label>
-              <Switch
-                checked={space.guestbook_enabled}
-                onCheckedChange={(v) => onUpdate({ guestbook_enabled: v })}
-              />
-            </div>
-            {space.guestbook_enabled && (
-              <RadioGroup
-                value={space.guestbook_permission}
-                onValueChange={(v) => onUpdate({ guestbook_permission: v as any })}
-                className="flex gap-3 pl-1"
-              >
-                <div className="flex items-center gap-1.5">
-                  <RadioGroupItem value="all" id={`gb-all-${space.id}`} />
-                  <Label htmlFor={`gb-all-${space.id}`} className="text-xs">{t("전체", "Everyone")}</Label>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <RadioGroupItem value="friends" id={`gb-fri-${space.id}`} />
-                  <Label htmlFor={`gb-fri-${space.id}`} className="text-xs">{t("친구만", "Friends only")}</Label>
-                </div>
-              </RadioGroup>
-            )}
-          </div>
         </div>
       )}
     </div>
