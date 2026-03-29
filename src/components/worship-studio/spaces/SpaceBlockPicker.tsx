@@ -1,9 +1,10 @@
 import { useTranslation } from "@/hooks/useTranslation";
-import { useCreateBlock, useDeleteBlock } from "@/hooks/useSpaceBlocks";
+import { useCreateBlock, useDeleteBlock, useUpdateBlock } from "@/hooks/useSpaceBlocks";
 import { useBlockContent } from "@/hooks/useBlockContent";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Type, StickyNote, ListOrdered, CheckSquare, Image, Youtube, Music, Calendar, Link, FileText, Contact } from "lucide-react";
+import { Type, StickyNote, ListOrdered, CheckSquare, Image, Youtube, Music, Calendar, Link, FileText, Contact, ArrowRightLeft } from "lucide-react";
 import { BlockSettingsPanel } from "./blocks/BlockSettingsPanel";
+import { useStudioSpaces } from "@/hooks/useStudioSpaces";
 import type { SpaceBlock } from "@/hooks/useSpaceBlocks";
 
 const BLOCK_TYPES = [
@@ -33,7 +34,13 @@ interface SpaceBlockPickerProps {
 function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBlock; spaceId: string; onBlockDeleted: () => void }) {
   const { language } = useTranslation();
   const deleteBlock = useDeleteBlock();
+  const updateBlock = useUpdateBlock();
   const { content, setContent } = useBlockContent(block.id, spaceId, block.content);
+
+  // Get page count from the space's parent
+  const { data: spaces = [] } = useStudioSpaces(undefined);
+  const spaceData = spaces.find(s => s.id === spaceId);
+  const pageCount = spaceData?.page_count ?? 2;
 
   const handleDelete = () => {
     if (!window.confirm(language === "ko" ? "이 블록을 삭제하시겠습니까?" : "Delete this block?")) return;
@@ -41,13 +48,45 @@ function SelectedBlockPanel({ block, spaceId, onBlockDeleted }: { block: SpaceBl
     onBlockDeleted();
   };
 
+  const handleMovePage = (targetPage: number) => {
+    updateBlock.mutate({ id: block.id, spaceId, page_number: targetPage });
+  };
+
   return (
-    <BlockSettingsPanel
-      block={block}
-      content={content}
-      onContentChange={setContent}
-      onDelete={handleDelete}
-    />
+    <div className="space-y-4">
+      <BlockSettingsPanel
+        block={block}
+        content={content}
+        onContentChange={setContent}
+        onDelete={handleDelete}
+      />
+
+      {/* Move to page */}
+      {pageCount > 1 && (
+        <div>
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+            <ArrowRightLeft className="h-3 w-3" />
+            {language === "ko" ? "페이지 이동" : "Move to Page"}
+          </h3>
+          <div className="flex flex-wrap gap-1">
+            {Array.from({ length: pageCount }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => handleMovePage(i)}
+                disabled={(block.page_number ?? 0) === i}
+                className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                  (block.page_number ?? 0) === i
+                    ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-transparent"
+                    : "border-border hover:bg-accent"
+                } disabled:opacity-60`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
