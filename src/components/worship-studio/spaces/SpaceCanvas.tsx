@@ -122,6 +122,11 @@ export function SpaceCanvas({
       ? `${startPage + 1}-${Math.min(startPage + 2, pageCount)}/${pageCount}`
       : "0/0";
 
+  // Report nav info to parent for floating bar
+  useEffect(() => {
+    onPageNavInfo?.({ pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, handleAddPage });
+  }, [pageCount, canGoNext, canGoPrev, pageIndicator, navigatePage, handleAddPage, onPageNavInfo]);
+
   // Render a single page
   const renderPage = (pageNum: number, side?: "left" | "right") => {
     const pageBlocks = getPageBlocks(pageNum);
@@ -238,37 +243,6 @@ export function SpaceCanvas({
         </div>
       </div>
 
-      {/* Bottom navigation — page number on left, arrows on right */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-t border-border/30">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-muted-foreground">{pageIndicator}</span>
-          {isOwner && isEditMode && (
-            <button
-              onClick={handleAddPage}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
-            >
-              <Plus className="h-3 w-3" />
-              {language === "ko" ? "새 페이지" : "New Page"}
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => navigatePage("left")}
-            disabled={!canGoPrev || isAnimating}
-            className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <ChevronLeft className="h-4 w-4 text-foreground" />
-          </button>
-          <button
-            onClick={() => navigatePage("right")}
-            disabled={!canGoNext || isAnimating}
-            className="p-1.5 rounded-md hover:bg-accent transition disabled:opacity-30 disabled:pointer-events-none"
-          >
-            <ChevronRight className="h-4 w-4 text-foreground" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
