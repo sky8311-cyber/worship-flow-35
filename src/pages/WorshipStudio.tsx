@@ -125,12 +125,12 @@ export default function WorshipStudio() {
 
           {/* Floating page navigation bar */}
           {pageNavInfo && (
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-4 py-2">
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-5 py-2 min-w-[280px]">
               <span className="text-xs font-mono text-muted-foreground">{pageNavInfo.pageIndicator}</span>
               {isOwnStudio && (
                 <button
                   onClick={pageNavInfo.handleAddPage}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--muted))]/60 hover:bg-[hsl(var(--muted))] text-foreground text-[11px] font-medium transition-colors whitespace-nowrap"
                 >
                   <Plus className="h-3 w-3" />
                   {language === "ko" ? "새 페이지" : "New Page"}

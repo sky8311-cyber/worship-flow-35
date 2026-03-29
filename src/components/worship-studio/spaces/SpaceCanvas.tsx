@@ -54,6 +54,7 @@ export function SpaceCanvas({
 
   const currentSpaceData = spaces.find(s => s.id === spaceId);
   const pageCount = currentSpaceData?.page_count ?? 2;
+  const resolvedSpaceId = currentSpaceData?.id ?? spaceId;
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -112,9 +113,8 @@ export function SpaceCanvas({
   }, [isAnimating, canGoNext, canGoPrev, startPage, pagesPerView, onPageChange]);
 
   const handleAddPage = useCallback(() => {
-    if (!currentSpaceData) return;
-    updateSpace.mutate({ id: spaceId, page_count: pageCount + 1 });
-  }, [spaceId, pageCount, currentSpaceData, updateSpace]);
+    updateSpace.mutate({ id: resolvedSpaceId, page_count: pageCount + 1 });
+  }, [resolvedSpaceId, pageCount, updateSpace]);
 
   const pageIndicator = isMobile
     ? `${currentPage + 1}/${pageCount}`
