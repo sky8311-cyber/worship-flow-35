@@ -1,51 +1,54 @@
 
-# 전면 교체 계획 (모바일/데스크탑 모두 정합)
 
-## 현재 불일치 원인
-- 지붕이 “한 번에 그려진 구조”가 아니라, 장식선/외곽선/바디 경계가 서로 다른 기준으로 보여 시각적으로 어긋나 보입니다.
-- `GothicArchTop`의 고정 높이 + `preserveAspectRatio="none"` 조합 때문에 화면비가 바뀔 때(특히 모바일) 아치 비례가 무너집니다.
-- 지붕 하단선과 건물 body의 `border-x`/상단 경계가 동일한 구조체로 묶여 있지 않아 이음새가 틀어집니다.
+# 방명록 스튜디오 레벨로 변경 + 탭 배지 superscript 스타일
 
-## 구현 방향
-- **전면 교체**: 기존 지붕 SVG를 버리고, 3단 프랑스 고딕 지붕을 새 좌표계로 다시 설계합니다.
-- **핵심 원칙**
-  1. 외곽 실루엣(path) 1개를 기준으로 fill/stroke/클리핑을 모두 공유
-  2. 지붕 하단 기준선과 body 경계를 같은 좌표로 고정
-  3. 모바일/데스크탑에서 같은 비례를 유지하도록 반응형 높이 체계 재구성
+## 1. 방명록을 스튜디오(Room) 단위로 변경
 
-## 파일별 작업
-### 1) `src/components/worship-studio/GothicArchTop.tsx` (완전 재작성)
-- 단일 SVG 구조로 재설계 (`viewBox` 고정, 한 좌표계 사용)
-- 3단 아치 재구성:
-  - 중앙 메인 아치: 가장 높고 가장 포인티
-  - 좌/우 아치: 더 낮고 대칭
-- 디테일 재배치:
-  - 아치형 프레임 창문(quatrefoil/trefoil 느낌)
-  - 크로켓(crocket) 패턴
-  - 피니얼(finial) 3개
-- 브랜드 텍스트/별은 중앙 아치 내부에서 겹침 없이 재배치
-- collapsed 모드도 별도 간략 SVG로 다시 작성(비율 유지 우선)
+### 현재 문제
+- `space_guestbook` 테이블이 `space_id` FK로 각 공간마다 방명록 존재
+- 설정에서 각 공간마다 `guestbook_enabled` / `guestbook_permission` 토글 존재
+- 실제로는 스튜디오당 방명록 1개만 필요
 
-### 2) `src/components/worship-studio/StudioSidePanel.tsx` (정합 보정)
-- 지붕과 body 이음새가 정확히 붙도록 wrapper 구조 정리
-- `GothicArchTop` 컨테이너와 body 경계선(`border-x`, 상단 분리선) 기준 통일
-- 모바일(`mode="mobile"`)과 데스크탑(`sidebar`)에서 동일한 정렬 규칙 적용
+### 해결: 새 `room_guestbook` 테이블 생성
 
-## 반응형 규칙
-- 모바일/데스크탑 모두 동일한 지붕 비례를 유지하도록 높이 체계를 재설정:
-  - 모바일: 너무 납작해지지 않도록 최소 높이 확보
-  - 데스크탑: 디테일 보이도록 충분한 높이 확보
-- 단순 stretch가 아니라 **비례 유지 + 정확한 폭 정렬** 중심으로 조정
+**DB 마이그레이션:**
+- `room_guestbook` 테이블 생성 (`id`, `room_id` FK → `worship_rooms`, `author_user_id` FK → `auth.users`, `body`, `created_at`)
+- `worship_rooms`에 `guestbook_enabled boolean default true`, `guestbook_permission text default 'all'` 컬럼 추가
+- 기존 `space_guestbook` 데이터를 `room_guestbook`으로 마이그레이션 (space → room 매핑)
+- RLS: 읽기는 모두 허용, 쓰기는 인증 사용자, 삭제는 작성자 또는 room 소유자
 
-## 검증 계획 (필수)
-1. 모바일(현재 430px 기준)에서 확인:
-   - 지붕 fill과 라인 완전 일치
-   - 좌우 끝이 body와 정확히 맞음
-   - 중앙 아치가 가장 높고 포인티하게 보임
-2. 데스크탑에서도 동일 항목 확인
-3. 접기(collapsed) 상태에서도 폭/경계 어긋남 없는지 확인
+**파일 변경:**
 
-## 완료 기준
-- “지붕 이미지/선/백필”이 하나의 건축물처럼 정확히 맞고,
-- 모바일/데스크탑 모두 경계선 이격/겹침/찌그러짐 없이
-- 요청한 3단 프랑스 고딕 아치 디테일(창문/무늬/프레임)이 일관되게 보이면 완료.
+| 파일 | 변경 |
+|------|------|
+| `useGuestbook.ts` | `space_guestbook` → `room_guestbook`, `space_id` → `room_id`, query key 변경 |
+| `GuestbookPanel.tsx` | props `spaceId` → `roomId` |
+| `GuestbookEntry.tsx` | 변경 없음 (entry 구조 동일) |
+| `StudioSettingsDialog.tsx` | 각 공간의 방명록 토글 제거, room 레벨로 방명록 설정 이동 (BGM 섹션 아래에 1개의 토글 + permission 라디오) |
+| `SpaceCanvas.tsx` | `guestbookEnabled` prop을 room 레벨에서 받음 (변경 최소) |
+| `StudioMainPanel.tsx` | 방명록 데이터를 room 기준으로 fetch, `useGuestbook(roomId)` |
+| `SpaceTabBar.tsx` | space별 guestbook 참조 제거 |
+
+### 설정 UI 변경 (StudioSettingsDialog)
+- 각 공간의 "방명록 활성화" 스위치 + permission 라디오 **제거**
+- BGM 섹션 아래에 새 "방명록" 섹션 추가:
+  - `Switch`: 방명록 활성화 (room.guestbook_enabled)
+  - `RadioGroup`: 전체/친구만 (room.guestbook_permission)
+- `handleSave`에 `guestbook_enabled`, `guestbook_permission` 포함
+
+## 2. 탭 배지를 superscript 스타일로 변경
+
+### 현재 문제
+- "비공개" / "친구만" 배지가 탭 내부에 있어 탭이 너무 길어짐
+
+### 해결
+- 탭을 `relative` + `overflow-visible`로 설정
+- 배지를 `absolute -top-1.5 -right-2` 위치에 superscript로 배치
+- 크기: `text-[7px] px-1 py-0 leading-tight rounded-full`
+- 비공개: 🔒 아이콘만 (텍스트 없이), friends: 👥 아이콘만
+- 탭 본문에서 배지 제거
+
+**파일:** `SpaceTabBar.tsx`
+- 각 탭 `div`에 `relative overflow-visible` 추가
+- 배지를 `absolute` 위치의 작은 원형 아이콘으로 변경
+
