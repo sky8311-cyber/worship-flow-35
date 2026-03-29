@@ -134,7 +134,7 @@ export default function WorshipStudio() {
             <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
               <SheetContent side="bottom" className="h-[75vh] p-0 rounded-t-2xl overflow-hidden">
                 <SheetHeader className="sr-only">
-                  <SheetTitle>K-Worship Studio</SheetTitle>
+                  <SheetTitle>Worship Atelier</SheetTitle>
                 </SheetHeader>
                 <div className="h-full overflow-hidden">
                   <StudioSidePanel

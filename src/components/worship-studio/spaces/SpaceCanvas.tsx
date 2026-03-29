@@ -51,16 +51,13 @@ export function SpaceCanvas({
   const { data: spaces = [] } = useStudioSpaces(undefined);
   const updateSpace = useUpdateSpace();
 
-  // Find the current space's page_count
   const currentSpaceData = spaces.find(s => s.id === spaceId);
   const pageCount = currentSpaceData?.page_count ?? 2;
 
   const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Desktop shows 2 pages, mobile shows 1
   const pagesPerView = isMobile ? 1 : 2;
-  // For desktop: current page should be even (0-indexed, show pairs 0-1, 2-3, etc.)
   const startPage = isMobile ? currentPage : Math.floor(currentPage / 2) * 2;
 
   const visiblePages = useMemo(() => {
@@ -72,7 +69,6 @@ export function SpaceCanvas({
     return pages;
   }, [startPage, pagesPerView, pageCount]);
 
-  // Filter blocks by page
   const getPageBlocks = useCallback((pageNum: number) => {
     return blocks.filter(b => (b.page_number ?? 0) === pageNum);
   }, [blocks]);
@@ -119,61 +115,11 @@ export function SpaceCanvas({
     updateSpace.mutate({ id: spaceId, page_count: pageCount + 1 });
   }, [spaceId, pageCount, currentSpaceData, updateSpace]);
 
-  // Page indicator text
   const pageIndicator = isMobile
     ? `${currentPage + 1}/${pageCount}`
     : pageCount > 0
       ? `${startPage + 1}-${Math.min(startPage + 2, pageCount)}/${pageCount}`
       : "0/0";
-
-  const actionButtons = (
-    <div className="flex items-center gap-1.5">
-      <BGMButton
-        bgmSongTitle={bgmSongTitle}
-        bgmVideoId={bgmVideoId}
-        bgmRoomId={bgmRoomId}
-        bgmOwnerName={bgmOwnerName}
-        bgmSongArtist={bgmSongArtist}
-      />
-      {!isOwner && onAddNeighbor && (
-        <NeighborButton status={neighborStatus} onClick={onAddNeighbor} />
-      )}
-      {isOwner && (
-        isEditMode ? (
-          <>
-            <button
-              onClick={onSaveEdits}
-              className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
-            >
-              💾 {language === "ko" ? "저장" : "Save"}
-            </button>
-            <button
-              onClick={onCancelEdits}
-              className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
-            >
-              {language === "ko" ? "취소" : "Cancel"}
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onToggleEditMode}
-            className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
-          >
-            ✏️ {language === "ko" ? "편집" : "Edit"}
-          </button>
-        )
-      )}
-      {isOwner && onOpenSettings && (
-        <button
-          onClick={onOpenSettings}
-          className="p-1.5 rounded-md hover:bg-accent transition"
-          title={language === "ko" ? "스튜디오 설정" : "Studio Settings"}
-        >
-          <Settings className="h-4 w-4 text-muted-foreground" />
-        </button>
-      )}
-    </div>
-  );
 
   // Render a single page
   const renderPage = (pageNum: number, side?: "left" | "right") => {
@@ -213,13 +159,53 @@ export function SpaceCanvas({
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col overflow-hidden relative" style={{ height: 'calc(100dvh - 48px - 40px)' }}>
-      {/* Toolbar */}
-      <div className="shrink-0 z-30 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-b border-border/30 gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-mono text-muted-foreground shrink-0">{pageIndicator}</span>
-        </div>
-        {actionButtons}
+    <div ref={containerRef} className="flex flex-col overflow-hidden relative" style={{ height: 'calc(100dvh - 48px)' }}>
+      {/* Top action buttons — absolute inside canvas area */}
+      <div className="absolute top-2 left-3 z-30 flex items-center gap-1.5">
+        <BGMButton
+          bgmSongTitle={bgmSongTitle}
+          bgmVideoId={bgmVideoId}
+          bgmRoomId={bgmRoomId}
+          bgmOwnerName={bgmOwnerName}
+          bgmSongArtist={bgmSongArtist}
+        />
+        {!isOwner && onAddNeighbor && (
+          <NeighborButton status={neighborStatus} onClick={onAddNeighbor} />
+        )}
+        {isOwner && (
+          isEditMode ? (
+            <>
+              <button
+                onClick={onSaveEdits}
+                className="px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+              >
+                💾 {language === "ko" ? "저장" : "Save"}
+              </button>
+              <button
+                onClick={onCancelEdits}
+                className="px-3 py-1.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] text-xs font-medium shadow hover:opacity-90 transition"
+              >
+                {language === "ko" ? "취소" : "Cancel"}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onToggleEditMode}
+              className="px-3 py-1.5 rounded-full bg-[hsl(var(--background))]/80 border border-border text-[hsl(var(--primary))] text-xs font-medium shadow hover:bg-accent transition backdrop-blur-sm"
+            >
+              ✏️ {language === "ko" ? "편집" : "Edit"}
+            </button>
+          )
+        )}
+        {isOwner && onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="p-1.5 rounded-md hover:bg-accent transition"
+            title={language === "ko" ? "아틀리에 설정" : "Atelier Settings"}
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" />
+          </button>
+        )}
       </div>
 
       {/* Page area */}
@@ -233,13 +219,10 @@ export function SpaceCanvas({
           style={{ transition: isAnimating ? "transform 0.35s ease, opacity 0.35s ease" : "none" }}
         >
           {isMobile ? (
-            // Mobile: single page
             visiblePages.map(p => renderPage(p))
           ) : (
-            // Desktop: book spread with fold
             <div className="flex items-stretch relative h-full">
               {visiblePages[0] !== undefined && renderPage(visiblePages[0], "left")}
-              {/* Book fold / spine */}
               {visiblePages.length === 2 && (
                 <div className="w-3 shrink-0 relative z-10"
                   style={{
@@ -254,9 +237,10 @@ export function SpaceCanvas({
         </div>
       </div>
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation — page number on left, arrows on right */}
       <div className="shrink-0 flex items-center justify-between px-3 py-2 bg-[hsl(var(--background))]/90 backdrop-blur-sm border-t border-border/30">
-        <div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-muted-foreground">{pageIndicator}</span>
           {isOwner && isEditMode && (
             <button
               onClick={handleAddPage}
@@ -327,7 +311,7 @@ function NeighborButton({ status, onClick }: { status?: "none" | "pending" | "ac
   );
 }
 
-// --- Cyworld-style BGM Button ---
+// --- Cyworld-style BGM Button with play fix ---
 interface BGMButtonProps {
   bgmSongTitle?: string | null;
   bgmSongArtist?: string | null;
@@ -337,8 +321,19 @@ interface BGMButtonProps {
 }
 
 function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongArtist }: BGMButtonProps) {
-  const { startPlaylist, closePlayer, isPlaying, setPlayerState, playlist } = useMusicPlayer();
+  const { startPlaylist, closePlayer, isPlaying, setPlayerState, setIsPlaying, sendCommand, playerReady, playlist } = useMusicPlayer();
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Fix: after starting BGM, wait for playerReady then force play
+  useEffect(() => {
+    if (hasStarted && playerReady && !isPlaying) {
+      const timer = setTimeout(() => {
+        sendCommand('play');
+        setIsPlaying(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasStarted, playerReady, isPlaying, sendCommand, setIsPlaying]);
 
   if (!bgmSongTitle || !bgmVideoId || !bgmRoomId) return null;
 
@@ -354,7 +349,7 @@ function BGMButton({ bgmSongTitle, bgmVideoId, bgmRoomId, bgmOwnerName, bgmSongA
           artist: bgmSongArtist || "",
           position: 0,
         }],
-        `${bgmOwnerName || "Studio"} BGM`,
+        `${bgmOwnerName || "Atelier"} BGM`,
         bgmRoomId
       );
       setPlayerState("hidden");

@@ -50,7 +50,7 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
               <>
                 "Worship is not a stage, it is life.<br />
                 As life becomes worship, ministry takes shape.<br />
-                This Studio is where that journey is written and shared."
+                This Atelier is where that journey is written and shared."
               </>
             )}
           </div>
@@ -75,7 +75,7 @@ export function StudioContractPrompt({ onLater, onCreated }: StudioContractPromp
           >
             {createStudio.isPending 
               ? (language === "ko" ? "생성 중..." : "Creating...")
-              : (language === "ko" ? "예, 스튜디오를 오픈합니다" : "Yes, open my Studio")}
+              : (language === "ko" ? "예, 아틀리에를 오픈합니다" : "Yes, open my Atelier")}
           </Button>
           {onLater && (
             <Button variant="ghost" onClick={onLater} className="w-full">

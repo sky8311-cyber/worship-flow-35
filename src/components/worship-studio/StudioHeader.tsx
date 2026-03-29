@@ -1,7 +1,8 @@
 import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { ProfileDropdownMenu } from "./ProfileDropdownMenu";
+import worshipAtelierLogo from "@/assets/worship-atelier-logo.png";
 
 interface StudioHeaderProps {
   onBack: () => void;
@@ -14,21 +15,14 @@ export function StudioHeader({
   onShare,
   onNotifications,
 }: StudioHeaderProps) {
-  const { language } = useTranslation();
-  const title = language === "ko" ? "예배공작소" : "Worship Studio";
-  
   return (
     <header className="flex items-center justify-between px-3 py-2 border-b border-border bg-background/95 backdrop-blur-sm">
       <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onBack}
-          className="h-9 w-9"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-base font-semibold tracking-tight">{title}</h1>
+        <img 
+          src={worshipAtelierLogo} 
+          alt="Worship Atelier" 
+          className="h-7 object-contain"
+        />
       </div>
       
       <div className="flex items-center gap-1">

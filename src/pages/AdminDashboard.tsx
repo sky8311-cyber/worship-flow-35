@@ -648,7 +648,7 @@ const AdminDashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">
-                        Worship Studio
+                        Worship Atelier
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         {language === "ko" 
