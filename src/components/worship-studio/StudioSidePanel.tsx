@@ -418,9 +418,9 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 /* ─── Animated Road (full width) ─── */
 function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   return (
-    <div className="relative shrink-0">
+    <div className="relative shrink-0 overflow-hidden">
       {/* Sidewalk with patio set */}
-      <div className={cn("select-none pointer-events-none relative", isMobile ? "h-5" : "h-6")}
+      <div className={cn("select-none pointer-events-none relative", isMobile ? "h-3" : "h-4")}
         style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
         {(!collapsed || isMobile) && (
           <svg className="absolute left-2 top-0 h-full" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid meet">
@@ -448,7 +448,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
 
         {/* Upper lane — cars positioned inside the road area */}
-        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '0s' }}>🚗</span>
+        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
 
         {/* Lower lane */}
         <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
@@ -457,7 +457,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
         {(!collapsed || isMobile) && (
           <>
-            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '8s' }}>🚙</span>
+            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
             <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
