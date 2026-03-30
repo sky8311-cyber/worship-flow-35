@@ -7,7 +7,7 @@ interface AtelierArchLogoProps {
   startDrawing?: boolean;
 }
 
-export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0 }: AtelierArchLogoProps) => {
+export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0, startDrawing = true }: AtelierArchLogoProps) => {
   return (
     <div className={`relative ${className}`}>
       <svg

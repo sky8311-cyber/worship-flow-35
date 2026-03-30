@@ -97,7 +97,8 @@ export const AtelierHero = () => {
       <div className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 mb-4">
         {/* Arch draws at phase 4 */}
         <AtelierArchLogo
-          delay={phase >= 4 ? 0 : 999}
+          startDrawing={phase >= 4}
+          delay={0}
           className="w-full h-full"
           onArchComplete={() => {}}
         />
