@@ -4,6 +4,7 @@ interface AtelierArchLogoProps {
   onArchComplete?: () => void;
   className?: string;
   delay?: number;
+  startDrawing?: boolean;
 }
 
 export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0 }: AtelierArchLogoProps) => {
