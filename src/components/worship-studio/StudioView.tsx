@@ -3,7 +3,7 @@ import { useWorshipRoomById, useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { StudioContractPrompt } from "./StudioContractPrompt";
+import { StudioOnboarding } from "./onboarding/StudioOnboarding";
 import { StudioLockedState } from "./StudioLockedState";
 
 import { StudioPostList } from "./PostDisplayCard";
