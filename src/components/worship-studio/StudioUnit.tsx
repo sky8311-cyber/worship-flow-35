@@ -21,7 +21,7 @@ export interface StudioUnitProps {
 const windowFrame = "rounded-[4px] border-[1.5px] border-[#5a7a8a] shadow-[inset_0_0_6px_rgba(180,210,230,0.2)]";
 
 /* Warm amber glow background for windows */
-const windowGlow = "bg-gradient-to-b from-amber-50/80 via-amber-100/40 to-amber-50/60";
+const windowGlow = "bg-gradient-to-b from-[#fff8e8] via-[#fff3d6] to-[#fff8e8]";
 
 export function StudioUnit({
   avatarUrl,
