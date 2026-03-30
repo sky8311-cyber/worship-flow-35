@@ -1,22 +1,21 @@
 
 
-# 자동차 전조등 — 차 앞쪽 헤드라이트로 변경
+# 건물 파사드 다크 차콜 + 패티오 세트 삭제
 
-## 문제
-현재 `filter: drop-shadow(0 0 5px #f5c542)`가 차량 이모지 전체에 적용되어 차 전체가 빛남. 헤드라이트는 차 앞쪽에서만 길을 비춰야 함.
+## 변경 사항 (`StudioSidePanel.tsx`)
 
-## 수정 방향 (StudioSidePanel.tsx — AnimatedRoad)
+### 1. 낮 모드 건물 색상 → 다크 차콜 & 블랙
+- `glassWallDay` 그라디언트 변경:
+  - 기존: `#c0d4e4 → #a8bcd0 → #98b0c4` (파란 유리)
+  - 변경: `#3a3a3a → #2a2a2a → #222222` (다크 차콜)
+- 관련 요소 색상 조정:
+  - `FloorLabel` 낮 모드 텍스트/배경: 어두운 파사드에 맞게 밝은 톤으로 (`text-[#c0c0c0]`, `bg-[#333]`, `border-[#555]`)
+  - 건물 간판 "WORSHIP ATELIER": `bg-white` 유지 (어두운 벽과 대비)
 
-1. **차 전체 `drop-shadow` 제거** — 기존 `filter` 스타일 삭제
+### 2. 루프탑 패티오 세트(파라솔 + 테이블 + 의자) 삭제
+- `parasolSets` 배열 및 관련 렌더링 블록 (lines 96-168) 전체 제거
+- `parasolSets` 변수, 매핑 JSX 블록 삭제
 
-2. **각 차량을 wrapper `span`으로 감싸고, 앞쪽에 헤드라이트 div 배치**:
-   - 왼쪽으로 이동하는 차 (`animate-car-move-left`): 차 왼쪽에 노란 빛 원형 배치
-   - 오른쪽으로 이동하는 차 (`animate-car-move-right`): 차 오른쪽에 노란 빛 원형 배치
-   - 헤드라이트: `position: absolute`, 작은 원형 (`w-2 h-1.5`), `background: radial-gradient(ellipse, rgba(255,230,100,0.7), transparent)`, 차 앞쪽 하단에 위치
-   - 밤에만 표시 (`isNight && ...`)
-
-3. **빛이 길을 비추는 효과**: 헤드라이트 앞쪽으로 넓게 퍼지는 타원형 glow 추가 (`w-6 h-2`, 낮은 opacity), 도로 위에 빛이 깔리는 느낌
-
-## 변경 파일
-- `src/components/worship-studio/StudioSidePanel.tsx` (AnimatedRoad 함수, lines 574-583)
+## 파일
+- `src/components/worship-studio/StudioSidePanel.tsx`
 
