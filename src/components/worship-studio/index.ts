@@ -14,7 +14,7 @@ export { StudioSettingsDialog } from "./StudioSettingsDialog";
 export { StudioBGMSelector } from "./StudioBGMSelector";
 export { StudioEmptyState } from "./StudioEmptyState";
 export { StudioLockedState } from "./StudioLockedState";
-export { StudioContractPrompt } from "./StudioContractPrompt";
+export { StudioOnboarding } from "./onboarding/StudioOnboarding";
 export { StudioDiscover } from "./StudioDiscover";
 export { StudioDraftsTab } from "./StudioDraftsTab";
 export { SpaceTabBar } from "./spaces/SpaceTabBar";
