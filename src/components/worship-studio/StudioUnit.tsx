@@ -38,7 +38,7 @@ export function StudioUnit({
   /* Compact sizes for 2F/1F; penthouse keeps original size */
   const isPenthouse = variant === "penthouse";
   const h = compact && !isPenthouse ? "h-7" : "h-10";
-  const avatarW = compact && !isPenthouse ? "w-6" : "w-8";
+  const avatarW = compact && !isPenthouse ? "w-7" : "w-8";
   const avatarH = compact && !isPenthouse ? "h-7" : "h-10";
   const visitSize = compact && !isPenthouse ? "w-7 h-7" : "w-10 h-10";
   const iconSize = compact && !isPenthouse ? "h-3 w-3" : "h-4 w-4";
