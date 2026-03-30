@@ -1,3 +1,7 @@
+# Legacy /studio → /atelier redirects
+/studio/* /atelier/:splat 301
+/studio /atelier 301
+
 # RSS Feed Proxy
 /rss.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed 200
 

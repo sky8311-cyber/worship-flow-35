@@ -69,7 +69,7 @@ export default function CanvasEditor() {
         onTitleChange={(t) => updateTitle(t)}
         onStageChange={(s) => updateStage(s)}
         onPublish={() => publishCanvas()}
-        onBack={() => navigate("/studio")}
+        onBack={() => navigate("/atelier")}
       />
 
       <div className="flex-1 flex min-h-0 overflow-hidden relative z-10">

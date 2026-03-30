@@ -81,7 +81,7 @@ export default function WorshipStudio() {
   const handleMyStudioSelect = () => {
     setSelectedStudioId(null);
     setMobileAptOpen(false);
-    window.history.replaceState(null, '', '/studio');
+    window.history.replaceState(null, '', '/atelier');
   };
 
   return (

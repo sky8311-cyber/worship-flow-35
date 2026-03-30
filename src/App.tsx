@@ -254,9 +254,13 @@ const App = () => {
               <Route path="/community/search" element={<ProtectedRoute><CommunitySearch /></ProtectedRoute>} />
               <Route path="/community/:id" element={<ProtectedRoute><CommunityManagement /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute><JoinCommunity /></ProtectedRoute>} />
-              <Route path="/studio" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
-              <Route path="/studio/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
-              <Route path="/studio/canvas/:canvasId" element={<ProtectedRoute><CanvasEditor /></ProtectedRoute>} />
+              <Route path="/atelier" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
+              <Route path="/atelier/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
+              <Route path="/atelier/canvas/:canvasId" element={<ProtectedRoute><CanvasEditor /></ProtectedRoute>} />
+              {/* Legacy /studio redirects */}
+              <Route path="/studio" element={<Navigate to="/atelier" replace />} />
+              <Route path="/studio/:roomId" element={<Navigate to="/atelier" replace />} />
+              <Route path="/studio/canvas/:canvasId" element={<Navigate to="/atelier" replace />} />
               <Route path="/invite/:invitationId" element={<InvitedSignUp />} /> {/* Public - dedicated signup for invited users */}
               <Route path="/accept-invitation/:invitationId" element={<ProtectedRoute><AcceptInvitation /></ProtectedRoute>} />
               <Route path="/band-view/:id" element={<BandView />} /> {/* Protected for team members */}
