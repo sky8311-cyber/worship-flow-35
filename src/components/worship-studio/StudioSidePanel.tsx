@@ -160,24 +160,31 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   );
 }
 
-/* ─── SVG String Lights — poles anchored at building top border, extending upward ─── */
+/* ─── SVG String Lights — poles anchored at building body top border, extending upward ─── */
 function RooftopStringLights({ width }: { width: number }) {
   const poleHeight = 34;
-  const svgH = poleHeight + 6;
+  const svgH = poleHeight + 2;
   const poleX = width - 14;
-  // Pole bottom at svgH (= anchored to building top), extends upward
+  // Pole bottom at SVG bottom = building top border
   const poleBottomY = svgH;
   const poleTopY = svgH - poleHeight;
 
   const strands = [
-    { endX: 10, endY: svgH - 8, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 16 },
-    { endX: 25, endY: svgH - 4, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 10 },
-    { endX: 45, endY: svgH - 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 6 },
+    { endX: 10, endY: svgH - 6, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 14 },
+    { endX: 25, endY: svgH - 2, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 8 },
+    { endX: 45, endY: svgH + 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 4 },
   ];
 
   return (
-    <svg width={width} height={svgH} className="absolute left-0 pointer-events-none" style={{ bottom: '100%' }} viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
-      {/* Pole */}
+    <svg
+      width={width}
+      height={svgH}
+      className="absolute left-0 pointer-events-none z-20"
+      style={{ bottom: '100%', marginBottom: '-1px' }}
+      viewBox={`0 0 ${width} ${svgH}`}
+      preserveAspectRatio="none"
+    >
+      {/* Pole — bottom touches building top border */}
       <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
       {/* Flag */}
       <polygon points={`${poleX + 1},${poleTopY} ${poleX + 6},${poleTopY + 2.5} ${poleX + 1},${poleTopY + 5}`} fill="#c94040" opacity={0.7} />
