@@ -14,7 +14,7 @@ import { isNightTime } from "@/lib/nightModeHelper";
 
 /* ─── Glass facade style (day / night) ─── */
 const glassWallDay: React.CSSProperties = {
-  background: 'linear-gradient(to bottom, #c0d4e4 0%, #a8bcd0 50%, #98b0c4 100%)',
+  background: 'linear-gradient(to bottom, #b8b0a8 0%, #a09890 50%, #908880 100%)',
 };
 const glassWallNight: React.CSSProperties = {
   background: 'linear-gradient(to bottom, #2a3a4a 0%, #1e2e3e 50%, #182838 100%)',
@@ -484,31 +484,31 @@ function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean
         "w-6 flex flex-col items-center justify-end border-x relative",
         isNight
           ? "bg-gradient-to-b from-[#2a3a4a] to-[#1e2e3e] border-[#3a4a5a]"
-          : "bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-[#7a8a9a]"
+          : "bg-gradient-to-b from-[#a09890] to-[#908880] border-[#8a8278]"
       )}>
         <div className={cn(
           "flex-1 w-full relative",
           isNight
             ? "bg-gradient-to-b from-[#2a3a4a] to-[#1e2e3e]"
-            : "bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0]"
+            : "bg-gradient-to-b from-[#a09890] to-[#908880]"
         )}>
           <svg className="absolute bottom-0 w-full" viewBox="0 0 40 8" preserveAspectRatio="none">
-            <path d="M 4,8 Q 20,1 36,8 Z" fill={isNight ? "#2a3a4a" : "#5a6a7a"} />
-            <path d="M 6,8 Q 20,3 34,8 Z" fill={isNight ? "#3a5a6a" : "#a0c0d4"} fillOpacity={0.3} />
+            <path d="M 4,8 Q 20,1 36,8 Z" fill={isNight ? "#2a3a4a" : "#706860"} />
+            <path d="M 6,8 Q 20,3 34,8 Z" fill={isNight ? "#3a5a6a" : "#a09890"} fillOpacity={0.3} />
           </svg>
         </div>
         <div className={cn("w-5 mb-0 rounded-t-[3px] flex flex-col items-center relative overflow-hidden",
-          isNight ? "bg-[#2a3a4a]" : "bg-[#5a6a7a]",
+          isNight ? "bg-[#2a3a4a]" : "bg-[#706860]",
           isMobile ? "h-14" : "h-10"
         )}>
           <div className={cn("w-4 flex-1 mt-0.5 rounded-t-[2px] border",
-            isNight ? "bg-[#1a2a3a]/60 border-[#3a4a5a]/50" : "bg-[#b0d0e0]/40 border-[#7a8a9a]/50"
+            isNight ? "bg-[#1a2a3a]/60 border-[#3a4a5a]/50" : "bg-[#a09890]/40 border-[#8a8278]/50"
           )} />
           <svg className="absolute right-0.5" style={{ top: '55%' }} width="4" height="4" viewBox="0 0 4 4">
             <circle cx="2" cy="2" r="1.5" fill="#b8860b" />
             <circle cx="2" cy="1.6" r="0.6" fill="#d4a830" opacity={0.7} />
           </svg>
-          <div className={cn("w-full h-0.5", isNight ? "bg-[#1a2a3a]" : "bg-[#4a5a6a]")} />
+          <div className={cn("w-full h-0.5", isNight ? "bg-[#1a2a3a]" : "bg-[#605850]")} />
         </div>
         <div className="absolute bottom-0 left-0 text-[5px]">🌱</div>
         <div className="absolute bottom-0 right-0 text-[5px]">🌱</div>
@@ -684,7 +684,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className="px-0.5 relative">
           {!collapsed && (
             <div className="flex flex-col items-center gap-0.5 px-2 py-0.5 select-none">
-              <div className="px-4 py-1 rounded-[2px] border-2 border-[#7a8a9a] shadow-[2px_3px_0px_#6a7a8a] flex items-center justify-center bg-white">
+              <div className="px-4 py-1 rounded-[2px] border-2 border-[#8a8278] shadow-[2px_3px_0px_#7a7268] flex items-center justify-center bg-white">
                 <span className="text-[8px] font-bold tracking-[0.15em] text-center w-full text-[#2a2a2a]">
                   WORSHIP ATELIER <span className="text-[6px] font-normal text-[#555]">by kworship.app</span>
                 </span>
@@ -876,7 +876,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               <div
                 className={cn(
                   "min-h-0 flex flex-col border-x border-t overflow-visible relative transition-colors duration-700",
-                  isNight ? "border-[#3a4a5a]" : "border-[#7a8a9a]",
+                  isNight ? "border-[#3a4a5a]" : "border-[#8a8278]",
                   isMobile ? "mx-6 flex-1 min-h-0" : "mx-3 flex-1"
                 )}
                 style={{
@@ -898,7 +898,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               {/* G/F Ground Floor */}
               <div className={cn(
                 "shrink-0 border-x transition-colors duration-700",
-                isNight ? "border-[#3a4a5a] bg-[#1e2e3e]" : "border-[#7a8a9a] bg-[#e4ecf2]",
+                isNight ? "border-[#3a4a5a] bg-[#1e2e3e]" : "border-[#8a8278] bg-[#d8d0c8]",
                 isMobile ? "mx-6" : "mx-3"
               )}>
                 <GroundFloorShops collapsed={collapsed} isMobile={isMobile} isNight={isNight} />
