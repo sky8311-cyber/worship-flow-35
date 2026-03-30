@@ -24,7 +24,7 @@ export const AtelierCTA = () => {
         transition={{ duration: 0.7 }}
       >
         <h2 className="font-korean text-2xl md:text-3xl text-foreground">
-          당신의 공간을 만들어보세요
+          이제, 당신의 아틀리에를 시작하세요
         </h2>
 
         <button
