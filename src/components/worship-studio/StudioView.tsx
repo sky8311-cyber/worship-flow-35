@@ -17,6 +17,7 @@ interface StudioViewProps {
 }
 
 export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedPost, setSelectedPost] = useState<StudioPost | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
