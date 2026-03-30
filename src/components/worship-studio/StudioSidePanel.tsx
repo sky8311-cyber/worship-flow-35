@@ -8,7 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
-import { ChevronLeft, ChevronRight, Sun, Moon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun, Moon, Home, Instagram, AtSign, Youtube, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { isNightTime } from "@/lib/nightModeHelper";
 
@@ -1082,6 +1083,52 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* Animated Road */}
               <AnimatedRoad collapsed={collapsed} isMobile={isMobile} isNight={isNight} />
+
+              {/* Footer: Description + Links */}
+              {!collapsed && (
+                <div className={cn(
+                  "shrink-0 text-center py-4 px-3 space-y-3 transition-colors duration-700",
+                  isMobile ? "mx-6" : "mx-0"
+                )}>
+                  <p className={cn(
+                    "text-[10px] leading-relaxed whitespace-pre-line",
+                    isNight ? "text-[#8a9aaa]" : "text-muted-foreground"
+                  )}>
+                    {`Worship Atelier는 예배를\n'준비'에서 '삶의 흐름'으로\n확장시키는 창작 기반 플랫폼입니다.`}
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    <Link
+                      to="/dashboard"
+                      className={cn(
+                        "flex items-center gap-1 text-[10px] transition-colors",
+                        isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Home size={12} />
+                      <span>홈으로</span>
+                    </Link>
+                    <span className={cn("text-[8px]", isNight ? "text-[#4a5a6a]" : "text-muted-foreground/40")}>|</span>
+                    <div className="flex items-center gap-2">
+                      <a href="https://www.instagram.com/kworship.app" target="_blank" rel="noopener noreferrer"
+                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        <Instagram size={12} />
+                      </a>
+                      <a href="https://www.threads.net/@kworship.app" target="_blank" rel="noopener noreferrer"
+                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        <AtSign size={12} />
+                      </a>
+                      <a href="https://www.youtube.com/@kworship_app" target="_blank" rel="noopener noreferrer"
+                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        <Youtube size={12} />
+                      </a>
+                      <a href="mailto:hello@k-worship.com"
+                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        <Mail size={12} />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
