@@ -546,9 +546,16 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
             {/* Building wrapper */}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
+              {/* Rooftop scene — railing, trees, parasol+chairs */}
+              {(!collapsed || isMobile) && (
+                <div className={cn("shrink-0", isMobile ? "mx-6" : "mx-3")}>
+                  <RooftopScene width={collapsed ? 56 : isMobile ? 200 : 232} isMobile={isMobile} />
+                </div>
+              )}
+
               {/* Building body — glass facade */}
               <div
-                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] rounded-t-md overflow-hidden", isMobile ? "mx-6" : "mx-3")}
+                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-hidden", isMobile ? "mx-6" : "mx-3")}
                 style={{
                   ...glassWallStyle,
                   boxShadow: '2px 0 8px rgba(0,0,0,0.1), -2px 0 8px rgba(0,0,0,0.1)',
