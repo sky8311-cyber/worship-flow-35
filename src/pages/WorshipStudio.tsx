@@ -123,8 +123,8 @@ export default function WorshipStudio() {
             />
           </div>
 
-          {/* Floating page navigation bar */}
-          {pageNavInfo && (
+          {/* Floating page navigation bar - hide when mobile sheet is open */}
+          {!mobileAptOpen && pageNavInfo && (
             <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-5 py-1 h-10 min-w-[280px]">
               <span className="text-xs font-mono text-muted-foreground">{pageNavInfo.pageIndicator}</span>
               {isOwnStudio && (
@@ -155,7 +155,7 @@ export default function WorshipStudio() {
             </div>
           )}
 
-          {isMobile && (
+          {isMobile && !mobileAptOpen && (
             <button
               onClick={() => setMobileAptOpen(true)}
               className="fixed bottom-2 left-0 z-[55] h-10 w-14 bg-[#b8902a] text-white flex items-center justify-center hover:bg-[#a07d24] transition-colors rounded-r-xl"
@@ -167,7 +167,7 @@ export default function WorshipStudio() {
 
           {isMobile && (
             <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-              <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-2xl overflow-hidden flex flex-col [&>button:last-child]:top-2 [&>button:last-child]:right-3">
+              <SheetContent side="bottom" className="h-[85dvh] max-h-[85dvh] p-0 rounded-t-2xl overflow-hidden flex flex-col [&>button:last-child]:top-2 [&>button:last-child]:right-3">
                 <SheetHeader className="sr-only">
                   <SheetTitle>Worship Atelier</SheetTitle>
                 </SheetHeader>
@@ -187,7 +187,7 @@ export default function WorshipStudio() {
                 >
                   <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
                 </div>
-                <div className="flex-1 min-h-0 overflow-hidden pt-2">
+                <div className="flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]">
                   <StudioSidePanel
                     myStudioId={myStudio?.id}
                     onStudioSelect={handleStudioSelect}
