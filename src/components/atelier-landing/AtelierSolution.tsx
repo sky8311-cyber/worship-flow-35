@@ -8,8 +8,8 @@ const rows = [
 
 export const AtelierSolution = () => {
   return (
-    <section className="min-h-[70vh] flex items-center justify-center px-6 bg-[#F5F2ED]">
-      <div className="max-w-2xl text-center space-y-10">
+    <section className="min-h-[42vh] flex items-center justify-center px-6 bg-[#F5F2ED]">
+      <div className="max-w-2xl text-center space-y-6">
         <motion.p
           className="font-korean text-lg md:text-xl text-muted-foreground"
           initial={{ opacity: 0, y: 20 }}

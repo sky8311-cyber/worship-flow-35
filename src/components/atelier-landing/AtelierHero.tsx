@@ -144,9 +144,17 @@ export const AtelierHero = () => {
         initial={{ opacity: 0, y: 12 }}
         animate={showCTA ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="mt-8"
+        className="mt-8 flex flex-col items-center"
         style={{ visibility: showCTA ? "visible" : "hidden" }}
       >
+        <motion.p
+          className="text-sm text-muted-foreground font-serif italic tracking-[0.2em] mb-3"
+          initial={{ opacity: 0 }}
+          animate={phase >= 7 ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          Start Your Atelier
+        </motion.p>
         <button
           onClick={handleCTA}
           className="px-8 py-3.5 bg-[#1F1F1F] text-[#FAF8F5] font-korean text-lg tracking-wider rounded-none hover:bg-[#333] transition-colors duration-300"

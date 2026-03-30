@@ -43,11 +43,6 @@ export const AtelierCTA = () => {
           </p>
         )}
 
-        <div className="w-12 h-[1px] bg-[#CCC] mx-auto" />
-
-        <p className="font-korean text-sm text-muted-foreground">
-          K-Worship 플랫폼에서 아틀리에를 만들 수 있습니다
-        </p>
       </motion.div>
     </section>
   );

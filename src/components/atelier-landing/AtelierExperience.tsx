@@ -27,7 +27,7 @@ export const AtelierExperience = () => {
     <section className="py-14 md:py-20 px-6 bg-[#FAF8F5]">
       <div className="max-w-4xl mx-auto">
         <motion.p
-          className="font-serif text-center text-sm md:text-base text-[#B8902A] tracking-[0.3em] uppercase mb-16"
+          className="font-serif text-center text-sm md:text-base text-[#B8902A] tracking-[0.3em] uppercase mb-10"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
