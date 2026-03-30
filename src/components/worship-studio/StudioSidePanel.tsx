@@ -558,11 +558,11 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       )}
 
-      {/* 2F — Friends / Neighbors */}
-      {friendStudios.length > 0 ? (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "2F · 이웃" : "2F · Neighbors"} />}
-          {friendStudios.map(s => (
+      {/* 3F — Friends / Neighbors */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "3F · 이웃" : "3F · Neighbors"} />}
+        {friendStudios.length > 0 ? (
+          friendStudios.map(s => (
             <StudioUnit
               compact={true}
               key={s.id}
@@ -576,38 +576,21 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               onStoryClick={() => handleStoryClick(s)}
               onVisit={() => handleVisit(s.id)}
             />
-          ))}
-        </div>
-      ) : (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "2F · 이웃" : "2F · Neighbors"} />}
-          {PLACEHOLDER_FRIENDS.map(t => (
-            <div key={t.id} className="opacity-60 pointer-events-none select-none">
-              <StudioUnit
-                compact={true}
-                studioName={`${t.icon} ${t.name}`}
-                ownerName={t.name}
-                roomId={t.id}
-                hasUnseenStory={false}
-                variant="friend"
-                collapsed={collapsed}
-                placeholderInitials={t.initials}
-                onStoryClick={() => {}}
-                onVisit={() => {}}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-f-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="friend" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
 
-      {/* Minimal spacer between floors */}
       <div className="min-h-[6px]" />
 
-      {/* 1F — Ambassadors */}
-      {ambassadorStudios.length > 0 ? (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "1F · 앰배서더" : "1F · Ambassadors"} />}
-          {ambassadorStudios.map(s => (
+      {/* 2F — Ambassadors */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "2F · 앰배서더" : "2F · Ambassadors"} />}
+        {ambassadorStudios.length > 0 ? (
+          ambassadorStudios.map(s => (
             <StudioUnit
               compact={true}
               key={s.id}
@@ -621,29 +604,41 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               onStoryClick={() => handleStoryClick(s)}
               onVisit={() => handleVisit(s.id)}
             />
-          ))}
-        </div>
-      ) : (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "1F · 앰배서더" : "1F · Ambassadors"} />}
-          {PLACEHOLDER_AMBASSADORS.map(t => (
-            <div key={t.id} className="opacity-60 pointer-events-none select-none">
-              <StudioUnit
-                compact={true}
-                studioName={`${t.icon} ${t.name}`}
-                ownerName={t.name}
-                roomId={t.id}
-                hasUnseenStory={false}
-                variant="ambassador"
-                collapsed={collapsed}
-                placeholderInitials={t.initials}
-                onStoryClick={() => {}}
-                onVisit={() => {}}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-a-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="ambassador" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
+
+      <div className="min-h-[6px]" />
+
+      {/* 1F — Plaza */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "1F · 광장" : "1F · Plaza"} />}
+        {(plazaUsers && plazaUsers.length > 0) ? (
+          plazaUsers.map(p => (
+            <StudioUnit
+              compact={true}
+              key={p.roomId}
+              avatarUrl={p.avatarUrl || undefined}
+              studioName={p.studioName || p.ownerName?.split(" ")[0] || "Studio"}
+              ownerName={p.ownerName || ""}
+              roomId={p.roomId}
+              hasUnseenStory={false}
+              variant="plaza"
+              collapsed={collapsed}
+              onStoryClick={() => handleVisit(p.roomId)}
+              onVisit={() => handleVisit(p.roomId)}
+            />
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-p-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="plaza" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
     </>
   );
 
