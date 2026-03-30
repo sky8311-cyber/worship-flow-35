@@ -153,25 +153,26 @@ export const AtelierHero = () => {
         >
           내 공간 만들기
         </button>
-        <motion.p
-          className="text-center text-sm text-muted-foreground mt-3 font-serif"
-          initial={{ opacity: 0 }}
-          animate={phase >= 7 ? { opacity: 1 } : {}}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          Start Your Atelier
-        </motion.p>
       </motion.div>
 
       {/* Atelier description */}
-      <motion.p
-        className="text-xs text-muted-foreground max-w-sm text-center leading-relaxed font-korean mt-8 px-4"
+      <motion.div
+        className="max-w-sm text-center font-korean mt-6 px-4 space-y-3"
         initial={{ opacity: 0 }}
         animate={phase >= 7 ? { opacity: 1 } : {}}
         transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
       >
-        아틀리에(atelier)는 프랑스어로 예술가의 작업실을 뜻하며, 단순히 결과를 만드는 장소가 아니라 아이디어가 형성되고 다듬어지는 창작의 공간을 의미합니다. Worship Atelier는 이러한 개념을 담아, 예배를 준비하는 것을 넘어 삶 전체를 하나님께 드려지는 예배로 만들어가는 여정을 함께하는 공간입니다.
-      </motion.p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          아틀리에에서 예술가는 완성품만 만들지 않습니다.
+          <br />
+          그 공간에서 아이디어는 자라고, 과정은 쌓이며, 삶 자체가 작품이 됩니다.
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Worship Atelier는 그런 공간입니다.
+          <br />
+          예배를 준비하는 곳이 아니라, 예배로 살아가는 여정을 함께하는 곳.
+        </p>
+      </motion.div>
 
       {/* Scroll indicator */}
       <motion.div
