@@ -36,6 +36,7 @@ export const AtelierExperience = () => {
           Experience
         </motion.p>
 
+
         <div className="grid md:grid-cols-3 gap-12 md:gap-8">
           {steps.map((step, i) => (
             <motion.div
