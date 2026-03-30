@@ -1,34 +1,82 @@
 
 
-# 건물 하단 푸터 영역 잔디밭 배경 적용
+# Atelier 온보딩 플로우 구현
 
-## 현재 상태
-- 도로(`AnimatedRoad`) 아래에 텍스트 + 소셜 링크가 있는 푸터 영역 (line 1069-1113)
-- 배경: 투명 (부모의 `#faf7f2` 그대로 노출)
-- 텍스트: `text-[10px]`, `text-muted-foreground`
+## 개요
+현재 모든 신규 유저에게 자동으로 worship_room이 생성되는 트리거를 제거하고, 사용자가 직접 동의 + 온보딩 과정을 거쳐야만 아틀리에가 생성되도록 변경합니다.
 
-## 접근 방식: 녹색 바탕 + 잔디 이모지 패턴
+## 1. DB 마이그레이션
 
-업로드된 잔디 이미지를 직접 사용하면 텍스트 가독성이 크게 떨어지므로, **녹색 계열 바탕색 + 잔디 이모지를 뿌리는 방식**을 채택합니다.
+### 1-1. 자동 생성 트리거 제거
+```sql
+DROP TRIGGER IF EXISTS on_profile_created_create_room ON public.profiles;
+DROP FUNCTION IF EXISTS public.create_default_worship_room();
+```
 
-## 수정 내용
+### 1-2. 빈 worship_room 삭제
+게시물(room_posts)이나 공간(studio_spaces)이 없는 빈 방을 정리:
+```sql
+DELETE FROM public.worship_rooms wr
+WHERE NOT EXISTS (SELECT 1 FROM public.room_posts rp WHERE rp.room_id = wr.id)
+  AND NOT EXISTS (SELECT 1 FROM public.studio_spaces ss WHERE ss.room_id = wr.id);
+```
 
-### `src/components/worship-studio/StudioSidePanel.tsx` — 푸터 영역 (line 1069-1113)
+### 1-3. worship_rooms에 온보딩 완료 컬럼 추가
+```sql
+ALTER TABLE public.worship_rooms
+  ADD COLUMN IF NOT EXISTS onboarding_completed boolean NOT NULL DEFAULT false;
+```
+기존 room이 남아있는 유저는 이미 콘텐츠가 있으므로 `UPDATE ... SET onboarding_completed = true`로 처리.
 
-1. **잔디밭 배경 컨테이너**
-   - 낮: 부드러운 녹색 그라디언트 배경 (`from-[#5a8f3c] to-[#4a7d32]`)
-   - 밤: 어두운 녹색 (`from-[#1e3a1e] to-[#162e16]`)
-   - 상단에 `🌱🌿` 이모지를 pseudo-element 또는 인라인으로 랜덤 배치하여 잔디 느낌 연출
+## 2. 온보딩 플로우 UI (새 컴포넌트)
 
-2. **텍스트 가독성 확보**
-   - 텍스트 색상을 흰색 계열로 변경 (낮: `text-white`, 밤: `text-green-100`)
-   - 텍스트 뒤에 살짝 반투명 어두운 배경 (`bg-black/20 rounded-lg px-3 py-2`) 적용하여 가독성 보장
-   - 소셜 링크 아이콘도 흰색 계열로 조정
+### `src/components/worship-studio/onboarding/StudioOnboarding.tsx`
+스텝 기반 위저드 (총 4단계, 3-4는 스킵 가능):
 
-3. **잔디 이모지 장식**
-   - 푸터 상단/하단에 `🌿🍀🌱` 이모지를 작은 크기로 흩뿌려 자연스러운 잔디밭 분위기
-   - `absolute` 포지션으로 배치, `pointer-events-none`으로 인터랙션 방해 방지
+**Step 1 — 동의 & 이름 설정**
+- 아틀리에 소개 문구 (기존 StudioContractPrompt의 내용 재활용)
+- "아틀리에 이름" 입력 필드 (기본값: "{유저이름}의 아틀리에")
+- "오픈합니다" 버튼 → worship_room INSERT 실행
 
-### 수정 파일
-- `src/components/worship-studio/StudioSidePanel.tsx` (1곳, 푸터 영역)
+**Step 2 — 기본 설정**
+- BGM 설정 (기존 `StudioBGMSelector` 재활용)
+- 방명록 on/off 토글
+- 공개 범위 선택 (비공개/이웃/공개)
+- "다음" / "스킵" 버튼
+
+**Step 3 — 첫 공간 추가 (스킵 가능)**
+- 공간 이름, 아이콘, 색상 선택 (기존 ICON_CATEGORIES, COLOR_SWATCHES 재활용)
+- "추가" / "나중에" 버튼
+
+**Step 4 — 첫 블록 추가 (스킵 가능)**
+- 기존 `BlockTypeSelector`의 블록 타입 6종 표시
+- 하나 선택 시 간단한 블록 생성 후 완료
+- "나중에" 버튼으로 스킵 가능
+
+**완료** → `onboarding_completed = true` 업데이트 → 아틀리에 메인 화면으로 전환
+
+## 3. 기존 코드 수정
+
+### `src/components/worship-studio/StudioView.tsx`
+- `!room && isOwnRoom` → `StudioOnboarding` 컴포넌트로 변경 (기존 `StudioContractPrompt` 대체)
+- `room && !room.onboarding_completed` → 온보딩 위저드 표시
+
+### `src/hooks/useCreateStudio.ts`
+- `studio_name` 파라미터 추가 (온보딩에서 입력받은 이름)
+- `onboarding_completed: false`로 초기 생성
+
+### `src/components/worship-studio/StudioContractPrompt.tsx`
+- 더 이상 사용하지 않으므로 삭제 (온보딩 Step 1로 통합)
+
+## 4. 파일 목록
+
+| 파일 | 작업 |
+|---|---|
+| DB 마이그레이션 | 트리거 제거 + 빈 room 삭제 + onboarding_completed 컬럼 |
+| `src/components/worship-studio/onboarding/StudioOnboarding.tsx` | 신규 — 4단계 온보딩 위저드 |
+| `src/components/worship-studio/StudioView.tsx` | 수정 — 온보딩 분기 |
+| `src/hooks/useCreateStudio.ts` | 수정 — studio_name 파라미터 |
+| `src/components/worship-studio/StudioContractPrompt.tsx` | 삭제 |
+
+> **랜딩페이지 및 외부 접속(worshipatelier.com) 구현은 별도 후속 작업으로 진행합니다.**
 
