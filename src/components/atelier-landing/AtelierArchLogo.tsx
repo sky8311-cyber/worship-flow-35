@@ -49,7 +49,7 @@ export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0, sta
             d="M0 28 C14 28 28 14 28 0 C28 14 42 28 56 28 C42 28 28 42 28 56 C28 42 14 28 0 28Z"
             fill="#B8902A"
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={startDrawing ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
             transition={{
               delay: delay + 2.0,
               duration: 0.35,
