@@ -51,13 +51,13 @@ export const AtelierExperience = () => {
                   <step.icon className="w-6 h-6 text-[#B8902A]" strokeWidth={1.5} />
                 </div>
               </div>
-              <h3 className="font-serif text-xl md:text-2xl text-[#1F1F1F]">
+              <h3 className="font-korean text-xl md:text-2xl text-foreground">
                 {step.ko}
               </h3>
               <p className="text-sm text-[#B8902A] tracking-wider font-serif">
                 {step.en}
               </p>
-              <p className="text-sm text-[#888] leading-relaxed max-w-[240px] mx-auto">
+              <p className="font-korean text-sm text-muted-foreground leading-relaxed max-w-[240px] mx-auto">
                 {step.desc}
               </p>
             </motion.div>

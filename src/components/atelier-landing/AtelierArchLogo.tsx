@@ -9,7 +9,7 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
   return (
     <div className={`relative ${className}`}>
       <svg
-        viewBox="0 0 660 580"
+        viewBox="0 -30 660 610"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"

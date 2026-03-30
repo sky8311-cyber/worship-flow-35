@@ -10,14 +10,14 @@ export const AtelierProblem = () => {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <p className="font-serif text-xl md:text-2xl text-[#1F1F1F] leading-relaxed">
+        <p className="font-korean text-xl md:text-2xl text-foreground leading-relaxed">
           우리는 예배를 준비하지만
         </p>
-        <p className="font-serif text-xl md:text-2xl text-[#1F1F1F] leading-relaxed">
+        <p className="font-korean text-xl md:text-2xl text-foreground leading-relaxed">
           삶과는 연결되지 않습니다
         </p>
         <div className="w-12 h-[1px] bg-[#B8902A] mx-auto my-8" />
-        <p className="font-serif text-lg md:text-xl text-[#666666] leading-relaxed">
+        <p className="font-korean text-lg md:text-xl text-muted-foreground leading-relaxed">
           예배는 따로 있고, 삶은 따로 있습니다
         </p>
       </motion.div>
