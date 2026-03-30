@@ -291,11 +291,12 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
       >
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-        {/* Animated cars */}
-        <span className="absolute top-[2px] text-[11px] animate-car-move-right" style={{ animationDelay: '0s' }}>🚗</span>
-        <span className="absolute bottom-[2px] text-[10px] animate-car-move-left" style={{ animationDelay: '3s', transform: 'scaleX(-1)' }}>🚕</span>
+        {/* Upper lane — right to left */}
+        <span className="absolute top-[1px] text-[9px] animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
+        {/* Lower lane — left to right (car faces right) */}
+        <span className="absolute bottom-[1px] text-[9px] animate-car-move-right" style={{ animationDelay: '3s' }}>🚕</span>
         {(!collapsed || isMobile) && (
-          <span className="absolute top-[2px] text-[9px] animate-car-move-right" style={{ animationDelay: '8s' }}>🚙</span>
+          <span className="absolute top-[1px] text-[8px] animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
         )}
       </div>
     </>
@@ -511,8 +512,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Rooftop area with neon sign + string lights + trees */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-20" : "h-24")}>
+            {/* Rooftop area with neon sign + string lights */}
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-16" : "h-20")}>
               {/* Neon signage */}
               <div className="flex flex-col items-center justify-end h-full pb-1">
                 {(!collapsed || isMobile) && (
@@ -537,16 +538,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 {collapsed && !isMobile && <div className="h-2" />}
               </div>
 
-              {/* String lights from pole + Trees (SVG overlay) */}
+              {/* String lights — attached to building top */}
               {(!collapsed || isMobile) && (
-                <>
-                  <RooftopStringLights width={collapsed ? 56 : 256} height={isMobile ? 80 : 96} />
-                  {/* Trees */}
-                  <svg className="absolute bottom-0 left-0 pointer-events-none" width={collapsed ? 56 : 256} height={isMobile ? 80 : 96} viewBox={`0 0 ${collapsed ? 56 : 256} ${isMobile ? 80 : 96}`}>
-                    <RooftopTree x={18} height={28} />
-                    <RooftopTree x={collapsed ? 40 : 60} height={22} />
-                  </svg>
-                </>
+                <RooftopStringLights width={collapsed ? 56 : 256} buildingTop={isMobile ? 2 : 4} />
               )}
             </div>
 
