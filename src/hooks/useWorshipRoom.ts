@@ -27,6 +27,7 @@ export interface WorshipRoom {
   grid_columns?: number | null;
   marquee_text?: string | null;
   marquee_text_color?: string | null;
+  onboarding_completed?: boolean;
   marquee_bg_color?: string | null;
   marquee_speed?: number | null;
   owner?: {
