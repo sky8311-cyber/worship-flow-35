@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 export const AtelierProblem = () => {
   return (
-    <section className="min-h-[60vh] flex items-center justify-center px-6 bg-[#FAF8F5]">
+    <section className="min-h-[36vh] flex items-center justify-center px-6 bg-[#FAF8F5]">
       <motion.div
         className="max-w-2xl text-center space-y-6"
         initial={{ opacity: 0, y: 30 }}
