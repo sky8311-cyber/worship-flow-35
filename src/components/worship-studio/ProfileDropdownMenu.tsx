@@ -38,7 +38,7 @@ export function ProfileDropdownMenu({
   const initials = fullName.charAt(0).toUpperCase();
   
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <button 
           className={cn(

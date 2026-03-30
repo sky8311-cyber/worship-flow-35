@@ -37,7 +37,7 @@ function FloorLabel({ label, isNight }: { label: string; isNight: boolean }) {
 }
 
 /* ─── Night Sky Stars ─── */
-function NightSkyStars({ width, height }: { width: number; height: number }) {
+const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { width: number; height: number }) {
   const stars = useMemo(() => {
     const result: { x: number; y: number; r: number; opacity: number; delay: number; dur: number }[] = [];
     let seed = 42;
