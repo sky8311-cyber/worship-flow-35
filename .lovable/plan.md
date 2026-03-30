@@ -1,52 +1,47 @@
-# 루프탑 / 간판 / 도로 / 상가 대규모 수정
 
-## 변경 사항
 
-### 1. 루프탑 RooftopScene 재디자인
+# 아틀리에 빌딩 대규모 비주얼 업데이트
 
-- 나무 2그루 → **5~6그루** (크고 작은 다양한 사이즈)
-- 파라솔+테이블+의자 **5세트** 배치 (참조 이미지처럼 우산형 파라솔, 의자 2개 + 테이블)
-- 난간은 이미 있으므로 유지
+## 변경 파일
 
-### 2. 간판 교체
+### 1. `StudioSidePanel.tsx`
 
-- 하늘에 떠 있는 기존 네온 `WORSHIP ATELIER` 간판 → **삭제**
-- ROOFTOP 배지 라인의 양쪽 빨간/노란 파라솔 이모지(`⛱️ ... ⛱️`) → **삭제**
-- 대신 같은 위치에 **길쭉한 흰색 배경 + 검은 폰트 간판**: `WORSHIP ATELIER by kworship.app`
-- 크기: ROOFTOP 글자보다 약간 더 큼, 기존 네온 간판보다는 작음
+**상가 높이**: `h-16` → `h-20`
 
-### 3. 스트링 라이트 수정
+**건물 벽면 흰색 세로줄 삭제**: `glassWallStyle`의 `repeating-linear-gradient` (line 32) 제거 — 순수 블루 그라데이션만 유지. 건물 body 내부의 glass panel vertical lines overlay (line 571-576)도 삭제.
 
-- 폴 높이 현재 `poleHeight = 20` → **30**  
-**폴 높이 건물 최상단 라인에서 시작하여 위로 하늘로 솓기**
-- 스트링 라이트 시작점을 **건물 최상단 라인에 앵커링** (하늘에 뜨지 않도록)
-- 루프탑 영역 높이(`h-20`/`h-16`) 축소하여 스트링 라이트가 건물과 연결
+**스트링 라이트 폴대**: 현재 `buildingTop` 기반이 아니라 건물 body `.border-t` 상단에 앵커링되어야 함. 폴대 하단을 건물 최상단(루프탑 씬 바로 아래, building body border-t 위치)에 고정하고 위로 솟도록 수정.
 
-### 4. 도로 차량 수정
+**창문 정사각형화 (StudioUnit.tsx)**:
+- 양쪽 창문(아바타 + 방문 버튼): compact 모드에서 `w-6 h-7` / `w-7 h-7` → `w-7 h-7` (정사각형). penthouse는 `w-10 h-10` (이미 정사각형).
+- 가운데 이름 창문: 높이를 양쪽과 동일하게 유지 (`h-7` / `h-10`), 폭은 `flex-1`로 자동 조절.
 
-- **상단 차선**: 오른쪽→왼쪽 (이미 `animate-car-move-left` — 정상)
-- **하단 차선**: 왼쪽→오른쪽 (이미 `animate-car-move-right` — 정상)
-- 하단 차선 차량 **수평 반전**: `style={{ transform: 'scaleX(-1)' }}` 추가하여 머리가 오른쪽을 향하도록
-- 차량 크기 **3배**: `text-[9px]` → `text-[28px]`, `text-[8px]` → `text-[24px]`
-- `tailwind.config.ts`: 애니메이션 범위 2.5배 확대 — `car-move-right`: `-300%` → `2500%`, `car-move-left`: `2500%` → `-300%`
-- 도로 높이도 차량 크기에 맞게 확대: `h-5`/`h-4` → `h-10`/`h-8`
+**간판 업그레이드**:
+- 테두리 색을 난간 색 `#7a8a9a`로 변경
+- `border-2 border-[#7a8a9a]` + `shadow-[2px_3px_0px_#6a7a8a]` 로 입체감 부여
+- 텍스트를 `text-center w-full`로 정가운데 정렬
+- 폰트 `text-[7px]` → `text-[8px]`, "by kworship.app"도 `text-[6px]`로 소폭 확대
 
-### 5. 카페/갤러리 상가 잘림 해결
+**자동차 수정**:
+- 상단 차선(우→좌): 🚗, 현재 정상
+- 하단 차선(좌→우): 🚕에 `scaleX(-1)` 적용 — 현재 `style={{ transform: 'scaleX(-1)' }}`가 있으나 `animate-car-move-right`의 transform과 충돌 가능. 별도 wrapper `<span>` 안에 넣어 이중 transform 해결
+- 미니밴 🚐 추가 (하단 차선, delay 다르게)
+- 차량 위치: 상단 `top-[2px]` → `top-[15%]`, 하단 `bottom-[2px]` → `bottom-[15%]`로 차선 중앙 배치
 
-- `GroundFloorShops` 높이 `h-11` → `h-16` (SVG가 충분히 보이도록)
+**루프탑 우측 파라솔 2개 제거 → 무대 추가**:
+- `parasolSets` 4번째, 5번째 제거 (총 3개 남음)
+- 우측 영역에 SVG로 작은 흰색 low-rise 무대 플랫폼, 드럼세트(원+스틱), 어쿠스틱 기타(세워놓기), 마이크 스탠드 배치
 
-## 파일 변경
+**갤러리 액자 그림 변경**:
+- 액자1: 일장기 느낌의 원형 → 산/계곡 풍경화 (녹색 산 + 파란 하늘)
+- 액자2: 빨간 원형 → 추상 색 블록 (노랑/파랑/녹색 조합)
+- 액자3: 보라 단색 → 별이 있는 밤하늘
 
-### `StudioSidePanel.tsx`
+**카페 커피머신 교체**:
+- 기존 사각형 블록 → 에스프레소 머신 실루엣 (상부 돔형 + 포터필터 + 컵 받침)
 
-- `RooftopScene`: 나무 5~6그루 + 파라솔 5세트로 확장
-- 네온 간판 div 삭제 → 흰배경 검정폰트 간판으로 교체 (ROOFTOP 라벨 위치)
-- `⛱️` 이모지 2개 제거, 간판 배치
-- `RooftopStringLights`: `poleHeight` 20→10, 루프탑 영역 높이 축소
-- `AnimatedRoad`: 차량 텍스트 크기 3x, 하단 차선 `scaleX(-1)`, 도로 높이 확대
-- `GroundFloorShops`: `h-11` → `h-14`
+### 2. `StudioUnit.tsx`
 
-### `tailwind.config.ts`
+- compact 아바타: `w-6 h-7` → `w-7 h-7` (정사각형)
+- compact 방문버튼: `w-7 h-7` (이미 정사각형, 유지)
 
-- `car-move-right`: `translateX(-300%)` → `translateX(2500%)`
-- `car-move-left`: `translateX(2500%)` → `translateX(-300%)`
