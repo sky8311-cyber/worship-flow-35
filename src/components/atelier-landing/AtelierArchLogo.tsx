@@ -1,0 +1,62 @@
+import { motion } from "framer-motion";
+
+interface AtelierArchLogoProps {
+  onArchComplete?: () => void;
+  className?: string;
+}
+
+export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchLogoProps) => {
+  return (
+    <div className={`relative ${className}`}>
+      <svg
+        viewBox="0 0 660 580"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        {/* Outer arch - pen drawing left to right */}
+        <motion.path
+          d="M150 520 L150 200 Q150 130 200 90 L280 20 Q330 -20 380 20 L460 90 Q510 130 510 200 L510 520"
+          stroke="#1F1F1F"
+          strokeWidth="24"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
+        />
+
+        {/* Inner arch */}
+        <motion.path
+          d="M195 520 L195 230 Q195 170 230 140 L290 90 Q330 60 370 90 L430 140 Q465 170 465 230 L465 520"
+          stroke="#1F1F1F"
+          strokeWidth="24"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1.2, delay: 0.8, ease: "easeInOut" }}
+          onAnimationComplete={onArchComplete}
+        />
+
+        {/* Gold Star - stamp effect after arch completes */}
+        <motion.g transform="translate(500,-10)">
+          <motion.path
+            d="M0 28 C14 28 28 14 28 0 C28 14 42 28 56 28 C42 28 28 42 28 56 C28 42 14 28 0 28Z"
+            fill="#B8902A"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{
+              delay: 2.8,
+              duration: 0.35,
+              ease: [0.175, 0.885, 0.32, 1.275], // overshoot ease
+            }}
+            style={{ transformOrigin: "28px 28px" }}
+          />
+        </motion.g>
+      </svg>
+    </div>
+  );
+};

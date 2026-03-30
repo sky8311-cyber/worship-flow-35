@@ -117,6 +117,7 @@ const JoinCommunity = lazyWithRetry(() => import("./pages/JoinCommunity"));
 const WorshipStudio = lazyWithRetry(() => import("./pages/WorshipStudio"));
 const CanvasEditor = lazyWithRetry(() => import("./pages/CanvasEditor"));
 const EmailPreferencesPage = lazyWithRetry(() => import("./pages/EmailPreferences"));
+const AtelierWelcome = lazyWithRetry(() => import("./pages/AtelierWelcome"));
 
 // Page loader component for Suspense fallback
 const PageLoader = () => <FullScreenLoader />;
@@ -227,6 +228,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/r/:referralCode" element={<ReferralRedirect />} />
               <Route path="/legal" element={<Legal />} />
+              <Route path="/atelier-welcome" element={<AtelierWelcome />} />
               <Route path="/app-history" element={<AppHistory />} />
               <Route path="/features" element={<Features />} />
               <Route path="/press" element={<Press />} />
