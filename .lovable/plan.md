@@ -1,39 +1,38 @@
 
 
-# 히어로 수정 계획
+# 히어로 애니메이션 순서 재구성 + 텍스트 변경
 
-## 변경사항 3가지
+## 변경 요약
 
-### 1. "Worship Atelier는..." 타이틀 제거
-- 상단 `motion.div` (lines 71-94) 전체 삭제
-- Phase 1의 dots 로직도 제거 — 불필요
-- Phase 시작을 바로 2부터 (또는 단순화)
+### 1. 애니메이션 순서 재설계 (AtelierHero.tsx)
 
-### 2. "예배를 삶의 흐름으로" + "연결합니다" 한 블록으로
-- 아치 아래에 텍스트를 한 줄로 배치: `예배를 삶의 흐름으로`
-- 바로 아래 `연결합니다` — 간격 최소화하여 한 텍스트 블록처럼
-- 현재 absolute 배치 → 아치 아래 중앙 정렬 flex column으로 변경
+| Phase | 내용 | 타이밍 |
+|-------|------|--------|
+| 1 | "예배를" 페이드인 | 0.4s |
+| 2 | 아치 심볼 드로잉 시작 (outer → inner) | ~1.0s |
+| 3 | "삶으로" 타이프라이터 (텍스트 변경) | 아치 완료 후 ~2.7s |
+| 4 | "연결합니다." 타이프라이터 (점 추가) | "삶으로" 완료 후 |
+| 5 | 별 stamp | "연결합니다." 완료 후 |
+| 6 | 내 공간 만들기 버튼 페이드인 | 별 후 ~0.5s |
+| 7 | "Start Your Atelier" 페이드인 (텍스트 변경) | 버튼 후 ~0.3s |
 
-### 3. 아치 애니메이션 반복 버그 수정
-- **원인**: `useEffect` for dots가 `[phase]`에 의존 → phase가 2, 3, 4로 변할 때마다 다시 실행되어 `setPhase(2)`를 1.5초 후 호출 → phase가 계속 순환
-- **수정**: dots effect의 조건을 `if (phase !== 1) return`으로 변경하여 phase 1에서만 실행
-- AtelierArchLogo의 `animate`에서 `startDrawing`이 false→true만 되도록 보장
+### 2. 텍스트 변경
+- "삶의 흐름으로" → **"삶으로"** (typewriter 효과)
+- "연결합니다" → **"연결합니다."** (마침표 추가)
+- "Start Your Studio" → **"Start Your Atelier"**
+
+### 3. AtelierArchLogo.tsx — 별을 분리 제어
+- 별 stamp 애니메이션을 `startDrawing`과 분리하여 별도의 `showStar` prop 추가
+- Hero에서 Phase 5 시점에 `showStar={true}` 전달
+- `onArchComplete` 콜백은 inner arch 완료 시 호출 (Phase 3 트리거용)
+
+### 4. 아틀리에 설명 텍스트 — 히어로 CTA 아래 배치
+- CTA 버튼 + "Start Your Atelier" 아래에 작은 글씨로 설명 추가
+- 스크롤 인디케이터 위에 위치
+- `text-xs text-muted-foreground max-w-sm text-center leading-relaxed font-korean`
+- CTA와 함께 페이드인
 
 ## 수정 파일
-
-### `AtelierHero.tsx` — 재구성
-- 타이틀 섹션 삭제
-- Phase 단순화: 1→예배를, 2→삶의 흐름으로, 3→아치+연결합니다, 4→CTA
-- 텍스트 레이아웃: 아치 아래 중앙에 두 줄 텍스트 블록
-```
-    [아치 심볼]
-  예배를 삶의 흐름으로
-     연결합니다
-   [내 공간 만들기]
-```
-- dots 관련 state/effect 제거
-- phase useEffect 버그 수정
-
-### `AtelierArchLogo.tsx` — 변경 없음
-- 컴포넌트 자체는 정상, 부모의 phase 버그가 원인
+- `src/components/atelier-landing/AtelierHero.tsx` — 전면 재작성
+- `src/components/atelier-landing/AtelierArchLogo.tsx` — `showStar` prop 추가
 
