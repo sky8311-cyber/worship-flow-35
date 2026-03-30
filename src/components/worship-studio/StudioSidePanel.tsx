@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -61,12 +61,6 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
       <rect x={0} y={floorY} width={width} height={h - floorY} fill="#8a9aaa" />
       <rect x={0} y={floorY} width={width} height={1} fill="#7a8a9a" />
 
-      {/* Railing — sits on floor edge as a front fence */}
-      <rect x={0} y={floorY - 4.5} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
-      <rect x={0} y={floorY - 0.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
-      {Array.from({ length: Math.floor(width / 12) }).map((_, i) => (
-        <rect key={`bal-${i}`} x={6 + i * 12} y={floorY - 4.5} width={1.8} height={5} rx={0.45} fill="#8a9aaa" />
-      ))}
 
       {/* Trees — grounded on floor surface */}
       {trees.map((t, i) => (
@@ -146,6 +140,13 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
           );
         })()}
       </g>
+
+      {/* Railing — rendered last = topmost layer (front fence) */}
+      <rect x={0} y={floorY - 4.5} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
+      <rect x={0} y={floorY - 0.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
+      {Array.from({ length: Math.floor(width / 12) }).map((_, i) => (
+        <rect key={`bal-${i}`} x={6 + i * 12} y={floorY - 4.5} width={1.8} height={5} rx={0.45} fill="#8a9aaa" />
+      ))}
     </svg>
   );
 }
@@ -696,8 +697,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
               {/* Rooftop scene */}
               {(!collapsed || isMobile) && (
-                <div className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
-                  <RooftopScene width={collapsed ? 56 : isMobile ? 200 : 232} isMobile={isMobile} />
+                <div ref={isMobile ? rooftopRef : undefined} className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
+                  <RooftopScene width={collapsed ? 56 : isMobile ? rooftopWidth : 232} isMobile={isMobile} />
                 </div>
               )}
 
