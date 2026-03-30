@@ -30,6 +30,7 @@ function FloorLabel({ label }: { label: string }) {
 /* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage (1.5x scale) ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
   const h = isMobile ? 78 : 90;
+  const floorY = h - 4; // visible floor surface near bottom
   const spacing = width / 6;
 
   // 3 parasol sets (left side) — 1.5x
@@ -52,29 +53,33 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   // Worship stage position (right side) — 1.5x
   const stageX = spacing * 4.5;
   const stageW = spacing * 1.8;
-  const stageY = h - 7;
+  const stageY = floorY;
 
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-      {/* Railing — 1.5x thickness */}
-      <rect x={0} y={h - 6} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
-      <rect x={0} y={h - 1.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
+      {/* Rooftop floor surface — solid building top */}
+      <rect x={0} y={floorY} width={width} height={h - floorY} fill="#8a9aaa" />
+      <rect x={0} y={floorY} width={width} height={1} fill="#7a8a9a" />
+
+      {/* Railing — sits on floor edge as a front fence */}
+      <rect x={0} y={floorY - 4.5} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
+      <rect x={0} y={floorY - 0.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
       {Array.from({ length: Math.floor(width / 12) }).map((_, i) => (
-        <rect key={`bal-${i}`} x={6 + i * 12} y={h - 6} width={1.8} height={6} rx={0.45} fill="#8a9aaa" />
+        <rect key={`bal-${i}`} x={6 + i * 12} y={floorY - 4.5} width={1.8} height={5} rx={0.45} fill="#8a9aaa" />
       ))}
 
-      {/* Trees — 1.5x */}
+      {/* Trees — grounded on floor surface */}
       {trees.map((t, i) => (
         <g key={`tree-${i}`}>
-          <rect x={t.x - 1.5} y={h - 6 - t.trunkH} width={3} height={t.trunkH} rx={1.2} fill="#6b5b4f" />
-          <circle cx={t.x} cy={h - 6 - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
-          <circle cx={t.x - 3} cy={h - 6 - t.trunkH + 1.5} r={t.r2} fill="#5a9a5a" opacity={0.7} />
+          <rect x={t.x - 1.5} y={floorY - t.trunkH} width={3} height={t.trunkH} rx={1.2} fill="#6b5b4f" />
+          <circle cx={t.x} cy={floorY - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
+          <circle cx={t.x - 3} cy={floorY - t.trunkH + 1.5} r={t.r2} fill="#5a9a5a" opacity={0.7} />
         </g>
       ))}
 
-      {/* Parasol + table + chairs — 1.5x */}
+      {/* Parasol + table + chairs — grounded on floor */}
       {parasolSets.map((p, i) => {
-        const baseY = h - 7.5;
+        const baseY = floorY - 1.5;
         return (
           <g key={`parasol-${i}`}>
             <rect x={p.x - 0.75} y={baseY - 18} width={1.5} height={15} fill="#8a7a6a" />
@@ -88,12 +93,12 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         );
       })}
 
-      {/* Worship Stage — 1.5x */}
+      {/* Worship Stage — on floor surface */}
       <g>
         <rect x={stageX} y={stageY - 4.5} width={stageW} height={4.5} rx={1.5} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.75} />
         <rect x={stageX + 1.5} y={stageY - 6} width={stageW - 3} height={2.25} rx={0.75} fill="#fafafa" stroke="#ddd" strokeWidth={0.45} />
 
-        {/* Drum set — 2.6x (bigger than guitar, taller than parasols) */}
+        {/* Drum set — on stage */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
           const drumY = stageY - 10;
@@ -112,7 +117,7 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
           );
         })()}
 
-        {/* Acoustic guitar — 1.5x */}
+        {/* Acoustic guitar — on stage */}
         {(() => {
           const gx = stageX + stageW * 0.18;
           const gy = stageY - 7.5;
@@ -126,7 +131,7 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
           );
         })()}
 
-        {/* Mic stand — 1.5x */}
+        {/* Mic stand — on stage */}
         {(() => {
           const mx = stageX + stageW * 0.82;
           const my = stageY - 7.5;
@@ -387,17 +392,25 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 
       {/* Entrance Door */}
       <div className="w-6 flex flex-col items-center justify-end bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-x border-[#7a8a9a] relative">
-        {/* Arch top */}
-        <svg className="absolute top-0 w-full" viewBox="0 0 40 12" preserveAspectRatio="none">
-          <path d="M 0,12 Q 20,0 40,12 Z" fill="#5a6a7a" />
-          <path d="M 2,12 Q 20,2 38,12 Z" fill="#a0c0d4" fillOpacity={0.4} />
-        </svg>
-        {/* Door frame */}
-        <div className="w-5 flex-1 mt-2 mb-0 bg-[#5a6a7a] rounded-t-[2px] flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Transom wall above door */}
+        <div className="flex-1 w-full bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] relative">
+          {/* Small arch accent at bottom of transom */}
+          <svg className="absolute bottom-0 w-full" viewBox="0 0 40 8" preserveAspectRatio="none">
+            <path d="M 4,8 Q 20,1 36,8 Z" fill="#5a6a7a" />
+            <path d="M 6,8 Q 20,3 34,8 Z" fill="#a0c0d4" fillOpacity={0.3} />
+          </svg>
+        </div>
+        {/* Door frame — fixed natural height */}
+        <div className={cn("w-5 mb-0 bg-[#5a6a7a] rounded-t-[3px] flex flex-col items-center relative overflow-hidden", isMobile ? "h-14" : "h-10")}>
           {/* Glass panel */}
           <div className="w-4 flex-1 mt-0.5 bg-[#b0d0e0]/40 rounded-t-[2px] border border-[#7a8a9a]/50" />
-          {/* Handle */}
-          <div className="w-0.5 h-1.5 bg-[#c0a060] rounded-full mb-0.5 mt-0.5" />
+          {/* Door knob — brass circle at handle height */}
+          <svg className="absolute right-0.5" style={{ top: '55%' }} width="4" height="4" viewBox="0 0 4 4">
+            <circle cx="2" cy="2" r="1.5" fill="#b8860b" />
+            <circle cx="2" cy="1.6" r="0.6" fill="#d4a830" opacity={0.7} />
+          </svg>
+          {/* Bottom rail */}
+          <div className="w-full h-0.5 bg-[#4a5a6a]" />
         </div>
         {/* Plants beside door */}
         <div className="absolute bottom-0 left-0 text-[5px]">🌱</div>
