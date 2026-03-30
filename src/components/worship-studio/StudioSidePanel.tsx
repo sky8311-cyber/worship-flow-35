@@ -193,17 +193,17 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
   }
 
   return (
-    <div className="flex h-16 border-t border-[#7a8a9a]">
+    <div className="flex h-9 border-t border-[#7a8a9a]">
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning */}
         <div
-          className="w-full h-2.5 shrink-0"
+          className="w-full h-1.5 shrink-0"
           style={{
             background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #fff 4px, #fff 8px)',
           }}
         />
-        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider text-center mt-0.5 relative z-10">CAFÉ</span>
+        <span className="text-[5px] font-bold text-[#5a4a3a] tracking-wider text-center mt-0.5 relative z-10">CAFÉ</span>
         <div className="flex-1 relative">
           <CafeSVG />
         </div>
@@ -212,7 +212,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
       </div>
 
       {/* Entrance Door */}
-      <div className="w-10 flex flex-col items-center justify-end bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-x border-[#7a8a9a] relative">
+      <div className="w-6 flex flex-col items-center justify-end bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-x border-[#7a8a9a] relative">
         {/* Arch top */}
         <svg className="absolute top-0 w-full" viewBox="0 0 40 12" preserveAspectRatio="none">
           <path d="M 0,12 Q 20,0 40,12 Z" fill="#5a6a7a" />
@@ -232,7 +232,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 
       {/* Gallery */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <span className="text-[6px] font-bold text-[#5a6a7a] tracking-wider text-center mt-1 relative z-10">GALLERY</span>
+        <span className="text-[5px] font-bold text-[#5a6a7a] tracking-wider text-center mt-0.5 relative z-10">GALLERY</span>
         <div className="flex-1 relative">
           <GallerySVG />
         </div>
@@ -246,7 +246,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
   return (
     <>
       {/* Sidewalk */}
-      <div className={cn("shrink-0 flex items-end justify-around px-1 select-none pointer-events-none", isMobile ? "h-3" : "h-4")}
+      <div className={cn("shrink-0 flex items-end justify-around px-1 select-none pointer-events-none", isMobile ? "h-2" : "h-2.5")}
         style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
         {(!collapsed || isMobile) && (
           <>
@@ -259,7 +259,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
       {/* Road */}
       <div
-        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-6" : "h-8")}
+        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-4" : "h-5")}
         style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
       >
         {/* Center line */}
