@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 
 const rows = [
   { left: "삶", arrow: "→", right: "예배로", en: "Life → Worship" },
-  { left: "공간", arrow: "→", right: "창작", en: "Space → Creation" },
-  { left: "과정", arrow: "→", right: "흐름", en: "Process → Flow" },
+  { left: "기록", arrow: "→", right: "창작으로", en: "Record → Creation" },
+  { left: "준비", arrow: "→", right: "흐름으로", en: "Prep → Flow" },
 ];
 
 export const AtelierSolution = () => {
