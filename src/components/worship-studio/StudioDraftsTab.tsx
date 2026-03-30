@@ -71,8 +71,8 @@ export function StudioDraftsTab({ roomId }: StudioDraftsTabProps) {
           </h2>
           <p className="text-sm text-muted-foreground">
             {language === "ko" 
-              ? "여기서 작성한 글은 스튜디오 그리드에 임베드할 수 있습니다" 
-              : "Posts here can be embedded in your studio grid"}
+              ? "여기서 작성한 글은 아틀리에 그리드에 임베드할 수 있습니다" 
+              : "Posts here can be embedded in your atelier grid"}
           </p>
         </div>
         

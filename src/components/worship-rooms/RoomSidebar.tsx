@@ -137,7 +137,7 @@ export function RoomSidebar({
           {showPublicRooms && (
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-                {language === "ko" ? "공개 스튜디오" : "Public Studios"}
+                {language === "ko" ? "공개 아틀리에" : "Public Ateliers"}
               </h3>
               {publicLoading ? (
                 <div className="space-y-2">

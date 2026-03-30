@@ -328,7 +328,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   /* ─── Building interior content ─── */
   const buildingContent = (
     <>
-      {/* ROOFTOP — My Studio */}
+      {/* ROOFTOP — My Atelier */}
       {myStudio && (
         <div className="px-0.5 relative">
           {!collapsed && (
@@ -341,7 +341,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           <StudioUnit
             compact={false}
             avatarUrl={myAvatarUrl}
-            studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
+            studioName={language === "ko" ? "내 아틀리에" : "My Atelier"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
             roomId={myStudio.id}
             hasUnseenStory={myStudio.hasNewPosts}

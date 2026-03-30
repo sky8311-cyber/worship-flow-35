@@ -147,7 +147,7 @@ export function CollapsibleSidebar({
         isExpanded ? "w-64" : "w-14"
       )}
     >
-      {/* My Studio Button */}
+      {/* My Atelier Button */}
       <div className={cn("p-2", isExpanded && "px-3")}>
         {isExpanded ? (
           <button
@@ -163,7 +163,7 @@ export function CollapsibleSidebar({
               <Home className="h-4 w-4 text-primary" />
             </div>
             <span className="font-medium text-sm">
-              {language === "ko" ? "내 스튜디오" : "My Studio"}
+              {language === "ko" ? "내 아틀리에" : "My Atelier"}
             </span>
           </button>
         ) : (
@@ -183,7 +183,7 @@ export function CollapsibleSidebar({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">
-                {language === "ko" ? "내 스튜디오" : "My Studio"}
+                {language === "ko" ? "내 아틀리에" : "My Atelier"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
