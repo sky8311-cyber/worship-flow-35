@@ -25,7 +25,7 @@ export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0, sta
           strokeLinejoin="round"
           fill="none"
           initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
+          animate={startDrawing ? { pathLength: 1 } : { pathLength: 0 }}
           transition={{ duration: 1.2, delay: delay, ease: "easeInOut" }}
         />
 
