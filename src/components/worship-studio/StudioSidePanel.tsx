@@ -1066,45 +1066,66 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               {/* Animated Road */}
               <AnimatedRoad collapsed={collapsed} isMobile={isMobile} isNight={isNight} />
 
-              {/* Footer: Description + Links */}
+              {/* Footer: Grassland Description + Links */}
               {!collapsed && (
                 <div className={cn(
-                  "shrink-0 text-center py-4 px-3 space-y-3 transition-colors duration-700",
-                  isMobile ? "mx-6" : "mx-0"
+                  "shrink-0 text-center py-5 px-3 space-y-3 transition-colors duration-700 relative overflow-hidden",
+                  isMobile ? "mx-6 rounded-b-xl" : "mx-0",
+                  isNight
+                    ? "bg-gradient-to-b from-[#1e3a1e] to-[#162e16]"
+                    : "bg-gradient-to-b from-[#5a8f3c] to-[#4a7d32]"
                 )}>
-                  <p className={cn(
-                    "text-[10px] leading-relaxed whitespace-pre-line",
-                    isNight ? "text-[#8a9aaa]" : "text-muted-foreground"
-                  )}>
-                    {`Worship Atelier는 예배를\n'준비'에서 '삶의 흐름'으로\n확장시키는 창작 기반 플랫폼입니다.`}
-                  </p>
-                  <div className="flex items-center justify-center gap-3">
+                  {/* Grass emoji decorations */}
+                  <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
+                    <span className="absolute top-1 left-[8%] text-[10px] opacity-40">🌿</span>
+                    <span className="absolute top-0 left-[22%] text-[8px] opacity-30">🌱</span>
+                    <span className="absolute top-2 left-[45%] text-[9px] opacity-25">🍀</span>
+                    <span className="absolute top-1 left-[68%] text-[10px] opacity-35">🌿</span>
+                    <span className="absolute top-0 left-[85%] text-[8px] opacity-30">🌱</span>
+                    <span className="absolute bottom-1 left-[5%] text-[9px] opacity-30">🌱</span>
+                    <span className="absolute bottom-0 left-[30%] text-[10px] opacity-25">🌿</span>
+                    <span className="absolute bottom-2 left-[55%] text-[8px] opacity-35">🍀</span>
+                    <span className="absolute bottom-1 left-[75%] text-[9px] opacity-30">🌱</span>
+                    <span className="absolute bottom-0 left-[92%] text-[10px] opacity-25">🌿</span>
+                  </div>
+
+                  {/* Text with legibility backdrop */}
+                  <div className="relative z-10 bg-black/20 backdrop-blur-[2px] rounded-lg px-3 py-2">
+                    <p className={cn(
+                      "text-[10px] leading-relaxed whitespace-pre-line",
+                      isNight ? "text-green-100/90" : "text-white/95"
+                    )}>
+                      {`Worship Atelier는 예배를\n'준비'에서 '삶의 흐름'으로\n확장시키는 창작 기반 플랫폼입니다.`}
+                    </p>
+                  </div>
+
+                  <div className="relative z-10 flex items-center justify-center gap-3">
                     <Link
                       to="/dashboard"
                       className={cn(
                         "flex items-center gap-1 text-[10px] transition-colors",
-                        isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground"
+                        isNight ? "text-green-200/80 hover:text-green-100" : "text-white/80 hover:text-white"
                       )}
                     >
                       <Home size={12} />
                       <span>홈으로</span>
                     </Link>
-                    <span className={cn("text-[8px]", isNight ? "text-[#4a5a6a]" : "text-muted-foreground/40")}>|</span>
+                    <span className={cn("text-[8px]", isNight ? "text-green-900/60" : "text-white/30")}>|</span>
                     <div className="flex items-center gap-2">
                       <a href="https://www.instagram.com/kworship.app" target="_blank" rel="noopener noreferrer"
-                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        className={cn("transition-colors", isNight ? "text-green-200/80 hover:text-green-100" : "text-white/80 hover:text-white")}>
                         <Instagram size={12} />
                       </a>
                       <a href="https://www.threads.net/@kworship.app" target="_blank" rel="noopener noreferrer"
-                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        className={cn("transition-colors", isNight ? "text-green-200/80 hover:text-green-100" : "text-white/80 hover:text-white")}>
                         <AtSign size={12} />
                       </a>
                       <a href="https://www.youtube.com/@kworship_app" target="_blank" rel="noopener noreferrer"
-                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        className={cn("transition-colors", isNight ? "text-green-200/80 hover:text-green-100" : "text-white/80 hover:text-white")}>
                         <Youtube size={12} />
                       </a>
                       <a href="mailto:hello@k-worship.com"
-                        className={cn("transition-colors", isNight ? "text-[#8a9aaa] hover:text-[#c0d0e0]" : "text-muted-foreground hover:text-foreground")}>
+                        className={cn("transition-colors", isNight ? "text-green-200/80 hover:text-green-100" : "text-white/80 hover:text-white")}>
                         <Mail size={12} />
                       </a>
                     </div>
