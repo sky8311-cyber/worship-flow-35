@@ -197,3 +197,12 @@ input[type="time"]::-webkit-date-and-time-value {
   border-color: hsl(var(--border));
   margin: 2rem 0;
 }
+
+/* ═══ Star twinkle animation for night sky ═══ */
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+}
