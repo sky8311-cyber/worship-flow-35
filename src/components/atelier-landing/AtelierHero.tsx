@@ -5,42 +5,69 @@ import { AtelierArchLogo } from "./AtelierArchLogo";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const AtelierHero = () => {
-  // Phase 1: 예배를, Phase 2: 삶의 흐름으로, Phase 3: 아치+연결합니다, Phase 4: CTA
+  // Phases: 0=init, 1=예배를, 2=arch drawing, 3=삶으로 typewriter, 4=연결합니다. typewriter, 5=star, 6=CTA, 7=subtitle
   const [phase, setPhase] = useState(0);
+  const [lifeChars, setLifeChars] = useState(0);
   const [connectChars, setConnectChars] = useState(0);
-  const [showCTA, setShowCTA] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const connectText = "연결합니다";
+  const lifeText = "삶으로";
+  const connectText = "연결합니다.";
 
-  // Phase transitions
+  // Phase 0 → 1: "예배를" fade in
   useEffect(() => {
     const t = setTimeout(() => setPhase(1), 400);
     return () => clearTimeout(t);
   }, []);
 
+  // Phase 1 → 2: start arch drawing after "예배를" appears
   useEffect(() => {
-    if (phase === 1) {
-      const t = setTimeout(() => setPhase(2), 600);
-      return () => clearTimeout(t);
-    }
-    if (phase === 2) {
-      const t = setTimeout(() => setPhase(3), 600);
-      return () => clearTimeout(t);
-    }
+    if (phase !== 1) return;
+    const t = setTimeout(() => setPhase(2), 600);
+    return () => clearTimeout(t);
   }, [phase]);
 
-  // Phase 3: Typewriter for "연결합니다"
+  // Phase 3: typewriter for "삶으로"
   useEffect(() => {
-    if (phase < 3) return;
+    if (phase !== 3) return;
+    if (lifeChars >= lifeText.length) {
+      const t = setTimeout(() => setPhase(4), 300);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setLifeChars((c) => c + 1), 90);
+    return () => clearTimeout(t);
+  }, [phase, lifeChars]);
+
+  // Phase 4: typewriter for "연결합니다."
+  useEffect(() => {
+    if (phase !== 4) return;
     if (connectChars >= connectText.length) {
-      const t = setTimeout(() => setShowCTA(true), 800);
+      const t = setTimeout(() => setPhase(5), 400);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setConnectChars((c) => c + 1), 80);
     return () => clearTimeout(t);
   }, [phase, connectChars]);
+
+  // Phase 5 → 6: after star, show CTA
+  useEffect(() => {
+    if (phase !== 5) return;
+    const t = setTimeout(() => setPhase(6), 600);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  // Phase 6 → 7: after button, show subtitle
+  useEffect(() => {
+    if (phase !== 6) return;
+    const t = setTimeout(() => setPhase(7), 300);
+    return () => clearTimeout(t);
+  }, [phase]);
+
+  const handleArchComplete = () => {
+    // Arch inner path done → start "삶으로" typewriter
+    if (phase === 2) setPhase(3);
+  };
 
   const handleCTA = () => {
     if (user) {
@@ -50,52 +77,65 @@ export const AtelierHero = () => {
     }
   };
 
+  const showCTA = phase >= 6;
+
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#FAF8F5] relative">
+      {/* "예배를" */}
+      <motion.span
+        className="font-korean text-xl md:text-3xl text-foreground tracking-wide mb-2"
+        initial={{ opacity: 0, y: -4 }}
+        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        예배를
+      </motion.span>
+
       {/* Arch symbol */}
       <div className="w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64">
         <AtelierArchLogo
-          startDrawing={phase >= 3}
+          startDrawing={phase >= 2}
+          showStar={phase >= 5}
           delay={0}
           className="w-full h-full"
-          onArchComplete={() => {}}
+          onArchComplete={handleArchComplete}
         />
       </div>
 
       {/* Text block below arch */}
       <div className="flex flex-col items-center mt-2">
-        {/* 예배를 삶의 흐름으로 — single line */}
-        <div className="flex items-baseline gap-1">
-          <motion.span
-            className="font-korean text-xl md:text-3xl text-foreground tracking-wide"
-            initial={{ opacity: 0, y: -4 }}
-            animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            예배를
-          </motion.span>
-          <motion.span
-            className="font-korean text-xl md:text-3xl text-foreground tracking-wide"
-            initial={{ opacity: 0, y: -4 }}
-            animate={phase >= 2 ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            삶의 흐름으로
-          </motion.span>
+        {/* 삶으로 — typewriter */}
+        <div className="h-10 text-center">
+          {phase >= 3 && (
+            <span className="font-korean text-xl md:text-3xl text-foreground tracking-wide">
+              {lifeText.slice(0, lifeChars)}
+              {phase === 3 && (
+                <span
+                  className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
+                  style={{
+                    backgroundColor: "#1F1F1F",
+                    animation: "blink 1s step-end infinite",
+                  }}
+                />
+              )}
+            </span>
+          )}
         </div>
 
-        {/* 연결합니다 */}
-        <div className="h-10 mt-1 text-center">
-          {phase >= 3 && (
+        {/* 연결합니다. — typewriter */}
+        <div className="h-10 text-center">
+          {phase >= 4 && (
             <span className="font-korean text-xl md:text-3xl text-muted-foreground tracking-wide">
               {connectText.slice(0, connectChars)}
-              <span
-                className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
-                style={{
-                  backgroundColor: "#1F1F1F",
-                  animation: "blink 1s step-end infinite",
-                }}
-              />
+              {phase === 4 && (
+                <span
+                  className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
+                  style={{
+                    backgroundColor: "#1F1F1F",
+                    animation: "blink 1s step-end infinite",
+                  }}
+                />
+              )}
             </span>
           )}
         </div>
@@ -115,10 +155,25 @@ export const AtelierHero = () => {
         >
           내 공간 만들기
         </button>
-        <p className="text-center text-sm text-muted-foreground mt-3 font-serif">
-          Start Your Studio
-        </p>
+        <motion.p
+          className="text-center text-sm text-muted-foreground mt-3 font-serif"
+          initial={{ opacity: 0 }}
+          animate={phase >= 7 ? { opacity: 1 } : {}}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          Start Your Atelier
+        </motion.p>
       </motion.div>
+
+      {/* Atelier description */}
+      <motion.p
+        className="text-xs text-muted-foreground max-w-sm text-center leading-relaxed font-korean mt-8 px-4"
+        initial={{ opacity: 0 }}
+        animate={phase >= 7 ? { opacity: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+      >
+        아틀리에(atelier)는 프랑스어로 예술가의 작업실을 뜻하며, 단순히 결과를 만드는 장소가 아니라 아이디어가 형성되고 다듬어지는 창작의 공간을 의미합니다. Worship Atelier는 이러한 개념을 담아, 예배를 준비하는 것을 넘어 삶 전체를 하나님께 드려지는 예배로 만들어가는 여정을 함께하는 공간입니다.
+      </motion.p>
 
       {/* Scroll indicator */}
       <motion.div
