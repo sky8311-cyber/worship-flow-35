@@ -26,113 +26,222 @@ const PLACEHOLDER_TENANTS = [
 const PLACEHOLDER_FRIENDS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'friend');
 const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'ambassador');
 
-/* ─── Brick wall texture style ─── */
-const brickWallStyle = {
-  backgroundColor: '#f5f0e8',
-  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, #e8ddd0 15px, #e8ddd0 16px), repeating-linear-gradient(90deg, transparent, transparent 30px, #e8ddd0 30px, #e8ddd0 31px)',
+/* ─── Glass facade style ─── */
+const glassWallStyle: React.CSSProperties = {
+  background: 'linear-gradient(to bottom, #d0e0ec, #b8ccd8)',
+  backgroundImage: 'linear-gradient(to bottom, #d0e0ec, #b8ccd8), repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.18) 38px, rgba(255,255,255,0.18) 39px)',
+  backgroundBlendMode: 'normal',
 };
 
 /* ─── Floor label — small metal plate ─── */
 function FloorLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-center mx-2 my-0.5">
-      <span className="text-[7px] font-bold text-[#8a7a6a] border border-[#c4b8a8] bg-[#ede8df] px-1.5 py-px rounded-[1px] tracking-wider uppercase shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+      <span className="text-[7px] font-bold text-[#5a6a7a] border border-[#9ab0c0] bg-[#e4ecf2] px-1.5 py-px rounded-[2px] tracking-wider uppercase shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         {label}
       </span>
     </div>
   );
 }
 
-/* ─── String Lights ─── */
-function StringLights({ count = 7 }: { count?: number }) {
+/* ─── SVG Rooftop Trees ─── */
+function RooftopTree({ x, height = 40 }: { x: number; height?: number }) {
+  const crownR = height * 0.35;
+  const trunkH = height * 0.45;
   return (
-    <div className="flex items-center justify-center gap-1.5 py-0.5">
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="w-1 h-1 rounded-full bg-amber-300 animate-string-shimmer"
-          style={{ animationDelay: `${i * 0.3}s` }}
-        />
-      ))}
-    </div>
+    <g transform={`translate(${x}, 0)`}>
+      {/* Trunk */}
+      <rect x={-2} y={-trunkH} width={4} height={trunkH} rx={1} fill="#6b5b4f" />
+      {/* Crown */}
+      <circle cx={0} cy={-trunkH - crownR * 0.6} r={crownR} fill="#5a8a5a" opacity={0.9} />
+      <circle cx={-crownR * 0.5} cy={-trunkH - crownR * 0.3} r={crownR * 0.7} fill="#4a7a4a" opacity={0.7} />
+      <circle cx={crownR * 0.4} cy={-trunkH - crownR * 0.4} r={crownR * 0.6} fill="#6a9a6a" opacity={0.8} />
+    </g>
   );
 }
 
-/* ─── G/F Commercial Units ─── */
+/* ─── SVG String Lights from pole ─── */
+function RooftopStringLights({ width, height }: { width: number; height: number }) {
+  const poleX = width - 14;
+  const poleTop = 4;
+  const poleBottom = height - 2;
+  // 3 strands draping from top of pole down-left
+  const strands = [
+    { endX: 10, endY: height * 0.55, cp1x: poleX - 20, cp1y: poleTop + 5, cp2x: 30, cp2y: height * 0.3 },
+    { endX: 25, endY: height * 0.7, cp1x: poleX - 15, cp1y: poleTop + 10, cp2x: 40, cp2y: height * 0.5 },
+    { endX: 45, endY: height * 0.85, cp1x: poleX - 10, cp1y: poleTop + 18, cp2x: 55, cp2y: height * 0.65 },
+  ];
+
+  return (
+    <svg width={width} height={height} className="absolute inset-0 pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+      {/* Pole */}
+      <rect x={poleX - 1.5} y={poleTop} width={3} height={poleBottom - poleTop} rx={1} fill="#6b5b4f" />
+      {/* Small flag/ornament at top */}
+      <polygon points={`${poleX + 1.5},${poleTop} ${poleX + 8},${poleTop + 3} ${poleX + 1.5},${poleTop + 6}`} fill="#c94040" opacity={0.7} />
+
+      {/* Wire strands with bulbs */}
+      {strands.map((s, si) => {
+        const path = `M ${poleX},${poleTop + 2} C ${s.cp1x},${s.cp1y} ${s.cp2x},${s.cp2y} ${s.endX},${s.endY}`;
+        // Place bulbs along the curve
+        const bulbCount = 5 + si;
+        return (
+          <g key={si}>
+            <path d={path} fill="none" stroke="#4a4a4a" strokeWidth={0.8} opacity={0.5} />
+            {Array.from({ length: bulbCount }).map((_, bi) => {
+              const t = (bi + 1) / (bulbCount + 1);
+              // Approximate point on cubic bezier
+              const mt = 1 - t;
+              const bx = mt * mt * mt * poleX + 3 * mt * mt * t * s.cp1x + 3 * mt * t * t * s.cp2x + t * t * t * s.endX;
+              const by = mt * mt * mt * (poleTop + 2) + 3 * mt * mt * t * s.cp1y + 3 * mt * t * t * s.cp2y + t * t * t * s.endY;
+              return (
+                <circle
+                  key={bi}
+                  cx={bx}
+                  cy={by + 1.5}
+                  r={1.8}
+                  fill="#f5c542"
+                  opacity={0.85}
+                  className="animate-string-shimmer"
+                  style={{ animationDelay: `${(si * 0.5 + bi * 0.25)}s` }}
+                />
+              );
+            })}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ─── SVG Café Interior ─── */
+function CafeSVG() {
+  return (
+    <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      {/* Glass window bg */}
+      <rect x={0} y={0} width={80} height={50} fill="#e8f0f4" fillOpacity={0.3} />
+      {/* Curtain left */}
+      <path d="M 0,0 Q 6,10 3,50" fill="#c94040" fillOpacity={0.25} />
+      {/* Curtain right */}
+      <path d="M 80,0 Q 74,10 77,50" fill="#c94040" fillOpacity={0.25} />
+      {/* Counter */}
+      <rect x={5} y={32} width={70} height={4} rx={1} fill="#8b6f4e" />
+      {/* Coffee machine */}
+      <rect x={55} y={18} width={14} height={14} rx={2} fill="#4a4a4a" />
+      <rect x={58} y={20} width={8} height={4} rx={1} fill="#666" />
+      <circle cx={62} cy={28} r={2} fill="#888" />
+      {/* Cups on counter */}
+      <rect x={12} y={28} width={5} height={5} rx={1} fill="#f0e6d6" />
+      <rect x={20} y={29} width={4} height={4} rx={1} fill="#e8dcc8" />
+      {/* Stool */}
+      <rect x={30} y={36} width={2} height={10} fill="#6b5b4f" />
+      <rect x={25} y={34} width={12} height={2} rx={1} fill="#6b5b4f" />
+      <rect x={44} y={36} width={2} height={10} fill="#6b5b4f" />
+      <rect x={39} y={34} width={12} height={2} rx={1} fill="#6b5b4f" />
+      {/* Hanging pendant light */}
+      <line x1={40} y1={0} x2={40} y2={8} stroke="#333" strokeWidth={0.5} />
+      <polygon points="36,8 44,8 42,12 38,12" fill="#f5c542" fillOpacity={0.6} />
+    </svg>
+  );
+}
+
+/* ─── SVG Gallery Interior ─── */
+function GallerySVG() {
+  return (
+    <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      {/* White gallery wall */}
+      <rect x={0} y={0} width={80} height={50} fill="#fafafa" fillOpacity={0.4} />
+      {/* Track lighting */}
+      <rect x={5} y={2} width={70} height={1.5} rx={0.5} fill="#555" />
+      <circle cx={18} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
+      <circle cx={40} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
+      <circle cx={62} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
+      {/* Light beams */}
+      <polygon points="18,4 12,20 24,20" fill="#f5c542" fillOpacity={0.06} />
+      <polygon points="40,4 34,20 46,20" fill="#f5c542" fillOpacity={0.06} />
+      <polygon points="62,4 56,20 68,20" fill="#f5c542" fillOpacity={0.06} />
+      {/* Art frame 1 - landscape */}
+      <rect x={8} y={10} width={20} height={16} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
+      <rect x={10} y={12} width={16} height={12} fill="#c4a47a" />
+      <circle cx={20} cy={16} r={3} fill="#e8c97a" />
+      <rect x={10} y={20} width={16} height={4} fill="#6a8a5a" />
+      {/* Art frame 2 - portrait */}
+      <rect x={33} y={8} width={14} height={22} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
+      <rect x={35} y={10} width={10} height={18} fill="#8ab0d0" />
+      <circle cx={40} cy={16} r={3} fill="#c06060" />
+      {/* Art frame 3 - small */}
+      <rect x={54} y={12} width={18} height={14} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
+      <rect x={56} y={14} width={14} height={10} fill="#d0a0c0" />
+      {/* Floor */}
+      <rect x={0} y={42} width={80} height={8} fill="#e8e4dc" fillOpacity={0.5} />
+      {/* Pedestal */}
+      <rect x={34} y={35} width={12} height={7} rx={0.5} fill="#ddd" />
+      <rect x={37} y={32} width={6} height={3} rx={1} fill="#aaa" />
+    </svg>
+  );
+}
+
+/* ─── G/F Commercial Units — Café | Entrance | Gallery ─── */
 function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   if (collapsed && !isMobile) {
     return (
-      <div className="flex flex-col items-center gap-0.5 py-1 text-[6px] text-[#5a4a3a]">
+      <div className="flex flex-col items-center gap-0.5 py-1 text-[6px] text-muted-foreground">
         <span>☕</span>
+        <span>🚪</span>
         <span>🖼️</span>
-        <span>🎭</span>
       </div>
     );
   }
 
   return (
-    <div className="flex h-16 border-t border-[#3a2f28]">
+    <div className="flex h-16 border-t border-[#7a8a9a]">
       {/* Café */}
-      <div className="flex-1 flex flex-col items-center border-r border-[#c4b8a8] bg-[#f5f0e8] overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning */}
         <div
           className="w-full h-2.5 shrink-0"
           style={{
-            background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #f5f0e8 4px, #f5f0e8 8px)',
+            background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #fff 4px, #fff 8px)',
           }}
         />
-        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider mt-0.5">CAFÉ</span>
-        <div className="flex-1 flex items-center justify-center gap-1">
-          <span className="text-[10px]">☕</span>
-          <span className="text-[8px] animate-leaf-sway inline-block">🌸</span>
+        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider text-center mt-0.5 relative z-10">CAFÉ</span>
+        <div className="flex-1 relative">
+          <CafeSVG />
         </div>
+        {/* Flower pot outside */}
+        <div className="absolute bottom-0 left-1 text-[7px] animate-leaf-sway">🌿</div>
+      </div>
+
+      {/* Entrance Door */}
+      <div className="w-10 flex flex-col items-center justify-end bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-x border-[#7a8a9a] relative">
+        {/* Arch top */}
+        <svg className="absolute top-0 w-full" viewBox="0 0 40 12" preserveAspectRatio="none">
+          <path d="M 0,12 Q 20,0 40,12 Z" fill="#5a6a7a" />
+          <path d="M 2,12 Q 20,2 38,12 Z" fill="#a0c0d4" fillOpacity={0.4} />
+        </svg>
+        {/* Door frame */}
+        <div className="w-7 flex-1 mt-3 mb-0 bg-[#5a6a7a] rounded-t-[3px] flex flex-col items-center justify-center relative overflow-hidden">
+          {/* Glass panel */}
+          <div className="w-5 flex-1 mt-1 bg-[#b0d0e0]/40 rounded-t-[2px] border border-[#7a8a9a]/50" />
+          {/* Handle */}
+          <div className="w-0.5 h-2 bg-[#c0a060] rounded-full mb-1 mt-0.5" />
+        </div>
+        {/* Plants beside door */}
+        <div className="absolute bottom-0 left-0 text-[5px]">🌱</div>
+        <div className="absolute bottom-0 right-0 text-[5px]">🌱</div>
       </div>
 
       {/* Gallery */}
-      <div className="flex-1 flex flex-col items-center border-r border-[#c4b8a8] bg-[#faf8f4] overflow-hidden">
-        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider mt-1">GALLERY</span>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-5 h-4 border border-[#c4b8a8] bg-white flex items-center justify-center">
-            <span className="text-[8px]">🖼️</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Theatre */}
-      <div className="flex-1 flex flex-col items-center bg-[#3a2f28] overflow-hidden relative">
-        {/* Marquee bulbs */}
-        <div className="flex gap-1 mt-0.5">
-          {[0, 1, 2, 3, 4].map(i => (
-            <div
-              key={i}
-              className="w-[3px] h-[3px] rounded-full bg-amber-300 animate-bulb-twinkle"
-              style={{ animationDelay: `${i * 0.3}s` }}
-            />
-          ))}
-        </div>
-        <span className="text-[6px] font-bold text-amber-200/90 tracking-wider mt-0.5"
-          style={{ textShadow: '0 0 4px rgba(245,190,80,0.5)' }}>
-          THEATRE
-        </span>
-        <div className="flex-1 flex items-center justify-center">
-          <span className="text-[10px]">🎭</span>
-        </div>
-        {/* Bottom bulbs */}
-        <div className="flex gap-1 mb-0.5">
-          {[0, 1, 2, 3, 4].map(i => (
-            <div
-              key={i}
-              className="w-[3px] h-[3px] rounded-full bg-amber-300 animate-bulb-twinkle"
-              style={{ animationDelay: `${i * 0.3 + 0.15}s` }}
-            />
-          ))}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <span className="text-[6px] font-bold text-[#5a6a7a] tracking-wider text-center mt-1 relative z-10">GALLERY</span>
+        <div className="flex-1 relative">
+          <GallerySVG />
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Animated Road ─── */
+/* ─── Animated Road (full width) ─── */
 function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   return (
     <>
@@ -157,7 +266,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
         {/* Animated cars */}
         <span className="absolute top-[2px] text-[11px] animate-car-move-right" style={{ animationDelay: '0s' }}>🚗</span>
-        <span className="absolute bottom-[2px] text-[10px] animate-car-move-left" style={{ animationDelay: '3s' }}>🚕</span>
+        <span className="absolute bottom-[2px] text-[10px] animate-car-move-left" style={{ animationDelay: '3s', transform: 'scaleX(-1)' }}>🚕</span>
         {(!collapsed || isMobile) && (
           <span className="absolute top-[2px] text-[9px] animate-car-move-right" style={{ animationDelay: '8s' }}>🚙</span>
         )}
@@ -219,9 +328,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   /* ─── Building interior content ─── */
   const buildingContent = (
     <>
-      {/* ROOFTOP — My Studio with parasols */}
+      {/* ROOFTOP — My Studio */}
       {myStudio && (
-        <div className="px-0.5">
+        <div className="px-0.5 relative">
           {!collapsed && (
             <div className="flex items-center justify-around px-2 py-0.5 select-none">
               <span className="text-[10px]">⛱️</span>
@@ -363,7 +472,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         {mode === "sidebar" && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="absolute top-2 right-0 translate-x-1/2 z-40 bg-[#faf7f2] border border-[#e8e0d5] rounded-full p-1 text-[#b8902a] hover:bg-amber-50 shadow-sm transition-colors"
+            className="absolute top-2 right-0 translate-x-1/2 z-40 bg-background border border-border rounded-full p-1 text-primary hover:bg-accent shadow-sm transition-colors"
           >
             {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
           </button>
@@ -375,53 +484,73 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Neon signage */}
-            <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-12" : "h-14")}>
-              {(!collapsed || isMobile) && (
-                <div className="flex flex-col items-center">
-                  <div
-                    className="bg-[#3a2f28] px-3 py-1 rounded-sm shadow-lg animate-neon-glow"
-                    style={{
-                      boxShadow: '0 2px 12px rgba(245,190,80,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
-                    }}
-                  >
-                    <span
-                      className="text-[9px] font-bold text-amber-200/90 tracking-[0.2em] uppercase"
+            {/* Rooftop area with neon sign + string lights + trees */}
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-20" : "h-24")}>
+              {/* Neon signage */}
+              <div className="flex flex-col items-center justify-end h-full pb-1">
+                {(!collapsed || isMobile) && (
+                  <div className="flex flex-col items-center relative w-full">
+                    <div
+                      className="bg-[#3a3a4a] px-3 py-1 rounded-sm shadow-lg animate-neon-glow relative z-10"
                       style={{
-                        textShadow: '0 0 8px rgba(245,190,80,0.6), 0 0 16px rgba(245,190,80,0.3)',
+                        boxShadow: '0 2px 12px rgba(180,210,240,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                       }}
                     >
-                      WORSHIP ATELIER
-                    </span>
+                      <span
+                        className="text-[9px] font-bold text-[#a0d0f0] tracking-[0.2em] uppercase"
+                        style={{
+                          textShadow: '0 0 8px rgba(160,200,240,0.6), 0 0 16px rgba(160,200,240,0.3)',
+                        }}
+                      >
+                        WORSHIP ATELIER
+                      </span>
+                    </div>
                   </div>
-                  {/* String lights under signage */}
-                  <StringLights count={7} />
-                </div>
+                )}
+                {collapsed && !isMobile && <div className="h-2" />}
+              </div>
+
+              {/* String lights from pole + Trees (SVG overlay) */}
+              {(!collapsed || isMobile) && (
+                <>
+                  <RooftopStringLights width={collapsed ? 56 : 256} height={isMobile ? 80 : 96} />
+                  {/* Trees */}
+                  <svg className="absolute bottom-0 left-0 pointer-events-none" width={collapsed ? 56 : 256} height={isMobile ? 80 : 96} viewBox={`0 0 ${collapsed ? 56 : 256} ${isMobile ? 80 : 96}`}>
+                    <RooftopTree x={18} height={28} />
+                    <RooftopTree x={collapsed ? 40 : 60} height={22} />
+                  </svg>
+                </>
               )}
-              {collapsed && !isMobile && <div className="h-2" />}
             </div>
 
             {/* Building wrapper */}
-            <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile ? "mx-6" : "mx-3")}>
-              {/* Building body — cream exterior with brick texture */}
+            <div className="relative z-10 flex flex-col flex-1 min-h-0">
+              {/* Building body — glass facade */}
               <div
-                className="flex-1 min-h-0 flex flex-col border-x border-t border-[#d4c5a9] rounded-t-md overflow-hidden"
+                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] rounded-t-md overflow-hidden", isMobile ? "mx-6" : "mx-3")}
                 style={{
-                  ...brickWallStyle,
-                  boxShadow: '2px 0 8px rgba(0,0,0,0.08), -2px 0 8px rgba(0,0,0,0.08)',
+                  ...glassWallStyle,
+                  boxShadow: '2px 0 8px rgba(0,0,0,0.1), -2px 0 8px rgba(0,0,0,0.1)',
                 }}
               >
-                <ScrollArea className="flex-1 min-h-0">
+                {/* Glass panel vertical lines overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none z-0"
+                  style={{
+                    backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.15) 38px, rgba(255,255,255,0.15) 39px)',
+                  }}
+                />
+                <ScrollArea className="flex-1 min-h-0 relative z-10">
                   {buildingContent}
                 </ScrollArea>
               </div>
 
               {/* G/F Ground Floor — Commercial Units */}
-              <div className="shrink-0 border-x border-[#d4c5a9]" style={brickWallStyle}>
+              <div className={cn("shrink-0 border-x border-[#7a8a9a] bg-[#e4ecf2]", isMobile ? "mx-6" : "mx-3")}>
                 <GroundFloorShops collapsed={collapsed} isMobile={isMobile} />
               </div>
 
-              {/* Animated Road */}
+              {/* Animated Road — full width (no mx) */}
               <AnimatedRoad collapsed={collapsed} isMobile={isMobile} />
             </div>
           </>
