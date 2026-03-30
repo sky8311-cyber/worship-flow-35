@@ -1,64 +1,87 @@
 
 
-# 포스트모던 아틀리에 빌딩 전면 재디자인
+# StudioSidePanel 전면 재설계 — 포스트모던 멀티유닛 상업 건물
 
-## 디자인 컨셉
-성수동 리모델링 스튜디오 건물. 크림 외벽 + 따뜻한 벽돌 텍스처, 세로로 긴 아틀리에 창문에서 앰버/골든 glow가 새어나오는 구조. 고딕/종교적 요소 완전 제거. "여기서 일하고 싶다"는 욕망을 만드는 감성.
+## 변경 파일
 
-## 파일 변경
+### 1. `tailwind.config.ts` — 커스텀 keyframes/animations 추가
 
-### 1. `StudioSidePanel.tsx` — 빌딩 외장 전면 교체
+```
+cloud-drift: translateX(-100%) → translateX(100%), 35s linear infinite
+neon-glow: opacity 1→0.7→1, 3s ease-in-out infinite
+string-shimmer: opacity 0.4→1→0.4, 2s ease-in-out infinite (+ staggered via animation-delay)
+leaf-sway: rotate(-3deg)→rotate(3deg), 2.5s ease-in-out infinite alternate
+car-move-right: translateX(-120%)→translateX(400%), 18s linear infinite
+car-move-left: translateX(400%)→translateX(-120%), 22s linear infinite
+pinwheel-spin: rotate 0→360deg, 4s linear infinite
+bulb-twinkle: opacity 0.3→1→0.3, 1.5s ease-in-out infinite
+```
 
-**상단 간판 (기존 rooftop sign 교체)**
-- 고딕 폴 제거 → 다크 브라운(`#3a2f28`) 배경에 `text-amber-200/90` 글자로 "WORSHIP ATELIER" 백라이트 간판
-- `letter-spacing: 0.2em`, `text-shadow: 0 0 8px rgba(245,190,80,0.6)` glow 효과
-- 간판 아래 가느다란 앰버 LED 라인 (`h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent`)
+### 2. `StudioUnit.tsx` — Compact 유닛 (높이 절반)
 
-**건물 본체 (기존 `bg-gradient-to-b from-slate-50...` 교체)**
-- 외벽: `bg-[#f5f0e8]` (크림/오프화이트) + CSS `repeating-linear-gradient` 벽돌 패턴 (16px 간격, `#e8ddd0` 색 라인으로 은근한 벽돌 줄눈)
-- `border-x border-t` → `border-[#d4c5a9]` (따뜻한 사암색)
-- `rounded-t-xl` → `rounded-t-md` (포스트모던은 둥근 코너 최소화)
-- `boxShadow` → 좌우 미세한 그림자 유지, 상단 금색 라인 제거
+- 현재 `h-10` 창문 → `h-7` (compact)
+- 전체 row padding `py-1` → `py-0.5`
+- 아바타 `w-8 h-10` → `w-6 h-7`
+- 이름 창 `h-10` → `h-7`, 텍스트 `text-[10px]`
+- 방문 버튼 `w-10 h-10` → `w-7 h-7`
+- Penthouse variant는 기존 크기 유지 (루프탑에서 더 크게 보이도록)
 
-**층 구분 (이웃 vs 앰배서더)**
-- 이웃 섹션 상단: 얇은 가로선 + 작은 층 번호 "2F" 레이블 (`text-[8px] text-[#a89070] bg-[#f5f0e8] px-1`)
-- 앰배서더 섹션 상단: 같은 스타일로 "1F" 레이블
-- My Studio(펜트하우스): "3F" 또는 "ROOFTOP" 레이블
+### 3. `StudioSidePanel.tsx` — 전면 재구성
 
-**1F 입구 (기존 ground floor 교체)**
-- 반원 아치 현관: `border-t` + `rounded-t-full` (로고 아치 스타일) 위에 쌍둥이 문 배치
-- 문: 기존 사각형 유지하되 색상 → 다크 브라운(`bg-[#5a4a3a]`) + 유리 부분 `bg-amber-50/40`
-- 입구 양쪽: 🌿 식물 포트 아이콘 (기존 꽃 이모지 대체)
-- "Worship Atelier" + "kworship.app" 배지 유지, 간판 아래로 이동
+**하늘 배경**: 기존 정적 구름 이모지 → CSS `animate-cloud-drift`로 좌→우 이동 루프. 3개 구름을 다른 속도/높이로 배치.
 
-**잔디/도로 유지** — 색상만 미세 조정. 꽃 이모지 → 식물 포트 포커스.
+**루프탑 (내 스튜디오)**:
+- 간판: "WORSHIP ATELIER" 네온사인에 `animate-neon-glow` 적용
+- 스트링 조명: 간판 아래에 작은 원형 점 5~7개를 가로로 배치, 각각 `animate-string-shimmer`에 `animation-delay` 스태거
+- 파라솔 이모지 2~3개 (☂️→⛱️) + 작은 테이블 구조물
+- "내 스튜디오" 유저 카드는 루프탑 영역 안에 위치
 
-**하늘 배경** — 기존 유지 (구름 포함).
+**2F 이웃 / 1F 앰배서더**: 
+- FloorLabel 유지하되 가로선 제거 → 벽에 작은 금속 플레이트 느낌 (배경색과 동일, 테두리만)
+- `flex-1 min-h-[24px]` 여백 제거 → `min-h-[8px]`로 축소
+- StudioUnit에 compact=true 항상 전달 (penthouse 제외)
 
-### 2. `StudioUnit.tsx` — 창문 스타일 변경
+**G/F 지상층 — 3개 상업 유닛 (SVG/CSS 일러스트)**:
+기존 entrance 영역을 3개 가게로 교체. 각 가게는 `flex-1`로 균등 배분.
 
-**창문 프레임 교체**
-- 기존: `rounded-sm border border-[#8a7a6a]`
-- 변경: 다크 브라운/블랙 창틀 `border-[#3a2f28] border-[1.5px] rounded-[2px]`
-- 세로로 긴 비율 강조: 아바타 창 `w-8 h-10` (기존 `w-8 h-8`), 이름 창 `h-10`, 방문 버튼 `h-10`
+- **Café**: 줄무늬 어닝(CSS striped background) + "Café" 작은 간판 + 유리창(반투명 bg) 안에 ☕ 실루엣 + 입구 앞 테이블 1개 + 꽃화분(🌸) `animate-leaf-sway`
+- **Gallery**: 미니멀 간판 "Gallery" + 흰색 유리창 안에 🖼️ 액자 + 깔끔한 프레임
+- **Theatre**: 마키 간판 "Theatre" + 전구 테두리 점 여러 개 `animate-bulb-twinkle` (staggered delay) + 포스터 프레임
 
-**앰버 glow 효과**
-- 각 창문 배경: `bg-white` → `bg-gradient-to-b from-amber-50/80 via-amber-100/40 to-amber-50/60`
-- 미세한 inner glow: `shadow-[inset_0_0_6px_rgba(245,190,80,0.15)]`
-- "이 안에서 창작이 일어나고 있다"는 따뜻한 빛 느낌
+**도로**:
+- 잔디 제거
+- 인도: `bg-[#c4b8a8]` 회색 톤 + 가로등 🏮 1~2개
+- 도로: 기존 유지 + 자동차 이모지에 `animate-car-move-right` / `animate-car-move-left` 적용 (정적 absolute → 애니메이션 이동)
+- 바람개비 ✤ 또는 CSS 바람개비 → `animate-pinwheel-spin`
 
-**방문 버튼 색상 조정**
-- 모든 variant의 hover bg → `hover:bg-amber-100/80` (통일된 따뜻한 톤)
+**Collapsed 상태**: 지상층 가게 → 간판만 세로 배치, 애니메이션 유지
 
-### 3. collapsed 상태 처리
-- 외벽 텍스처와 창틀 스타일은 동일하게 적용
-- 간판은 숨김 (기존과 동일)
-- 창문은 아바타만 세로 배치 (기존 로직 유지, 프레임 스타일만 변경)
+## 구조 요약 (위→아래)
 
-## 금지 사항 체크리스트
-- ❌ 고딕 아치 (뾰족한 아치) → ✅ 반원 아치만 입구에 사용
-- ❌ 십자가/종교 장식 → ✅ 없음
-- ❌ 스테인드글라스 → ✅ 없음
-- ❌ 뾰족한 첨탑 → ✅ 없음
-- ❌ 카카오 스타일 → ✅ 세련된 포스트모던
+```text
+┌─────────────────────────┐
+│     ☁️ SKY (animated)    │
+│  ☁️         ☁️           │
+├─────────────────────────┤
+│ ✨ WORSHIP ATELIER ✨    │ ← neon glow
+│  · · · · · · ·          │ ← string lights shimmer
+│  ⛱️  [내 스튜디오]  ⛱️   │ ← rooftop user card
+├─────────────────────────┤
+│  2F · 이웃               │ ← small metal plate label
+│  [unit] [unit] [unit]... │ ← compact h-7 windows
+├─────────────────────────┤
+│  1F · 앰배서더            │
+│  [unit] [unit] [unit]    │
+├═════════════════════════┤
+│ Café  │Gallery│ Theatre  │ ← G/F commercial units
+│ ☕ 🌸 │  🖼️   │ 💡🎭    │
+├─────────────────────────┤
+│ 🏮 sidewalk  🏮         │
+│ 🚗→    ═══    ←🚕       │ ← animated cars
+│           🌀             │ ← pinwheel
+└─────────────────────────┘
+```
+
+## 금지 체크
+- 고딕 아치 없음, 종교적 요소 없음, 과도한 가로줄 없음, 잔디 없음, 카카오 스타일 없음
 
