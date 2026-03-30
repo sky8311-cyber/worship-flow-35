@@ -1,22 +1,38 @@
 
 
-# 자동차 전조등 — 차 앞쪽 헤드라이트로 변경
+# 건물 파사드 — 밝은 차콜 색상 통일 (낮)
 
-## 문제
-현재 `filter: drop-shadow(0 0 5px #f5c542)`가 차량 이모지 전체에 적용되어 차 전체가 빛남. 헤드라이트는 차 앞쪽에서만 길을 비춰야 함.
+## 현재 상태
+- **파사드 (낮)**: 파란 유리 느낌 `#c0d4e4 → #a8bcd0 → #98b0c4` (푸른 계열)
+- **문 위 벽 (낮)**: `#a0b8c8 → #8aa0b0` (푸른 계열)
+- **문 (낮)**: `#5a6a7a` (푸른 회색)
+- **G/F 배경 (낮)**: `#e4ecf2` (연한 파랑)
+- **보더**: `#7a8a9a`
 
-## 수정 방향 (StudioSidePanel.tsx — AnimatedRoad)
+→ 전체적으로 블루 계열. 요청은 **밝은 차콜(warm gray)** 계열로 통일.
 
-1. **차 전체 `drop-shadow` 제거** — 기존 `filter` 스타일 삭제
+## 변경할 색상 (낮 모드만)
 
-2. **각 차량을 wrapper `span`으로 감싸고, 앞쪽에 헤드라이트 div 배치**:
-   - 왼쪽으로 이동하는 차 (`animate-car-move-left`): 차 왼쪽에 노란 빛 원형 배치
-   - 오른쪽으로 이동하는 차 (`animate-car-move-right`): 차 오른쪽에 노란 빛 원형 배치
-   - 헤드라이트: `position: absolute`, 작은 원형 (`w-2 h-1.5`), `background: radial-gradient(ellipse, rgba(255,230,100,0.7), transparent)`, 차 앞쪽 하단에 위치
-   - 밤에만 표시 (`isNight && ...`)
+밝은 차콜 팔레트:
+- 파사드 그라디언트: `#b8b0a8 → #a09890 → #908880`
+- 문 위 벽: `#a09890 → #908880`
+- 문: `#706860`
+- 문 유리/아치: `#908880` 계열
+- G/F 배경: `#d8d0c8`
+- 보더: `#8a8278`
+- 간판 보더/그림자: `#8a8278` / `#7a7268`
 
-3. **빛이 길을 비추는 효과**: 헤드라이트 앞쪽으로 넓게 퍼지는 타원형 glow 추가 (`w-6 h-2`, 낮은 opacity), 도로 위에 빛이 깔리는 느낌
+## 수정 위치 (`StudioSidePanel.tsx`)
 
-## 변경 파일
-- `src/components/worship-studio/StudioSidePanel.tsx` (AnimatedRoad 함수, lines 574-583)
+1. **Line 16-18** — `glassWallDay` 그라디언트 → 밝은 차콜
+2. **Lines 483-488** — 문 영역 낮 색상 (`from-[#a0b8c8]` → 차콜 계열)
+3. **Lines 489-494** — 문 위 벽 낮 색상
+4. **Line 496** — 문 위 아치 SVG fill
+5. **Lines 500-511** — 문 본체, 유리, 문턱 낮 색상
+6. **Line 901** — G/F 배경 낮 색상
+7. **Lines 878-879** — 보더 낮 색상
+8. **Line 687** — 간판 보더/그림자 색상 (밤낮 무관 유지하되 차콜 톤에 맞춤)
+
+## 파일
+- `src/components/worship-studio/StudioSidePanel.tsx`
 
