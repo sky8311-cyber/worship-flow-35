@@ -677,10 +677,10 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Spacer for string lights to extend into */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-5" : "h-6")} />
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-3" : "h-6")} />
 
             {/* Building wrapper */}
-            <div className="relative z-10 flex flex-col flex-1 min-h-0">
+            <div className={cn("relative z-10 flex flex-col flex-1 min-h-0", isMobile && "justify-end")}>
               {/* Rooftop scene */}
               {(!collapsed || isMobile) && (
                 <div className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
@@ -692,7 +692,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               <div
                 className={cn(
                   "min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-visible relative",
-                  isMobile ? "mx-6 h-[38vh] flex-none" : "mx-3 flex-1"
+                  isMobile ? "mx-6 h-[50vh] flex-none" : "mx-3 flex-1"
                 )}
                 style={{
                   ...glassWallStyle,
