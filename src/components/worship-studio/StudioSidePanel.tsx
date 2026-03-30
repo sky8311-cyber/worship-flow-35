@@ -206,7 +206,7 @@ function RooftopStringLights({ width }: { width: number }) {
 /* ─── SVG Café Interior ─── */
 function CafeSVG() {
   return (
-    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMax meet">
       <rect x={0} y={0} width={120} height={70} fill="#e8f0f4" fillOpacity={0.3} />
       {/* Curtain sides */}
       <path d="M 0,0 Q 4,10 2,70" fill="#c94040" fillOpacity={0.25} />
@@ -275,7 +275,7 @@ function CafeSVG() {
 /* ─── SVG Gallery Interior ─── */
 function GallerySVG() {
   return (
-    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMax meet">
       <rect x={0} y={0} width={120} height={70} fill="#fafafa" fillOpacity={0.4} />
       {/* Track lighting */}
       <rect x={5} y={2} width={110} height={1.2} rx={0.4} fill="#555" />
@@ -359,7 +359,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
   }
 
   return (
-    <div className="flex h-20 border-t border-[#7a8a9a]">
+    <div className={cn("flex border-t border-[#7a8a9a]", isMobile ? "h-28" : "h-20")}>
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning — taller with scalloped edge */}
