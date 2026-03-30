@@ -220,6 +220,46 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
         </>
       )}
 
+      {/* Billboard — behind trees/parasols/stage */}
+      {(() => {
+        const bbW = width * 0.45;
+        const bbH = floorY * 0.42;
+        const bbX = width * 0.3;
+        const bbY = floorY - bbH - 16;
+        const pillarW = 3;
+        const pillarH = floorY - bbY - bbH + bbH;
+        const bezelPad = 2;
+        return (
+          <g>
+            {/* Pillars */}
+            <rect x={bbX + 8} y={bbY + bbH - 2} width={pillarW} height={pillarH + 2} rx={1} fill={isNight ? "#4a5a6a" : "#8a8a8a"} />
+            <rect x={bbX + bbW - 8 - pillarW} y={bbY + bbH - 2} width={pillarW} height={pillarH + 2} rx={1} fill={isNight ? "#4a5a6a" : "#8a8a8a"} />
+            {/* Screen 3D depth (back face) */}
+            <rect x={bbX + 2} y={bbY + 2} width={bbW} height={bbH} rx={2} fill={isNight ? "#2a3a4a" : "#6a6a6a"} opacity={0.5} />
+            {/* Screen body */}
+            <rect x={bbX} y={bbY} width={bbW} height={bbH} rx={2} fill={isNight ? "#1a2a3a" : "#f4f4f4"} />
+            {/* Bezel frame */}
+            <rect x={bbX} y={bbY} width={bbW} height={bbH} rx={2} fill="none" stroke={isNight ? "#5a6a7a" : "#aaa"} strokeWidth={1.5} />
+            {/* Night glow */}
+            {isNight && (
+              <>
+                <defs>
+                  <filter id="bbGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <rect x={bbX - 3} y={bbY - 3} width={bbW + 6} height={bbH + 6} rx={4} fill="rgba(200,220,255,0.08)" filter="url(#bbGlow)" />
+              </>
+            )}
+            {/* Animated text */}
+            <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`}>
+              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} />
+            </g>
+          </g>
+        );
+      })()}
+
       {/* Trees — grounded on floor surface */}
       <g opacity={silhouetteOpacity}>
         {trees.map((t, i) => (
