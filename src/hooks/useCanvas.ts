@@ -184,7 +184,7 @@ export function useCanvas(canvasId?: string) {
       queryClient.invalidateQueries({ queryKey: ["canvas", canvasId] });
       queryClient.invalidateQueries({ queryKey: ["studio-posts"] });
       toast.success("발행되었습니다");
-      navigate("/studio");
+      navigate("/atelier");
     },
   });
 
