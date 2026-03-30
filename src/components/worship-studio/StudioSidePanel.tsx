@@ -435,7 +435,7 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
   return (
     <>
     {/* Sidewalk with patio set */}
-      <div className={cn("shrink-0 select-none pointer-events-none relative", isMobile ? "h-5" : "h-6")}
+      <div className={cn("shrink-0 select-none pointer-events-none relative z-10", isMobile ? "h-5" : "h-6")}
         style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
         {/* Patio table & chairs in front of café */}
         {(!collapsed || isMobile) && (
@@ -462,26 +462,26 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
       {/* Road */}
       <div
-        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-8" : "h-10")}
+        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none z-20", isMobile ? "h-8" : "h-10")}
         style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
       >
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
 
         {/* Upper lane (above center line) — right to left, raised 15px */}
-        <span className="absolute text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
+        <span className="absolute z-30 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
 
         {/* Lower lane (below center line) — left to right, emoji flipped to face right */}
-        <span className="absolute bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+        <span className="absolute z-30 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
           <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
 
         {(!collapsed || isMobile) && (
           <>
             {/* Upper lane — 2nd car, raised 15px */}
-            <span className="absolute text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
+            <span className="absolute z-30 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
             {/* Lower lane — minivan */}
-            <span className="absolute bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+            <span className="absolute z-30 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
           </>
@@ -727,7 +727,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 {(!collapsed || isMobile) && (
                   <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 )}
-                <ScrollArea className="flex-1 min-h-0 relative z-10">
+                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[50vh]")}>
                   {buildingContent}
                 </ScrollArea>
               </div>
