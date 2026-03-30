@@ -30,6 +30,7 @@ function FloorLabel({ label }: { label: string }) {
 /* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage (1.5x scale) ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
   const h = isMobile ? 78 : 90;
+  const floorY = h - 4; // visible floor surface near bottom
   const spacing = width / 6;
 
   // 3 parasol sets (left side) — 1.5x
