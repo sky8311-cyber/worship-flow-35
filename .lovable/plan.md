@@ -1,57 +1,39 @@
 
 
-# 히어로 애니메이션 레이아웃 & 순서 재구성
+# 히어로 수정 계획
 
-## 새로운 레이아웃 (위→아래)
+## 변경사항 3가지
 
-```text
-┌─────────────────────────────────────┐
-│                                     │
-│     "Worship Atelier" + "는..."     │  ← 로고 SVG 텍스트 + 고운돋움 인라인
-│                                     │
-│          ╭───────────╮              │
-│         ╱   아치 심볼  ╲             │  ← 아치 드로잉 + 별 stamp
-│        │               │            │
-│        │               │            │
-│   "예배를"          "삶의 흐름으로"    │  ← 아치 다리 바로 아래 좌/우 배치
-│                                     │
-│          "연결합니다"                 │  ← 중앙, 커서 깜빡임
-│                                     │
-│        [ 내 공간 만들기 ]             │  ← CTA 페이드인
-│                                     │
-└─────────────────────────────────────┘
-```
+### 1. "Worship Atelier는..." 타이틀 제거
+- 상단 `motion.div` (lines 71-94) 전체 삭제
+- Phase 1의 dots 로직도 제거 — 불필요
+- Phase 시작을 바로 2부터 (또는 단순화)
 
-## 애니메이션 순서
+### 2. "예배를 삶의 흐름으로" + "연결합니다" 한 블록으로
+- 아치 아래에 텍스트를 한 줄로 배치: `예배를 삶의 흐름으로`
+- 바로 아래 `연결합니다` — 간격 최소화하여 한 텍스트 블록처럼
+- 현재 absolute 배치 → 아치 아래 중앙 정렬 flex column으로 변경
 
-| 순서 | 내용 | 타이밍 |
-|------|------|--------|
-| 1 | "Worship Atelier는..." — "WORSHIP ATELIER" 는 serif SVG 텍스트로, "는" 은 고운돋움 인라인 텍스트로 페이드인 후 "..." 점 하나씩 타이프라이터 + 깜빡임 | 0s ~ 1.5s |
-| 2 | "예배를" — 왼쪽 아치 아래에 페이드인 | ~1.5s |
-| 3 | "삶의 흐름으로" — 오른쪽 아치 아래에 페이드인 | ~2.0s |
-| 4 | 아치 심볼 드로잉 (outer→inner) + "연결합니다" 타이프라이터 + 별 stamp — 동시 시작 | ~2.5s |
-| 5 | CTA 버튼 페이드인 | ~4.5s |
+### 3. 아치 애니메이션 반복 버그 수정
+- **원인**: `useEffect` for dots가 `[phase]`에 의존 → phase가 2, 3, 4로 변할 때마다 다시 실행되어 `setPhase(2)`를 1.5초 후 호출 → phase가 계속 순환
+- **수정**: dots effect의 조건을 `if (phase !== 1) return`으로 변경하여 phase 1에서만 실행
+- AtelierArchLogo의 `animate`에서 `startDrawing`이 false→true만 되도록 보장
 
 ## 수정 파일
 
-### `src/components/atelier-landing/AtelierHero.tsx` — 전면 재작성
-- 기존 TypewriterText 컴포넌트 사용 중지, 직접 단계별 state 관리
-- 레이아웃을 수직 스택으로 재구성:
-  1. 상단: "Worship Atelier" (serif, `<svg>` 텍스트 또는 `font-serif` span) + "는" (font-korean) + "..." 타이프라이터 점
-  2. 중앙: AtelierArchLogo (delay prop 전달)
-  3. 아치 아래 좌우: "예배를" / "삶의 흐름으로" (motion.div fade-in, relative positioning)
-  4. 하단: "연결합니다" (타이프라이터 + 커서)
-- 각 단계 완료 시 다음 단계 트리거하는 state machine (`phase: 1|2|3|4|5`)
+### `AtelierHero.tsx` — 재구성
+- 타이틀 섹션 삭제
+- Phase 단순화: 1→예배를, 2→삶의 흐름으로, 3→아치+연결합니다, 4→CTA
+- 텍스트 레이아웃: 아치 아래 중앙에 두 줄 텍스트 블록
+```
+    [아치 심볼]
+  예배를 삶의 흐름으로
+     연결합니다
+   [내 공간 만들기]
+```
+- dots 관련 state/effect 제거
+- phase useEffect 버그 수정
 
-### `src/components/atelier-landing/AtelierArchLogo.tsx` — delay prop 추가
-- `delay` prop 추가하여 아치 드로잉 시작 시점을 Hero에서 제어
-- 기존 하드코딩된 delay (0.3s, 0.8s, 2.8s) 대신 `delay` 기준으로 상대 오프셋 적용
-- `onArchComplete` 콜백 유지 (별 stamp 완료 시 호출)
-
-## 핵심 구현 디테일
-
-- "Worship Atelier" 텍스트: HTML `<span className="font-serif">Worship Atelier</span><span className="font-korean">는</span>` — SVG 파일 임베드 대신 CSS 폰트 사용 (더 유연)
-- "..." 타이프라이터: 점 3개를 순차적으로 표시 후 마지막 점에서 opacity 깜빡임
-- "예배를" / "삶의 흐름으로": 아치 컨테이너 기준 `relative` 배치, 아치 다리(하단) 바로 아래 좌/우 정렬
-- Phase 4에서 아치 드로잉과 "연결합니다" 타이프라이터가 동시에 시작
+### `AtelierArchLogo.tsx` — 변경 없음
+- 컴포넌트 자체는 정상, 부모의 phase 버그가 원인
 
