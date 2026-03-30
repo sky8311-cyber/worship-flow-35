@@ -118,7 +118,7 @@ const WHITE_BG_STYLE: React.CSSProperties = {
   background: '#ffffff',
 };
 
-const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight }: { screenW: number; screenH: number; isNight: boolean }) {
+const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight, isMobile }: { screenW: number; screenH: number; isNight: boolean; isMobile?: boolean }) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [animClass, setAnimClass] = useState("billboard-fade-in");
