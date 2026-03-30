@@ -1,29 +1,79 @@
 
 
-# 루프탑 난간 레이어링 + 모바일 너비 맞춤
+# 밤/낮 모드 — 타임존 자동 + 토글 버튼
 
-## 문제 1: 난간이 오브젝트 뒤에 있음
-현재 SVG 렌더링 순서: 바닥 → **난간** → 나무 → 파라솔 → 스테이지
-SVG는 나중에 그려진 요소가 위에 표시되므로, 난간이 모든 오브젝트 뒤에 깔림.
+## 개요
+유저 타임존 기반으로 밤/낮을 자동 판별하되, 토글 버튼으로 수동 전환 가능. 재접속 시 타임존 기준으로 자동 리셋.
 
-**수정**: 난간 코드(lines 64-69)를 스테이지 `</g>` 뒤(line 148 근처)로 이동 → 최상단 레이어로 렌더링. 나무, 파라솔, 스테이지가 난간 뒤편에 위치한 것처럼 보임.
+## 새 파일
 
-## 문제 2: 모바일에서 난간 너비 고정
-현재 `RooftopScene`에 `width={200}` (모바일)이 하드코딩되어 있지만, 실제 건물 본체는 `mx-6` 패딩 후 화면 전체를 차지함.
+### `src/lib/nightModeHelper.ts`
+- `isNightTime(timezone: string | null): boolean` — 19:00~06:00이면 true (기본값 Asia/Seoul)
+- `Intl.DateTimeFormat` 사용하여 해당 타임존의 현재 시각 계산
 
-**수정**: `RooftopScene`의 `width` prop 대신 컨테이너 실제 너비를 사용하도록 변경. 모바일에서는 `useRef` + `useEffect`로 컨테이너 `clientWidth`를 측정하여 동적으로 전달. 이렇게 하면 난간과 모든 오브젝트가 건물 너비에 자동으로 맞춰짐.
-
-## 변경 사항
+## 변경 파일
 
 ### `src/components/worship-studio/StudioSidePanel.tsx`
 
-1. **난간 SVG 순서 변경** (RooftopScene 함수 내):
-   - Lines 64-69의 난간 코드를 line 148 (스테이지 `</g>` 뒤)로 이동
-   - 결과: 바닥 → 나무 → 파라솔 → 스테이지 → **난간** (최상단)
+**1. isNight 상태 + 토글**
+- `useAuth()`에서 `profile?.timezone` 가져오기
+- `const autoNight = isNightTime(profile?.timezone)` → 초기값
+- `const [isNight, setIsNight] = useState(autoNight)` + `useEffect`로 autoNight 변경 시 동기화 (재접속 시 자동 반영)
+- 토글 버튼: 건물 상단(하늘 영역)에 🌙/☀️ 아이콘 버튼 배치
 
-2. **모바일 동적 너비**:
-   - 루프탑 컨테이너 div에 `ref` 추가
-   - `useState` + `useEffect` + `ResizeObserver`로 컨테이너 너비 측정
-   - 모바일일 때 측정된 너비를 `RooftopScene`에 전달 (fallback: 200)
-   - 데스크톱은 기존 하드코딩 유지
+**2. 하늘 배경 (lines 676-688)**
+- 낮: 기존 그라디언트 + 구름
+- 밤: `#0a0e2a → #141852 → #1a1a40` 그라디언트, 구름 제거
+- **별**: SVG 50~70개 랜덤 좌표 원형 (r=0.5~1.5), 흰색, CSS `animate-twinkle` 각각 다른 delay
+- **달**: 우측 상단 초승달 SVG, 은은한 glow
+
+**3. 건물 파사드 (glassWallStyle)**
+- 밤: `#2a3a4a → #1e2e3e → #182838` 어두운 푸른색 그라디언트
+- `isNight` 기반 조건부 스타일 적용
+
+**4. 루프탑 (RooftopScene) — isNight prop 추가**
+- 바닥색: `#8a9aaa` → `#3a4a5a`
+- 나무/파라솔: opacity 0.4로 낮춰 실루엣화
+- **무대만 밝게**: 무대 아래 노란 glow rect + radialGradient 스포트라이트
+- 난간색: 어둡게
+
+**5. 스트링 라이트 (RooftopStringLights) — isNight prop 추가**
+- 밤: 전구 색 `#ffe066`, opacity 1.0으로 밝게
+- 각 전구 아래 빛 삼각형 cone 추가 (노란색, opacity 0.15)
+- 전구가 비추지 않는 영역은 기존 어둠 유지
+
+**6. 상가 (GroundFloorShops) — isNight prop 추가**
+- 카페: 영업중 — 내부 밝게 유지, 조명 cone 강화 (fillOpacity 높임), 간판 glow
+- 갤러리: 영업종료 — 어두운 오버레이 rect `rgba(0,0,0,0.6)` 추가
+
+**7. 도로 (AnimatedRoad) — isNight prop 추가**
+- 도로색: `#4a4a4a` → `#2a2a2a`, 인도: `#c4b8a8` → `#6a6050`
+
+### `src/components/worship-studio/StudioUnit.tsx`
+- `isNight?: boolean` prop 추가
+- empty 유닛: 밤이면 `windowGlow` 대신 `bg-[#1a2a3a]` (불 꺼진 창문)
+- 입주 유닛: 밤이면 windowGlow 유지 (불 켜진 따뜻한 창문)
+
+### `src/index.css` (또는 tailwind 설정)
+- `@keyframes twinkle` 추가: opacity 0.3 ↔ 1.0, duration 2~4s
+
+## Props 흐름
+```text
+StudioSidePanel (isNight 계산 + 토글)
+  ├── Sky background    ← isNight 조건부 렌더링
+  ├── RooftopScene      ← isNight prop
+  ├── RooftopStringLights ← isNight prop
+  ├── StudioUnit        ← isNight prop (각 유닛에 전달)
+  ├── GroundFloorShops  ← isNight prop
+  └── AnimatedRoad      ← isNight prop
+```
+
+## 토글 버튼 위치
+하늘 영역 우측 상단 (z-30), 작은 원형 버튼 (w-6 h-6), 밤이면 ☀️ 표시, 낮이면 🌙 표시
+
+## 파일 목록
+1. `src/lib/nightModeHelper.ts` (신규)
+2. `src/components/worship-studio/StudioSidePanel.tsx` (대규모 수정)
+3. `src/components/worship-studio/StudioUnit.tsx` (isNight prop 추가)
+4. `src/index.css` (twinkle 애니메이션 추가)
 
