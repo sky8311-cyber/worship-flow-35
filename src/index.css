@@ -118,7 +118,7 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-korean;
     word-break: keep-all;
     overflow-wrap: break-word;
   }

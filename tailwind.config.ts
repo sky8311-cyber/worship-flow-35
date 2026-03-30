@@ -14,6 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
+        sans: ['Gowun Dodum', 'sans-serif'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
         korean: ['Gowun Dodum', 'sans-serif'],
       },
