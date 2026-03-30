@@ -3,9 +3,10 @@ import { motion } from "framer-motion";
 interface AtelierArchLogoProps {
   onArchComplete?: () => void;
   className?: string;
+  delay?: number;
 }
 
-export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchLogoProps) => {
+export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0 }: AtelierArchLogoProps) => {
   return (
     <div className={`relative ${className}`}>
       <svg
@@ -24,7 +25,7 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
           fill="none"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
+          transition={{ duration: 1.2, delay: delay, ease: "easeInOut" }}
         />
 
         {/* Inner arch */}
@@ -37,7 +38,7 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
           fill="none"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, delay: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 1.2, delay: delay + 0.5, ease: "easeInOut" }}
           onAnimationComplete={onArchComplete}
         />
 
@@ -49,9 +50,9 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{
-              delay: 2.8,
+              delay: delay + 2.0,
               duration: 0.35,
-              ease: [0.175, 0.885, 0.32, 1.275], // overshoot ease
+              ease: [0.175, 0.885, 0.32, 1.275],
             }}
             style={{ transformOrigin: "28px 28px" }}
           />
