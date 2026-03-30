@@ -278,9 +278,9 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
       {/* Billboard — behind trees/parasols/stage */}
       {(() => {
         const bbW = width * 0.45;
-        const bbH = isMobile ? floorY * 0.48 : floorY * 0.42;
+        const bbH = isMobile ? floorY * 0.55 : floorY * 0.42;
         const bbX = width * 0.3;
-        const bbY = floorY - bbH - 16;
+        const bbY = floorY - bbH - (isMobile ? 10 : 16);
         const pillarW = 3;
         const pillarH = floorY - bbY - bbH + bbH;
         const bezelPad = 2;
