@@ -234,3 +234,9 @@ input[type="time"]::-webkit-date-and-time-value {
 .billboard-slide-up { animation: bb-slide-up 0.6s ease-out forwards; }
 .billboard-scale-pop { animation: bb-scale-pop 0.5s ease-out forwards; }
 .billboard-slide-right { animation: bb-slide-right 0.6s ease-out forwards; }
+
+/* ═══ Billboard stream background flow ═══ */
+@keyframes stream-flow {
+  0% { background-position: 0% 50%, 0% 0%; }
+  100% { background-position: 200% 50%, 0% 0%; }
+}
