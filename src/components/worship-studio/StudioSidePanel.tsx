@@ -118,7 +118,7 @@ const WHITE_BG_STYLE: React.CSSProperties = {
   background: '#ffffff',
 };
 
-const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight }: { screenW: number; screenH: number; isNight: boolean }) {
+const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight, isMobile }: { screenW: number; screenH: number; isNight: boolean; isMobile?: boolean }) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [animClass, setAnimClass] = useState("billboard-fade-in");
@@ -171,8 +171,8 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
   const isStream = screen.bg === "stream";
   const isEnglish = /^[A-Za-z\s]+$/.test(screen.text);
   const fontSize = isEnglish
-    ? Math.min(Math.max(5, screenW * 0.07), screenH * 0.35)
-    : Math.min(Math.max(5, screenW * 0.09), screenH * 0.35);
+    ? Math.min(Math.max(4, screenW * 0.07), screenH * 0.3, isMobile ? 12 : 20)
+    : Math.min(Math.max(4, screenW * 0.08), screenH * 0.28, isMobile ? 10 : 18);
   const textColor = isStream ? '#ffffff' : '#2a2a2a';
 
   const displayText = isTypewriter && visible
@@ -203,7 +203,7 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
             fontWeight: 700,
             color: textColor,
             textAlign: 'center',
-            lineHeight: 1.3,
+            lineHeight: 1.15,
             wordBreak: 'keep-all',
             overflowWrap: 'break-word',
             display: 'block',
@@ -278,9 +278,9 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
       {/* Billboard — behind trees/parasols/stage */}
       {(() => {
         const bbW = width * 0.45;
-        const bbH = isMobile ? floorY * 0.48 : floorY * 0.42;
+        const bbH = isMobile ? floorY * 0.55 : floorY * 0.42;
         const bbX = width * 0.3;
-        const bbY = floorY - bbH - 16;
+        const bbY = floorY - bbH - (isMobile ? 10 : 16);
         const pillarW = 3;
         const pillarH = floorY - bbY - bbH + bbH;
         const bezelPad = 2;
@@ -309,7 +309,7 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
             )}
             {/* Animated text */}
             <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`}>
-              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} />
+              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} isMobile={isMobile} />
             </g>
           </g>
         );
