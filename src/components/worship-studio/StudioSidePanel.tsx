@@ -52,29 +52,33 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   // Worship stage position (right side) — 1.5x
   const stageX = spacing * 4.5;
   const stageW = spacing * 1.8;
-  const stageY = h - 7;
+  const stageY = floorY;
 
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-      {/* Railing — 1.5x thickness */}
-      <rect x={0} y={h - 6} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
-      <rect x={0} y={h - 1.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
+      {/* Rooftop floor surface — solid building top */}
+      <rect x={0} y={floorY} width={width} height={h - floorY} fill="#8a9aaa" />
+      <rect x={0} y={floorY} width={width} height={1} fill="#7a8a9a" />
+
+      {/* Railing — sits on floor edge as a front fence */}
+      <rect x={0} y={floorY - 4.5} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
+      <rect x={0} y={floorY - 0.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
       {Array.from({ length: Math.floor(width / 12) }).map((_, i) => (
-        <rect key={`bal-${i}`} x={6 + i * 12} y={h - 6} width={1.8} height={6} rx={0.45} fill="#8a9aaa" />
+        <rect key={`bal-${i}`} x={6 + i * 12} y={floorY - 4.5} width={1.8} height={5} rx={0.45} fill="#8a9aaa" />
       ))}
 
-      {/* Trees — 1.5x */}
+      {/* Trees — grounded on floor surface */}
       {trees.map((t, i) => (
         <g key={`tree-${i}`}>
-          <rect x={t.x - 1.5} y={h - 6 - t.trunkH} width={3} height={t.trunkH} rx={1.2} fill="#6b5b4f" />
-          <circle cx={t.x} cy={h - 6 - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
-          <circle cx={t.x - 3} cy={h - 6 - t.trunkH + 1.5} r={t.r2} fill="#5a9a5a" opacity={0.7} />
+          <rect x={t.x - 1.5} y={floorY - t.trunkH} width={3} height={t.trunkH} rx={1.2} fill="#6b5b4f" />
+          <circle cx={t.x} cy={floorY - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
+          <circle cx={t.x - 3} cy={floorY - t.trunkH + 1.5} r={t.r2} fill="#5a9a5a" opacity={0.7} />
         </g>
       ))}
 
-      {/* Parasol + table + chairs — 1.5x */}
+      {/* Parasol + table + chairs — grounded on floor */}
       {parasolSets.map((p, i) => {
-        const baseY = h - 7.5;
+        const baseY = floorY - 1.5;
         return (
           <g key={`parasol-${i}`}>
             <rect x={p.x - 0.75} y={baseY - 18} width={1.5} height={15} fill="#8a7a6a" />
@@ -88,12 +92,12 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         );
       })}
 
-      {/* Worship Stage — 1.5x */}
+      {/* Worship Stage — on floor surface */}
       <g>
         <rect x={stageX} y={stageY - 4.5} width={stageW} height={4.5} rx={1.5} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.75} />
         <rect x={stageX + 1.5} y={stageY - 6} width={stageW - 3} height={2.25} rx={0.75} fill="#fafafa" stroke="#ddd" strokeWidth={0.45} />
 
-        {/* Drum set — 2.6x (bigger than guitar, taller than parasols) */}
+        {/* Drum set — on stage */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
           const drumY = stageY - 10;
@@ -112,7 +116,7 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
           );
         })()}
 
-        {/* Acoustic guitar — 1.5x */}
+        {/* Acoustic guitar — on stage */}
         {(() => {
           const gx = stageX + stageW * 0.18;
           const gy = stageY - 7.5;
@@ -126,7 +130,7 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
           );
         })()}
 
-        {/* Mic stand — 1.5x */}
+        {/* Mic stand — on stage */}
         {(() => {
           const mx = stageX + stageW * 0.82;
           const my = stageY - 7.5;
