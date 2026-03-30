@@ -110,12 +110,52 @@ export default {
           "0%": { transform: "translateX(0%)" },
           "100%": { transform: "translateX(-100%)" },
         },
+        "cloud-drift": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "neon-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.7" },
+        },
+        "string-shimmer": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "1" },
+        },
+        "leaf-sway": {
+          "0%": { transform: "rotate(-3deg)" },
+          "100%": { transform: "rotate(3deg)" },
+        },
+        "car-move-right": {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
+        "car-move-left": {
+          "0%": { transform: "translateX(400%)" },
+          "100%": { transform: "translateX(-120%)" },
+        },
+        "pinwheel-spin": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "bulb-twinkle": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "marquee": "marquee 8s linear infinite",
+        "cloud-drift": "cloud-drift 35s linear infinite",
+        "neon-glow": "neon-glow 3s ease-in-out infinite",
+        "string-shimmer": "string-shimmer 2s ease-in-out infinite",
+        "leaf-sway": "leaf-sway 2.5s ease-in-out infinite alternate",
+        "car-move-right": "car-move-right 18s linear infinite",
+        "car-move-left": "car-move-left 22s linear infinite",
+        "pinwheel-spin": "pinwheel-spin 4s linear infinite",
+        "bulb-twinkle": "bulb-twinkle 1.5s ease-in-out infinite",
       },
     },
   },
