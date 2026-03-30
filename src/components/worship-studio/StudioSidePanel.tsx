@@ -571,14 +571,28 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
         style={{ background: roadColor, borderTop: `2px solid ${roadBorder}` }}
       >
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>🚗</span>
-        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>
+        {/* Car moving left — headlight on left side */}
+        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>
+          {isNight && <span className="absolute" style={{ left: '-8px', top: '10px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+          {isNight && <span className="absolute" style={{ left: '-20px', top: '6px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+          🚗
+        </span>
+        {/* Car moving right — headlight on right side (car is flipped) */}
+        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+          {isNight && <span className="absolute" style={{ right: '-8px', top: '10px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+          {isNight && <span className="absolute" style={{ right: '-20px', top: '6px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
           <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
         {(!collapsed || isMobile) && (
           <>
-            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>🚙</span>
-            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>
+            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>
+              {isNight && <span className="absolute" style={{ left: '-7px', top: '8px', width: '10px', height: '5px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              {isNight && <span className="absolute" style={{ left: '-18px', top: '5px', width: '20px', height: '8px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              🚙
+            </span>
+            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+              {isNight && <span className="absolute" style={{ right: '-7px', top: '8px', width: '10px', height: '5px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              {isNight && <span className="absolute" style={{ right: '-18px', top: '5px', width: '20px', height: '8px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
           </>
