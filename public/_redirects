@@ -10,3 +10,6 @@
 
 # Dynamic Sitemap Proxy
 /sitemap.xml https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/sitemap 200
+
+# Worship Atelier external domain redirect
+/welcome /atelier-welcome 301

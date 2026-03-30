@@ -228,6 +228,7 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/r/:referralCode" element={<ReferralRedirect />} />
               <Route path="/legal" element={<Legal />} />
+              <Route path="/atelier-welcome" element={<AtelierWelcome />} />
               <Route path="/app-history" element={<AppHistory />} />
               <Route path="/features" element={<Features />} />
               <Route path="/press" element={<Press />} />
