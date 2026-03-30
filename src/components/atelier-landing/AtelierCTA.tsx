@@ -15,7 +15,7 @@ export const AtelierCTA = () => {
   };
 
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#F5F2ED]">
+    <section className="py-14 md:py-20 px-6 bg-[#F5F2ED]">
       <motion.div
         className="max-w-xl mx-auto text-center space-y-8"
         initial={{ opacity: 0, y: 20 }}
