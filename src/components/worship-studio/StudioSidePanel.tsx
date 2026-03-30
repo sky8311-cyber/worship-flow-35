@@ -39,17 +39,25 @@ function FloorLabel({ label, isNight }: { label: string; isNight: boolean }) {
 /* ─── Night Sky Stars ─── */
 function NightSkyStars({ width, height }: { width: number; height: number }) {
   const stars = useMemo(() => {
-    const result: { x: number; y: number; r: number; delay: number; dur: number }[] = [];
-    // seeded pseudo-random for consistent placement
+    const result: { x: number; y: number; r: number; opacity: number; delay: number; dur: number }[] = [];
     let seed = 42;
     const rand = () => { seed = (seed * 16807 + 0) % 2147483647; return seed / 2147483647; };
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 180; i++) {
+      // Milky Way band: diagonal density (center band has higher probability)
+      const rawX = rand() * 100;
+      const rawY = rand() * 85;
+      // Bias towards a diagonal band from top-left to bottom-right
+      const bandCenter = rawX * 0.6; // diagonal line
+      const distFromBand = Math.abs(rawY - bandCenter);
+      // 60% of stars cluster near the band, rest scattered
+      if (i > 60 && distFromBand > 25 && rand() > 0.3) continue;
       result.push({
-        x: rand() * width,
-        y: rand() * height * 0.85,
-        r: 0.4 + rand() * 1.2,
-        delay: rand() * 5,
-        dur: 2 + rand() * 3,
+        x: rawX * width / 100,
+        y: rawY * height / 100,
+        r: 0.2 + rand() * 0.6,
+        opacity: 0.3 + rand() * 0.7,
+        delay: rand() * 6,
+        dur: 2 + rand() * 4,
       });
     }
     return result;
@@ -59,7 +67,7 @@ function NightSkyStars({ width, height }: { width: number; height: number }) {
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
       {/* Crescent moon */}
       <circle cx={width * 0.8} cy={height * 0.18} r={10} fill="#f5e6a0" opacity={0.9} />
-      <circle cx={width * 0.8 + 4} cy={height * 0.18 - 2} r={8.5} fill="#0e1430" />
+      <circle cx={width * 0.8 + 4} cy={height * 0.18 - 2} r={8.5} fill="#141852" />
       {/* Moon glow */}
       <circle cx={width * 0.8} cy={height * 0.18} r={18} fill="#f5e6a0" opacity={0.06} />
 
@@ -70,6 +78,7 @@ function NightSkyStars({ width, height }: { width: number; height: number }) {
           cy={s.y}
           r={s.r}
           fill="#fff"
+          opacity={s.opacity}
           className="animate-star-twinkle"
           style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
         />
@@ -266,14 +275,6 @@ function RooftopStringLights({ width, isNight }: { width: number; isNight: boole
               const by = mt * mt * mt * (poleTopY + 2) + 3 * mt * mt * t * s.cp1y + 3 * mt * t * t * s.cp2y + t * t * t * s.endY;
               return (
                 <g key={bi}>
-                  {/* Light cone below bulb at night */}
-                  {isNight && (
-                    <polygon
-                      points={`${bx},${by + 2.5} ${bx - 5},${by + 14} ${bx + 5},${by + 14}`}
-                      fill="#f5c542"
-                      opacity={0.1}
-                    />
-                  )}
                   <circle
                     cx={bx}
                     cy={by + 1.5}
@@ -283,10 +284,6 @@ function RooftopStringLights({ width, isNight }: { width: number; isNight: boole
                     className="animate-string-shimmer"
                     style={{ animationDelay: `${(si * 0.5 + bi * 0.25)}s` }}
                   />
-                  {/* Night glow around each bulb */}
-                  {isNight && (
-                    <circle cx={bx} cy={by + 1.5} r={5} fill="#f5c542" opacity={0.06} />
-                  )}
                 </g>
               );
             })}
@@ -355,13 +352,10 @@ function CafeSVG({ isNight }: { isNight: boolean }) {
       {/* Hanging pendant lights — brighter at night */}
       <line x1={30} y1={0} x2={30} y2={18} stroke="#333" strokeWidth={0.4} />
       <polygon points="27,18 33,18 32,22 28,22" fill="#f5c542" fillOpacity={isNight ? 0.9 : 0.5} />
-      {isNight && <polygon points="24,22 36,22 33,38 27,38" fill="#f5c542" fillOpacity={0.08} />}
       <line x1={60} y1={0} x2={60} y2={16} stroke="#333" strokeWidth={0.4} />
       <polygon points="57,16 63,16 62,20 58,20" fill="#f5c542" fillOpacity={isNight ? 0.9 : 0.5} />
-      {isNight && <polygon points="54,20 66,20 63,36 57,36" fill="#f5c542" fillOpacity={0.08} />}
       <line x1={90} y1={0} x2={90} y2={19} stroke="#333" strokeWidth={0.4} />
       <polygon points="87,19 93,19 92,23 88,23" fill="#f5c542" fillOpacity={isNight ? 0.9 : 0.5} />
-      {isNight && <polygon points="84,23 96,23 93,39 87,39" fill="#f5c542" fillOpacity={0.08} />}
       {/* Potted plant on counter */}
       <rect x={8} y={40} width={4} height={4} rx={1} fill="#8b6f4e" />
       <circle cx={10} cy={38} r={3} fill="#4a8a4a" opacity={0.7} />
@@ -373,18 +367,15 @@ function CafeSVG({ isNight }: { isNight: boolean }) {
 function GallerySVG({ isNight }: { isNight: boolean }) {
   return (
     <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMax meet">
-      <rect x={0} y={0} width={120} height={70} fill={isNight ? "#0a0a14" : "#fafafa"} fillOpacity={isNight ? 0.9 : 0.4} />
+      <rect x={0} y={0} width={120} height={70} fill={isNight ? "#f5f0e8" : "#fafafa"} fillOpacity={isNight ? 0.7 : 0.4} />
 
-      {/* Night: dark overlay — gallery is closed */}
-      {isNight && <rect x={0} y={0} width={120} height={70} fill="#000" fillOpacity={0.5} />}
-
-      <g opacity={isNight ? 0.3 : 1}>
+      <g opacity={1}>
         {/* Track lighting */}
         <rect x={5} y={2} width={110} height={1.2} rx={0.4} fill="#555" />
-        <circle cx={20} cy={3} r={1.2} fill="#f5c542" fillOpacity={isNight ? 0.2 : 0.7} />
-        <circle cx={45} cy={3} r={1.2} fill="#f5c542" fillOpacity={isNight ? 0.2 : 0.7} />
-        <circle cx={70} cy={3} r={1.2} fill="#f5c542" fillOpacity={isNight ? 0.2 : 0.7} />
-        <circle cx={95} cy={3} r={1.2} fill="#f5c542" fillOpacity={isNight ? 0.2 : 0.7} />
+        <circle cx={20} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+        <circle cx={45} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+        <circle cx={70} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+        <circle cx={95} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
         <polygon points="20,4 14,18 26,18" fill="#f5c542" fillOpacity={0.05} />
         <polygon points="45,4 39,18 51,18" fill="#f5c542" fillOpacity={0.05} />
         <polygon points="70,4 64,18 76,18" fill="#f5c542" fillOpacity={0.05} />
@@ -472,10 +463,13 @@ function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean
             ))}
           </svg>
         </div>
-        <span className={cn(
-          "text-[5px] font-bold tracking-wider text-center mt-0.5 relative z-10",
-          isNight ? "text-[#f5c542]" : "text-[#5a4a3a]"
-        )}>
+        <span
+          className={cn(
+            "text-[5px] font-bold tracking-wider text-center mt-0.5 relative z-10",
+            isNight ? "text-[#f5c542]" : "text-[#5a4a3a]"
+          )}
+          style={isNight ? { textShadow: '0 0 6px #f5c542' } : undefined}
+        >
           CAFÉ & BOOKS
           {isNight && <span className="ml-0.5 text-[4px]">✦ OPEN</span>}
         </span>
@@ -520,14 +514,17 @@ function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean
         <div className="absolute bottom-0 right-0 text-[5px]">🌱</div>
       </div>
 
-      {/* Gallery — closed at night */}
+      {/* Gallery — open at night too */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        <span className={cn(
-          "text-[5px] font-bold tracking-wider text-center mt-0.5 relative z-10",
-          isNight ? "text-[#5a6a7a]" : "text-[#5a6a7a]"
-        )}>
+        <span
+          className={cn(
+            "text-[5px] font-bold tracking-wider text-center mt-0.5 relative z-10",
+            isNight ? "text-[#f5c542]" : "text-[#5a6a7a]"
+          )}
+          style={isNight ? { textShadow: '0 0 6px #f5c542' } : undefined}
+        >
           GALLERY
-          {isNight && <span className="ml-0.5 text-[4px] text-[#6a5a4a]">CLOSED</span>}
+          {isNight && <span className="ml-0.5 text-[4px]">✦ OPEN</span>}
         </span>
         <div className="flex-1 relative">
           <GallerySVG isNight={isNight} />
@@ -574,14 +571,14 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
         style={{ background: roadColor, borderTop: `2px solid ${roadBorder}` }}
       >
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
-        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>🚗</span>
+        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>
           <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
         {(!collapsed || isMobile) && (
           <>
-            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
-            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>🚙</span>
+            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s', filter: isNight ? 'drop-shadow(0 0 5px #f5c542)' : 'none' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
           </>
@@ -673,15 +670,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className="px-0.5 relative">
           {!collapsed && (
             <div className="flex flex-col items-center gap-0.5 px-2 py-0.5 select-none">
-              <div className={cn(
-                "px-4 py-1 rounded-[2px] border-2 shadow-[2px_3px_0px_#6a7a8a] flex items-center justify-center",
-                isNight ? "bg-[#1e2e3e] border-[#4a5a6a]" : "bg-white border-[#7a8a9a]"
-              )}>
-                <span className={cn(
-                  "text-[8px] font-bold tracking-[0.15em] text-center w-full",
-                  isNight ? "text-[#c0d0e0]" : "text-[#2a2a2a]"
-                )}>
-                  WORSHIP ATELIER <span className={cn("text-[6px] font-normal", isNight ? "text-[#8a9aaa]" : "text-[#555]")}>by kworship.app</span>
+              <div className="px-4 py-1 rounded-[2px] border-2 border-[#7a8a9a] shadow-[2px_3px_0px_#6a7a8a] flex items-center justify-center bg-white">
+                <span className="text-[8px] font-bold tracking-[0.15em] text-center w-full text-[#2a2a2a]">
+                  WORSHIP ATELIER <span className="text-[6px] font-normal text-[#555]">by kworship.app</span>
                 </span>
               </div>
             </div>
