@@ -111,8 +111,12 @@ export default {
           "100%": { transform: "translateX(-100%)" },
         },
         "cloud-drift": {
-          "0%": { transform: "translateX(-100%)" },
-          "100%": { transform: "translateX(100%)" },
+          "0%": { transform: "translateX(-200%)" },
+          "100%": { transform: "translateX(600%)" },
+        },
+        "airplane-fly": {
+          "0%": { transform: "translateX(2000%)" },
+          "100%": { transform: "translateX(-500%)" },
         },
         "neon-glow": {
           "0%, 100%": { opacity: "1" },
@@ -148,7 +152,8 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "marquee": "marquee 8s linear infinite",
-        "cloud-drift": "cloud-drift 35s linear infinite",
+        "cloud-drift": "cloud-drift 45s linear infinite",
+        "airplane-fly": "airplane-fly 40s linear infinite",
         "neon-glow": "neon-glow 3s ease-in-out infinite",
         "string-shimmer": "string-shimmer 2s ease-in-out infinite",
         "leaf-sway": "leaf-sway 2.5s ease-in-out infinite alternate",

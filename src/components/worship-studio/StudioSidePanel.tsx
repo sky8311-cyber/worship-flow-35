@@ -44,7 +44,7 @@ function FloorLabel({ label }: { label: string }) {
 
 /* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage (1.5x scale) ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
-  const h = isMobile ? 72 : 82;
+  const h = isMobile ? 78 : 90;
   const spacing = width / 6;
 
   // 3 parasol sets (left side) — 1.5x
@@ -108,21 +108,21 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         <rect x={stageX} y={stageY - 4.5} width={stageW} height={4.5} rx={1.5} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.75} />
         <rect x={stageX + 1.5} y={stageY - 6} width={stageW - 3} height={2.25} rx={0.75} fill="#fafafa" stroke="#ddd" strokeWidth={0.45} />
 
-        {/* Drum set — 2x (bigger than guitar, taller than parasols) */}
+        {/* Drum set — 2.6x (bigger than guitar, taller than parasols) */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
-          const drumY = stageY - 16;
+          const drumY = stageY - 22;
           return (
             <>
-              <ellipse cx={drumCx} cy={drumY} rx={9} ry={6.5} fill="#c0c0c0" stroke="#999" strokeWidth={0.8} />
-              <ellipse cx={drumCx} cy={drumY} rx={5.5} ry={4} fill="#e0e0e0" />
-              <ellipse cx={drumCx - 11} cy={drumY + 2} rx={4.5} ry={2.7} fill="#d4c090" stroke="#aa9060" strokeWidth={0.6} />
-              <line x1={drumCx + 11} y1={drumY + 4} x2={drumCx + 11} y2={drumY - 9} stroke="#888" strokeWidth={1} />
-              <ellipse cx={drumCx + 11} cy={drumY - 9} rx={4.5} ry={1.3} fill="#c8b040" opacity={0.8} />
-              <line x1={drumCx - 6} y1={drumY - 2} x2={drumCx - 6} y2={drumY - 11} stroke="#888" strokeWidth={0.8} />
-              <ellipse cx={drumCx - 6} cy={drumY - 11} rx={5.5} ry={1.1} fill="#d4b848" opacity={0.7} />
-              <line x1={drumCx - 2} y1={drumY - 6} x2={drumCx + 4} y2={drumY + 2} stroke="#8b6f4e" strokeWidth={1} />
-              <line x1={drumCx + 2} y1={drumY - 6} x2={drumCx - 4} y2={drumY + 2} stroke="#8b6f4e" strokeWidth={1} />
+              <ellipse cx={drumCx} cy={drumY} rx={11.5} ry={8} fill="#c0c0c0" stroke="#999" strokeWidth={0.9} />
+              <ellipse cx={drumCx} cy={drumY} rx={7} ry={5} fill="#e0e0e0" />
+              <ellipse cx={drumCx - 14} cy={drumY + 3} rx={5.5} ry={3.3} fill="#d4c090" stroke="#aa9060" strokeWidth={0.7} />
+              <line x1={drumCx + 14} y1={drumY + 5} x2={drumCx + 14} y2={drumY - 12} stroke="#888" strokeWidth={1.1} />
+              <ellipse cx={drumCx + 14} cy={drumY - 12} rx={5.5} ry={1.6} fill="#c8b040" opacity={0.8} />
+              <line x1={drumCx - 7} y1={drumY - 3} x2={drumCx - 7} y2={drumY - 14} stroke="#888" strokeWidth={0.9} />
+              <ellipse cx={drumCx - 7} cy={drumY - 14} rx={6.5} ry={1.4} fill="#d4b848" opacity={0.7} />
+              <line x1={drumCx - 2} y1={drumY - 8} x2={drumCx + 5} y2={drumY + 3} stroke="#8b6f4e" strokeWidth={1.1} />
+              <line x1={drumCx + 2} y1={drumY - 8} x2={drumCx - 5} y2={drumY + 3} stroke="#8b6f4e" strokeWidth={1.1} />
             </>
           );
         })()}
@@ -160,19 +160,18 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   );
 }
 
-/* ─── SVG String Lights — poles anchored at building body top border, extending upward ─── */
+/* ─── SVG String Lights — poles anchored at building body top border, 1.5x height ─── */
 function RooftopStringLights({ width }: { width: number }) {
-  const poleHeight = 34;
+  const poleHeight = 51; // 1.5x from 34
   const svgH = poleHeight + 2;
   const poleX = width - 14;
-  // Pole bottom at SVG bottom = building top border
   const poleBottomY = svgH;
   const poleTopY = svgH - poleHeight;
 
   const strands = [
-    { endX: 10, endY: svgH - 6, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 14 },
-    { endX: 25, endY: svgH - 2, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 8 },
-    { endX: 45, endY: svgH + 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 4 },
+    { endX: 10, endY: svgH - 4, cp1x: poleX - 30, cp1y: poleTopY + 14, cp2x: 25, cp2y: svgH - 18 },
+    { endX: 25, endY: svgH - 1, cp1x: poleX - 22, cp1y: poleTopY + 20, cp2x: 38, cp2y: svgH - 10 },
+    { endX: 45, endY: svgH + 1, cp1x: poleX - 14, cp1y: poleTopY + 28, cp2x: 50, cp2y: svgH - 4 },
   ];
 
   return (
@@ -182,7 +181,7 @@ function RooftopStringLights({ width }: { width: number }) {
       className="absolute left-0 pointer-events-none z-20"
       style={{ bottom: '100%', marginBottom: '-1px' }}
       viewBox={`0 0 ${width} ${svgH}`}
-      preserveAspectRatio="none"
+      preserveAspectRatio="xMidYMax meet"
     >
       {/* Pole — bottom touches building top border */}
       <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
@@ -316,14 +315,22 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
     <div className="flex h-20 border-t border-[#7a8a9a]">
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
-        {/* Striped awning */}
-        <div
-          className="w-full h-1.5 shrink-0"
-          style={{
-            background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #fff 4px, #fff 8px)',
-          }}
-        />
-        <span className="text-[5px] font-bold text-[#5a4a3a] tracking-wider text-center mt-0.5 relative z-10">CAFÉ</span>
+        {/* Striped awning — taller with scalloped edge */}
+        <div className="w-full shrink-0 relative">
+          <div
+            className="w-full h-3"
+            style={{
+              background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #fff 4px, #fff 8px)',
+            }}
+          />
+          {/* Scalloped bottom edge */}
+          <svg className="w-full h-1.5 block" viewBox="0 0 100 6" preserveAspectRatio="none">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <path key={i} d={`M ${i * 10},0 Q ${i * 10 + 5},6 ${(i + 1) * 10},0`} fill={i % 2 === 0 ? '#c94040' : '#fff'} />
+            ))}
+          </svg>
+        </div>
+        <span className="text-[5px] font-bold text-[#5a4a3a] tracking-wider text-center mt-0.5 relative z-10">CAFÉ & BOOKS</span>
         <div className="flex-1 relative">
           <CafeSVG />
         </div>
@@ -365,9 +372,31 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   return (
     <>
-      {/* Sidewalk — clean, no decorations */}
-      <div className={cn("shrink-0 select-none pointer-events-none", isMobile ? "h-2" : "h-2.5")}
-        style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }} />
+    {/* Sidewalk with patio set */}
+      <div className={cn("shrink-0 select-none pointer-events-none relative", isMobile ? "h-5" : "h-6")}
+        style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
+        {/* Patio table & chairs in front of café */}
+        {(!collapsed || isMobile) && (
+          <svg className="absolute left-2 top-0 h-full" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid meet">
+            {/* Table */}
+            <rect x={10} y={6} width={10} height={1.5} rx={0.5} fill="#7a6a5a" />
+            <rect x={14} y={7.5} width={2} height={8} fill="#6b5b4f" />
+            <rect x={11} y={15} width={8} height={1} rx={0.5} fill="#6b5b4f" />
+            {/* Chair left */}
+            <rect x={4} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
+            <rect x={5} y={9} width={1} height={6} fill="#7a6a5a" />
+            <rect x={7.5} y={9} width={1} height={6} fill="#7a6a5a" />
+            <rect x={4} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
+            {/* Chair right */}
+            <rect x={21} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
+            <rect x={22} y={9} width={1} height={6} fill="#7a6a5a" />
+            <rect x={24.5} y={9} width={1} height={6} fill="#7a6a5a" />
+            <rect x={25} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
+            {/* Cup on table */}
+            <rect x={13} y={4.5} width={2} height={2} rx={0.5} fill="#f0e6d6" />
+          </svg>
+        )}
+      </div>
 
       {/* Road */}
       <div
@@ -377,8 +406,8 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
 
-        {/* Upper lane (above center line) — right to left, moved up ~8px */}
-        <span className="absolute text-[28px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '0s' }}>🚗</span>
+        {/* Upper lane (above center line) — right to left, raised 15px */}
+        <span className="absolute text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
 
         {/* Lower lane (below center line) — left to right, emoji flipped to face right */}
         <span className="absolute bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
@@ -387,8 +416,8 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
         {(!collapsed || isMobile) && (
           <>
-            {/* Upper lane — 2nd car, moved up ~8px */}
-            <span className="absolute text-[24px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '8s' }}>🚙</span>
+            {/* Upper lane — 2nd car, raised 15px */}
+            <span className="absolute text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
             {/* Lower lane — minivan */}
             <span className="absolute bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
@@ -588,9 +617,11 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           >
             {(!collapsed || isMobile) && (
               <>
-                <div className="absolute top-3 animate-cloud-drift select-none pointer-events-none text-2xl opacity-80" style={{ animationDuration: '35s' }}>☁️</div>
-                <div className="absolute top-8 animate-cloud-drift select-none pointer-events-none text-lg opacity-60" style={{ animationDuration: '28s', animationDelay: '5s' }}>☁️</div>
-                <div className="absolute top-14 animate-cloud-drift select-none pointer-events-none text-sm opacity-40" style={{ animationDuration: '42s', animationDelay: '12s' }}>☁️</div>
+                <div className="absolute top-3 left-0 animate-cloud-drift select-none pointer-events-none text-2xl opacity-80" style={{ animationDuration: '45s' }}>☁️</div>
+                <div className="absolute top-8 left-0 animate-cloud-drift select-none pointer-events-none text-lg opacity-60" style={{ animationDuration: '35s', animationDelay: '8s' }}>☁️</div>
+                <div className="absolute top-14 left-0 animate-cloud-drift select-none pointer-events-none text-sm opacity-40" style={{ animationDuration: '55s', animationDelay: '15s' }}>☁️</div>
+                {/* Airplane flying right to left */}
+                <div className="absolute top-5 left-0 animate-airplane-fly select-none pointer-events-none text-xs opacity-70" style={{ animationDuration: '40s' }}>✈️</div>
               </>
             )}
           </div>
