@@ -1,60 +1,33 @@
 
 
-# 빌딩 층 구조 리빌드 + 모바일/차량 수정
+# 차량 오버플로우 수정 + 원래 위치 복구
 
-## 변경 1: 플레이스홀더 제거 & 층 구조 변경 (`StudioSidePanel.tsx`)
+## 문제 분석
 
-**삭제**: Lines 13-27의 `PLACEHOLDER_TENANTS`, `PLACEHOLDER_FRIENDS`, `PLACEHOLDER_AMBASSADORS` 상수 전부 제거.
+### 1. 자동차가 빌딩/캔버스 밖으로 나감
+`AnimatedRoad`의 도로 div에 `overflow-hidden`이 없어서 `translateX(3000%)` 애니메이션이 도로 영역 밖까지 렌더링됨. 도로 컨테이너 전체(`<div className="relative shrink-0">`)에도 overflow 제한 없음.
 
-**층 구조 (위→아래)**:
-- **ROOFTOP** — 현재 유지 (내 아틀리에)
-- **3F · 이웃** — 기존 2F 이웃 로직을 3F로 라벨만 변경. `friendStudios` 데이터 사용. 0명이면 빈 창문 그리드만 표시 (3개 빈 StudioUnit, opacity-30, pointer-events-none)
-- **2F · 앰배서더** — 기존 1F 앰배서더를 2F로 올림. `ambassadorStudios` 데이터 사용. 0명이면 빈 창문 그리드 표시
-- **1F · 광장** — 새 섹션. `usePlazaUsers` 훅에서 데이터 fetch. 0명이면 빈 창문 그리드 표시
-- **상가** (CAFÉ & BOOKS + GALLERY) — 현재 유지
+### 2. 자동차 y축 위치
+지난 수정에서 `top: -13px` → `top: 2px`로 변경됨. 원래 `-13px`이 정상이었고, 인도에 가리는 문제는 인도 높이를 줄여서 해결.
 
-**빈 상태 처리**: 각 층에 유저 0명이면 3개의 빈 창문(이름/아바타 없이 빈 프레임만) 표시. `StudioUnit`에 새 prop `empty` 추가하여 이름/아바타 없이 빈 창문 프레임만 렌더링.
+## 변경 사항 (`StudioSidePanel.tsx`)
 
-## 변경 2: 새 훅 `usePlazaUsers` 생성
+### A. 도로 div에 `overflow-hidden` 추가
+- Line 444의 도로 div: `overflow-hidden` 추가하여 차량이 도로 영역 밖으로 나가지 않도록 함
 
-**파일**: `src/hooks/usePlazaUsers.ts`
+### B. 차량 top 위치 원래대로 복구
+- Line 451: `top: '2px'` → `top: '-13px'`
+- Line 460: `top: '2px'` → `top: '-13px'`
 
-- `worship_rooms` 테이블에서 `visibility = 'public'`인 방들 쿼리
-- 본인 제외, 친구 제외 (friends 테이블 서브쿼리), 앰배서더 제외 (`is_ambassador != true`)
-- `profiles` join하여 프로필 정보 가져오기
-- 최대 20개, 랜덤 정렬은 클라이언트에서 shuffle
-- `StoryStudio` 형태로 변환하여 반환
+### C. 인도 높이 축소 (차량 가림 방지)
+- Line 423: 인도 높이를 줄임 (`h-5`/`h-6` → `h-3`/`h-4`)
+- 이렇게 하면 `-13px` 위치의 차량이 인도에 덜 가려짐
 
-## 변경 3: `useStoryBarStudios.ts` 수정
-
-- plaza 유저를 `studios` 배열에 포함시키지 않음 (스토리바와 독립적). 대신 `StudioSidePanel`에서 직접 `usePlazaUsers` 호출하여 1F에 렌더링.
-
-## 변경 4: `StudioUnit.tsx` — `empty` prop 추가 & `placeholderInitials` 제거
-
-- `placeholderInitials` prop 제거
-- 새 `empty?: boolean` prop 추가: true이면 아바타/이름 없이 빈 창문 프레임만 렌더링 (windowFrame + windowGlow 스타일 유지, 내부 비움)
-
-## 변경 5: 차량 z-index 수정 (`StudioSidePanel.tsx`)
-
-**문제**: 인도(`z-10`)가 차량 이모지를 가림. 차량은 `z-30`이지만 인도와 도로가 별도 div이므로 stacking context가 분리됨.
-
-**수정**: `AnimatedRoad` 전체를 하나의 relative 컨테이너로 감싸고, 인도와 도로를 같은 stacking context 안에 배치. 차량 span의 `z-30`이 인도 위에 올라오도록 구조 변경:
-- 인도 div: `z-0` (relative 부모 내에서)
-- 도로 div: `z-0`
-- 차량 span: `z-10` (부모 컨테이너 기준 absolute로 변경)
-
-또는 더 간단하게: 인도 div의 `overflow-hidden` 제거 대신 인도 높이를 줄이거나 차량 top 위치를 도로 영역 내부로 조정하여 인도에 가려지지 않게 함. 실제로 현재 upper lane 차량이 `top: -13px`로 되어 있어 도로 밖으로 올라가 인도에 가려짐. → `top: 2px`로 조정.
-
-## 변경 6: 모바일 하단 잘림 수정
-
-**문제**: `max-h-[50vh]` 제한이 건물 본체에만 적용되어 상가+도로가 뷰포트 밖으로 밀림.
-
-**수정**: 
-- 건물 본체 `max-h-[50vh]` → `max-h-[40vh]`로 줄여 상가+도로에 더 많은 공간 확보
-- 또는 전체 building wrapper에 `max-h-[calc(100vh-4rem)]`를 적용하고 내부를 flex로 배분
+### D. 스크롤 구조 확인
+- 데스크탑: Line 703 `ScrollArea`가 건물 본체(층)만 감싸고 있음 — 상가/도로는 `ScrollArea` 밖 → **정상** (층만 스크롤, 상가/도로 고정)
+- 모바일: 동일 구조 + `max-h-[40vh]` 제한 → **정상**
+- 변경 불필요
 
 ## 변경 파일
 - `src/components/worship-studio/StudioSidePanel.tsx`
-- `src/components/worship-studio/StudioUnit.tsx`
-- `src/hooks/usePlazaUsers.ts` (신규)
 
