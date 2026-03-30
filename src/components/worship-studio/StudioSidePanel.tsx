@@ -66,10 +66,8 @@ function NightSkyStars({ width, height }: { width: number; height: number }) {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
       {/* Crescent moon */}
-      <circle cx={width * 0.8} cy={height * 0.12} r={12} fill="#f5e6a0" opacity={0.9} />
-      <circle cx={width * 0.8 + 5} cy={height * 0.12 - 2} r={10} fill="#0a0e2a" />
-      {/* Moon glow */}
-      <circle cx={width * 0.8} cy={height * 0.12} r={22} fill="#f5e6a0" opacity={0.08} />
+      <circle cx={width * 0.8} cy={height * 0.08} r={7} fill="#f5e6a0" opacity={0.9} />
+      <circle cx={width * 0.8 + 3} cy={height * 0.08 - 1} r={6} fill="#0a0e2a" />
 
       {stars.map((s, i) => (
         <circle
