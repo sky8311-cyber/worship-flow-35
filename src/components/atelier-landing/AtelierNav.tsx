@@ -21,8 +21,8 @@ export const AtelierNav = () => {
       }`}
     >
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Logo text */}
-        <Link to="/atelier-welcome" className="font-serif text-base tracking-[0.15em] text-[#1F1F1F]">
+        {/* Logo text - keep serif */}
+        <Link to="/atelier-welcome" className="font-serif text-base tracking-[0.15em] text-foreground">
           WORSHIP ATELIER
         </Link>
 
@@ -31,7 +31,7 @@ export const AtelierNav = () => {
           {user ? (
             <Link
               to="/atelier"
-              className="text-sm font-serif text-[#B8902A] hover:text-[#96750F] transition-colors"
+              className="text-sm font-korean text-[#B8902A] hover:text-[#96750F] transition-colors"
             >
               내 아틀리에
             </Link>
@@ -39,13 +39,13 @@ export const AtelierNav = () => {
             <>
               <Link
                 to="/login"
-                className="text-sm font-serif text-[#666] hover:text-[#1F1F1F] transition-colors"
+                className="text-sm font-korean text-muted-foreground hover:text-foreground transition-colors"
               >
                 로그인
               </Link>
               <Link
                 to="/signup"
-                className="text-sm font-serif px-4 py-1.5 bg-[#1F1F1F] text-[#FAF8F5] hover:bg-[#333] transition-colors"
+                className="text-sm font-korean px-4 py-1.5 bg-[#1F1F1F] text-[#FAF8F5] hover:bg-[#333] transition-colors"
               >
                 시작하기
               </Link>

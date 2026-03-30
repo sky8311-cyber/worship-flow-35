@@ -11,7 +11,7 @@ export const AtelierSolution = () => {
     <section className="min-h-[70vh] flex items-center justify-center px-6 bg-[#F5F2ED]">
       <div className="max-w-2xl text-center space-y-10">
         <motion.p
-          className="font-serif text-lg md:text-xl text-[#666666]"
+          className="font-korean text-lg md:text-xl text-muted-foreground"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
@@ -32,11 +32,11 @@ export const AtelierSolution = () => {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.2 }}
             >
-              <span className="font-serif text-2xl md:text-3xl text-[#1F1F1F] tracking-widest">
+              <span className="font-korean text-2xl md:text-3xl text-foreground tracking-widest">
                 {row.left}
               </span>
               <span className="text-[#B8902A] text-xl md:text-2xl">→</span>
-              <span className="font-serif text-2xl md:text-3xl text-[#B8902A] tracking-widest font-medium">
+              <span className="font-korean text-2xl md:text-3xl text-[#B8902A] tracking-widest font-medium">
                 {row.right}
               </span>
             </motion.div>

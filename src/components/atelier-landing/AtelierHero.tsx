@@ -13,15 +13,15 @@ export const AtelierHero = () => {
   const typewriterLines = [
     {
       text: "Worship Atelier는",
-      className: "font-serif text-2xl md:text-4xl text-[#1F1F1F] tracking-wide",
+      className: "font-korean text-2xl md:text-4xl text-foreground tracking-wide",
     },
     {
       text: "예배를 삶의 흐름으로",
-      className: "font-serif text-2xl md:text-4xl text-[#1F1F1F] tracking-wide",
+      className: "font-korean text-2xl md:text-4xl text-foreground tracking-wide",
     },
     {
       text: "연결합니다",
-      className: "font-serif text-xl md:text-3xl text-[#666666] tracking-wide mt-1",
+      className: "font-korean text-xl md:text-3xl text-muted-foreground tracking-wide mt-1",
     },
   ];
 
@@ -48,7 +48,6 @@ export const AtelierHero = () => {
           delayBetweenLines={350}
           startDelay={300}
           onComplete={() => {
-            // Show CTA after a brief pause
             setTimeout(() => setShowCTA(true), 800);
           }}
         />
@@ -64,11 +63,11 @@ export const AtelierHero = () => {
       >
         <button
           onClick={handleCTA}
-          className="px-8 py-3.5 bg-[#1F1F1F] text-[#FAF8F5] font-serif text-lg tracking-wider rounded-none hover:bg-[#333] transition-colors duration-300"
+          className="px-8 py-3.5 bg-[#1F1F1F] text-[#FAF8F5] font-korean text-lg tracking-wider rounded-none hover:bg-[#333] transition-colors duration-300"
         >
           내 공간 만들기
         </button>
-        <p className="text-center text-sm text-[#999] mt-3 font-serif">
+        <p className="text-center text-sm text-muted-foreground mt-3 font-serif">
           Start Your Studio
         </p>
       </motion.div>
