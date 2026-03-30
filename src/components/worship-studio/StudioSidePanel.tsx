@@ -692,7 +692,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               <div
                 className={cn(
                   "min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-visible relative",
-                  isMobile ? "mx-6 h-[38vh] flex-none" : "mx-3 flex-1"
+                  isMobile ? "mx-6 h-[50vh] flex-none" : "mx-3 flex-1"
                 )}
                 style={{
                   ...glassWallStyle,
