@@ -387,17 +387,25 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 
       {/* Entrance Door */}
       <div className="w-6 flex flex-col items-center justify-end bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] border-x border-[#7a8a9a] relative">
-        {/* Arch top */}
-        <svg className="absolute top-0 w-full" viewBox="0 0 40 12" preserveAspectRatio="none">
-          <path d="M 0,12 Q 20,0 40,12 Z" fill="#5a6a7a" />
-          <path d="M 2,12 Q 20,2 38,12 Z" fill="#a0c0d4" fillOpacity={0.4} />
-        </svg>
-        {/* Door frame */}
-        <div className="w-5 flex-1 mt-2 mb-0 bg-[#5a6a7a] rounded-t-[2px] flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Transom wall above door */}
+        <div className="flex-1 w-full bg-gradient-to-b from-[#a0b8c8] to-[#8aa0b0] relative">
+          {/* Small arch accent at bottom of transom */}
+          <svg className="absolute bottom-0 w-full" viewBox="0 0 40 8" preserveAspectRatio="none">
+            <path d="M 4,8 Q 20,1 36,8 Z" fill="#5a6a7a" />
+            <path d="M 6,8 Q 20,3 34,8 Z" fill="#a0c0d4" fillOpacity={0.3} />
+          </svg>
+        </div>
+        {/* Door frame — fixed natural height */}
+        <div className={cn("w-5 mb-0 bg-[#5a6a7a] rounded-t-[3px] flex flex-col items-center relative overflow-hidden", isMobile ? "h-14" : "h-10")}>
           {/* Glass panel */}
           <div className="w-4 flex-1 mt-0.5 bg-[#b0d0e0]/40 rounded-t-[2px] border border-[#7a8a9a]/50" />
-          {/* Handle */}
-          <div className="w-0.5 h-1.5 bg-[#c0a060] rounded-full mb-0.5 mt-0.5" />
+          {/* Door knob — brass circle at handle height */}
+          <svg className="absolute right-0.5" style={{ top: '55%' }} width="4" height="4" viewBox="0 0 4 4">
+            <circle cx="2" cy="2" r="1.5" fill="#b8860b" />
+            <circle cx="2" cy="1.6" r="0.6" fill="#d4a830" opacity={0.7} />
+          </svg>
+          {/* Bottom rail */}
+          <div className="w-full h-0.5 bg-[#4a5a6a]" />
         </div>
         {/* Plants beside door */}
         <div className="absolute bottom-0 left-0 text-[5px]">🌱</div>
