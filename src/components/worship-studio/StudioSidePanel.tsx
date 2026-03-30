@@ -487,6 +487,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const { language } = useTranslation();
   const { user } = useAuth();
   const studios = useStoryBarStudios(myStudioId);
+  const { data: plazaUsers } = usePlazaUsers();
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
