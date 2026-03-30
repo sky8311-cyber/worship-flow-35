@@ -28,7 +28,7 @@ const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'a
 
 /* ─── Glass facade style ─── */
 const glassWallStyle: React.CSSProperties = {
-  background: 'linear-gradient(to bottom, #d0e0ec, #b8ccd8)',
+  background: 'linear-gradient(to bottom, #c0d4e4 0%, #a8bcd0 50%, #98b0c4 100%)',
 };
 
 /* ─── Floor label — small metal plate ─── */
@@ -42,129 +42,116 @@ function FloorLabel({ label }: { label: string }) {
   );
 }
 
-/* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage ─── */
+/* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage (1.5x scale) ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
-  const h = isMobile ? 38 : 44;
+  const h = isMobile ? 57 : 66;
   const spacing = width / 6;
 
-  // 3 parasol sets (left side)
+  // 3 parasol sets (left side) — 1.5x
   const parasolSets = [
     { x: spacing * 0.8, color: '#d06030' },
     { x: spacing * 1.8, color: '#c04828' },
     { x: spacing * 3, color: '#d07040' },
   ];
 
-  // 6 trees — varied sizes
+  // 6 trees — 1.5x sizes
   const trees = [
-    { x: 6, trunkH: 10, r1: 5, r2: 3.5 },
-    { x: 22, trunkH: 7, r1: 3.5, r2: 2.5 },
-    { x: width * 0.38, trunkH: 8, r1: 4, r2: 3 },
-    { x: width * 0.62, trunkH: 6, r1: 3, r2: 2 },
-    { x: width - 28, trunkH: 9, r1: 4.5, r2: 3 },
-    { x: width - 10, trunkH: 7, r1: 3.5, r2: 2.5 },
+    { x: 6, trunkH: 15, r1: 7.5, r2: 5.25 },
+    { x: 22, trunkH: 10.5, r1: 5.25, r2: 3.75 },
+    { x: width * 0.38, trunkH: 12, r1: 6, r2: 4.5 },
+    { x: width * 0.62, trunkH: 9, r1: 4.5, r2: 3 },
+    { x: width - 28, trunkH: 13.5, r1: 6.75, r2: 4.5 },
+    { x: width - 10, trunkH: 10.5, r1: 5.25, r2: 3.75 },
   ];
 
-  // Worship stage position (right side)
+  // Worship stage position (right side) — 1.5x
   const stageX = spacing * 4.5;
   const stageW = spacing * 1.8;
-  const stageY = h - 5;
+  const stageY = h - 7;
 
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
-      {/* Railing — evenly spaced balusters */}
-      <rect x={0} y={h - 4} width={width} height={1.5} rx={0.5} fill="#7a8a9a" />
-      <rect x={0} y={h - 1} width={width} height={1} rx={0.3} fill="#6a7a8a" />
-      {Array.from({ length: Math.floor(width / 8) }).map((_, i) => (
-        <rect key={`bal-${i}`} x={4 + i * 8} y={h - 4} width={1.2} height={4} rx={0.3} fill="#8a9aaa" />
+      {/* Railing — 1.5x thickness */}
+      <rect x={0} y={h - 6} width={width} height={2.25} rx={0.75} fill="#7a8a9a" />
+      <rect x={0} y={h - 1.5} width={width} height={1.5} rx={0.45} fill="#6a7a8a" />
+      {Array.from({ length: Math.floor(width / 12) }).map((_, i) => (
+        <rect key={`bal-${i}`} x={6 + i * 12} y={h - 6} width={1.8} height={6} rx={0.45} fill="#8a9aaa" />
       ))}
 
-      {/* Trees */}
+      {/* Trees — 1.5x */}
       {trees.map((t, i) => (
         <g key={`tree-${i}`}>
-          <rect x={t.x - 1} y={h - 4 - t.trunkH} width={2} height={t.trunkH} rx={0.8} fill="#6b5b4f" />
-          <circle cx={t.x} cy={h - 4 - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
-          <circle cx={t.x - 2} cy={h - 4 - t.trunkH + 1} r={t.r2} fill="#5a9a5a" opacity={0.7} />
+          <rect x={t.x - 1.5} y={h - 6 - t.trunkH} width={3} height={t.trunkH} rx={1.2} fill="#6b5b4f" />
+          <circle cx={t.x} cy={h - 6 - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
+          <circle cx={t.x - 3} cy={h - 6 - t.trunkH + 1.5} r={t.r2} fill="#5a9a5a" opacity={0.7} />
         </g>
       ))}
 
-      {/* Parasol + table + chairs sets */}
+      {/* Parasol + table + chairs — 1.5x */}
       {parasolSets.map((p, i) => {
-        const baseY = h - 5;
+        const baseY = h - 7.5;
         return (
           <g key={`parasol-${i}`}>
-            <rect x={p.x - 0.5} y={baseY - 12} width={1} height={10} fill="#8a7a6a" />
-            <path d={`M ${p.x - 8},${baseY - 11} Q ${p.x},${baseY - 17} ${p.x + 8},${baseY - 11} Z`} fill={p.color} opacity={0.85} />
-            <rect x={p.x - 2} y={baseY - 4} width={4} height={3} rx={0.5} fill="#7a6a5a" />
-            <rect x={p.x - 6} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
-            <rect x={p.x - 5.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
-            <rect x={p.x + 3} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
-            <rect x={p.x + 3.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
+            <rect x={p.x - 0.75} y={baseY - 18} width={1.5} height={15} fill="#8a7a6a" />
+            <path d={`M ${p.x - 12},${baseY - 16.5} Q ${p.x},${baseY - 25.5} ${p.x + 12},${baseY - 16.5} Z`} fill={p.color} opacity={0.85} />
+            <rect x={p.x - 3} y={baseY - 6} width={6} height={4.5} rx={0.75} fill="#7a6a5a" />
+            <rect x={p.x - 9} y={baseY - 4.5} width={4.5} height={3.75} rx={0.75} fill="#8a7a6a" />
+            <rect x={p.x - 8.25} y={baseY - 8.25} width={3} height={3.75} rx={0.75} fill="#9a8a7a" />
+            <rect x={p.x + 4.5} y={baseY - 4.5} width={4.5} height={3.75} rx={0.75} fill="#8a7a6a" />
+            <rect x={p.x + 5.25} y={baseY - 8.25} width={3} height={3.75} rx={0.75} fill="#9a8a7a" />
           </g>
         );
       })}
 
-      {/* Worship Stage — low-rise white platform with instruments */}
+      {/* Worship Stage — 1.5x */}
       <g>
-        {/* Stage platform */}
-        <rect x={stageX} y={stageY - 3} width={stageW} height={3} rx={1} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.5} />
-        <rect x={stageX + 1} y={stageY - 4} width={stageW - 2} height={1.5} rx={0.5} fill="#fafafa" stroke="#ddd" strokeWidth={0.3} />
+        <rect x={stageX} y={stageY - 4.5} width={stageW} height={4.5} rx={1.5} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.75} />
+        <rect x={stageX + 1.5} y={stageY - 6} width={stageW - 3} height={2.25} rx={0.75} fill="#fafafa" stroke="#ddd" strokeWidth={0.45} />
 
-        {/* Drum set — center of stage */}
+        {/* Drum set — 1.5x */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
-          const drumY = stageY - 5;
+          const drumY = stageY - 7.5;
           return (
             <>
-              {/* Bass drum */}
-              <ellipse cx={drumCx} cy={drumY} rx={4} ry={3} fill="#c0c0c0" stroke="#999" strokeWidth={0.4} />
-              <ellipse cx={drumCx} cy={drumY} rx={2.5} ry={1.8} fill="#e0e0e0" />
-              {/* Snare */}
-              <ellipse cx={drumCx - 5} cy={drumY + 1} rx={2} ry={1.2} fill="#d4c090" stroke="#aa9060" strokeWidth={0.3} />
-              {/* Hi-hat */}
-              <line x1={drumCx + 5} y1={drumY + 2} x2={drumCx + 5} y2={drumY - 4} stroke="#888" strokeWidth={0.5} />
-              <ellipse cx={drumCx + 5} cy={drumY - 4} rx={2} ry={0.6} fill="#c8b040" opacity={0.8} />
-              {/* Cymbal */}
-              <line x1={drumCx - 3} y1={drumY - 1} x2={drumCx - 3} y2={drumY - 5} stroke="#888" strokeWidth={0.4} />
-              <ellipse cx={drumCx - 3} cy={drumY - 5} rx={2.5} ry={0.5} fill="#d4b848" opacity={0.7} />
-              {/* Drum sticks */}
-              <line x1={drumCx - 1} y1={drumY - 3} x2={drumCx + 2} y2={drumY + 1} stroke="#8b6f4e" strokeWidth={0.5} />
-              <line x1={drumCx + 1} y1={drumY - 3} x2={drumCx - 2} y2={drumY + 1} stroke="#8b6f4e" strokeWidth={0.5} />
+              <ellipse cx={drumCx} cy={drumY} rx={6} ry={4.5} fill="#c0c0c0" stroke="#999" strokeWidth={0.6} />
+              <ellipse cx={drumCx} cy={drumY} rx={3.75} ry={2.7} fill="#e0e0e0" />
+              <ellipse cx={drumCx - 7.5} cy={drumY + 1.5} rx={3} ry={1.8} fill="#d4c090" stroke="#aa9060" strokeWidth={0.45} />
+              <line x1={drumCx + 7.5} y1={drumY + 3} x2={drumCx + 7.5} y2={drumY - 6} stroke="#888" strokeWidth={0.75} />
+              <ellipse cx={drumCx + 7.5} cy={drumY - 6} rx={3} ry={0.9} fill="#c8b040" opacity={0.8} />
+              <line x1={drumCx - 4.5} y1={drumY - 1.5} x2={drumCx - 4.5} y2={drumY - 7.5} stroke="#888" strokeWidth={0.6} />
+              <ellipse cx={drumCx - 4.5} cy={drumY - 7.5} rx={3.75} ry={0.75} fill="#d4b848" opacity={0.7} />
+              <line x1={drumCx - 1.5} y1={drumY - 4.5} x2={drumCx + 3} y2={drumY + 1.5} stroke="#8b6f4e" strokeWidth={0.75} />
+              <line x1={drumCx + 1.5} y1={drumY - 4.5} x2={drumCx - 3} y2={drumY + 1.5} stroke="#8b6f4e" strokeWidth={0.75} />
             </>
           );
         })()}
 
-        {/* Acoustic guitar — leaning on stand, left of drums */}
+        {/* Acoustic guitar — 1.5x */}
         {(() => {
           const gx = stageX + stageW * 0.18;
-          const gy = stageY - 5;
+          const gy = stageY - 7.5;
           return (
             <>
-              {/* Neck */}
-              <line x1={gx} y1={gy - 8} x2={gx + 1} y2={gy + 1} stroke="#8b6f4e" strokeWidth={1} />
-              {/* Body */}
-              <ellipse cx={gx + 1.5} cy={gy + 1} rx={3} ry={2.5} fill="#c4956a" stroke="#8b6f4e" strokeWidth={0.4} />
-              {/* Sound hole */}
-              <circle cx={gx + 1.5} cy={gy + 0.5} r={0.8} fill="#5a4030" />
-              {/* Headstock */}
-              <rect x={gx - 1} y={gy - 9} width={2} height={2} rx={0.5} fill="#5a4030" />
+              <line x1={gx} y1={gy - 12} x2={gx + 1.5} y2={gy + 1.5} stroke="#8b6f4e" strokeWidth={1.5} />
+              <ellipse cx={gx + 2.25} cy={gy + 1.5} rx={4.5} ry={3.75} fill="#c4956a" stroke="#8b6f4e" strokeWidth={0.6} />
+              <circle cx={gx + 2.25} cy={gy + 0.75} r={1.2} fill="#5a4030" />
+              <rect x={gx - 1.5} y={gy - 13.5} width={3} height={3} rx={0.75} fill="#5a4030" />
             </>
           );
         })()}
 
-        {/* Mic stand — right of drums */}
+        {/* Mic stand — 1.5x */}
         {(() => {
           const mx = stageX + stageW * 0.82;
-          const my = stageY - 5;
+          const my = stageY - 7.5;
           return (
             <>
-              {/* Stand base (tripod) */}
-              <line x1={mx} y1={my + 4} x2={mx - 2} y2={my + 5} stroke="#666" strokeWidth={0.5} />
-              <line x1={mx} y1={my + 4} x2={mx + 2} y2={my + 5} stroke="#666" strokeWidth={0.5} />
-              {/* Vertical pole */}
-              <line x1={mx} y1={my + 4} x2={mx} y2={my - 6} stroke="#666" strokeWidth={0.7} />
-              {/* Mic head */}
-              <ellipse cx={mx} cy={my - 7} rx={1.5} ry={2} fill="#333" />
-              <rect x={mx - 0.3} y={my - 6} width={0.6} height={1} fill="#555" />
+              <line x1={mx} y1={my + 6} x2={mx - 3} y2={my + 7.5} stroke="#666" strokeWidth={0.75} />
+              <line x1={mx} y1={my + 6} x2={mx + 3} y2={my + 7.5} stroke="#666" strokeWidth={0.75} />
+              <line x1={mx} y1={my + 6} x2={mx} y2={my - 9} stroke="#666" strokeWidth={1.05} />
+              <ellipse cx={mx} cy={my - 10.5} rx={2.25} ry={3} fill="#333" />
+              <rect x={mx - 0.45} y={my - 9} width={0.9} height={1.5} fill="#555" />
             </>
           );
         })()}
@@ -173,27 +160,26 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   );
 }
 
-/* ─── SVG String Lights — poles start at building top, extend upward into sky ─── */
-function RooftopStringLights({ width, buildingTop }: { width: number; buildingTop: number }) {
-  const poleHeight = 30;
+/* ─── SVG String Lights — poles anchored at building top border, extending upward ─── */
+function RooftopStringLights({ width }: { width: number }) {
+  const poleHeight = 34;
+  const svgH = poleHeight + 6;
   const poleX = width - 14;
-  // Pole bottom is at building top, extends upward
-  const poleBottomY = buildingTop + poleHeight;
-  const poleTopY = buildingTop;
+  // Pole bottom at svgH (= anchored to building top), extends upward
+  const poleBottomY = svgH;
+  const poleTopY = svgH - poleHeight;
 
   const strands = [
-    { endX: 10, endY: poleTopY + poleHeight * 0.7, cp1x: poleX - 20, cp1y: poleTopY + 6, cp2x: 30, cp2y: poleTopY + poleHeight * 0.4 },
-    { endX: 25, endY: poleTopY + poleHeight * 0.85, cp1x: poleX - 15, cp1y: poleTopY + 10, cp2x: 40, cp2y: poleTopY + poleHeight * 0.6 },
-    { endX: 45, endY: poleTopY + poleHeight * 0.95, cp1x: poleX - 10, cp1y: poleTopY + 15, cp2x: 55, cp2y: poleTopY + poleHeight * 0.75 },
+    { endX: 10, endY: svgH - 8, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 16 },
+    { endX: 25, endY: svgH - 4, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 10 },
+    { endX: 45, endY: svgH - 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 6 },
   ];
 
-  const svgH = poleBottomY + 4;
-
   return (
-    <svg width={width} height={svgH} className="absolute bottom-0 left-0 pointer-events-none" viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
-      {/* Pole — anchored at building top, extends up */}
+    <svg width={width} height={svgH} className="absolute left-0 pointer-events-none" style={{ bottom: '100%' }} viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
+      {/* Pole */}
       <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
-      {/* Small flag at top of pole */}
+      {/* Flag */}
       <polygon points={`${poleX + 1},${poleTopY} ${poleX + 6},${poleTopY + 2.5} ${poleX + 1},${poleTopY + 5}`} fill="#c94040" opacity={0.7} />
 
       {strands.map((s, si) => {
@@ -372,17 +358,9 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   return (
     <>
-      {/* Sidewalk */}
-      <div className={cn("shrink-0 flex items-end justify-around px-1 select-none pointer-events-none", isMobile ? "h-2" : "h-2.5")}
-        style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
-        {(!collapsed || isMobile) && (
-          <>
-            <span className="text-[7px] mb-px">🏮</span>
-            <div className="animate-pinwheel-spin inline-block text-[8px] mb-px">✤</div>
-            <span className="text-[7px] mb-px">🏮</span>
-          </>
-        )}
-      </div>
+      {/* Sidewalk — clean, no decorations */}
+      <div className={cn("shrink-0 select-none pointer-events-none", isMobile ? "h-2" : "h-2.5")}
+        style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }} />
 
       {/* Road */}
       <div
@@ -391,17 +369,22 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
       >
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-        {/* Upper lane — right to left */}
-        <span className="absolute top-[15%] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
-        {/* Lower lane — left to right (wrapper for flip, inner for animation) */}
-        <span className="absolute bottom-[15%] inline-flex" style={{ transform: 'scaleX(-1)' }}>
-          <span className="text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>🚕</span>
+
+        {/* Upper lane (above center line) — right to left */}
+        <span className="absolute top-[10%] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
+
+        {/* Lower lane (below center line) — left to right, emoji flipped to face right */}
+        <span className="absolute bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+          <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
+
         {(!collapsed || isMobile) && (
           <>
-            <span className="absolute top-[15%] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
-            <span className="absolute bottom-[15%] inline-flex" style={{ transform: 'scaleX(-1)' }}>
-              <span className="text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>🚐</span>
+            {/* Upper lane — 2nd car */}
+            <span className="absolute top-[10%] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
+            {/* Lower lane — minivan */}
+            <span className="absolute bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+              <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
           </>
         )}
@@ -473,7 +456,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                   WORSHIP ATELIER <span className="text-[6px] font-normal text-[#555]">by kworship.app</span>
                 </span>
               </div>
-              <FloorLabel label="ROOFTOP" />
+              
             </div>
           )}
           <StudioUnit
@@ -622,24 +605,17 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Rooftop area with string lights — anchored to building top */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-10" : "h-12")}>
-              <div className="flex flex-col items-center justify-end h-full pb-1">
-                {collapsed && !isMobile && <div className="h-2" />}
-              </div>
-
-              {/* String lights — poles from building top extending upward */}
-              {(!collapsed || isMobile) && (
-                <RooftopStringLights width={collapsed ? 56 : 256} buildingTop={isMobile ? 2 : 4} />
-              )}
-            </div>
+            {/* Spacer for string lights to extend into */}
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-10" : "h-12")} />
 
             {/* Building wrapper */}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
-              {/* Rooftop scene — railing, trees, parasol+chairs */}
+              {/* Rooftop scene + string lights anchored at building top */}
               {(!collapsed || isMobile) && (
-                <div className={cn("shrink-0", isMobile ? "mx-6" : "mx-3")}>
+                <div className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
                   <RooftopScene width={collapsed ? 56 : isMobile ? 200 : 232} isMobile={isMobile} />
+                  {/* String lights — SVG positioned above this container via bottom:100%, pole anchored to building top */}
+                  <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 </div>
               )}
 
