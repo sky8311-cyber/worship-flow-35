@@ -15,6 +15,7 @@ import { NeighborActionHandler } from "@/components/worship-studio/NeighborActio
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 function extractVideoId(url: string | null): string | null {
   if (!url) return null;
@@ -187,7 +188,7 @@ export default function WorshipStudio() {
                 >
                   <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
                 </div>
-                <div className="flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]">
+                <div className={cn("flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]", !mobileAptOpen && "hidden")}>
                   <StudioSidePanel
                     myStudioId={myStudio?.id}
                     onStudioSelect={handleStudioSelect}
