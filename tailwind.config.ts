@@ -127,12 +127,12 @@ export default {
           "100%": { transform: "rotate(3deg)" },
         },
         "car-move-right": {
-          "0%": { transform: "translateX(-300%)" },
-          "100%": { transform: "translateX(2500%)" },
+          "0%": { transform: "translateX(-400%)" },
+          "100%": { transform: "translateX(3000%)" },
         },
         "car-move-left": {
-          "0%": { transform: "translateX(2500%)" },
-          "100%": { transform: "translateX(-300%)" },
+          "0%": { transform: "translateX(3000%)" },
+          "100%": { transform: "translateX(-400%)" },
         },
         "pinwheel-spin": {
           "0%": { transform: "rotate(0deg)" },
