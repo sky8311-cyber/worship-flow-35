@@ -1,50 +1,28 @@
 
 
-# "스튜디오" → "아틀리에" 전격 교체
+# G/F 상가 + 도로 비례 축소
 
-## 범위
+## 문제
+- 카페/갤러리/입구 문이 창문 높이 대비 너무 크고 (h-16 = 64px vs 창문 h-7 = 28px)
+- 모바일/데스크탑에서 하단이 잘려 보임
+- 자동차/도로 스케일 대비 1층 상가가 비현실적으로 거대
 
-17개 파일, 약 167건의 한국어 "스튜디오" + 대응되는 영어 "Studio" 문자열을 "아틀리에" / "Atelier"로 교체.
+## 변경 — `StudioSidePanel.tsx`만
 
-## 교체 규칙
+### 1. GroundFloorShops 높이 축소
+- `h-16` (64px) → `h-9` (36px) — 창문(h-7)과 비례하는 미니 사이즈
+- 입구 문 `w-10` → `w-6`
+- SVG viewBox 유지하되 컨테이너가 작아지면 자동 축소
+- 어닝 높이 `h-2.5` → `h-1.5`
+- 간판 텍스트 `text-[6px]` → `text-[5px]`
+- 문 내부 디테일 비례 축소
 
-| 기존 (KO) | 변경 (KO) | 기존 (EN) | 변경 (EN) |
-|---|---|---|---|
-| 내 스튜디오 | 내 아틀리에 | My Studio | My Atelier |
-| 나의 스튜디오 | 나의 아틀리에 | - | - |
-| 스튜디오 설정 | 아틀리에 설정 | Studio Settings | Atelier Settings |
-| 스튜디오 방문하기 | 아틀리에 방문하기 | Visit Studio | Visit Atelier |
-| 스튜디오 탐색 | 아틀리에 탐색 | Discover Studios | Discover Ateliers |
-| 공개 스튜디오 | 공개 아틀리에 | Public Studios | Public Ateliers |
-| 스튜디오 검색 | 아틀리에 검색 | Search studios | Search ateliers |
-| 활성 스튜디오 | 활성 아틀리에 | Active Studios | Active Ateliers |
-| 스튜디오 그리드 | 아틀리에 그리드 | studio grid | atelier grid |
-| 스튜디오 이름 | 아틀리에 이름 | Studio name | Atelier name |
-| 스튜디오의 분위기 | 아틀리에의 분위기 | your Studio | your Atelier |
-| 스튜디오당 | 아틀리에당 | per studio | per atelier |
-| 앰버서더 스튜디오 | 앰버서더 아틀리에 | Ambassador studios | Ambassador ateliers |
-| 스튜디오 피드 | 아틀리에 피드 | studio feeds | atelier feeds |
+### 2. 도로 영역 축소
+- 인도 `h-4`/`h-3` → `h-2.5`/`h-2`
+- 도로 `h-8`/`h-6` → `h-5`/`h-4`
 
-**예외 — 변경하지 않는 것:**
-- `translations.ts`의 "스튜디오 버전" (음악 녹음 맥락의 studio version → 이건 음악 용어)
-- 파일명/컴포넌트명/변수명 (`Studio*.tsx`, `useStudio*`, `myStudio` 등) — 코드 내부 식별자는 유지
-- `StudioPostEditor.tsx`의 "이 스튜디오는 그 여정이…" → "이 아틀리에는 그 여정이…" (교체 대상)
+### 3. 잘림 방지
+- G/F + 도로 wrapper에 `overflow-visible` 불필요 — 전체 높이 감소로 해결
 
-## 변경 파일 목록
-
-1. `src/components/worship-rooms/RoomCustomizeDialog.tsx` — 1건
-2. `src/components/worship-studio/StudioDraftsTab.tsx` — 1건
-3. `src/components/worship-studio/StoryCard.tsx` — 2건
-4. `src/components/worship-studio/StudioDiscover.tsx` — 6건
-5. `src/components/worship-studio/StudioCoverEditor.tsx` — 2건
-6. `src/components/worship-studio/StudioSettingsDialog.tsx` — 3건
-7. `src/components/worship-studio/StudioPostEditor.tsx` — 1건
-8. `src/components/worship-studio/StudioSidePanel.tsx` — 1건
-9. `src/components/worship-studio/StudioEmptyState.tsx` — 1건
-10. `src/components/worship-studio/StudioFeedCard.tsx` — 1건
-11. `src/components/worship-studio/CollapsibleSidebar.tsx` — 2건
-12. `src/pages/AdminStudio.tsx` — 5건+
-13. 나머지 파일들 (검색 결과에서 truncated된 파일들도 포함)
-
-단순 문자열 치환 작업이므로 로직 변경 없음.
+결과: 1층 상가가 창문 유닛과 비슷한 스케일로 미니어처 느낌, 도로도 축소되어 전체가 화면 안에 수납됨.
 
