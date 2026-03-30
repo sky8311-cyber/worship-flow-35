@@ -677,7 +677,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Spacer for string lights to extend into */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-5" : "h-6")} />
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-2" : "h-6")} />
 
             {/* Building wrapper */}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
