@@ -309,7 +309,7 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
             )}
             {/* Animated text */}
             <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`}>
-              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} />
+              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} isMobile={isMobile} />
             </g>
           </g>
         );
