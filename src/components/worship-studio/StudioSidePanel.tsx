@@ -170,7 +170,9 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
 
   const isStream = screen.bg === "stream";
   const isEnglish = /^[A-Za-z\s]+$/.test(screen.text);
-  const fontSize = isEnglish ? Math.max(5, screenW * 0.07) : Math.max(5, screenW * 0.09);
+  const fontSize = isEnglish
+    ? Math.min(Math.max(5, screenW * 0.07), screenH * 0.35)
+    : Math.min(Math.max(5, screenW * 0.09), screenH * 0.35);
   const textColor = isStream ? '#ffffff' : '#2a2a2a';
 
   const displayText = isTypewriter && visible
