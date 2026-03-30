@@ -1,37 +1,19 @@
 
 
-# Fix Vertically Stretched Moon
+# 탑 네비게이션과 공간 탭 사이 구분선 제거
 
-## Problem
-The `NightSkyStars` SVG has `preserveAspectRatio="none"`, which stretches the moon circles to match the container dimensions. Since the container is typically taller than the viewBox ratio, the moon appears vertically elongated.
+## 변경 사항
 
-## Solution
-Move the moon out of the stretched SVG and render it as a separate absolutely-positioned element (or a second SVG with proper aspect ratio). The stars can remain in the `preserveAspectRatio="none"` SVG since tiny dots aren't visibly affected by stretching.
+### 1. AppHeader — 하단 border 제거
+`src/components/layout/AppHeader.tsx` (line 102):
+- `border-b border-border/50` 제거
 
-## Changes — `src/components/worship-studio/StudioSidePanel.tsx`
+### 2. SpaceTabBar — 상단 배경/border 정리 (선택)
+`src/components/worship-studio/spaces/SpaceTabBar.tsx` (line 83):
+- 컨테이너의 `border-b border-[#d0c8bc]`는 탭과 캔버스 구분이므로 유지
+- 탭 바 자체와 헤더 사이 시각적 끊김이 없도록 확인
 
-In the `NightSkyStars` component (around lines 66-90):
-
-1. Remove the moon circles (lines 68-70) from the main SVG
-2. Add a separate `div` or small SVG after the main SVG for the moon, positioned at roughly `right-[20%] top-[8%]` with fixed pixel dimensions so it maintains a perfect circle shape
-
-```tsx
-return (
-  <>
-    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-      {/* Stars only */}
-      {stars.map((s, i) => (
-        // ... existing star code
-      ))}
-    </svg>
-    {/* Moon rendered separately to avoid stretching */}
-    <svg className="absolute pointer-events-none" style={{ right: '20%', top: '8%', width: 20, height: 20 }} viewBox="0 0 20 20">
-      <circle cx={10} cy={10} r={7} fill="#f5e6a0" opacity={0.9} />
-      <circle cx={13} cy={9} r={6} fill="#0a0e2a" />
-    </svg>
-  </>
-);
-```
-
-**File:** `src/components/worship-studio/StudioSidePanel.tsx`
+## 파일
+1. `src/components/layout/AppHeader.tsx` — `border-b border-border/50` 제거
+2. (필요시) `src/components/worship-studio/spaces/SpaceTabBar.tsx` — 탭 바 상단 여백/배경 조정
 
