@@ -89,12 +89,12 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
 });
 
 /* ─── Billboard Animated Text ─── */
-const BILLBOARD_TEXTS = [
-  "삶을 예배로 만드는 공간",
-  "WORSHIP ATELIER",
-  "by K-Worship",
-  "나만의 공작소에",
-  "입주하세요!",
+const BILLBOARD_SCREENS = [
+  { text: "삶을 예배로 만드는 공간", bg: "stream" as const },
+  { text: "WORSHIP ATELIER", bg: "stream" as const },
+  { text: "by K-Worship", bg: "stream" as const },
+  { text: "나만의 공작소에", bg: "white" as const },
+  { text: "입주하세요!", bg: "white" as const },
 ];
 
 const BILLBOARD_ANIMATIONS = [
@@ -103,6 +103,19 @@ const BILLBOARD_ANIMATIONS = [
   "billboard-scale-pop",
   "billboard-slide-right",
 ];
+
+const STREAM_BG_STYLE: React.CSSProperties = {
+  background: `
+    linear-gradient(110deg, rgba(56,163,165,0.85) 0%, rgba(34,87,122,0.9) 30%, rgba(87,204,153,0.7) 55%, rgba(56,163,165,0.85) 75%, rgba(34,87,122,0.9) 100%),
+    linear-gradient(180deg, rgba(200,230,255,0.3) 0%, rgba(56,163,165,0.2) 50%, rgba(34,87,122,0.4) 100%)
+  `,
+  backgroundSize: '200% 100%, 100% 100%',
+  animation: 'stream-flow 5s linear infinite',
+};
+
+const WHITE_BG_STYLE: React.CSSProperties = {
+  background: '#ffffff',
+};
 
 const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight }: { screenW: number; screenH: number; isNight: boolean }) {
   const [index, setIndex] = useState(0);
@@ -114,7 +127,7 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
       setVisible(false);
       setTimeout(() => {
         setIndex(prev => {
-          const next = (prev + 1) % BILLBOARD_TEXTS.length;
+          const next = (prev + 1) % BILLBOARD_SCREENS.length;
           if (next === 0) {
             setAnimClass("billboard-fade-in");
           } else {
@@ -128,9 +141,11 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
     return () => clearInterval(interval);
   }, []);
 
-  const text = BILLBOARD_TEXTS[index];
-  const isEnglish = /^[A-Za-z\s]+$/.test(text);
+  const screen = BILLBOARD_SCREENS[index];
+  const isStream = screen.bg === "stream";
+  const isEnglish = /^[A-Za-z\s]+$/.test(screen.text);
   const fontSize = isEnglish ? Math.max(5, screenW * 0.07) : Math.max(5, screenW * 0.09);
+  const textColor = isStream ? '#ffffff' : '#2a2a2a';
 
   return (
     <foreignObject x={0} y={0} width={screenW} height={screenH}>
@@ -144,6 +159,8 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
           padding: '2px 4px',
           boxSizing: 'border-box',
           overflow: 'hidden',
+          borderRadius: 2,
+          ...(isStream ? STREAM_BG_STYLE : WHITE_BG_STYLE),
         }}
       >
         <span
@@ -152,7 +169,7 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
           style={{
             fontSize,
             fontWeight: 700,
-            color: isNight ? '#e0e8f0' : '#3a3a3a',
+            color: textColor,
             textAlign: 'center',
             lineHeight: 1.3,
             wordBreak: 'keep-all',
@@ -160,9 +177,10 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
             display: 'block',
             fontFamily: "'Pretendard', sans-serif",
             letterSpacing: isEnglish ? '0.08em' : '0.02em',
+            textShadow: isStream ? '0 1px 4px rgba(0,0,0,0.5)' : 'none',
           }}
         >
-          {text}
+          {screen.text}
         </span>
       </div>
     </foreignObject>
