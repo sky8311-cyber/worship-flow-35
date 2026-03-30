@@ -5048,6 +5048,7 @@ export type Database = {
           marquee_text: string | null
           marquee_text_color: string | null
           max_widgets: number | null
+          onboarding_completed: boolean
           owner_user_id: string
           status_emoji: string | null
           status_text: string | null
@@ -5071,6 +5072,7 @@ export type Database = {
           marquee_text?: string | null
           marquee_text_color?: string | null
           max_widgets?: number | null
+          onboarding_completed?: boolean
           owner_user_id: string
           status_emoji?: string | null
           status_text?: string | null
@@ -5094,6 +5096,7 @@ export type Database = {
           marquee_text?: string | null
           marquee_text_color?: string | null
           max_widgets?: number | null
+          onboarding_completed?: boolean
           owner_user_id?: string
           status_emoji?: string | null
           status_text?: string | null

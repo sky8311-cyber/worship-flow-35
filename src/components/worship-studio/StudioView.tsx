@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useWorshipRoomById, useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { StudioContractPrompt } from "./StudioContractPrompt";
+import { StudioOnboarding } from "./onboarding/StudioOnboarding";
 import { StudioLockedState } from "./StudioLockedState";
 
 import { StudioPostList } from "./PostDisplayCard";
@@ -17,6 +17,7 @@ interface StudioViewProps {
 }
 
 export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [selectedPost, setSelectedPost] = useState<StudioPost | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -71,9 +72,15 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
     );
   }
   
-  // No room - show contract prompt for own studio
-  if (!room && isOwnRoom) {
-    return <StudioContractPrompt />;
+  // No room or onboarding not completed - show onboarding for own studio
+  if (isOwnRoom && (!room || !room.onboarding_completed)) {
+    return (
+      <StudioOnboarding
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["worship-room"] });
+        }}
+      />
+    );
   }
   
   // Room not found

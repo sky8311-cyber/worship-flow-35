@@ -8,7 +8,7 @@ export function useCreateStudio() {
   const { user } = useAuth();
   
   return useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ studioName }: { studioName?: string } = {}) => {
       if (!user) throw new Error("Not authenticated");
       
       const { data, error } = await supabase
@@ -17,6 +17,8 @@ export function useCreateStudio() {
           owner_user_id: user.id,
           visibility: "friends",
           is_active: true,
+          onboarding_completed: false,
+          studio_name: studioName || null,
           theme_config: {
             wallpaper: "default",
             backgroundColor: "#f8fafc",
