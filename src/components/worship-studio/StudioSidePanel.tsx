@@ -170,7 +170,9 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
 
   const isStream = screen.bg === "stream";
   const isEnglish = /^[A-Za-z\s]+$/.test(screen.text);
-  const fontSize = isEnglish ? Math.max(5, screenW * 0.07) : Math.max(5, screenW * 0.09);
+  const fontSize = isEnglish
+    ? Math.min(Math.max(5, screenW * 0.07), screenH * 0.35)
+    : Math.min(Math.max(5, screenW * 0.09), screenH * 0.35);
   const textColor = isStream ? '#ffffff' : '#2a2a2a';
 
   const displayText = isTypewriter && visible
@@ -276,7 +278,7 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
       {/* Billboard — behind trees/parasols/stage */}
       {(() => {
         const bbW = width * 0.45;
-        const bbH = floorY * 0.42;
+        const bbH = isMobile ? floorY * 0.48 : floorY * 0.42;
         const bbX = width * 0.3;
         const bbY = floorY - bbH - 16;
         const pillarW = 3;
