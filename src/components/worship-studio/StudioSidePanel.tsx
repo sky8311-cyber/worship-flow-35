@@ -91,18 +91,11 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
 
 /* ─── Billboard Animated Text ─── */
 const BILLBOARD_SCREENS = [
-  { text: "삶을 예배로 만드는 공간", bg: "stream" as const, anim: "random" as const },
-  { text: "WORSHIP ATELIER", bg: "stream" as const, anim: "random" as const },
-  { text: "by K-Worship", bg: "stream" as const, anim: "random" as const },
-  { text: "나만의 공작소에", bg: "white" as const, anim: "typewriter" as const },
-  { text: "입주하세요!", bg: "white" as const, anim: "random" as const },
-];
-
-const BILLBOARD_ANIMATIONS = [
-  "billboard-fade-in",
-  "billboard-slide-up",
-  "billboard-scale-pop",
-  "billboard-slide-right",
+  { text: "삶을 예배로 만드는 공간", bg: "stream" as const },
+  { text: "WORSHIP ATELIER", bg: "stream" as const },
+  { text: "by K-Worship", bg: "stream" as const },
+  { text: "나만의 공작소에", bg: "white" as const },
+  { text: "입주하세요!", bg: "white" as const },
 ];
 
 const STREAM_BG_STYLE: React.CSSProperties = {
@@ -120,64 +113,52 @@ const WHITE_BG_STYLE: React.CSSProperties = {
 
 const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight, isMobile }: { screenW: number; screenH: number; isNight: boolean; isMobile?: boolean }) {
   const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-  const [animClass, setAnimClass] = useState("billboard-fade-in");
   const [charCount, setCharCount] = useState(0);
   const [showCursor, setShowCursor] = useState(true);
+  const [typingDone, setTypingDone] = useState(false);
 
   const screen = BILLBOARD_SCREENS[index];
-  const isTypewriter = screen.anim === "typewriter";
+  const isEnglish = /^[A-Za-z\s\-]+$/.test(screen.text);
+  const typeSpeed = isEnglish ? 80 : 150;
 
+  // Screen transition: wait for typing to finish, then hold, then advance
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setIndex(prev => {
-          const next = (prev + 1) % BILLBOARD_SCREENS.length;
-          const nextScreen = BILLBOARD_SCREENS[next];
-          if (nextScreen.anim === "typewriter") {
-            setCharCount(0);
-          }
-          if (next === 0) {
-            setAnimClass("billboard-fade-in");
-          } else if (nextScreen.anim !== "typewriter") {
-            setAnimClass(BILLBOARD_ANIMATIONS[Math.floor(Math.random() * BILLBOARD_ANIMATIONS.length)]);
-          }
-          return next;
-        });
-        setVisible(true);
-      }, 400);
-    }, 3400);
-    return () => clearInterval(interval);
-  }, []);
+    if (!typingDone) return;
+    const holdTime = 1800;
+    const timer = setTimeout(() => {
+      setIndex(prev => (prev + 1) % BILLBOARD_SCREENS.length);
+      setCharCount(0);
+      setTypingDone(false);
+    }, holdTime);
+    return () => clearTimeout(timer);
+  }, [typingDone]);
 
   // Typewriter: increment chars one by one
   useEffect(() => {
-    if (!isTypewriter || !visible) return;
-    if (charCount >= screen.text.length) return;
+    if (typingDone) return;
+    if (charCount >= screen.text.length) {
+      setTypingDone(true);
+      return;
+    }
     const timer = setTimeout(() => {
       setCharCount(prev => prev + 1);
-    }, 150);
+    }, typeSpeed);
     return () => clearTimeout(timer);
-  }, [isTypewriter, visible, charCount, screen.text.length]);
+  }, [charCount, screen.text.length, typingDone, typeSpeed]);
 
-  // Blinking cursor for typewriter
+  // Blinking cursor
   useEffect(() => {
-    if (!isTypewriter || !visible) return;
     const blink = setInterval(() => setShowCursor(prev => !prev), 500);
     return () => clearInterval(blink);
-  }, [isTypewriter, visible]);
+  }, []);
 
   const isStream = screen.bg === "stream";
-  const isEnglish = /^[A-Za-z\s]+$/.test(screen.text);
   const fontSize = isEnglish
     ? Math.min(Math.max(4, screenW * 0.07), screenH * 0.3, isMobile ? 12 : 20)
     : Math.min(Math.max(4, screenW * 0.08), screenH * 0.28, isMobile ? 10 : 18);
   const textColor = isStream ? '#ffffff' : '#2a2a2a';
 
-  const displayText = isTypewriter && visible
-    ? screen.text.slice(0, charCount)
-    : screen.text;
+  const displayText = screen.text.slice(0, charCount);
 
   return (
     <foreignObject x={0} y={0} width={screenW} height={screenH}>
@@ -196,8 +177,6 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
         }}
       >
         <span
-          key={`${index}-${animClass}`}
-          className={isTypewriter ? undefined : (visible ? animClass : "billboard-fade-out")}
           style={{
             fontSize,
             fontWeight: 700,
@@ -210,14 +189,10 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
             fontFamily: "'Pretendard', sans-serif",
             letterSpacing: isEnglish ? '0.08em' : '0.02em',
             textShadow: isStream ? '0 1px 4px rgba(0,0,0,0.5)' : 'none',
-            opacity: isTypewriter ? (visible ? 1 : 0) : undefined,
-            transition: isTypewriter ? 'opacity 0.3s' : undefined,
           }}
         >
           {displayText}
-          {isTypewriter && visible && (
-            <span style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}>|</span>
-          )}
+          <span style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}>|</span>
         </span>
       </div>
     </foreignObject>
