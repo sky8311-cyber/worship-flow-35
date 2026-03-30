@@ -85,11 +85,8 @@ export const AtelierHero = () => {
           <motion.span
             className="absolute font-korean text-lg md:text-2xl text-foreground tracking-wide whitespace-nowrap"
             style={{ bottom: -4, left: 0 }}
-            animate={
-              isMerged
-                ? { x: "0%", opacity: 1 }
-                : { x: 0, opacity: 1 }
-            }
+            animate={{ opacity: isMerged ? 0 : 1 }}
+            transition={{ duration: 0.4 }}
             initial={{ opacity: 1 }}
           >
             {text1.slice(0, chars1)}
