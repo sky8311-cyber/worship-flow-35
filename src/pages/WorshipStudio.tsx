@@ -167,12 +167,12 @@ export default function WorshipStudio() {
 
           {isMobile && (
             <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-              <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-2xl overflow-hidden [&>button:last-child]:top-2 [&>button:last-child]:right-3">
+              <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-2xl overflow-hidden flex flex-col [&>button:last-child]:top-2 [&>button:last-child]:right-3">
                 <SheetHeader className="sr-only">
                   <SheetTitle>Worship Atelier</SheetTitle>
                 </SheetHeader>
                 <div
-                  className="flex justify-center pt-3 pb-1 cursor-grab"
+                  className="flex-shrink-0 flex justify-center pt-3 pb-1 cursor-grab"
                   onTouchStart={(e) => {
                     (e.currentTarget as any)._touchStartY = e.touches[0].clientY;
                   }}
@@ -187,7 +187,7 @@ export default function WorshipStudio() {
                 >
                   <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
                 </div>
-                <div className="h-full overflow-hidden pt-2">
+                <div className="flex-1 min-h-0 overflow-hidden pt-2">
                   <StudioSidePanel
                     myStudioId={myStudio?.id}
                     onStudioSelect={handleStudioSelect}
