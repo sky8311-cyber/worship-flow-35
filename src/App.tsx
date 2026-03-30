@@ -117,6 +117,7 @@ const JoinCommunity = lazyWithRetry(() => import("./pages/JoinCommunity"));
 const WorshipStudio = lazyWithRetry(() => import("./pages/WorshipStudio"));
 const CanvasEditor = lazyWithRetry(() => import("./pages/CanvasEditor"));
 const EmailPreferencesPage = lazyWithRetry(() => import("./pages/EmailPreferences"));
+const AtelierWelcome = lazyWithRetry(() => import("./pages/AtelierWelcome"));
 
 // Page loader component for Suspense fallback
 const PageLoader = () => <FullScreenLoader />;
