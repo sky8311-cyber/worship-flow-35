@@ -1,26 +1,29 @@
 
 
-# Fix: Entrance Door Height + Rooftop Object Placement
+# 루프탑 난간 레이어링 + 모바일 너비 맞춤
 
-## Problem 1: Entrance Door Too Tall
-The entrance door column uses `flex-1` making it stretch to the full container height (`h-28` = 112px on mobile). A real door should be proportional — roughly 60-70% of the shop height, with a visible transom/wall above.
+## 문제 1: 난간이 오브젝트 뒤에 있음
+현재 SVG 렌더링 순서: 바닥 → **난간** → 나무 → 파라솔 → 스테이지
+SVG는 나중에 그려진 요소가 위에 표시되므로, 난간이 모든 오브젝트 뒤에 깔림.
 
-**Fix in `GroundFloorShops`** (lines 388-405):
-- Remove `flex-1` from door frame, give it a fixed height (`h-16` on mobile, `h-12` on desktop)
-- Add visible door knob circle (brass colored, ~2px diameter) at proper handle height (~40% from bottom)
-- Add a small wall/transom area above the door arch
-- Keep `justify-end` so door sits at ground level
+**수정**: 난간 코드(lines 64-69)를 스테이지 `</g>` 뒤(line 148 근처)로 이동 → 최상단 레이어로 렌더링. 나무, 파라솔, 스테이지가 난간 뒤편에 위치한 것처럼 보임.
 
-## Problem 2: Rooftop Objects Floating on Railing
-Currently all objects (trees, parasols, stage, instruments) are anchored to `h - 6` / `h - 7.5` which is essentially the railing top. There's no visible floor surface, so everything looks like it's balanced on the railing bars.
+## 문제 2: 모바일에서 난간 너비 고정
+현재 `RooftopScene`에 `width={200}` (모바일)이 하드코딩되어 있지만, 실제 건물 본체는 `mx-6` 패딩 후 화면 전체를 차지함.
 
-**Fix in `RooftopScene`** (lines 30-146):
-- Add a visible rooftop floor rectangle below the railing (e.g. `y = h-3` to `h`, darker tone like `#8a9aaa`) — this represents the building's top surface
-- Move the railing UP slightly so it sits on the floor edge (visual front-fence)
-- Rebase all object positions: trees, parasols, and stage stand on the floor surface (behind railing)
-- Instruments remain on the stage (their y-coordinates relative to `stageY` stay the same)
-- Net effect: objects appear grounded on a solid surface with the railing as a decorative fence in front
+**수정**: `RooftopScene`의 `width` prop 대신 컨테이너 실제 너비를 사용하도록 변경. 모바일에서는 `useRef` + `useEffect`로 컨테이너 `clientWidth`를 측정하여 동적으로 전달. 이렇게 하면 난간과 모든 오브젝트가 건물 너비에 자동으로 맞춰짐.
 
-## Files
-- `src/components/worship-studio/StudioSidePanel.tsx`
+## 변경 사항
+
+### `src/components/worship-studio/StudioSidePanel.tsx`
+
+1. **난간 SVG 순서 변경** (RooftopScene 함수 내):
+   - Lines 64-69의 난간 코드를 line 148 (스테이지 `</g>` 뒤)로 이동
+   - 결과: 바닥 → 나무 → 파라솔 → 스테이지 → **난간** (최상단)
+
+2. **모바일 동적 너비**:
+   - 루프탑 컨테이너 div에 `ref` 추가
+   - `useState` + `useEffect` + `ResizeObserver`로 컨테이너 너비 측정
+   - 모바일일 때 측정된 너비를 `RooftopScene`에 전달 (fallback: 200)
+   - 데스크톱은 기존 하드코딩 유지
 
