@@ -307,8 +307,13 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
                 <rect x={bbX - 3} y={bbY - 3} width={bbW + 6} height={bbH + 6} rx={4} fill="rgba(200,220,255,0.08)" filter="url(#bbGlow)" />
               </>
             )}
-            {/* Animated text */}
-            <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`}>
+            {/* Animated text — clipPath prevents overflow on mobile */}
+            <defs>
+              <clipPath id="bbTextClip">
+                <rect x={0} y={0} width={bbW - bezelPad * 2} height={bbH - bezelPad * 2} />
+              </clipPath>
+            </defs>
+            <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`} clipPath="url(#bbTextClip)">
               <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} isMobile={isMobile} />
             </g>
           </g>
