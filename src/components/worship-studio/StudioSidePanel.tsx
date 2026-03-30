@@ -64,24 +64,27 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
   }, [width, height]);
 
   return (
-    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-      {/* Crescent moon */}
-      <circle cx={width * 0.8} cy={height * 0.08} r={7} fill="#f5e6a0" opacity={0.9} />
-      <circle cx={width * 0.8 + 3} cy={height * 0.08 - 1} r={6} fill="#0a0e2a" />
-
-      {stars.map((s, i) => (
-        <circle
-          key={i}
-          cx={s.x}
-          cy={s.y}
-          r={s.r}
-          fill="#fff"
-          opacity={s.opacity}
-          className="animate-star-twinkle"
-          style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
-        />
-      ))}
-    </svg>
+    <>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+        {stars.map((s, i) => (
+          <circle
+            key={i}
+            cx={s.x}
+            cy={s.y}
+            r={s.r}
+            fill="#fff"
+            opacity={s.opacity}
+            className="animate-star-twinkle"
+            style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
+          />
+        ))}
+      </svg>
+      {/* Moon rendered separately to avoid stretching from preserveAspectRatio="none" */}
+      <svg className="absolute pointer-events-none" style={{ right: '20%', top: '8%', width: 22, height: 22 }} viewBox="0 0 22 22">
+        <circle cx={11} cy={11} r={7} fill="#f5e6a0" opacity={0.9} />
+        <circle cx={14} cy={10} r={6} fill="#0a0e2a" />
+      </svg>
+    </>
   );
 });
 
