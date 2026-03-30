@@ -690,7 +690,10 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
               {/* Building body — glass facade */}
               <div
-                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-visible relative", isMobile ? "mx-6" : "mx-3")}
+                className={cn(
+                  "min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-visible relative",
+                  isMobile ? "mx-6 h-[38vh] flex-none" : "mx-3 flex-1"
+                )}
                 style={{
                   ...glassWallStyle,
                   boxShadow: '2px 0 8px rgba(0,0,0,0.1), -2px 0 8px rgba(0,0,0,0.1)',
@@ -700,7 +703,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 {(!collapsed || isMobile) && (
                   <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 )}
-                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[40vh]")}>
+                <ScrollArea className="flex-1 min-h-0 relative z-10">
                   {buildingContent}
                 </ScrollArea>
               </div>
