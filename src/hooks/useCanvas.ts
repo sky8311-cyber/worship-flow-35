@@ -184,7 +184,7 @@ export function useCanvas(canvasId?: string) {
       queryClient.invalidateQueries({ queryKey: ["canvas", canvasId] });
       queryClient.invalidateQueries({ queryKey: ["studio-posts"] });
       toast.success("발행되었습니다");
-      navigate("/studio");
+      navigate("/atelier");
     },
   });
 
@@ -212,7 +212,7 @@ export function useCanvas(canvasId?: string) {
     },
     onSuccess: (data) => {
       if (data) {
-        navigate(`/studio/canvas/${data.id}`);
+        navigate(`/atelier/canvas/${data.id}`);
       }
     },
   });
