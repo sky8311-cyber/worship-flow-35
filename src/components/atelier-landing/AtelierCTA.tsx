@@ -15,7 +15,7 @@ export const AtelierCTA = () => {
   };
 
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#F5F2ED]">
+    <section className="py-14 md:py-20 px-6 bg-[#F5F2ED]">
       <motion.div
         className="max-w-xl mx-auto text-center space-y-8"
         initial={{ opacity: 0, y: 20 }}
@@ -24,7 +24,7 @@ export const AtelierCTA = () => {
         transition={{ duration: 0.7 }}
       >
         <h2 className="font-korean text-2xl md:text-3xl text-foreground">
-          당신의 공간을 만들어보세요
+          이제, 당신의 아틀리에를 시작하세요
         </h2>
 
         <button
@@ -43,11 +43,6 @@ export const AtelierCTA = () => {
           </p>
         )}
 
-        <div className="w-12 h-[1px] bg-[#CCC] mx-auto" />
-
-        <p className="font-korean text-sm text-muted-foreground">
-          K-Worship 플랫폼에서 아틀리에를 만들 수 있습니다
-        </p>
       </motion.div>
     </section>
   );

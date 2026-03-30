@@ -2,14 +2,14 @@ import { motion } from "framer-motion";
 
 const rows = [
   { left: "삶", arrow: "→", right: "예배로", en: "Life → Worship" },
-  { left: "공간", arrow: "→", right: "창작", en: "Space → Creation" },
-  { left: "과정", arrow: "→", right: "흐름", en: "Process → Flow" },
+  { left: "기록", arrow: "→", right: "창작으로", en: "Record → Creation" },
+  { left: "준비", arrow: "→", right: "흐름으로", en: "Prep → Flow" },
 ];
 
 export const AtelierSolution = () => {
   return (
-    <section className="min-h-[70vh] flex items-center justify-center px-6 bg-[#F5F2ED]">
-      <div className="max-w-2xl text-center space-y-10">
+    <section className="min-h-[42vh] flex items-center justify-center px-6 bg-[#F5F2ED]">
+      <div className="max-w-2xl text-center space-y-6">
         <motion.p
           className="font-korean text-lg md:text-xl text-muted-foreground"
           initial={{ opacity: 0, y: 20 }}

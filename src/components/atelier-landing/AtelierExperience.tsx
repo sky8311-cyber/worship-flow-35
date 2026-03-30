@@ -4,30 +4,30 @@ import { Palette, Layers, Heart } from "lucide-react";
 const steps = [
   {
     icon: Palette,
-    ko: "분위기를 만들고",
-    en: "Create your mood",
-    desc: "BGM, 테마, 컬러로 예배의 분위기를 디자인합니다",
+    ko: "나만의 공간을 만들고",
+    en: "Make it yours",
+    desc: "BGM, 테마, 블록으로 나만의 예배 아틀리에를 꾸밉니다",
   },
   {
     icon: Layers,
-    ko: "흐름을 세우고",
+    ko: "예배 여정을 기록하고",
     en: "Build your flow",
-    desc: "블록과 공간으로 예배의 흐름을 구성합니다",
+    desc: "찬양, 말씀, 묵상을 블록으로 담아 예배의 흐름을 만듭니다",
   },
   {
     icon: Heart,
-    ko: "삶을 드립니다",
-    en: "Offer your life",
-    desc: "나누고 기록하며 삶 전체를 예배로 드립니다",
+    ko: "이웃과 잇습니다",
+    en: "Connect with neighbors",
+    desc: "예배하는 이웃의 아틀리에를 방문하고 함께 연결됩니다",
   },
 ];
 
 export const AtelierExperience = () => {
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#FAF8F5]">
+    <section className="py-14 md:py-20 px-6 bg-[#FAF8F5]">
       <div className="max-w-4xl mx-auto">
         <motion.p
-          className="font-serif text-center text-sm md:text-base text-[#B8902A] tracking-[0.3em] uppercase mb-16"
+          className="font-serif text-center text-sm md:text-base text-[#B8902A] tracking-[0.3em] uppercase mb-10"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -35,6 +35,7 @@ export const AtelierExperience = () => {
         >
           Experience
         </motion.p>
+
 
         <div className="grid md:grid-cols-3 gap-12 md:gap-8">
           {steps.map((step, i) => (
