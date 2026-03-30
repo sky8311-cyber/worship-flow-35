@@ -236,7 +236,7 @@ const AdminStudio = () => {
             </TabsTrigger>
             <TabsTrigger value="studios" className="gap-2">
               <Users className="w-4 h-4" />
-              {language === "ko" ? "스튜디오" : "Studios"}
+              {language === "ko" ? "아틀리에" : "Ateliers"}
             </TabsTrigger>
             <TabsTrigger value="stats" className="gap-2">
               <BarChart3 className="w-4 h-4" />

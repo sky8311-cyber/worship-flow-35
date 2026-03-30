@@ -110,7 +110,7 @@ export function StudioFeedCard({ post, onStudioClick }: StudioFeedCardProps) {
                 className="text-xs text-muted-foreground h-7"
               >
                 <ExternalLink className="h-3 w-3 mr-1" />
-                {language === "ko" ? "스튜디오" : "Studio"}
+                {language === "ko" ? "아틀리에" : "Atelier"}
               </Button>
             )}
           </div>

@@ -138,7 +138,7 @@ export function StudioCoverEditor({ room, isOwner = false }: StudioCoverEditorPr
                 <Input
                   value={studioName}
                   onChange={(e) => setStudioName(e.target.value)}
-                  placeholder={language === "ko" ? "스튜디오 이름" : "Studio name"}
+                  placeholder={language === "ko" ? "아틀리에 이름" : "Atelier name"}
                   className="h-9 max-w-xs"
                   autoFocus
                 />
