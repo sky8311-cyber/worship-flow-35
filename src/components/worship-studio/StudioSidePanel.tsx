@@ -554,43 +554,43 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
       >
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
         {/* Car moving left — headlight on left side */}
-        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>
+        <span className="absolute z-10 [animation-fill-mode:backwards] text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>
           {isNight && <span className="absolute" style={{ left: '-8px', top: '10px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
           {isNight && <span className="absolute" style={{ left: '-20px', top: '6px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
           🚗
         </span>
         {/* Car moving right — headlight on right side (car is flipped) */}
-        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+        <span className="absolute z-20 [animation-fill-mode:backwards] bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
           {isNight && <span className="absolute" style={{ right: '-8px', top: '10px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
           {isNight && <span className="absolute" style={{ right: '-20px', top: '6px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
           <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
         {(!collapsed || isMobile) && (
           <>
-            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>
+            <span className="absolute z-10 [animation-fill-mode:backwards] text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>
               {isNight && <span className="absolute" style={{ left: '-7px', top: '8px', width: '10px', height: '5px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ left: '-18px', top: '5px', width: '20px', height: '8px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               🚙
             </span>
-            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+            <span className="absolute z-20 [animation-fill-mode:backwards] bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               {isNight && <span className="absolute" style={{ right: '-7px', top: '8px', width: '10px', height: '5px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ right: '-18px', top: '5px', width: '20px', height: '8px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
             {/* Sports car — fast, moving left */}
-            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left-fast" style={{ top: '-13px', animationDelay: '5s' }}>
+            <span className="absolute z-10 [animation-fill-mode:backwards] text-[24px] leading-none animate-car-move-left-fast" style={{ top: '-13px', animationDelay: '5s' }}>
               {isNight && <span className="absolute" style={{ left: '-8px', top: '8px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ left: '-20px', top: '5px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               🏎️
             </span>
             {/* Motorcycle — fast, moving right */}
-            <span className="absolute z-10 bottom-[10%] text-[18px] leading-none animate-car-move-right-fast" style={{ animationDelay: '7s' }}>
+            <span className="absolute z-20 [animation-fill-mode:backwards] bottom-[10%] text-[18px] leading-none animate-car-move-right-fast" style={{ animationDelay: '7s' }}>
               {isNight && <span className="absolute" style={{ right: '-6px', top: '6px', width: '8px', height: '4px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ right: '-14px', top: '4px', width: '16px', height: '6px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🏍️</span>
             </span>
             {/* Trailer truck — slow, moving left */}
-            <span className="absolute z-10 text-[30px] leading-none animate-car-move-left-slow" style={{ top: '-16px', animationDelay: '15s' }}>
+            <span className="absolute z-10 [animation-fill-mode:backwards] text-[30px] leading-none animate-car-move-left-slow" style={{ top: '-16px', animationDelay: '15s' }}>
               {isNight && <span className="absolute" style={{ left: '-10px', top: '12px', width: '14px', height: '7px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ left: '-24px', top: '8px', width: '28px', height: '12px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               🚛
