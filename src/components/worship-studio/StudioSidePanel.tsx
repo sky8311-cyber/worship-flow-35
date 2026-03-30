@@ -42,18 +42,16 @@ function FloorLabel({ label }: { label: string }) {
   );
 }
 
-/* ─── SVG Rooftop Scene — flat-view trees, parasols+chairs, railing ─── */
+/* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
   const h = isMobile ? 38 : 44;
   const spacing = width / 6;
 
-  // 5 parasol sets evenly distributed
+  // 3 parasol sets (left side)
   const parasolSets = [
     { x: spacing * 0.8, color: '#d06030' },
     { x: spacing * 1.8, color: '#c04828' },
     { x: spacing * 3, color: '#d07040' },
-    { x: spacing * 4.2, color: '#b84020' },
-    { x: spacing * 5.2, color: '#c85838' },
   ];
 
   // 6 trees — varied sizes
@@ -65,6 +63,11 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
     { x: width - 28, trunkH: 9, r1: 4.5, r2: 3 },
     { x: width - 10, trunkH: 7, r1: 3.5, r2: 2.5 },
   ];
+
+  // Worship stage position (right side)
+  const stageX = spacing * 4.5;
+  const stageW = spacing * 1.8;
+  const stageY = h - 5;
 
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
@@ -89,21 +92,83 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         const baseY = h - 5;
         return (
           <g key={`parasol-${i}`}>
-            {/* Pole */}
             <rect x={p.x - 0.5} y={baseY - 12} width={1} height={10} fill="#8a7a6a" />
-            {/* Canopy */}
             <path d={`M ${p.x - 8},${baseY - 11} Q ${p.x},${baseY - 17} ${p.x + 8},${baseY - 11} Z`} fill={p.color} opacity={0.85} />
-            {/* Table */}
             <rect x={p.x - 2} y={baseY - 4} width={4} height={3} rx={0.5} fill="#7a6a5a" />
-            {/* Chair left */}
             <rect x={p.x - 6} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
             <rect x={p.x - 5.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
-            {/* Chair right */}
             <rect x={p.x + 3} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
             <rect x={p.x + 3.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
           </g>
         );
       })}
+
+      {/* Worship Stage — low-rise white platform with instruments */}
+      <g>
+        {/* Stage platform */}
+        <rect x={stageX} y={stageY - 3} width={stageW} height={3} rx={1} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.5} />
+        <rect x={stageX + 1} y={stageY - 4} width={stageW - 2} height={1.5} rx={0.5} fill="#fafafa" stroke="#ddd" strokeWidth={0.3} />
+
+        {/* Drum set — center of stage */}
+        {(() => {
+          const drumCx = stageX + stageW * 0.5;
+          const drumY = stageY - 5;
+          return (
+            <>
+              {/* Bass drum */}
+              <ellipse cx={drumCx} cy={drumY} rx={4} ry={3} fill="#c0c0c0" stroke="#999" strokeWidth={0.4} />
+              <ellipse cx={drumCx} cy={drumY} rx={2.5} ry={1.8} fill="#e0e0e0" />
+              {/* Snare */}
+              <ellipse cx={drumCx - 5} cy={drumY + 1} rx={2} ry={1.2} fill="#d4c090" stroke="#aa9060" strokeWidth={0.3} />
+              {/* Hi-hat */}
+              <line x1={drumCx + 5} y1={drumY + 2} x2={drumCx + 5} y2={drumY - 4} stroke="#888" strokeWidth={0.5} />
+              <ellipse cx={drumCx + 5} cy={drumY - 4} rx={2} ry={0.6} fill="#c8b040" opacity={0.8} />
+              {/* Cymbal */}
+              <line x1={drumCx - 3} y1={drumY - 1} x2={drumCx - 3} y2={drumY - 5} stroke="#888" strokeWidth={0.4} />
+              <ellipse cx={drumCx - 3} cy={drumY - 5} rx={2.5} ry={0.5} fill="#d4b848" opacity={0.7} />
+              {/* Drum sticks */}
+              <line x1={drumCx - 1} y1={drumY - 3} x2={drumCx + 2} y2={drumY + 1} stroke="#8b6f4e" strokeWidth={0.5} />
+              <line x1={drumCx + 1} y1={drumY - 3} x2={drumCx - 2} y2={drumY + 1} stroke="#8b6f4e" strokeWidth={0.5} />
+            </>
+          );
+        })()}
+
+        {/* Acoustic guitar — leaning on stand, left of drums */}
+        {(() => {
+          const gx = stageX + stageW * 0.18;
+          const gy = stageY - 5;
+          return (
+            <>
+              {/* Neck */}
+              <line x1={gx} y1={gy - 8} x2={gx + 1} y2={gy + 1} stroke="#8b6f4e" strokeWidth={1} />
+              {/* Body */}
+              <ellipse cx={gx + 1.5} cy={gy + 1} rx={3} ry={2.5} fill="#c4956a" stroke="#8b6f4e" strokeWidth={0.4} />
+              {/* Sound hole */}
+              <circle cx={gx + 1.5} cy={gy + 0.5} r={0.8} fill="#5a4030" />
+              {/* Headstock */}
+              <rect x={gx - 1} y={gy - 9} width={2} height={2} rx={0.5} fill="#5a4030" />
+            </>
+          );
+        })()}
+
+        {/* Mic stand — right of drums */}
+        {(() => {
+          const mx = stageX + stageW * 0.82;
+          const my = stageY - 5;
+          return (
+            <>
+              {/* Stand base (tripod) */}
+              <line x1={mx} y1={my + 4} x2={mx - 2} y2={my + 5} stroke="#666" strokeWidth={0.5} />
+              <line x1={mx} y1={my + 4} x2={mx + 2} y2={my + 5} stroke="#666" strokeWidth={0.5} />
+              {/* Vertical pole */}
+              <line x1={mx} y1={my + 4} x2={mx} y2={my - 6} stroke="#666" strokeWidth={0.7} />
+              {/* Mic head */}
+              <ellipse cx={mx} cy={my - 7} rx={1.5} ry={2} fill="#333" />
+              <rect x={mx - 0.3} y={my - 6} width={0.6} height={1} fill="#555" />
+            </>
+          );
+        })()}
+      </g>
     </svg>
   );
 }
@@ -165,22 +230,29 @@ function RooftopStringLights({ width, buildingTop }: { width: number; buildingTo
 function CafeSVG() {
   return (
     <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      {/* Glass window bg */}
       <rect x={0} y={0} width={80} height={50} fill="#e8f0f4" fillOpacity={0.3} />
-      {/* Curtain left */}
       <path d="M 0,0 Q 6,10 3,50" fill="#c94040" fillOpacity={0.25} />
-      {/* Curtain right */}
       <path d="M 80,0 Q 74,10 77,50" fill="#c94040" fillOpacity={0.25} />
       {/* Counter */}
       <rect x={5} y={32} width={70} height={4} rx={1} fill="#8b6f4e" />
-      {/* Coffee machine */}
-      <rect x={55} y={18} width={14} height={14} rx={2} fill="#4a4a4a" />
-      <rect x={58} y={20} width={8} height={4} rx={1} fill="#666" />
-      <circle cx={62} cy={28} r={2} fill="#888" />
+      {/* Espresso machine — dome top + portafilter */}
+      <rect x={52} y={16} width={18} height={16} rx={2} fill="#4a4a4a" />
+      <rect x={54} y={14} width={14} height={4} rx={2} fill="#555" />
+      {/* Dome top */}
+      <ellipse cx={61} cy={14} rx={6} ry={2.5} fill="#5a5a5a" />
+      {/* Group head / portafilter */}
+      <rect x={56} y={26} width={4} height={3} rx={0.5} fill="#888" />
+      <rect x={63} y={26} width={4} height={3} rx={0.5} fill="#888" />
+      {/* Drip tray */}
+      <rect x={55} y={30} width={12} height={2} rx={0.5} fill="#666" />
+      {/* Cup under portafilter */}
+      <rect x={57} y={28} width={3} height={3} rx={0.5} fill="#f0e6d6" />
+      {/* Steam wand */}
+      <line x1={70} y1={20} x2={72} y2={28} stroke="#999" strokeWidth={0.8} />
       {/* Cups on counter */}
       <rect x={12} y={28} width={5} height={5} rx={1} fill="#f0e6d6" />
       <rect x={20} y={29} width={4} height={4} rx={1} fill="#e8dcc8" />
-      {/* Stool */}
+      {/* Stools */}
       <rect x={30} y={36} width={2} height={10} fill="#6b5b4f" />
       <rect x={25} y={34} width={12} height={2} rx={1} fill="#6b5b4f" />
       <rect x={44} y={36} width={2} height={10} fill="#6b5b4f" />
@@ -196,29 +268,36 @@ function CafeSVG() {
 function GallerySVG() {
   return (
     <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      {/* White gallery wall */}
       <rect x={0} y={0} width={80} height={50} fill="#fafafa" fillOpacity={0.4} />
       {/* Track lighting */}
       <rect x={5} y={2} width={70} height={1.5} rx={0.5} fill="#555" />
       <circle cx={18} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
       <circle cx={40} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
       <circle cx={62} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
-      {/* Light beams */}
       <polygon points="18,4 12,20 24,20" fill="#f5c542" fillOpacity={0.06} />
       <polygon points="40,4 34,20 46,20" fill="#f5c542" fillOpacity={0.06} />
       <polygon points="62,4 56,20 68,20" fill="#f5c542" fillOpacity={0.06} />
-      {/* Art frame 1 - landscape */}
+      {/* Art frame 1 — Mountain landscape */}
       <rect x={8} y={10} width={20} height={16} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={10} y={12} width={16} height={12} fill="#c4a47a" />
-      <circle cx={20} cy={16} r={3} fill="#e8c97a" />
-      <rect x={10} y={20} width={16} height={4} fill="#6a8a5a" />
-      {/* Art frame 2 - portrait */}
+      <rect x={10} y={12} width={16} height={12} fill="#87CEEB" />
+      <polygon points="10,24 18,16 26,24" fill="#4a8a4a" />
+      <polygon points="14,24 22,18 26,24" fill="#3a7a3a" />
+      <circle cx={22} cy={15} r={2} fill="#f5c542" opacity={0.8} />
+      {/* Art frame 2 — Abstract color blocks */}
       <rect x={33} y={8} width={14} height={22} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={35} y={10} width={10} height={18} fill="#8ab0d0" />
-      <circle cx={40} cy={16} r={3} fill="#c06060" />
-      {/* Art frame 3 - small */}
+      <rect x={35} y={10} width={10} height={6} fill="#e8c040" />
+      <rect x={35} y={16} width={5} height={6} fill="#4080c0" />
+      <rect x={40} y={16} width={5} height={6} fill="#50a060" />
+      <rect x={35} y={22} width={10} height={6} fill="#c06040" />
+      {/* Art frame 3 — Starry night sky */}
       <rect x={54} y={12} width={18} height={14} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={56} y={14} width={14} height={10} fill="#d0a0c0" />
+      <rect x={56} y={14} width={14} height={10} fill="#1a1a40" />
+      <circle cx={60} cy={17} r={0.8} fill="#fff" opacity={0.9} />
+      <circle cx={64} cy={16} r={0.5} fill="#fff" opacity={0.7} />
+      <circle cx={67} cy={19} r={0.6} fill="#fff" opacity={0.8} />
+      <circle cx={62} cy={20} r={0.4} fill="#fff" opacity={0.6} />
+      <circle cx={58} cy={21} r={0.5} fill="#fff" opacity={0.7} />
+      <circle cx={66} cy={17} r={1} fill="#f5e6a0" opacity={0.5} />
       {/* Floor */}
       <rect x={0} y={42} width={80} height={8} fill="#e8e4dc" fillOpacity={0.5} />
       {/* Pedestal */}
