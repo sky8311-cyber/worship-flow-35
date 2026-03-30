@@ -498,6 +498,20 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
   const isMobile = mode === "mobile";
+  const rooftopRef = useRef<HTMLDivElement>(null);
+  const [rooftopWidth, setRooftopWidth] = useState(200);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = rooftopRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) setRooftopWidth(entry.contentRect.width);
+    });
+    ro.observe(el);
+    setRooftopWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, [isMobile]);
 
   const { data: profileAvatar } = useQuery({
     queryKey: ["my-profile-avatar", user?.id],
