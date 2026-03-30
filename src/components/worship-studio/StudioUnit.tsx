@@ -13,15 +13,19 @@ export interface StudioUnitProps {
   compact?: boolean;
   empty?: boolean;
   forceWindowsOn?: boolean;
+  isNight?: boolean;
   onStoryClick: () => void;
   onVisit: () => void;
 }
 
-/* Dark brown atelier window frame */
-const windowFrame = "rounded-[4px] border-[1.5px] border-[#5a7a8a] shadow-[inset_0_0_6px_rgba(180,210,230,0.2)]";
+/* Window frame styles (day vs night) */
+const windowFrameDay = "rounded-[4px] border-[1.5px] border-[#5a7a8a] shadow-[inset_0_0_6px_rgba(180,210,230,0.2)]";
+const windowFrameNight = "rounded-[4px] border-[1.5px] border-[#3a4a5a] shadow-[inset_0_0_6px_rgba(0,0,0,0.3)]";
 
-/* Warm amber glow background for windows */
-const windowGlow = "bg-gradient-to-b from-[#fff8e8] via-[#fff3d6] to-[#fff8e8]";
+/* Warm amber glow for lit windows */
+const windowGlowLit = "bg-gradient-to-b from-[#fff8e8] via-[#fff3d6] to-[#fff8e8]";
+/* Dark window — lights off (night, empty unit) */
+const windowGlowDark = "bg-gradient-to-b from-[#1a2a3a] via-[#162636] to-[#1a2a3a]";
 
 export function StudioUnit({
   avatarUrl,
@@ -32,6 +36,7 @@ export function StudioUnit({
   collapsed = false,
   compact = false,
   empty = false,
+  isNight = false,
   onStoryClick,
   onVisit,
 }: StudioUnitProps) {
@@ -40,20 +45,24 @@ export function StudioUnit({
   const avatarW = compact && !isPenthouse ? "w-7" : "w-10";
   const avatarH = compact && !isPenthouse ? "h-7" : "h-10";
 
-  /* Empty state: just render hollow window frames */
+  const windowFrame = isNight ? windowFrameNight : windowFrameDay;
+  // Occupied units glow warmly even at night; empty units are dark at night
+  const windowGlow = (isNight && empty) ? windowGlowDark : windowGlowLit;
+
+  /* Empty state */
   if (empty) {
     if (collapsed) {
       return (
         <div className="flex justify-center py-0.5">
-          <div className={cn("w-8 h-10", windowFrame, windowGlow, "opacity-30")} />
+          <div className={cn("w-8 h-10", windowFrame, windowGlow, isNight ? "opacity-60" : "opacity-30")} />
         </div>
       );
     }
     return (
       <div className="flex items-center gap-0.5 px-1 py-[2px] opacity-30 pointer-events-none select-none">
-        <div className={cn(avatarW, avatarH, windowFrame, windowGlow)} />
-        <div className={cn("flex-1 min-w-0", h, windowFrame, windowGlow)} />
-        <div className={cn(compact ? "w-7 h-7" : "w-10 h-10", windowFrame, windowGlow)} />
+        <div className={cn(avatarW, avatarH, windowFrame, windowGlow, isNight && "opacity-100")} />
+        <div className={cn("flex-1 min-w-0", h, windowFrame, windowGlow, isNight && "opacity-100")} />
+        <div className={cn(compact ? "w-7 h-7" : "w-10 h-10", windowFrame, windowGlow, isNight && "opacity-100")} />
       </div>
     );
   }
@@ -62,7 +71,7 @@ export function StudioUnit({
     return (
       <div className="flex justify-center py-0.5">
         <button onClick={onStoryClick} className="flex-shrink-0">
-          <div className={cn("w-8 h-10 overflow-hidden flex items-center justify-center", windowFrame, windowGlow, hasUnseenStory && "ring-2 ring-[#b8902a] ring-offset-1")}>
+          <div className={cn("w-8 h-10 overflow-hidden flex items-center justify-center", windowFrame, windowGlowLit, hasUnseenStory && "ring-2 ring-[#b8902a] ring-offset-1")}>
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
@@ -82,7 +91,7 @@ export function StudioUnit({
     <div className={cn("flex items-center gap-0.5 px-1 py-[2px]")}>
       {/* Avatar window */}
       <button onClick={onStoryClick} className="flex-shrink-0">
-        <div className={cn(avatarW, avatarH, "overflow-hidden flex items-center justify-center", windowFrame, windowGlow, hasUnseenStory && "ring-2 ring-[#b8902a] ring-offset-1")}>
+        <div className={cn(avatarW, avatarH, "overflow-hidden flex items-center justify-center", windowFrame, windowGlowLit, hasUnseenStory && "ring-2 ring-[#b8902a] ring-offset-1")}>
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -94,7 +103,7 @@ export function StudioUnit({
       </button>
 
       {/* Name window */}
-      <div className={cn("flex-1 min-w-0 flex items-center px-1.5", h, windowFrame, windowGlow)}>
+      <div className={cn("flex-1 min-w-0 flex items-center px-1.5", h, windowFrame, windowGlowLit)}>
         <p className={cn(fontSize, "font-medium truncate text-foreground")}>
           {variant === "ambassador" && <span className="text-violet-500 mr-0.5">✦</span>}
           {studioName}
@@ -102,15 +111,16 @@ export function StudioUnit({
       </div>
 
       {/* Visit button window */}
-      <VisitDoorButton variant={variant} onVisit={onVisit} compact={compact && !isPenthouse} />
+      <VisitDoorButton variant={variant} onVisit={onVisit} compact={compact && !isPenthouse} isNight={isNight} />
     </div>
   );
 }
 
-function VisitDoorButton({ variant, onVisit, compact }: { variant: string; onVisit: () => void; compact?: boolean }) {
+function VisitDoorButton({ variant, onVisit, compact, isNight }: { variant: string; onVisit: () => void; compact?: boolean; isNight?: boolean }) {
   const [hovered, setHovered] = useState(false);
   const size = compact ? "w-7 h-7" : "w-10 h-10";
   const iconSize = compact ? "h-3 w-3" : "h-4 w-4";
+  const windowFrame = isNight ? windowFrameNight : windowFrameDay;
   return (
     <button
       onClick={(e) => { e.stopPropagation(); onVisit(); }}
@@ -120,7 +130,7 @@ function VisitDoorButton({ variant, onVisit, compact }: { variant: string; onVis
         size,
         "shrink-0 flex items-center justify-center transition-colors",
         windowFrame,
-        windowGlow,
+        windowGlowLit,
         "hover:bg-amber-100/80"
       )}
     >
