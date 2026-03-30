@@ -167,7 +167,7 @@ export default function WorshipStudio() {
 
           {isMobile && (
             <Sheet open={mobileAptOpen} onOpenChange={setMobileAptOpen}>
-              <SheetContent side="bottom" className="h-[85dvh] max-h-[85dvh] p-0 rounded-t-2xl overflow-hidden flex flex-col [&>button:last-child]:top-2 [&>button:last-child]:right-3">
+              <SheetContent side="bottom" <SheetContent side="bottom" className="h-[93dvh] max-h-[93dvh] p-0 rounded-t-2xl overflow-hidden flex flex-col [&>button:last-child]:top-2 [&>button:last-child]:right-3"> [&>button:last-child]:top-2 [&>button:last-child]:right-3">
                 <SheetHeader className="sr-only">
                   <SheetTitle>Worship Atelier</SheetTitle>
                 </SheetHeader>
