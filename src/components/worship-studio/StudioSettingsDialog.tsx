@@ -246,7 +246,7 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
       <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {language === "ko" ? "스튜디오 설정" : "Studio Settings"}
+            {language === "ko" ? "아틀리에 설정" : "Atelier Settings"}
           </DialogTitle>
         </DialogHeader>
         
@@ -290,8 +290,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
             />
             <p className="text-xs text-muted-foreground">
               {language === "ko" 
-                ? "BGM이 스튜디오의 분위기를 만듭니다." 
-                : "BGM sets the atmosphere of your Studio."}
+                ? "BGM이 아틀리에의 분위기를 만듭니다." 
+                : "BGM sets the atmosphere of your Atelier."}
             </p>
           </div>
 
@@ -323,8 +323,8 @@ export function StudioSettingsDialog({ room, open, onOpenChange }: StudioSetting
             )}
             <p className="text-xs text-muted-foreground">
               {language === "ko"
-                ? "방명록은 스튜디오당 1개이며, 모든 공간에서 표시됩니다."
-                : "One guestbook per studio, visible across all spaces."}
+                ? "방명록은 아틀리에당 1개이며, 모든 공간에서 표시됩니다."
+                : "One guestbook per atelier, visible across all spaces."}
             </p>
           </div>
 

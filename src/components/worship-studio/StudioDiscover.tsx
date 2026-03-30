@@ -84,17 +84,17 @@ export function StudioDiscover({ onStudioSelect }: StudioDiscoverProps) {
       {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold mb-1">
-          {language === "ko" ? "스튜디오 탐색" : "Discover Studios"}
+          {language === "ko" ? "아틀리에 탐색" : "Discover Ateliers"}
         </h2>
         <p className="text-sm text-muted-foreground mb-3">
           {language === "ko" 
-            ? "스튜디오를 탐색하세요—배우고, 격려받고, 함께 성장하세요."
-            : "Explore Studios—learn, be encouraged, and build together."}
+            ? "아틀리에를 탐색하세요—배우고, 격려받고, 함께 성장하세요."
+            : "Explore Ateliers—learn, be encouraged, and build together."}
         </p>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={language === "ko" ? "스튜디오 검색..." : "Search studios..."}
+            placeholder={language === "ko" ? "아틀리에 검색..." : "Search ateliers..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -133,12 +133,12 @@ export function StudioDiscover({ onStudioSelect }: StudioDiscoverProps) {
             )}
           </section>
           
-          {/* Public Studios */}
+          {/* Public Ateliers */}
           <section>
             <div className="flex items-center gap-2 mb-3">
               <Globe className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-semibold text-sm">
-                {language === "ko" ? "공개 스튜디오" : "Public Studios"}
+                {language === "ko" ? "공개 아틀리에" : "Public Ateliers"}
               </h3>
             </div>
             {publicLoading ? (
@@ -159,7 +159,7 @@ export function StudioDiscover({ onStudioSelect }: StudioDiscoverProps) {
               <p className="text-sm text-muted-foreground py-2">
                 {searchQuery 
                   ? (language === "ko" ? "검색 결과 없음" : "No results")
-                  : (language === "ko" ? "공개 스튜디오가 없습니다" : "No public studios yet")}
+                  : (language === "ko" ? "공개 아틀리에가 없습니다" : "No public ateliers yet")}
               </p>
             )}
           </section>

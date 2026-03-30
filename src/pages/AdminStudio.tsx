@@ -218,8 +218,8 @@ const AdminStudio = () => {
             </h1>
             <p className="text-muted-foreground text-sm">
               {language === "ko" 
-                ? "카테고리, 앰버서더, 스튜디오 설정 관리" 
-                : "Manage categories, ambassadors, and studio settings"}
+                ? "카테고리, 앰버서더, 아틀리에 설정 관리" 
+                : "Manage categories, ambassadors, and atelier settings"}
             </p>
           </div>
         </div>
@@ -252,8 +252,8 @@ const AdminStudio = () => {
                   <CardTitle>{language === "ko" ? "포스트 카테고리" : "Post Categories"}</CardTitle>
                   <CardDescription>
                     {language === "ko" 
-                      ? "스튜디오 피드에서 사용할 수 있는 포스트 유형을 관리합니다" 
-                      : "Manage post types available in studio feeds"}
+                      ? "아틀리에 피드에서 사용할 수 있는 포스트 유형을 관리합니다" 
+                      : "Manage post types available in atelier feeds"}
                   </CardDescription>
                 </div>
                 <Button onClick={() => setIsAddDialogOpen(true)} size="sm">
@@ -336,8 +336,8 @@ const AdminStudio = () => {
                 </CardTitle>
                 <CardDescription>
                   {language === "ko" 
-                    ? "공식 앰버서더를 관리합니다. 앰버서더 스튜디오는 탐색 탭에서 특별히 표시됩니다." 
-                    : "Manage official ambassadors. Ambassador studios are highlighted in the Discover tab."}
+                    ? "공식 앰버서더를 관리합니다. 앰버서더 아틀리에는 탐색 탭에서 특별히 표시됩니다." 
+                    : "Manage official ambassadors. Ambassador ateliers are highlighted in the Discover tab."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -441,11 +441,11 @@ const AdminStudio = () => {
           <TabsContent value="studios">
             <Card>
               <CardHeader>
-                <CardTitle>{language === "ko" ? "활성 스튜디오" : "Active Studios"}</CardTitle>
+                <CardTitle>{language === "ko" ? "활성 아틀리에" : "Active Ateliers"}</CardTitle>
                 <CardDescription>
                   {language === "ko" 
-                    ? "계약이 완료된 스튜디오 목록입니다" 
-                    : "List of studios with active contracts"}
+                    ? "계약이 완료된 아틀리에 목록입니다" 
+                    : "List of ateliers with active contracts"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -460,7 +460,7 @@ const AdminStudio = () => {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg">
-                    {language === "ko" ? "총 스튜디오" : "Total Studios"}
+                    {language === "ko" ? "총 아틀리에" : "Total Ateliers"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

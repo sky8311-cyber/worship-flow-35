@@ -25,7 +25,7 @@ export function StudioCoverEditor({ room, isOwner = false }: StudioCoverEditorPr
   const [isUploading, setIsUploading] = useState(false);
   
   const coverUrl = (room as any).cover_image_url;
-  const displayName = (room as any).studio_name || room.owner?.full_name || (language === "ko" ? "나의 스튜디오" : "My Studio");
+  const displayName = (room as any).studio_name || room.owner?.full_name || (language === "ko" ? "나의 아틀리에" : "My Atelier");
   
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

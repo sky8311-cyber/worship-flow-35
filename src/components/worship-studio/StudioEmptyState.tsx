@@ -27,7 +27,7 @@ export function StudioEmptyState({ type, onAction, onHelp }: StudioEmptyStatePro
         
         <p className="text-sm text-muted-foreground text-center mt-2 mb-10 max-w-sm">
           {language === "ko"
-            ? "이 스튜디오는 그 여정이 기록되고 나눠지는 곳입니다."
+            ? "이 아틀리에는 그 여정이 기록되고 나눠지는 곳입니다."
             : "This studio is where that journey is written and shared."}
         </p>
         

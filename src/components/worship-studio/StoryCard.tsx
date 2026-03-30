@@ -136,7 +136,7 @@ export function StoryCard({ studios, initialIndex, onClose, onVisit }: StoryCard
               studio.coverImageUrl ? "text-white" : "text-foreground"
             )}>
               {studio.isSelf
-                ? (language === "ko" ? "나의 스튜디오" : "My Studio")
+                ? (language === "ko" ? "나의 아틀리에" : "My Atelier")
                 : (studio.ownerName || "")}
             </p>
             {timeAgo && (
@@ -218,7 +218,7 @@ export function StoryCard({ studios, initialIndex, onClose, onVisit }: StoryCard
             className="w-full gap-2"
             onClick={(e) => { e.stopPropagation(); onVisit(studio.id); }}
           >
-            {language === "ko" ? "스튜디오 방문하기" : "Visit Studio"}
+            {language === "ko" ? "아틀리에 방문하기" : "Visit Atelier"}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

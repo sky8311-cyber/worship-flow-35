@@ -102,7 +102,7 @@ export function StudioSidebar({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={language === "ko" ? "스튜디오 검색..." : "Search studios..."}
+            placeholder={language === "ko" ? "아틀리에 검색..." : "Search ateliers..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-9"
@@ -162,7 +162,7 @@ export function StudioSidebar({
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground py-2 px-1">{searchQuery ? (language === "ko" ? "검색 결과 없음" : "No results") : (language === "ko" ? "공개 스튜디오가 없습니다" : "No public studios")}</p>
+              <p className="text-xs text-muted-foreground py-2 px-1">{searchQuery ? (language === "ko" ? "검색 결과 없음" : "No results") : (language === "ko" ? "공개 아틀리에가 없습니다" : "No public ateliers")}</p>
             )}
           </div>
         </div>

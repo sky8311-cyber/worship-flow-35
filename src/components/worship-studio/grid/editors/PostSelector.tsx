@@ -24,7 +24,7 @@ export function PostSelector({ roomId, selectedPostId, onSelect }: PostSelectorP
   const { room: myRoom } = useWorshipRoom(user?.id);
   const [searchQuery, setSearchQuery] = useState("");
   
-  // 자신의 스튜디오에서 게시물 조회 (다른 사람 스튜디오 방문 시에도 자신의 초안함에서 가져옴)
+  // 자신의 아틀리에에서 게시물 조회 (다른 사람 아틀리에 방문 시에도 자신의 초안함에서 가져옴)
   const { data: posts, isLoading } = useRoomPosts(myRoom?.id);
   
   const filteredPosts = posts?.filter(post => 

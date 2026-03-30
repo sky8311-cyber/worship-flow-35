@@ -18,14 +18,14 @@ export function StudioLockedState({ ownerUserId, ownerName }: StudioLockedStateP
       </div>
       <h3 className="text-xl font-semibold mb-2">
         {language === "ko" 
-          ? "이 스튜디오는 친구에게만 공개됩니다." 
-          : "This Studio is friends-only."}
+          ? "이 아틀리에는 친구에게만 공개됩니다." 
+          : "This Atelier is friends-only."}
       </h3>
       {ownerName && (
         <p className="text-muted-foreground mb-6">
           {language === "ko"
-            ? `${ownerName}님과 친구가 되어 스튜디오를 구경하세요.`
-            : `Become friends with ${ownerName} to view their Studio.`}
+            ? `${ownerName}님과 친구가 되어 아틀리에를 구경하세요.`
+            : `Become friends with ${ownerName} to view their Atelier.`}
         </p>
       )}
       <FriendRequestButton targetUserId={ownerUserId} />

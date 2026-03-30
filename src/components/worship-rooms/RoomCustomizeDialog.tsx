@@ -91,7 +91,7 @@ export function RoomCustomizeDialog({ room, open, onOpenChange }: RoomCustomizeD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{language === "ko" ? "스튜디오 설정" : "Studio Settings"}</DialogTitle>
+          <DialogTitle>{language === "ko" ? "아틀리에 설정" : "Atelier Settings"}</DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="theme" className="w-full">
