@@ -1,44 +1,56 @@
 
 
-# 루프탑 전광판 (애니메이션 텍스트 스크린)
+# 전광판 배경 이미지 + 애니메이션
+
+## 개요
+전광판 스크린에 텍스트별 배경을 추가. 스크린 1~3은 시냇물 배경(CSS 애니메이션으로 물 흐르는 효과), 스크린 4~5는 밝은 흰색 배경.
 
 ## 디자인
-- 루프탑 중앙~우측에 배치, 나무/파라솔/무대 **뒤** 레이어
-- 3D 입체감: 기둥 2개 + 두께감 있는 베젤 프레임 + 흰색 스크린
-- 밤에는 스크린 발광 효과
 
-## 애니메이션 텍스트 (무한 루프)
-| # | 텍스트 | 애니메이션 |
-|---|--------|-----------|
-| 1 | 삶을 예배로 만드는 공간 | Fade In |
-| 2 | WORSHIP ATELIER | 랜덤 (slide/scale/fade) |
-| 3 | by K-Worship | 랜덤 |
-| 4 | 나만의 공작소에 | 랜덤 |
-| 5 | 입주하세요! | 랜덤 |
+| 스크린 | 배경 | 텍스트 |
+|--------|------|--------|
+| 1 | 시냇물 (animated) | 삶을 예배로 만드는 공간 |
+| 2 | 시냇물 (동일) | WORSHIP ATELIER |
+| 3 | 시냇물 (동일) | by K-Worship |
+| 4 | 밝은 흰색 | 나만의 공작소에 |
+| 5 | 밝은 흰색 | 입주하세요! |
 
-- 각 텍스트 ~3초 표시 → 페이드아웃 → 다음 텍스트
-- `foreignObject` 사용하여 한글 어절 자동 줄바꿈 (`word-break: keep-all`)
+## 구현 — `StudioSidePanel.tsx`
 
-## 구현
+### 시냇물 배경 (CSS로 구현)
+실제 이미지 대신 CSS gradient + animation으로 시냇물 느낌 표현:
+- 여러 레이어의 반투명 파랑/초록 그라디언트를 `background` 합성
+- `@keyframes stream-flow`로 배경을 수평 이동 → 물 흐르는 효과
+- 약간의 빛 반짝임 효과 (밝은 줄무늬가 이동)
 
-### `StudioSidePanel.tsx` — `RooftopScene` 수정
-
-1. **SVG 레이어 순서** (spotlight 뒤, trees 앞):
+### `BillboardText` 수정
+1. `BILLBOARD_TEXTS`를 객체 배열로 변경:
+```ts
+const BILLBOARD_SCREENS = [
+  { text: "삶을 예배로 만드는 공간", bg: "stream" },
+  { text: "WORSHIP ATELIER", bg: "stream" },
+  { text: "by K-Worship", bg: "stream" },
+  { text: "나만의 공작소에", bg: "white" },
+  { text: "입주하세요!", bg: "white" },
+];
 ```
-[floor] → [spotlight] → [★ 전광판] → [trees] → [parasols] → [stage] → [railing]
+
+2. `foreignObject` 내부 div에 배경 스타일 적용:
+   - `bg === "stream"`: CSS 그라디언트 + `animation: stream-flow 4s linear infinite`
+   - `bg === "white"`: 밝은 흰색 (`#ffffff`), 밤에도 밝게 유지
+   - 텍스트 색상도 배경에 맞게 조정 (시냇물: 흰색/밝은색, 흰색 배경: 어두운색)
+
+3. 스크린 4~5 밤모드: `isNight`와 무관하게 스크린 본체도 흰색으로 표시 (밝은 라이트 효과)
+
+### `index.css` 추가
+```css
+@keyframes stream-flow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
 ```
-
-2. **전광판 SVG 구조**:
-   - 기둥 2개 (바닥에서 스크린까지)
-   - 스크린 뒷면 두께 (2px 오프셋, 어두운 색)
-   - 스크린 본체 (흰색, rounded)
-   - 베젤 프레임 (stroke)
-   - 밤: glow filter
-
-3. **애니메이션 텍스트**: `useState` + `useEffect`로 인덱스 순환, `foreignObject` 안에 텍스트 렌더링. CSS transition으로 fade/scale/slide 애니메이션 적용. 랜덤 애니메이션은 텍스트 전환 시 배열에서 랜덤 선택.
-
-4. **React.memo 유지**: 전광판 내부 state는 `RooftopScene` 안에서 관리하되, 텍스트 애니메이션 부분만 별도 내부 컴포넌트로 분리하여 부모 리렌더 방지.
 
 ## 파일
-- `src/components/worship-studio/StudioSidePanel.tsx`
+- `src/components/worship-studio/StudioSidePanel.tsx` — BillboardText 배경 로직
+- `src/index.css` — stream-flow 키프레임
 
