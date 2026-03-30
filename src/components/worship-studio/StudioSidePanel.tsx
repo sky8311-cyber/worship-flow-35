@@ -66,10 +66,10 @@ function NightSkyStars({ width, height }: { width: number; height: number }) {
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
       {/* Crescent moon */}
-      <circle cx={width * 0.8} cy={height * 0.18} r={10} fill="#f5e6a0" opacity={0.9} />
-      <circle cx={width * 0.8 + 4} cy={height * 0.18 - 2} r={8.5} fill="#141852" />
+      <circle cx={width * 0.8} cy={height * 0.12} r={12} fill="#f5e6a0" opacity={0.9} />
+      <circle cx={width * 0.8 + 5} cy={height * 0.12 - 2} r={10} fill="#0a0e2a" />
       {/* Moon glow */}
-      <circle cx={width * 0.8} cy={height * 0.18} r={18} fill="#f5e6a0" opacity={0.06} />
+      <circle cx={width * 0.8} cy={height * 0.12} r={22} fill="#f5e6a0" opacity={0.08} />
 
       {stars.map((s, i) => (
         <circle
@@ -89,7 +89,7 @@ function NightSkyStars({ width, height }: { width: number; height: number }) {
 
 /* ─── SVG Rooftop Scene ─── */
 function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: boolean; isNight: boolean }) {
-  const h = isMobile ? 78 : 90;
+  const h = isMobile ? 95 : 110;
   const floorY = h - 4;
   const spacing = width / 6;
 
@@ -547,22 +547,6 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
       {/* Sidewalk */}
       <div className={cn("select-none pointer-events-none relative", isMobile ? "h-3" : "h-4")}
         style={{ background: sidewalkBg }}>
-        {(!collapsed || isMobile) && (
-          <svg className="absolute left-2 top-0 h-full" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid meet">
-            <rect x={10} y={6} width={10} height={1.5} rx={0.5} fill="#7a6a5a" />
-            <rect x={14} y={7.5} width={2} height={8} fill="#6b5b4f" />
-            <rect x={11} y={15} width={8} height={1} rx={0.5} fill="#6b5b4f" />
-            <rect x={4} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
-            <rect x={5} y={9} width={1} height={6} fill="#7a6a5a" />
-            <rect x={7.5} y={9} width={1} height={6} fill="#7a6a5a" />
-            <rect x={4} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
-            <rect x={21} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
-            <rect x={22} y={9} width={1} height={6} fill="#7a6a5a" />
-            <rect x={24.5} y={9} width={1} height={6} fill="#7a6a5a" />
-            <rect x={25} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
-            <rect x={13} y={4.5} width={2} height={2} rx={0.5} fill="#f0e6d6" />
-          </svg>
-        )}
       </div>
 
       {/* Road */}
@@ -594,6 +578,24 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
               {isNight && <span className="absolute" style={{ right: '-7px', top: '8px', width: '10px', height: '5px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               {isNight && <span className="absolute" style={{ right: '-18px', top: '5px', width: '20px', height: '8px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
+            </span>
+            {/* Sports car — fast, moving left */}
+            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left-fast" style={{ top: '-13px', animationDelay: '5s' }}>
+              {isNight && <span className="absolute" style={{ left: '-8px', top: '8px', width: '12px', height: '6px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              {isNight && <span className="absolute" style={{ left: '-20px', top: '5px', width: '24px', height: '10px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              🏎️
+            </span>
+            {/* Motorcycle — fast, moving right */}
+            <span className="absolute z-10 bottom-[10%] text-[18px] leading-none animate-car-move-right-fast" style={{ animationDelay: '7s' }}>
+              {isNight && <span className="absolute" style={{ right: '-6px', top: '6px', width: '8px', height: '4px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              {isNight && <span className="absolute" style={{ right: '-14px', top: '4px', width: '16px', height: '6px', background: 'radial-gradient(ellipse at left, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🏍️</span>
+            </span>
+            {/* Trailer truck — slow, moving left */}
+            <span className="absolute z-10 text-[30px] leading-none animate-car-move-left-slow" style={{ top: '-16px', animationDelay: '15s' }}>
+              {isNight && <span className="absolute" style={{ left: '-10px', top: '12px', width: '14px', height: '7px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.8), rgba(255,230,100,0.3) 40%, transparent 100%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              {isNight && <span className="absolute" style={{ left: '-24px', top: '8px', width: '28px', height: '12px', background: 'radial-gradient(ellipse at right, rgba(255,230,100,0.25), transparent 80%)', borderRadius: '50%', pointerEvents: 'none' }} />}
+              🚛
             </span>
           </>
         )}
