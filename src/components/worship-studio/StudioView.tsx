@@ -71,9 +71,15 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
     );
   }
   
-  // No room - show contract prompt for own studio
-  if (!room && isOwnRoom) {
-    return <StudioContractPrompt />;
+  // No room or onboarding not completed - show onboarding for own studio
+  if (isOwnRoom && (!room || !(room as any).onboarding_completed)) {
+    return (
+      <StudioOnboarding
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["worship-room"] });
+        }}
+      />
+    );
   }
   
   // Room not found

@@ -130,8 +130,9 @@ export function StudioOnboarding({ onComplete }: StudioOnboardingProps) {
         room_id: roomId,
         block_type: selectedBlock,
         title: t("첫 번째 블록", "First Block"),
-        status: "draft",
-        author_id: user?.id,
+        content: "",
+        is_draft: true,
+        author_user_id: user!.id,
       });
       await finishOnboarding();
     } catch {
