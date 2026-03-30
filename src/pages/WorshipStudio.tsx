@@ -125,7 +125,7 @@ export default function WorshipStudio() {
 
           {/* Floating page navigation bar */}
           {pageNavInfo && (
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-5 py-2 min-w-[280px]">
+            <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-[55] flex items-center gap-3 rounded-full bg-[hsl(var(--background))]/90 backdrop-blur-sm border border-border shadow-sm px-5 py-2 min-w-[280px]">
               <span className="text-xs font-mono text-muted-foreground">{pageNavInfo.pageIndicator}</span>
               {isOwnStudio && (
                 <button
@@ -158,9 +158,10 @@ export default function WorshipStudio() {
           {isMobile && (
             <button
               onClick={() => setMobileAptOpen(true)}
-              className="fixed bottom-20 left-4 z-40 w-12 h-12 rounded-full bg-[#b8902a] text-white shadow-lg flex items-center justify-center hover:bg-[#a07d24] transition-colors"
+              className="fixed bottom-0 left-0 z-[55] h-12 w-14 bg-[#b8902a] text-white flex items-center justify-center hover:bg-[#a07d24] transition-colors border-t border-border/50"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             >
-              <Building2 size={22} />
+              <Building2 size={20} />
             </button>
           )}
 
