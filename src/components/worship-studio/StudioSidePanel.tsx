@@ -88,6 +88,87 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
   );
 });
 
+/* ─── Billboard Animated Text ─── */
+const BILLBOARD_TEXTS = [
+  "삶을 예배로 만드는 공간",
+  "WORSHIP ATELIER",
+  "by K-Worship",
+  "나만의 공작소에",
+  "입주하세요!",
+];
+
+const BILLBOARD_ANIMATIONS = [
+  "billboard-fade-in",
+  "billboard-slide-up",
+  "billboard-scale-pop",
+  "billboard-slide-right",
+];
+
+const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight }: { screenW: number; screenH: number; isNight: boolean }) {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const [animClass, setAnimClass] = useState("billboard-fade-in");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex(prev => {
+          const next = (prev + 1) % BILLBOARD_TEXTS.length;
+          if (next === 0) {
+            setAnimClass("billboard-fade-in");
+          } else {
+            setAnimClass(BILLBOARD_ANIMATIONS[Math.floor(Math.random() * BILLBOARD_ANIMATIONS.length)]);
+          }
+          return next;
+        });
+        setVisible(true);
+      }, 400);
+    }, 3400);
+    return () => clearInterval(interval);
+  }, []);
+
+  const text = BILLBOARD_TEXTS[index];
+  const isEnglish = /^[A-Za-z\s]+$/.test(text);
+  const fontSize = isEnglish ? Math.max(5, screenW * 0.07) : Math.max(5, screenW * 0.09);
+
+  return (
+    <foreignObject x={0} y={0} width={screenW} height={screenH}>
+      <div
+        style={{
+          width: screenW,
+          height: screenH,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2px 4px',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
+      >
+        <span
+          key={`${index}-${animClass}`}
+          className={visible ? animClass : "billboard-fade-out"}
+          style={{
+            fontSize,
+            fontWeight: 700,
+            color: isNight ? '#e0e8f0' : '#3a3a3a',
+            textAlign: 'center',
+            lineHeight: 1.3,
+            wordBreak: 'keep-all',
+            overflowWrap: 'break-word',
+            display: 'block',
+            fontFamily: "'Pretendard', sans-serif",
+            letterSpacing: isEnglish ? '0.08em' : '0.02em',
+          }}
+        >
+          {text}
+        </span>
+      </div>
+    </foreignObject>
+  );
+});
+
 /* ─── SVG Rooftop Scene ─── */
 const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: boolean; isNight: boolean }) {
   const h = isMobile ? 95 : 110;
@@ -138,6 +219,46 @@ const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight
           <ellipse cx={stageX + stageW / 2} cy={stageY - 12} rx={stageW * 0.8} ry={20} fill="url(#stageSpot)" />
         </>
       )}
+
+      {/* Billboard — behind trees/parasols/stage */}
+      {(() => {
+        const bbW = width * 0.45;
+        const bbH = floorY * 0.42;
+        const bbX = width * 0.3;
+        const bbY = floorY - bbH - 16;
+        const pillarW = 3;
+        const pillarH = floorY - bbY - bbH + bbH;
+        const bezelPad = 2;
+        return (
+          <g>
+            {/* Pillars */}
+            <rect x={bbX + 8} y={bbY + bbH - 2} width={pillarW} height={pillarH + 2} rx={1} fill={isNight ? "#4a5a6a" : "#8a8a8a"} />
+            <rect x={bbX + bbW - 8 - pillarW} y={bbY + bbH - 2} width={pillarW} height={pillarH + 2} rx={1} fill={isNight ? "#4a5a6a" : "#8a8a8a"} />
+            {/* Screen 3D depth (back face) */}
+            <rect x={bbX + 2} y={bbY + 2} width={bbW} height={bbH} rx={2} fill={isNight ? "#2a3a4a" : "#6a6a6a"} opacity={0.5} />
+            {/* Screen body */}
+            <rect x={bbX} y={bbY} width={bbW} height={bbH} rx={2} fill={isNight ? "#1a2a3a" : "#f4f4f4"} />
+            {/* Bezel frame */}
+            <rect x={bbX} y={bbY} width={bbW} height={bbH} rx={2} fill="none" stroke={isNight ? "#5a6a7a" : "#aaa"} strokeWidth={1.5} />
+            {/* Night glow */}
+            {isNight && (
+              <>
+                <defs>
+                  <filter id="bbGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <rect x={bbX - 3} y={bbY - 3} width={bbW + 6} height={bbH + 6} rx={4} fill="rgba(200,220,255,0.08)" filter="url(#bbGlow)" />
+              </>
+            )}
+            {/* Animated text */}
+            <g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`}>
+              <BillboardText screenW={bbW - bezelPad * 2} screenH={bbH - bezelPad * 2} isNight={isNight} />
+            </g>
+          </g>
+        );
+      })()}
 
       {/* Trees — grounded on floor surface */}
       <g opacity={silhouetteOpacity}>

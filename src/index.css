@@ -206,3 +206,31 @@ input[type="time"]::-webkit-date-and-time-value {
 .animate-star-twinkle {
   animation: star-twinkle 3s ease-in-out infinite;
 }
+
+/* ═══ Billboard text animations ═══ */
+@keyframes bb-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes bb-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes bb-slide-up {
+  0% { opacity: 0; transform: translateY(40%); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes bb-scale-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes bb-slide-right {
+  0% { opacity: 0; transform: translateX(-40%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.billboard-fade-in { animation: bb-fade-in 0.6s ease-out forwards; }
+.billboard-fade-out { animation: bb-fade-out 0.35s ease-in forwards; }
+.billboard-slide-up { animation: bb-slide-up 0.6s ease-out forwards; }
+.billboard-scale-pop { animation: bb-scale-pop 0.5s ease-out forwards; }
+.billboard-slide-right { animation: bb-slide-right 0.6s ease-out forwards; }
