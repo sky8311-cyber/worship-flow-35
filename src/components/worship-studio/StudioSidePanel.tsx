@@ -44,61 +44,89 @@ function FloorLabel({ label }: { label: string }) {
   );
 }
 
-/* ─── SVG Rooftop Trees ─── */
-function RooftopTree({ x, height = 40 }: { x: number; height?: number }) {
-  const crownR = height * 0.35;
-  const trunkH = height * 0.45;
+/* ─── SVG Rooftop Scene — flat-view trees, parasol+chairs, railing ─── */
+function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
+  const h = isMobile ? 28 : 32;
   return (
-    <g transform={`translate(${x}, 0)`}>
-      {/* Trunk */}
-      <rect x={-2} y={-trunkH} width={4} height={trunkH} rx={1} fill="#6b5b4f" />
-      {/* Crown */}
-      <circle cx={0} cy={-trunkH - crownR * 0.6} r={crownR} fill="#5a8a5a" opacity={0.9} />
-      <circle cx={-crownR * 0.5} cy={-trunkH - crownR * 0.3} r={crownR * 0.7} fill="#4a7a4a" opacity={0.7} />
-      <circle cx={crownR * 0.4} cy={-trunkH - crownR * 0.4} r={crownR * 0.6} fill="#6a9a6a" opacity={0.8} />
-    </g>
+    <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
+      {/* Railing — evenly spaced balusters */}
+      <rect x={0} y={h - 4} width={width} height={1.5} rx={0.5} fill="#7a8a9a" />
+      <rect x={0} y={h - 1} width={width} height={1} rx={0.3} fill="#6a7a8a" />
+      {Array.from({ length: Math.floor(width / 8) }).map((_, i) => (
+        <rect key={i} x={4 + i * 8} y={h - 4} width={1.2} height={4} rx={0.3} fill="#8a9aaa" />
+      ))}
+
+      {/* Tree 1 — left */}
+      <rect x={12} y={h - 14} width={2.5} height={10} rx={0.8} fill="#6b5b4f" />
+      <circle cx={13.25} cy={h - 16} r={5} fill="#4a8a4a" opacity={0.85} />
+      <circle cx={11} cy={h - 14} r={3.5} fill="#5a9a5a" opacity={0.7} />
+
+      {/* Tree 2 — right */}
+      <rect x={width - 22} y={h - 12} width={2} height={8} rx={0.8} fill="#6b5b4f" />
+      <circle cx={width - 21} cy={h - 14} r={4} fill="#4a8a4a" opacity={0.85} />
+      <circle cx={width - 23} cy={h - 12.5} r={3} fill="#5a9a5a" opacity={0.7} />
+
+      {/* Parasol + chairs — center */}
+      {/* Parasol pole */}
+      <rect x={width / 2 - 0.5} y={h - 16} width={1} height={12} fill="#8a7a6a" />
+      {/* Parasol canopy — orange like reference */}
+      <path d={`M ${width / 2 - 10},${h - 15} Q ${width / 2},${h - 22} ${width / 2 + 10},${h - 15} Z`} fill="#d06030" opacity={0.85} />
+      {/* Chair left */}
+      <rect x={width / 2 - 8} y={h - 6} width={4} height={3} rx={0.5} fill="#8a7a6a" />
+      <rect x={width / 2 - 7.5} y={h - 9} width={3} height={3} rx={0.5} fill="#9a8a7a" />
+      {/* Chair right */}
+      <rect x={width / 2 + 4} y={h - 6} width={4} height={3} rx={0.5} fill="#8a7a6a" />
+      <rect x={width / 2 + 4.5} y={h - 9} width={3} height={3} rx={0.5} fill="#9a8a7a" />
+      {/* Small table */}
+      <rect x={width / 2 - 2} y={h - 8} width={4} height={4} rx={0.5} fill="#7a6a5a" />
+
+      {/* Small planter — far left */}
+      <rect x={3} y={h - 6} width={5} height={3} rx={1} fill="#8a7a6a" />
+      <circle cx={5.5} cy={h - 7.5} r={2} fill="#5a9a5a" opacity={0.7} />
+    </svg>
   );
 }
 
-/* ─── SVG String Lights from pole ─── */
-function RooftopStringLights({ width, height }: { width: number; height: number }) {
+/* ─── SVG String Lights — attached to building top line ─── */
+function RooftopStringLights({ width, buildingTop }: { width: number; buildingTop: number }) {
+  // Lights hang from the building's top edge (buildingTop y), pole is short
   const poleX = width - 14;
-  const poleTop = 4;
-  const poleBottom = height - 2;
-  // 3 strands draping from top of pole down-left
+  const poleTopY = buildingTop;
+  const poleHeight = 20; // half of original
+  const poleBottomY = poleTopY + poleHeight;
+  
   const strands = [
-    { endX: 10, endY: height * 0.55, cp1x: poleX - 20, cp1y: poleTop + 5, cp2x: 30, cp2y: height * 0.3 },
-    { endX: 25, endY: height * 0.7, cp1x: poleX - 15, cp1y: poleTop + 10, cp2x: 40, cp2y: height * 0.5 },
-    { endX: 45, endY: height * 0.85, cp1x: poleX - 10, cp1y: poleTop + 18, cp2x: 55, cp2y: height * 0.65 },
+    { endX: 10, endY: poleTopY + poleHeight * 0.7, cp1x: poleX - 20, cp1y: poleTopY + 4, cp2x: 30, cp2y: poleTopY + poleHeight * 0.4 },
+    { endX: 25, endY: poleTopY + poleHeight * 0.85, cp1x: poleX - 15, cp1y: poleTopY + 8, cp2x: 40, cp2y: poleTopY + poleHeight * 0.6 },
+    { endX: 45, endY: poleTopY + poleHeight * 0.95, cp1x: poleX - 10, cp1y: poleTopY + 12, cp2x: 55, cp2y: poleTopY + poleHeight * 0.75 },
   ];
 
-  return (
-    <svg width={width} height={height} className="absolute inset-0 pointer-events-none" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
-      {/* Pole */}
-      <rect x={poleX - 1.5} y={poleTop} width={3} height={poleBottom - poleTop} rx={1} fill="#6b5b4f" />
-      {/* Small flag/ornament at top */}
-      <polygon points={`${poleX + 1.5},${poleTop} ${poleX + 8},${poleTop + 3} ${poleX + 1.5},${poleTop + 6}`} fill="#c94040" opacity={0.7} />
+  const svgH = poleBottomY + 4;
 
-      {/* Wire strands with bulbs */}
+  return (
+    <svg width={width} height={svgH} className="absolute top-0 left-0 pointer-events-none" viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
+      {/* Pole — short */}
+      <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
+      {/* Small flag */}
+      <polygon points={`${poleX + 1},${poleTopY} ${poleX + 6},${poleTopY + 2.5} ${poleX + 1},${poleTopY + 5}`} fill="#c94040" opacity={0.7} />
+
       {strands.map((s, si) => {
-        const path = `M ${poleX},${poleTop + 2} C ${s.cp1x},${s.cp1y} ${s.cp2x},${s.cp2y} ${s.endX},${s.endY}`;
-        // Place bulbs along the curve
+        const path = `M ${poleX},${poleTopY + 2} C ${s.cp1x},${s.cp1y} ${s.cp2x},${s.cp2y} ${s.endX},${s.endY}`;
         const bulbCount = 5 + si;
         return (
           <g key={si}>
             <path d={path} fill="none" stroke="#4a4a4a" strokeWidth={0.8} opacity={0.5} />
             {Array.from({ length: bulbCount }).map((_, bi) => {
               const t = (bi + 1) / (bulbCount + 1);
-              // Approximate point on cubic bezier
               const mt = 1 - t;
               const bx = mt * mt * mt * poleX + 3 * mt * mt * t * s.cp1x + 3 * mt * t * t * s.cp2x + t * t * t * s.endX;
-              const by = mt * mt * mt * (poleTop + 2) + 3 * mt * mt * t * s.cp1y + 3 * mt * t * t * s.cp2y + t * t * t * s.endY;
+              const by = mt * mt * mt * (poleTopY + 2) + 3 * mt * mt * t * s.cp1y + 3 * mt * t * t * s.cp2y + t * t * t * s.endY;
               return (
                 <circle
                   key={bi}
                   cx={bx}
                   cy={by + 1.5}
-                  r={1.8}
+                  r={1.5}
                   fill="#f5c542"
                   opacity={0.85}
                   className="animate-string-shimmer"
@@ -112,7 +140,6 @@ function RooftopStringLights({ width, height }: { width: number; height: number 
     </svg>
   );
 }
-
 /* ─── SVG Café Interior ─── */
 function CafeSVG() {
   return (
