@@ -167,7 +167,7 @@ export const BottomTabNavigation = () => {
           WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
-        <div className="grid grid-cols-6 h-14">
+        <div className="grid grid-cols-6 h-12">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="flex items-center justify-center py-1">
               <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
@@ -188,7 +188,7 @@ export const BottomTabNavigation = () => {
           WebkitTransform: 'translate3d(0, 0, 0)',
         }}
       >
-        <div className={cn("grid h-14", gridColsClass)}>
+        <div className={cn("grid h-12", gridColsClass)}>
           {regularItems.map((item, index) => {
             const isActive = isPathActive(item.match_pattern, item.path);
             const Icon = iconMap[item.icon] || iconMap.Home;

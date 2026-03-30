@@ -12,7 +12,7 @@ export const MusicPill = () => {
     <button
       onClick={showPlayer}
       className={cn(
-        "fixed left-4 bottom-32 z-40 flex items-center gap-2 h-10 px-3 rounded-full",
+        "fixed left-4 bottom-16 z-[55] flex items-center gap-2 h-10 px-3 rounded-full",
         "bg-primary text-primary-foreground shadow-lg",
         "hover:scale-105 active:scale-95",
         "animate-in slide-in-from-left-4"
