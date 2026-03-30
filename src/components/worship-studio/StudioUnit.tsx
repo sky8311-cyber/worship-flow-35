@@ -18,7 +18,7 @@ export interface StudioUnitProps {
 }
 
 /* Dark brown atelier window frame */
-const windowFrame = "rounded-[2px] border-[1.5px] border-[#3a2f28] shadow-[inset_0_0_6px_rgba(245,190,80,0.15)]";
+const windowFrame = "rounded-[4px] border-[1.5px] border-[#5a7a8a] shadow-[inset_0_0_6px_rgba(180,210,230,0.2)]";
 
 /* Warm amber glow background for windows */
 const windowGlow = "bg-gradient-to-b from-amber-50/80 via-amber-100/40 to-amber-50/60";
