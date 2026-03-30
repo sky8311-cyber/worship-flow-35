@@ -651,13 +651,6 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                   boxShadow: '2px 0 8px rgba(0,0,0,0.1), -2px 0 8px rgba(0,0,0,0.1)',
                 }}
               >
-                {/* Glass panel vertical lines overlay */}
-                <div
-                  className="absolute inset-0 pointer-events-none z-0"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.15) 38px, rgba(255,255,255,0.15) 39px)',
-                  }}
-                />
                 <ScrollArea className="flex-1 min-h-0 relative z-10">
                   {buildingContent}
                 </ScrollArea>
