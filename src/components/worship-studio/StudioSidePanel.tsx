@@ -44,7 +44,7 @@ function FloorLabel({ label }: { label: string }) {
 
 /* ─── SVG Rooftop Scene — trees, parasols+chairs, railing, worship stage (1.5x scale) ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
-  const h = isMobile ? 57 : 66;
+  const h = isMobile ? 72 : 82;
   const spacing = width / 6;
 
   // 3 parasol sets (left side) — 1.5x
@@ -108,21 +108,21 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         <rect x={stageX} y={stageY - 4.5} width={stageW} height={4.5} rx={1.5} fill="#f0f0f0" stroke="#ccc" strokeWidth={0.75} />
         <rect x={stageX + 1.5} y={stageY - 6} width={stageW - 3} height={2.25} rx={0.75} fill="#fafafa" stroke="#ddd" strokeWidth={0.45} />
 
-        {/* Drum set — 1.5x */}
+        {/* Drum set — 2x (bigger than guitar, taller than parasols) */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
-          const drumY = stageY - 7.5;
+          const drumY = stageY - 16;
           return (
             <>
-              <ellipse cx={drumCx} cy={drumY} rx={6} ry={4.5} fill="#c0c0c0" stroke="#999" strokeWidth={0.6} />
-              <ellipse cx={drumCx} cy={drumY} rx={3.75} ry={2.7} fill="#e0e0e0" />
-              <ellipse cx={drumCx - 7.5} cy={drumY + 1.5} rx={3} ry={1.8} fill="#d4c090" stroke="#aa9060" strokeWidth={0.45} />
-              <line x1={drumCx + 7.5} y1={drumY + 3} x2={drumCx + 7.5} y2={drumY - 6} stroke="#888" strokeWidth={0.75} />
-              <ellipse cx={drumCx + 7.5} cy={drumY - 6} rx={3} ry={0.9} fill="#c8b040" opacity={0.8} />
-              <line x1={drumCx - 4.5} y1={drumY - 1.5} x2={drumCx - 4.5} y2={drumY - 7.5} stroke="#888" strokeWidth={0.6} />
-              <ellipse cx={drumCx - 4.5} cy={drumY - 7.5} rx={3.75} ry={0.75} fill="#d4b848" opacity={0.7} />
-              <line x1={drumCx - 1.5} y1={drumY - 4.5} x2={drumCx + 3} y2={drumY + 1.5} stroke="#8b6f4e" strokeWidth={0.75} />
-              <line x1={drumCx + 1.5} y1={drumY - 4.5} x2={drumCx - 3} y2={drumY + 1.5} stroke="#8b6f4e" strokeWidth={0.75} />
+              <ellipse cx={drumCx} cy={drumY} rx={9} ry={6.5} fill="#c0c0c0" stroke="#999" strokeWidth={0.8} />
+              <ellipse cx={drumCx} cy={drumY} rx={5.5} ry={4} fill="#e0e0e0" />
+              <ellipse cx={drumCx - 11} cy={drumY + 2} rx={4.5} ry={2.7} fill="#d4c090" stroke="#aa9060" strokeWidth={0.6} />
+              <line x1={drumCx + 11} y1={drumY + 4} x2={drumCx + 11} y2={drumY - 9} stroke="#888" strokeWidth={1} />
+              <ellipse cx={drumCx + 11} cy={drumY - 9} rx={4.5} ry={1.3} fill="#c8b040" opacity={0.8} />
+              <line x1={drumCx - 6} y1={drumY - 2} x2={drumCx - 6} y2={drumY - 11} stroke="#888" strokeWidth={0.8} />
+              <ellipse cx={drumCx - 6} cy={drumY - 11} rx={5.5} ry={1.1} fill="#d4b848" opacity={0.7} />
+              <line x1={drumCx - 2} y1={drumY - 6} x2={drumCx + 4} y2={drumY + 2} stroke="#8b6f4e" strokeWidth={1} />
+              <line x1={drumCx + 2} y1={drumY - 6} x2={drumCx - 4} y2={drumY + 2} stroke="#8b6f4e" strokeWidth={1} />
             </>
           );
         })()}
@@ -160,24 +160,31 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
   );
 }
 
-/* ─── SVG String Lights — poles anchored at building top border, extending upward ─── */
+/* ─── SVG String Lights — poles anchored at building body top border, extending upward ─── */
 function RooftopStringLights({ width }: { width: number }) {
   const poleHeight = 34;
-  const svgH = poleHeight + 6;
+  const svgH = poleHeight + 2;
   const poleX = width - 14;
-  // Pole bottom at svgH (= anchored to building top), extends upward
+  // Pole bottom at SVG bottom = building top border
   const poleBottomY = svgH;
   const poleTopY = svgH - poleHeight;
 
   const strands = [
-    { endX: 10, endY: svgH - 8, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 16 },
-    { endX: 25, endY: svgH - 4, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 10 },
-    { endX: 45, endY: svgH - 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 6 },
+    { endX: 10, endY: svgH - 6, cp1x: poleX - 20, cp1y: poleTopY + 8, cp2x: 30, cp2y: svgH - 14 },
+    { endX: 25, endY: svgH - 2, cp1x: poleX - 15, cp1y: poleTopY + 12, cp2x: 40, cp2y: svgH - 8 },
+    { endX: 45, endY: svgH + 1, cp1x: poleX - 10, cp1y: poleTopY + 18, cp2x: 55, cp2y: svgH - 4 },
   ];
 
   return (
-    <svg width={width} height={svgH} className="absolute left-0 pointer-events-none" style={{ bottom: '100%' }} viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
-      {/* Pole */}
+    <svg
+      width={width}
+      height={svgH}
+      className="absolute left-0 pointer-events-none z-20"
+      style={{ bottom: '100%', marginBottom: '-1px' }}
+      viewBox={`0 0 ${width} ${svgH}`}
+      preserveAspectRatio="none"
+    >
+      {/* Pole — bottom touches building top border */}
       <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
       {/* Flag */}
       <polygon points={`${poleX + 1},${poleTopY} ${poleX + 6},${poleTopY + 2.5} ${poleX + 1},${poleTopY + 5}`} fill="#c94040" opacity={0.7} />
@@ -370,8 +377,8 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
 
-        {/* Upper lane (above center line) — right to left */}
-        <span className="absolute top-[10%] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
+        {/* Upper lane (above center line) — right to left, moved up ~8px */}
+        <span className="absolute text-[28px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '0s' }}>🚗</span>
 
         {/* Lower lane (below center line) — left to right, emoji flipped to face right */}
         <span className="absolute bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
@@ -380,8 +387,8 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
         {(!collapsed || isMobile) && (
           <>
-            {/* Upper lane — 2nd car */}
-            <span className="absolute top-[10%] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
+            {/* Upper lane — 2nd car, moved up ~8px */}
+            <span className="absolute text-[24px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '8s' }}>🚙</span>
             {/* Lower lane — minivan */}
             <span className="absolute bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
@@ -610,23 +617,25 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
 
             {/* Building wrapper */}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
-              {/* Rooftop scene + string lights anchored at building top */}
+              {/* Rooftop scene */}
               {(!collapsed || isMobile) && (
                 <div className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
                   <RooftopScene width={collapsed ? 56 : isMobile ? 200 : 232} isMobile={isMobile} />
-                  {/* String lights — SVG positioned above this container via bottom:100%, pole anchored to building top */}
-                  <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 </div>
               )}
 
               {/* Building body — glass facade */}
               <div
-                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-hidden", isMobile ? "mx-6" : "mx-3")}
+                className={cn("flex-1 min-h-0 flex flex-col border-x border-t border-[#7a8a9a] overflow-visible relative", isMobile ? "mx-6" : "mx-3")}
                 style={{
                   ...glassWallStyle,
                   boxShadow: '2px 0 8px rgba(0,0,0,0.1), -2px 0 8px rgba(0,0,0,0.1)',
                 }}
               >
+                {/* String lights — anchored to building body top border */}
+                {(!collapsed || isMobile) && (
+                  <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
+                )}
                 <ScrollArea className="flex-1 min-h-0 relative z-10">
                   {buildingContent}
                 </ScrollArea>
