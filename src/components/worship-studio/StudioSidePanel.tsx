@@ -111,7 +111,7 @@ function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean })
         {/* Drum set — 2.6x (bigger than guitar, taller than parasols) */}
         {(() => {
           const drumCx = stageX + stageW * 0.5;
-          const drumY = stageY - 22;
+          const drumY = stageY - 10;
           return (
             <>
               <ellipse cx={drumCx} cy={drumY} rx={11.5} ry={8} fill="#c0c0c0" stroke="#999" strokeWidth={0.9} />
@@ -221,37 +221,68 @@ function RooftopStringLights({ width }: { width: number }) {
 /* ─── SVG Café Interior ─── */
 function CafeSVG() {
   return (
-    <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      <rect x={0} y={0} width={80} height={50} fill="#e8f0f4" fillOpacity={0.3} />
-      <path d="M 0,0 Q 6,10 3,50" fill="#c94040" fillOpacity={0.25} />
-      <path d="M 80,0 Q 74,10 77,50" fill="#c94040" fillOpacity={0.25} />
+    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <rect x={0} y={0} width={120} height={70} fill="#e8f0f4" fillOpacity={0.3} />
+      {/* Curtain sides */}
+      <path d="M 0,0 Q 4,10 2,70" fill="#c94040" fillOpacity={0.25} />
+      <path d="M 120,0 Q 116,10 118,70" fill="#c94040" fillOpacity={0.25} />
+      {/* Back wall shelf */}
+      <rect x={3} y={6} width={30} height={1.5} rx={0.5} fill="#8b6f4e" />
+      {/* Books on shelf */}
+      <rect x={4} y={1} width={2} height={5} rx={0.3} fill="#c94040" />
+      <rect x={7} y={2} width={2} height={4} rx={0.3} fill="#4080c0" />
+      <rect x={10} y={1.5} width={1.5} height={4.5} rx={0.3} fill="#50a060" />
+      <rect x={12.5} y={2.5} width={2} height={3.5} rx={0.3} fill="#e8c040" />
+      <rect x={15.5} y={1} width={2.5} height={5} rx={0.3} fill="#8060a0" />
+      <rect x={19} y={2} width={1.5} height={4} rx={0.3} fill="#c06040" />
+      <rect x={21.5} y={1.5} width={2} height={4.5} rx={0.3} fill="#4a8a4a" />
+      <rect x={24.5} y={2} width={2} height={4} rx={0.3} fill="#d07040" />
+      <rect x={27.5} y={1} width={2.5} height={5} rx={0.3} fill="#5a6a7a" />
+      {/* Menu board on wall */}
+      <rect x={38} y={3} width={16} height={12} rx={1} fill="#3a3020" />
+      <rect x={40} y={5} width={12} height={2} rx={0.3} fill="#f5c542" fillOpacity={0.6} />
+      <rect x={40} y={8} width={8} height={1.5} rx={0.3} fill="#f5c542" fillOpacity={0.4} />
+      <rect x={40} y={10.5} width={10} height={1.5} rx={0.3} fill="#f5c542" fillOpacity={0.4} />
+      {/* Wall art */}
+      <rect x={95} y={4} width={14} height={10} rx={0.5} fill="none" stroke="#6b5b4f" strokeWidth={0.6} />
+      <rect x={96.5} y={5.5} width={11} height={7} fill="#f0e6d6" />
+      <ellipse cx={102} cy={8} rx={3} ry={2.5} fill="#c94040" fillOpacity={0.3} />
       {/* Counter */}
-      <rect x={5} y={32} width={70} height={4} rx={1} fill="#8b6f4e" />
-      {/* Espresso machine — dome top + portafilter */}
-      <rect x={52} y={16} width={18} height={16} rx={2} fill="#4a4a4a" />
-      <rect x={54} y={14} width={14} height={4} rx={2} fill="#555" />
-      {/* Dome top */}
-      <ellipse cx={61} cy={14} rx={6} ry={2.5} fill="#5a5a5a" />
-      {/* Group head / portafilter */}
-      <rect x={56} y={26} width={4} height={3} rx={0.5} fill="#888" />
-      <rect x={63} y={26} width={4} height={3} rx={0.5} fill="#888" />
-      {/* Drip tray */}
-      <rect x={55} y={30} width={12} height={2} rx={0.5} fill="#666" />
-      {/* Cup under portafilter */}
-      <rect x={57} y={28} width={3} height={3} rx={0.5} fill="#f0e6d6" />
-      {/* Steam wand */}
-      <line x1={70} y1={20} x2={72} y2={28} stroke="#999" strokeWidth={0.8} />
+      <rect x={5} y={44} width={110} height={4} rx={1} fill="#8b6f4e" />
+      {/* Espresso machine (smaller) */}
+      <rect x={80} y={30} width={12} height={14} rx={1.5} fill="#4a4a4a" />
+      <rect x={81} y={28} width={10} height={3} rx={1.5} fill="#555" />
+      <ellipse cx={86} cy={28} rx={4} ry={1.8} fill="#5a5a5a" />
+      <rect x={82} y={38} width={3} height={2.5} rx={0.3} fill="#888" />
+      <rect x={87} y={38} width={3} height={2.5} rx={0.3} fill="#888" />
+      <rect x={81} y={42} width={10} height={1.5} rx={0.3} fill="#666" />
+      <rect x={83} y={40} width={2.5} height={2.5} rx={0.3} fill="#f0e6d6" />
+      {/* Bottles on back counter */}
+      <rect x={60} y={34} width={2.5} height={8} rx={0.8} fill="#4080c0" fillOpacity={0.7} />
+      <rect x={64} y={36} width={2} height={6} rx={0.8} fill="#50a060" fillOpacity={0.7} />
+      <rect x={67.5} y={35} width={2.5} height={7} rx={0.8} fill="#c06040" fillOpacity={0.7} />
+      <rect x={71} y={37} width={2} height={5} rx={0.8} fill="#e8c040" fillOpacity={0.7} />
       {/* Cups on counter */}
-      <rect x={12} y={28} width={5} height={5} rx={1} fill="#f0e6d6" />
-      <rect x={20} y={29} width={4} height={4} rx={1} fill="#e8dcc8" />
+      <rect x={15} y={40} width={3.5} height={4} rx={0.8} fill="#f0e6d6" />
+      <rect x={21} y={41} width={3} height={3} rx={0.8} fill="#e8dcc8" />
+      <rect x={27} y={40.5} width={3} height={3.5} rx={0.8} fill="#d4c8b0" />
       {/* Stools */}
-      <rect x={30} y={36} width={2} height={10} fill="#6b5b4f" />
-      <rect x={25} y={34} width={12} height={2} rx={1} fill="#6b5b4f" />
-      <rect x={44} y={36} width={2} height={10} fill="#6b5b4f" />
-      <rect x={39} y={34} width={12} height={2} rx={1} fill="#6b5b4f" />
-      {/* Hanging pendant light */}
-      <line x1={40} y1={0} x2={40} y2={8} stroke="#333" strokeWidth={0.5} />
-      <polygon points="36,8 44,8 42,12 38,12" fill="#f5c542" fillOpacity={0.6} />
+      <rect x={35} y={48} width={1.5} height={14} fill="#6b5b4f" />
+      <rect x={31} y={46.5} width={10} height={1.5} rx={0.8} fill="#6b5b4f" />
+      <rect x={48} y={48} width={1.5} height={14} fill="#6b5b4f" />
+      <rect x={44} y={46.5} width={10} height={1.5} rx={0.8} fill="#6b5b4f" />
+      <rect x={100} y={48} width={1.5} height={14} fill="#6b5b4f" />
+      <rect x={96} y={46.5} width={10} height={1.5} rx={0.8} fill="#6b5b4f" />
+      {/* Hanging pendant lights */}
+      <line x1={30} y1={0} x2={30} y2={18} stroke="#333" strokeWidth={0.4} />
+      <polygon points="27,18 33,18 32,22 28,22" fill="#f5c542" fillOpacity={0.5} />
+      <line x1={60} y1={0} x2={60} y2={16} stroke="#333" strokeWidth={0.4} />
+      <polygon points="57,16 63,16 62,20 58,20" fill="#f5c542" fillOpacity={0.5} />
+      <line x1={90} y1={0} x2={90} y2={19} stroke="#333" strokeWidth={0.4} />
+      <polygon points="87,19 93,19 92,23 88,23" fill="#f5c542" fillOpacity={0.5} />
+      {/* Potted plant on counter */}
+      <rect x={8} y={40} width={4} height={4} rx={1} fill="#8b6f4e" />
+      <circle cx={10} cy={38} r={3} fill="#4a8a4a" opacity={0.7} />
     </svg>
   );
 }
@@ -259,42 +290,73 @@ function CafeSVG() {
 /* ─── SVG Gallery Interior ─── */
 function GallerySVG() {
   return (
-    <svg viewBox="0 0 80 50" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-      <rect x={0} y={0} width={80} height={50} fill="#fafafa" fillOpacity={0.4} />
+    <svg viewBox="0 0 120 70" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+      <rect x={0} y={0} width={120} height={70} fill="#fafafa" fillOpacity={0.4} />
       {/* Track lighting */}
-      <rect x={5} y={2} width={70} height={1.5} rx={0.5} fill="#555" />
-      <circle cx={18} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
-      <circle cx={40} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
-      <circle cx={62} cy={3} r={1.5} fill="#f5c542" fillOpacity={0.7} />
-      <polygon points="18,4 12,20 24,20" fill="#f5c542" fillOpacity={0.06} />
-      <polygon points="40,4 34,20 46,20" fill="#f5c542" fillOpacity={0.06} />
-      <polygon points="62,4 56,20 68,20" fill="#f5c542" fillOpacity={0.06} />
+      <rect x={5} y={2} width={110} height={1.2} rx={0.4} fill="#555" />
+      <circle cx={20} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+      <circle cx={45} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+      <circle cx={70} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+      <circle cx={95} cy={3} r={1.2} fill="#f5c542" fillOpacity={0.7} />
+      <polygon points="20,4 14,18 26,18" fill="#f5c542" fillOpacity={0.05} />
+      <polygon points="45,4 39,18 51,18" fill="#f5c542" fillOpacity={0.05} />
+      <polygon points="70,4 64,18 76,18" fill="#f5c542" fillOpacity={0.05} />
+      <polygon points="95,4 89,18 101,18" fill="#f5c542" fillOpacity={0.05} />
       {/* Art frame 1 — Mountain landscape */}
-      <rect x={8} y={10} width={20} height={16} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={10} y={12} width={16} height={12} fill="#87CEEB" />
-      <polygon points="10,24 18,16 26,24" fill="#4a8a4a" />
-      <polygon points="14,24 22,18 26,24" fill="#3a7a3a" />
-      <circle cx={22} cy={15} r={2} fill="#f5c542" opacity={0.8} />
-      {/* Art frame 2 — Abstract color blocks */}
-      <rect x={33} y={8} width={14} height={22} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={35} y={10} width={10} height={6} fill="#e8c040" />
-      <rect x={35} y={16} width={5} height={6} fill="#4080c0" />
-      <rect x={40} y={16} width={5} height={6} fill="#50a060" />
-      <rect x={35} y={22} width={10} height={6} fill="#c06040" />
-      {/* Art frame 3 — Starry night sky */}
-      <rect x={54} y={12} width={18} height={14} rx={1} fill="none" stroke="#333" strokeWidth={0.8} />
-      <rect x={56} y={14} width={14} height={10} fill="#1a1a40" />
-      <circle cx={60} cy={17} r={0.8} fill="#fff" opacity={0.9} />
-      <circle cx={64} cy={16} r={0.5} fill="#fff" opacity={0.7} />
-      <circle cx={67} cy={19} r={0.6} fill="#fff" opacity={0.8} />
-      <circle cx={62} cy={20} r={0.4} fill="#fff" opacity={0.6} />
-      <circle cx={58} cy={21} r={0.5} fill="#fff" opacity={0.7} />
-      <circle cx={66} cy={17} r={1} fill="#f5e6a0" opacity={0.5} />
+      <rect x={6} y={10} width={16} height={12} rx={0.8} fill="none" stroke="#333" strokeWidth={0.6} />
+      <rect x={7.5} y={11.5} width={13} height={9} fill="#87CEEB" />
+      <polygon points="7.5,20.5 14,14 20.5,20.5" fill="#4a8a4a" />
+      <polygon points="11,20.5 17,16 20.5,20.5" fill="#3a7a3a" />
+      <circle cx={18} cy={13.5} r={1.5} fill="#f5c542" opacity={0.8} />
+      {/* Art frame 2 — Abstract */}
+      <rect x={28} y={8} width={11} height={17} rx={0.8} fill="none" stroke="#333" strokeWidth={0.6} />
+      <rect x={29.5} y={9.5} width={8} height={5} fill="#e8c040" />
+      <rect x={29.5} y={14.5} width={4} height={5} fill="#4080c0" />
+      <rect x={33.5} y={14.5} width={4} height={5} fill="#50a060" />
+      <rect x={29.5} y={19.5} width={8} height={4} fill="#c06040" />
+      {/* Art frame 3 — Starry night */}
+      <rect x={45} y={11} width={14} height={10} rx={0.8} fill="none" stroke="#333" strokeWidth={0.6} />
+      <rect x={46.5} y={12.5} width={11} height={7} fill="#1a1a40" />
+      <circle cx={49} cy={14.5} r={0.6} fill="#fff" opacity={0.9} />
+      <circle cx={52} cy={13.5} r={0.4} fill="#fff" opacity={0.7} />
+      <circle cx={54.5} cy={16} r={0.5} fill="#fff" opacity={0.8} />
+      <circle cx={50.5} cy={17} r={0.3} fill="#fff" opacity={0.6} />
+      <circle cx={54} cy={14} r={0.8} fill="#f5e6a0" opacity={0.5} />
+      {/* Art frame 4 — Portrait */}
+      <rect x={65} y={9} width={10} height={14} rx={0.8} fill="none" stroke="#333" strokeWidth={0.6} />
+      <rect x={66.5} y={10.5} width={7} height={11} fill="#f0e6d6" />
+      <circle cx={70} cy={14} r={2.5} fill="#d4a070" opacity={0.6} />
+      <rect x={68} y={17} width={4} height={4} rx={0.5} fill="#4080c0" opacity={0.5} />
+      {/* Art frame 5 — Minimal shapes */}
+      <rect x={82} y={10} width={13} height={13} rx={0.8} fill="none" stroke="#333" strokeWidth={0.6} />
+      <rect x={83.5} y={11.5} width={10} height={10} fill="#f8f4f0" />
+      <circle cx={88.5} cy={16.5} r={4} fill="none" stroke="#c94040" strokeWidth={0.8} />
+      <rect x={86} y={14} width={5} height={5} fill="none" stroke="#4080c0" strokeWidth={0.6} />
+      {/* Art frame 6 — Small sketch */}
+      <rect x={101} y={12} width={10} height={8} rx={0.5} fill="none" stroke="#333" strokeWidth={0.5} />
+      <rect x={102.5} y={13.5} width={7} height={5} fill="#e8e4dc" />
+      <line x1={103} y1={18} x2={109} y2={14} stroke="#6b5b4f" strokeWidth={0.4} />
+      <line x1={105} y1={18} x2={108} y2={15} stroke="#8a7a6a" strokeWidth={0.3} />
       {/* Floor */}
-      <rect x={0} y={42} width={80} height={8} fill="#e8e4dc" fillOpacity={0.5} />
-      {/* Pedestal */}
-      <rect x={34} y={35} width={12} height={7} rx={0.5} fill="#ddd" />
-      <rect x={37} y={32} width={6} height={3} rx={1} fill="#aaa" />
+      <rect x={0} y={56} width={120} height={14} fill="#e8e4dc" fillOpacity={0.5} />
+      {/* Pedestal with sculpture */}
+      <rect x={15} y={46} width={8} height={10} rx={0.5} fill="#ddd" />
+      <rect x={17} y={42} width={4} height={4} rx={0.8} fill="#aaa" />
+      <ellipse cx={19} cy={41} rx={2.5} ry={1.5} fill="#999" />
+      {/* Bench */}
+      <rect x={50} y={52} width={20} height={2} rx={0.5} fill="#8b6f4e" />
+      <rect x={52} y={54} width={2} height={5} fill="#6b5b4f" />
+      <rect x={66} y={54} width={2} height={5} fill="#6b5b4f" />
+      {/* Potted plant */}
+      <rect x={95} y={50} width={5} height={6} rx={1} fill="#8b6f4e" />
+      <circle cx={97.5} cy={48} r={3.5} fill="#4a8a4a" opacity={0.7} />
+      <circle cx={95.5} cy={49} r={2} fill="#5a9a5a" opacity={0.5} />
+      {/* Visitor silhouette */}
+      <circle cx={38} cy={44} r={2} fill="#555" opacity={0.4} />
+      <rect x={36.5} y={46} width={3} height={7} rx={1} fill="#555" opacity={0.3} />
+      {/* Second visitor */}
+      <circle cx={78} cy={45} r={1.8} fill="#555" opacity={0.35} />
+      <rect x={76.5} y={47} width={3} height={6.5} rx={1} fill="#555" opacity={0.25} />
     </svg>
   );
 }
@@ -617,11 +679,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           >
             {(!collapsed || isMobile) && (
               <>
-                <div className="absolute top-3 left-0 animate-cloud-drift select-none pointer-events-none text-2xl opacity-80" style={{ animationDuration: '45s' }}>☁️</div>
-                <div className="absolute top-8 left-0 animate-cloud-drift select-none pointer-events-none text-lg opacity-60" style={{ animationDuration: '35s', animationDelay: '8s' }}>☁️</div>
-                <div className="absolute top-14 left-0 animate-cloud-drift select-none pointer-events-none text-sm opacity-40" style={{ animationDuration: '55s', animationDelay: '15s' }}>☁️</div>
-                {/* Airplane flying right to left */}
-                <div className="absolute top-5 left-0 animate-airplane-fly select-none pointer-events-none text-xs opacity-70" style={{ animationDuration: '40s' }}>✈️</div>
+                <div className="absolute top-1 left-0 animate-cloud-drift select-none pointer-events-none text-2xl opacity-80" style={{ animationDuration: '45s' }}>☁️</div>
+                <div className="absolute top-3 left-0 animate-cloud-drift select-none pointer-events-none text-lg opacity-60" style={{ animationDuration: '35s', animationDelay: '8s' }}>☁️</div>
+                <div className="absolute top-5 left-0 animate-cloud-drift select-none pointer-events-none text-sm opacity-40" style={{ animationDuration: '55s', animationDelay: '15s' }}>☁️</div>
               </>
             )}
           </div>
@@ -644,7 +704,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         ) : (
           <>
             {/* Spacer for string lights to extend into */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-10" : "h-12")} />
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-5" : "h-6")} />
 
             {/* Building wrapper */}
             <div className="relative z-10 flex flex-col flex-1 min-h-0">
