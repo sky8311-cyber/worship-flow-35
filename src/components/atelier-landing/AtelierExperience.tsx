@@ -24,7 +24,7 @@ const steps = [
 
 export const AtelierExperience = () => {
   return (
-    <section className="py-24 md:py-32 px-6 bg-[#FAF8F5]">
+    <section className="py-14 md:py-20 px-6 bg-[#FAF8F5]">
       <div className="max-w-4xl mx-auto">
         <motion.p
           className="font-serif text-center text-sm md:text-base text-[#B8902A] tracking-[0.3em] uppercase mb-16"
