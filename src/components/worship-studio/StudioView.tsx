@@ -73,7 +73,7 @@ export function StudioView({ roomId, isOwnRoom = false }: StudioViewProps) {
   }
   
   // No room or onboarding not completed - show onboarding for own studio
-  if (isOwnRoom && (!room || !(room as any).onboarding_completed)) {
+  if (isOwnRoom && (!room || !room.onboarding_completed)) {
     return (
       <StudioOnboarding
         onComplete={() => {
