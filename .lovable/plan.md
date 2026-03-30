@@ -1,23 +1,34 @@
 
 
-# 전광판 모든 텍스트에 타자기(Typewriter) 효과 적용
+# 건물 하단 푸터 영역 잔디밭 배경 적용
 
-## 변경 내용
+## 현재 상태
+- 도로(`AnimatedRoad`) 아래에 텍스트 + 소셜 링크가 있는 푸터 영역 (line 1069-1113)
+- 배경: 투명 (부모의 `#faf7f2` 그대로 노출)
+- 텍스트: `text-[10px]`, `text-muted-foreground`
 
-### `src/components/worship-studio/StudioSidePanel.tsx`
+## 접근 방식: 녹색 바탕 + 잔디 이모지 패턴
 
-1. **모든 스크린의 `anim`을 `"typewriter"`로 통일**
-   - `BILLBOARD_SCREENS` 배열의 5개 항목 전부 `anim: "typewriter"`로 변경
-   - `BILLBOARD_ANIMATIONS` 배열과 랜덤 애니메이션 선택 로직은 사용되지 않게 됨 (추후 정리 가능)
+업로드된 잔디 이미지를 직접 사용하면 텍스트 가독성이 크게 떨어지므로, **녹색 계열 바탕색 + 잔디 이모지를 뿌리는 방식**을 채택합니다.
 
-2. **타자기 로직 단순화**
-   - `isTypewriter` 분기 제거 → 모든 스크린이 동일하게 타자기 동작
-   - 스크린 전환 시 항상 `setCharCount(0)` 호출
-   - CSS transform 기반 애니메이션 클래스(`billboard-slide-up`, `billboard-scale-pop` 등) 적용 중단 → 위치 이탈 문제 원천 제거
+## 수정 내용
 
-3. **영문 텍스트 타자기 속도 조정**
-   - 영문은 글자 수가 많으므로 타이핑 간격을 한글(150ms)보다 빠르게 조정 (예: 80~100ms)
-   - 스크린 전환 인터벌도 텍스트 길이에 맞게 동적 계산하여 타이핑 완료 후 잠시 머물다 전환
+### `src/components/worship-studio/StudioSidePanel.tsx` — 푸터 영역 (line 1069-1113)
 
-이 변경으로 CSS transform 애니메이션이 완전히 제거되어, 모바일/데스크탑 모두에서 텍스트가 전광판 밖으로 나가는 문제가 근본적으로 해결됩니다.
+1. **잔디밭 배경 컨테이너**
+   - 낮: 부드러운 녹색 그라디언트 배경 (`from-[#5a8f3c] to-[#4a7d32]`)
+   - 밤: 어두운 녹색 (`from-[#1e3a1e] to-[#162e16]`)
+   - 상단에 `🌱🌿` 이모지를 pseudo-element 또는 인라인으로 랜덤 배치하여 잔디 느낌 연출
+
+2. **텍스트 가독성 확보**
+   - 텍스트 색상을 흰색 계열로 변경 (낮: `text-white`, 밤: `text-green-100`)
+   - 텍스트 뒤에 살짝 반투명 어두운 배경 (`bg-black/20 rounded-lg px-3 py-2`) 적용하여 가독성 보장
+   - 소셜 링크 아이콘도 흰색 계열로 조정
+
+3. **잔디 이모지 장식**
+   - 푸터 상단/하단에 `🌿🍀🌱` 이모지를 작은 크기로 흩뿌려 자연스러운 잔디밭 분위기
+   - `absolute` 포지션으로 배치, `pointer-events-none`으로 인터랙션 방해 방지
+
+### 수정 파일
+- `src/components/worship-studio/StudioSidePanel.tsx` (1곳, 푸터 영역)
 
