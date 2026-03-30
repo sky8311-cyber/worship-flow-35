@@ -88,6 +88,87 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
   );
 });
 
+/* ─── Billboard Animated Text ─── */
+const BILLBOARD_TEXTS = [
+  "삶을 예배로 만드는 공간",
+  "WORSHIP ATELIER",
+  "by K-Worship",
+  "나만의 공작소에",
+  "입주하세요!",
+];
+
+const BILLBOARD_ANIMATIONS = [
+  "billboard-fade-in",
+  "billboard-slide-up",
+  "billboard-scale-pop",
+  "billboard-slide-right",
+];
+
+const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNight }: { screenW: number; screenH: number; isNight: boolean }) {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const [animClass, setAnimClass] = useState("billboard-fade-in");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex(prev => {
+          const next = (prev + 1) % BILLBOARD_TEXTS.length;
+          if (next === 0) {
+            setAnimClass("billboard-fade-in");
+          } else {
+            setAnimClass(BILLBOARD_ANIMATIONS[Math.floor(Math.random() * BILLBOARD_ANIMATIONS.length)]);
+          }
+          return next;
+        });
+        setVisible(true);
+      }, 400);
+    }, 3400);
+    return () => clearInterval(interval);
+  }, []);
+
+  const text = BILLBOARD_TEXTS[index];
+  const isEnglish = /^[A-Za-z\s]+$/.test(text);
+  const fontSize = isEnglish ? Math.max(5, screenW * 0.07) : Math.max(5, screenW * 0.09);
+
+  return (
+    <foreignObject x={0} y={0} width={screenW} height={screenH}>
+      <div
+        style={{
+          width: screenW,
+          height: screenH,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2px 4px',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
+      >
+        <span
+          key={`${index}-${animClass}`}
+          className={visible ? animClass : "billboard-fade-out"}
+          style={{
+            fontSize,
+            fontWeight: 700,
+            color: isNight ? '#e0e8f0' : '#3a3a3a',
+            textAlign: 'center',
+            lineHeight: 1.3,
+            wordBreak: 'keep-all',
+            overflowWrap: 'break-word',
+            display: 'block',
+            fontFamily: "'Pretendard', sans-serif",
+            letterSpacing: isEnglish ? '0.08em' : '0.02em',
+          }}
+        >
+          {text}
+        </span>
+      </div>
+    </foreignObject>
+  );
+});
+
 /* ─── SVG Rooftop Scene ─── */
 const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: boolean; isNight: boolean }) {
   const h = isMobile ? 95 : 110;
