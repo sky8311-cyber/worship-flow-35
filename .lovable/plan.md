@@ -1,79 +1,51 @@
 
 
-# 밤/낮 모드 — 타임존 자동 + 토글 버튼
+# 밤 모드 시각 개선
 
-## 개요
-유저 타임존 기반으로 밤/낮을 자동 판별하되, 토글 버튼으로 수동 전환 가능. 재접속 시 타임존 기준으로 자동 리셋.
-
-## 새 파일
-
-### `src/lib/nightModeHelper.ts`
-- `isNightTime(timezone: string | null): boolean` — 19:00~06:00이면 true (기본값 Asia/Seoul)
-- `Intl.DateTimeFormat` 사용하여 해당 타임존의 현재 시각 계산
-
-## 변경 파일
+## 변경 사항
 
 ### `src/components/worship-studio/StudioSidePanel.tsx`
 
-**1. isNight 상태 + 토글**
-- `useAuth()`에서 `profile?.timezone` 가져오기
-- `const autoNight = isNightTime(profile?.timezone)` → 초기값
-- `const [isNight, setIsNight] = useState(autoNight)` + `useEffect`로 autoNight 변경 시 동기화 (재접속 시 자동 반영)
-- 토글 버튼: 건물 상단(하늘 영역)에 🌙/☀️ 아이콘 버튼 배치
+**1. 스트링 라이트 빛 원뿔 삭제 (lines 269-276, 287-289)**
+- 전구 아래 `polygon` (light cone) 삭제
+- 전구 주변 glow `circle` (opacity 0.06) 삭제
+- 전구 자체는 유지 (크기/색상 그대로)
 
-**2. 하늘 배경 (lines 676-688)**
-- 낮: 기존 그라디언트 + 구름
-- 밤: `#0a0e2a → #141852 → #1a1a40` 그라디언트, 구름 제거
-- **별**: SVG 50~70개 랜덤 좌표 원형 (r=0.5~1.5), 흰색, CSS `animate-twinkle` 각각 다른 delay
-- **달**: 우측 상단 초승달 SVG, 은은한 glow
+**2. 카페 빛 원뿔 삭제 (CafeSVG lines 358, 361, 364)**
+- 펜던트 조명 아래 `{isNight && <polygon ...>}` 3개 삭제
+- 조명 셰이드 자체는 유지
 
-**3. 건물 파사드 (glassWallStyle)**
-- 밤: `#2a3a4a → #1e2e3e → #182838` 어두운 푸른색 그라디언트
-- `isNight` 기반 조건부 스타일 적용
+**3. 갤러리 영업 Open (GallerySVG lines 376-381)**
+- 어두운 오버레이 `rect fill="#000" fillOpacity={0.5}` 삭제
+- 배경색: 밤에도 밝게 (`#fafafa` 계열 유지, 약간 따뜻한 톤 `#f5f0e8`)
+- `opacity` wrapper를 밤에도 1로 변경 (기존 0.3 → 1)
+- 트랙 라이팅 전구 fillOpacity 밤에도 0.7로 유지
 
-**4. 루프탑 (RooftopScene) — isNight prop 추가**
-- 바닥색: `#8a9aaa` → `#3a4a5a`
-- 나무/파라솔: opacity 0.4로 낮춰 실루엣화
-- **무대만 밝게**: 무대 아래 노란 glow rect + radialGradient 스포트라이트
-- 난간색: 어둡게
+**4. 카페 & 갤러리 간판 조명 (GroundFloorShops)**
+- 카페 "CAFÉ & BOOKS" 간판: 밤에 text-shadow glow 추가 (`0 0 6px #f5c542`)
+- 갤러리 "GALLERY" 간판: 밤에도 밝은 색 (`text-[#c0d0e0]`), text-shadow glow 추가
+- 갤러리에서 `CLOSED` 텍스트 제거, `OPEN` 추가
 
-**5. 스트링 라이트 (RooftopStringLights) — isNight prop 추가**
-- 밤: 전구 색 `#ffe066`, opacity 1.0으로 밝게
-- 각 전구 아래 빛 삼각형 cone 추가 (노란색, opacity 0.15)
-- 전구가 비추지 않는 영역은 기존 어둠 유지
+**5. 건물 간판 흰색 배경 유지 (lines 676-687)**
+- "WORSHIP ATELIER" 간판: 밤에도 `bg-white` 유지 (현재 `bg-[#1e2e3e]`로 변경됨 → 수정)
+- 텍스트도 밤에도 어두운 색 유지 (`text-[#2a2a2a]`)
 
-**6. 상가 (GroundFloorShops) — isNight prop 추가**
-- 카페: 영업중 — 내부 밝게 유지, 조명 cone 강화 (fillOpacity 높임), 간판 glow
-- 갤러리: 영업종료 — 어두운 오버레이 rect `rgba(0,0,0,0.6)` 추가
+**6. 별 개선 (NightSkyStars)**
+- 현재 65개 → 150~200개로 대폭 증가
+- 크기: r 0.2~0.8로 작게 (현재 0.4~1.2 → 줄임)
+- 은하수 느낌: 중앙 대각선 밴드에 밀집도 높이기 (y 위치를 대각선 방향으로 가우시안 분포)
+- 밝기: opacity 다양하게 (0.3~1.0)
 
-**7. 도로 (AnimatedRoad) — isNight prop 추가**
-- 도로색: `#4a4a4a` → `#2a2a2a`, 인도: `#c4b8a8` → `#6a6050`
+**7. 달 수정 (NightSkyStars lines 60-64)**
+- 현재 초승달 코드는 이미 존재하지만 해(☀️)가 보이는 문제 확인 필요
+- 토글 버튼이 `Sun` 아이콘을 밤에 표시 중 → 이건 "낮으로 전환" 의미이므로 정상
+- 초승달 SVG: 현재 `#0e1430` 마스킹 색이 하늘 배경과 안 맞을 수 있음 → NightSkyStars에서 하늘 그라디언트 중간색 `#141852`로 마스킹 원 색상 조정
 
-### `src/components/worship-studio/StudioUnit.tsx`
-- `isNight?: boolean` prop 추가
-- empty 유닛: 밤이면 `windowGlow` 대신 `bg-[#1a2a3a]` (불 꺼진 창문)
-- 입주 유닛: 밤이면 windowGlow 유지 (불 켜진 따뜻한 창문)
-
-### `src/index.css` (또는 tailwind 설정)
-- `@keyframes twinkle` 추가: opacity 0.3 ↔ 1.0, duration 2~4s
-
-## Props 흐름
-```text
-StudioSidePanel (isNight 계산 + 토글)
-  ├── Sky background    ← isNight 조건부 렌더링
-  ├── RooftopScene      ← isNight prop
-  ├── RooftopStringLights ← isNight prop
-  ├── StudioUnit        ← isNight prop (각 유닛에 전달)
-  ├── GroundFloorShops  ← isNight prop
-  └── AnimatedRoad      ← isNight prop
-```
-
-## 토글 버튼 위치
-하늘 영역 우측 상단 (z-30), 작은 원형 버튼 (w-6 h-6), 밤이면 ☀️ 표시, 낮이면 🌙 표시
+**8. 자동차 전조등 (AnimatedRoad)**
+- 각 차량 이모지 앞에 CSS `::before` 또는 wrapper로 노란 glow 추가
+- 방법: 차량 span에 `filter: drop-shadow(0 0 4px #f5c542)` 밤일 때 적용
+- 추가로 차량 앞쪽에 작은 노란 원형 div (전조등 빛) 배치 — 이모지이므로 CSS filter가 가장 자연스러움
 
 ## 파일 목록
-1. `src/lib/nightModeHelper.ts` (신규)
-2. `src/components/worship-studio/StudioSidePanel.tsx` (대규모 수정)
-3. `src/components/worship-studio/StudioUnit.tsx` (isNight prop 추가)
-4. `src/index.css` (twinkle 애니메이션 추가)
+1. `src/components/worship-studio/StudioSidePanel.tsx` — 모든 변경
 
