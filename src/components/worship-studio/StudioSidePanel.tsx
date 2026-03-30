@@ -220,7 +220,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
   }
 
   return (
-    <div className="flex h-9 border-t border-[#7a8a9a]">
+    <div className="flex h-11 border-t border-[#7a8a9a]">
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning */}
@@ -246,11 +246,11 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
           <path d="M 2,12 Q 20,2 38,12 Z" fill="#a0c0d4" fillOpacity={0.4} />
         </svg>
         {/* Door frame */}
-        <div className="w-7 flex-1 mt-3 mb-0 bg-[#5a6a7a] rounded-t-[3px] flex flex-col items-center justify-center relative overflow-hidden">
+        <div className="w-5 flex-1 mt-2 mb-0 bg-[#5a6a7a] rounded-t-[2px] flex flex-col items-center justify-center relative overflow-hidden">
           {/* Glass panel */}
-          <div className="w-5 flex-1 mt-1 bg-[#b0d0e0]/40 rounded-t-[2px] border border-[#7a8a9a]/50" />
+          <div className="w-4 flex-1 mt-0.5 bg-[#b0d0e0]/40 rounded-t-[2px] border border-[#7a8a9a]/50" />
           {/* Handle */}
-          <div className="w-0.5 h-2 bg-[#c0a060] rounded-full mb-1 mt-0.5" />
+          <div className="w-0.5 h-1.5 bg-[#c0a060] rounded-full mb-0.5 mt-0.5" />
         </div>
         {/* Plants beside door */}
         <div className="absolute bottom-0 left-0 text-[5px]">🌱</div>
