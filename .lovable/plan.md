@@ -1,34 +1,26 @@
 
 
-# Fix: Mobile 1F Cafe/Gallery Bottom Artifacts Clipped
+# 모바일 빌딩 패널 높이 확장 (85dvh → 93dvh)
 
-## Root Cause
+## 현재 상태
+- Sheet 높이: `85dvh` → 659px 뷰포트 기준 약 560px
+- 상단 drag handle + 여백: ~40px
+- 고정 요소(Rooftop ~78px + 1F h-28 ~112px + Road ~44px) = ~234px
+- **빌딩 본체(스크롤 영역): ~286px** → 층수 제한
 
-The `GroundFloorShops` container is `h-20` (80px). Inside each shop column:
-- Awning: `h-3` (12px) + scallop `h-1.5` (6px) = 18px
-- Label: ~8px
-- **Remaining for SVG: ~54px**
+## 변경
 
-The SVGs have `viewBox="0 0 120 70"` (aspect ratio 120:70 ≈ 1.71:1). At ~54px height, the rendered width would be ~92px, but the column is wider, so the SVG scales to fit width and the height exceeds 54px — bottom content (stools at y=62, bench legs at y=59) gets clipped by `overflow-hidden`.
-
-## Solution (2 changes in 1 file)
-
-### 1. Increase mobile 1F height: `h-20` → `h-28`
-Line 362 — make height conditional:
+### `src/pages/WorshipStudio.tsx` (1줄)
+- Sheet 높이를 `85dvh` → `93dvh`로 확장
 ```tsx
-<div className={cn("flex border-t border-[#7a8a9a]", isMobile ? "h-28" : "h-20")}>
+// Line 170
+<SheetContent side="bottom" className="h-[93dvh] max-h-[93dvh] p-0 rounded-t-2xl overflow-hidden flex flex-col ...">
 ```
-This gives ~112px total → ~84px for SVG area → enough for all bottom artifacts.
 
-### 2. Anchor SVGs to bottom: `xMidYMid` → `xMidYMax`
-Lines 209 and 278 — change `preserveAspectRatio` on both CafeSVG and GallerySVG:
-```tsx
-preserveAspectRatio="xMidYMax meet"
-```
-This ensures bottom elements (stools, bench, pedestals) are always visible first, with any clipping happening at the top instead.
+이렇게 하면 빌딩 본체 영역이 ~53px 추가 확보되어 더 많은 유닛/층이 한 번에 보이고, 스크롤 없이 입주 가능한 공간이 늘어남. 기존 `flex-1 min-h-0` 구조 덕분에 추가 높이가 자동으로 빌딩 본체에 배분됨.
 
-### Files
-- `src/components/worship-studio/StudioSidePanel.tsx` (3 line changes)
+상단 7dvh만 남겨 시트 뒤 배경이 살짝 보이므로 "시트"임을 인지 가능.
 
-Desktop is unaffected since `GroundFloorShops` receives `isMobile` prop and desktop keeps `h-20`.
+### 변경 파일
+- `src/pages/WorshipStudio.tsx` (1줄 수정)
 
