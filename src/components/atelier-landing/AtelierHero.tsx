@@ -81,16 +81,6 @@ export const AtelierHero = () => {
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#FAF8F5] relative">
-      {/* "예배를" */}
-      <motion.span
-        className="font-korean text-xl md:text-3xl text-foreground tracking-wide mb-2"
-        initial={{ opacity: 0, y: -4 }}
-        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        예배를
-      </motion.span>
-
       {/* Arch symbol */}
       <div className="w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64">
         <AtelierArchLogo
@@ -104,8 +94,16 @@ export const AtelierHero = () => {
 
       {/* Text block below arch */}
       <div className="flex flex-col items-center mt-2">
-        {/* 삶으로 — typewriter */}
-        <div className="h-10 text-center">
+        {/* 예배를 삶으로 — inline row */}
+        <div className="h-10 flex flex-row items-baseline justify-center gap-1">
+          <motion.span
+            className="font-korean text-xl md:text-3xl text-foreground tracking-wide"
+            initial={{ opacity: 0, y: -4 }}
+            animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            예배를
+          </motion.span>
           {phase >= 3 && (
             <span className="font-korean text-xl md:text-3xl text-foreground tracking-wide">
               {lifeText.slice(0, lifeChars)}
