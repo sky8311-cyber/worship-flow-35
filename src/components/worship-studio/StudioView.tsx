@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWorshipRoomById, useWorshipRoom } from "@/hooks/useWorshipRoom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioOnboarding } from "./onboarding/StudioOnboarding";
 import { StudioLockedState } from "./StudioLockedState";
