@@ -5,51 +5,36 @@ import { AtelierArchLogo } from "./AtelierArchLogo";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const AtelierHero = () => {
+  // Phase 1: 예배를, Phase 2: 삶의 흐름으로, Phase 3: 아치+연결합니다, Phase 4: CTA
   const [phase, setPhase] = useState(0);
-  const [dots, setDots] = useState(0);
-  const [showCTA, setShowCTA] = useState(false);
   const [connectChars, setConnectChars] = useState(0);
+  const [showCTA, setShowCTA] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const connectText = "연결합니다";
 
-  // Phase 1: Start title fade-in immediately
+  // Phase transitions
   useEffect(() => {
-    const t = setTimeout(() => setPhase(1), 300);
+    const t = setTimeout(() => setPhase(1), 400);
     return () => clearTimeout(t);
   }, []);
 
-  // Phase 1: Typewriter dots after title appears
   useEffect(() => {
-    if (phase < 1) return;
-    const timers: NodeJS.Timeout[] = [];
-    // dots appear at 0.6s, 0.9s, 1.2s after phase 1
-    [600, 900, 1200].forEach((ms, i) => {
-      timers.push(setTimeout(() => setDots(i + 1), ms));
-    });
-    // Move to phase 2 after dots
-    timers.push(setTimeout(() => setPhase(2), 1500));
-    return () => timers.forEach(clearTimeout);
-  }, [phase]);
-
-  // Phase 2 → 3 → 4
-  useEffect(() => {
+    if (phase === 1) {
+      const t = setTimeout(() => setPhase(2), 600);
+      return () => clearTimeout(t);
+    }
     if (phase === 2) {
-      const t = setTimeout(() => setPhase(3), 500);
-      return () => clearTimeout(t);
-    }
-    if (phase === 3) {
-      const t = setTimeout(() => setPhase(4), 500);
+      const t = setTimeout(() => setPhase(3), 600);
       return () => clearTimeout(t);
     }
   }, [phase]);
 
-  // Phase 4: Typewriter for "연결합니다"
+  // Phase 3: Typewriter for "연결합니다"
   useEffect(() => {
-    if (phase < 4) return;
+    if (phase < 3) return;
     if (connectChars >= connectText.length) {
-      // Show CTA after typewriter completes
       const t = setTimeout(() => setShowCTA(true), 800);
       return () => clearTimeout(t);
     }
@@ -67,84 +52,56 @@ export const AtelierHero = () => {
 
   return (
     <section className="min-h-screen flex flex-col items-center justify-center px-6 bg-[#FAF8F5] relative">
-      {/* 1. Title: "Worship Atelier는..." */}
-      <motion.div
-        className="text-center mb-6"
-        initial={{ opacity: 0, y: 8 }}
-        animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        <span className="font-serif text-2xl md:text-4xl tracking-wider text-foreground">
-          Worship Atelier
-        </span>
-        <span className="font-korean text-2xl md:text-4xl text-foreground">는</span>
-        <span className="font-korean text-2xl md:text-4xl text-muted-foreground ml-0.5">
-          {".".repeat(dots)}
-        </span>
-        {/* Blinking cursor on last dot */}
-        {phase >= 1 && phase < 4 && (
-          <span
-            className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
-            style={{
-              backgroundColor: "#1F1F1F",
-              animation: "blink 1s step-end infinite",
-            }}
-          />
-        )}
-      </motion.div>
-
-      {/* 2. Arch symbol + side text container */}
-      <div className="relative w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64 mb-4">
-        {/* Arch draws at phase 4 */}
+      {/* Arch symbol */}
+      <div className="w-40 h-40 md:w-56 md:h-56 lg:w-64 lg:h-64">
         <AtelierArchLogo
-          startDrawing={phase >= 4}
+          startDrawing={phase >= 3}
           delay={0}
           className="w-full h-full"
           onArchComplete={() => {}}
         />
+      </div>
 
-        {/* "예배를" — left below arch */}
-        <motion.div
-          className="absolute -left-16 md:-left-24 bottom-0 translate-y-full"
-          initial={{ opacity: 0, y: -4 }}
-          animate={phase >= 2 ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <span className="font-korean text-xl md:text-3xl text-foreground tracking-wide">
+      {/* Text block below arch */}
+      <div className="flex flex-col items-center mt-2">
+        {/* 예배를 삶의 흐름으로 — single line */}
+        <div className="flex items-baseline gap-1">
+          <motion.span
+            className="font-korean text-xl md:text-3xl text-foreground tracking-wide"
+            initial={{ opacity: 0, y: -4 }}
+            animate={phase >= 1 ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
             예배를
-          </span>
-        </motion.div>
-
-        {/* "삶의 흐름으로" — right below arch */}
-        <motion.div
-          className="absolute -right-20 md:-right-32 bottom-0 translate-y-full"
-          initial={{ opacity: 0, y: -4 }}
-          animate={phase >= 3 ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <span className="font-korean text-xl md:text-3xl text-foreground tracking-wide">
+          </motion.span>
+          <motion.span
+            className="font-korean text-xl md:text-3xl text-foreground tracking-wide"
+            initial={{ opacity: 0, y: -4 }}
+            animate={phase >= 2 ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
             삶의 흐름으로
-          </span>
-        </motion.div>
+          </motion.span>
+        </div>
+
+        {/* 연결합니다 */}
+        <div className="h-10 mt-1 text-center">
+          {phase >= 3 && (
+            <span className="font-korean text-xl md:text-3xl text-muted-foreground tracking-wide">
+              {connectText.slice(0, connectChars)}
+              <span
+                className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
+                style={{
+                  backgroundColor: "#1F1F1F",
+                  animation: "blink 1s step-end infinite",
+                }}
+              />
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* 3. "연결합니다" — typewriter below arch */}
-      <div className="mt-10 text-center h-10">
-        {phase >= 4 && (
-          <span className="font-korean text-xl md:text-3xl text-muted-foreground tracking-wide">
-            {connectText.slice(0, connectChars)}
-            <span
-              className="inline-block w-[2px] h-[1em] ml-0.5 align-middle"
-              style={{
-                backgroundColor: "#1F1F1F",
-                animation: "blink 1s step-end infinite",
-              }}
-            />
-          </span>
-        )}
-      </div>
-
-      {/* 4. CTA */}
+      {/* CTA */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={showCTA ? { opacity: 1, y: 0 } : {}}
