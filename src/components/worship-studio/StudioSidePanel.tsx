@@ -3,28 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStoryBarStudios, incrementVisitCount, type StoryStudio } from "@/hooks/useStoryBarStudios";
+import { usePlazaUsers } from "@/hooks/usePlazaUsers";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDER_TENANTS = [
-  { id: 'ph1', name: '김찬양', initials: '김', icon: '🎵', variant: 'friend' as const },
-  { id: 'ph2', name: '박워십', initials: '박', icon: '🎹', variant: 'friend' as const },
-  { id: 'ph3', name: '이예배', initials: '이', icon: '🙏', variant: 'friend' as const },
-  { id: 'ph4', name: '최성령', initials: '최', icon: '🕊️', variant: 'friend' as const },
-  { id: 'ph5', name: '정은혜', initials: '정', icon: '✝️', variant: 'friend' as const },
-  { id: 'ph6', name: '한찬미', initials: '한', icon: '🎶', variant: 'friend' as const },
-  { id: 'ph7', name: '오다윗', initials: '오', icon: '🎸', variant: 'friend' as const },
-  { id: 'ph8', name: '새벽이슬 워십',   initials: '새', icon: '🌅', variant: 'ambassador' as const },
-  { id: 'ph9', name: '시온찬양단',       initials: '시', icon: '🏛️', variant: 'ambassador' as const },
-  { id: 'ph10', name: '다윗의장막 밴드', initials: '다', icon: '🎺', variant: 'ambassador' as const },
-];
-
-const PLACEHOLDER_FRIENDS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'friend');
-const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'ambassador');
 
 /* ─── Glass facade style ─── */
 const glassWallStyle: React.CSSProperties = {
@@ -433,28 +418,23 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
 /* ─── Animated Road (full width) ─── */
 function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
   return (
-    <>
-    {/* Sidewalk with patio set */}
-      <div className={cn("shrink-0 select-none pointer-events-none relative z-10", isMobile ? "h-5" : "h-6")}
+    <div className="relative shrink-0">
+      {/* Sidewalk with patio set */}
+      <div className={cn("select-none pointer-events-none relative", isMobile ? "h-5" : "h-6")}
         style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
-        {/* Patio table & chairs in front of café */}
         {(!collapsed || isMobile) && (
           <svg className="absolute left-2 top-0 h-full" viewBox="0 0 30 20" preserveAspectRatio="xMidYMid meet">
-            {/* Table */}
             <rect x={10} y={6} width={10} height={1.5} rx={0.5} fill="#7a6a5a" />
             <rect x={14} y={7.5} width={2} height={8} fill="#6b5b4f" />
             <rect x={11} y={15} width={8} height={1} rx={0.5} fill="#6b5b4f" />
-            {/* Chair left */}
             <rect x={4} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
             <rect x={5} y={9} width={1} height={6} fill="#7a6a5a" />
             <rect x={7.5} y={9} width={1} height={6} fill="#7a6a5a" />
             <rect x={4} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
-            {/* Chair right */}
             <rect x={21} y={8} width={5} height={1} rx={0.3} fill="#8a7a6a" />
             <rect x={22} y={9} width={1} height={6} fill="#7a6a5a" />
             <rect x={24.5} y={9} width={1} height={6} fill="#7a6a5a" />
             <rect x={25} y={5} width={1} height={4} rx={0.3} fill="#8a7a6a" />
-            {/* Cup on table */}
             <rect x={13} y={4.5} width={2} height={2} rx={0.5} fill="#f0e6d6" />
           </svg>
         )}
@@ -462,32 +442,29 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
       {/* Road */}
       <div
-        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none z-20", isMobile ? "h-8" : "h-10")}
+        className={cn("relative select-none pointer-events-none", isMobile ? "h-8" : "h-10")}
         style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
       >
-        {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
 
-        {/* Upper lane (above center line) — right to left, raised 15px */}
-        <span className="absolute z-30 text-[28px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '0s' }}>🚗</span>
+        {/* Upper lane — cars positioned inside the road area */}
+        <span className="absolute z-10 text-[28px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '0s' }}>🚗</span>
 
-        {/* Lower lane (below center line) — left to right, emoji flipped to face right */}
-        <span className="absolute z-30 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
+        {/* Lower lane */}
+        <span className="absolute z-10 bottom-[10%] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>
           <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚕</span>
         </span>
 
         {(!collapsed || isMobile) && (
           <>
-            {/* Upper lane — 2nd car, raised 15px */}
-            <span className="absolute z-30 text-[24px] leading-none animate-car-move-left" style={{ top: '-13px', animationDelay: '8s' }}>🚙</span>
-            {/* Lower lane — minivan */}
-            <span className="absolute z-30 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
+            <span className="absolute z-10 text-[24px] leading-none animate-car-move-left" style={{ top: '2px', animationDelay: '8s' }}>🚙</span>
+            <span className="absolute z-10 bottom-[10%] text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>
               <span style={{ display: 'inline-block', transform: 'scaleX(-1)' }}>🚐</span>
             </span>
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -502,6 +479,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   const { language } = useTranslation();
   const { user } = useAuth();
   const studios = useStoryBarStudios(myStudioId);
+  const { data: plazaUsers } = usePlazaUsers();
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const isSheet = mode === "sheet";
@@ -572,11 +550,11 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       )}
 
-      {/* 2F — Friends / Neighbors */}
-      {friendStudios.length > 0 ? (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "2F · 이웃" : "2F · Neighbors"} />}
-          {friendStudios.map(s => (
+      {/* 3F — Friends / Neighbors */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "3F · 이웃" : "3F · Neighbors"} />}
+        {friendStudios.length > 0 ? (
+          friendStudios.map(s => (
             <StudioUnit
               compact={true}
               key={s.id}
@@ -590,38 +568,21 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               onStoryClick={() => handleStoryClick(s)}
               onVisit={() => handleVisit(s.id)}
             />
-          ))}
-        </div>
-      ) : (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "2F · 이웃" : "2F · Neighbors"} />}
-          {PLACEHOLDER_FRIENDS.map(t => (
-            <div key={t.id} className="opacity-60 pointer-events-none select-none">
-              <StudioUnit
-                compact={true}
-                studioName={`${t.icon} ${t.name}`}
-                ownerName={t.name}
-                roomId={t.id}
-                hasUnseenStory={false}
-                variant="friend"
-                collapsed={collapsed}
-                placeholderInitials={t.initials}
-                onStoryClick={() => {}}
-                onVisit={() => {}}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-f-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="friend" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
 
-      {/* Minimal spacer between floors */}
       <div className="min-h-[6px]" />
 
-      {/* 1F — Ambassadors */}
-      {ambassadorStudios.length > 0 ? (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "1F · 앰배서더" : "1F · Ambassadors"} />}
-          {ambassadorStudios.map(s => (
+      {/* 2F — Ambassadors */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "2F · 앰배서더" : "2F · Ambassadors"} />}
+        {ambassadorStudios.length > 0 ? (
+          ambassadorStudios.map(s => (
             <StudioUnit
               compact={true}
               key={s.id}
@@ -635,29 +596,41 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               onStoryClick={() => handleStoryClick(s)}
               onVisit={() => handleVisit(s.id)}
             />
-          ))}
-        </div>
-      ) : (
-        <div>
-          {!collapsed && <FloorLabel label={language === "ko" ? "1F · 앰배서더" : "1F · Ambassadors"} />}
-          {PLACEHOLDER_AMBASSADORS.map(t => (
-            <div key={t.id} className="opacity-60 pointer-events-none select-none">
-              <StudioUnit
-                compact={true}
-                studioName={`${t.icon} ${t.name}`}
-                ownerName={t.name}
-                roomId={t.id}
-                hasUnseenStory={false}
-                variant="ambassador"
-                collapsed={collapsed}
-                placeholderInitials={t.initials}
-                onStoryClick={() => {}}
-                onVisit={() => {}}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-a-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="ambassador" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
+
+      <div className="min-h-[6px]" />
+
+      {/* 1F — Plaza */}
+      <div>
+        {!collapsed && <FloorLabel label={language === "ko" ? "1F · 광장" : "1F · Plaza"} />}
+        {(plazaUsers && plazaUsers.length > 0) ? (
+          plazaUsers.map(p => (
+            <StudioUnit
+              compact={true}
+              key={p.roomId}
+              avatarUrl={p.avatarUrl || undefined}
+              studioName={p.studioName || p.ownerName?.split(" ")[0] || "Studio"}
+              ownerName={p.ownerName || ""}
+              roomId={p.roomId}
+              hasUnseenStory={false}
+              variant="plaza"
+              collapsed={collapsed}
+              onStoryClick={() => handleVisit(p.roomId)}
+              onVisit={() => handleVisit(p.roomId)}
+            />
+          ))
+        ) : (
+          Array.from({ length: 3 }).map((_, i) => (
+            <StudioUnit key={`empty-p-${i}`} empty compact studioName="" ownerName="" roomId="" hasUnseenStory={false} variant="plaza" collapsed={collapsed} onStoryClick={() => {}} onVisit={() => {}} />
+          ))
+        )}
+      </div>
     </>
   );
 
@@ -727,7 +700,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 {(!collapsed || isMobile) && (
                   <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 )}
-                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[50vh]")}>
+                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[40vh]")}>
                   {buildingContent}
                 </ScrollArea>
               </div>

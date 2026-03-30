@@ -8,10 +8,10 @@ export interface StudioUnitProps {
   ownerName: string;
   roomId: string;
   hasUnseenStory: boolean;
-  variant: "penthouse" | "friend" | "ambassador";
+  variant: "penthouse" | "friend" | "ambassador" | "plaza";
   collapsed?: boolean;
   compact?: boolean;
-  placeholderInitials?: string;
+  empty?: boolean;
   forceWindowsOn?: boolean;
   onStoryClick: () => void;
   onVisit: () => void;
@@ -31,18 +31,32 @@ export function StudioUnit({
   variant,
   collapsed = false,
   compact = false,
-  placeholderInitials,
+  empty = false,
   onStoryClick,
   onVisit,
 }: StudioUnitProps) {
-  /* Compact sizes for 2F/1F; penthouse keeps original size */
   const isPenthouse = variant === "penthouse";
   const h = compact && !isPenthouse ? "h-7" : "h-10";
   const avatarW = compact && !isPenthouse ? "w-7" : "w-10";
   const avatarH = compact && !isPenthouse ? "h-7" : "h-10";
-  const visitSize = compact && !isPenthouse ? "w-7 h-7" : "w-10 h-10";
-  const iconSize = compact && !isPenthouse ? "h-3 w-3" : "h-4 w-4";
-  const fontSize = compact && !isPenthouse ? "text-[9px]" : "text-[11px]";
+
+  /* Empty state: just render hollow window frames */
+  if (empty) {
+    if (collapsed) {
+      return (
+        <div className="flex justify-center py-0.5">
+          <div className={cn("w-8 h-10", windowFrame, windowGlow, "opacity-30")} />
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center gap-0.5 px-1 py-[2px] opacity-30 pointer-events-none select-none">
+        <div className={cn(avatarW, avatarH, windowFrame, windowGlow)} />
+        <div className={cn("flex-1 min-w-0", h, windowFrame, windowGlow)} />
+        <div className={cn(compact ? "w-7 h-7" : "w-10 h-10", windowFrame, windowGlow)} />
+      </div>
+    );
+  }
 
   if (collapsed) {
     return (
@@ -53,7 +67,7 @@ export function StudioUnit({
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className={cn("text-[10px] font-medium", variant === "ambassador" ? "text-indigo-400" : "text-[#5a4a3a]")}>
-                {placeholderInitials || ownerName?.charAt(0) || "?"}
+                {ownerName?.charAt(0) || "?"}
               </span>
             )}
           </div>
@@ -61,6 +75,8 @@ export function StudioUnit({
       </div>
     );
   }
+
+  const fontSize = compact && !isPenthouse ? "text-[9px]" : "text-[11px]";
 
   return (
     <div className={cn("flex items-center gap-0.5 px-1 py-[2px]")}>
@@ -70,8 +86,8 @@ export function StudioUnit({
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className={cn("text-[10px] font-medium", variant === "ambassador" ? "text-indigo-400" : "text-[#5a4a3a]")}>
-              {placeholderInitials || (variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?"))}
+            <span className={cn("text-[10px] font-medium", variant === "ambassador" ? "text-indigo-400" : variant === "plaza" ? "text-emerald-500" : "text-[#5a4a3a]")}>
+              {variant === "ambassador" ? "✦" : (ownerName?.charAt(0) || "?")}
             </span>
           )}
         </div>
