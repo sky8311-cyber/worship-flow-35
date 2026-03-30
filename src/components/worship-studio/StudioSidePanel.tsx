@@ -203,7 +203,7 @@ const BillboardText = React.memo(function BillboardText({ screenW, screenH, isNi
             fontWeight: 700,
             color: textColor,
             textAlign: 'center',
-            lineHeight: 1.3,
+            lineHeight: 1.15,
             wordBreak: 'keep-all',
             overflowWrap: 'break-word',
             display: 'block',
