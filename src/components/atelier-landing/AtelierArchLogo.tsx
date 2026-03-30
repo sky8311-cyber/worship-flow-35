@@ -3,9 +3,11 @@ import { motion } from "framer-motion";
 interface AtelierArchLogoProps {
   onArchComplete?: () => void;
   className?: string;
+  delay?: number;
+  startDrawing?: boolean;
 }
 
-export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchLogoProps) => {
+export const AtelierArchLogo = ({ onArchComplete, className = "", delay = 0, startDrawing = true }: AtelierArchLogoProps) => {
   return (
     <div className={`relative ${className}`}>
       <svg
@@ -23,8 +25,8 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
           strokeLinejoin="round"
           fill="none"
           initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, delay: 0.3, ease: "easeInOut" }}
+          animate={startDrawing ? { pathLength: 1 } : { pathLength: 0 }}
+          transition={{ duration: 1.2, delay: delay, ease: "easeInOut" }}
         />
 
         {/* Inner arch */}
@@ -36,8 +38,8 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
           strokeLinejoin="round"
           fill="none"
           initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, delay: 0.8, ease: "easeInOut" }}
+          animate={startDrawing ? { pathLength: 1 } : { pathLength: 0 }}
+          transition={{ duration: 1.2, delay: delay + 0.5, ease: "easeInOut" }}
           onAnimationComplete={onArchComplete}
         />
 
@@ -47,11 +49,11 @@ export const AtelierArchLogo = ({ onArchComplete, className = "" }: AtelierArchL
             d="M0 28 C14 28 28 14 28 0 C28 14 42 28 56 28 C42 28 28 42 28 56 C28 42 14 28 0 28Z"
             fill="#B8902A"
             initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
+            animate={startDrawing ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
             transition={{
-              delay: 2.8,
+              delay: delay + 2.0,
               duration: 0.35,
-              ease: [0.175, 0.885, 0.32, 1.275], // overshoot ease
+              ease: [0.175, 0.885, 0.32, 1.275],
             }}
             style={{ transformOrigin: "28px 28px" }}
           />
