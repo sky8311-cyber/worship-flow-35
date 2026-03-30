@@ -90,11 +90,11 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
 
 /* ─── Billboard Animated Text ─── */
 const BILLBOARD_SCREENS = [
-  { text: "삶을 예배로 만드는 공간", bg: "stream" as const },
-  { text: "WORSHIP ATELIER", bg: "stream" as const },
-  { text: "by K-Worship", bg: "stream" as const },
-  { text: "나만의 공작소에", bg: "white" as const },
-  { text: "입주하세요!", bg: "white" as const },
+  { text: "삶을 예배로 만드는 공간", bg: "stream" as const, anim: "random" as const },
+  { text: "WORSHIP ATELIER", bg: "stream" as const, anim: "random" as const },
+  { text: "by K-Worship", bg: "stream" as const, anim: "random" as const },
+  { text: "나만의 공작소에", bg: "white" as const, anim: "typewriter" as const },
+  { text: "입주하세요!", bg: "white" as const, anim: "random" as const },
 ];
 
 const BILLBOARD_ANIMATIONS = [
