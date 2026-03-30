@@ -15,6 +15,7 @@ import { NeighborActionHandler } from "@/components/worship-studio/NeighborActio
 import { ShareReferralDialog } from "@/components/ShareReferralDialog";
 import { FeatureComingSoon } from "@/components/common/FeatureComingSoon";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 function extractVideoId(url: string | null): string | null {
   if (!url) return null;
