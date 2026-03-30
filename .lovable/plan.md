@@ -1,19 +1,33 @@
 
 
-# 로고 텍스트 위치 조정 — 심볼 하단과 한글 태그라인 하단 정렬
+# 전광판 텍스트 위치 이탈 수정
 
-## 현재 상태
-- 심볼(아치) 하단: `translate(150,120)` + path y=520 → **절대 y=640**
-- 한글 태그라인 하단: 텍스트 그룹 `translate(800,520)` + y=160 → baseline ~680 → **하단 약 700**
-- 한글 태그라인이 심볼보다 약 60px 아래에 위치
+## 원인 분석
+- "나만의 공작소에"는 typewriter 애니메이션(CSS transform 없음)이라 정상 위치
+- 나머지 텍스트는 `translateY(40%)`, `translateX(-40%)`, `scale(0.4)` 등 CSS transform 애니메이션 사용
+- `foreignObject` 내부 div에 `overflow: hidden`이 있지만, 모바일 WebKit에서 foreignObject의 overflow 클리핑이 불안정
+- 애니메이션 시작 프레임에서 텍스트가 전광판 영역 밖으로 렌더링됨
 
-## 수정 내용
+## 수정 방법
 
-### `src/assets/worship-atelier-logo.svg`
-- 텍스트 그룹 `<g transform="translate(800,520)">`을 `translate(800,460)`으로 변경 (60px 위로)
-- 이렇게 하면:
-  - 영문 "WORSHIP ATELIER" baseline: 460
-  - 한글 "삶을 예배로 만드는 공간" baseline: 460+160=620, 디센더 포함 하단 ≈ 640
-  - 심볼 하단 = 640 → **정렬 완료**
-- 영문/한글 간 간격(y=160)은 유지 — 두 줄 배치 그대로
+### `src/components/worship-studio/StudioSidePanel.tsx`
+- 전광판 텍스트를 감싸는 `<g>` 태그에 SVG `clipPath`를 추가하여 전광판 영역 밖 콘텐츠를 강제 클리핑
+- `<defs>`에 전광판 크기의 `<clipPath>` 정의 → 텍스트 그룹에 `clipPath` 적용
+
+```tsx
+// Billboard 렌더링 부분에 clipPath 추가
+<defs>
+  <clipPath id="bbClip">
+    <rect x={0} y={0} width={bbW - bezelPad*2} height={bbH - bezelPad*2} />
+  </clipPath>
+</defs>
+<g transform={`translate(${bbX + bezelPad}, ${bbY + bezelPad})`} clipPath="url(#bbClip)">
+  <BillboardText ... />
+</g>
+```
+
+이렇게 하면 CSS 애니메이션이 어떤 transform을 사용하든 SVG 레벨에서 전광판 경계 밖으로 나가지 않습니다.
+
+### 수정 파일
+- `src/components/worship-studio/StudioSidePanel.tsx` (1곳)
 
