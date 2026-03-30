@@ -44,70 +44,93 @@ function FloorLabel({ label }: { label: string }) {
   );
 }
 
-/* ─── SVG Rooftop Scene — flat-view trees, parasol+chairs, railing ─── */
+/* ─── SVG Rooftop Scene — flat-view trees, parasols+chairs, railing ─── */
 function RooftopScene({ width, isMobile }: { width: number; isMobile: boolean }) {
-  const h = isMobile ? 28 : 32;
+  const h = isMobile ? 38 : 44;
+  const spacing = width / 6;
+
+  // 5 parasol sets evenly distributed
+  const parasolSets = [
+    { x: spacing * 0.8, color: '#d06030' },
+    { x: spacing * 1.8, color: '#c04828' },
+    { x: spacing * 3, color: '#d07040' },
+    { x: spacing * 4.2, color: '#b84020' },
+    { x: spacing * 5.2, color: '#c85838' },
+  ];
+
+  // 6 trees — varied sizes
+  const trees = [
+    { x: 6, trunkH: 10, r1: 5, r2: 3.5 },
+    { x: 22, trunkH: 7, r1: 3.5, r2: 2.5 },
+    { x: width * 0.38, trunkH: 8, r1: 4, r2: 3 },
+    { x: width * 0.62, trunkH: 6, r1: 3, r2: 2 },
+    { x: width - 28, trunkH: 9, r1: 4.5, r2: 3 },
+    { x: width - 10, trunkH: 7, r1: 3.5, r2: 2.5 },
+  ];
+
   return (
     <svg width={width} height={h} viewBox={`0 0 ${width} ${h}`} className="w-full" preserveAspectRatio="xMidYMid meet">
       {/* Railing — evenly spaced balusters */}
       <rect x={0} y={h - 4} width={width} height={1.5} rx={0.5} fill="#7a8a9a" />
       <rect x={0} y={h - 1} width={width} height={1} rx={0.3} fill="#6a7a8a" />
       {Array.from({ length: Math.floor(width / 8) }).map((_, i) => (
-        <rect key={i} x={4 + i * 8} y={h - 4} width={1.2} height={4} rx={0.3} fill="#8a9aaa" />
+        <rect key={`bal-${i}`} x={4 + i * 8} y={h - 4} width={1.2} height={4} rx={0.3} fill="#8a9aaa" />
       ))}
 
-      {/* Tree 1 — left */}
-      <rect x={12} y={h - 14} width={2.5} height={10} rx={0.8} fill="#6b5b4f" />
-      <circle cx={13.25} cy={h - 16} r={5} fill="#4a8a4a" opacity={0.85} />
-      <circle cx={11} cy={h - 14} r={3.5} fill="#5a9a5a" opacity={0.7} />
+      {/* Trees */}
+      {trees.map((t, i) => (
+        <g key={`tree-${i}`}>
+          <rect x={t.x - 1} y={h - 4 - t.trunkH} width={2} height={t.trunkH} rx={0.8} fill="#6b5b4f" />
+          <circle cx={t.x} cy={h - 4 - t.trunkH - t.r1 * 0.6} r={t.r1} fill="#4a8a4a" opacity={0.85} />
+          <circle cx={t.x - 2} cy={h - 4 - t.trunkH + 1} r={t.r2} fill="#5a9a5a" opacity={0.7} />
+        </g>
+      ))}
 
-      {/* Tree 2 — right */}
-      <rect x={width - 22} y={h - 12} width={2} height={8} rx={0.8} fill="#6b5b4f" />
-      <circle cx={width - 21} cy={h - 14} r={4} fill="#4a8a4a" opacity={0.85} />
-      <circle cx={width - 23} cy={h - 12.5} r={3} fill="#5a9a5a" opacity={0.7} />
-
-      {/* Parasol + chairs — center */}
-      {/* Parasol pole */}
-      <rect x={width / 2 - 0.5} y={h - 16} width={1} height={12} fill="#8a7a6a" />
-      {/* Parasol canopy — orange like reference */}
-      <path d={`M ${width / 2 - 10},${h - 15} Q ${width / 2},${h - 22} ${width / 2 + 10},${h - 15} Z`} fill="#d06030" opacity={0.85} />
-      {/* Chair left */}
-      <rect x={width / 2 - 8} y={h - 6} width={4} height={3} rx={0.5} fill="#8a7a6a" />
-      <rect x={width / 2 - 7.5} y={h - 9} width={3} height={3} rx={0.5} fill="#9a8a7a" />
-      {/* Chair right */}
-      <rect x={width / 2 + 4} y={h - 6} width={4} height={3} rx={0.5} fill="#8a7a6a" />
-      <rect x={width / 2 + 4.5} y={h - 9} width={3} height={3} rx={0.5} fill="#9a8a7a" />
-      {/* Small table */}
-      <rect x={width / 2 - 2} y={h - 8} width={4} height={4} rx={0.5} fill="#7a6a5a" />
-
-      {/* Small planter — far left */}
-      <rect x={3} y={h - 6} width={5} height={3} rx={1} fill="#8a7a6a" />
-      <circle cx={5.5} cy={h - 7.5} r={2} fill="#5a9a5a" opacity={0.7} />
+      {/* Parasol + table + chairs sets */}
+      {parasolSets.map((p, i) => {
+        const baseY = h - 5;
+        return (
+          <g key={`parasol-${i}`}>
+            {/* Pole */}
+            <rect x={p.x - 0.5} y={baseY - 12} width={1} height={10} fill="#8a7a6a" />
+            {/* Canopy */}
+            <path d={`M ${p.x - 8},${baseY - 11} Q ${p.x},${baseY - 17} ${p.x + 8},${baseY - 11} Z`} fill={p.color} opacity={0.85} />
+            {/* Table */}
+            <rect x={p.x - 2} y={baseY - 4} width={4} height={3} rx={0.5} fill="#7a6a5a" />
+            {/* Chair left */}
+            <rect x={p.x - 6} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
+            <rect x={p.x - 5.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
+            {/* Chair right */}
+            <rect x={p.x + 3} y={baseY - 3} width={3} height={2.5} rx={0.5} fill="#8a7a6a" />
+            <rect x={p.x + 3.5} y={baseY - 5.5} width={2} height={2.5} rx={0.5} fill="#9a8a7a" />
+          </g>
+        );
+      })}
     </svg>
   );
 }
 
-/* ─── SVG String Lights — attached to building top line ─── */
+/* ─── SVG String Lights — poles start at building top, extend upward into sky ─── */
 function RooftopStringLights({ width, buildingTop }: { width: number; buildingTop: number }) {
-  // Lights hang from the building's top edge (buildingTop y), pole is short
+  const poleHeight = 30;
   const poleX = width - 14;
+  // Pole bottom is at building top, extends upward
+  const poleBottomY = buildingTop + poleHeight;
   const poleTopY = buildingTop;
-  const poleHeight = 20; // half of original
-  const poleBottomY = poleTopY + poleHeight;
-  
+
   const strands = [
-    { endX: 10, endY: poleTopY + poleHeight * 0.7, cp1x: poleX - 20, cp1y: poleTopY + 4, cp2x: 30, cp2y: poleTopY + poleHeight * 0.4 },
-    { endX: 25, endY: poleTopY + poleHeight * 0.85, cp1x: poleX - 15, cp1y: poleTopY + 8, cp2x: 40, cp2y: poleTopY + poleHeight * 0.6 },
-    { endX: 45, endY: poleTopY + poleHeight * 0.95, cp1x: poleX - 10, cp1y: poleTopY + 12, cp2x: 55, cp2y: poleTopY + poleHeight * 0.75 },
+    { endX: 10, endY: poleTopY + poleHeight * 0.7, cp1x: poleX - 20, cp1y: poleTopY + 6, cp2x: 30, cp2y: poleTopY + poleHeight * 0.4 },
+    { endX: 25, endY: poleTopY + poleHeight * 0.85, cp1x: poleX - 15, cp1y: poleTopY + 10, cp2x: 40, cp2y: poleTopY + poleHeight * 0.6 },
+    { endX: 45, endY: poleTopY + poleHeight * 0.95, cp1x: poleX - 10, cp1y: poleTopY + 15, cp2x: 55, cp2y: poleTopY + poleHeight * 0.75 },
   ];
 
   const svgH = poleBottomY + 4;
 
   return (
-    <svg width={width} height={svgH} className="absolute top-0 left-0 pointer-events-none" viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
-      {/* Pole — short */}
+    <svg width={width} height={svgH} className="absolute bottom-0 left-0 pointer-events-none" viewBox={`0 0 ${width} ${svgH}`} preserveAspectRatio="none">
+      {/* Pole — anchored at building top, extends up */}
       <rect x={poleX - 1} y={poleTopY} width={2} height={poleHeight} rx={0.8} fill="#6b5b4f" />
-      {/* Small flag */}
+      {/* Small flag at top of pole */}
       <polygon points={`${poleX + 1},${poleTopY} ${poleX + 6},${poleTopY + 2.5} ${poleX + 1},${poleTopY + 5}`} fill="#c94040" opacity={0.7} />
 
       {strands.map((s, si) => {
@@ -220,7 +243,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
   }
 
   return (
-    <div className="flex h-11 border-t border-[#7a8a9a]">
+    <div className="flex h-16 border-t border-[#7a8a9a]">
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning */}
@@ -286,17 +309,17 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
 
       {/* Road */}
       <div
-        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-4" : "h-5")}
+        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-8" : "h-10")}
         style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
       >
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
         {/* Upper lane — right to left */}
-        <span className="absolute top-[1px] text-[9px] animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
-        {/* Lower lane — left to right (car faces right) */}
-        <span className="absolute bottom-[1px] text-[9px] animate-car-move-right" style={{ animationDelay: '3s' }}>🚕</span>
+        <span className="absolute top-[2px] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
+        {/* Lower lane — left to right (car flipped to face right) */}
+        <span className="absolute bottom-[2px] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s', transform: 'scaleX(-1)' }}>🚕</span>
         {(!collapsed || isMobile) && (
-          <span className="absolute top-[1px] text-[8px] animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
+          <span className="absolute top-[2px] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
         )}
       </div>
     </>
@@ -360,10 +383,13 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
       {myStudio && (
         <div className="px-0.5 relative">
           {!collapsed && (
-            <div className="flex items-center justify-around px-2 py-0.5 select-none">
-              <span className="text-[10px]">⛱️</span>
+            <div className="flex flex-col items-center gap-0.5 px-2 py-0.5 select-none">
+              <div className="bg-white px-3 py-0.5 rounded-[2px] shadow-sm border border-[#ddd]">
+                <span className="text-[7px] font-bold text-[#2a2a2a] tracking-[0.15em]">
+                  WORSHIP ATELIER <span className="text-[5px] font-normal text-[#666]">by kworship.app</span>
+                </span>
+              </div>
               <FloorLabel label="ROOFTOP" />
-              <span className="text-[10px]">⛱️</span>
             </div>
           )}
           <StudioUnit
@@ -512,33 +538,13 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Rooftop area with neon sign + string lights */}
-            <div className={cn("relative z-10 shrink-0", isMobile ? "h-16" : "h-20")}>
-              {/* Neon signage */}
+            {/* Rooftop area with string lights — anchored to building top */}
+            <div className={cn("relative z-10 shrink-0", isMobile ? "h-10" : "h-12")}>
               <div className="flex flex-col items-center justify-end h-full pb-1">
-                {(!collapsed || isMobile) && (
-                  <div className="flex flex-col items-center relative w-full">
-                    <div
-                      className="bg-[#3a3a4a] px-3 py-1 rounded-sm shadow-lg animate-neon-glow relative z-10"
-                      style={{
-                        boxShadow: '0 2px 12px rgba(180,210,240,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
-                      }}
-                    >
-                      <span
-                        className="text-[9px] font-bold text-[#a0d0f0] tracking-[0.2em] uppercase"
-                        style={{
-                          textShadow: '0 0 8px rgba(160,200,240,0.6), 0 0 16px rgba(160,200,240,0.3)',
-                        }}
-                      >
-                        WORSHIP ATELIER
-                      </span>
-                    </div>
-                  </div>
-                )}
                 {collapsed && !isMobile && <div className="h-2" />}
               </div>
 
-              {/* String lights — attached to building top */}
+              {/* String lights — poles from building top extending upward */}
               {(!collapsed || isMobile) && (
                 <RooftopStringLights width={collapsed ? 56 : 256} buildingTop={isMobile ? 2 : 4} />
               )}
