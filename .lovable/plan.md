@@ -1,35 +1,55 @@
 
-목표: 빌딩 본체 높이는 사용자가 요청한대로 `45vh`로 복구하고, 높이를 줄이지 않고도 1층 매장(커피머신/하단 요소)이 잘리지 않게 레이아웃 구조를 수정합니다.
 
-1) 빌딩 본체 높이 복구
-- 파일: `src/components/worship-studio/StudioSidePanel.tsx`
-- 변경:
-  - `isMobile ? "mx-6 h-[38vh] flex-none" : "mx-3 flex-1"`
-  - → `isMobile ? "mx-6 h-[45vh] flex-none" : "mx-3 flex-1"`
+# Fix: 1층 매장/도로 잘림 근본 해결
 
-2) 잘림의 근본 원인 해결 (Sheet 내부 높이 계산 오류)
-- 파일: `src/pages/WorshipStudio.tsx`
-- 현재는 드래그 핸들 영역 + `h-full` 콘텐츠가 합쳐져 총 높이가 100%를 넘어, 아래쪽이 `overflow-hidden`으로 잘립니다.
-- 변경 방식:
-  - `SheetContent`를 `flex flex-col` 구조로 전환
-  - 드래그 핸들 컨테이너를 `shrink-0`
-  - `StudioSidePanel` 래퍼를 `h-full` 대신 `flex-1 min-h-0 overflow-hidden`로 변경
-- 의도:
-  - 핸들 높이를 제외한 “남은 높이”만 StudioSidePanel이 정확히 사용하도록 만들어, 하단 매장/도로가 잘리지 않게 함.
+## 원인 분석
 
-3) 모바일 패널 내부 안정화(보조)
-- 파일: `src/components/worship-studio/StudioSidePanel.tsx`
-- `isMobile` 루트 컨테이너가 이미 `flex flex-col h-full` 구조이므로 유지
-- 필요 시(실기기에서 여전히 경계선 컷 발생할 때만) 상단 스페이서 `h-5`를 `h-4`로 1단계 미세 조정해 하단 가시성 확보
-- 우선순위는 2번 구조 수정이 핵심이며, 이 보조 조정은 fallback
+현재 모바일 레이아웃 구조 (Sheet 85vh ≈ 560px):
 
-4) 검증 시나리오
-- 모바일(현재 430x659 포함)에서:
-  - 바텀 시트를 연 직후 1층 매장 하단(커피머신/진열/도로)이 모두 보이는지
-  - 빌딩 본체는 `45vh`로 유지되는지
-  - 드래그로 시트 닫기(80px) 제스처가 그대로 동작하는지
-  - 기존 빌딩/뮤직필/하단 UI 위치 관계가 깨지지 않는지
+```text
+Sheet (h-[85vh] ≈ 560px)
+├─ Drag handle (~32px, shrink-0)
+└─ Content wrapper (flex-1, overflow-hidden) ≈ 528px
+   └─ StudioSidePanel (h-full)
+      ├─ Spacer (h-5 = 20px)
+      └─ Building wrapper (flex-1)
+         ├─ Rooftop scene (~78px, shrink-0)
+         ├─ Building body (h-[45vh]=297px, flex-none) ← 절대 줄어들지 않음
+         ├─ Ground floor shops (h-20=80px)
+         └─ Road (~44px, shrink-0)
+         = 합계 ≈ 519px
+```
 
-변경 파일
-- `src/components/worship-studio/StudioSidePanel.tsx`
-- `src/pages/WorshipStudio.tsx`
+Building body가 `flex-none`이라 축소 불가. 합계가 컨테이너를 초과하면 `overflow-hidden`으로 하단이 잘림.
+
+## 해결 방법
+
+Building body를 **고정 높이(`h-[45vh] flex-none`)** 대신 **유연한 높이(`flex-1 min-h-0`)**로 변경. 
+Ground floor와 Road는 `shrink-0`로 고정하여 **절대 잘리지 않도록** 보장.
+
+빌딩 본체가 남은 공간을 채우되 내부는 이미 `ScrollArea`가 있으므로 스크롤 가능.
+
+## 변경 사항
+
+### 1. `src/components/worship-studio/StudioSidePanel.tsx`
+
+**Line 695** — Building body 클래스 변경:
+```
+Before: isMobile ? "mx-6 h-[45vh] flex-none" : "mx-3 flex-1"
+After:  isMobile ? "mx-6 flex-1 min-h-0" : "mx-3 flex-1"
+```
+
+**Line 712** — Ground floor shops 래퍼에 `shrink-0` 추가:
+```
+Before: "shrink-0 border-x border-[#7a8a9a] bg-[#e4ecf2]"
+(이미 shrink-0 있음 — 변경 없음)
+```
+
+이렇게 하면:
+- Rooftop(shrink-0) + GroundFloor(shrink-0, h-20) + Road(shrink-0) = 고정 요소 ~142px
+- Building body = 나머지 공간 전부 차지 (내부 ScrollArea로 스크롤)
+- 1층 매장과 도로는 **항상 완전히 표시**
+
+### 변경 파일
+- `src/components/worship-studio/StudioSidePanel.tsx` (1줄 수정)
+
