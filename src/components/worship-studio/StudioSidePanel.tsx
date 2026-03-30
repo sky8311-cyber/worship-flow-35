@@ -14,7 +14,7 @@ import { isNightTime } from "@/lib/nightModeHelper";
 
 /* ─── Glass facade style (day / night) ─── */
 const glassWallDay: React.CSSProperties = {
-  background: 'linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 50%, #222222 100%)',
+  background: 'linear-gradient(to bottom, #c0d4e4 0%, #a8bcd0 50%, #98b0c4 100%)',
 };
 const glassWallNight: React.CSSProperties = {
   background: 'linear-gradient(to bottom, #2a3a4a 0%, #1e2e3e 50%, #182838 100%)',
@@ -28,7 +28,7 @@ function FloorLabel({ label, isNight }: { label: string; isNight: boolean }) {
         "text-[7px] font-bold px-1.5 py-px rounded-[2px] tracking-wider uppercase shadow-[0_1px_2px_rgba(0,0,0,0.06)]",
         isNight
           ? "text-[#8a9aaa] border border-[#4a5a6a] bg-[#1e2e3e]"
-          : "text-[#c0c0c0] border border-[#555] bg-[#333]"
+          : "text-[#5a6a7a] border border-[#9ab0c0] bg-[#e4ecf2]"
       )}>
         {label}
       </span>
@@ -93,6 +93,11 @@ function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: b
   const floorY = h - 4;
   const spacing = width / 6;
 
+  const parasolSets = [
+    { x: spacing * 0.8, color: '#d06030' },
+    { x: spacing * 1.8, color: '#c04828' },
+    { x: spacing * 3, color: '#d07040' },
+  ];
 
   const trees = [
     { x: 6, trunkH: 15, r1: 7.5, r2: 5.25 },
@@ -144,8 +149,23 @@ function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: b
         ))}
       </g>
 
-
-
+      {/* Parasol + table + chairs */}
+      <g opacity={silhouetteOpacity}>
+        {parasolSets.map((p, i) => {
+          const baseY = floorY - 1.5;
+          return (
+            <g key={`parasol-${i}`}>
+              <rect x={p.x - 0.75} y={baseY - 18} width={1.5} height={15} fill={isNight ? "#4a3a2a" : "#8a7a6a"} />
+              <path d={`M ${p.x - 12},${baseY - 16.5} Q ${p.x},${baseY - 25.5} ${p.x + 12},${baseY - 16.5} Z`} fill={isNight ? "#5a2a18" : p.color} opacity={isNight ? 0.5 : 0.85} />
+              <rect x={p.x - 3} y={baseY - 6} width={6} height={4.5} rx={0.75} fill={isNight ? "#3a2a1a" : "#7a6a5a"} />
+              <rect x={p.x - 9} y={baseY - 4.5} width={4.5} height={3.75} rx={0.75} fill={isNight ? "#4a3a2a" : "#8a7a6a"} />
+              <rect x={p.x - 8.25} y={baseY - 8.25} width={3} height={3.75} rx={0.75} fill={isNight ? "#5a4a3a" : "#9a8a7a"} />
+              <rect x={p.x + 4.5} y={baseY - 4.5} width={4.5} height={3.75} rx={0.75} fill={isNight ? "#4a3a2a" : "#8a7a6a"} />
+              <rect x={p.x + 5.25} y={baseY - 8.25} width={3} height={3.75} rx={0.75} fill={isNight ? "#5a4a3a" : "#9a8a7a"} />
+            </g>
+          );
+        })}
+      </g>
 
       {/* Worship Stage — stays bright at night */}
       <g>
