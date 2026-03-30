@@ -187,7 +187,7 @@ export default function WorshipStudio() {
                 >
                   <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
                 </div>
-                <div className="flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]">
+                <div className={cn("flex-1 min-h-0 overflow-hidden pb-[env(safe-area-inset-bottom,0px)]", !mobileAptOpen && "hidden")}>
                   <StudioSidePanel
                     myStudioId={myStudio?.id}
                     onStudioSelect={handleStudioSelect}

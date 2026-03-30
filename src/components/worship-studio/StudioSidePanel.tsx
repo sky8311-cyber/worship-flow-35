@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -83,10 +83,10 @@ const NightSkyStars = React.memo(function NightSkyStars({ width, height }: { wid
       ))}
     </svg>
   );
-}
+});
 
 /* ─── SVG Rooftop Scene ─── */
-function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: boolean; isNight: boolean }) {
+const RooftopScene = React.memo(function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: boolean; isNight: boolean }) {
   const h = isMobile ? 95 : 110;
   const floorY = h - 4;
   const spacing = width / 6;
@@ -227,7 +227,7 @@ function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: b
       ))}
     </svg>
   );
-}
+});
 
 /* ─── SVG String Lights ─── */
 function RooftopStringLights({ width, isNight }: { width: number; isNight: boolean }) {
@@ -433,7 +433,7 @@ function GallerySVG({ isNight }: { isNight: boolean }) {
 }
 
 /* ─── G/F Commercial Units ─── */
-function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean; isMobile: boolean; isNight: boolean }) {
+const GroundFloorShops = React.memo(function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean; isMobile: boolean; isNight: boolean }) {
   if (collapsed && !isMobile) {
     return (
       <div className="flex flex-col items-center gap-0.5 py-1 text-[6px] text-muted-foreground">
@@ -530,10 +530,10 @@ function GroundFloorShops({ collapsed, isMobile, isNight }: { collapsed: boolean
       </div>
     </div>
   );
-}
+});
 
 /* ─── Animated Road ─── */
-function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; isMobile: boolean; isNight: boolean }) {
+const AnimatedRoad = React.memo(function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; isMobile: boolean; isNight: boolean }) {
   const roadColor = isNight ? "#2a2a2a" : "#4a4a4a";
   const roadBorder = isNight ? "#1a1a1a" : "#3a3a3a";
   const sidewalkBg = isNight
@@ -600,7 +600,7 @@ function AnimatedRoad({ collapsed, isMobile, isNight }: { collapsed: boolean; is
       </div>
     </div>
   );
-}
+});
 
 interface StudioSidePanelProps {
   myStudioId?: string;
