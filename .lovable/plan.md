@@ -1,26 +1,26 @@
 
 
-# 모바일 빌딩 패널 높이 확장 (85dvh → 93dvh)
+# Fix: Entrance Door Height + Rooftop Object Placement
 
-## 현재 상태
-- Sheet 높이: `85dvh` → 659px 뷰포트 기준 약 560px
-- 상단 drag handle + 여백: ~40px
-- 고정 요소(Rooftop ~78px + 1F h-28 ~112px + Road ~44px) = ~234px
-- **빌딩 본체(스크롤 영역): ~286px** → 층수 제한
+## Problem 1: Entrance Door Too Tall
+The entrance door column uses `flex-1` making it stretch to the full container height (`h-28` = 112px on mobile). A real door should be proportional — roughly 60-70% of the shop height, with a visible transom/wall above.
 
-## 변경
+**Fix in `GroundFloorShops`** (lines 388-405):
+- Remove `flex-1` from door frame, give it a fixed height (`h-16` on mobile, `h-12` on desktop)
+- Add visible door knob circle (brass colored, ~2px diameter) at proper handle height (~40% from bottom)
+- Add a small wall/transom area above the door arch
+- Keep `justify-end` so door sits at ground level
 
-### `src/pages/WorshipStudio.tsx` (1줄)
-- Sheet 높이를 `85dvh` → `93dvh`로 확장
-```tsx
-// Line 170
-<SheetContent side="bottom" className="h-[93dvh] max-h-[93dvh] p-0 rounded-t-2xl overflow-hidden flex flex-col ...">
-```
+## Problem 2: Rooftop Objects Floating on Railing
+Currently all objects (trees, parasols, stage, instruments) are anchored to `h - 6` / `h - 7.5` which is essentially the railing top. There's no visible floor surface, so everything looks like it's balanced on the railing bars.
 
-이렇게 하면 빌딩 본체 영역이 ~53px 추가 확보되어 더 많은 유닛/층이 한 번에 보이고, 스크롤 없이 입주 가능한 공간이 늘어남. 기존 `flex-1 min-h-0` 구조 덕분에 추가 높이가 자동으로 빌딩 본체에 배분됨.
+**Fix in `RooftopScene`** (lines 30-146):
+- Add a visible rooftop floor rectangle below the railing (e.g. `y = h-3` to `h`, darker tone like `#8a9aaa`) — this represents the building's top surface
+- Move the railing UP slightly so it sits on the floor edge (visual front-fence)
+- Rebase all object positions: trees, parasols, and stage stand on the floor surface (behind railing)
+- Instruments remain on the stage (their y-coordinates relative to `stageY` stay the same)
+- Net effect: objects appear grounded on a solid surface with the railing as a decorative fence in front
 
-상단 7dvh만 남겨 시트 뒤 배경이 살짝 보이므로 "시트"임을 인지 가능.
-
-### 변경 파일
-- `src/pages/WorshipStudio.tsx` (1줄 수정)
+## Files
+- `src/components/worship-studio/StudioSidePanel.tsx`
 
