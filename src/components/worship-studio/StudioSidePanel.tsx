@@ -320,7 +320,7 @@ function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobil
   }
 
   return (
-    <div className="flex h-16 border-t border-[#7a8a9a]">
+    <div className="flex h-20 border-t border-[#7a8a9a]">
       {/* Café */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Striped awning */}
@@ -392,11 +392,18 @@ function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: b
         {/* Center line */}
         <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
         {/* Upper lane — right to left */}
-        <span className="absolute top-[2px] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
-        {/* Lower lane — left to right (car flipped to face right) */}
-        <span className="absolute bottom-[2px] text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s', transform: 'scaleX(-1)' }}>🚕</span>
+        <span className="absolute top-[15%] text-[28px] leading-none animate-car-move-left" style={{ animationDelay: '0s' }}>🚗</span>
+        {/* Lower lane — left to right (wrapper for flip, inner for animation) */}
+        <span className="absolute bottom-[15%] inline-flex" style={{ transform: 'scaleX(-1)' }}>
+          <span className="text-[28px] leading-none animate-car-move-right" style={{ animationDelay: '3s' }}>🚕</span>
+        </span>
         {(!collapsed || isMobile) && (
-          <span className="absolute top-[2px] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
+          <>
+            <span className="absolute top-[15%] text-[24px] leading-none animate-car-move-left" style={{ animationDelay: '8s' }}>🚙</span>
+            <span className="absolute bottom-[15%] inline-flex" style={{ transform: 'scaleX(-1)' }}>
+              <span className="text-[24px] leading-none animate-car-move-right" style={{ animationDelay: '12s' }}>🚐</span>
+            </span>
+          </>
         )}
       </div>
     </>
@@ -461,9 +468,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         <div className="px-0.5 relative">
           {!collapsed && (
             <div className="flex flex-col items-center gap-0.5 px-2 py-0.5 select-none">
-              <div className="bg-white px-3 py-0.5 rounded-[2px] shadow-sm border border-[#ddd]">
-                <span className="text-[7px] font-bold text-[#2a2a2a] tracking-[0.15em]">
-                  WORSHIP ATELIER <span className="text-[5px] font-normal text-[#666]">by kworship.app</span>
+              <div className="bg-white px-4 py-1 rounded-[2px] border-2 border-[#7a8a9a] shadow-[2px_3px_0px_#6a7a8a] flex items-center justify-center">
+                <span className="text-[8px] font-bold text-[#2a2a2a] tracking-[0.15em] text-center w-full">
+                  WORSHIP ATELIER <span className="text-[6px] font-normal text-[#555]">by kworship.app</span>
                 </span>
               </div>
               <FloorLabel label="ROOFTOP" />
