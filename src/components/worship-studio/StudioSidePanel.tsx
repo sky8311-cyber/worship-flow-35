@@ -700,7 +700,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 {(!collapsed || isMobile) && (
                   <RooftopStringLights width={collapsed ? 56 : isMobile ? 200 : 232} />
                 )}
-                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[50vh]")}>
+                <ScrollArea className={cn("flex-1 min-h-0 relative z-10", isMobile && "max-h-[40vh]")}>
                   {buildingContent}
                 </ScrollArea>
               </div>
