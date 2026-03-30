@@ -3,28 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useStoryBarStudios, incrementVisitCount, type StoryStudio } from "@/hooks/useStoryBarStudios";
+import { usePlazaUsers } from "@/hooks/usePlazaUsers";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StudioUnit } from "./StudioUnit";
 import { StoryCard } from "./StoryCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const PLACEHOLDER_TENANTS = [
-  { id: 'ph1', name: '김찬양', initials: '김', icon: '🎵', variant: 'friend' as const },
-  { id: 'ph2', name: '박워십', initials: '박', icon: '🎹', variant: 'friend' as const },
-  { id: 'ph3', name: '이예배', initials: '이', icon: '🙏', variant: 'friend' as const },
-  { id: 'ph4', name: '최성령', initials: '최', icon: '🕊️', variant: 'friend' as const },
-  { id: 'ph5', name: '정은혜', initials: '정', icon: '✝️', variant: 'friend' as const },
-  { id: 'ph6', name: '한찬미', initials: '한', icon: '🎶', variant: 'friend' as const },
-  { id: 'ph7', name: '오다윗', initials: '오', icon: '🎸', variant: 'friend' as const },
-  { id: 'ph8', name: '새벽이슬 워십',   initials: '새', icon: '🌅', variant: 'ambassador' as const },
-  { id: 'ph9', name: '시온찬양단',       initials: '시', icon: '🏛️', variant: 'ambassador' as const },
-  { id: 'ph10', name: '다윗의장막 밴드', initials: '다', icon: '🎺', variant: 'ambassador' as const },
-];
-
-const PLACEHOLDER_FRIENDS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'friend');
-const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'ambassador');
 
 /* ─── Glass facade style ─── */
 const glassWallStyle: React.CSSProperties = {
