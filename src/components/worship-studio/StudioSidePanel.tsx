@@ -29,19 +29,140 @@ const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'a
 /* ─── Brick wall texture style ─── */
 const brickWallStyle = {
   backgroundColor: '#f5f0e8',
-  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, #e8ddd0 15px, #e8ddd0 16px)',
+  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 15px, #e8ddd0 15px, #e8ddd0 16px), repeating-linear-gradient(90deg, transparent, transparent 30px, #e8ddd0 30px, #e8ddd0 31px)',
 };
 
-/* ─── Floor label component ─── */
+/* ─── Floor label — small metal plate ─── */
 function FloorLabel({ label }: { label: string }) {
   return (
-    <div className="relative flex items-center mx-1 my-0.5">
-      <div className="flex-1 h-px bg-[#d4c5a9]" />
-      <span className="text-[7px] font-bold text-[#a89070] bg-[#f5f0e8] px-1.5 tracking-wider uppercase">
+    <div className="flex items-center justify-center mx-2 my-0.5">
+      <span className="text-[7px] font-bold text-[#8a7a6a] border border-[#c4b8a8] bg-[#ede8df] px-1.5 py-px rounded-[1px] tracking-wider uppercase shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
         {label}
       </span>
-      <div className="flex-1 h-px bg-[#d4c5a9]" />
     </div>
+  );
+}
+
+/* ─── String Lights ─── */
+function StringLights({ count = 7 }: { count?: number }) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 py-0.5">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="w-1 h-1 rounded-full bg-amber-300 animate-string-shimmer"
+          style={{ animationDelay: `${i * 0.3}s` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─── G/F Commercial Units ─── */
+function GroundFloorShops({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  if (collapsed && !isMobile) {
+    return (
+      <div className="flex flex-col items-center gap-0.5 py-1 text-[6px] text-[#5a4a3a]">
+        <span>☕</span>
+        <span>🖼️</span>
+        <span>🎭</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-16 border-t border-[#3a2f28]">
+      {/* Café */}
+      <div className="flex-1 flex flex-col items-center border-r border-[#c4b8a8] bg-[#f5f0e8] overflow-hidden">
+        {/* Striped awning */}
+        <div
+          className="w-full h-2.5 shrink-0"
+          style={{
+            background: 'repeating-linear-gradient(90deg, #c94040, #c94040 4px, #f5f0e8 4px, #f5f0e8 8px)',
+          }}
+        />
+        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider mt-0.5">CAFÉ</span>
+        <div className="flex-1 flex items-center justify-center gap-1">
+          <span className="text-[10px]">☕</span>
+          <span className="text-[8px] animate-leaf-sway inline-block">🌸</span>
+        </div>
+      </div>
+
+      {/* Gallery */}
+      <div className="flex-1 flex flex-col items-center border-r border-[#c4b8a8] bg-[#faf8f4] overflow-hidden">
+        <span className="text-[6px] font-bold text-[#5a4a3a] tracking-wider mt-1">GALLERY</span>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-5 h-4 border border-[#c4b8a8] bg-white flex items-center justify-center">
+            <span className="text-[8px]">🖼️</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Theatre */}
+      <div className="flex-1 flex flex-col items-center bg-[#3a2f28] overflow-hidden relative">
+        {/* Marquee bulbs */}
+        <div className="flex gap-1 mt-0.5">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div
+              key={i}
+              className="w-[3px] h-[3px] rounded-full bg-amber-300 animate-bulb-twinkle"
+              style={{ animationDelay: `${i * 0.3}s` }}
+            />
+          ))}
+        </div>
+        <span className="text-[6px] font-bold text-amber-200/90 tracking-wider mt-0.5"
+          style={{ textShadow: '0 0 4px rgba(245,190,80,0.5)' }}>
+          THEATRE
+        </span>
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-[10px]">🎭</span>
+        </div>
+        {/* Bottom bulbs */}
+        <div className="flex gap-1 mb-0.5">
+          {[0, 1, 2, 3, 4].map(i => (
+            <div
+              key={i}
+              className="w-[3px] h-[3px] rounded-full bg-amber-300 animate-bulb-twinkle"
+              style={{ animationDelay: `${i * 0.3 + 0.15}s` }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Animated Road ─── */
+function AnimatedRoad({ collapsed, isMobile }: { collapsed: boolean; isMobile: boolean }) {
+  return (
+    <>
+      {/* Sidewalk */}
+      <div className={cn("shrink-0 flex items-end justify-around px-1 select-none pointer-events-none", isMobile ? "h-3" : "h-4")}
+        style={{ background: 'linear-gradient(to bottom, #c4b8a8, #b8a998)' }}>
+        {(!collapsed || isMobile) && (
+          <>
+            <span className="text-[7px] mb-px">🏮</span>
+            <div className="animate-pinwheel-spin inline-block text-[8px] mb-px">✤</div>
+            <span className="text-[7px] mb-px">🏮</span>
+          </>
+        )}
+      </div>
+
+      {/* Road */}
+      <div
+        className={cn("shrink-0 relative overflow-hidden select-none pointer-events-none", isMobile ? "h-6" : "h-8")}
+        style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
+      >
+        {/* Center line */}
+        <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
+        {/* Animated cars */}
+        <span className="absolute top-[2px] text-[11px] animate-car-move-right" style={{ animationDelay: '0s' }}>🚗</span>
+        <span className="absolute bottom-[2px] text-[10px] animate-car-move-left" style={{ animationDelay: '3s' }}>🚕</span>
+        {(!collapsed || isMobile) && (
+          <span className="absolute top-[2px] text-[9px] animate-car-move-right" style={{ animationDelay: '8s' }}>🚙</span>
+        )}
+      </div>
+    </>
   );
 }
 
@@ -98,12 +219,18 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
   /* ─── Building interior content ─── */
   const buildingContent = (
     <>
-      {/* ROOFTOP — My Studio */}
+      {/* ROOFTOP — My Studio with parasols */}
       {myStudio && (
-        <div>
-          {!collapsed && <FloorLabel label="ROOFTOP" />}
+        <div className="px-0.5">
+          {!collapsed && (
+            <div className="flex items-center justify-around px-2 py-0.5 select-none">
+              <span className="text-[10px]">⛱️</span>
+              <FloorLabel label="ROOFTOP" />
+              <span className="text-[10px]">⛱️</span>
+            </div>
+          )}
           <StudioUnit
-            compact={isSheet || isMobile}
+            compact={false}
             avatarUrl={myAvatarUrl}
             studioName={language === "ko" ? "내 스튜디오" : "My Studio"}
             ownerName={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
@@ -123,7 +250,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {!collapsed && <FloorLabel label={language === "ko" ? "2F · 이웃" : "2F · Neighbors"} />}
           {friendStudios.map(s => (
             <StudioUnit
-              compact={isSheet || isMobile}
+              compact={true}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -143,7 +270,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_FRIENDS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet || isMobile}
+                compact={true}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
@@ -159,7 +286,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
         </div>
       )}
 
-      <div className="flex-1 min-h-[24px]" />
+      {/* Minimal spacer between floors */}
+      <div className="min-h-[6px]" />
 
       {/* 1F — Ambassadors */}
       {ambassadorStudios.length > 0 ? (
@@ -167,7 +295,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {!collapsed && <FloorLabel label={language === "ko" ? "1F · 앰배서더" : "1F · Ambassadors"} />}
           {ambassadorStudios.map(s => (
             <StudioUnit
-              compact={isSheet || isMobile}
+              compact={true}
               key={s.id}
               avatarUrl={s.avatarUrl || undefined}
               studioName={s.ownerName?.split(" ")[0] || "Studio"}
@@ -187,7 +315,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           {PLACEHOLDER_AMBASSADORS.map(t => (
             <div key={t.id} className="opacity-60 pointer-events-none select-none">
               <StudioUnit
-                compact={isSheet || isMobile}
+                compact={true}
                 studioName={`${t.icon} ${t.name}`}
                 ownerName={t.name}
                 roomId={t.id}
@@ -215,7 +343,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           ? "w-full flex flex-col h-full"
           : `${collapsed ? "w-14" : "w-64"} shrink-0 flex flex-col h-full transition-all duration-300 ease-in-out`
       )}>
-        {/* Sky background */}
+        {/* Sky background with animated clouds */}
         {showBuilding && (
           <div
             className="absolute inset-0 z-0 overflow-hidden"
@@ -223,15 +351,9 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           >
             {(!collapsed || isMobile) && (
               <>
-                <div className="absolute top-3 left-3 text-2xl opacity-80 select-none pointer-events-none">☁️</div>
-                <div className="absolute top-8 right-2 text-lg opacity-60 select-none pointer-events-none">☁️</div>
-                <div className="absolute top-16 left-8 text-sm opacity-40 select-none pointer-events-none">☁️</div>
-                {isMobile && (
-                  <>
-                    <div className="absolute top-5 right-16 text-xl opacity-50 select-none pointer-events-none">☁️</div>
-                    <div className="absolute top-12 left-24 text-base opacity-35 select-none pointer-events-none">☁️</div>
-                  </>
-                )}
+                <div className="absolute top-3 animate-cloud-drift select-none pointer-events-none text-2xl opacity-80" style={{ animationDuration: '35s' }}>☁️</div>
+                <div className="absolute top-8 animate-cloud-drift select-none pointer-events-none text-lg opacity-60" style={{ animationDuration: '28s', animationDelay: '5s' }}>☁️</div>
+                <div className="absolute top-14 animate-cloud-drift select-none pointer-events-none text-sm opacity-40" style={{ animationDuration: '42s', animationDelay: '12s' }}>☁️</div>
               </>
             )}
           </div>
@@ -253,12 +375,12 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
           </ScrollArea>
         ) : (
           <>
-            {/* Backlit signage — postmodern atelier style */}
+            {/* Neon signage */}
             <div className={cn("relative z-10 shrink-0 flex flex-col items-center justify-end", isMobile ? "h-12" : "h-14")}>
               {(!collapsed || isMobile) && (
                 <div className="flex flex-col items-center">
                   <div
-                    className="bg-[#3a2f28] px-3 py-1 rounded-sm shadow-lg"
+                    className="bg-[#3a2f28] px-3 py-1 rounded-sm shadow-lg animate-neon-glow"
                     style={{
                       boxShadow: '0 2px 12px rgba(245,190,80,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
                     }}
@@ -272,8 +394,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                       WORSHIP ATELIER
                     </span>
                   </div>
-                  {/* LED accent line */}
-                  <div className="w-20 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent mt-0.5" />
+                  {/* String lights under signage */}
+                  <StringLights count={7} />
                 </div>
               )}
               {collapsed && !isMobile && <div className="h-2" />}
@@ -294,105 +416,13 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
                 </ScrollArea>
               </div>
 
-              {/* Divider between tenants and ground floor */}
-              <div className="shrink-0 border-t-2 border-[#3a2f28] mx-0" />
-
-              {/* 1F Entrance — semicircular arch + dark brown doors */}
-              <div
-                className="shrink-0 border-x border-[#d4c5a9] px-2 pt-3 pb-0"
-                style={brickWallStyle}
-              >
-                {(!collapsed || isMobile) ? (
-                  <>
-                    {/* Badges row */}
-                    <div className="flex justify-between items-center mb-1.5">
-                      <div className="text-[7px] font-bold border border-[#3a2f28] bg-[#f5f0e8] text-[#3a2f28] px-1 py-0.5 rounded-sm">
-                        Worship Atelier
-                      </div>
-                      <div className="text-[7px] font-bold border border-[#3a2f28] bg-[#f5f0e8] text-[#3a2f28] px-1 py-0.5 rounded-sm">
-                        kworship.app
-                      </div>
-                    </div>
-                    {/* Semicircular arch entrance */}
-                    <div className="flex flex-col items-center">
-                      {/* Arch frame */}
-                      <div className="w-16 h-4 border-t-2 border-x-2 border-[#3a2f28] rounded-t-full bg-amber-50/30" />
-                      {/* Double doors */}
-                      <div className="flex gap-px -mt-px">
-                        <div className="w-8 h-8 border border-[#3a2f28] bg-[#5a4a3a] relative">
-                          <div className="absolute inset-1 bg-amber-50/40 rounded-[1px]" />
-                          <div className="absolute right-1.5 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-amber-300/80" />
-                        </div>
-                        <div className="w-8 h-8 border border-[#3a2f28] bg-[#5a4a3a] relative">
-                          <div className="absolute inset-1 bg-amber-50/40 rounded-[1px]" />
-                          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-amber-300/80" />
-                        </div>
-                      </div>
-                      {/* Stairs */}
-                      <div className="w-20 h-1.5 bg-[#e8ddd0] border-t border-[#d4c5a9]" />
-                      <div className="w-24 h-1.5 bg-[#e8ddd0] border-t border-[#d4c5a9]" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-2 border-t border-x border-[#3a2f28] rounded-t-full bg-amber-50/30" />
-                    <div className="flex gap-px -mt-px">
-                      <div className="w-4 h-10 border border-[#3a2f28] bg-[#5a4a3a] relative">
-                        <div className="absolute inset-0.5 bg-amber-50/40" />
-                        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-amber-300/80" />
-                      </div>
-                      <div className="w-4 h-10 border border-[#3a2f28] bg-[#5a4a3a] relative">
-                        <div className="absolute inset-0.5 bg-amber-50/40" />
-                        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-0.5 h-0.5 rounded-full bg-amber-300/80" />
-                      </div>
-                    </div>
-                    <div className="w-10 h-1.5 bg-[#e8ddd0] border-t border-[#d4c5a9]" />
-                  </div>
-                )}
+              {/* G/F Ground Floor — Commercial Units */}
+              <div className="shrink-0 border-x border-[#d4c5a9]" style={brickWallStyle}>
+                <GroundFloorShops collapsed={collapsed} isMobile={isMobile} />
               </div>
 
-              {/* Plant pots & lawn strip */}
-              <div
-                className={cn("shrink-0 flex items-center justify-around px-1 select-none pointer-events-none border-x border-[#d4c5a9]", isMobile ? "h-3" : "h-4")}
-                style={{ background: 'linear-gradient(to bottom, #6aaf50, #4a8f35)' }}
-              >
-                {(!collapsed || isMobile) && (
-                  <>
-                    <span className="text-[8px]">🪴</span>
-                    <span className="text-[8px]">🌿</span>
-                    <span className="text-[8px]">🪴</span>
-                    <span className="text-[8px]">🌿</span>
-                    {isMobile && (
-                      <>
-                        <span className="text-[8px]">🪴</span>
-                        <span className="text-[8px]">🌿</span>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Sidewalk */}
-              <div className="h-2 shrink-0 select-none pointer-events-none" style={{ background: '#a89070' }} />
-
-              {/* Road bar */}
-              <div
-                className={cn("shrink-0 flex items-center px-2 select-none pointer-events-none overflow-hidden relative", isMobile ? "h-6" : "h-8")}
-                style={{ background: '#4a4a4a', borderTop: '2px solid #3a3a3a' }}
-              >
-                <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-white/25" />
-                <span className="absolute left-1 text-[11px]">🚗</span>
-                <span className="absolute left-8 text-[9px]">🚙</span>
-                {(!collapsed || isMobile) && (
-                  <>
-                    <span className="absolute right-6 text-[10px]">🚕</span>
-                    <span className="absolute right-1 text-[12px]">🚌</span>
-                    {isMobile && (
-                      <span className="absolute left-20 text-[10px]">🚐</span>
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Animated Road */}
+              <AnimatedRoad collapsed={collapsed} isMobile={isMobile} />
             </div>
           </>
         )}
