@@ -93,11 +93,6 @@ function RooftopScene({ width, isMobile, isNight }: { width: number; isMobile: b
   const floorY = h - 4;
   const spacing = width / 6;
 
-  const parasolSets = [
-    { x: spacing * 0.8, color: '#d06030' },
-    { x: spacing * 1.8, color: '#c04828' },
-    { x: spacing * 3, color: '#d07040' },
-  ];
 
   const trees = [
     { x: 6, trunkH: 15, r1: 7.5, r2: 5.25 },
