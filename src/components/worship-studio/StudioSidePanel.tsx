@@ -29,8 +29,6 @@ const PLACEHOLDER_AMBASSADORS = PLACEHOLDER_TENANTS.filter(t => t.variant === 'a
 /* ─── Glass facade style ─── */
 const glassWallStyle: React.CSSProperties = {
   background: 'linear-gradient(to bottom, #d0e0ec, #b8ccd8)',
-  backgroundImage: 'linear-gradient(to bottom, #d0e0ec, #b8ccd8), repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(255,255,255,0.18) 38px, rgba(255,255,255,0.18) 39px)',
-  backgroundBlendMode: 'normal',
 };
 
 /* ─── Floor label — small metal plate ─── */
