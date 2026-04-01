@@ -291,7 +291,9 @@ serve(async (req) => {
 사용 가능한 곡 목록 (song_id, title, artist, original_key, tempo, lyrics 포함):
 ${songListJson}
 
-위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON 구조(worshipSet + worshipArc)로만 반환한다.`;
+위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON 구조(worshipSet + worshipArc)로만 반환한다.
+
+중요: 곡 목록 전체를 처음부터 끝까지 검토하고, 설교 주제/본문에 가장 적합한 곡을 선택한다. 목록 순서에 편향되지 않는다. 가사의 신학적 메시지와 설교 본문을 대조하여 최적의 곡을 고른다.`;
 
     // ── 5. Call Anthropic API ──
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
