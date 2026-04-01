@@ -1,42 +1,37 @@
 
 
-# AI 세트 빌더: 버튼 잘림 수정 + 추천 다양성 개선 (수정 플랜)
+# AI 세트 빌더 패널 잘림 수정
 
-## 문제 1: 버튼 텍스트 잘림
+## 문제
+스크린샷에서 필드와 버튼이 오른쪽으로 잘리고 있음. `ScrollArea`에 `-mx-6 px-6`과 `overflow-x-hidden` 조합이 우측 콘텐츠를 클리핑함.
 
-### 수정 (`AISetBuilderForm.tsx`)
-- 로딩 텍스트 축약: `"AI가 세트를 구성하고 있습니다..."` → `"세트 생성 중..."`
-- 버튼에 `truncate` 클래스 추가
+## 변경 (`AISetBuilderPanel.tsx`)
 
-## 문제 2: 주제가 달라도 같은 곡 추천
+### ScrollArea 오버플로우 수정
+- `-mx-6 px-6` 패턴 제거 → 단순히 `flex-1 min-h-0`으로 변경
+- `overflow-x-hidden` 제거
+- 이렇게 하면 SheetContent의 기본 패딩 안에서 콘텐츠가 정상 렌더링됨
 
-### 원인 분석
-현재 로직을 확인한 결과:
-- 곡 목록(최대 500곡)을 **전부** AI에 전달하고 있음
-- 셔플은 불필요 — AI는 목록 전체를 읽고 판단해야 함
-- **진짜 문제**: 프롬프트에 "전체 목록을 검토하고 최적의 곡을 골라라"는 명시적 지시가 약함
-- `temperature` 미설정으로 다양성 부족
-
-### 수정 (`generate-worship-set/index.ts`)
-
-**A. 프롬프트 강화 — 전체 검토 필수 지시 (핵심)**
-
-시스템 프롬프트 끝에 추가:
 ```
-## 필수 선곡 규칙
-- 곡 목록 전체를 처음부터 끝까지 검토한 뒤 최적의 곡을 선택한다.
-- 목록의 순서에 편향되지 않는다. 상위에 있든 하위에 있든 주제와 가사가 가장 잘 맞는 곡을 고른다.
-- 주제/본문이 다르면 반드시 다른 곡 조합을 시도한다. 같은 세트를 반복하지 않는다.
-- 가사 내용을 설교 주제와 신학적으로 대조하여, 해당 주제에 가장 적합한 곡을 우선 선곡한다.
+// Before (L225)
+<ScrollArea className="flex-1 -mx-6 px-6 overflow-x-hidden">
+
+// After
+<ScrollArea className="flex-1 min-h-0">
 ```
 
-**B. temperature 파라미터 추가**
-- Anthropic API 호출에 `temperature: 0.85` 설정으로 다양성 확보
+### AISetBuilderForm 하단 여백
+- 버튼이 스크롤 영역 하단에서 잘리지 않도록 `pb-4` 추가
 
-**C. userMessage에 강조 문구 추가**
-- 기존 마지막 줄 뒤에: `"중요: 목록 전체를 검토하고 주제에 가장 적합한 곡을 선택한다. 목록 순서에 편향되지 않는다."`
+```
+// Before (L47 in AISetBuilderForm.tsx)
+<div className="space-y-4 py-4">
+
+// After
+<div className="space-y-4 py-4 pb-6">
+```
 
 ### 변경 파일
-1. `src/components/ai-set-builder/AISetBuilderForm.tsx` — 버튼 텍스트 축약
-2. `supabase/functions/generate-worship-set/index.ts` — 프롬프트 강화 + temperature 추가
+1. `src/components/AISetBuilderPanel.tsx` — ScrollArea 클래스 수정
+2. `src/components/ai-set-builder/AISetBuilderForm.tsx` — 하단 패딩 추가
 
