@@ -17,9 +17,9 @@ export const AtelierSolution = () => {
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.6 }}
         >
-          Worship Atelier는
+          Worship Atelier의 목적은
           <br />
-          예배를 삶의 흐름으로 연결합니다
+          예배를 삶의 리듬으로 연결하는 것입니다.
         </motion.p>
 
         <div className="space-y-6">
