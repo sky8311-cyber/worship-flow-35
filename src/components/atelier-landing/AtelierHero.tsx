@@ -165,7 +165,7 @@ export const AtelierHero = () => {
 
       {/* Atelier description */}
       <motion.div
-        className="max-w-sm text-center font-korean mt-6 px-4 space-y-3"
+        className="max-w-sm text-center font-korean mt-10 px-4 space-y-3"
         initial={{ opacity: 0 }}
         animate={phase >= 7 ? { opacity: 1 } : {}}
         transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
@@ -173,11 +173,7 @@ export const AtelierHero = () => {
         <p className="text-xs text-muted-foreground leading-relaxed">
           아틀리에에서 예술가는 완성품만 만들지 않습니다.
           <br />
-          그 공간에서 아이디어는 자라고,
-          <br />
-          과정은 쌓이며,
-          <br />
-          삶 자체가 작품이 됩니다.
+          그 공간에서 아이디어가 쌓이고 삶 자체가 작품이 됩니다.
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           Worship Atelier는 그런 공간입니다.
@@ -188,7 +184,7 @@ export const AtelierHero = () => {
 
       {/* Scroll indicator */}
       <motion.div
-        className="absolute bottom-8"
+        className="absolute bottom-4"
         initial={{ opacity: 0 }}
         animate={showCTA ? { opacity: 1 } : {}}
         transition={{ delay: 0.5, duration: 0.5 }}
