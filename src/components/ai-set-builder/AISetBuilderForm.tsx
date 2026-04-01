@@ -189,13 +189,13 @@ export function AISetBuilderForm({
           >
             {isLoading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {language === "ko" ? "AI가 세트를 구성하고 있습니다..." : "AI is building your set..."}
+                <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />
+                <span className="truncate">{language === "ko" ? "세트 생성 중..." : "Generating..."}</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                {language === "ko" ? "AI 세트 생성" : "Generate AI Set"}
+                <Sparkles className="w-4 h-4 mr-2 shrink-0" />
+                <span className="truncate">{language === "ko" ? "AI 세트 생성" : "Generate AI Set"}</span>
               </>
             )}
           </Button>

@@ -313,6 +313,7 @@ ${songListJson}
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
+        temperature: 0.85,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
