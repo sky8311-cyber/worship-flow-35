@@ -173,7 +173,11 @@ export const AtelierHero = () => {
         <p className="text-xs text-muted-foreground leading-relaxed">
           아틀리에에서 예술가는 완성품만 만들지 않습니다.
           <br />
-          그 공간에서 아이디어는 자라고, 과정은 쌓이며, 삶 자체가 작품이 됩니다.
+          그 공간에서 아이디어는 자라고,
+          <br />
+          과정은 쌓이며,
+          <br />
+          삶 자체가 작품이 됩니다.
         </p>
         <p className="text-xs text-muted-foreground leading-relaxed">
           Worship Atelier는 그런 공간입니다.
