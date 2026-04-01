@@ -105,6 +105,13 @@ serve(async (req) => {
 
     const systemPrompt = `${systemPromptContent}
 
+## 필수 선곡 규칙 (반드시 준수)
+- 곡 목록 전체를 처음부터 끝까지 빠짐없이 검토한 뒤 최적의 곡을 선택한다.
+- 목록의 순서에 절대 편향되지 않는다. 1번째 곡이든 500번째 곡이든, 주제와 가사가 가장 잘 맞는 곡을 고른다.
+- 주제/본문이 다르면 반드시 다른 곡 조합을 선택한다. 같은 세트를 반복하지 않는다.
+- 가사 내용을 설교 주제/본문과 신학적으로 대조하여, 해당 주제에 가장 적합한 곡을 우선 선곡한다.
+- 키워드 단순 매칭이 아닌, 가사의 신학적 메시지와 설교 본문의 핵심 명제가 일치하는 곡을 선택한다.
+
 위 지침에 따라 예배 세트를 구성한다. 제공된 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. 위 JSON 구조로만 반환한다. 다른 텍스트 없음.`;
 
     // ── 1. Fetch songs (with tempo) ──
@@ -284,7 +291,9 @@ serve(async (req) => {
 사용 가능한 곡 목록 (song_id, title, artist, original_key, tempo, lyrics 포함):
 ${songListJson}
 
-위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON 구조(worshipSet + worshipArc)로만 반환한다.`;
+위 곡 목록에서만 선곡한다. 목록에 없는 곡은 절대 추가하지 않는다. JSON 구조(worshipSet + worshipArc)로만 반환한다.
+
+중요: 곡 목록 전체를 처음부터 끝까지 검토하고, 설교 주제/본문에 가장 적합한 곡을 선택한다. 목록 순서에 편향되지 않는다. 가사의 신학적 메시지와 설교 본문을 대조하여 최적의 곡을 고른다.`;
 
     // ── 5. Call Anthropic API ──
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
@@ -304,6 +313,7 @@ ${songListJson}
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 3000,
+        temperature: 0.85,
         system: systemPrompt,
         messages: [{ role: 'user', content: userMessage }],
       }),
