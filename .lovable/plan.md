@@ -1,28 +1,28 @@
 
 
-# Problem 섹션 텍스트 수정 + 스크롤 인디케이터 추가
+# Problem 섹션 상하 균등 공간 + 스크롤 인디케이터
 
-## 변경 사항
+## 현재 상태
+- 섹션이 `flex justify-center`로 텍스트를 중앙 배치
+- 스크롤 인디케이터가 `absolute bottom-4`로 바닥에 붙어 있음
+- 위쪽 공간(Hero의 indicator → Problem 텍스트)과 아래쪽 공간(텍스트 → indicator)이 불균형
 
-### 1. `AtelierProblem.tsx` — 텍스트 교체 + 스크롤 인디케이터 추가
+## 변경 (`AtelierProblem.tsx`)
 
-기존 텍스트:
+레이아웃을 flex column으로 변경하여 상하 균등 공간 확보:
+
+1. `justify-center` 제거, 수동으로 상하 패딩/공간 배치
+2. 구조: **상단 여백 → 텍스트 → 하단 여백 + 스크롤 인디케이터**
+3. `absolute` 제거하고 스크롤 인디케이터를 flow 안에 배치
+4. 텍스트 위아래에 동일한 `py` 또는 `flex-1` spacer를 넣어 균등 배분
+
 ```
-우리는 예배를 준비하지만
-삶과는 연결되지 않습니다
+section (min-h-[36vh], flex flex-col items-center)
+  ├── flex-1 spacer (위 공간)
+  ├── 텍스트 블록
+  ├── flex-1 spacer (아래 공간)
+  └── 스크롤 인디케이터 (mb-4)
 ```
 
-신규 텍스트:
-```
-예배는 많지만,
-그 리듬은 삶으로 이어지고 있나요?
-```
-
-그리고 섹션 하단에 Hero와 동일한 스크롤 인디케이터(`w-[1px] h-10 bg-[#CCC] animate-pulse`) 추가. 섹션을 `relative`로 변경하고 `absolute bottom-4`로 세로 라인 배치.
-
-### 기술 세부
-
-- `section`에 `relative` 추가
-- `motion.div`로 스크롤 인디케이터 감싸서 `whileInView` 페이드인 적용
-- Hero의 스크롤 인디케이터 스타일 그대로 복제
+이렇게 하면 텍스트 위/아래 공간이 동일하고, 인디케이터가 자연스럽게 하단에 위치합니다.
 
