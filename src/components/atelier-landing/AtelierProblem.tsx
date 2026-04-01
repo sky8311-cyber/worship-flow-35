@@ -2,7 +2,9 @@ import { motion } from "framer-motion";
 
 export const AtelierProblem = () => {
   return (
-    <section className="min-h-[36vh] flex flex-col items-center justify-center px-6 bg-[#FAF8F5] relative">
+    <section className="min-h-[36vh] flex flex-col items-center px-6 bg-[#FAF8F5]">
+      <div className="flex-1" />
+
       <motion.div
         className="max-w-2xl text-center space-y-2"
         initial={{ opacity: 0, y: 30 }}
@@ -18,8 +20,10 @@ export const AtelierProblem = () => {
         </p>
       </motion.div>
 
+      <div className="flex-1" />
+
       <motion.div
-        className="absolute bottom-4"
+        className="mb-4"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
