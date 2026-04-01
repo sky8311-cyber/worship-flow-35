@@ -16,12 +16,6 @@ export const AtelierProblem = () => {
         <p className="font-korean text-xl md:text-2xl text-foreground leading-relaxed">
           삶과는 연결되지 않습니다
         </p>
-        <div className="w-12 h-[1px] bg-[#B8902A] mx-auto my-4" />
-        <p className="font-korean text-lg md:text-xl text-muted-foreground leading-relaxed">
-          주일엔 뜨겁게 예배하고,
-          <br />
-          월요일엔 다시 각자의 일상으로 흩어집니다.
-        </p>
       </motion.div>
     </section>
   );
