@@ -195,7 +195,7 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex w-full min-w-0 flex-col sm:max-w-md">
+      <SheetContent side="right" className="flex w-full min-w-0 flex-col overflow-hidden sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -221,8 +221,8 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
           </div>
         ) : (
           <>
-            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
-              <div className="w-full min-w-0 pr-1">
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]">
+              <div className="w-full min-w-0 max-w-full pr-2 sm:pr-1">
                 {currentView === "form" ? (
                   <AISetBuilderForm
                     theme={theme} setTheme={setTheme}
@@ -251,14 +251,14 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
             </div>
 
             {result && (
-              <div className="flex w-full min-w-0 gap-2 border-t pt-4">
-                <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="min-w-0 flex-1">
+              <div className="flex w-full min-w-0 gap-2 overflow-hidden border-t pt-4">
+                <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="min-w-0 max-w-full flex-1 overflow-hidden">
                   <RefreshCw className="mr-2 h-4 w-4 shrink-0" />
-                  <span className="truncate">{language === "ko" ? "다시 생성" : "Regenerate"}</span>
+                  <span className="min-w-0 truncate">{language === "ko" ? "다시 생성" : "Regenerate"}</span>
                 </Button>
-                <Button onClick={handleUseSet} className="min-w-0 flex-1">
+                <Button onClick={handleUseSet} className="min-w-0 max-w-full flex-1 overflow-hidden">
                   <Check className="mr-2 h-4 w-4 shrink-0" />
-                  <span className="truncate">{language === "ko" ? "이 세트 사용" : "Use this set"}</span>
+                  <span className="min-w-0 truncate">{language === "ko" ? "이 세트 사용" : "Use this set"}</span>
                 </Button>
               </div>
             )}

@@ -13,7 +13,7 @@ interface AISetBuilderResultProps {
 
 export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilderResultProps) {
   return (
-    <div className="w-full min-w-0 space-y-3 py-4 pb-6">
+    <div className="w-full min-w-0 max-w-full space-y-3 py-4 pb-6">
       {/* Worship Arc Card */}
       {worshipArc && (
         <WorshipArcCard worshipArc={worshipArc} />
@@ -23,11 +23,11 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
       {result.map((item, idx) => {
         const song = songMap[item.song_id];
         return (
-          <div key={item.song_id} className="w-full min-w-0 space-y-2 rounded-lg border p-3">
+          <div key={item.song_id} className="w-full min-w-0 max-w-full space-y-2 rounded-lg border p-3">
             {item.transition_note && idx > 0 && (
               <div className="-mt-1 mb-2 flex min-w-0 items-start gap-2 rounded bg-muted/50 p-2 text-xs text-muted-foreground">
                 <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
-                <span>{item.transition_note}</span>
+                <span className="min-w-0 break-words">{item.transition_note}</span>
               </div>
             )}
 
