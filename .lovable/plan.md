@@ -1,24 +1,28 @@
 
 
-# 빌딩 양옆 빈 공간을 잔디로 채우기
+# Problem 섹션 상하 균등 공간 + 스크롤 인디케이터
 
-## 현재 문제
-빌딩, 옥상, 1층 모두 `mx-6` (모바일) / `mx-3` (데스크탑) 마진이 적용되어 있어 양옆에 빈 공간이 생김. 도로는 전체 너비지만, 도로 아래 잔디(footer)도 `mx-6`이라 빌딩 옆 빈 공간이 배경색 그대로 노출되어 "땅" 느낌이 안 남.
+## 현재 상태
+- 섹션이 `flex justify-center`로 텍스트를 중앙 배치
+- 스크롤 인디케이터가 `absolute bottom-4`로 바닥에 붙어 있음
+- 위쪽 공간(Hero의 indicator → Problem 텍스트)과 아래쪽 공간(텍스트 → indicator)이 불균형
 
-## 변경 (`StudioSidePanel.tsx`)
+## 변경 (`AtelierProblem.tsx`)
 
-### 1. 빌딩 ~ 도로 사이 양옆에 잔디 배경 추가
-빌딩 영역(rooftop + building body + ground floor)을 감싸는 wrapper의 **배경**에 잔디색 그라데이션 적용. 빌딩은 기존 `mx-6`으로 중앙에, 양옆 빈 공간은 잔디색으로 채워짐.
+레이아웃을 flex column으로 변경하여 상하 균등 공간 확보:
 
-구체적으로:
-- **Line 1026** 부근의 building wrapper div (`flex flex-col flex-1`)에 잔디색 배경 추가
-  - 낮: `bg-gradient-to-b from-[#6a9f4c] to-[#5a8f3c]` (초록 잔디)
-  - 밤: `bg-gradient-to-b from-[#2a4a2a] to-[#1e3a1e]` (어두운 잔디)
-- 이렇게 하면 빌딩 양옆 마진 공간이 자연스럽게 잔디색으로 채워짐
+1. `justify-center` 제거, 수동으로 상하 패딩/공간 배치
+2. 구조: **상단 여백 → 텍스트 → 하단 여백 + 스크롤 인디케이터**
+3. `absolute` 제거하고 스크롤 인디케이터를 flow 안에 배치
+4. 텍스트 위아래에 동일한 `py` 또는 `flex-1` spacer를 넣어 균등 배분
 
-### 2. Footer 잔디 영역도 전체 너비로
-- **Line 1073**의 `mx-6` 제거 → 잔디가 좌우 끝까지 확장
-- `rounded-b-xl`은 유지 가능 (모바일 시트 하단 모서리)
+```
+section (min-h-[36vh], flex flex-col items-center)
+  ├── flex-1 spacer (위 공간)
+  ├── 텍스트 블록
+  ├── flex-1 spacer (아래 공간)
+  └── 스크롤 인디케이터 (mb-4)
+```
 
-이렇게 하면 빌딩이 잔디 위에 세워진 것처럼 보이고, 도로 아래도 잔디가 좌우 끝까지 이어져 자연스러운 땅 느낌을 줌.
+이렇게 하면 텍스트 위/아래 공간이 동일하고, 인디케이터가 자연스럽게 하단에 위치합니다.
 

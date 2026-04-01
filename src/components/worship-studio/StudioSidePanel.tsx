@@ -1022,13 +1022,8 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
             {/* Spacer for string lights */}
             <div className={cn("relative z-10 shrink-0", isMobile ? "h-2" : "h-6")} />
 
-            {/* Building wrapper — grass background fills side margins */}
-            <div className={cn(
-              "relative z-10 flex flex-col flex-1 min-h-0 transition-colors duration-700",
-              isNight
-                ? "bg-gradient-to-b from-[#2a4a2a] to-[#1e3a1e]"
-                : "bg-gradient-to-b from-[#6a9f4c] to-[#5a8f3c]"
-            )}>
+            {/* Building wrapper */}
+            <div className="relative z-10 flex flex-col flex-1 min-h-0">
               {/* Rooftop scene */}
               {(!collapsed || isMobile) && (
                 <div ref={isMobile ? rooftopRef : undefined} className={cn("shrink-0 relative overflow-visible", isMobile ? "mx-6" : "mx-3")}>
@@ -1075,7 +1070,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               {!collapsed && (
                 <div className={cn(
                   "shrink-0 text-center py-5 px-3 space-y-3 transition-colors duration-700 relative overflow-hidden",
-                  isMobile ? "rounded-b-xl" : "mx-0",
+                  isMobile ? "mx-6 rounded-b-xl" : "mx-0",
                   isNight
                     ? "bg-gradient-to-b from-[#1e3a1e] to-[#162e16]"
                     : "bg-gradient-to-b from-[#5a8f3c] to-[#4a7d32]"
