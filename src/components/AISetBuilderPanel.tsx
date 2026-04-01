@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTierFeature } from "@/hooks/useTierFeature";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CurationProfileChat } from "@/components/CurationProfileChat";
 
@@ -196,7 +195,7 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+      <SheetContent side="right" className="flex w-full min-w-0 flex-col sm:max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -222,42 +221,44 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 min-h-0">
-              {currentView === "form" ? (
-                <AISetBuilderForm
-                  theme={theme} setTheme={setTheme}
-                  songCount={songCount} setSongCount={setSongCount}
-                  preferredKey={preferredKey} setPreferredKey={setPreferredKey}
-                  durationMinutes={durationMinutes} setDurationMinutes={setDurationMinutes}
-                  tone={tone} setTone={setTone}
-                  serviceType={serviceType} setServiceType={setServiceType}
-                  tempoPattern={tempoPattern} setTempoPattern={setTempoPattern}
-                  isLoading={isLoading}
-                  onGenerate={handleGenerate}
-                  hasAiAccess={hasAiAccess}
-                  hasProfile={hasProfile}
-                  curationProfile={curationProfile}
-                  onEditProfile={() => setShowEditProfile(true)}
-                  language={language}
-                />
-              ) : (
-                <AISetBuilderResult
-                  result={result!}
-                  songMap={songMap}
-                  worshipArc={worshipArc}
-                />
-              )}
-            </ScrollArea>
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden">
+              <div className="w-full min-w-0 pr-1">
+                {currentView === "form" ? (
+                  <AISetBuilderForm
+                    theme={theme} setTheme={setTheme}
+                    songCount={songCount} setSongCount={setSongCount}
+                    preferredKey={preferredKey} setPreferredKey={setPreferredKey}
+                    durationMinutes={durationMinutes} setDurationMinutes={setDurationMinutes}
+                    tone={tone} setTone={setTone}
+                    serviceType={serviceType} setServiceType={setServiceType}
+                    tempoPattern={tempoPattern} setTempoPattern={setTempoPattern}
+                    isLoading={isLoading}
+                    onGenerate={handleGenerate}
+                    hasAiAccess={hasAiAccess}
+                    hasProfile={hasProfile}
+                    curationProfile={curationProfile}
+                    onEditProfile={() => setShowEditProfile(true)}
+                    language={language}
+                  />
+                ) : (
+                  <AISetBuilderResult
+                    result={result!}
+                    songMap={songMap}
+                    worshipArc={worshipArc}
+                  />
+                )}
+              </div>
+            </div>
 
             {result && (
-              <div className="flex gap-2 pt-4 border-t min-w-0 overflow-hidden">
-                <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="flex-1">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  {language === "ko" ? "다시 생성" : "Regenerate"}
+              <div className="flex w-full min-w-0 gap-2 border-t pt-4">
+                <Button variant="outline" onClick={handleGenerate} disabled={isLoading} className="min-w-0 flex-1">
+                  <RefreshCw className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="truncate">{language === "ko" ? "다시 생성" : "Regenerate"}</span>
                 </Button>
-                <Button onClick={handleUseSet} className="flex-1">
-                  <Check className="w-4 h-4 mr-2" />
-                  {language === "ko" ? "이 세트 사용" : "Use this set"}
+                <Button onClick={handleUseSet} className="min-w-0 flex-1">
+                  <Check className="mr-2 h-4 w-4 shrink-0" />
+                  <span className="truncate">{language === "ko" ? "이 세트 사용" : "Use this set"}</span>
                 </Button>
               </div>
             )}

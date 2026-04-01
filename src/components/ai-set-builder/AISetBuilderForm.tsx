@@ -44,12 +44,12 @@ export function AISetBuilderForm({
   language,
 }: AISetBuilderFormProps) {
   return (
-    <div className="space-y-4 py-4 pb-6">
+    <div className="w-full min-w-0 space-y-4 py-4 pb-6">
       {/* Profile indicator */}
       {hasProfile && (
         <button
           onClick={onEditProfile}
-          className="w-full flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+          className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-muted/50 p-2.5 text-left transition-colors hover:bg-muted"
         >
           <UserCircle className="w-4 h-4 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
@@ -64,7 +64,7 @@ export function AISetBuilderForm({
 
       {/* Locked banner */}
       {hasProfile && !hasAiAccess && (
-        <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-lg space-y-3">
+        <div className="min-w-0 space-y-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-4">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-primary/10 rounded-full">
               <Lock className="w-5 h-5 text-primary" />
@@ -77,7 +77,7 @@ export function AISetBuilderForm({
               </p>
             </div>
           </div>
-          <Link to="/membership">
+          <Link to="/membership" className="block w-full min-w-0">
             <Button variant="outline" size="sm" className="w-full">
               정식멤버 안내 보기
             </Button>
@@ -118,13 +118,17 @@ export function AISetBuilderForm({
               {TEMPO_PATTERNS.map((tp) => (
                 <label
                   key={tp.value}
-                  className="flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors has-[data-state=checked]:border-primary has-[data-state=checked]:bg-primary/5"
+                  className="flex w-full min-w-0 items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/50 cursor-pointer has-[data-state=checked]:border-primary has-[data-state=checked]:bg-primary/5"
                 >
                   <RadioGroupItem value={tp.value} />
-                  <span className="text-sm font-medium">{tp.label}</span>
-                  {tp.description && (
-                    <span className="text-xs text-muted-foreground ml-auto">{tp.description}</span>
-                  )}
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="min-w-0 flex-1 text-sm font-medium">{tp.label}</span>
+                    {tp.description && (
+                      <span className="min-w-0 max-w-[45%] break-words text-right text-xs leading-tight text-muted-foreground whitespace-normal">
+                        {tp.description}
+                      </span>
+                    )}
+                  </div>
                 </label>
               ))}
             </RadioGroup>
@@ -184,7 +188,7 @@ export function AISetBuilderForm({
           <Button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full max-w-full"
+            className="w-full min-w-0 max-w-full"
             size="default"
           >
             {isLoading ? (
