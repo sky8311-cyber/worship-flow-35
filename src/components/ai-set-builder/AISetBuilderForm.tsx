@@ -44,12 +44,12 @@ export function AISetBuilderForm({
   language,
 }: AISetBuilderFormProps) {
   return (
-    <div className="w-full min-w-0 space-y-4 py-4 pb-6">
+    <div className="w-full min-w-0 max-w-full space-y-4 py-4 pb-6">
       {/* Profile indicator */}
       {hasProfile && (
         <button
           onClick={onEditProfile}
-          className="flex w-full min-w-0 items-center gap-2 rounded-lg bg-muted/50 p-2.5 text-left transition-colors hover:bg-muted"
+          className="flex w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-lg bg-muted/50 p-2.5 text-left transition-colors hover:bg-muted"
         >
           <UserCircle className="w-4 h-4 text-primary shrink-0" />
           <div className="flex-1 min-w-0">
@@ -64,9 +64,9 @@ export function AISetBuilderForm({
 
       {/* Locked banner */}
       {hasProfile && !hasAiAccess && (
-        <div className="min-w-0 space-y-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-4">
+        <div className="w-full min-w-0 max-w-full space-y-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 p-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 bg-primary/10 rounded-full">
+            <div className="shrink-0 rounded-full bg-primary/10 p-2">
               <Lock className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -78,7 +78,7 @@ export function AISetBuilderForm({
             </div>
           </div>
           <Link to="/membership" className="block w-full min-w-0">
-            <Button variant="outline" size="sm" className="w-full">
+            <Button variant="outline" size="sm" className="w-full min-w-0 max-w-full overflow-hidden">
               정식멤버 안내 보기
             </Button>
           </Link>
@@ -87,9 +87,10 @@ export function AISetBuilderForm({
 
       {hasAiAccess && (
         <>
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>{language === "ko" ? "설교 본문/주제" : "Sermon Theme / Scripture"}</Label>
             <Input
+              className="w-full min-w-0 max-w-full"
               placeholder={language === "ko" ? "예: 은혜, 요한복음 3:16" : "e.g., Grace, John 3:16"}
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
@@ -97,10 +98,10 @@ export function AISetBuilderForm({
           </div>
 
           {/* Service Type */}
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>예배 유형</Label>
             <Select value={serviceType} onValueChange={setServiceType}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full min-w-0 max-w-full">
                 <SelectValue placeholder="예배 유형 선택 (선택사항)" />
               </SelectTrigger>
               <SelectContent>
@@ -112,19 +113,19 @@ export function AISetBuilderForm({
           </div>
 
           {/* Tempo Pattern */}
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>템포 패턴</Label>
             <RadioGroup value={tempoPattern} onValueChange={setTempoPattern} className="grid gap-2">
               {TEMPO_PATTERNS.map((tp) => (
                 <label
                   key={tp.value}
-                  className="flex w-full min-w-0 items-center gap-3 rounded-lg border p-2.5 transition-colors hover:bg-muted/50 cursor-pointer has-[data-state=checked]:border-primary has-[data-state=checked]:bg-primary/5"
+                  className="flex w-full min-w-0 max-w-full items-start gap-3 overflow-hidden rounded-lg border p-2.5 transition-colors hover:bg-muted/50 cursor-pointer has-[data-state=checked]:border-primary has-[data-state=checked]:bg-primary/5"
                 >
-                  <RadioGroupItem value={tp.value} />
-                  <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <span className="min-w-0 flex-1 text-sm font-medium">{tp.label}</span>
+                  <RadioGroupItem value={tp.value} className="shrink-0" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                    <span className="block min-w-0 truncate text-sm font-medium">{tp.label}</span>
                     {tp.description && (
-                      <span className="min-w-0 max-w-[45%] break-words text-right text-xs leading-tight text-muted-foreground whitespace-normal">
+                      <span className="block min-w-0 break-words text-xs leading-tight text-muted-foreground whitespace-normal sm:max-w-[45%] sm:text-right">
                         {tp.description}
                       </span>
                     )}
@@ -134,9 +135,10 @@ export function AISetBuilderForm({
             </RadioGroup>
           </div>
 
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>{language === "ko" ? "곡 수" : "Number of Songs"}</Label>
             <Input
+              className="w-full min-w-0 max-w-full"
               type="number"
               min={3}
               max={12}
@@ -145,10 +147,10 @@ export function AISetBuilderForm({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>{language === "ko" ? "선호 키" : "Preferred Key"}</Label>
             <Select value={preferredKey} onValueChange={setPreferredKey}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full min-w-0 max-w-full">
                 <SelectValue placeholder={language === "ko" ? "키 선택 (선택사항)" : "Select key (optional)"} />
               </SelectTrigger>
               <SelectContent>
@@ -160,9 +162,10 @@ export function AISetBuilderForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>{language === "ko" ? "예배 시간 (분)" : "Service Duration (min)"}</Label>
             <Input
+              className="w-full min-w-0 max-w-full"
               type="number"
               min={10}
               max={120}
@@ -171,10 +174,10 @@ export function AISetBuilderForm({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="min-w-0 space-y-2">
             <Label>{language === "ko" ? "분위기" : "Tone"}</Label>
             <Select value={tone} onValueChange={setTone}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full min-w-0 max-w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -188,18 +191,18 @@ export function AISetBuilderForm({
           <Button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full min-w-0 max-w-full"
+            className="w-full min-w-0 max-w-full overflow-hidden"
             size="default"
           >
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin shrink-0" />
-                <span className="truncate">{language === "ko" ? "세트 생성 중..." : "Generating..."}</span>
+                <span className="min-w-0 truncate">{language === "ko" ? "세트 생성 중..." : "Generating..."}</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4 mr-2 shrink-0" />
-                <span className="truncate">{language === "ko" ? "AI 세트 생성" : "Generate AI Set"}</span>
+                <span className="min-w-0 truncate">{language === "ko" ? "AI 세트 생성" : "Generate AI Set"}</span>
               </>
             )}
           </Button>
