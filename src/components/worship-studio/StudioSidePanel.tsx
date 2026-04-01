@@ -1075,7 +1075,7 @@ export function StudioSidePanel({ myStudioId, onStudioSelect, onMyStudioSelect, 
               {!collapsed && (
                 <div className={cn(
                   "shrink-0 text-center py-5 px-3 space-y-3 transition-colors duration-700 relative overflow-hidden",
-                  isMobile ? "mx-6 rounded-b-xl" : "mx-0",
+                  isMobile ? "rounded-b-xl" : "mx-0",
                   isNight
                     ? "bg-gradient-to-b from-[#1e3a1e] to-[#162e16]"
                     : "bg-gradient-to-b from-[#5a8f3c] to-[#4a7d32]"
