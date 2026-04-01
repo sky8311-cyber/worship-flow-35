@@ -13,7 +13,7 @@ interface AISetBuilderResultProps {
 
 export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilderResultProps) {
   return (
-    <div className="space-y-3 py-4">
+    <div className="w-full min-w-0 space-y-3 py-4 pb-6">
       {/* Worship Arc Card */}
       {worshipArc && (
         <WorshipArcCard worshipArc={worshipArc} />
@@ -23,15 +23,15 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
       {result.map((item, idx) => {
         const song = songMap[item.song_id];
         return (
-          <div key={item.song_id} className="border rounded-lg p-3 space-y-2">
+          <div key={item.song_id} className="w-full min-w-0 space-y-2 rounded-lg border p-3">
             {item.transition_note && idx > 0 && (
-              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 rounded p-2 -mt-1 mb-2">
+              <div className="-mt-1 mb-2 flex min-w-0 items-start gap-2 rounded bg-muted/50 p-2 text-xs text-muted-foreground">
                 <ArrowRight className="w-3 h-3 mt-0.5 shrink-0" />
                 <span>{item.transition_note}</span>
               </div>
             )}
 
-            <div className="flex items-start gap-3">
+            <div className="flex min-w-0 items-start gap-3">
               <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold shrink-0">
                 {item.order_position}
               </div>
@@ -42,7 +42,7 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
                 <p className="text-xs text-muted-foreground truncate">
                   {item.artist || song?.artist || ""}
                 </p>
-                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="text-xs">
                     Key: {item.key}
                   </Badge>
@@ -84,7 +84,7 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
             </div>
 
             {item.rationale && (
-              <p className="text-xs text-muted-foreground italic pl-10">
+              <p className="min-w-0 break-words pl-10 text-xs italic text-muted-foreground">
                 {item.rationale}
               </p>
             )}
