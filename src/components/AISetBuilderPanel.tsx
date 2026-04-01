@@ -222,7 +222,7 @@ export function AISetBuilderPanel({ open, onOpenChange, communityId, onAddSongs,
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 -mx-6 px-6 overflow-x-hidden">
+            <ScrollArea className="flex-1 min-h-0">
               {currentView === "form" ? (
                 <AISetBuilderForm
                   theme={theme} setTheme={setTheme}

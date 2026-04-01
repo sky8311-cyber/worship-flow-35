@@ -44,7 +44,7 @@ export function AISetBuilderForm({
   language,
 }: AISetBuilderFormProps) {
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-4 py-4 pb-6">
       {/* Profile indicator */}
       {hasProfile && (
         <button
