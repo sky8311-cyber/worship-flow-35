@@ -271,10 +271,13 @@ export const useAutoSaveDraft = ({
         setId = data.id;
       } else {
         // Update existing draft
+        // Only update if still a draft — prevents race condition where
+        // an in-flight auto-save overwrites a just-published status
         const { error } = await supabase
           .from("service_sets")
           .update(dataToSave)
-          .eq("id", setId);
+          .eq("id", setId)
+          .eq("status", "draft");
 
         if (error) throw error;
       }

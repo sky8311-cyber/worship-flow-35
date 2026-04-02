@@ -781,9 +781,13 @@ const SetBuilder = () => {
     }
   };
 
-  const confirmPublish = () => {
+  const confirmPublish = async () => {
     suppressAutoSaveRef.current = true;
     cancelPendingAutoSave();
+    // Wait for any in-flight auto-save to complete before publishing
+    if (isSaving) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
     saveSetMutation.mutate("published");
     setShowPublishConfirm(false);
   };
