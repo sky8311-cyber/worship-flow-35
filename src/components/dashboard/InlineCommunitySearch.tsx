@@ -10,7 +10,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Users, X, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-export function InlineCommunitySearch() {
+interface InlineCommunitySearchProps {
+  onClose?: () => void;
+}
+
+export function InlineCommunitySearch({ onClose }: InlineCommunitySearchProps) {
   const [query, setQuery] = useState("");
   const { user } = useAuth();
   const { t, language } = useTranslation();

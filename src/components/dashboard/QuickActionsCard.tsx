@@ -40,16 +40,18 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
               </Button>
             )}
 
-            <Button
-              variant={showSearch ? "secondary" : "outline"}
-              className="w-full justify-start"
-              onClick={() => setShowSearch(!showSearch)}
-            >
-              <Search className="w-4 h-4 mr-2" />
-              {t("community.search")}
-            </Button>
-
-            {showSearch && <InlineCommunitySearch />}
+            {showSearch ? (
+              <InlineCommunitySearch onClose={() => setShowSearch(false)} />
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setShowSearch(true)}
+              >
+                <Search className="w-4 h-4 mr-2" />
+                {t("community.search")}
+              </Button>
+            )}
 
             {showCreateCommunity && (
               <Button
