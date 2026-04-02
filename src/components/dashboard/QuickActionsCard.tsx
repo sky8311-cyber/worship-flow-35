@@ -26,7 +26,7 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
   return (
     <>
       <Card>
-        <CardContent className="p-3">
+        <CardContent className="p-3 overflow-hidden">
           <div className="space-y-2">
             {/* Worship Leader Application - Prominent placement for non-WLs */}
             {!isWorshipLeader && (

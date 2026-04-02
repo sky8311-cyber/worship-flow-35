@@ -151,9 +151,9 @@ export function InlineCommunitySearch() {
       )}
 
       {canSearch && !isLoading && communities && communities.length > 0 && (
-        <div className="space-y-1 max-h-60 overflow-y-auto">
+        <div className="space-y-1 max-h-60 overflow-y-auto overflow-x-hidden">
           {communities.map((c) => (
-            <div key={c.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent transition-colors">
+            <div key={c.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-accent transition-colors overflow-hidden">
               <Avatar className="w-8 h-8 shrink-0">
                 <AvatarImage src={c.avatar_url || undefined} />
                 <AvatarFallback className="text-xs">{c.name[0]}</AvatarFallback>
@@ -164,15 +164,15 @@ export function InlineCommunitySearch() {
                   <Users className="w-3 h-3" /> {c.member_count}
                 </p>
               </div>
-              <div className="shrink-0">
+              <div className="shrink min-w-0">
                 {isMember(c.id) ? (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs px-2"
+                    className="h-7 text-xs px-2 truncate max-w-[80px]"
                     onClick={() => navigate(`/community/${c.id}`)}
                   >
-                    {t("community.alreadyMember")}
+                    {language === "ko" ? "멤버" : "Member"}
                   </Button>
                 ) : getStatus(c.id) === "pending" ? (
                   <Button
