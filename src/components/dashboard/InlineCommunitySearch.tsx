@@ -10,7 +10,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Users, X, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-export function InlineCommunitySearch() {
+interface InlineCommunitySearchProps {
+  onClose?: () => void;
+}
+
+export function InlineCommunitySearch({ onClose }: InlineCommunitySearchProps) {
   const [query, setQuery] = useState("");
   const { user } = useAuth();
   const { t, language } = useTranslation();
@@ -125,12 +129,26 @@ export function InlineCommunitySearch() {
 
   return (
     <div className="space-y-2">
-      <SearchInput
-        placeholder={language === "ko" ? "공동체 이름 검색..." : "Search community name..."}
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        className="h-8 text-sm"
-      />
+      <div className="relative">
+        <SearchInput
+          placeholder={language === "ko" ? "공동체 이름 검색..." : "Search community name..."}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="h-8 text-sm pr-16"
+          autoFocus
+        />
+        {onClose && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute right-8 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-accent"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
       {!canSearch && (
         <p className="text-xs text-muted-foreground px-1">
