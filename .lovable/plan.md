@@ -1,24 +1,26 @@
 
 
-# 공동체 인라인 검색 잘림 수정
+# 검색 버튼을 검색창으로 전환
 
 ## 문제
-스크린샷에서 검색 결과의 오른쪽이 잘림. 원인:
-1. 멤버 상태 버튼("이미 이 예배공동체의 멤버입니다")이 길어서 `shrink-0`으로 인해 줄지 않고 부모를 넘침
-2. 결과 행이 `overflow-hidden` 없이 Card 밖으로 삐져나옴
+현재: "예배공동체 검색" 버튼 → 클릭 → 아래에 또 SearchInput이 나타남 (중복 UI)
 
 ## 변경
 
-### `src/components/dashboard/InlineCommunitySearch.tsx`
-1. **결과 행 컨테이너** (L156): `overflow-hidden` 추가
-2. **상태 버튼 영역** (L167): `shrink-0` 제거 → `shrink min-w-0` 적용하여 버튼이 줄어들 수 있게 함
-3. **멤버 상태 버튼 텍스트** (L175): 긴 텍스트 대신 짧은 라벨 사용 — `t("community.alreadyMember")`가 길면 "멤버" / "Member"로 축약, 또는 버튼에 `truncate max-w-[80px]` 적용
-4. **전체 리스트 컨테이너** (L154): `overflow-hidden` 추가
-
 ### `src/components/dashboard/QuickActionsCard.tsx`
-- Card의 `CardContent`에 `overflow-hidden` 추가하여 자식 요소가 카드 밖으로 나가지 않도록 방어
+- 검색 Button을 제거하고, 그 자리에 `SearchInput`을 직접 배치
+- `showSearch` state 제거 → `InlineCommunitySearch`에 검색어 state를 내장하되, 항상 검색창은 보이게
+- 또는: 평소에는 버튼처럼 보이다가 클릭하면 input으로 전환되는 방식
+- **채택 방식**: `showSearch`를 유지하되, true일 때 Button 대신 `InlineCommunitySearch`(검색창 포함)를 보여줌. 즉 Button이 사라지고 검색창+결과가 그 자리를 대체
 
-### 기술 요약
-- 핵심: 버튼 텍스트가 flex 컨테이너에서 줄어들지 못해서 발생한 오버플로우
-- `shrink-0` → `shrink` + `truncate`로 변경하면 좁은 화면에서도 잘림 없이 표시됨
+### `src/components/dashboard/InlineCommunitySearch.tsx`
+- `autoFocus` prop을 SearchInput에 추가 → 열리자마자 커서 진입
+- 닫기(X) 버튼 추가: 검색창 오른쪽 또는 상단에 닫기 버튼 → 클릭 시 `onClose` 콜백 호출
+- `onClose` prop 추가
+
+### 동작 흐름
+1. 사용자가 "예배공동체 검색" 버튼 클릭
+2. 버튼이 사라지고, 그 자리에 검색 input이 나타남 (autoFocus로 바로 커서)
+3. 2글자 이상 입력 시 드롭다운으로 결과 표시
+4. X 버튼 또는 input 비우기 시 → 버튼 상태로 복귀
 
