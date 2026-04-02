@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { InlineCommunitySearch } from "@/components/dashboard/InlineCommunitySearch";
 
 interface QuickActionsCardProps {
   showCreateCommunity?: boolean;
