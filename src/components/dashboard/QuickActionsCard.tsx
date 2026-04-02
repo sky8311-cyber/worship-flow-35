@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { CreateCommunityDialog } from "@/components/CreateCommunityDialog";
 import { CalendarEventDialog } from "@/components/CalendarEventDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { InlineCommunitySearch } from "@/components/dashboard/InlineCommunitySearch";
 
 interface QuickActionsCardProps {
   showCreateCommunity?: boolean;
@@ -18,6 +19,7 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
   const { isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const canCreateEvents = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
 
@@ -39,13 +41,15 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
             )}
 
             <Button
-              variant="outline"
+              variant={showSearch ? "secondary" : "outline"}
               className="w-full justify-start"
-              onClick={() => navigate("/community/search")}
+              onClick={() => setShowSearch(!showSearch)}
             >
               <Search className="w-4 h-4 mr-2" />
               {t("community.search")}
             </Button>
+
+            {showSearch && <InlineCommunitySearch />}
 
             {showCreateCommunity && (
               <Button

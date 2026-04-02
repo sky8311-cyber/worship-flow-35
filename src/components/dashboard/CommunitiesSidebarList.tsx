@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, ChevronRight } from "lucide-react";
+import { Users, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -24,14 +25,15 @@ interface CommunitiesSidebarListProps {
 }
 
 export function CommunitiesSidebarList({ communities, maxVisible = 5, currentCommunityId }: CommunitiesSidebarListProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { user, isAdmin } = useAuth();
+  const [expanded, setExpanded] = useState(false);
 
   if (!communities || communities.length === 0) {
     return null;
   }
 
-  const visibleCommunities = communities.slice(0, maxVisible);
+  const visibleCommunities = expanded ? communities : communities.slice(0, maxVisible);
   const hasMore = communities.length > maxVisible;
 
   return (
@@ -89,10 +91,23 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5, currentCom
         </div>
 
         {hasMore && (
-          <Button variant="ghost" size="sm" className="w-full mt-2" asChild>
-            <Link to="/community/search">
-              {t("common.seeAll")} ({communities.length})
-            </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp className="w-3 h-3 mr-1" />
+                {language === "ko" ? "접기" : "Show less"}
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3 h-3 mr-1" />
+                {t("common.seeAll")} ({communities.length})
+              </>
+            )}
           </Button>
         )}
       </CardContent>
