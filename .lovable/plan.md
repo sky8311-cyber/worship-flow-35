@@ -1,39 +1,40 @@
 
-AI 워십세트 패널 재수정 계획
 
-진단
-- 이번엔 `AISetBuilderPanel`, `AISetBuilderForm`, `AISetBuilderResult`, 공용 `sheet`, `scroll-area`까지 다시 확인했습니다.
-- 이전 수정은 `-mx-6` 쪽만 건드렸지만, 실제 핵심 원인은 form/result 영역에 쓰인 `ScrollArea`입니다.
-- 현재 구조에서는 커스텀 세로 스크롤바 레일이 콘텐츠 영역 안쪽을 차지해서, `w-full`인 Input / Select / Button의 오른쪽이 430px 모바일에서 계속 잘려 보일 수 있습니다.
-- 그래서 필드와 버튼 박스가 모두 같은 방향으로 잘리는 증상이 반복된 것입니다. 이번에는 이 레이어를 직접 고칩니다.
+# 공동체 검색: 인라인 드롭다운 방식으로 변경
 
-변경 계획
-1. `src/components/AISetBuilderPanel.tsx`
-   - form/result 구간의 `ScrollArea`를 제거하고, 로컬 `div` 스크롤 컨테이너로 교체합니다.
-   - 구조를 `flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden` 기준으로 정리해 커스텀 스크롤바가 필드 위를 덮지 않게 합니다.
-   - 하단 액션 버튼 영역도 같은 너비 기준으로 맞춰서 body/footer가 서로 다른 폭으로 보이지 않게 정리합니다.
-   - 공용 `ScrollArea`나 `Sheet`는 이번 이슈 때문에 전역 수정하지 않습니다.
+## 요약
+"공동체 검색" 버튼 클릭 시 별도 페이지(`/community/search`)로 이동하지 않고, **사이드바 안에서 검색 입력창이 펼쳐지고, 검색어를 입력해야만 결과가 표시**되는 인라인 방식으로 변경합니다.
 
-2. `src/components/ai-set-builder/AISetBuilderForm.tsx`
-   - 최상위 래퍼를 `w-full min-w-0` 기준으로 보강합니다.
-   - 프로필 카드, 잠금 배너, 생성 버튼을 모두 동일한 width 규칙으로 맞춥니다.
-   - 템포 패턴 행은 모바일에서 안전하게 보이도록 내부 텍스트 영역에 `min-w-0`를 주고, 설명 텍스트는 필요 시 줄바꿈/축소되게 정리합니다.
-   - 현재 짧게 바꾼 로딩 텍스트와 truncate는 유지합니다.
+## 핵심 동작
+- 검색 버튼 클릭 → 버튼 아래에 `SearchInput`이 펼쳐짐 (토글)
+- 검색어가 비어 있으면 결과 없음 (전체 목록 노출 안 함)
+- 검색어 2글자 이상 입력 시 DB에서 이름/설명 매칭되는 공동체만 표시
+- 각 결과에 "가입 신청" / "승인 대기" / "이미 멤버" 상태 표시 (기존 CommunitySearch 페이지 로직 재활용)
+- 가입 신청/취소 액션도 인라인에서 바로 처리
 
-3. `src/components/ai-set-builder/AISetBuilderResult.tsx`
-   - 결과 카드도 `min-w-0` 기준으로 정리해서 동일한 우측 잘림이 생기지 않게 합니다.
-   - 하단 “다시 생성 / 이 세트 사용” 버튼은 텍스트가 길어져도 박스가 깨지지 않도록 내부 텍스트 truncate 처리를 같이 맞춥니다.
+## 변경 파일
 
-검증 기준
-- 430px 모바일 기준으로 아래 항목의 오른쪽 border와 rounded corner가 전부 정상 노출되어야 합니다.
-  - 설교 본문/주제 input
-  - 예배 유형 / 선호 키 / 분위기 select
-  - 곡 수 / 예배 시간 input
-  - 템포 패턴 카드
-  - AI 세트 생성 버튼
-  - 결과 화면 하단 2개 버튼
-- form 화면과 result 화면 둘 다 확인 대상으로 잡겠습니다.
+### 1. 새 컴포넌트: `src/components/dashboard/InlineCommunitySearch.tsx`
+- `QuickActionsCard` 내부에서 사용할 인라인 검색 컴포넌트
+- 검색어 state → 2글자 이상일 때만 `useQuery`로 공동체 검색 (활성 공동체만, `is_active = true`)
+- 검색어가 비어있으면 "검색어를 입력하세요" 안내 텍스트만 표시
+- 결과 리스트: 공동체 이름, 멤버 수, 가입 상태/버튼
+- 가입 신청/취소 mutation은 기존 `CommunitySearch.tsx`에서 로직 가져옴
 
-기술 메모
-- 이번 수정은 “여백 숫자 미세조정”이 아니라, 잘림을 만드는 레이아웃 원인 자체를 바꾸는 계획입니다.
-- 즉, `ScrollArea` 내부에서 full-width 폼을 계속 렌더링하는 구조를 걷어내고, AI 세트 패널만 안전한 모바일 스크롤 레이아웃으로 재구성하는 방향입니다.
+### 2. 수정: `src/components/dashboard/QuickActionsCard.tsx`
+- `navigate("/community/search")` 제거
+- 검색 버튼 클릭 시 `showSearch` state 토글
+- `showSearch`가 true일 때 `InlineCommunitySearch` 컴포넌트 렌더링
+
+### 3. 수정: `src/components/dashboard/CommunitiesSidebarList.tsx`
+- "더보기" 링크(`/community/search`)를 제거하거나, 같은 인라인 검색을 트리거하는 방식으로 변경
+- 또는 단순히 `maxVisible`을 넘는 커뮤니티는 "더보기" 클릭 시 나머지를 펼치는 방식으로 변경 (전체 목록 노출이지만 이미 가입한 공동체이므로 문제 없음)
+
+### 4. `/community/search` 라우트는 유지
+- 다른 진입점(온보딩 다이얼로그, 뉴스피드 등)에서 아직 사용 중
+- 단, 해당 페이지도 검색어 없으면 결과를 표시하지 않도록 수정 (전체 목록 노출 방지)
+
+## 기술 메모
+- 검색 쿼리: `supabase.from("worship_communities").select("id, name, description, avatar_url").eq("is_active", true).ilike("name", `%${query}%`)` — 서버사이드 필터링으로 전체 목록 전송 방지
+- 결과 최대 20건 `.limit(20)` 적용
+
