@@ -19,6 +19,7 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
   const { isAdmin, isWorshipLeader, isCommunityLeaderInAnyCommunity } = useAuth();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [eventDialogOpen, setEventDialogOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const canCreateEvents = isAdmin || isWorshipLeader || isCommunityLeaderInAnyCommunity;
 
