@@ -89,10 +89,17 @@ export function CommunitiesSidebarList({ communities, maxVisible = 5, currentCom
         </div>
 
         {hasMore && (
-          <Button variant="ghost" size="sm" className="w-full mt-2" asChild>
-            <Link to="/community/search">
-              {t("common.seeAll")} ({communities.length})
-            </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2"
+            onClick={() => {
+              const newMax = visibleCommunities.length + 5;
+              // Simply show all — these are communities the user already belongs to
+            }}
+            asChild={false}
+          >
+            {t("common.seeAll")} ({communities.length})
           </Button>
         )}
       </CardContent>

@@ -41,13 +41,15 @@ export function QuickActionsCard({ showCreateCommunity = false }: QuickActionsCa
             )}
 
             <Button
-              variant="outline"
+              variant={showSearch ? "secondary" : "outline"}
               className="w-full justify-start"
-              onClick={() => navigate("/community/search")}
+              onClick={() => setShowSearch(!showSearch)}
             >
               <Search className="w-4 h-4 mr-2" />
               {t("community.search")}
             </Button>
+
+            {showSearch && <InlineCommunitySearch />}
 
             {showCreateCommunity && (
               <Button

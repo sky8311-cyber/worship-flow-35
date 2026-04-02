@@ -56,8 +56,8 @@ export default function CommunitySearch() {
         member_count: counts?.[c.id] || 0
       }));
       
-      // Client-side filtering (name, description, owner name)
-      if (!searchQuery) return enrichedCommunities;
+      // Don't show any results without a search query (prevent full list exposure)
+      if (!searchQuery || searchQuery.trim().length < 2) return [];
       
       const lowerQuery = searchQuery.toLowerCase();
       return enrichedCommunities.filter(c => 
