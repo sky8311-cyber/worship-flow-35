@@ -17,7 +17,8 @@ import {
   CreditCard,
   ArrowRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RotateCcw
 } from "lucide-react";
 import {
   Carousel,
