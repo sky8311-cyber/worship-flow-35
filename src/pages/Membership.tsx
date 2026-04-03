@@ -558,6 +558,31 @@ const Membership = () => {
           </Carousel>
         </div>
 
+        {/* Restore Purchases — required by Apple for native iOS */}
+        {nativeIOS && (
+          <div className="text-center mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={async () => {
+                try {
+                  await restorePurchases();
+                  queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
+                  queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
+                  toast.success(language === "ko" ? "구매 내역이 복원되었습니다" : "Purchases restored");
+                } catch {
+                  toast.error(language === "ko" ? "복원에 실패했습니다" : "Failed to restore purchases");
+                }
+              }}
+              disabled={rcLoading}
+            >
+              {rcLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+              {language === "ko" ? "구매 내역 복원" : "Restore Purchases"}
+            </Button>
+          </div>
+        )}
+
         {/* Quick Links for existing subscribers */}
         {(isPremium || isChurch) && (
           <div className="mt-8 pt-6 border-t text-center">
