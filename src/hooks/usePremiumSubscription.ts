@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { isNativeIOS } from "@/utils/platform";
 
 interface PremiumSubscriptionStatus {
   isSubscribed: boolean;
@@ -76,14 +77,31 @@ export function usePremiumSubscription(): PremiumSubscriptionStatus & { isLoadin
       const isActive = status === "active" || (isTrial ?? false);
       const canStartTrial = !status || status === "inactive" || status === "";
 
+      // On native iOS, also check RevenueCat entitlements
+      let nativeIsActive = false;
+      if (isNativeIOS()) {
+        try {
+          const { Purchases } = await import("@revenuecat/purchases-capacitor");
+          const { customerInfo } = await Purchases.getCustomerInfo();
+          const premiumEntitlement = customerInfo?.entitlements?.active?.["premium"];
+          if (premiumEntitlement && premiumEntitlement.isActive) {
+            nativeIsActive = true;
+          }
+        } catch (err) {
+          console.warn("[Premium] RevenueCat check failed, using DB only:", err);
+        }
+      }
+
+      const finalIsActive = isActive || nativeIsActive;
+
       return {
-        isSubscribed: isActive,
-        isActive: status === "active",
+        isSubscribed: finalIsActive,
+        isActive: status === "active" || nativeIsActive,
         isTrial: isTrial || false,
         trialDaysRemaining,
         subscriptionStatus: status,
         subscriptionEnd: currentPeriodEnd,
-        canStartTrial,
+        canStartTrial: canStartTrial && !nativeIsActive,
       };
     },
     enabled: !!user?.id,

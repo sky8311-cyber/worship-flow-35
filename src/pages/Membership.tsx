@@ -17,7 +17,8 @@ import {
   CreditCard,
   ArrowRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RotateCcw
 } from "lucide-react";
 import {
   Carousel,
@@ -35,6 +36,8 @@ import { useTierFeature, TIER_HIERARCHY, type TierLevel } from "@/hooks/useTierF
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isNativeIOS } from "@/utils/platform";
+import { useRevenueCat } from "@/hooks/useRevenueCat";
 
 type PlanId = "team-member" | "basic-member" | "full-member" | "community-account";
 
@@ -70,6 +73,14 @@ const Membership = () => {
   const { product: churchProduct } = useMembershipProduct("community_account");
 
   const [isLoading, setIsLoading] = useState<PlanId | null>(null);
+  const nativeIOS = isNativeIOS();
+  const { 
+    purchasePackage, 
+    restorePurchases, 
+    getPremiumPackage, 
+    getChurchPackage, 
+    isLoading: rcLoading 
+  } = useRevenueCat();
 
   // Access control: Only Admin or Sandbox Tester can access this page
   if (!settingsLoading && !isAdmin && !isSandboxTester) {
@@ -107,10 +118,23 @@ const Membership = () => {
   const handlePremiumSubscribe = async () => {
     setIsLoading("full-member");
     try {
-      const { data, error } = await supabase.functions.invoke("create-premium-checkout");
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      if (nativeIOS) {
+        // Use RevenueCat for native iOS IAP
+        const pkg = getPremiumPackage();
+        if (!pkg) {
+          toast.error(language === "ko" ? "상품을 불러올 수 없습니다" : "Could not load product");
+          return;
+        }
+        await purchasePackage(pkg);
+        toast.success(language === "ko" ? "정식 멤버 가입 완료!" : "Full Member activated!");
+        queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
+      } else {
+        // Use Stripe for web
+        const { data, error } = await supabase.functions.invoke("create-premium-checkout");
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
       }
     } catch (error) {
       console.error("Premium checkout error:", error);
@@ -533,6 +557,31 @@ const Membership = () => {
             </div>
           </Carousel>
         </div>
+
+        {/* Restore Purchases — required by Apple for native iOS */}
+        {nativeIOS && (
+          <div className="text-center mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground"
+              onClick={async () => {
+                try {
+                  await restorePurchases();
+                  queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
+                  queryClient.invalidateQueries({ queryKey: ["church-subscription-status"] });
+                  toast.success(language === "ko" ? "구매 내역이 복원되었습니다" : "Purchases restored");
+                } catch {
+                  toast.error(language === "ko" ? "복원에 실패했습니다" : "Failed to restore purchases");
+                }
+              }}
+              disabled={rcLoading}
+            >
+              {rcLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+              {language === "ko" ? "구매 내역 복원" : "Restore Purchases"}
+            </Button>
+          </div>
+        )}
 
         {/* Quick Links for existing subscribers */}
         {(isPremium || isChurch) && (
