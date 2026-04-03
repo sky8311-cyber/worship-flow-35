@@ -1,67 +1,112 @@
 
 
-# 게시 후 상태가 "작성중"으로 되돌아가는 버그 분석 및 수정
+# iOS App Store In-App Subscription Purchases
 
-## 문제 원인
+## Overview
 
-**Auto-save와 Publish 사이의 Race Condition**
+Add native iOS in-app subscription purchases using **RevenueCat** (`@revenuecat/purchases-capacitor`). This lets users upgrade their membership (Full Member, Community Account) directly through Apple's payment system when using the iOS app, while keeping Stripe for web users.
 
-`useAutoSaveDraft.ts` 259번 줄에서 auto-save는 **항상 `status: "draft"`로 저장**합니다. 게시 시 다음 시나리오가 발생할 수 있습니다:
+## Architecture
 
 ```text
-시간 →
-1. Auto-save debounce 타이머 발동 (status 아직 "draft")
-2. Auto-save mutation 시작 → DB에 status: "draft" 쓰기 시작
-3. 사용자가 "게시" 클릭 → confirmPublish() 호출
-4. suppressAutoSaveRef = true, cancelPendingAutoSave() — 이미 in-flight인 mutation은 취소 불가
-5. saveSetMutation 실행 → DB에 status: "published" 저장
-6. Auto-save mutation이 뒤늦게 완료 → status: "draft"로 덮어씀 ← 버그!
+┌─────────────────────────────────────────────────┐
+│  Membership.tsx / Upgrade UI                    │
+│                                                 │
+│  if (native iOS)  → RevenueCat purchase flow    │
+│  if (web)         → Stripe checkout (existing)  │
+└─────────────────────────────────────────────────┘
+         │                        │
+         ▼                        ▼
+   Apple App Store           Stripe API
+         │                        │
+         ▼                        ▼
+   RevenueCat Server ──webhook──► Edge Function
+         │                           │
+         └───────────────────────────┘
+                     │
+              premium_subscriptions
+              church_accounts tables
 ```
 
-결과: DB에는 `status: "draft"`가 저장되어 있지만, UI의 React state는 `"published"`로 표시 → "게시취소" 버튼이 보임. 다른 사용자가 접근하면 RLS 정책(`status = 'published'` 조건)에 의해 "접근 권한 없음" 표시.
+## Steps
 
-## 수정 계획
+### 1. Install RevenueCat Capacitor Plugin
+- Add `@revenuecat/purchases-capacitor` dependency
+- This wraps StoreKit for iOS (and Google Play for future Android)
 
-### 1. `src/hooks/useAutoSaveDraft.ts` — Auto-save에 published 상태 보호 추가
-- `mutationFn` 시작 부분(line ~219)에서 `statusRef.current` 체크 외에, **실제 DB 상태도 확인**하는 안전장치 추가
-- 기존 세트 업데이트 시, 현재 DB의 status가 `"published"`이면 auto-save를 건너뛰도록 처리
-- 이렇게 하면 in-flight auto-save가 publish 후 완료되더라도 DB 상태를 덮어쓰지 않음
+### 2. Create Platform Detection Utility
+- New file: `src/utils/platform.ts`
+- Export `isNativeIOS()` using Capacitor's `Capacitor.isNativePlatform()` + platform check
+- Used throughout the app to branch between native IAP and Stripe
 
-### 2. `src/pages/SetBuilder.tsx` — Publish 전 auto-save mutation 완료 대기
-- `confirmPublish`에서 auto-save mutation이 현재 진행 중인지 확인하고, 진행 중이면 완료를 기다린 후 publish 실행
-- 또는 `saveSetMutation`에서 publish 시 항상 최신 DB 상태를 먼저 확인
+### 3. Create RevenueCat Service Hook
+- New file: `src/hooks/useRevenueCat.ts`
+- Initialize RevenueCat SDK with your API key on app startup
+- Identify user with their Supabase auth user ID
+- Expose: `getOfferings()`, `purchasePackage()`, `getCustomerInfo()`, `restorePurchases()`
+- Map RevenueCat entitlements to your tier system (full_membership → premium, community_account → church)
 
-### 기술 상세
+### 4. Create RevenueCat Webhook Edge Function
+- New file: `supabase/functions/revenuecat-webhook/index.ts`
+- Receives events from RevenueCat (INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION)
+- Updates `premium_subscriptions` / `church_accounts` tables with `payment_gateway: "apple"` metadata
+- Validates webhook authenticity via shared secret
 
-**방법 A (권장)**: auto-save update 쿼리에 `.eq("status", "draft")` 조건 추가
+### 5. Update Membership Page for Native Purchases
+- Modify `src/pages/Membership.tsx`
+- When `isNativeIOS()` is true:
+  - Replace Stripe checkout buttons with RevenueCat purchase flow
+  - Show Apple-formatted pricing from RevenueCat offerings
+  - Add "Restore Purchases" button (required by Apple)
+- When on web: keep existing Stripe flow unchanged
 
-```typescript
-// useAutoSaveDraft.ts line ~274
-const { error } = await supabase
-  .from("service_sets")
-  .update(dataToSave)
-  .eq("id", setId)
-  .eq("status", "draft");  // ← published 상태면 업데이트 안 됨
-```
+### 6. Update Subscription Status Hook
+- Modify `src/hooks/usePremiumSubscription.ts`
+- On native iOS: also check RevenueCat customer info for active entitlements
+- Merge with existing DB-based status check (webhook keeps DB in sync)
 
-이 한 줄 추가로 auto-save가 이미 published된 세트를 draft로 되돌리는 것을 DB 레벨에서 방지합니다. 가장 안전하고 간단한 수정입니다.
+### 7. Store RevenueCat API Key as Secret
+- Use `add_secret` tool for `REVENUECAT_API_KEY` (public iOS API key for the SDK)
+- Use `add_secret` for `REVENUECAT_WEBHOOK_SECRET` (for webhook verification)
 
-**방법 B (추가 안전장치)**: `confirmPublish`에서 auto-save mutation이 진행 중일 때 대기
+## Apple / RevenueCat Setup (Manual — on your Mac)
 
-```typescript
-const confirmPublish = async () => {
-  suppressAutoSaveRef.current = true;
-  cancelPendingAutoSave();
-  // auto-save가 in-flight이면 완료까지 잠시 대기
-  if (autoSaveIsSaving) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-  saveSetMutation.mutate("published");
-  setShowPublishConfirm(false);
-};
-```
+You'll need to do these steps yourself:
 
-### 변경 파일
-- `src/hooks/useAutoSaveDraft.ts` — update 쿼리에 `.eq("status", "draft")` 조건 추가
-- `src/pages/SetBuilder.tsx` — confirmPublish에 auto-save 완료 대기 로직 추가 (선택적)
+1. **Apple Developer Console** → App Store Connect:
+   - Create your app record if not already done
+   - Go to **Subscriptions** → Create subscription groups
+   - Add products: `full_membership_yearly` ($49.99/yr) and `community_account_monthly` ($39.99/mo)
+
+2. **RevenueCat Dashboard** (free account at revenuecat.com):
+   - Create a project, add iOS app with your Bundle ID `app.kworship.main`
+   - Connect App Store credentials (shared secret from App Store Connect)
+   - Create **Entitlements**: `premium` and `church`
+   - Create **Offerings** with the subscription products
+   - Set up **Webhook** URL pointing to your edge function
+   - Copy the **Public iOS API Key**
+
+3. **Xcode** (after git pull):
+   - Enable **In-App Purchase** capability
+   - Set Swift Language Version ≥ 5.0
+   - `npx cap sync ios` to sync plugin
+
+## Files Changed/Created
+
+| File | Action |
+|------|--------|
+| `package.json` | Add `@revenuecat/purchases-capacitor` |
+| `src/utils/platform.ts` | New — platform detection |
+| `src/hooks/useRevenueCat.ts` | New — RevenueCat SDK wrapper |
+| `supabase/functions/revenuecat-webhook/index.ts` | New — webhook handler |
+| `src/pages/Membership.tsx` | Modified — branch IAP vs Stripe |
+| `src/hooks/usePremiumSubscription.ts` | Modified — native entitlement check |
+| `capacitor.config.ts` | No changes needed |
+
+## Technical Notes
+
+- RevenueCat is free up to $2,500/mo revenue — ideal for starting out
+- Apple requires a "Restore Purchases" button — we'll add it on the Membership page (native only)
+- Apple takes 15-30% commission on IAP — pricing may need adjustment
+- The webhook keeps the database in sync so existing tier/feature-gate logic works unchanged
 
