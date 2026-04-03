@@ -73,6 +73,14 @@ const Membership = () => {
   const { product: churchProduct } = useMembershipProduct("community_account");
 
   const [isLoading, setIsLoading] = useState<PlanId | null>(null);
+  const nativeIOS = isNativeIOS();
+  const { 
+    purchasePackage, 
+    restorePurchases, 
+    getPremiumPackage, 
+    getChurchPackage, 
+    isLoading: rcLoading 
+  } = useRevenueCat();
 
   // Access control: Only Admin or Sandbox Tester can access this page
   if (!settingsLoading && !isAdmin && !isSandboxTester) {
