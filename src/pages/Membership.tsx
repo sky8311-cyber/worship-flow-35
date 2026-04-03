@@ -118,10 +118,23 @@ const Membership = () => {
   const handlePremiumSubscribe = async () => {
     setIsLoading("full-member");
     try {
-      const { data, error } = await supabase.functions.invoke("create-premium-checkout");
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      if (nativeIOS) {
+        // Use RevenueCat for native iOS IAP
+        const pkg = getPremiumPackage();
+        if (!pkg) {
+          toast.error(language === "ko" ? "상품을 불러올 수 없습니다" : "Could not load product");
+          return;
+        }
+        await purchasePackage(pkg);
+        toast.success(language === "ko" ? "정식 멤버 가입 완료!" : "Full Member activated!");
+        queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
+      } else {
+        // Use Stripe for web
+        const { data, error } = await supabase.functions.invoke("create-premium-checkout");
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, "_blank");
+        }
       }
     } catch (error) {
       console.error("Premium checkout error:", error);
