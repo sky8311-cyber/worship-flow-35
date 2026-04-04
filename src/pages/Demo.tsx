@@ -287,7 +287,7 @@ const Demo = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => openYouTubeUrl(song.youtube_url, playYouTube)}
+                          onClick={() => openYouTubeUrl(song.youtube_url)}
                           title="YouTube"
                         >
                           <Youtube className="h-4 w-4 text-red-500" />
