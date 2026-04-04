@@ -65,4 +65,4 @@ Disallow: /band-view
 Sitemap: https://kworship.app/sitemap.xml
 
 # RSS Feed location
-RSS-Feed: https://kworship.app/rss.xml
+RSS-Feed: https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed
