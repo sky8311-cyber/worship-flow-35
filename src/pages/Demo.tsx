@@ -10,7 +10,6 @@ import { DemoSignupCTA } from "@/components/demo/DemoSignupCTA";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useSongCart } from "@/contexts/SongCartContext";
-import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { Link } from "react-router-dom";
 import {
