@@ -20,7 +20,11 @@ export const NewsShareButtons = ({ url, title, variant = "dropdown" }: NewsShare
   const { language } = useTranslation();
   const [copied, setCopied] = useState(false);
 
-  const fullUrl = url.startsWith("http") ? url : `https://kworship.app${url}`;
+  // Extract slug from /news/slug path for OG edge function
+  const newsSlugMatch = url.match(/^\/news\/(.+)$/);
+  const fullUrl = newsSlugMatch
+    ? `https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/og-news/${newsSlugMatch[1]}`
+    : url.startsWith("http") ? url : `https://kworship.app${url}`;
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(fullUrl);
