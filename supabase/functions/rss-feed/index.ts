@@ -53,13 +53,13 @@ Deno.serve(async (req) => {
     const items = (posts || []).map((post) => {
       const title = post.title_ko || post.title;
       const description = post.excerpt_ko || post.excerpt || (post.content_ko || post.content).substring(0, 200);
-      const link = post.external_url || `${baseUrl}/news/${post.slug}`;
+      const link = `${baseUrl}/news/${post.slug}`;
       const pubDate = post.published_at ? new Date(post.published_at).toUTCString() : new Date().toUTCString();
 
       return `    <item>
       <title><![CDATA[${title}]]></title>
       <link>${escapeXml(link)}</link>
-      <guid isPermaLink="${!post.external_url}">${escapeXml(link)}</guid>
+      <guid isPermaLink="true">${escapeXml(link)}</guid>
       <pubDate>${pubDate}</pubDate>
       <description><![CDATA[${description}]]></description>
       <category>${post.category}</category>
