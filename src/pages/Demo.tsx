@@ -23,7 +23,6 @@ const DEMO_LIMIT = 100;
 const Demo = () => {
   const { t, language } = useTranslation();
   const { isInCart, toggleCart, cartCount } = useSongCart();
-  const { playYouTube } = useMusicPlayer();
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [ctaOpen, setCtaOpen] = useState(false);
