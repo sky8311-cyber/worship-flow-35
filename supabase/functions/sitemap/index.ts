@@ -11,7 +11,7 @@ const staticPages = [
   { loc: "/", changefreq: "weekly", priority: "1.0", hreflang: true },
   { loc: "/app", changefreq: "weekly", priority: "0.9" },
   { loc: "/features", changefreq: "monthly", priority: "0.9", hreflang: true },
-  { loc: "/login", changefreq: "monthly", priority: "0.7" },
+  
   { loc: "/signup", changefreq: "monthly", priority: "0.8" },
   { loc: "/help", changefreq: "monthly", priority: "0.6", hreflang: true },
   { loc: "/legal", changefreq: "yearly", priority: "0.3" },

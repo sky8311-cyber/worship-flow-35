@@ -39,6 +39,10 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
+# Naver Search Crawler
+User-agent: Yeti
+Allow: /
+
 # All other crawlers
 User-agent: *
 Allow: /
