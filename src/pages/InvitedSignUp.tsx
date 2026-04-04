@@ -133,9 +133,12 @@ const InvitedSignUp = () => {
         return;
       }
       
+      const msg = error.message?.toLowerCase().includes("weak") || error.message?.toLowerCase().includes("leaked")
+        ? t("auth.weakPassword")
+        : error.message;
       toast({
         title: t("auth.error"),
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
       setLoading(false);
