@@ -433,7 +433,7 @@ const Demo = () => {
         <ScorePreviewDialog
           open={scorePreviewOpen}
           onOpenChange={setScorePreviewOpen}
-          scores={selectedSong.song_scores || []}
+          scoreUrl={selectedSong.song_scores?.[0]?.file_url || null}
           songTitle={selectedSong.title}
           songId={selectedSong.id}
         />
