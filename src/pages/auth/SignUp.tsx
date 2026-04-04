@@ -211,7 +211,7 @@ const SignUp = () => {
         descriptionKo="K-Worship 무료 계정을 만드세요. 지금 바로 찬양곡을 관리하고, 콘티를 제작하고, 팀과 협업을 시작하세요."
         canonicalPath="/signup"
         keywords="K-Worship signup, create account, worship leader, church worship team"
-        keywordsKo="K-Worship 회원가입, 계정 만들기, 예배 인도자, 교회 찬양팀"
+        keywordsKo="K-Worship 회원가입, 계정 만들기, 예배 인도자, 교회 찬양팀, 피아워십"
       />
       <div className="absolute top-4 right-4">
         <LanguageToggle />

@@ -74,7 +74,7 @@ const News = () => {
         description="Latest news, updates, and press releases from K-Worship - the all-in-one worship team platform."
         descriptionKo="K-Worship의 최신 소식, 기능 업데이트, 보도자료를 확인하세요."
         keywords="K-Worship news, worship app updates, K-Worship blog, press releases"
-        keywordsKo="K-Worship 뉴스, 케이워십 업데이트, 블로그, 보도자료"
+        keywordsKo="K-Worship 뉴스, 케이워십 업데이트, 블로그, 보도자료, 피아워십"
         canonicalPath="/news"
         jsonLd={newsListSchema}
         breadcrumbs={[
