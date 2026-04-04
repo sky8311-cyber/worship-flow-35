@@ -256,7 +256,7 @@ const AdminNews = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <a href="https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed" target="_blank" rel="noopener noreferrer">
+              <a href="https://kworship.app/rss.xml" target="_blank" rel="noopener noreferrer">
                 <Rss className="h-4 w-4 mr-2" />
                 RSS
               </a>

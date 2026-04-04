@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>K-Worship 뉴스</title>
+    <link>https://kworship.app/news</link>
+    <description>예배팀을 위한 통합 플랫폼 K-Worship의 최신 소식</description>
+    <language>ko</language>
+    <lastBuildDate>Sat, 04 Apr 2026 06:49:11 GMT</lastBuildDate>
+    <atom:link href="https://kworship.app/rss.xml" rel="self" type="application/rss+xml"/>
+    <image>
+      <url>https://kworship.app/kworship-icon.png</url>
+      <title>K-Worship 뉴스</title>
+      <link>https://kworship.app</link>
+    </image>
+    <item>
+      <title><![CDATA[찬양을 준비하는 시간, 그 수고는 어디에 남는가?]]></title>
+      <link>https://www.kmissioncanada.ca/post/찬양을-준비하는-시간-그-수고는-어디에-남는가-2</link>
+      <guid isPermaLink="false">https://www.kmissioncanada.ca/post/찬양을-준비하는-시간-그-수고는-어디에-남는가-2</guid>
+      <pubDate>Fri, 03 Apr 2026 22:48:00 GMT</pubDate>
+      <description><![CDATA[K-Worship은 숙달된 예배 인도자들이 실제 예배 현장에서 선택하는 찬양곡과 콘티를 데이터로 축적함으로써, 다음 세대 예배 인도자들에게 한국교회 예배의 흐름과 영성을 전수하는 것을 목표로 한다.]]></description>
+      <category>press</category>
+    </item>
+    <item>
+      <title><![CDATA[K-Worship Institute 개발 중 — 워십 교육의 미래를 만듭니다]]></title>
+      <link>https://kworship.app/news/kworship-institute-coming-soon</link>
+      <guid isPermaLink="true">https://kworship.app/news/kworship-institute-coming-soon</guid>
+      <pubDate>Fri, 03 Apr 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[K-Worship Institute를 개발하고 있습니다. 예배 인도자와 팀원을 위한 통합 교육 플랫폼으로, 코스, 인증, 학습 경로를 곧 선보입니다.]]></description>
+      <category>news</category>
+    </item>
+    <item>
+      <title><![CDATA[예배 준비 시간을 절반으로 줄이는 디지털 도구 활용법]]></title>
+      <link>https://kworship.app/news/cut-worship-prep-time-in-half-with-digital-tools</link>
+      <guid isPermaLink="true">https://kworship.app/news/cut-worship-prep-time-in-half-with-digital-tools</guid>
+      <pubDate>Thu, 02 Apr 2026 05:53:09 GMT</pubDate>
+      <description><![CDATA[디지털 도구를 사용하여 교회의 예배 준비 시간을 획기적으로 줄이고, 계획, 소통, 스케줄링을 간소화하여 더 효율적이고 영적으로 집중된 사역을 경험하세요.]]></description>
+      <category>blog</category>
+    </item>
+    <item>
+      <title><![CDATA[Planning Center vs K-Worship — 한국 교회에 맞는 도구는?]]></title>
+      <link>https://kworship.app/news/planning-center-vs-kworship-which-fits-korean-churches</link>
+      <guid isPermaLink="true">https://kworship.app/news/planning-center-vs-kworship-which-fits-korean-churches</guid>
+      <pubDate>Tue, 31 Mar 2026 05:53:09 GMT</pubDate>
+      <description><![CDATA[Planning Center와 K-Worship을 비교하여 한국 교회에 가장 적합한 예배 관리 프로그램을 알아보세요. 언어 지원, 예배 콘텐츠, 문화적 적합성을 살펴봅니다.]]></description>
+      <category>blog</category>
+    </item>
+    <item>
+      <title><![CDATA[찬양팀 협업이 어려운 이유와 해결법]]></title>
+      <link>https://kworship.app/news/why-worship-team-collaboration-is-hard-and-how-to-fix-it</link>
+      <guid isPermaLink="true">https://kworship.app/news/why-worship-team-collaboration-is-hard-and-how-to-fix-it</guid>
+      <pubDate>Sun, 29 Mar 2026 05:53:08 GMT</pubDate>
+      <description><![CDATA[찬양팀 협업이 일정 충돌, 소통 문제 등으로 어려움을 겪는 이유를 알아보고 해결책을 찾아보세요. K-Worship이 팀의 효율적인 작업 흐름을 어떻게 돕는지 확인하세요.]]></description>
+      <category>blog</category>
+    </item>
+    <item>
+      <title><![CDATA[예배 인도자를 위한 곡 선곡 팁 5가지]]></title>
+      <link>https://kworship.app/news/5-song-selection-tips-for-worship-leaders</link>
+      <guid isPermaLink="true">https://kworship.app/news/5-song-selection-tips-for-worship-leaders</guid>
+      <pubDate>Fri, 27 Mar 2026 05:53:08 GMT</pubDate>
+      <description><![CDATA[예배 인도자를 위한 효과적인 찬양 선곡 팁 5가지를 알아보세요. 회중 이해, 가사 우선, 흐름 구성, 익숙함과 새로움의 균형, 그리고 하나님의 인도 구하기.]]></description>
+      <category>blog</category>
+    </item>
+    <item>
+      <title><![CDATA[교회 찬양팀 콘티 만드는 법 — 완벽 가이드]]></title>
+      <link>https://kworship.app/news/how-to-build-worship-setlist-complete-guide</link>
+      <guid isPermaLink="true">https://kworship.app/news/how-to-build-worship-setlist-complete-guide</guid>
+      <pubDate>Wed, 25 Mar 2026 05:53:08 GMT</pubDate>
+      <description><![CDATA[교회 찬양팀을 위한 효과적인 찬양 콘티를 만드는 방법을 알아보세요. 회중 이해, 콘티 구성, 찬양 선정 및 팀 준비 사항을 다룹니다.]]></description>
+      <category>blog</category>
+    </item>
+    <item>
+      <title><![CDATA[AI 예배 인도자 프로필 & Worship Arc™ 신학적 프레임워크]]></title>
+      <link>https://kworship.app/news/ai-worship-leader-profile-worship-arc</link>
+      <guid isPermaLink="true">https://kworship.app/news/ai-worship-leader-profile-worship-arc</guid>
+      <pubDate>Fri, 20 Mar 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[AI로 예배 인도자 프로필을 생성하고 맞춤형 셋리스트를 추천받으세요. Worship Arc™ — 예배 흐름을 구성하는 신학적 프레임워크를 소개합니다.]]></description>
+      <category>news</category>
+    </item>
+    <item>
+      <title><![CDATA[AI 가사 매칭 강화 업데이트]]></title>
+      <link>https://kworship.app/news/ai-lyrics-matching-enhancement</link>
+      <guid isPermaLink="true">https://kworship.app/news/ai-lyrics-matching-enhancement</guid>
+      <pubDate>Sun, 15 Mar 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[웹 스크래핑과 고급 분석을 통해 AI 가사 매칭 엔진이 크게 개선되어 더 정확한 결과를 제공합니다.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[YouTube 스마트 검색 & 악보 코드 매칭]]></title>
+      <link>https://kworship.app/news/youtube-smart-search-chord-matching</link>
+      <guid isPermaLink="true">https://kworship.app/news/youtube-smart-search-chord-matching</guid>
+      <pubDate>Thu, 05 Mar 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[YouTube에서 먼저 검색하고 코드 악보와 스코어를 자동으로 매칭합니다. 더 스마트한 예배 셋리스트 구성 방법입니다.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[뮤직 플레이어 론칭]]></title>
+      <link>https://kworship.app/news/music-player-launch</link>
+      <guid isPermaLink="true">https://kworship.app/news/music-player-launch</guid>
+      <pubDate>Fri, 20 Feb 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[K-Worship에서 직접 찬양곡을 들으세요. 새로운 통합 뮤직 플레이어가 셋리스트 워크플로우에 오디오를 제공합니다.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[커뮤니티 채팅 기능 오픈]]></title>
+      <link>https://kworship.app/news/community-chat-launch</link>
+      <guid isPermaLink="true">https://kworship.app/news/community-chat-launch</guid>
+      <pubDate>Tue, 10 Feb 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[찬양팀을 위한 실시간 채팅 기능이 출시되었습니다. 리허설 조율, 아이디어 공유, 소통을 K-Worship 안에서 해결하세요.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[전체 인쇄 원클릭 & 태블릿 전체화면 모드]]></title>
+      <link>https://kworship.app/news/one-click-print-tablet-fullscreen</link>
+      <guid isPermaLink="true">https://kworship.app/news/one-click-print-tablet-fullscreen</guid>
+      <pubDate>Sun, 01 Feb 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[원클릭으로 전체 예배 셋을 인쇄하세요. iPad와 태블릿에 최적화된 전체화면 모드, 핀치 줌 및 스와이프 제스처를 지원합니다.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[곡별 가사 등록 기능 출시]]></title>
+      <link>https://kworship.app/news/song-lyrics-registration-launch</link>
+      <guid isPermaLink="true">https://kworship.app/news/song-lyrics-registration-launch</guid>
+      <pubDate>Tue, 20 Jan 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[이제 각 곡마다 개별적으로 가사를 입력하고 관리할 수 있습니다. 완벽한 가사 시트로 예배 셋리스트를 구성하세요.]]></description>
+      <category>update</category>
+    </item>
+    <item>
+      <title><![CDATA[찬양을 준비하는 시간, 그 수고는 어디에 남는가?]]></title>
+      <link>https://christiantimes.ca/christian-news/canada/20657/</link>
+      <guid isPermaLink="false">https://christiantimes.ca/christian-news/canada/20657/</guid>
+      <pubDate>Thu, 15 Jan 2026 08:00:00 GMT</pubDate>
+      <description><![CDATA[찬양을 준비하는 시간, 그 수고는 어디에 남는가
+한국 교회 예배의 흐름과 영성을 데이터로 축적하는 플랫폼, K-Worship]]></description>
+      <category>press</category>
+    </item>
+    <item>
+      <title><![CDATA[찬양 준비의 영성, 데이터로 남다… 예배 인도자 플랫폼 'K-Worship' 공식 런칭]]></title>
+      <link>https://segyetoday.com/news/newsview.php?ncode=1065585660860632</link>
+      <guid isPermaLink="false">https://segyetoday.com/news/newsview.php?ncode=1065585660860632</guid>
+      <pubDate>Wed, 14 Jan 2026 20:01:00 GMT</pubDate>
+      <description><![CDATA[흩어지는 예배 고민을 사역의 자산으로, 한국 교회 특유의 예배 흐름과 영성 보존]]></description>
+      <category>press</category>
+    </item>
+    <item>
+      <title><![CDATA[찬양 준비의 영성, 데이터로 남다… 예배 인도자 플랫폼 'K-Worship' 공식 런칭]]></title>
+      <link>https://www.kctusa.org/news/articleView.html?idxno=79074</link>
+      <guid isPermaLink="false">https://www.kctusa.org/news/articleView.html?idxno=79074</guid>
+      <pubDate>Wed, 14 Jan 2026 08:00:00 GMT</pubDate>
+      <description><![CDATA[K-Worship이 예배팀을 위한 통합 플랫폼으로 공식 런칭했습니다.]]></description>
+      <category>press</category>
+    </item>
+  </channel>
+</rss>
