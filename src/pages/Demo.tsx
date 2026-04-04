@@ -370,7 +370,7 @@ const Demo = () => {
                       <td className="p-3">
                         <div className="flex items-center justify-end gap-1">
                           {song.youtube_url && (
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openYouTubeUrl(song.youtube_url, playYouTube)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openYouTubeUrl(song.youtube_url)}>
                               <Youtube className="h-3.5 w-3.5 text-red-500" />
                             </Button>
                           )}
