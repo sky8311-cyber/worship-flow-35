@@ -1,37 +1,29 @@
 
 
-# SEO 블로그 포스트 5개 작성 및 게시
+# 뉴스/블로그 소셜 공유 미리보기 (OG Tags) 수정
 
-## 개요
-K-Worship의 핵심 기능과 타겟 키워드를 기반으로 ChatGPT/Google 검색에 최적화된 블로그 5개를 `news_posts` 테이블에 삽입합니다.
+## 문제
+K-Worship은 SPA(React)이므로, Facebook/Twitter/카카오톡 크롤러가 `/news/slug` URL을 방문하면 JavaScript를 실행하지 않아 `index.html`의 **기본 OG 태그**만 읽힙니다. 즉, 블로그 제목/설명/이미지 대신 항상 "K-Worship - 예배팀을 위한 통합 플랫폼"이 표시됩니다.
 
-## 블로그 주제 (SEO 타겟 키워드 포함)
+## 해결 방법
+기존 `og-public-view` Edge Function과 동일한 패턴으로 **`og-news` Edge Function**을 만들고, 공유 URL을 이 함수를 통해 전달합니다.
 
-| # | 제목 (KO) | 제목 (EN) | 타겟 키워드 |
-|---|-----------|-----------|------------|
-| 1 | 교회 찬양팀 콘티 만드는 법 — 완벽 가이드 | How to Build a Worship Setlist — Complete Guide | 찬양 콘티, worship setlist, 예배 순서 |
-| 2 | 예배 인도자를 위한 곡 선곡 팁 5가지 | 5 Song Selection Tips for Worship Leaders | 찬양 선곡, worship song selection |
-| 3 | 찬양팀 협업이 어려운 이유와 해결법 | Why Worship Team Collaboration Is Hard (And How to Fix It) | 찬양팀 관리, worship team management |
-| 4 | Planning Center vs K-Worship — 한국 교회에 맞는 도구는? | Planning Center vs K-Worship — Which Fits Korean Churches? | Planning Center 대안, Korean worship app |
-| 5 | 예배 준비 시간을 절반으로 줄이는 디지털 도구 활용법 | Cut Your Worship Prep Time in Half with Digital Tools | 예배 준비, worship planning tool |
+## 작업 내용
 
-## 각 포스트 구조
-- **category**: `blog`
-- **slug**: SEO-friendly English slug
-- **content / content_ko**: 800-1200자 분량의 HTML 본문 (h2/h3 구조, 내부 링크 포함)
-- **excerpt / excerpt_ko**: 검색 결과에 표시될 150자 요약
-- **is_published**: true
-- **published_at**: 각각 1-2일 간격으로 설정 (자연스러운 게시 패턴)
+### 1. `og-news` Edge Function 생성
+- slug를 받아 `news_posts` 테이블에서 제목/설명/이미지를 조회
+- 한국어/영어 OG 태그가 포함된 HTML을 반환
+- `<meta http-equiv="refresh">`로 실제 페이지(`/news/slug`)로 리다이렉트
+- 카카오톡 전용 meta 태그 포함
 
-## 기술 작업
-1. AI 스크립트로 5개 포스트의 한/영 콘텐츠 생성
-2. `news_posts` 테이블에 INSERT (insert 도구 사용)
-3. 코드 변경 없음 — 기존 뉴스 페이지가 자동 표시
+### 2. `NewsShareButtons.tsx` 수정
+- 공유 URL을 Edge Function URL로 변경:
+  ```
+  https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/og-news/{slug}
+  ```
+- "링크 복사" 기능도 이 URL 사용
 
-## SEO 최적화 포인트
-- 각 포스트에 `https://kworship.app/signup` CTA 포함
-- 내부 링크 (`/features`, `/news`, `/help`) 자연 삽입
-- JSON-LD NewsArticle 스키마는 기존 `NewsDetail.tsx`가 자동 생성
-- `/sitemap.xml` Edge Function이 새 slug를 자동 포함
-- `/rss.xml`에도 자동 반영
+### 3. 결과
+- Facebook/Twitter/카카오톡에 공유 시 블로그 제목, 요약, 커버 이미지가 미리보기로 표시
+- 클릭하면 실제 블로그 페이지로 리다이렉트
 
