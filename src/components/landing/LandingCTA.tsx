@@ -29,10 +29,15 @@ export const LandingCTA = () => {
             {t("landing.cta.description")}
           </p>
           
-          {/* CTA Button */}
-          <Button asChild size="lg" className="mb-4">
-            <Link to="/signup">{t("landing.cta.ctaButton")}</Link>
-          </Button>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
+            <Button asChild size="lg">
+              <Link to="/signup">{t("landing.cta.ctaButton")}</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to="/demo">🎵 {language === "ko" ? "데모 써보기" : "Try Demo"}</Link>
+            </Button>
+          </div>
           
           {/* Login Link */}
           <p className="text-muted-foreground">
