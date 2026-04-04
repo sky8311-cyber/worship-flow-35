@@ -1,21 +1,19 @@
 
 
-# K-Worship OG 이미지 생성 (1200x630)
+# "피아워십" 키워드 추가 계획
 
-## 목표
-소셜 미디어 공유용 1200x630 OG 이미지를 K-Worship 브랜드 컬러와 아이덴티티로 생성
+## 현재 상태
+이미 포함된 곳: `index.html`, `Landing.tsx`, `public/llms.txt` — 변경 불필요
 
-## 디자인 방향
-- **배경**: Brand Blue (#2b4b8a) → Coral (#d16265) 그라데이션
-- **로고/아이콘**: 기존 `kworship-icon.png` 활용
-- **텍스트**: "K-Worship" 타이틀 + "예배팀을 위한 통합 플랫폼" 서브타이틀
-- **크기**: 1200x630px (OG 표준)
+## 추가할 파일 (5개)
 
-## 구현
-1. Python (Pillow)으로 그라데이션 배경 + 텍스트 + 아이콘 합성
-2. `/mnt/documents/og-image.png`로 저장
-3. QA 검수 후 전달
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/pages/MobileAppLanding.tsx` | `keywordsKo`에 `피아워십, 마커스워십, 어노인팅` 추가 |
+| `src/pages/Features.tsx` | `keywordsKo`에 `피아워십, 마커스워십, 어노인팅` 추가 |
+| `src/pages/Help.tsx` | `keywordsKo`에 `피아워십` 추가 |
+| `src/pages/News.tsx` | `keywordsKo`에 `피아워십` 추가 |
+| `src/pages/auth/SignUp.tsx` | `keywordsKo`에 `피아워십, 찬양팀` 추가 |
 
-## 변경 파일
-코드베이스 변경 없음 — 이미지 파일만 생성
+각 페이지의 `keywordsKo` 문자열 끝에 자연스럽게 키워드를 추가합니다. `descriptionKo`가 있는 페이지 중 주요 페이지(`Features.tsx`, `MobileAppLanding.tsx`)에는 description에도 "피아워십"을 자연스럽게 포함시킵니다.
 
