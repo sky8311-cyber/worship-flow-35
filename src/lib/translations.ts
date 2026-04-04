@@ -354,6 +354,7 @@ export const translations = {
       emailNotConfirmed: "Please confirm your email before logging in.",
       resendConfirmation: "Resend Confirmation Email",
       passwordMismatch: "Passwords do not match",
+      weakPassword: "This password is too common. Please choose a different one.",
       alreadyRegistered: "This email is already registered. Redirecting to login...",
       alreadyRegisteredLoggedIn: "You already have an account. We've logged you in with that account.",
       accountCreated: "Account created successfully! Redirecting to dashboard...",
