@@ -12,7 +12,7 @@ const fadeInUp = {
 };
 
 export const LandingHeroSimple = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const features = [
     { 
@@ -84,6 +84,24 @@ export const LandingHeroSimple = () => {
                 </div>
               </div>
             ))}
+          </motion.div>
+
+          {/* CTA Buttons */}
+          <motion.div
+            {...fadeInUp}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-wrap gap-3 mt-8"
+          >
+            <Button asChild>
+              <Link to="/signup">
+                {language === "ko" ? "무료로 시작하기" : "Get started free"}
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/demo">
+                {language === "ko" ? "🎵 데모 써보기" : "🎵 Try Demo"}
+              </Link>
+            </Button>
           </motion.div>
         </div>
       </div>
