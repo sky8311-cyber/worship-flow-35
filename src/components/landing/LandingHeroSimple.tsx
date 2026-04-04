@@ -12,7 +12,7 @@ const fadeInUp = {
 };
 
 export const LandingHeroSimple = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const features = [
     { 
