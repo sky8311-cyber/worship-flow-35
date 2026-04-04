@@ -17,6 +17,7 @@ const AtelierWelcome = () => {
       <AtelierProblem />
       <AtelierSolution />
       <AtelierExperience />
+      <AtelierFAQ />
       <AtelierCTA />
 
       {/* Minimal footer */}
