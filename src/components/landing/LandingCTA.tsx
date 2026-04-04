@@ -2,8 +2,6 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _useLanguage = null; // language accessed via useTranslation
 import { revealOnScroll, revealViewportOptions } from "@/lib/animations";
 
 export const LandingCTA = () => {
