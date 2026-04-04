@@ -107,7 +107,7 @@ const News = () => {
           {/* RSS Feed Link */}
           <div className="mt-6">
             <Button variant="outline" size="sm" asChild>
-              <a href="/rss.xml" target="_blank" rel="noopener noreferrer" className="gap-2">
+              <a href="https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/rss-feed" target="_blank" rel="noopener noreferrer" className="gap-2">
                 <Rss className="h-4 w-4" />
                 RSS Feed
               </a>
