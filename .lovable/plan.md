@@ -1,34 +1,35 @@
-# 커버 이미지 재생성 — 텍스트 없는 일러스트 스타일로
+# SEO 문제 수정 계획
 
-## 문제
+## 수정 항목 4가지
 
-AI 이미지 생성 시 텍스트가 포함되었는데, AI가 한글/영어를 정확히 렌더링하지 못해 알 수 없는 문자가 표시됨. 이는 AI 이미지 생성의 알려진 한계입니다.
+### 1. aggregateRating 제거 (`index.html`)
 
-## 해결 방법
+`index.html`의 SoftwareApplication JSON-LD에서 하드코딩된 `aggregateRating` 블록(111-115행) 삭제. Google 스팸 구조화 데이터 페널티 방지.
 
-**텍스트 없이** 각 주제를 상징하는 깔끔한 일러스트/그래픽 스타일로 8개 커버 이미지를 재생성합니다.
+### 2. Sitemap에서 noIndex 페이지 제거 (`supabase/functions/sitemap/index.ts`)
 
-## 작업 내용
+현재 `/login`이 sitemap에 포함되어 있지만 `noIndex={true}`로 설정됨 → 모순. staticPages 배열에서 `/login` 제거. (`/signup`은 noIndex가 아니므로 유지)
 
-### 이미지 8개 재생성 (텍스트 없는 프롬프트)
+### 3. robots.txt에 Naver Yeti 봇 추가 (`public/robots.txt`)
+
+네이버 검색 크롤러 `Yeti` 전용 규칙 추가:
+
+```
+User-agent: Yeti
+Allow: /
+```
+
+### 4. OG 이미지 1200x630 생성
+
+AI 이미지 생성(`google/gemini-3-pro-image-preview`)으로 K-Worship 송라이브러리 데스크탑뷰 스크린샷으로 컬러의1200x630 OG 이미지 생성 → Supabase Storage 업로드 → `index.html`의 `og:image` 및 `twitter:image` URL 교체, `og:image:width/height` 업데이트.
+
+## 파일 변경 요약
 
 
-| 파일                     | 프롬프트 컨셉            |
-| ---------------------- | ------------------ |
-| cover-lyrics           | 마이크와 음표, 가사 시트 아이콘 |
-| cover-print-tablet     | 태블릿과 프린터, 손가락 제스처  |
-| cover-chat             | 말풍선과 음악 노트         |
-| cover-music-player     | 헤드폰과 이퀄라이저 파형      |
-| cover-youtube-matching | 재생 버튼과 악보/코드 심볼    |
-| cover-ai-lyrics        | AI 뇌와 가사 매칭 시각화    |
-| cover-worship-arc      | 십자가와 빛의 아크, 예배 실루엣 |
-| cover-institute        | 졸업모와 음악 교육 심볼      |
-
-
-- 모든 이미지: 1200x630, 깔끔한 모던 일러스트, K-Worship 브랜드 컬러 (보라/파랑 계열), **텍스트 완전 제외**
-- AI gateway (`google/gemini-3-pro-image-preview`) 사용
-- 생성 후 Supabase `news-covers` 버킷에 업로드하여 기존 URL 그대로 유지
-
-### 코드 변경 없음
-
-- 동일 파일명으로 덮어쓰기하므로 DB URL 변경 불필요
+| 파일                                    | 변경                                      |
+| ------------------------------------- | --------------------------------------- |
+| `index.html`                          | aggregateRating 삭제, OG 이미지 URL·사이즈 업데이트 |
+| `supabase/functions/sitemap/index.ts` | `/login` 항목 제거                          |
+| `public/robots.txt`                   | Yeti 봇 규칙 추가                            |
+| `public/sitemap.xml`                  | `/login` 항목 제거 (정적 백업 파일)               |
+| 새 이미지 파일                              | 1200x630 OG 이미지 생성·업로드                  |
