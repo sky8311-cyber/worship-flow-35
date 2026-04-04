@@ -7,7 +7,7 @@ const _useLanguage = null; // language accessed via useTranslation
 import { revealOnScroll, revealViewportOptions } from "@/lib/animations";
 
 export const LandingCTA = () => {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   return (
     <section className="py-16 md:py-24 relative overflow-hidden">
