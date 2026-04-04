@@ -6,6 +6,7 @@ import { AtelierHero } from "@/components/atelier-landing/AtelierHero";
 import { AtelierProblem } from "@/components/atelier-landing/AtelierProblem";
 import { AtelierSolution } from "@/components/atelier-landing/AtelierSolution";
 import { AtelierExperience } from "@/components/atelier-landing/AtelierExperience";
+import { AtelierFAQ } from "@/components/atelier-landing/AtelierFAQ";
 import { AtelierCTA } from "@/components/atelier-landing/AtelierCTA";
 
 const AtelierWelcome = () => {
@@ -16,6 +17,7 @@ const AtelierWelcome = () => {
       <AtelierProblem />
       <AtelierSolution />
       <AtelierExperience />
+      <AtelierFAQ />
       <AtelierCTA />
 
       {/* Minimal footer */}
