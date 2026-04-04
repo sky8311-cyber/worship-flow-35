@@ -15,6 +15,7 @@ export const LandingFooter = () => {
 
   const productLinks = [
     { to: "/features", label: language === "ko" ? "주요 기능" : "Key Features" },
+    { to: "/demo", label: language === "ko" ? "데모 써보기" : "Try Demo" },
   ];
 
   const companyLinks = [
