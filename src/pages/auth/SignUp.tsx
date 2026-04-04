@@ -308,22 +308,21 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
+                showStrength
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(v) => setFormData({ ...formData, password: v })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 required
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(v) => setFormData({ ...formData, confirmPassword: v })}
               />
             </div>
             
