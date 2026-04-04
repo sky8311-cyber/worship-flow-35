@@ -1,29 +1,34 @@
 
 
-# 뉴스/블로그 소셜 공유 미리보기 (OG Tags) 수정
+# 앱 업데이트 뉴스 포스트 8개 작성 및 게시
 
-## 문제
-K-Worship은 SPA(React)이므로, Facebook/Twitter/카카오톡 크롤러가 `/news/slug` URL을 방문하면 JavaScript를 실행하지 않아 `index.html`의 **기본 OG 태그**만 읽힙니다. 즉, 블로그 제목/설명/이미지 대신 항상 "K-Worship - 예배팀을 위한 통합 플랫폼"이 표시됩니다.
+## 개요
+K-Worship의 주요 기능 업데이트 내역을 `update` 카테고리로 시간순 배치하여 `news_posts`에 삽입합니다. 런칭(1/14) 이후부터 현재까지 자연스러운 간격으로 날짜를 설정합니다.
 
-## 해결 방법
-기존 `og-public-view` Edge Function과 동일한 패턴으로 **`og-news` Edge Function**을 만들고, 공유 URL을 이 함수를 통해 전달합니다.
+## 게시할 포스트 목록
 
-## 작업 내용
+| # | 날짜 | 제목 (KO) | 핵심 내용 |
+|---|------|-----------|----------|
+| 1 | 1/20 | 곡별 가사 등록 기능 출시 | 곡마다 가사 입력/관리 가능 |
+| 2 | 2/01 | 전체 인쇄 원클릭 & 태블릿 전체화면 모드 | 인쇄 원클릭, iPad/태블릿 풀스크린, 핑거 줌/스와이프 |
+| 3 | 2/10 | 커뮤니티 채팅 기능 오픈 | 찬양팀 실시간 채팅 |
+| 4 | 2/20 | 뮤직 플레이어 론칭 | 앱 내 음악 재생 기능 |
+| 5 | 3/05 | YouTube 스마트 검색 & 악보 코드 매칭 | 유튜브 검색 → 코드/악보 자동 매칭 |
+| 6 | 3/15 | AI 가사 매칭 강화 | 웹 스크래핑 + AI 분석으로 가사 자동 매칭 정확도 향상 |
+| 7 | 3/20 | AI 예배 인도자 프로필 & Worship Arc™ | AI 프로필 생성 → 맞춤 워십세트, Worship Arc™ 신학적 프레임워크 소개 |
+| 8 | 4/03 | K-Worship Institute 개발 중 | 워십 인스티튜트 교육 플랫폼 준비 소식 |
 
-### 1. `og-news` Edge Function 생성
-- slug를 받아 `news_posts` 테이블에서 제목/설명/이미지를 조회
-- 한국어/영어 OG 태그가 포함된 HTML을 반환
-- `<meta http-equiv="refresh">`로 실제 페이지(`/news/slug`)로 리다이렉트
-- 카카오톡 전용 meta 태그 포함
+## 각 포스트 구조
+- **category**: `update` (#1-6), `news` (#7-8)
+- **slug**: SEO-friendly English slug
+- **content / content_ko**: 500-800자 HTML 본문 (한/영)
+- **excerpt / excerpt_ko**: 150자 요약
+- **is_published**: true
+- **published_at**: 위 표의 날짜 (2026년)
 
-### 2. `NewsShareButtons.tsx` 수정
-- 공유 URL을 Edge Function URL로 변경:
-  ```
-  https://jihozsqrrmzzrqvwilyy.supabase.co/functions/v1/og-news/{slug}
-  ```
-- "링크 복사" 기능도 이 URL 사용
-
-### 3. 결과
-- Facebook/Twitter/카카오톡에 공유 시 블로그 제목, 요약, 커버 이미지가 미리보기로 표시
-- 클릭하면 실제 블로그 페이지로 리다이렉트
+## 기술 작업
+1. AI 스크립트로 8개 포스트의 한/영 콘텐츠 생성
+2. `news_posts` 테이블에 INSERT (insert 도구 사용)
+3. 코드 변경 없음 — 기존 뉴스 페이지가 자동 표시
+4. sitemap.xml, rss.xml에도 자동 반영
 
