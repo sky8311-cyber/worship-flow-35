@@ -129,7 +129,7 @@ const Features = () => {
         description="Discover K-Worship features: Song Library, Set Builder, Team Collaboration, Music Player, Print, and more. Everything for worship preparation."
         descriptionKo="K-Worship의 주요 기능을 알아보세요. 곡 라이브러리, 세트 빌더, 팀 협업, 뮤직 플레이어, 인쇄 기능 등 예배 준비의 모든 것."
         keywords="K-Worship features, worship software, church software, setlist builder, song library, team collaboration"
-        keywordsKo="K-Worship 기능, 예배 소프트웨어, 교회 소프트웨어, 콘티 제작, 곡 라이브러리, 팀 협업, 교회 찬양팀 앱, 예배 순서 프로그램"
+        keywordsKo="K-Worship 기능, 예배 소프트웨어, 교회 소프트웨어, 콘티 제작, 곡 라이브러리, 팀 협업, 교회 찬양팀 앱, 예배 순서 프로그램, 피아워십, 마커스워십, 어노인팅"
         canonicalPath="/features"
         jsonLd={featuresJsonLd}
         breadcrumbs={[
