@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { DateDropdownPicker } from "@/components/ui/date-dropdown-picker";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,9 +145,12 @@ const SignUp = () => {
       }
       
       // Real error - show destructive toast
+      const msg = error.message?.toLowerCase().includes("weak") || error.message?.toLowerCase().includes("leaked")
+        ? t("auth.weakPassword")
+        : error.message;
       toast({
         title: t("auth.error"),
-        description: error.message,
+        description: msg,
         variant: "destructive",
       });
       setLoading(false);
@@ -307,22 +311,21 @@ const SignUp = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">{t("auth.password")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 required
+                showStrength
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(v) => setFormData({ ...formData, password: v })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 required
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(v) => setFormData({ ...formData, confirmPassword: v })}
               />
             </div>
             
