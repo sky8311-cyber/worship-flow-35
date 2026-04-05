@@ -6,6 +6,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHeroSimple } from "@/components/landing/LandingHeroSimple";
 import { LandingNews } from "@/components/landing/LandingNews";
 import { LandingCTA } from "@/components/landing/LandingCTA";
+import { LandingFAQ } from "@/components/landing/LandingFAQ";
 import { AppPageHero } from "@/components/landing/AppPageHero";
 import { SEOHead } from "@/components/seo/SEOHead";
 
@@ -46,6 +47,7 @@ const Landing = () => {
           <>
             <LandingHeroSimple />
             <LandingNews />
+            <LandingFAQ />
             <LandingCTA />
           </>
         )}
