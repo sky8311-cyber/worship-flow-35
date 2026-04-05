@@ -46,6 +46,7 @@ const Landing = () => {
           <>
             <LandingHeroSimple />
             <LandingNews />
+            <LandingFAQ />
             <LandingCTA />
           </>
         )}
