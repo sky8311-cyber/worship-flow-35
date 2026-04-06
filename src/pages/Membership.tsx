@@ -286,12 +286,9 @@ const Membership = () => {
       description: premiumProduct 
         ? (language === "ko" ? premiumProduct.description_ko || "" : premiumProduct.description_en || "") 
         : (language === "ko" ? "예배인도자를 위한 프리미엄 기능" : "Premium features for worship leaders"),
-      features: [
-        language === "ko" ? "고급 분석 및 인사이트" : "Advanced analytics & insights",
-        language === "ko" ? "우선 지원" : "Priority support",
-        language === "ko" ? "추가 저장 공간" : "Additional storage",
-        language === "ko" ? "프리미엄 템플릿" : "Premium templates",
-      ],
+      features: language === "ko"
+        ? ["기본멤버 전체 포함", "AI 워십세트 생성 (Worship Arc™)", "KWI 전체 수강 + AI 코치 + 수료 배지", "앰배서더 신청 자격"]
+        : ["All Basic Member features", "AI Worship Set Generation (Worship Arc™)", "Full KWI Access + AI Coach + Certification", "Ambassador Application"],
       isHighlighted: !isChurch && !isPremium,
       actionType: isPremium ? "manage" : "upgrade",
     },
