@@ -56,7 +56,7 @@ const PublicLinkProxy = () => {
     ? `${setData.worship_leader ? `인도: ${setData.worship_leader}` : ""}${setData.theme ? ` | 주제: ${setData.theme}` : ""}`
     : "KWorship에서 공유된 예배세트입니다.";
 
-  const ogImageUrl = "https://kworship.app/images/og-worship-set.png";
+  const ogImageUrl = "https://jihozsqrrmzzrqvwilyy.supabase.co/storage/v1/object/public/og-assets/og-image.png";
   const canonicalUrl = `https://kworship.app/link/${token}`;
 
   return (
