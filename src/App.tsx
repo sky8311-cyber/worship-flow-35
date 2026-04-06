@@ -261,7 +261,8 @@ const App = () => {
               <Route path="/atelier" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
               <Route path="/atelier/:roomId" element={<ProtectedRoute><WorshipStudio /></ProtectedRoute>} />
               <Route path="/atelier/canvas/:canvasId" element={<ProtectedRoute><CanvasEditor /></ProtectedRoute>} />
-              {/* Legacy /studio redirects */}
+              {/* Legacy redirects */}
+              <Route path="/index" element={<Navigate to="/" replace />} />
               <Route path="/studio" element={<Navigate to="/atelier" replace />} />
               <Route path="/studio/:roomId" element={<Navigate to="/atelier" replace />} />
               <Route path="/studio/canvas/:canvasId" element={<Navigate to="/atelier" replace />} />
