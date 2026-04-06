@@ -25,6 +25,7 @@ export const LandingFooter = () => {
   ];
 
   const supportLinks = [
+    { to: "/support", label: language === "ko" ? "고객 지원" : "Support" },
     { href: "mailto:hello@kworship.app", label: t("landing.footer.contact") },
   ];
 
