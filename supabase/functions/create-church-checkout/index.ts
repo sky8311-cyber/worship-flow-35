@@ -40,6 +40,27 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Feature flag check (server-side gating)
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: flagData } = await serviceClient
+      .from("platform_feature_flags")
+      .select("enabled")
+      .eq("key", "church_subscription_enabled")
+      .single();
+
+    if (!flagData?.enabled) {
+      logStep("Feature flag disabled", { flag: "church_subscription_enabled" });
+      return new Response(
+        JSON.stringify({ error: "Church subscription not available" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+    logStep("Feature flag verified", { flag: "church_subscription_enabled" });
+
     const body = await req.json();
     const { churchAccountId, billing_cycle, currency: reqCurrency } = body;
     if (!churchAccountId) throw new Error("Church account ID is required");

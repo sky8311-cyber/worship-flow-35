@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import {
   Carousel,
   CarouselContent,
@@ -48,7 +49,9 @@ type PlanType = "member" | "worship-leader" | "church";
 
 export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabProps) {
   const { t, language } = useTranslation();
-  const { isWorshipLeader } = useAuth();
+  const { isWorshipLeader, isAdmin } = useAuth();
+  const { isChurchSubscriptionEnabled, isSandboxTester } = useAppSettings();
+  const canAccessChurchCheckout = isAdmin || isSandboxTester || isChurchSubscriptionEnabled;
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
@@ -301,29 +304,33 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                     )}
                     {t("churchAccount.startTrial")}
                   </Button>
+                  {canAccessChurchCheckout && (
+                    <Button 
+                      onClick={handleSubscribe}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="w-full gap-2"
+                    >
+                      {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {t("churchAccount.subscribeNow")}
+                    </Button>
+                  )}
+                </>
+              ) : isTrialValid ? (
+                canAccessChurchCheckout ? (
                   <Button 
                     onClick={handleSubscribe}
                     disabled={isLoading}
-                    variant="outline"
                     className="w-full gap-2"
                   >
-                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {t("churchAccount.subscribeNow")}
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-4 h-4" />
+                    )}
+                    {t("churchAccount.upgradeToPaid")}
                   </Button>
-                </>
-              ) : isTrialValid ? (
-                <Button 
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                  className="w-full gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4" />
-                  )}
-                  {t("churchAccount.upgradeToPaid")}
-                </Button>
+                ) : null
               ) : churchAccount.subscription_status === "active" ? (
                 <Button 
                   onClick={handleManageBilling}
@@ -339,14 +346,16 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   {t("churchAccount.manageSubscription")}
                 </Button>
               ) : (
-                <Button 
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                  className="w-full gap-2"
-                >
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {t("churchAccount.subscribeNow")}
-                </Button>
+                canAccessChurchCheckout ? (
+                  <Button 
+                    onClick={handleSubscribe}
+                    disabled={isLoading}
+                    className="w-full gap-2"
+                  >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {t("churchAccount.subscribeNow")}
+                  </Button>
+                ) : null
               )}
             </div>
           )}

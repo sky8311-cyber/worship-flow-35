@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguageContext } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,8 @@ interface ChurchAccount {
 
 export default function ChurchAccount() {
   const { user, isWorshipLeader, isAdmin } = useAuth();
+  const { isChurchSubscriptionEnabled, isSandboxTester } = useAppSettings();
+  const canAccessChurchCheckout = isAdmin || isSandboxTester || isChurchSubscriptionEnabled;
   const { language } = useLanguageContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -457,7 +460,7 @@ export default function ChurchAccount() {
               setShowUpgradeDialog(false);
             }
           }}
-          onSubscribe={async () => {
+          onSubscribe={canAccessChurchCheckout ? async () => {
             if (!selectedAccount) return;
             const { data, error } = await supabase.functions.invoke("create-church-checkout", {
               body: { churchAccountId: selectedAccount.id },
@@ -466,7 +469,7 @@ export default function ChurchAccount() {
               window.open(data.url, "_blank");
             }
             setShowUpgradeDialog(false);
-          }}
+          } : undefined}
         />
 
         {/* Plan selection dialog for new account creation */}
