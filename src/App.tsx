@@ -74,6 +74,7 @@ const News = lazyWithRetry(() => import("./pages/News"));
 const NewsDetail = lazyWithRetry(() => import("./pages/NewsDetail"));
 const KWorshipInfo = lazyWithRetry(() => import("./pages/KWorshipInfo"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
+const Support = lazyWithRetry(() => import("./pages/Support"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
@@ -236,6 +237,7 @@ const App = () => {
               <Route path="/news" element={<News />} />
               <Route path="/news/:slug" element={<NewsDetail />} />
               <Route path="/demo" element={<Demo />} />
+              <Route path="/support" element={<Support />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

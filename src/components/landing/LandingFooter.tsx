@@ -25,6 +25,7 @@ export const LandingFooter = () => {
   ];
 
   const supportLinks = [
+    { to: "/support", label: language === "ko" ? "고객 지원" : "Support" },
     { href: "mailto:hello@kworship.app", label: t("landing.footer.contact") },
   ];
 
@@ -101,15 +102,25 @@ export const LandingFooter = () => {
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
                   <nav className="space-y-3">
-                    {supportLinks.map((link) => (
-                      <a
-                        key={link.href}
-                        href={link.href}
-                        className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
-                      >
-                        {link.label}
-                      </a>
-                    ))}
+                    {supportLinks.map((link) =>
+                      'to' in link ? (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                        >
+                          {link.label}
+                        </a>
+                      )
+                    )}
                   </nav>
                 </AccordionContent>
               </AccordionItem>
@@ -169,15 +180,25 @@ export const LandingFooter = () => {
             {/* Support links */}
             <nav className="space-y-3">
               <h4 className="font-semibold text-lg mb-4">{t("landing.footer.support")}</h4>
-              {supportLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {supportLinks.map((link) =>
+                'to' in link ? (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                  >
+                    {link.label}
+                  </a>
+                )
+              )}
             </nav>
             
             {/* Legal links */}
