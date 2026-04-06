@@ -32,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePremiumSubscription } from "@/hooks/usePremiumSubscription";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTierFeature, TIER_HIERARCHY, type TierLevel } from "@/hooks/useTierFeature";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,8 +70,13 @@ const Membership = () => {
   const { tier } = useTierFeature();
   const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   
-  const { product: premiumProduct } = useMembershipProduct("full_membership");
-  const { product: churchProduct } = useMembershipProduct("community_account");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const { product: premiumMonthly } = useMembershipProduct("full_membership");
+  const { product: premiumYearly } = useMembershipProduct("full_membership_yearly");
+  const { product: churchMonthly } = useMembershipProduct("community_account");
+  const { product: churchYearly } = useMembershipProduct("community_account_yearly");
+  const premiumProduct = billingCycle === "yearly" ? premiumYearly : premiumMonthly;
+  const churchProduct = billingCycle === "yearly" ? churchYearly : churchMonthly;
 
   const [isLoading, setIsLoading] = useState<PlanId | null>(null);
   const nativeIOS = isNativeIOS();
@@ -101,15 +107,19 @@ const Membership = () => {
   // Get dynamic pricing
   const premiumPriceDisplay = premiumProduct 
     ? (language === "ko" 
-        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || "년"}`
-        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || "year"}`)
-    : (language === "ko" ? "₩59,000/년" : "$59/year");
+        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
+        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
+    : (billingCycle === "yearly" 
+        ? (language === "ko" ? "₩59,000/년" : "$49.99/year")
+        : (language === "ko" ? "₩5,900/월" : "$4.99/month"));
 
   const churchPriceDisplay = churchProduct 
     ? (language === "ko" 
-        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || "월"}`
-        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || "month"}`)
-    : (language === "ko" ? "₩39,900/월" : "$39.99/month");
+        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
+        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
+    : (billingCycle === "yearly"
+        ? (language === "ko" ? "₩399,000/년" : "$399/year")
+        : (language === "ko" ? "₩39,900/월" : "$39.99/month"));
 
   const premiumTrialDays = premiumProduct?.trial_days || 7;
   const churchTrialDays = churchProduct?.trial_days || 30;
@@ -130,7 +140,9 @@ const Membership = () => {
         queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
       } else {
         // Use Stripe for web
-        const { data, error } = await supabase.functions.invoke("create-premium-checkout");
+        const { data, error } = await supabase.functions.invoke("create-premium-checkout", {
+          body: { billing_cycle: billingCycle },
+        });
         if (error) throw error;
         if (data?.url) {
           window.open(data.url, "_blank");
@@ -203,7 +215,7 @@ const Membership = () => {
     setIsLoading("community-account");
     try {
       const { data, error } = await supabase.functions.invoke("create-church-checkout", {
-        body: { churchAccountId },
+        body: { churchAccountId, billing_cycle: billingCycle },
       });
 
       if (error) throw error;
@@ -245,11 +257,9 @@ const Membership = () => {
       price: language === "ko" ? "무료" : "Free",
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planMemberDescription"),
-      features: [
-        t("churchAccount.featureJoinCommunity"),
-        t("churchAccount.featureViewSets"),
-        t("churchAccount.featureTeamComm"),
-      ],
+      features: language === "ko" 
+        ? ["송 라이브러리 조회", "Band View", "워십 아틀리에", "KWI 무료 강의 수강"]
+        : ["Song Library", "Band View", "Worship Atelier", "KWI Free Courses"],
       actionType: currentTier === "member" ? "current" : "none",
     },
     {
@@ -260,12 +270,9 @@ const Membership = () => {
       price: language === "ko" ? "무료" : "Free",
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planWorshipLeaderDescription"),
-      features: [
-        t("churchAccount.featureCreateCommunity"),
-        t("churchAccount.featureManageSets"),
-        t("churchAccount.featureManageLibrary"),
-        t("churchAccount.featureTemplates"),
-      ],
+      features: language === "ko"
+        ? ["팀멤버 전체 포함", "워십세트 생성 및 관리", "KWI 기본멤버 강의 수강"]
+        : ["All Team Member features", "Worship Set Builder", "KWI Basic Courses"],
       actionType: currentTier === "worship_leader" ? "current" : 
                   (currentTier === "member" ? "upgrade" : "none"),
     },
@@ -279,12 +286,9 @@ const Membership = () => {
       description: premiumProduct 
         ? (language === "ko" ? premiumProduct.description_ko || "" : premiumProduct.description_en || "") 
         : (language === "ko" ? "예배인도자를 위한 프리미엄 기능" : "Premium features for worship leaders"),
-      features: [
-        language === "ko" ? "고급 분석 및 인사이트" : "Advanced analytics & insights",
-        language === "ko" ? "우선 지원" : "Priority support",
-        language === "ko" ? "추가 저장 공간" : "Additional storage",
-        language === "ko" ? "프리미엄 템플릿" : "Premium templates",
-      ],
+      features: language === "ko"
+        ? ["기본멤버 전체 포함", "AI 워십세트 생성 (Worship Arc™)", "KWI 전체 수강 + AI 코치 + 수료 배지", "앰배서더 신청 자격"]
+        : ["All Basic Member features", "AI Worship Set Generation (Worship Arc™)", "Full KWI Access + AI Coach + Certification", "Ambassador Application"],
       isHighlighted: !isChurch && !isPremium,
       actionType: isPremium ? "manage" : "upgrade",
     },
@@ -298,13 +302,9 @@ const Membership = () => {
       description: churchProduct 
         ? (language === "ko" ? churchProduct.description_ko || "" : churchProduct.description_en || "")
         : t("churchAccount.planChurchDescription"),
-      features: [
-        t("churchAccount.featureCustomRoles"),
-        t("churchAccount.featureTeamRotation"),
-        t("churchAccount.featurePositionSignup"),
-        t("churchAccount.featureWhiteLabel"),
-        t("churchAccount.featureCustomDomain"),
-      ],
+      features: language === "ko"
+        ? ["정식멤버 전체 포함", "소속 팀원 정식멤버 권한 부여 (인원 무제한)", "PPT 자막 생성", "팀 로테이션 스케줄링", "화이트레이블 브랜딩"]
+        : ["All Full Member features", "Grant Full Member access to all team members", "PPT Subtitle Generation", "Team Rotation Scheduling", "White-label Branding"],
       isHighlighted: isChurch || (!isPremium && (isWorshipLeader || isAdmin)),
       actionType: isChurch ? "manage" : "upgrade",
     },
@@ -520,6 +520,28 @@ const Membership = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             {t("churchAccount.choosePlanDescription")}
           </p>
+
+          {/* Billing Cycle Toggle */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <ToggleGroup
+              type="single"
+              value={billingCycle}
+              onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
+              className="bg-muted rounded-lg p-1"
+            >
+              <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                {language === "ko" ? "월간" : "Monthly"}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                {language === "ko" ? "연간" : "Yearly"}
+              </ToggleGroupItem>
+            </ToggleGroup>
+            {billingCycle === "yearly" && (
+              <Badge variant="secondary" className="text-xs">
+                {language === "ko" ? "약 17% 할인" : "Save ~17%"}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Desktop: Grid View */}
