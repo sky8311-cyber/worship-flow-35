@@ -1,36 +1,39 @@
 
 
-# OG 이미지 교체 계획
+# Blueprint 전체 업데이트 계획
 
-업로드된 K-Worship 브랜드 이미지를 플랫폼 전체의 OG 이미지로 교체합니다.
+## 변경사항 요약
 
-## 현재 상태
+현재 blueprint(2026-04-05 생성)와 실제 코드베이스 사이의 차이를 반영하여 전체 문서를 업데이트합니다.
 
-OG 이미지는 Supabase Storage(`og-assets` 버킷)에 호스팅되어 있으며, 아래 3곳에서 참조 중:
+### 1. 브랜딩 수정
+- 제목에서 `(예배공작소)` 제거 — K-Worship이 유일한 플랫폼명
+- Section 11 i18n에서 `"예배공작소" (Korean)` 참조 제거
+- Platform Identity 설명에서 `예배공작소 / "Living Atelier"` 제거, Worship Atelier은 하위 섹션으로만 언급
 
-| 위치 | 현재 URL |
-|------|----------|
-| `index.html` (og:image, twitter:image) | `supabase.co/.../og-assets/og-image.jpg` |
-| `og-news/index.ts` (뉴스 fallback) | `kworship.app/images/og-default.png` |
-| `og-public-view/index.ts` (콘티 공유) | `kworship.app/images/og-worship-set.png` |
+### 2. 누락된 테이블 추가 (5개)
+DB에 존재하지만 blueprint에 미기재된 테이블:
+- `liturgical_calendar_items` — 교회력 데이터 (새 테이블)
+- `seed_daily_caps` — Seeds 일일 한도
+- `seed_levels` — Seeds 레벨 정의
+- `seed_transactions` — Seeds 거래 내역
+- `service_sets_audit` — 콘티 변경 이력
 
-## 작업 내용
+### 3. Edge Function 수 정정
+- 55 → 54 (실제 count)
 
-### Step 1: 업로드 이미지를 Supabase Storage에 업로드
-업로드된 `IMG_5934.png`를 `og-assets` 버킷에 `og-image.png`로 업로드하여 기존 이미지를 교체합니다.
+### 4. OG 이미지 업데이트 반영
+- `og-image.jpg` → `og-image.png`
+- Section 12 SEO에서 OG 이미지 설명 업데이트
 
-### Step 2: `index.html` OG 태그 URL 업데이트
-`og:image`와 `twitter:image` 메타 태그의 URL을 새 이미지 경로로 변경합니다. 파일 확장자가 `.jpg`에서 `.png`로 바뀌므로 URL도 함께 수정합니다.
+### 5. 라우팅 변경 반영
+- `/index` → `/` redirect 추가됨
+- 고아 `Index.tsx` 페이지 삭제됨
 
-### Step 3: Edge Function fallback 이미지도 통일
-- `og-news/index.ts`: `og-default.png` fallback → 새 OG 이미지 URL로 교체
-- `og-public-view/index.ts`: 별도 이미지(`og-worship-set.png`)를 사용 중이므로, 이것도 새 이미지로 통일할지는 선택사항 (콘티 전용 이미지를 유지할 수도 있음)
+### 6. 날짜 업데이트
+- `2026-04-05` → `2026-04-06`
 
-### 변경 파일
+## 작업
 
-| 파일 | 변경 |
-|------|------|
-| Supabase Storage `og-assets` 버킷 | 새 이미지 업로드 |
-| `index.html` | og:image, twitter:image URL 교체 |
-| `supabase/functions/og-news/index.ts` | fallback OG 이미지 URL 교체 |
+`/mnt/documents/K-Worship_Platform_Blueprint.md` 파일을 위 변경사항 전부 반영하여 재생성합니다. 기존 구조와 내용은 유지하되, 정확성을 높입니다.
 
