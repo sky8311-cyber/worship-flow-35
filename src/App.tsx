@@ -74,6 +74,7 @@ const News = lazyWithRetry(() => import("./pages/News"));
 const NewsDetail = lazyWithRetry(() => import("./pages/NewsDetail"));
 const KWorshipInfo = lazyWithRetry(() => import("./pages/KWorshipInfo"));
 const Demo = lazyWithRetry(() => import("./pages/Demo"));
+const Support = lazyWithRetry(() => import("./pages/Support"));
 
 // Admin pages - lazy loaded (only admins use these)
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
