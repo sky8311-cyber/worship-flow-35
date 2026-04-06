@@ -96,7 +96,7 @@ const SetBuilder = () => {
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
-  const { hasFeature } = useTierFeature();
+  const { hasFeature, isLoading: isTierLoading } = useTierFeature();
   const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
