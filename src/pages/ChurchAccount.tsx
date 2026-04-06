@@ -460,7 +460,7 @@ export default function ChurchAccount() {
               setShowUpgradeDialog(false);
             }
           }}
-          onSubscribe={async () => {
+          onSubscribe={canAccessChurchCheckout ? async () => {
             if (!selectedAccount) return;
             const { data, error } = await supabase.functions.invoke("create-church-checkout", {
               body: { churchAccountId: selectedAccount.id },
@@ -469,7 +469,7 @@ export default function ChurchAccount() {
               window.open(data.url, "_blank");
             }
             setShowUpgradeDialog(false);
-          }}
+          } : undefined}
         />
 
         {/* Plan selection dialog for new account creation */}

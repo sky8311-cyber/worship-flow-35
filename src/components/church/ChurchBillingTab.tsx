@@ -304,29 +304,33 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                     )}
                     {t("churchAccount.startTrial")}
                   </Button>
+                  {canAccessChurchCheckout && (
+                    <Button 
+                      onClick={handleSubscribe}
+                      disabled={isLoading}
+                      variant="outline"
+                      className="w-full gap-2"
+                    >
+                      {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {t("churchAccount.subscribeNow")}
+                    </Button>
+                  )}
+                </>
+              ) : isTrialValid ? (
+                canAccessChurchCheckout ? (
                   <Button 
                     onClick={handleSubscribe}
                     disabled={isLoading}
-                    variant="outline"
                     className="w-full gap-2"
                   >
-                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {t("churchAccount.subscribeNow")}
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="w-4 h-4" />
+                    )}
+                    {t("churchAccount.upgradeToPaid")}
                   </Button>
-                </>
-              ) : isTrialValid ? (
-                <Button 
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                  className="w-full gap-2"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="w-4 h-4" />
-                  )}
-                  {t("churchAccount.upgradeToPaid")}
-                </Button>
+                ) : null
               ) : churchAccount.subscription_status === "active" ? (
                 <Button 
                   onClick={handleManageBilling}
@@ -342,14 +346,16 @@ export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabPro
                   {t("churchAccount.manageSubscription")}
                 </Button>
               ) : (
-                <Button 
-                  onClick={handleSubscribe}
-                  disabled={isLoading}
-                  className="w-full gap-2"
-                >
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {t("churchAccount.subscribeNow")}
-                </Button>
+                canAccessChurchCheckout ? (
+                  <Button 
+                    onClick={handleSubscribe}
+                    disabled={isLoading}
+                    className="w-full gap-2"
+                  >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {t("churchAccount.subscribeNow")}
+                  </Button>
+                ) : null
               )}
             </div>
           )}
