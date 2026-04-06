@@ -40,15 +40,23 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { churchAccountId } = await req.json();
+    const body = await req.json();
+    const { churchAccountId, billing_cycle, currency: reqCurrency } = body;
     if (!churchAccountId) throw new Error("Church account ID is required");
     logStep("Church account ID received", { churchAccountId });
 
-    // Fetch membership product settings from DB
+    const billingCycle: "monthly" | "yearly" = billing_cycle === "yearly" ? "yearly" : "monthly";
+    const currency: "usd" | "krw" = reqCurrency === "krw" ? "krw" : "usd";
+    logStep("Billing params", { billingCycle, currency });
+
+    // Determine which product_key to query
+    const productKey = billingCycle === "yearly" ? "community_account_yearly" : "community_account";
+    const priceColumn = currency === "krw" ? "stripe_price_id_krw" : "stripe_price_id_usd";
+
     const { data: productData, error: productError } = await supabaseClient
       .from("membership_products")
-      .select("stripe_price_id_usd, trial_days")
-      .eq("product_key", "community_account")
+      .select(`${priceColumn}, trial_days`)
+      .eq("product_key", productKey)
       .eq("is_active", true)
       .single();
 
@@ -56,14 +64,14 @@ serve(async (req) => {
       logStep("Product fetch error", { error: productError.message });
     }
 
-    const stripePriceId = productData?.stripe_price_id_usd;
+    const stripePriceId = productData?.[priceColumn];
     const trialDays = productData?.trial_days ?? 30;
 
     if (!stripePriceId) {
-      throw new Error("Stripe Price ID not configured for Community Account. Please set it in Admin > Membership Products.");
+      throw new Error(`Stripe Price ID not configured for ${productKey} (${currency}). Please run Stripe setup first.`);
     }
 
-    logStep("Product config loaded", { stripePriceId, trialDays });
+    logStep("Product config loaded", { stripePriceId, trialDays, productKey, currency });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
@@ -90,6 +98,7 @@ serve(async (req) => {
         trial_period_days: trialDays,
         metadata: {
           church_account_id: churchAccountId,
+          billing_cycle: billingCycle,
         },
       },
       success_url: `${req.headers.get("origin")}/church-account?success=true&session_id={CHECKOUT_SESSION_ID}`,
@@ -97,6 +106,7 @@ serve(async (req) => {
       metadata: {
         church_account_id: churchAccountId,
         user_id: user.id,
+        billing_cycle: billingCycle,
       },
     });
 
