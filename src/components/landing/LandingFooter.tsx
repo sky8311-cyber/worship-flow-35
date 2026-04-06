@@ -102,15 +102,25 @@ export const LandingFooter = () => {
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
                   <nav className="space-y-3">
-                    {supportLinks.map((link) => (
-                      <a
-                        key={link.href}
-                        href={link.href}
-                        className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
-                      >
-                        {link.label}
-                      </a>
-                    ))}
+                    {supportLinks.map((link) =>
+                      'to' in link ? (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                        >
+                          {link.label}
+                        </Link>
+                      ) : (
+                        <a
+                          key={link.href}
+                          href={link.href}
+                          className="block text-primary-foreground/70 hover:text-primary-foreground transition-colors"
+                        >
+                          {link.label}
+                        </a>
+                      )
+                    )}
                   </nav>
                 </AccordionContent>
               </AccordionItem>
