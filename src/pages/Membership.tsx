@@ -71,6 +71,7 @@ const Membership = () => {
   const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [currency, setCurrency] = useState<"usd" | "krw">(language === "ko" ? "krw" : "usd");
   const { product: premiumMonthly } = useMembershipProduct("full_membership");
   const { product: premiumYearly } = useMembershipProduct("full_membership_yearly");
   const { product: churchMonthly } = useMembershipProduct("community_account");
@@ -104,22 +105,27 @@ const Membership = () => {
   const currentTier = getUserTier();
   const currentTierLevel = TIER_HIERARCHY[currentTier];
 
-  // Get dynamic pricing
-  const premiumPriceDisplay = premiumProduct 
-    ? (language === "ko" 
-        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
-        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
-    : (billingCycle === "yearly" 
-        ? (language === "ko" ? "₩59,000/년" : "$49.99/year")
-        : (language === "ko" ? "₩5,900/월" : "$4.99/month"));
+  // Get dynamic pricing based on currency toggle
+  const cycleLabelKo = billingCycle === "yearly" ? "년" : "월";
+  const cycleLabelEn = billingCycle === "yearly" ? "year" : "month";
 
-  const churchPriceDisplay = churchProduct 
-    ? (language === "ko" 
-        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
-        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
-    : (billingCycle === "yearly"
-        ? (language === "ko" ? "₩399,000/년" : "$399/year")
-        : (language === "ko" ? "₩39,900/월" : "$39.99/month"));
+  const formatProductPrice = (product: ReturnType<typeof useMembershipProduct>["product"]) => {
+    if (!product) return null;
+    if (currency === "krw") {
+      return `${formatPrice(product.price_krw, "krw")}/${product.billing_cycle_label_ko || cycleLabelKo}`;
+    }
+    return `${formatPrice(product.price_usd, "usd")}/${product.billing_cycle_label_en || cycleLabelEn}`;
+  };
+
+  const premiumPriceDisplay = formatProductPrice(premiumProduct) 
+    ?? (billingCycle === "yearly"
+        ? (currency === "krw" ? "₩59,000/년" : "$49.99/year")
+        : (currency === "krw" ? "₩5,900/월" : "$4.99/month"));
+
+  const churchPriceDisplay = formatProductPrice(churchProduct) 
+    ?? (billingCycle === "yearly"
+        ? (currency === "krw" ? "₩399,000/년" : "$399/year")
+        : (currency === "krw" ? "₩39,900/월" : "$39.99/month"));
 
   const premiumTrialDays = premiumProduct?.trial_days || 7;
   const churchTrialDays = churchProduct?.trial_days || 30;
@@ -258,8 +264,8 @@ const Membership = () => {
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planMemberDescription"),
       features: language === "ko" 
-        ? ["송 라이브러리 조회", "Band View", "워십 아틀리에", "KWI 무료 강의 수강"]
-        : ["Song Library", "Band View", "Worship Atelier", "KWI Free Courses"],
+        ? ["송 라이브러리 조회", "Band View", "워십 아틀리에", "K-Worship Institute 무료 강의 수강"]
+        : ["Song Library", "Band View", "Worship Atelier", "K-Worship Institute Free Courses"],
       actionType: currentTier === "member" ? "current" : "none",
     },
     {
@@ -271,8 +277,8 @@ const Membership = () => {
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planWorshipLeaderDescription"),
       features: language === "ko"
-        ? ["팀멤버 전체 포함", "워십세트 생성 및 관리", "KWI 기본멤버 강의 수강"]
-        : ["All Team Member features", "Worship Set Builder", "KWI Basic Courses"],
+        ? ["팀멤버 전체 포함", "워십세트 생성 및 관리", "K-Worship Institute 기본멤버 강의 수강"]
+        : ["All Team Member features", "Worship Set Builder", "K-Worship Institute Basic Courses"],
       actionType: currentTier === "worship_leader" ? "current" : 
                   (currentTier === "member" ? "upgrade" : "none"),
     },
@@ -287,8 +293,8 @@ const Membership = () => {
         ? (language === "ko" ? premiumProduct.description_ko || "" : premiumProduct.description_en || "") 
         : (language === "ko" ? "예배인도자를 위한 프리미엄 기능" : "Premium features for worship leaders"),
       features: language === "ko"
-        ? ["기본멤버 전체 포함", "AI 워십세트 생성 (Worship Arc™)", "KWI 전체 수강 + AI 코치 + 수료 배지", "앰배서더 신청 자격"]
-        : ["All Basic Member features", "AI Worship Set Generation (Worship Arc™)", "Full KWI Access + AI Coach + Certification", "Ambassador Application"],
+        ? ["기본멤버 전체 포함", "AI 워십세트 생성 (Worship Arc™)", "K-Worship Institute 전체 수강 + AI 코치 + 수료 배지", "앰배서더 신청 자격"]
+        : ["All Basic Member features", "AI Worship Set Generation (Worship Arc™)", "Full K-Worship Institute Access + AI Coach + Certification", "Ambassador Application"],
       isHighlighted: !isChurch && !isPremium,
       actionType: isPremium ? "manage" : "upgrade",
     },
@@ -522,24 +528,40 @@ const Membership = () => {
           </p>
 
           {/* Billing Cycle Toggle */}
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <ToggleGroup
-              type="single"
-              value={billingCycle}
-              onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
-              className="bg-muted rounded-lg p-1"
-            >
-              <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                {language === "ko" ? "월간" : "Monthly"}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                {language === "ko" ? "연간" : "Yearly"}
-              </ToggleGroupItem>
-            </ToggleGroup>
-            {billingCycle === "yearly" && (
-              <Badge variant="secondary" className="text-xs">
-                {language === "ko" ? "약 17% 할인" : "Save ~17%"}
-              </Badge>
+          <div className="flex flex-col items-center gap-3 mt-6">
+            <div className="flex items-center gap-3">
+              <ToggleGroup
+                type="single"
+                value={billingCycle}
+                onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
+                className="bg-muted rounded-lg p-1"
+              >
+                <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  {language === "ko" ? "월간" : "Monthly"}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  {language === "ko" ? "연간  ✦ 17% 할인" : "Yearly  ✦ 17% off"}
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              <ToggleGroup
+                type="single"
+                value={currency}
+                onValueChange={(val) => { if (val) setCurrency(val as "usd" | "krw"); }}
+                className="bg-muted rounded-lg p-1"
+              >
+                <ToggleGroupItem value="usd" className="rounded-md px-3 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  USD
+                </ToggleGroupItem>
+                <ToggleGroupItem value="krw" className="rounded-md px-3 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  KRW
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            {billingCycle === "monthly" && (
+              <p className="text-xs text-muted-foreground">
+                {language === "ko" ? "연간 결제 시 17% 할인" : "Save 17% with yearly billing"}
+              </p>
             )}
           </div>
         </div>
