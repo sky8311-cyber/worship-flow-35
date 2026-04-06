@@ -40,6 +40,27 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Feature flag check (server-side gating)
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: flagData } = await serviceClient
+      .from("platform_feature_flags")
+      .select("enabled")
+      .eq("key", "premium_enabled")
+      .single();
+
+    if (!flagData?.enabled) {
+      logStep("Feature flag disabled", { flag: "premium_enabled" });
+      return new Response(
+        JSON.stringify({ error: "Premium subscription not available" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 403 }
+      );
+    }
+    logStep("Feature flag verified", { flag: "premium_enabled" });
+
     // Parse request body for billing_cycle and currency
     let billingCycle: "monthly" | "yearly" = "monthly";
     let currency: "usd" | "krw" = "usd";

@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import {
   Carousel,
   CarouselContent,
