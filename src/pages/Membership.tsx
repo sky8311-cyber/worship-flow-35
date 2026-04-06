@@ -270,12 +270,9 @@ const Membership = () => {
       price: language === "ko" ? "무료" : "Free",
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planWorshipLeaderDescription"),
-      features: [
-        t("churchAccount.featureCreateCommunity"),
-        t("churchAccount.featureManageSets"),
-        t("churchAccount.featureManageLibrary"),
-        t("churchAccount.featureTemplates"),
-      ],
+      features: language === "ko"
+        ? ["팀멤버 전체 포함", "워십세트 생성 및 관리", "KWI 기본멤버 강의 수강"]
+        : ["All Team Member features", "Worship Set Builder", "KWI Basic Courses"],
       actionType: currentTier === "worship_leader" ? "current" : 
                   (currentTier === "member" ? "upgrade" : "none"),
     },
