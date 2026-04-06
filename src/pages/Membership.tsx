@@ -32,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePremiumSubscription } from "@/hooks/usePremiumSubscription";
 import { useChurchSubscription } from "@/hooks/useChurchSubscription";
 import { useMembershipProduct, formatPrice } from "@/hooks/useMembershipProducts";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTierFeature, TIER_HIERARCHY, type TierLevel } from "@/hooks/useTierFeature";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { supabase } from "@/integrations/supabase/client";
