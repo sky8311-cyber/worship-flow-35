@@ -40,26 +40,41 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Fetch membership product settings from DB
+    // Parse request body for billing_cycle and currency
+    let billingCycle: "monthly" | "yearly" = "monthly";
+    let currency: "usd" | "krw" = "usd";
+    try {
+      const body = await req.json();
+      if (body.billing_cycle === "yearly") billingCycle = "yearly";
+      if (body.currency === "krw") currency = "krw";
+    } catch {
+      // No body or invalid JSON — use defaults
+    }
+    logStep("Billing params", { billingCycle, currency });
+
+    // Determine which product_key to query
+    const productKey = billingCycle === "yearly" ? "full_membership_yearly" : "full_membership";
+    const priceColumn = currency === "krw" ? "stripe_price_id_krw" : "stripe_price_id_usd";
+
     const { data: productData, error: productError } = await supabaseClient
       .from("membership_products")
-      .select("stripe_price_id_usd, trial_days")
-      .eq("product_key", "full_membership")
+      .select(`${priceColumn}, trial_days`)
+      .eq("product_key", productKey)
       .eq("is_active", true)
       .single();
 
     if (productError) {
-      logStep("Product fetch error, using fallback", { error: productError.message });
+      logStep("Product fetch error", { error: productError.message });
     }
 
-    const stripePriceId = productData?.stripe_price_id_usd;
-    const trialDays = productData?.trial_days ?? 7;
+    const stripePriceId = productData?.[priceColumn];
+    const trialDays = productData?.trial_days ?? 14;
 
     if (!stripePriceId) {
-      throw new Error("Stripe Price ID not configured for Full Membership. Please set it in Admin > Membership Products.");
+      throw new Error(`Stripe Price ID not configured for ${productKey} (${currency}). Please run Stripe setup first.`);
     }
 
-    logStep("Product config loaded", { stripePriceId, trialDays });
+    logStep("Product config loaded", { stripePriceId, trialDays, productKey, currency });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
@@ -87,6 +102,7 @@ serve(async (req) => {
         metadata: {
           user_id: user.id,
           type: "premium",
+          billing_cycle: billingCycle,
         },
       },
       success_url: `${req.headers.get("origin")}/settings?tab=premium&success=true&session_id={CHECKOUT_SESSION_ID}`,
@@ -94,6 +110,7 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         type: "premium",
+        billing_cycle: billingCycle,
       },
     });
 

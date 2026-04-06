@@ -1,15 +1,42 @@
+import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { MembershipProductCard } from "@/components/admin/MembershipProductCard";
 import { useAllMembershipProducts } from "@/hooks/useMembershipProducts";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CreditCard } from "lucide-react";
+import { AlertCircle, CreditCard, Loader2, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminMembershipProducts = () => {
   const { language } = useTranslation();
-  const { data: products, isLoading, error } = useAllMembershipProducts();
+  const { data: products, isLoading, error, refetch } = useAllMembershipProducts();
+  const [isSettingUp, setIsSettingUp] = useState(false);
+  const [setupResult, setSetupResult] = useState<Record<string, any> | null>(null);
+
+  const handleStripeSetup = async () => {
+    setIsSettingUp(true);
+    setSetupResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("setup-stripe-products", {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+      setSetupResult(data);
+      toast.success(language === "ko" ? "Stripe 상품이 설정되었습니다" : "Stripe products configured");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to setup Stripe products");
+    } finally {
+      setIsSettingUp(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -28,6 +55,43 @@ const AdminMembershipProducts = () => {
             }
           </p>
         </div>
+
+        {/* Stripe Setup Button */}
+        <Card className="mb-6 border-primary/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              {language === "ko" ? "Stripe 상품 초기화" : "Stripe Product Setup"}
+            </CardTitle>
+            <CardDescription>
+              {language === "ko"
+                ? "Stripe에 멤버십 상품과 가격을 생성하고 ID를 자동 저장합니다. 이미 설정된 항목은 스킵됩니다."
+                : "Creates membership products and prices in Stripe and saves IDs automatically. Already configured items are skipped."
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleStripeSetup} disabled={isSettingUp} variant="default">
+              {isSettingUp ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {language === "ko" ? "설정 중..." : "Setting up..."}
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  {language === "ko" ? "Stripe 상품 초기화 실행" : "Run Stripe Setup"}
+                </>
+              )}
+            </Button>
+
+            {setupResult && (
+              <pre className="mt-4 p-4 bg-muted rounded-lg text-xs overflow-auto max-h-64">
+                {JSON.stringify(setupResult, null, 2)}
+              </pre>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Info Alert */}
         <Alert className="mb-6">
