@@ -18,10 +18,9 @@ serve(async (req) => {
   }
 
   try {
-    // Auth: require service role key in Authorization header
+    // Auth: verify user JWT + admin role
     const authHeader = req.headers.get("Authorization");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!authHeader || !serviceRoleKey) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -29,24 +28,47 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    if (token !== serviceRoleKey) {
-      return new Response(JSON.stringify({ error: "Unauthorized: admin only" }), {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    // Verify user identity
+    const anonClient = createClient(supabaseUrl, anonKey, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userError } = await anonClient.auth.getUser(token);
+    if (userError || !userData?.user) {
+      logStep("Auth failed", { error: userError?.message });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Authorized");
+    // Check admin role
+    const { data: isAdmin, error: roleError } = await anonClient.rpc("has_role", {
+      _user_id: userData.user.id,
+      _role: "admin",
+    });
+    if (roleError || !isAdmin) {
+      logStep("Forbidden: not admin", { userId: userData.user.id });
+      return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    logStep("Authorized as admin", { userId: userData.user.id });
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      serviceRoleKey,
-      { auth: { persistSession: false } }
-    );
+    // Service-role client for DB writes (key never exposed in response)
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    });
 
     const result: Record<string, Record<string, string>> = {};
 
