@@ -62,9 +62,27 @@ const SetBuilder = () => {
   const queryClient = useQueryClient();
   const { user, isAdmin, signOut } = useAuth();
   const { t, language } = useTranslation();
+  const { hasFeature, isLoading: isTierLoading } = useTierFeature();
   
   // Tutorial system
   const tutorial = useTutorial({ key: "set-builder", steps: SET_BUILDER_STEPS });
+
+  // Gate: set_builder requires worship_leader tier or above
+  const canUseSetBuilder = hasFeature("set_builder");
+  
+  if (!isTierLoading && !canUseSetBuilder) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+          <LockedFeatureBanner
+            feature="set_builder"
+            message={language === "ko" ? "워십 세트 빌더는 기본멤버 이상부터 사용 가능합니다" : "Set Builder is available for Basic Members and above"}
+            onUpgrade={() => navigate("/membership")}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   // Remember scroll position per set
   useScrollPosition(id ? `set-builder-${id}` : "set-builder-new");
