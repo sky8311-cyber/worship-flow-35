@@ -96,7 +96,7 @@ const SetBuilder = () => {
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
-  const { hasFeature } = useTierFeature();
+  const { hasFeature, isLoading: isTierLoading } = useTierFeature();
   const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1546,6 +1546,21 @@ const SetBuilder = () => {
         ? `${formData.service_name || existingSet.service_name || "워십세트"} 편집`
         : `Edit ${formData.service_name || existingSet.service_name || "Worship Set"}`)
     : (language === "ko" ? "새 워십세트" : "New Worship Set");
+
+  // Gate: set_builder requires worship_leader tier or above
+  if (!isTierLoading && !hasFeature("set_builder")) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+          <LockedFeatureBanner
+            feature="set_builder"
+            message={language === "ko" ? "워십 세트 빌더는 기본멤버 이상부터 사용 가능합니다" : "Set Builder is available for Basic Members and above"}
+            onUpgrade={() => navigate("/membership")}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <>
