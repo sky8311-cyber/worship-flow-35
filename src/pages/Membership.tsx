@@ -105,22 +105,27 @@ const Membership = () => {
   const currentTier = getUserTier();
   const currentTierLevel = TIER_HIERARCHY[currentTier];
 
-  // Get dynamic pricing
-  const premiumPriceDisplay = premiumProduct 
-    ? (language === "ko" 
-        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
-        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
-    : (billingCycle === "yearly" 
-        ? (language === "ko" ? "₩59,000/년" : "$49.99/year")
-        : (language === "ko" ? "₩5,900/월" : "$4.99/month"));
+  // Get dynamic pricing based on currency toggle
+  const cycleLabelKo = billingCycle === "yearly" ? "년" : "월";
+  const cycleLabelEn = billingCycle === "yearly" ? "year" : "month";
 
-  const churchPriceDisplay = churchProduct 
-    ? (language === "ko" 
-        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
-        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
-    : (billingCycle === "yearly"
-        ? (language === "ko" ? "₩399,000/년" : "$399/year")
-        : (language === "ko" ? "₩39,900/월" : "$39.99/month"));
+  const formatProductPrice = (product: ReturnType<typeof useMembershipProduct>["product"]) => {
+    if (!product) return null;
+    if (currency === "krw") {
+      return `${formatPrice(product.price_krw, "krw")}/${product.billing_cycle_label_ko || cycleLabelKo}`;
+    }
+    return `${formatPrice(product.price_usd, "usd")}/${product.billing_cycle_label_en || cycleLabelEn}`;
+  };
+
+  const premiumPriceDisplay = formatProductPrice(premiumProduct) 
+    ?? (billingCycle === "yearly"
+        ? (currency === "krw" ? "₩59,000/년" : "$49.99/year")
+        : (currency === "krw" ? "₩5,900/월" : "$4.99/month"));
+
+  const churchPriceDisplay = formatProductPrice(churchProduct) 
+    ?? (billingCycle === "yearly"
+        ? (currency === "krw" ? "₩399,000/년" : "$399/year")
+        : (currency === "krw" ? "₩39,900/월" : "$39.99/month"));
 
   const premiumTrialDays = premiumProduct?.trial_days || 7;
   const churchTrialDays = churchProduct?.trial_days || 30;
