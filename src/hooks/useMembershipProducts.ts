@@ -40,7 +40,7 @@ export function useMembershipProducts() {
   });
 }
 
-export function useMembershipProduct(productKey: "full_membership" | "community_account") {
+export function useMembershipProduct(productKey: string) {
   const { data: products, isLoading, error } = useMembershipProducts();
   
   const product = products?.find(p => p.product_key === productKey);
