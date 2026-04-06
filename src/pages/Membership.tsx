@@ -528,24 +528,40 @@ const Membership = () => {
           </p>
 
           {/* Billing Cycle Toggle */}
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <ToggleGroup
-              type="single"
-              value={billingCycle}
-              onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
-              className="bg-muted rounded-lg p-1"
-            >
-              <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                {language === "ko" ? "월간" : "Monthly"}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                {language === "ko" ? "연간" : "Yearly"}
-              </ToggleGroupItem>
-            </ToggleGroup>
-            {billingCycle === "yearly" && (
-              <Badge variant="secondary" className="text-xs">
-                {language === "ko" ? "약 17% 할인" : "Save ~17%"}
-              </Badge>
+          <div className="flex flex-col items-center gap-3 mt-6">
+            <div className="flex items-center gap-3">
+              <ToggleGroup
+                type="single"
+                value={billingCycle}
+                onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
+                className="bg-muted rounded-lg p-1"
+              >
+                <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  {language === "ko" ? "월간" : "Monthly"}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  {language === "ko" ? "연간  ✦ 17% 할인" : "Yearly  ✦ 17% off"}
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              <ToggleGroup
+                type="single"
+                value={currency}
+                onValueChange={(val) => { if (val) setCurrency(val as "usd" | "krw"); }}
+                className="bg-muted rounded-lg p-1"
+              >
+                <ToggleGroupItem value="usd" className="rounded-md px-3 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  USD
+                </ToggleGroupItem>
+                <ToggleGroupItem value="krw" className="rounded-md px-3 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  KRW
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+            {billingCycle === "monthly" && (
+              <p className="text-xs text-muted-foreground">
+                {language === "ko" ? "연간 결제 시 17% 할인" : "Save 17% with yearly billing"}
+              </p>
             )}
           </div>
         </div>
