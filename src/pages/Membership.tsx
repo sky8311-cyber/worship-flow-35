@@ -71,6 +71,7 @@ const Membership = () => {
   const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const [currency, setCurrency] = useState<"usd" | "krw">(language === "ko" ? "krw" : "usd");
   const { product: premiumMonthly } = useMembershipProduct("full_membership");
   const { product: premiumYearly } = useMembershipProduct("full_membership_yearly");
   const { product: churchMonthly } = useMembershipProduct("community_account");
