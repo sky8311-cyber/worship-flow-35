@@ -1,39 +1,35 @@
 
 
-# Blueprint 전체 업데이트 계획
+# setup-stripe-products 인증 방식 수정
 
-## 변경사항 요약
+## 변경 파일
 
-현재 blueprint(2026-04-05 생성)와 실제 코드베이스 사이의 차이를 반영하여 전체 문서를 업데이트합니다.
+`supabase/functions/setup-stripe-products/index.ts` — 인증 로직만 교체 (1개 파일)
 
-### 1. 브랜딩 수정
-- 제목에서 `(예배공작소)` 제거 — K-Worship이 유일한 플랫폼명
-- Section 11 i18n에서 `"예배공작소" (Korean)` 참조 제거
-- Platform Identity 설명에서 `예배공작소 / "Living Atelier"` 제거, Worship Atelier은 하위 섹션으로만 언급
+## 변경 내용
 
-### 2. 누락된 테이블 추가 (5개)
-DB에 존재하지만 blueprint에 미기재된 테이블:
-- `liturgical_calendar_items` — 교회력 데이터 (새 테이블)
-- `seed_daily_caps` — Seeds 일일 한도
-- `seed_levels` — Seeds 레벨 정의
-- `seed_transactions` — Seeds 거래 내역
-- `service_sets_audit` — 콘티 변경 이력
+Lines 20-48의 인증 블록을 아래로 교체:
 
-### 3. Edge Function 수 정정
-- 55 → 54 (실제 count)
+1. Authorization 헤더에서 Bearer 토큰 추출
+2. **anon key**로 Supabase 클라이언트를 생성하되, 사용자 JWT를 전달하여 `auth.getUser()` 호출
+3. `has_role(user.id, 'admin')` RPC로 admin 여부 확인 → 아니면 403
+4. DB 쓰기용 클라이언트는 별도로 **SERVICE_ROLE_KEY**로 생성 (응답에 노출 안 함)
 
-### 4. OG 이미지 업데이트 반영
-- `og-image.jpg` → `og-image.png`
-- Section 12 SEO에서 OG 이미지 설명 업데이트
+```text
+Before:
+  authHeader → compare with SERVICE_ROLE_KEY → 1 supabase client (service role)
 
-### 5. 라우팅 변경 반영
-- `/index` → `/` redirect 추가됨
-- 고아 `Index.tsx` 페이지 삭제됨
+After:
+  authHeader → getUser() via anon client → has_role() RPC → admin 확인
+  DB writes → separate service-role client (internal only)
+```
 
-### 6. 날짜 업데이트
-- `2026-04-05` → `2026-04-06`
+## 프론트엔드 변경 없음
 
-## 작업
+`AdminMembershipProducts.tsx`는 이미 세션 토큰을 Authorization 헤더로 전달 중 — 수정 불필요.
 
-`/mnt/documents/K-Worship_Platform_Blueprint.md` 파일을 위 변경사항 전부 반영하여 재생성합니다. 기존 구조와 내용은 유지하되, 정확성을 높입니다.
+## 검증
+
+- 배포 후 `curl_edge_functions`로 토큰 없이 호출 → 401
+- 어드민 UI 버튼 클릭 → 정상 실행 확인
 
