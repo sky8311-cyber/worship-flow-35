@@ -70,8 +70,13 @@ const Membership = () => {
   const { tier } = useTierFeature();
   const { isSandboxTester, isLoading: settingsLoading } = useAppSettings();
   
-  const { product: premiumProduct } = useMembershipProduct("full_membership");
-  const { product: churchProduct } = useMembershipProduct("community_account");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  const { product: premiumMonthly } = useMembershipProduct("full_membership");
+  const { product: premiumYearly } = useMembershipProduct("full_membership_yearly");
+  const { product: churchMonthly } = useMembershipProduct("community_account");
+  const { product: churchYearly } = useMembershipProduct("community_account_yearly");
+  const premiumProduct = billingCycle === "yearly" ? premiumYearly : premiumMonthly;
+  const churchProduct = billingCycle === "yearly" ? churchYearly : churchMonthly;
 
   const [isLoading, setIsLoading] = useState<PlanId | null>(null);
   const nativeIOS = isNativeIOS();
