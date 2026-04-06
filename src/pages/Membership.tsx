@@ -264,8 +264,8 @@ const Membership = () => {
       priceNote: t("churchAccount.freeForever"),
       description: t("churchAccount.planMemberDescription"),
       features: language === "ko" 
-        ? ["송 라이브러리 조회", "Band View", "워십 아틀리에", "KWI 무료 강의 수강"]
-        : ["Song Library", "Band View", "Worship Atelier", "KWI Free Courses"],
+        ? ["송 라이브러리 조회", "Band View", "워십 아틀리에", "K-Worship Institute 무료 강의 수강"]
+        : ["Song Library", "Band View", "Worship Atelier", "K-Worship Institute Free Courses"],
       actionType: currentTier === "member" ? "current" : "none",
     },
     {
