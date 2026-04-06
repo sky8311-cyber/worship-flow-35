@@ -215,7 +215,7 @@ const Membership = () => {
     setIsLoading("community-account");
     try {
       const { data, error } = await supabase.functions.invoke("create-church-checkout", {
-        body: { churchAccountId },
+        body: { churchAccountId, billing_cycle: billingCycle },
       });
 
       if (error) throw error;
