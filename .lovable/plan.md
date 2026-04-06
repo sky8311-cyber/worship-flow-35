@@ -1,44 +1,39 @@
-# K-Worship 메인 랜딩 — FAQ + AI Citation Marketing 구현
-
-## 목적
-
-메인 랜딩 페이지(`/`)에 K-Worship 플랫폼 전체에 대한 FAQ를 추가하고, FAQPage JSON-LD 스키마를 삽입하여 AI 검색엔진(ChatGPT, Gemini, Perplexity)에서 K-Worship이 인용되도록 최적화합니다.
-
-## FAQ 콘텐츠 초안 (8~10개, KO+EN)
 
 
-| #   | 질문                   | 답변 요약                                                            |
-| --- | -------------------- | ---------------------------------------------------------------- |
-| 1   | K-Worship이 뭔가요?      | 예배팀을 위한 올인원 관리 플랫폼 — 곡 라이브러리, 셋리스트(콘티), 악보, 팀 협업                 |
-| 2   | 누가 사용하나요?            | 찬양인도자, 밴드 멤버, 음향 담당자, 교회 미디어팀 등 예배에 관련된 모든 봉사자                   |
-| 3   | 어떤 기능이 있나요?          | 곡 라이브러리, AI 셋리스트 생성(Worship Arc™), 유튜브 스마트 매칭, 악보 관리, 팀 채팅, 뉴스피드 |
-| 4   | AI 셋리스트 생성이란?        | 예배 흐름(경배→찬양→응답)에 맞춰 AI가 자동으로 셋리스트를 추천하는 Worship Arc™ 기능          |
-| 5   | 태블릿/iPad에서 사용 가능한가요? | 네, 터치 제스처 최적화, 가로모드 악보 뷰, 원클릭 인쇄 지원                              |
-| 6   | 여러 팀/교회를 관리할 수 있나요?  | 네, 멀티 커뮤니티 기능으로 여러 예배팀을 하나의 계정에서 관리 가능                           |
-| 7   | 워십 아틀리에란?            | K-Worship 위에 구축된 개인 창작·묵상 공간, 블록 기반 페이지로 예배를 삶의 리듬으로 기록          |
-| 8   | 무료인가요?               | 기본 기능 무료 제공, 곡 라이브러리·셋리스트·팀 협업 등 핵심 기능 무료                        |
-| 9   | 어떻게 시작하나요?           | 회원가입 후 바로 시작, 별도 설치 없이 웹에서 사용 가능                                 |
-| 10  | 마커스워십/피아워십 곡도 있나요?   | 다양한 한국 CCM 및 워십 곡을 라이브러리에서 관리 가능, 유튜브 자동 매칭으로 바로 재생              |
+# Fix: K-Worship Primary Branding & Remove Orphaned Index Page
 
+## Problem
 
-## 구현 내용
+The `/index` route (which some users may land on) shows a bare placeholder page with "Welcome to KWorship" — no SEO, no branding, no logo, no value proposition. This gives the impression the platform identity is confused.
 
-### 1. `src/components/landing/LandingFAQ.tsx` 전면 리팩터
+Meanwhile, the proper K-Worship landing is at `/` (MobileAppLanding.tsx), and Worship Atelier is correctly scoped to `/atelier-welcome`. The branding is actually fine across the platform — the issue is this orphaned `Index.tsx` page.
 
-- 기존 파일이 있지만 번역 키가 없어 사실상 미사용 상태
-- AtelierFAQ 패턴으로 전환: FAQ 데이터를 컴포넌트 내부 배열로 직접 관리 (KO+EN)
-- `Helmet`으로 FAQPage JSON-LD 스키마 삽입
-- 기존 디자인 톤 유지 (다크 테마 호환, `bg-card`, `border-border`, motion 애니메이션)
-- 영어 답변은 Atelier와 동일하게 작은 이탤릭으로 표시
+## Plan
 
-### 2. `src/pages/Landing.tsx` 수정
+### Step 1: Redirect `/index` to `/`
+In `App.tsx`, add a redirect route so `/index` goes to the main landing page (`/` → MobileAppLanding):
+```
+<Route path="/index" element={<Navigate to="/" replace />} />
+```
 
-- `LandingFAQ`를 `LandingCTA` 바로 위에 삽입 (CTA 전 신뢰 구축)
+### Step 2: Clean up Index.tsx
+Either delete `src/pages/Index.tsx` entirely (it's not imported anywhere) or repurpose it. Since it's orphaned, deletion is cleanest.
 
-### 변경 파일
+### Step 3: Verify Worship Atelier sub-branding
+Ensure the Atelier section footer reads **"Worship Atelier by K-Worship"** (already correct) and that Atelier FAQ clearly states it's a feature of K-Worship (already correct in the FAQ content).
 
+### Step 4: SEO audit pass
+- `index.html` — already properly branded as K-Worship ✅
+- `MobileAppLanding.tsx` SEOHead — already K-Worship ✅  
+- `llms.txt`, `manifest.json`, `robots.txt` — verify K-Worship is primary name (quick check, fix if needed)
 
-| 파일                                      | 변경                                   |
-| --------------------------------------- | ------------------------------------ |
-| `src/components/landing/LandingFAQ.tsx` | **리팩터** — 10개 KO+EN FAQ + JSON-LD 삽입 |
-| `src/pages/Landing.tsx`                 | `LandingFAQ` import 및 CTA 위에 배치      |
+### Files Changed
+| File | Action |
+|------|--------|
+| `src/App.tsx` | Add `/index` → `/` redirect |
+| `src/pages/Index.tsx` | Delete (orphaned, unused) |
+
+### What Won't Change
+- Worship Atelier landing (`/atelier-welcome`) — this is a legitimate sub-brand/feature section, correctly positioned under K-Worship
+- All other K-Worship branded pages — already correct
+
