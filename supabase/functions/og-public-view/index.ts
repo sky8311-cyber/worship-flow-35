@@ -58,7 +58,7 @@ serve(async (req) => {
       ? `${setData.theme}${setData.worship_leader ? ` - ${setData.worship_leader}` : ''}`
       : `예배 콘티${setData.worship_leader ? ` - ${setData.worship_leader}` : ''} | K-Worship`;
     
-    const ogImage = 'https://kworship.app/images/og-worship-set.png';
+    const ogImage = 'https://jihozsqrrmzzrqvwilyy.supabase.co/storage/v1/object/public/og-assets/og-image.png';
     const pageUrl = `https://kworship.app/public-view/${token}`;
 
     // Generate HTML with OG meta tags and redirect

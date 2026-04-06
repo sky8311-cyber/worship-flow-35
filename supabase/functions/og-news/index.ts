@@ -28,7 +28,7 @@ serve(async (req) => {
 
     const title = post.title_ko || post.title;
     const description = post.excerpt_ko || post.excerpt || 'K-Worship 블로그';
-    const ogImage = post.cover_image_url || 'https://kworship.app/images/og-default.png';
+    const ogImage = post.cover_image_url || 'https://jihozsqrrmzzrqvwilyy.supabase.co/storage/v1/object/public/og-assets/og-image.png';
     const pageUrl = `https://kworship.app/news/${slug}`;
 
     const html = `<!DOCTYPE html>
