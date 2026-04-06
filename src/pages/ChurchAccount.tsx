@@ -51,6 +51,8 @@ interface ChurchAccount {
 
 export default function ChurchAccount() {
   const { user, isWorshipLeader, isAdmin } = useAuth();
+  const { isChurchSubscriptionEnabled, isSandboxTester } = useAppSettings();
+  const canAccessChurchCheckout = isAdmin || isSandboxTester || isChurchSubscriptionEnabled;
   const { language } = useLanguageContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
