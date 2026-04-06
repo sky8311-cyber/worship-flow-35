@@ -107,15 +107,19 @@ const Membership = () => {
   // Get dynamic pricing
   const premiumPriceDisplay = premiumProduct 
     ? (language === "ko" 
-        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || "년"}`
-        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || "year"}`)
-    : (language === "ko" ? "₩59,000/년" : "$59/year");
+        ? `${formatPrice(premiumProduct.price_krw, "krw")}/${premiumProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
+        : `${formatPrice(premiumProduct.price_usd, "usd")}/${premiumProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
+    : (billingCycle === "yearly" 
+        ? (language === "ko" ? "₩59,000/년" : "$49.99/year")
+        : (language === "ko" ? "₩5,900/월" : "$4.99/month"));
 
   const churchPriceDisplay = churchProduct 
     ? (language === "ko" 
-        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || "월"}`
-        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || "month"}`)
-    : (language === "ko" ? "₩39,900/월" : "$39.99/month");
+        ? `${formatPrice(churchProduct.price_krw, "krw")}/${churchProduct.billing_cycle_label_ko || (billingCycle === "yearly" ? "년" : "월")}`
+        : `${formatPrice(churchProduct.price_usd, "usd")}/${churchProduct.billing_cycle_label_en || (billingCycle === "yearly" ? "year" : "month")}`)
+    : (billingCycle === "yearly"
+        ? (language === "ko" ? "₩399,000/년" : "$399/year")
+        : (language === "ko" ? "₩39,900/월" : "$39.99/month"));
 
   const premiumTrialDays = premiumProduct?.trial_days || 7;
   const churchTrialDays = churchProduct?.trial_days || 30;
