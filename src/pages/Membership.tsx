@@ -140,7 +140,9 @@ const Membership = () => {
         queryClient.invalidateQueries({ queryKey: ["premium-subscription-status"] });
       } else {
         // Use Stripe for web
-        const { data, error } = await supabase.functions.invoke("create-premium-checkout");
+        const { data, error } = await supabase.functions.invoke("create-premium-checkout", {
+          body: { billing_cycle: billingCycle },
+        });
         if (error) throw error;
         if (data?.url) {
           window.open(data.url, "_blank");
