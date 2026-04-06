@@ -236,6 +236,7 @@ const App = () => {
               <Route path="/news" element={<News />} />
               <Route path="/news/:slug" element={<NewsDetail />} />
               <Route path="/demo" element={<Demo />} />
+              <Route path="/support" element={<Support />} />
               
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
