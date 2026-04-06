@@ -1,39 +1,36 @@
 
 
-# Fix: K-Worship Primary Branding & Remove Orphaned Index Page
+# OG 이미지 교체 계획
 
-## Problem
+업로드된 K-Worship 브랜드 이미지를 플랫폼 전체의 OG 이미지로 교체합니다.
 
-The `/index` route (which some users may land on) shows a bare placeholder page with "Welcome to KWorship" — no SEO, no branding, no logo, no value proposition. This gives the impression the platform identity is confused.
+## 현재 상태
 
-Meanwhile, the proper K-Worship landing is at `/` (MobileAppLanding.tsx), and Worship Atelier is correctly scoped to `/atelier-welcome`. The branding is actually fine across the platform — the issue is this orphaned `Index.tsx` page.
+OG 이미지는 Supabase Storage(`og-assets` 버킷)에 호스팅되어 있으며, 아래 3곳에서 참조 중:
 
-## Plan
+| 위치 | 현재 URL |
+|------|----------|
+| `index.html` (og:image, twitter:image) | `supabase.co/.../og-assets/og-image.jpg` |
+| `og-news/index.ts` (뉴스 fallback) | `kworship.app/images/og-default.png` |
+| `og-public-view/index.ts` (콘티 공유) | `kworship.app/images/og-worship-set.png` |
 
-### Step 1: Redirect `/index` to `/`
-In `App.tsx`, add a redirect route so `/index` goes to the main landing page (`/` → MobileAppLanding):
-```
-<Route path="/index" element={<Navigate to="/" replace />} />
-```
+## 작업 내용
 
-### Step 2: Clean up Index.tsx
-Either delete `src/pages/Index.tsx` entirely (it's not imported anywhere) or repurpose it. Since it's orphaned, deletion is cleanest.
+### Step 1: 업로드 이미지를 Supabase Storage에 업로드
+업로드된 `IMG_5934.png`를 `og-assets` 버킷에 `og-image.png`로 업로드하여 기존 이미지를 교체합니다.
 
-### Step 3: Verify Worship Atelier sub-branding
-Ensure the Atelier section footer reads **"Worship Atelier by K-Worship"** (already correct) and that Atelier FAQ clearly states it's a feature of K-Worship (already correct in the FAQ content).
+### Step 2: `index.html` OG 태그 URL 업데이트
+`og:image`와 `twitter:image` 메타 태그의 URL을 새 이미지 경로로 변경합니다. 파일 확장자가 `.jpg`에서 `.png`로 바뀌므로 URL도 함께 수정합니다.
 
-### Step 4: SEO audit pass
-- `index.html` — already properly branded as K-Worship ✅
-- `MobileAppLanding.tsx` SEOHead — already K-Worship ✅  
-- `llms.txt`, `manifest.json`, `robots.txt` — verify K-Worship is primary name (quick check, fix if needed)
+### Step 3: Edge Function fallback 이미지도 통일
+- `og-news/index.ts`: `og-default.png` fallback → 새 OG 이미지 URL로 교체
+- `og-public-view/index.ts`: 별도 이미지(`og-worship-set.png`)를 사용 중이므로, 이것도 새 이미지로 통일할지는 선택사항 (콘티 전용 이미지를 유지할 수도 있음)
 
-### Files Changed
-| File | Action |
-|------|--------|
-| `src/App.tsx` | Add `/index` → `/` redirect |
-| `src/pages/Index.tsx` | Delete (orphaned, unused) |
+### 변경 파일
 
-### What Won't Change
-- Worship Atelier landing (`/atelier-welcome`) — this is a legitimate sub-brand/feature section, correctly positioned under K-Worship
-- All other K-Worship branded pages — already correct
+| 파일 | 변경 |
+|------|------|
+| Supabase Storage `og-assets` 버킷 | 새 이미지 업로드 |
+| `index.html` | og:image, twitter:image URL 교체 |
+| `supabase/functions/og-news/index.ts` | fallback OG 이미지 URL 교체 |
 
