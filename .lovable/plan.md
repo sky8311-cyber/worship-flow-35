@@ -1,35 +1,45 @@
 
 
-# setup-stripe-products 인증 방식 수정
+# /support 퍼블릭 고객지원 페이지 생성
+
+## 개요
+
+`/support` URL에 접근 가능한 퍼블릭 고객지원 페이지를 새로 만든다. 비로그인 사용자도 접근 가능하며, 기존 Features/Press 페이지와 동일한 레이아웃 패턴(LandingNav + LandingFooter / AppLayout)을 따른다.
+
+## 페이지 내용
+
+1. **이메일 연락처**: `hello@kworship.app` (기존 footer에서 사용 중인 주소)
+2. **로그인 후 채팅 상담 안내**: 로그인하면 앱 내 실시간 고객상담 채팅을 이용할 수 있다는 안내
+3. **운영 시간 / 응답 안내** (선택): 간단한 안내 문구
 
 ## 변경 파일
 
-`supabase/functions/setup-stripe-products/index.ts` — 인증 로직만 교체 (1개 파일)
+| 파일 | 변경 |
+|---|---|
+| `src/pages/Support.tsx` | **새 파일** — 퍼블릭 고객지원 페이지 |
+| `src/App.tsx` | `/support` 라우트 추가 (퍼블릭, Legal/Features 옆) |
+| `src/components/landing/LandingFooter.tsx` | supportLinks에 `/support` 링크 추가 |
 
-## 변경 내용
+## 구현 상세
 
-Lines 20-48의 인증 블록을 아래로 교체:
+### Support.tsx
 
-1. Authorization 헤더에서 Bearer 토큰 추출
-2. **anon key**로 Supabase 클라이언트를 생성하되, 사용자 JWT를 전달하여 `auth.getUser()` 호출
-3. `has_role(user.id, 'admin')` RPC로 admin 여부 확인 → 아니면 403
-4. DB 쓰기용 클라이언트는 별도로 **SERVICE_ROLE_KEY**로 생성 (응답에 노출 안 함)
+- Features.tsx 패턴 차용: 비로그인 → LandingNav + LandingFooter 래핑, 로그인 → AppLayout 래핑
+- 한/영 분기 (`language === "ko"`)
+- 섹션:
+  - **헤더**: "고객 지원" / "Customer Support"
+  - **이메일 카드**: Mail 아이콘 + `hello@kworship.app` mailto 링크
+  - **채팅 상담 카드**: MessageCircle 아이콘 + "로그인 후 앱 내 채팅으로 실시간 상담이 가능합니다" + 로그인/대시보드 버튼
+  - **FAQ 링크** (선택): 기존 `/help` 페이지로 안내
 
-```text
-Before:
-  authHeader → compare with SERVICE_ROLE_KEY → 1 supabase client (service role)
+### App.tsx
 
-After:
-  authHeader → getUser() via anon client → has_role() RPC → admin 확인
-  DB writes → separate service-role client (internal only)
-```
+- L231 `<Route path="/legal">` 근처에 추가:
+  ```
+  <Route path="/support" element={<Support />} />
+  ```
 
-## 프론트엔드 변경 없음
+### LandingFooter.tsx
 
-`AdminMembershipProducts.tsx`는 이미 세션 토큰을 Authorization 헤더로 전달 중 — 수정 불필요.
-
-## 검증
-
-- 배포 후 `curl_edge_functions`로 토큰 없이 호출 → 401
-- 어드민 UI 버튼 클릭 → 정상 실행 확인
+- L27-29 supportLinks 배열에 `/support` 페이지 링크 추가
 
