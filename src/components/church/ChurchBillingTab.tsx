@@ -49,7 +49,9 @@ type PlanType = "member" | "worship-leader" | "church";
 
 export function ChurchBillingTab({ churchAccount, isOwner }: ChurchBillingTabProps) {
   const { t, language } = useTranslation();
-  const { isWorshipLeader } = useAuth();
+  const { isWorshipLeader, isAdmin } = useAuth();
+  const { isChurchSubscriptionEnabled, isSandboxTester } = useAppSettings();
+  const canAccessChurchCheckout = isAdmin || isSandboxTester || isChurchSubscriptionEnabled;
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
