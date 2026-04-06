@@ -302,13 +302,9 @@ const Membership = () => {
       description: churchProduct 
         ? (language === "ko" ? churchProduct.description_ko || "" : churchProduct.description_en || "")
         : t("churchAccount.planChurchDescription"),
-      features: [
-        t("churchAccount.featureCustomRoles"),
-        t("churchAccount.featureTeamRotation"),
-        t("churchAccount.featurePositionSignup"),
-        t("churchAccount.featureWhiteLabel"),
-        t("churchAccount.featureCustomDomain"),
-      ],
+      features: language === "ko"
+        ? ["정식멤버 전체 포함", "소속 팀원 정식멤버 권한 부여 (인원 무제한)", "PPT 자막 생성", "팀 로테이션 스케줄링", "화이트레이블 브랜딩"]
+        : ["All Full Member features", "Grant Full Member access to all team members", "PPT Subtitle Generation", "Team Rotation Scheduling", "White-label Branding"],
       isHighlighted: isChurch || (!isPremium && (isWorshipLeader || isAdmin)),
       actionType: isChurch ? "manage" : "upgrade",
     },
