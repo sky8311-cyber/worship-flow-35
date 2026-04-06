@@ -532,7 +532,7 @@ const Membership = () => {
               <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                 {language === "ko" ? "월간" : "Monthly"}
               </ToggleGroupItem>
-              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm">
+              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
                 {language === "ko" ? "연간" : "Yearly"}
               </ToggleGroupItem>
             </ToggleGroup>
