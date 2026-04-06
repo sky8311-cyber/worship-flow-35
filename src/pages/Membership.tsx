@@ -520,6 +520,28 @@ const Membership = () => {
           <p className="text-muted-foreground max-w-2xl mx-auto">
             {t("churchAccount.choosePlanDescription")}
           </p>
+
+          {/* Billing Cycle Toggle */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <ToggleGroup
+              type="single"
+              value={billingCycle}
+              onValueChange={(val) => { if (val) setBillingCycle(val as "monthly" | "yearly"); }}
+              className="bg-muted rounded-lg p-1"
+            >
+              <ToggleGroupItem value="monthly" className="rounded-md px-4 py-2 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                {language === "ko" ? "월간" : "Monthly"}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="yearly" className="rounded-md px-4 py-2 text-sm data-[state=on]:bg-background data-[state=on]:shadow-sm">
+                {language === "ko" ? "연간" : "Yearly"}
+              </ToggleGroupItem>
+            </ToggleGroup>
+            {billingCycle === "yearly" && (
+              <Badge variant="secondary" className="text-xs">
+                {language === "ko" ? "약 17% 할인" : "Save ~17%"}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Desktop: Grid View */}
