@@ -410,7 +410,7 @@ export const translations = {
       subtitle: "Worship Set Management System",
       totalSongs: "Total Songs",
       songsRegistered: "songs registered",
-      viewLibrary: "View Song Library",
+      viewLibrary: "View My Worship Library",
       upcomingEvents: "Upcoming Events",
       upcomingServices: "Upcoming Services",
       servicesScheduled: "services scheduled",
