@@ -100,12 +100,12 @@ const Demo = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Song Library Demo - K-Worship"
-        titleKo="찬양 라이브러리 데모 - K-Worship"
-        description="Try K-Worship's song library with 100+ worship songs. Search, preview scores, watch YouTube videos, and build worship sets."
-        descriptionKo="K-Worship 찬양 라이브러리를 체험해보세요. 100곡 이상의 찬양곡 검색, 악보 미리보기, 유튜브 재생, 워십세트 만들기를 무료로 써볼 수 있습니다."
-        keywords="worship songs, 찬양, CCM, hymns, worship set, score, sheet music, K-Worship demo"
-        keywordsKo="찬양 라이브러리, 찬양곡 검색, CCM 악보, 워십 악보, 찬양팀 곡 관리, 피아워십, 마커스워십, K-Worship 데모"
+        title="Worship Library Demo - K-Worship"
+        titleKo="예배 자료 라이브러리 데모 - K-Worship"
+        description="Try K-Worship's worship library with 100+ worship songs. Search, preview uploaded materials, watch YouTube videos, and build worship sets."
+        descriptionKo="K-Worship 예배 자료 라이브러리를 체험해보세요. 100곡 이상의 찬양곡 검색, 자료 미리보기, 유튜브 재생, 워십세트 만들기를 무료로 써볼 수 있습니다."
+        keywords="worship songs, 찬양, CCM, hymns, worship set, worship preparation, K-Worship demo"
+        keywordsKo="예배 자료, 찬양곡 검색, CCM 참고자료, 워십 자료, 찬양팀 곡 관리, 피아워십, 마커스워십, K-Worship 데모"
         canonicalPath="/demo"
         jsonLd={jsonLd}
       />
