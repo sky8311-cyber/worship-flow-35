@@ -297,6 +297,7 @@ const App = () => {
               <Route path="/admin/membership-products" element={<AdminRoute><AdminMembershipProducts /></AdminRoute>} />
               <Route path="/admin/institute" element={<AdminRoute><AdminInstitute /></AdminRoute>} />
               <Route path="/admin/songlibrary" element={<AdminRoute><AdminSongLibrary /></AdminRoute>} />
+              <Route path="/admin/copyright-reports" element={<AdminRoute><AdminCopyrightReports /></AdminRoute>} />
               <Route path="/institute/setting" element={<AdminRoute><InstituteSetting /></AdminRoute>} />
               <Route path="/institute/faculty" element={<AdminRoute><InstituteFaculty /></AdminRoute>} />
               <Route path="/institute/manage" element={<ProtectedRoute><InstructorManage /></ProtectedRoute>} />
