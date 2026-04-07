@@ -662,8 +662,8 @@ Method 2 - Header Button (Desktop):
     },
     {
       icon: Maximize2,
-      question: "How do I view sheet music in fullscreen?",
-      answer: `View sheet music in fullscreen in Band View.
+      question: "How do I view uploaded materials in fullscreen?",
+      answer: `View uploaded materials in fullscreen in Band View.
 
 📱 Entering Fullscreen:
 1. Open a published setlist or access via share link
