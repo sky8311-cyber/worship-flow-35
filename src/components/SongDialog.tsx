@@ -49,7 +49,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
+  const { acknowledge } = useCopyrightAcknowledgment();
+  const [copyrightChecked, setCopyrightChecked] = useState(false);
+  const copyrightAck = copyrightChecked;
 
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
