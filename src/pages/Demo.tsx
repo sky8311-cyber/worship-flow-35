@@ -123,7 +123,7 @@ const Demo = () => {
               <h1 className="text-sm sm:text-lg font-bold text-foreground flex items-center gap-1.5 truncate">
                 <Music className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
                 <span className="truncate">
-                  {language === "ko" ? "찬양 라이브러리 데모" : "Song Library Demo"}
+                  {language === "ko" ? "예배 자료 라이브러리 데모" : "Worship Library Demo"}
                 </span>
               </h1>
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
