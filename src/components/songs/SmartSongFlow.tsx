@@ -837,7 +837,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
       {/* Scores Section */}
       <div className="space-y-3">
         <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> {t("songFlow.scores")}</Label>
-        <CopyrightUploadNoticeInline />
+        <CopyrightUploadNotice className="mb-2" />
         {scoreVariations.map((variation: ScoreVariation, index: number) => (
           <div key={index} className="border rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2">
