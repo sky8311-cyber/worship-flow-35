@@ -1813,7 +1813,7 @@ songCard: {
       cta: {
         title: "Ready to Transform Your Worship Preparation?",
         description: "Join thousands of worship leaders who are already using K-Worship to prepare and share worship sets effortlessly.",
-        ctaButton: "Get Started Free",
+        ctaButton: "Get Started",
         hasAccount: "Already have an account?",
         login: "Login",
       },
