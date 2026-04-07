@@ -388,19 +388,6 @@ const Demo = () => {
           </div>
         )}
 
-        {/* SEO: Hidden song list for crawlers */}
-        <noscript>
-          <div>
-            <h2>{language === "ko" ? "찬양곡 목록" : "Worship Song List"}</h2>
-            <ul>
-              {songs.map((s: any) => (
-                <li key={s.id}>
-                  {s.title} - {s.artist} ({s.default_key}) {s.youtube_url && <a href={s.youtube_url}>YouTube</a>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </noscript>
       </div>
 
       {/* Signup CTA */}
