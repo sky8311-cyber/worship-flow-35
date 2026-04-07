@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { ScoreViewerDisclaimer } from "@/components/copyright/ScoreViewerDisclaimer";
 
 interface ScorePreviewDialogProps {
   open: boolean;
