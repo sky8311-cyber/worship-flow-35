@@ -1287,7 +1287,7 @@ songCard: {
       never: "Never",
       neverUsed: "Never Used",
       viewYouTube: "YouTube",
-      viewScore: "Score",
+      viewScore: "View Material",
       key: "Key",
       cannotDeleteUsedSong: "This song is used in {count} worship set(s) and cannot be deleted.",
     },
