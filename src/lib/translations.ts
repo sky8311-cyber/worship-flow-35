@@ -3513,7 +3513,7 @@ songCard: {
       page: "페이지",
       preview: "미리보기",
       addMorePages: "페이지 추가",
-      addKeyVariation: "또 다른 악보 추가 (예: 키 변주)",
+      addKeyVariation: "또 다른 자료 추가 (예: 키 변주)",
       lyrics: "가사",
       lyricsPlaceholder: "가사를 입력하세요...",
       youtubeLinks: "YouTube 링크",
