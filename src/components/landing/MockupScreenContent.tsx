@@ -76,7 +76,7 @@ export const WorshipSetsScreen = () => (
   </div>
 );
 
-// Song Library Screen
+// Worship Library Screen
 export const SongLibraryScreen = () => (
   <div className="h-full flex flex-col">
     {/* Status bar */}
