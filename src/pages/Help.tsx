@@ -692,8 +692,8 @@ Method 2 - Header Button (Desktop):
 
 🎯 Features:
 • Clean, easy-to-read layout
-• See song order, keys, and sheet music at a glance
-• Fullscreen sheet music support
+• See song order, keys, and uploaded materials at a glance
+• Fullscreen material viewing support
 • Accessible via share link without login
 
 📋 Displayed Information:
