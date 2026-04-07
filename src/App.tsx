@@ -97,6 +97,7 @@ const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
 const AdminMembershipProducts = lazyWithRetry(() => import("./pages/AdminMembershipProducts"));
 const AdminInstitute = lazyWithRetry(() => import("./pages/AdminInstitute"));
 const AdminSongLibrary = lazyWithRetry(() => import("./pages/AdminSongLibrary"));
+const AdminCopyrightReports = lazyWithRetry(() => import("./pages/AdminCopyrightReports"));
 const InstituteSetting = lazyWithRetry(() => import("./pages/InstituteSetting"));
 const InstituteFaculty = lazyWithRetry(() => import("./pages/InstituteFaculty"));
 const InstructorManage = lazyWithRetry(() => import("./pages/InstructorManage"));
@@ -296,6 +297,7 @@ const App = () => {
               <Route path="/admin/membership-products" element={<AdminRoute><AdminMembershipProducts /></AdminRoute>} />
               <Route path="/admin/institute" element={<AdminRoute><AdminInstitute /></AdminRoute>} />
               <Route path="/admin/songlibrary" element={<AdminRoute><AdminSongLibrary /></AdminRoute>} />
+              <Route path="/admin/copyright-reports" element={<AdminRoute><AdminCopyrightReports /></AdminRoute>} />
               <Route path="/institute/setting" element={<AdminRoute><InstituteSetting /></AdminRoute>} />
               <Route path="/institute/faculty" element={<AdminRoute><InstituteFaculty /></AdminRoute>} />
               <Route path="/institute/manage" element={<ProtectedRoute><InstructorManage /></ProtectedRoute>} />

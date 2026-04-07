@@ -29,6 +29,7 @@ import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { SmartSongFlow, type SmartSongFlowRef } from "@/components/songs/SmartSongFlow";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
@@ -48,7 +49,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
 
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
@@ -1015,16 +1016,17 @@ const [loading, setLoading] = useState(false);
             className="absolute opacity-0 w-0 h-0 overflow-hidden"
             style={{ pointerEvents: 'none' }}
             id={`file-upload-${index}`}
+            disabled={!copyrightAck}
           />
           
           {/* Upload button using label for better mobile compatibility */}
-          <label htmlFor={`file-upload-${index}`} className="cursor-pointer flex-1">
+          <label htmlFor={`file-upload-${index}`} className={`flex-1 ${!copyrightAck ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
             <Button
               type="button"
               variant={isDragging ? "default" : "outline"}
               size="sm"
               asChild
-              disabled={uploadingVariationIndex === index}
+              disabled={uploadingVariationIndex === index || !copyrightAck}
               className={`${isDragging ? "border-2 border-dashed border-primary" : ""} w-full`}
             >
               <span>
@@ -1072,7 +1074,7 @@ const [loading, setLoading] = useState(false);
             variant="outline"
             size="sm"
             onClick={handleDownload}
-            disabled={downloadingScore || !urlInput.trim()}
+            disabled={downloadingScore || !urlInput.trim() || !copyrightAck}
           >
             {downloadingScore ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -1414,6 +1416,7 @@ const [loading, setLoading] = useState(false);
             <p className="text-xs text-muted-foreground mb-2">
               악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
             </p>
+            <CopyrightUploadNotice className="mb-3" />
             
             <DndContext
               sensors={sensors}

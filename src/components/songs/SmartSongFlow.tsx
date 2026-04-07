@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 
 const TOTAL_STEPS = 6;
 
@@ -794,6 +795,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
 }
 
 function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t }: any) {
+  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
   const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
@@ -836,6 +838,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
       {/* Scores Section */}
       <div className="space-y-3">
         <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> {t("songFlow.scores")}</Label>
+        <CopyrightUploadNotice className="mb-2" />
         {scoreVariations.map((variation: ScoreVariation, index: number) => (
           <div key={index} className="border rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2">
@@ -847,12 +850,12 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
                 <SelectTrigger className="w-28"><SelectValue placeholder={t("songFlow.keySelect")} /></SelectTrigger>
                 <SelectContent>{MUSICAL_KEYS.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
               </Select>
-              <label htmlFor={`score-upload-${index}`} className="flex-1 cursor-pointer">
-                <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index} className="w-full">
+              <label htmlFor={`score-upload-${index}`} className={`flex-1 ${!copyrightAck ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
+                <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index || !copyrightAck} className="w-full">
                   <span>{uploadingVariationIndex === index ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{t("songFlow.uploading")}</> : t("songFlow.scoreUpload")}</span>
                 </Button>
               </label>
-              <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={async (e) => {
+              <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" disabled={!copyrightAck} onChange={async (e) => {
                 const files = e.target.files;
                 if (files) await Promise.all(Array.from(files).map(f => uploadScoreFile(f, index)));
                 e.target.value = "";
@@ -862,7 +865,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
             {/* URL download */}
             <div className="flex gap-2">
               <Input type="url" placeholder={t("songFlow.imageUrlPaste")} value={index === 0 ? scoreUrlInput : ""} onChange={(e) => index === 0 && setScoreUrlInput(e.target.value)} className="flex-1 text-sm" />
-              <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore}>
+              <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore || !copyrightAck}>
                 {downloadingScore ? <Loader2 className="w-4 h-4 animate-spin" /> : t("songFlow.download")}
               </Button>
             </div>

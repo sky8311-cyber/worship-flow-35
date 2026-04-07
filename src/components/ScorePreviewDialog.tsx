@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { ScoreViewerDisclaimer } from "@/components/copyright/ScoreViewerDisclaimer";
 
 interface ScorePreviewDialogProps {
   open: boolean;
@@ -241,6 +242,11 @@ export const ScorePreviewDialog = ({
             <p>{t("songLibrary.noScoreAvailable")}</p>
           </div>
         )}
+
+        {/* Score viewer disclaimer - always visible */}
+        <div className="flex-shrink-0 mt-2">
+          <ScoreViewerDisclaimer />
+        </div>
       </DialogContent>
     </Dialog>
   );
