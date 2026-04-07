@@ -849,12 +849,12 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
                 <SelectTrigger className="w-28"><SelectValue placeholder={t("songFlow.keySelect")} /></SelectTrigger>
                 <SelectContent>{MUSICAL_KEYS.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
               </Select>
-              <label htmlFor={`score-upload-${index}`} className="flex-1 cursor-pointer">
-                <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index} className="w-full">
+              <label htmlFor={`score-upload-${index}`} className={`flex-1 ${!copyrightAck ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
+                <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index || !copyrightAck} className="w-full">
                   <span>{uploadingVariationIndex === index ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{t("songFlow.uploading")}</> : t("songFlow.scoreUpload")}</span>
                 </Button>
               </label>
-              <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" onChange={async (e) => {
+              <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" disabled={!copyrightAck} onChange={async (e) => {
                 const files = e.target.files;
                 if (files) await Promise.all(Array.from(files).map(f => uploadScoreFile(f, index)));
                 e.target.value = "";
