@@ -1038,7 +1038,7 @@ export const translations = {
       allCategories: "All Categories",
       allLanguages: "All Languages",
       noSongs: "No songs found",
-      addFirstSong: "Add your first song to get started",
+      addFirstSong: "Add your own notes, references, or materials for this song.",
       viewMode: {
         table: "Table View",
         card: "Card View",
