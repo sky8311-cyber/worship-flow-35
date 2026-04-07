@@ -34,7 +34,7 @@ export const DemoSignupCTA = ({ open, onOpenChange, action }: DemoSignupCTAProps
           </Button>
           <Button asChild>
             <Link to="/signup">
-              {language === "ko" ? "무료 가입하기" : "Sign up free"}
+              {language === "ko" ? "가입하기" : "Sign up"}
             </Link>
           </Button>
         </DialogFooter>

@@ -217,7 +217,7 @@ const Features = () => {
             to="/signup"
             className="inline-flex items-center justify-center px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
           >
-            {language === "ko" ? "무료로 시작하기" : "Start for Free"}
+            {language === "ko" ? "지금 시작하기" : "Get Started"}
           </Link>
         </motion.div>
       </main>

@@ -152,7 +152,7 @@ const Demo = () => {
             )}
             <Button asChild size="sm" className="h-8 px-2.5 sm:px-3 text-xs sm:text-sm">
               <Link to="/signup">
-                {language === "ko" ? "무료 가입" : "Sign up"}
+                {language === "ko" ? "가입하기" : "Sign up"}
               </Link>
             </Button>
           </div>

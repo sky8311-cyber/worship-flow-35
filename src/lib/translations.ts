@@ -4073,7 +4073,7 @@ songCard: {
       cta: {
         title: "예배 준비, 지금 바로 시작하세요",
         description: "K-Worship과 함께 더 나은 예배 준비를 경험해 보세요. 수많은 워십리더들이 이미 사용하고 있습니다.",
-        ctaButton: "무료로 시작하기",
+        ctaButton: "지금 시작하기",
         hasAccount: "이미 계정이 있으신가요?",
         login: "로그인",
       },

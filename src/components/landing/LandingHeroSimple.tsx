@@ -94,7 +94,7 @@ export const LandingHeroSimple = () => {
           >
             <Button asChild>
               <Link to="/signup">
-                {language === "ko" ? "무료로 시작하기" : "Get started free"}
+                {language === "ko" ? "지금 시작하기" : "Get started"}
               </Link>
             </Button>
             <Button asChild variant="outline">
