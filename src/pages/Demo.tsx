@@ -38,7 +38,7 @@ const Demo = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("songs")
-        .select("id, title, artist, default_key, language, tempo, youtube_url, created_at, song_scores(id, key, file_url, position, page_number)")
+        .select("id, title, artist, default_key, language, tempo, youtube_url, created_at")
         .eq("is_private", false)
         .eq("status", "published")
         .order("created_at", { ascending: false })
@@ -46,7 +46,8 @@ const Demo = () => {
       if (error) throw error;
       return (data || []).map((s: any) => ({
         ...s,
-        score_file_url: s.song_scores?.[0]?.file_url || null,
+        score_file_url: null,
+        song_scores: [],
         status: "published",
         is_private: false,
       }));
