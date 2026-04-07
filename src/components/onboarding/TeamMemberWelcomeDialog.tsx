@@ -40,8 +40,8 @@ const scaleIn = {
 const features = [
   { 
     icon: Music, 
-    labelKo: "찬양 라이브러리 이용", 
-    labelEn: "Access Song Library",
+    labelKo: "나의 예배 자료 이용", 
+    labelEn: "Access My Worship Library",
     descKo: "2,000+ 찬양곡을 검색하고 저장하세요",
     descEn: "Search and save 2,000+ worship songs"
   },

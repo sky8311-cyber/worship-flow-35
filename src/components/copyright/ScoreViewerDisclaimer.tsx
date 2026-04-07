@@ -10,8 +10,8 @@ export const ScoreViewerDisclaimer = () => {
       <Info className="w-3 h-3 shrink-0" />
       <span>
         {isKo
-          ? "이 콘텐츠는 사용자가 업로드한 자료입니다. 저작권 신고: hello@kworship.app"
-          : "This content was uploaded by a user. Report copyright issues: hello@kworship.app"}
+          ? "본 자료는 사용자가 업로드한 콘텐츠입니다. 저작권 신고: hello@kworship.app"
+          : "Content is uploaded by users and may be subject to copyright. Report issues: hello@kworship.app"}
       </span>
     </div>
   );
