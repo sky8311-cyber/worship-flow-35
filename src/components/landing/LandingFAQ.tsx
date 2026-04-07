@@ -31,9 +31,9 @@ const faqs = [
   },
   {
     q: "태블릿/iPad에서 사용 가능한가요?",
-    a: "네, 터치 제스처 최적화, 가로모드 악보 뷰, 원클릭 인쇄를 지원합니다. 예배 현장에서 태블릿으로 바로 사용할 수 있습니다.",
+    a: "네, 터치 제스처 최적화, 가로모드 자료 뷰, 원클릭 인쇄를 지원합니다. 예배 현장에서 태블릿으로 바로 사용할 수 있습니다.",
     qEn: "Can I use it on a tablet or iPad?",
-    aEn: "Yes — with touch-optimized gestures, landscape sheet music view, and one-click printing, it's ready for live worship on any tablet.",
+    aEn: "Yes — with touch-optimized gestures, landscape reference material view, and one-click printing, it's ready for live worship on any tablet.",
   },
   {
     q: "여러 팀/교회를 관리할 수 있나요?",
