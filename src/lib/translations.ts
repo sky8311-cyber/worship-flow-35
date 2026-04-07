@@ -3344,8 +3344,8 @@ songCard: {
     actions: "액션",
   },
       preview: "미리보기",
-      previewScore: "악보 미리보기",
-      noScoreAvailable: "악보 파일이 없습니다",
+      previewScore: "자료 보기",
+      noScoreAvailable: "업로드된 자료가 없습니다",
       categories: {
         hymn: "찬송가",
         modernKorean: "모던워십 (한국)",
