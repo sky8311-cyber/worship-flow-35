@@ -813,12 +813,12 @@ Method 2 - Share Link:
 
 🎛️ Three Print Modes:
 
-✨ **Sheet Music Only (One-Click Print)** - Most Popular!
+✨ **Reference Materials Only (One-Click Print)** - Most Popular!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Prints only sheet music images, one per page
-• Each song's sheet music fills the entire page
-• Perfect when you just need sheet music for rehearsal or service
-• One click prints all sheet music at once!
+• Prints only uploaded material images, one per page
+• Each song's material fills the entire page
+• Perfect when you just need materials for rehearsal or service
+• One click prints all materials at once!
 • Ideal for handing out to band members
 
 📋 Setlist Print:
