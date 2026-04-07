@@ -3489,7 +3489,7 @@ songCard: {
     previewVideo: "미리보기",
     selectVideo: "선택",
     youtubeRequired: "유튜브 URL은 필수입니다",
-    scoreRequired: "악보 파일은 필수입니다",
+    scoreRequired: "참고 자료는 필수입니다",
     previewScore: "미리보기",
     removeFile: "삭제",
     uploadedFile: "업로드된 파일:",
