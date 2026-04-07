@@ -458,7 +458,7 @@ const Help = () => {
 3. Use the bottom navigation to access main features
 
 🎯 Main Features:
-• Song Library: Search songs and view sheet music
+• Song Library: Search songs and view uploaded materials
 • Worship Sets: Create service setlists
 • Community: Connect with your worship team
 • Chat: Real-time messaging with team members
