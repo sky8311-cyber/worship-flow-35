@@ -19,9 +19,9 @@ const faqs = [
   },
   {
     q: "어떤 기능이 있나요?",
-    a: "곡 라이브러리, AI 셋리스트 생성(Worship Arc™), 유튜브 스마트 매칭, 악보 관리, 팀 채팅, 뉴스피드 등 예배 준비에 필요한 모든 기능을 제공합니다.",
+    a: "곡 라이브러리, AI 셋리스트 생성(Worship Arc™), 유튜브 스마트 매칭, 참고 자료 관리, 팀 채팅, 뉴스피드 등 예배 준비에 필요한 모든 기능을 제공합니다.",
     qEn: "What features does K-Worship offer?",
-    aEn: "Song library, AI setlist generation (Worship Arc™), YouTube smart matching, sheet music management, team chat, and a news feed — everything you need for worship preparation.",
+    aEn: "Song library, AI setlist generation (Worship Arc™), YouTube smart matching, reference material management, team chat, and a news feed — everything you need for worship preparation.",
   },
   {
     q: "AI 셋리스트 생성이란?",
