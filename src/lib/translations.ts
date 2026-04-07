@@ -1644,7 +1644,7 @@ songCard: {
         headline: "Worship Platform Built by Worship Leaders",
         subheadline: "All-in-One System • Official Launch • Multi-Community • 100% Bilingual",
         tagline: "Designed meticulously and practically — finally officially released. We're giving back your time.",
-        ctaButton: "Get Started Free",
+        ctaButton: "Get Started",
         learnMore: "See Features",
         badges: {
           allInOne: "All-in-One",
