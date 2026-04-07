@@ -803,8 +803,8 @@ Method 2 - Share Link:
     },
     {
       icon: Printer,
-      question: "How do I print setlists and sheet music?",
-      answer: `Print your setlists and sheet music easily from Band View.
+      question: "How do I print setlists and uploaded materials?",
+      answer: `Print your setlists and uploaded materials easily from Band View.
 
 📱 Accessing Print:
 1. Open a published setlist to enter Band View
