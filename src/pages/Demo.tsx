@@ -76,27 +76,20 @@ const Demo = () => {
     return Array.from(set).sort();
   }, [songs]);
 
-  // JSON-LD for SEO
+  // JSON-LD for SEO — simplified, no individual song metadata
   const jsonLd = useMemo(() => {
-    if (!songs.length) return undefined;
     return {
       "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: language === "ko" ? "K-Worship 예배 자료 라이브러리" : "K-Worship Worship Library",
-      numberOfItems: songs.length,
-      itemListElement: songs.map((s: any, i: number) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: {
-          "@type": "MusicComposition",
-          name: s.title,
-          composer: s.artist || undefined,
-          musicalKey: s.default_key || undefined,
-          url: s.youtube_url || undefined,
-        },
-      })),
+      "@type": "WebApplication",
+      name: "K-Worship",
+      applicationCategory: "ReligiousSoftware",
+      operatingSystem: "Web",
+      description: language === "ko"
+        ? "예배팀을 위한 통합 관리 도구를 체험해보세요"
+        : "Try K-Worship's integrated worship team management tools",
+      url: "https://kworship.app/demo",
     };
-  }, [songs, language]);
+  }, [language]);
 
   return (
     <div className="min-h-screen bg-background">
