@@ -3553,7 +3553,7 @@ songCard: {
       never: "사용 안 함",
       neverUsed: "사용한 적 없음",
       viewYouTube: "유튜브",
-      viewScore: "악보",
+      viewScore: "자료 보기",
       key: "키",
       cannotDeleteUsedSong: "이 곡은 {count}개의 워십세트에서 사용 중이므로 삭제할 수 없습니다.",
     },
