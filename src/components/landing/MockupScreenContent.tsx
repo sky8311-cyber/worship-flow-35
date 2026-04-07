@@ -76,7 +76,7 @@ export const WorshipSetsScreen = () => (
   </div>
 );
 
-// Song Library Screen
+// Worship Library Screen
 export const SongLibraryScreen = () => (
   <div className="h-full flex flex-col">
     {/* Status bar */}
@@ -394,8 +394,8 @@ export const screens = [
   },
   { 
     component: SongLibraryScreen, 
-    titleKo: "10,000+ 찬양 라이브러리", 
-    titleEn: "10,000+ song library",
+    titleKo: "10,000+ 찬양 자료 관리", 
+    titleEn: "10,000+ worship song management",
     subtitleKo: "CCM, 영어찬양, 찬송가 모두",
     subtitleEn: "CCM, English worship, Hymns & more"
   },
