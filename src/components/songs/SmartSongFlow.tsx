@@ -535,6 +535,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           scoreUrlInput={scoreUrlInput}
           setScoreUrlInput={setScoreUrlInput}
           t={t}
+          copyrightChecked={copyrightChecked}
+          setCopyrightChecked={setCopyrightChecked}
+          onAcknowledge={() => acknowledge()}
         />}
         {currentStep === 4 && <Step4_Lyrics
           originalComposer={originalComposer}
