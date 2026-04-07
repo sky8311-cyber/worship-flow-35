@@ -3290,10 +3290,10 @@ songCard: {
       member: "팀 멤버",
     },
     songLibrary: {
-      title: "곡 라이브러리",
+      title: "나의 예배 자료",
       subtitle: "찬양곡 관리",
       mySongs: "내가 추가한 곡",
-      addSong: "곡 추가",
+      addSong: "곡 자료 추가",
       viewAllLibrary: "전체 라이브러리 보기",
       recentlyAdded: "최근 추가",
       importCSV: "CSV 가져오기",
