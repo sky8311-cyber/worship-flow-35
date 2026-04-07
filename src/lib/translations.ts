@@ -1247,7 +1247,7 @@ export const translations = {
       page: "Page",
       preview: "Preview",
       addMorePages: "Add More Pages",
-      addKeyVariation: "Add another score (e.g., key variation)",
+      addKeyVariation: "Add another reference (e.g., key variation)",
       lyrics: "Lyrics",
       lyricsPlaceholder: "Enter song lyrics here...",
       youtubeLinks: "YouTube Links",
