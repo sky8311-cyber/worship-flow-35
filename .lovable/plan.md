@@ -1,94 +1,61 @@
 
 
-# 전체 플랫폼 법적 용어 감사 및 수정
+# 데모 페이지 저작권 노출 위험 대응 방안
 
-## 문제점
-"무료", "free", "sheet music" 등 플랫폼이 콘텐츠를 제공하거나 무료 악보를 배포하는 것처럼 오해될 수 있는 표현이 다수 남아있음.
+## 현재 위험 분석
 
-## 수정 원칙
-- **"무료로 시작하기" / "Get started free"** → **"지금 시작하기" / "Get started"** (가격 관련 표현 제거)
-- **"무료 가입" / "Sign up free"** → **"가입하기" / "Sign up"**
-- **"sheet music management"** → **"uploaded reference management"** or **"참고 자료 관리"**
-- 가격표에서 쓰는 "무료" (팀멤버/기본멤버 요금)는 **유지** — 이것은 pricing tier 설명이므로 법적 문제 없음
-- 30일 체험 관련 "무료 체험"도 **유지** — 이것은 trial 설명
-- "is_free" 같은 코드 변수명은 변경 불필요
+데모 페이지가 다음과 같이 **최대한 SEO 노출**되도록 설계되어 있음:
 
-## 변경 대상 (13개 파일)
+```text
+노출 경로:
+├── sitemap.xml → /demo (priority 0.8)
+├── JSON-LD → ItemList + MusicComposition (곡명, 아티스트, 키)
+├── <noscript> → 100곡 전체 HTML 리스트 (크롤러용)
+├── song_scores 쿼리 → 악보 이미지 URL 직접 노출
+└── SongCard → 악보 미리보기 이미지 + ScorePreviewDialog
+```
 
-### 1. `src/pages/Demo.tsx`
-| 위치 | Before | After |
-|---|---|---|
-| L106 | `무료로 써볼 수 있습니다` | `체험해볼 수 있습니다` |
-| L131 | `${songs.length}곡의 찬양을 무료로 체험하세요` | `${songs.length}곡의 찬양을 체험해보세요` |
-| L132 | `Try ${songs.length} worship songs for free` | `Try ${songs.length} worship songs` |
-| L155 | `무료 가입` | `가입하기` |
+**핵심 문제**: 곡 제목/아티스트가 검색엔진에 인덱싱되는 것 자체는 큰 문제가 아님. **악보(score) 이미지가 로그인 없이 접근 가능**한 것이 저작권 위반 소지의 핵심.
 
-### 2. `src/components/demo/DemoSignupCTA.tsx`
-| Before | After |
+---
+
+## 제안 방안: 2단계 접근
+
+### Phase 1 — 즉시 조치 (악보 노출 차단)
+
+| 변경 | 설명 |
 |---|---|
-| `무료 회원가입이 필요합니다` | `회원가입이 필요합니다` |
-| `Sign up for free to use this feature` | `Sign up to use this feature` |
-| `무료 가입하기` | `가입하기` |
-| `Sign up free` | `Sign up` |
+| **데모에서 악보 제거** | `song_scores` 조인 제거, `score_file_url`을 항상 `null`로 설정 |
+| **SongCard 데모 모드** | 악보 미리보기/보기 버튼 숨김, 클릭 시 가입 CTA 표시 |
+| **JSON-LD에서 MusicComposition 제거** | 개별 곡 스키마를 제거하고 단순 ItemList만 유지 (곡명만, 아티스트 제거) |
+| **noscript 블록 제거** | 크롤러용 100곡 HTML 리스트 완전 삭제 |
 
-### 3. `src/components/landing/LandingHeroSimple.tsx`
-| Before | After |
+### Phase 2 — SEO 재조정
+
+| 변경 | 설명 |
 |---|---|
-| `무료로 시작하기` / `Get started free` | `지금 시작하기` / `Get started` |
+| **sitemap에서 /demo 우선순위 하향** | `priority: 0.8` → `0.4`, `changefreq: weekly` → `monthly` |
+| **SEO 메타 키워드 정리** | "worship songs", "찬양곡 검색" 등 콘텐츠 제공자처럼 보이는 키워드 제거 |
+| **SEO description 변경** | "100곡 이상의 찬양곡" → "예배 준비 도구를 체험해보세요" (도구 강조) |
+| **Edge Function sitemap도 동일 적용** | `supabase/functions/sitemap/index.ts`에서 demo priority 조정 |
 
-### 4. `src/lib/translations.ts`
-| Key | Before | After |
-|---|---|---|
-| `hero.ctaButton` | `무료로 시작하기` | `지금 시작하기` |
-| `cta.ctaButton` | `무료로 시작하기` | `지금 시작하기` |
-| `faq.q5.question` | `K-Worship은 무료인가요?` | `K-Worship 멤버십은 어떻게 되나요?` |
-| `faq.q5.answer` | `핵심 기능을 무료로 제공합니다...` | `기본 멤버로 핵심 기능을 이용할 수 있습니다. 팀 협업 및 공동체 관리를 위한 고급 기능은 정식 멤버십으로 제공됩니다.` |
+---
 
-### 5. `src/components/landing/LandingFAQ.tsx`
-| Before | After |
+## 변경 대상 파일 (6개)
+
+| 파일 | 변경 내용 |
 |---|---|
-| `무료인가요?` | `멤버십은 어떻게 되나요?` |
-| `기본 기능은 무료로 제공됩니다...` | `기본 멤버로 핵심 기능을 이용할 수 있습니다. 팀 협업 및 공동체 관리 등 고급 기능은 정식 멤버십으로 제공됩니다.` |
-| `Is K-Worship free?` | `What membership plans are available?` |
-| `Core features are free...` | `Core features are available to all members. Advanced features like team collaboration and community management are offered through premium membership.` |
-| `sheet music management` (FAQ 답변들) | `reference material management` / `참고 자료 관리` |
+| `src/pages/Demo.tsx` | song_scores 조인 제거, JSON-LD 단순화, noscript 삭제, SEO meta 변경 |
+| `src/components/SongCard.tsx` | `isDemo` prop 추가 → 악보 관련 UI 숨김 |
+| `public/sitemap.xml` | /demo priority 0.4로 하향 |
+| `supabase/functions/sitemap/index.ts` | demo priority 0.4로 하향 |
+| `src/components/demo/DemoSignupCTA.tsx` | 악보 보기 시도 시 표시할 메시지 추가 |
+| `public/robots.txt` | 변경 없음 (demo 자체는 접근 허용 유지) |
 
-### 6. `src/components/atelier-landing/AtelierFAQ.tsx`
-| Before | After |
-|---|---|
-| `무료인가요?` / `Is it free?` | `어떻게 시작하나요?` / `How do I get started?` |
-| `기본 기능은 무료로 제공됩니다...` | `워십 아틀리에의 기본 기능은 모든 멤버에게 제공됩니다...` |
-| `core features...are free` | `Core features of Worship Atelier are available to all members...` |
+## 결과
 
-### 7. `src/pages/auth/SignUp.tsx`
-| Before | After |
-|---|---|
-| `Create your free K-Worship account` | `Create your K-Worship account` |
-| `K-Worship 무료 계정을 만드세요` | `K-Worship 계정을 만드세요` |
-
-### 8. `supabase/functions/send-referral-invite/index.ts`
-| Before | After |
-|---|---|
-| `다양한 기능을 무료로 이용하세요!` | `다양한 기능을 이용하세요!` |
-| `all for free!` | 제거 |
-| `sheet music` references | `reference materials` / `참고 자료` |
-
-### 9. `src/pages/Help.tsx`
-- 모든 `sheet music` → `uploaded reference material` / `참고 자료`
-- `view sheet music` → `view uploaded materials` / `자료 보기`
-- `Sheet Music Only` (인쇄 모드명) → `Reference Materials Only`
-
-### 10. `src/pages/MobileAppLanding.tsx`
-| Before | After |
-|---|---|
-| `sheet music sharing` | `reference material sharing` |
-| `악보 공유` | `참고 자료 공유` |
-| SEO keywords의 `sheet music` | `worship reference materials` |
-
-## 변경하지 않는 항목
-- 가격표의 "무료" (planMemberPrice, freeLabel, freeForever) — pricing tier 표시
-- 30일 체험 관련 "무료 체험" — trial 기능 설명
-- 코드 변수명 (is_free 등)
-- `download-score-image` edge function 내부 로직
-- `악보` 자체가 song_scores 테이블 컬럼 등 내부 용어로 쓰이는 경우
+- ✅ 곡 제목 검색은 가능 (SEO 유지, 단 도구 중심 포지셔닝)
+- ✅ 악보 이미지는 **로그인 후에만** 접근 가능
+- ✅ 크롤러가 개별 곡 메타데이터를 수집할 수 없음
+- ✅ 데모는 "도구 체험"으로 포지셔닝
 
