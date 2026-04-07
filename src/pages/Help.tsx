@@ -573,7 +573,7 @@ Regular users can view published setlists. To create your own setlists, you need
 
 💡 Tips:
 • Use favorites (♥) to save frequently used songs
-• View sheet music, lyrics, and YouTube links on song detail pages
+• View uploaded materials, lyrics, and YouTube links on song detail pages
 • Worship Leaders can add new songs to the library`
     },
     {
