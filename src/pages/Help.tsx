@@ -66,7 +66,7 @@ const Help = () => {
 3. 하단 네비게이션을 통해 주요 기능에 접근합니다
 
 🎯 주요 기능 소개:
-• 곡 라이브러리: 찬양곡 검색 및 악보 확인
+• 곡 라이브러리: 찬양곡 검색 및 참고 자료 확인
 • 워십세트: 예배 콘티(세트리스트) 작성
 • 커뮤니티: 찬양팀과 소통하는 공간
 • 채팅: 팀원들과 실시간 대화
@@ -181,7 +181,7 @@ const Help = () => {
 
 💡 팁:
 • 즐겨찾기(♥)를 사용해 자주 쓰는 곡을 저장하세요
-• 곡 상세페이지에서 악보, 가사, 유튜브 링크를 확인할 수 있습니다
+• 곡 상세페이지에서 참고 자료, 가사, 유튜브 링크를 확인할 수 있습니다
 • 워십리더는 새 곡을 직접 추가할 수 있습니다`
     },
     {
@@ -202,8 +202,8 @@ const Help = () => {
 
 📱 링크로 접속하면:
 • 로그인 없이도 콘티 열람 가능 (밴드뷰)
-• 곡 목록, 키, 악보 등 모든 정보 확인
-• 악보 전체화면 보기 지원
+• 곡 목록, 키, 참고 자료 등 모든 정보 확인
+• 참고 자료 전체화면 보기 지원
 
 🔒 공유 관리:
 • 언제든 공유 링크를 비활성화할 수 있습니다
@@ -270,12 +270,12 @@ const Help = () => {
     },
     {
       icon: Maximize2,
-      question: "전체화면 악보 보기는 어떻게 하나요?",
-      answer: `밴드뷰에서 악보를 전체화면으로 크게 볼 수 있습니다.
+      question: "전체화면 자료 보기는 어떻게 하나요?",
+      answer: `밴드뷰에서 참고 자료를 전체화면으로 크게 볼 수 있습니다.
 
 📱 전체화면 진입:
 1. 게시된 콘티를 열거나 공유 링크로 접속합니다
-2. '밴드뷰' 화면에서 악보 이미지를 탭/클릭합니다
+2. '밴드뷰' 화면에서 자료 이미지를 탭/클릭합니다
 3. 전체화면 뷰어가 열립니다
 
 🎛️ 전체화면 조작:
@@ -284,7 +284,7 @@ const Help = () => {
 • 더블탭: 빠른 확대/축소
 • X 버튼: 전체화면 종료
 
-📄 여러 페이지 악보:
+📄 여러 페이지 자료:
 • 하단에 페이지 인디케이터가 표시됩니다
 • 좌우로 넘기며 모든 페이지를 볼 수 있습니다
 
@@ -300,15 +300,15 @@ const Help = () => {
 
 🎯 밴드뷰 특징:
 • 깔끔하고 읽기 쉬운 레이아웃
-• 곡 순서, 키, 악보를 한눈에 확인
-• 전체화면 악보 지원
+• 곡 순서, 키, 참고 자료를 한눈에 확인
+• 전체화면 자료 보기 지원
 • 로그인 없이도 공유 링크로 접근 가능
 
 📋 표시 정보:
 • 예배 정보 (날짜, 예배명, 인도자)
 • 곡 목록 및 순서
 • 각 곡의 키 정보
-• 악보 이미지
+• 참고 자료 이미지
 • 유튜브 참고 영상 링크
 
 📱 접근 방법:
@@ -322,7 +322,7 @@ const Help = () => {
 
 💡 활용 팁:
 • 리허설 시 곡 순서와 키 확인
-• 예배 중 악보 참조
+• 예배 중 자료 참조
 • 새 멤버에게 곡 목록 공유`
     },
     {
@@ -411,8 +411,8 @@ const Help = () => {
     },
     {
       icon: Printer,
-      question: "콘티와 악보를 인쇄하려면?",
-      answer: `밴드뷰에서 콘티와 악보를 간편하게 인쇄할 수 있습니다.
+      question: "콘티와 자료를 인쇄하려면?",
+      answer: `밴드뷰에서 콘티와 참고 자료를 간편하게 인쇄할 수 있습니다.
 
 📱 인쇄 기능 접근:
 1. 게시된 콘티를 열어 밴드뷰로 이동합니다
@@ -421,13 +421,13 @@ const Help = () => {
 
 🎛️ 인쇄 모드 3가지:
 
-✨ **악보만 인쇄 (One-Click Print)** - 가장 많이 사용!
+✨ **자료만 인쇄 (One-Click Print)** - 가장 많이 사용!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• 악보 이미지만 한 페이지씩 크게 출력
-• 각 곡의 악보가 페이지 전체를 채우도록 확대
-• 리허설이나 예배 시 악보만 필요할 때 최적
-• 클릭 한 번으로 모든 악보를 한꺼번에 인쇄!
-• 밴드 멤버에게 악보를 나눠줄 때 완벽
+• 참고 자료 이미지만 한 페이지씩 크게 출력
+• 각 곡의 자료가 페이지 전체를 채우도록 확대
+• 리허설이나 예배 시 자료만 필요할 때 최적
+• 클릭 한 번으로 모든 자료를 한꺼번에 인쇄!
+• 밴드 멤버에게 자료를 나눠줄 때 완벽
 
 📋 순서표 인쇄:
 • 곡 목록과 순서를 깔끔하게 출력
@@ -442,9 +442,9 @@ const Help = () => {
 • 브라우저 인쇄 기능 사용
 
 💡 활용 팁:
-• 밴드 멤버에게 악보 나눠줄 때 → 악보만 인쇄 ✨
+• 밴드 멤버에게 자료 나눠줄 때 → 자료만 인쇄 ✨
 • 인도자용 진행표 필요할 때 → 순서표 인쇄
-• 리허설 전 빠른 악보 준비 → 원클릭 악보 인쇄!`
+• 리허설 전 빠른 자료 준비 → 원클릭 자료 인쇄!`
     }
   ] : [
     {
@@ -458,7 +458,7 @@ const Help = () => {
 3. Use the bottom navigation to access main features
 
 🎯 Main Features:
-• Song Library: Search songs and view sheet music
+• Song Library: Search songs and view uploaded materials
 • Worship Sets: Create service setlists
 • Community: Connect with your worship team
 • Chat: Real-time messaging with team members
@@ -573,7 +573,7 @@ Regular users can view published setlists. To create your own setlists, you need
 
 💡 Tips:
 • Use favorites (♥) to save frequently used songs
-• View sheet music, lyrics, and YouTube links on song detail pages
+• View uploaded materials, lyrics, and YouTube links on song detail pages
 • Worship Leaders can add new songs to the library`
     },
     {
@@ -594,8 +594,8 @@ Regular users can view published setlists. To create your own setlists, you need
 
 📱 Link Access:
 • View setlist without logging in (Band View)
-• See song list, keys, sheet music
-• Fullscreen sheet music viewing
+• See song list, keys, uploaded materials
+• Fullscreen material viewing
 
 🔒 Managing Shares:
 • You can disable share links anytime
@@ -662,12 +662,12 @@ Method 2 - Header Button (Desktop):
     },
     {
       icon: Maximize2,
-      question: "How do I view sheet music in fullscreen?",
-      answer: `View sheet music in fullscreen in Band View.
+      question: "How do I view uploaded materials in fullscreen?",
+      answer: `View uploaded materials in fullscreen in Band View.
 
 📱 Entering Fullscreen:
 1. Open a published setlist or access via share link
-2. In Band View, tap/click on a sheet music image
+2. In Band View, tap/click on a material image
 3. Fullscreen viewer opens
 
 🎛️ Fullscreen Controls:
@@ -692,15 +692,15 @@ Method 2 - Header Button (Desktop):
 
 🎯 Features:
 • Clean, easy-to-read layout
-• See song order, keys, and sheet music at a glance
-• Fullscreen sheet music support
+• See song order, keys, and uploaded materials at a glance
+• Fullscreen material viewing support
 • Accessible via share link without login
 
 📋 Displayed Information:
 • Service info (date, name, leader)
 • Song list and order
 • Key information for each song
-• Sheet music images
+• Uploaded material images
 • YouTube reference links
 
 📱 How to Access:
@@ -714,7 +714,7 @@ Method 2 - Share Link:
 
 💡 Usage Tips:
 • Check song order and keys during rehearsal
-• Reference sheet music during service
+• Reference uploaded materials during service
 • Share song lists with new members`
     },
     {
@@ -803,8 +803,8 @@ Method 2 - Share Link:
     },
     {
       icon: Printer,
-      question: "How do I print setlists and sheet music?",
-      answer: `Print your setlists and sheet music easily from Band View.
+      question: "How do I print setlists and uploaded materials?",
+      answer: `Print your setlists and uploaded materials easily from Band View.
 
 📱 Accessing Print:
 1. Open a published setlist to enter Band View
@@ -813,12 +813,12 @@ Method 2 - Share Link:
 
 🎛️ Three Print Modes:
 
-✨ **Sheet Music Only (One-Click Print)** - Most Popular!
+✨ **Reference Materials Only (One-Click Print)** - Most Popular!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Prints only sheet music images, one per page
-• Each song's sheet music fills the entire page
-• Perfect when you just need sheet music for rehearsal or service
-• One click prints all sheet music at once!
+• Prints only uploaded material images, one per page
+• Each song's material fills the entire page
+• Perfect when you just need materials for rehearsal or service
+• One click prints all materials at once!
 • Ideal for handing out to band members
 
 📋 Setlist Print:
@@ -834,9 +834,9 @@ Method 2 - Share Link:
 • Uses browser print function
 
 💡 Tips:
-• Handing out to band members → Sheet Music Only ✨
+• Handing out to band members → Reference Materials Only ✨
 • Need a run sheet for the leader → Setlist Print
-• Quick prep before rehearsal → One-Click Sheet Music Print!`
+• Quick prep before rehearsal → One-Click Material Print!`
     }
   ];
 

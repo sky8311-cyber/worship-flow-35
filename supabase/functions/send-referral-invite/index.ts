@@ -120,7 +120,7 @@ serve(async (req) => {
         
         <p style="font-size: 16px; margin-bottom: 20px;">
           K-Worship은 예배 리더와 팀을 위한 최고의 협업 플랫폼입니다. 
-          곡 라이브러리, 예배 세트 빌더, 팀 협업 등 다양한 기능을 무료로 이용하세요!
+          곡 라이브러리, 예배 세트 빌더, 팀 협업 등 다양한 기능을 이용하세요!
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
@@ -156,8 +156,8 @@ serve(async (req) => {
         </div>
         
         <p style="font-size: 16px; margin-bottom: 20px;">
-          K-Worship is the ultimate collaboration platform for worship leaders and teams. 
-          Access song libraries, build worship sets, and collaborate with your team - all for free!
+          K-Worship은 예배 리더와 팀을 위한 최고의 협업 플랫폼입니다. 
+          곡 라이브러리, 예배 세트 빌더, 팀 협업 등 다양한 기능을 이용하세요!
         </p>
         
         <div style="text-align: center; margin: 30px 0;">

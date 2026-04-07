@@ -1644,7 +1644,7 @@ songCard: {
         headline: "Worship Platform Built by Worship Leaders",
         subheadline: "All-in-One System • Official Launch • Multi-Community • 100% Bilingual",
         tagline: "Designed meticulously and practically — finally officially released. We're giving back your time.",
-        ctaButton: "Get Started Free",
+        ctaButton: "Get Started",
         learnMore: "See Features",
         badges: {
           allInOne: "All-in-One",
@@ -1813,7 +1813,7 @@ songCard: {
       cta: {
         title: "Ready to Transform Your Worship Preparation?",
         description: "Join thousands of worship leaders who are already using K-Worship to prepare and share worship sets effortlessly.",
-        ctaButton: "Get Started Free",
+        ctaButton: "Get Started",
         hasAccount: "Already have an account?",
         login: "Login",
       },
@@ -3904,7 +3904,7 @@ songCard: {
         headline: "현장 워십리더가 만든 예배 공동체 플랫폼",
         subheadline: "올인원 시스템 • 정식 출시 • 멀티 공동체 • 한/영 100%",
         tagline: "실질적이고 섬세하게 디자인된 상품이 드디어 정식 출시. 여러분의 시간을 돌려드립니다.",
-        ctaButton: "무료로 시작하기",
+        ctaButton: "지금 시작하기",
         learnMore: "기능 보기",
         badges: {
           allInOne: "올인원",
@@ -4073,7 +4073,7 @@ songCard: {
       cta: {
         title: "예배 준비, 지금 바로 시작하세요",
         description: "K-Worship과 함께 더 나은 예배 준비를 경험해 보세요. 수많은 워십리더들이 이미 사용하고 있습니다.",
-        ctaButton: "무료로 시작하기",
+        ctaButton: "지금 시작하기",
         hasAccount: "이미 계정이 있으신가요?",
         login: "로그인",
       },

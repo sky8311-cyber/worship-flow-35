@@ -62,10 +62,10 @@ const faqs = [
     aEn: "Each atelier page has a guestbook where visitors can leave short messages. It serves as a warm space for encouragement and sharing prayer topics.",
   },
   {
-    q: "무료인가요?",
-    a: "워십 아틀리에의 기본 기능은 무료로 제공됩니다. 아틀리에 페이지 만들기, 블록 편집, 이웃 연결 등 핵심 기능을 무료로 사용할 수 있습니다.",
-    qEn: "Is it free?",
-    aEn: "The core features of Worship Atelier are free. You can create atelier pages, edit blocks, and connect with neighbors at no cost.",
+    q: "멤버십은 어떻게 되나요?",
+    a: "워십 아틀리에의 기본 기능은 모든 멤버에게 제공됩니다. 아틀리에 페이지 만들기, 블록 편집, 이웃 연결 등 핵심 기능을 사용할 수 있습니다.",
+    qEn: "What membership plans are available?",
+    aEn: "Core features of Worship Atelier are available to all members. You can create atelier pages, edit blocks, and connect with neighbors.",
   },
   {
     q: "어떻게 시작하나요?",
@@ -75,9 +75,9 @@ const faqs = [
   },
   {
     q: "팀에서도 사용할 수 있나요?",
-    a: "네, 워십 아틀리에는 개인 공간뿐 아니라 팀 단위로도 활용할 수 있습니다. K-Worship의 커뮤니티 기능과 연동하여 팀원들과 셋리스트, 악보, 묵상을 함께 나눌 수 있습니다.",
+    a: "네, 워십 아틀리에는 개인 공간뿐 아니라 팀 단위로도 활용할 수 있습니다. K-Worship의 커뮤니티 기능과 연동하여 팀원들과 셋리스트, 참고 자료, 묵상을 함께 나눌 수 있습니다.",
     qEn: "Can teams use it too?",
-    aEn: "Yes, Worship Atelier can be used by teams as well as individuals. Integrated with K-Worship's community features, teams can share setlists, sheet music, and devotions together.",
+    aEn: "Yes, Worship Atelier can be used by teams as well as individuals. Integrated with K-Worship's community features, teams can share setlists, reference materials, and devotions together.",
   },
 ];
 
