@@ -3527,7 +3527,7 @@ songCard: {
       selectMultipleFiles: "여러 파일 선택",
       downloadingScore: "다운로드 중...",
       privateToggle: "비공개 곡",
-      privateDescription: "비공개 곡은 송 라이브러리에서 본인만 볼 수 있습니다. 워십세트에 추가 시 본인이 속한 커뮤니티 멤버에게만 표시됩니다.",
+      privateDescription: "비공개 곡은 나의 예배 자료에서 본인만 볼 수 있습니다. 워십세트에 추가 시 본인이 속한 커뮤니티 멤버에게만 표시됩니다.",
       private: "비공개",
       privateSongAdded: "비공개 곡이 추가되었습니다. 이 곡은 내 커뮤니티 멤버에게만 표시됩니다.",
       privateSongHidden: "이 곡은 비공개 상태입니다",
