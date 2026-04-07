@@ -787,6 +787,57 @@ export type Database = {
           },
         ]
       }
+      copyright_reports: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          evidence_url: string | null
+          id: string
+          reason: string
+          reporter_email: string
+          reporter_name: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          reviewed_at: string | null
+          reviewer_notes: string | null
+          status: string
+          uploader_user_id: string | null
+        }
+        Insert: {
+          content_id: string
+          content_type?: string
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          reason: string
+          reporter_email: string
+          reporter_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          uploader_user_id?: string | null
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          reason?: string
+          reporter_email?: string
+          reporter_name?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          reviewed_at?: string | null
+          reviewer_notes?: string | null
+          status?: string
+          uploader_user_id?: string | null
+        }
+        Relationships: []
+      }
       email_preferences: {
         Row: {
           automated_reminders: boolean | null
@@ -4709,6 +4760,33 @@ export type Database = {
         }
         Relationships: []
       }
+      upload_copyright_acknowledgments: {
+        Row: {
+          accepted_at: string
+          acknowledgment_version: string
+          created_at: string
+          id: string
+          language: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          acknowledgment_version?: string
+          created_at?: string
+          id?: string
+          language?: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          acknowledgment_version?: string
+          created_at?: string
+          id?: string
+          language?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_curation_profiles: {
         Row: {
           congregation_notes: string | null
@@ -5503,6 +5581,10 @@ export type Database = {
           full_name: string
           user_id: string
         }[]
+      }
+      get_validated_strike_count: {
+        Args: { _user_id: string }
+        Returns: number
       }
       has_role: {
         Args: {
