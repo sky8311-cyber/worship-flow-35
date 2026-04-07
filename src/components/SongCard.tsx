@@ -44,6 +44,8 @@ interface SongCardProps {
   isFavorite?: boolean;
   favoriteCount?: number;
   usageCount?: number;
+  // Demo mode — hides score previews and auth-required actions
+  isDemo?: boolean;
   // Selector mode props - for use in SongSelector dialog
   selectorMode?: boolean;
   isSelectedForSet?: boolean;
