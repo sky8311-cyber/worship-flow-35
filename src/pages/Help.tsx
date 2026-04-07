@@ -700,7 +700,7 @@ Method 2 - Header Button (Desktop):
 • Service info (date, name, leader)
 • Song list and order
 • Key information for each song
-• Sheet music images
+• Uploaded material images
 • YouTube reference links
 
 📱 How to Access:
