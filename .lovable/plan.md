@@ -1,31 +1,94 @@
 
 
-# 매 업로드마다 저작권 동의 체크박스 표시
+# 전체 플랫폼 법적 용어 감사 및 수정
 
-## 문제
-현재 체크박스를 한 번 누르면 DB에 저장되어 이후 체크박스가 사라짐. 면책 문구(노란 박스)는 유지되지만, 사용자가 매번 새 곡을 등록할 때마다 동의 확인을 받아야 법적으로 더 강력함.
+## 문제점
+"무료", "free", "sheet music" 등 플랫폼이 콘텐츠를 제공하거나 무료 악보를 배포하는 것처럼 오해될 수 있는 표현이 다수 남아있음.
 
-## 변경 방향
-- DB 저장 방식을 유지하되, **매 업로드 세션마다** 체크박스를 표시
-- 체크박스는 **로컬 상태**로 관리 (곡 등록 다이얼로그 열 때마다 초기화)
-- DB 기록은 감사 로그(audit trail)로 계속 쌓음 (upsert → insert로 변경하여 매 동의를 기록)
-- 면책 문구(노란 박스)는 항상 표시
+## 수정 원칙
+- **"무료로 시작하기" / "Get started free"** → **"지금 시작하기" / "Get started"** (가격 관련 표현 제거)
+- **"무료 가입" / "Sign up free"** → **"가입하기" / "Sign up"**
+- **"sheet music management"** → **"uploaded reference management"** or **"참고 자료 관리"**
+- 가격표에서 쓰는 "무료" (팀멤버/기본멤버 요금)는 **유지** — 이것은 pricing tier 설명이므로 법적 문제 없음
+- 30일 체험 관련 "무료 체험"도 **유지** — 이것은 trial 설명
+- "is_free" 같은 코드 변수명은 변경 불필요
 
-## 변경 파일
+## 변경 대상 (13개 파일)
 
-| 파일 | 변경 |
+### 1. `src/pages/Demo.tsx`
+| 위치 | Before | After |
+|---|---|---|
+| L106 | `무료로 써볼 수 있습니다` | `체험해볼 수 있습니다` |
+| L131 | `${songs.length}곡의 찬양을 무료로 체험하세요` | `${songs.length}곡의 찬양을 체험해보세요` |
+| L132 | `Try ${songs.length} worship songs for free` | `Try ${songs.length} worship songs` |
+| L155 | `무료 가입` | `가입하기` |
+
+### 2. `src/components/demo/DemoSignupCTA.tsx`
+| Before | After |
 |---|---|
-| `src/components/copyright/CopyrightUploadNotice.tsx` | 체크박스를 항상 표시. `checked` 상태를 props로 받아 부모가 제어. `onAcknowledge` 콜백 추가 |
-| `src/hooks/useCopyrightAcknowledgment.ts` | DB 조회 로직 제거 (매번 체크 필요하므로). `acknowledge()`는 insert로 변경하여 감사 로그 누적 |
-| `src/components/songs/SmartSongFlow.tsx` | 로컬 `copyrightChecked` state 추가. 다이얼로그 열릴 때 false로 초기화. 체크 안 되면 업로드 버튼 비활성화 |
-| `src/components/SongDialog.tsx` | 동일하게 로컬 state로 관리 |
+| `무료 회원가입이 필요합니다` | `회원가입이 필요합니다` |
+| `Sign up for free to use this feature` | `Sign up to use this feature` |
+| `무료 가입하기` | `가입하기` |
+| `Sign up free` | `Sign up` |
 
-## 동작 흐름
+### 3. `src/components/landing/LandingHeroSimple.tsx`
+| Before | After |
+|---|---|
+| `무료로 시작하기` / `Get started free` | `지금 시작하기` / `Get started` |
 
-1. 곡 등록/편집 다이얼로그 열림 → 체크박스 unchecked 상태
-2. 면책 문구(노란 박스)는 항상 보임
-3. 체크박스도 항상 보임 → 사용자가 체크
-4. 체크 시 DB에 새 행 insert (감사 로그)
-5. 체크해야 악보 업로드 버튼 활성화
-6. 다이얼로그 닫았다가 다시 열면 다시 unchecked
+### 4. `src/lib/translations.ts`
+| Key | Before | After |
+|---|---|---|
+| `hero.ctaButton` | `무료로 시작하기` | `지금 시작하기` |
+| `cta.ctaButton` | `무료로 시작하기` | `지금 시작하기` |
+| `faq.q5.question` | `K-Worship은 무료인가요?` | `K-Worship 멤버십은 어떻게 되나요?` |
+| `faq.q5.answer` | `핵심 기능을 무료로 제공합니다...` | `기본 멤버로 핵심 기능을 이용할 수 있습니다. 팀 협업 및 공동체 관리를 위한 고급 기능은 정식 멤버십으로 제공됩니다.` |
+
+### 5. `src/components/landing/LandingFAQ.tsx`
+| Before | After |
+|---|---|
+| `무료인가요?` | `멤버십은 어떻게 되나요?` |
+| `기본 기능은 무료로 제공됩니다...` | `기본 멤버로 핵심 기능을 이용할 수 있습니다. 팀 협업 및 공동체 관리 등 고급 기능은 정식 멤버십으로 제공됩니다.` |
+| `Is K-Worship free?` | `What membership plans are available?` |
+| `Core features are free...` | `Core features are available to all members. Advanced features like team collaboration and community management are offered through premium membership.` |
+| `sheet music management` (FAQ 답변들) | `reference material management` / `참고 자료 관리` |
+
+### 6. `src/components/atelier-landing/AtelierFAQ.tsx`
+| Before | After |
+|---|---|
+| `무료인가요?` / `Is it free?` | `어떻게 시작하나요?` / `How do I get started?` |
+| `기본 기능은 무료로 제공됩니다...` | `워십 아틀리에의 기본 기능은 모든 멤버에게 제공됩니다...` |
+| `core features...are free` | `Core features of Worship Atelier are available to all members...` |
+
+### 7. `src/pages/auth/SignUp.tsx`
+| Before | After |
+|---|---|
+| `Create your free K-Worship account` | `Create your K-Worship account` |
+| `K-Worship 무료 계정을 만드세요` | `K-Worship 계정을 만드세요` |
+
+### 8. `supabase/functions/send-referral-invite/index.ts`
+| Before | After |
+|---|---|
+| `다양한 기능을 무료로 이용하세요!` | `다양한 기능을 이용하세요!` |
+| `all for free!` | 제거 |
+| `sheet music` references | `reference materials` / `참고 자료` |
+
+### 9. `src/pages/Help.tsx`
+- 모든 `sheet music` → `uploaded reference material` / `참고 자료`
+- `view sheet music` → `view uploaded materials` / `자료 보기`
+- `Sheet Music Only` (인쇄 모드명) → `Reference Materials Only`
+
+### 10. `src/pages/MobileAppLanding.tsx`
+| Before | After |
+|---|---|
+| `sheet music sharing` | `reference material sharing` |
+| `악보 공유` | `참고 자료 공유` |
+| SEO keywords의 `sheet music` | `worship reference materials` |
+
+## 변경하지 않는 항목
+- 가격표의 "무료" (planMemberPrice, freeLabel, freeForever) — pricing tier 표시
+- 30일 체험 관련 "무료 체험" — trial 기능 설명
+- 코드 변수명 (is_free 등)
+- `download-score-image` edge function 내부 로직
+- `악보` 자체가 song_scores 테이블 컬럼 등 내부 용어로 쓰이는 경우
 
