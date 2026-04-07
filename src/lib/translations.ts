@@ -2688,7 +2688,7 @@ songCard: {
       subtitle: "워십세트 관리 시스템",
       totalSongs: "전체 곡",
       songsRegistered: "곡이 등록되어 있습니다",
-      viewLibrary: "곡 라이브러리 보기",
+      viewLibrary: "나의 예배 자료 보기",
       upcomingEvents: "다가오는 일정",
       upcomingServices: "다가오는 예배",
       servicesScheduled: "예배가 예정되어 있습니다",
