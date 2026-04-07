@@ -7,9 +7,9 @@ import { Helmet } from "react-helmet-async";
 const faqs = [
   {
     q: "K-Worship이 뭔가요?",
-    a: "K-Worship은 예배팀을 위한 올인원 관리 플랫폼입니다. 곡 라이브러리, 셋리스트(콘티) 제작, 악보 관리, 팀 협업 기능을 하나의 서비스에서 제공합니다.",
+    a: "K-Worship은 예배팀을 위한 올인원 관리 플랫폼입니다. 곡 라이브러리, 셋리스트(콘티) 제작, 참고 자료 관리, 팀 협업 기능을 하나의 서비스에서 제공합니다.",
     qEn: "What is K-Worship?",
-    aEn: "K-Worship is an all-in-one worship team management platform offering a song library, setlist (conti) builder, sheet music management, and team collaboration — all in one place.",
+    aEn: "K-Worship is an all-in-one worship team management platform offering a song library, setlist (conti) builder, reference material management, and team collaboration — all in one place.",
   },
   {
     q: "누가 사용하나요?",
