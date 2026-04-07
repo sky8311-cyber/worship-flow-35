@@ -253,6 +253,7 @@ const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (!open) {
       setShowCloseConfirm(false);
+      setCopyrightChecked(false);
     }
   }, [open]);
   
