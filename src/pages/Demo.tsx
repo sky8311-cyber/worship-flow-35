@@ -128,8 +128,8 @@ const Demo = () => {
               </h1>
               <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                 {language === "ko"
-                  ? `${songs.length}곡의 찬양을 무료로 체험하세요`
-                  : `Try ${songs.length} worship songs for free`}
+                  ? `${songs.length}곡의 찬양을 체험해보세요`
+                  : `Try ${songs.length} worship songs`}
               </p>
             </div>
           </div>
