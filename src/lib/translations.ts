@@ -3316,7 +3316,7 @@ songCard: {
       allCategories: "전체 카테고리",
       allLanguages: "전체 언어",
       noSongs: "곡이 없습니다",
-      addFirstSong: "첫 곡을 추가하여 시작하세요",
+      addFirstSong: "이 곡에 대한 개인 자료나 참고 자료를 추가해보세요.",
       viewMode: {
         table: "테이블 보기",
         card: "카드 보기",
