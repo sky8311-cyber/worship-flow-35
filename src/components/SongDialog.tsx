@@ -1020,13 +1020,13 @@ const [loading, setLoading] = useState(false);
           />
           
           {/* Upload button using label for better mobile compatibility */}
-          <label htmlFor={`file-upload-${index}`} className="cursor-pointer flex-1">
+          <label htmlFor={`file-upload-${index}`} className={`flex-1 ${!copyrightAck ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
             <Button
               type="button"
               variant={isDragging ? "default" : "outline"}
               size="sm"
               asChild
-              disabled={uploadingVariationIndex === index}
+              disabled={uploadingVariationIndex === index || !copyrightAck}
               className={`${isDragging ? "border-2 border-dashed border-primary" : ""} w-full`}
             >
               <span>
