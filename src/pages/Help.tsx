@@ -714,7 +714,7 @@ Method 2 - Share Link:
 
 💡 Usage Tips:
 • Check song order and keys during rehearsal
-• Reference sheet music during service
+• Reference uploaded materials during service
 • Share song lists with new members`
     },
     {
