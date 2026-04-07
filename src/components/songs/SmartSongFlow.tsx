@@ -69,6 +69,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   
   const [loading, setLoading] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
+  const [copyrightChecked, setCopyrightChecked] = useState(false);
+  const { acknowledge } = useCopyrightAcknowledgment();
 
   // === STEP 1: Basic Info ===
   const [title, setTitle] = useState(draftSong?.title || "");
