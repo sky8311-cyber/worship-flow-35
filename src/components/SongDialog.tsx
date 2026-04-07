@@ -1415,6 +1415,7 @@ const [loading, setLoading] = useState(false);
             <p className="text-xs text-muted-foreground mb-2">
               악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
             </p>
+            <CopyrightUploadNotice className="mb-3" />
             
             <DndContext
               sensors={sensors}
