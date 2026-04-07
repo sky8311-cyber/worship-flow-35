@@ -15,8 +15,8 @@ export const DemoSignupCTA = ({ open, onOpenChange, action }: DemoSignupCTAProps
 
   const title = language === "ko" ? "회원가입이 필요합니다" : "Sign up required";
   const description = language === "ko"
-    ? `이 기능을 사용하려면 무료 회원가입이 필요합니다. 가입하면 워십세트 만들기, 새 곡 추가, 악보 관리 등 모든 기능을 이용할 수 있습니다.`
-    : `Sign up for free to use this feature. Create worship sets, add songs, manage scores and more.`;
+    ? `이 기능을 사용하려면 회원가입이 필요합니다. 가입하면 워십세트 만들기, 새 곡 추가, 참고 자료 관리 등 모든 기능을 이용할 수 있습니다.`
+    : `Sign up to use this feature. Create worship sets, add songs, manage reference materials and more.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
