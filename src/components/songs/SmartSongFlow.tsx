@@ -794,8 +794,8 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
   );
 }
 
-function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t }: any) {
-  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
+function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t, copyrightChecked, setCopyrightChecked, onAcknowledge }: any) {
+  const copyrightAck = copyrightChecked;
   const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
