@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 
 const TOTAL_STEPS = 6;
 
