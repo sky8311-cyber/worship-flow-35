@@ -1066,8 +1066,8 @@ export const translations = {
     actions: "Actions",
   },
       preview: "Preview",
-      previewScore: "Preview Score",
-      noScoreAvailable: "No score file available",
+      previewScore: "View Uploaded Material",
+      noScoreAvailable: "No uploaded material available",
       categories: {
         hymn: "Hymn",
         modernKorean: "Modern Worship (Korean)",
