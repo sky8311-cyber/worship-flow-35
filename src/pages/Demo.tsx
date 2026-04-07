@@ -38,7 +38,7 @@ const Demo = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("songs")
-        .select("id, title, artist, default_key, language, tempo, youtube_url, created_at, song_scores(id, key, file_url, position, page_number)")
+        .select("id, title, artist, default_key, language, tempo, youtube_url, created_at")
         .eq("is_private", false)
         .eq("status", "published")
         .order("created_at", { ascending: false })
@@ -46,7 +46,8 @@ const Demo = () => {
       if (error) throw error;
       return (data || []).map((s: any) => ({
         ...s,
-        score_file_url: s.song_scores?.[0]?.file_url || null,
+        score_file_url: null,
+        song_scores: [],
         status: "published",
         is_private: false,
       }));
@@ -75,37 +76,30 @@ const Demo = () => {
     return Array.from(set).sort();
   }, [songs]);
 
-  // JSON-LD for SEO
+  // JSON-LD for SEO — simplified, no individual song metadata
   const jsonLd = useMemo(() => {
-    if (!songs.length) return undefined;
     return {
       "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: language === "ko" ? "K-Worship 예배 자료 라이브러리" : "K-Worship Worship Library",
-      numberOfItems: songs.length,
-      itemListElement: songs.map((s: any, i: number) => ({
-        "@type": "ListItem",
-        position: i + 1,
-        item: {
-          "@type": "MusicComposition",
-          name: s.title,
-          composer: s.artist || undefined,
-          musicalKey: s.default_key || undefined,
-          url: s.youtube_url || undefined,
-        },
-      })),
+      "@type": "WebApplication",
+      name: "K-Worship",
+      applicationCategory: "ReligiousSoftware",
+      operatingSystem: "Web",
+      description: language === "ko"
+        ? "예배팀을 위한 통합 관리 도구를 체험해보세요"
+        : "Try K-Worship's integrated worship team management tools",
+      url: "https://kworship.app/demo",
     };
-  }, [songs, language]);
+  }, [language]);
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Worship Library Demo - K-Worship"
-        titleKo="예배 자료 라이브러리 데모 - K-Worship"
-        description="Try K-Worship's worship library with 100+ worship songs. Search, preview uploaded materials, watch YouTube videos, and build worship sets."
-        descriptionKo="K-Worship 예배 자료 라이브러리를 체험해보세요. 100곡 이상의 찬양곡 검색, 자료 미리보기, 유튜브 재생, 워십세트 만들기를 체험해볼 수 있습니다."
-        keywords="worship songs, 찬양, CCM, hymns, worship set, worship preparation, K-Worship demo"
-        keywordsKo="예배 자료, 찬양곡 검색, CCM 참고자료, 워십 자료, 찬양팀 곡 관리, 피아워십, 마커스워십, K-Worship 데모"
+        title="Worship Preparation Tool Demo - K-Worship"
+        titleKo="예배 준비 도구 데모 - K-Worship"
+        description="Try K-Worship's worship preparation tools. Search songs, manage worship sets, and collaborate with your team."
+        descriptionKo="K-Worship 예배 준비 도구를 체험해보세요. 곡 검색, 워십세트 관리, 팀 협업 기능을 체험할 수 있습니다."
+        keywords="worship preparation tool, worship team management, worship set builder, K-Worship demo"
+        keywordsKo="예배 준비 도구, 찬양팀 관리, 워십세트 빌더, K-Worship 데모"
         canonicalPath="/demo"
         jsonLd={jsonLd}
       />
@@ -313,6 +307,7 @@ const Demo = () => {
               <SongCard
                 key={song.id}
                 song={song}
+                isDemo
                 inCart={isInCart(song.id)}
                 onToggleCart={() =>
                   toggleCart({
@@ -394,19 +389,6 @@ const Demo = () => {
           </div>
         )}
 
-        {/* SEO: Hidden song list for crawlers */}
-        <noscript>
-          <div>
-            <h2>{language === "ko" ? "찬양곡 목록" : "Worship Song List"}</h2>
-            <ul>
-              {songs.map((s: any) => (
-                <li key={s.id}>
-                  {s.title} - {s.artist} ({s.default_key}) {s.youtube_url && <a href={s.youtube_url}>YouTube</a>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </noscript>
       </div>
 
       {/* Signup CTA */}
