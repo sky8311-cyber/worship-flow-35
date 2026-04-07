@@ -594,8 +594,8 @@ Regular users can view published setlists. To create your own setlists, you need
 
 📱 Link Access:
 • View setlist without logging in (Band View)
-• See song list, keys, sheet music
-• Fullscreen sheet music viewing
+• See song list, keys, uploaded materials
+• Fullscreen material viewing
 
 🔒 Managing Shares:
 • You can disable share links anytime
