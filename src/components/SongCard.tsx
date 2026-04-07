@@ -63,6 +63,7 @@ export const SongCard = memo(function SongCard({
   isFavorite = false,
   favoriteCount = 0,
   usageCount = 0,
+  isDemo = false,
   selectorMode = false,
   isSelectedForSet = false,
   onSelectForSet,
