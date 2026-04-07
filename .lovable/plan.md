@@ -1,45 +1,31 @@
 
 
-# /support 퍼블릭 고객지원 페이지 생성
+# 매 업로드마다 저작권 동의 체크박스 표시
 
-## 개요
+## 문제
+현재 체크박스를 한 번 누르면 DB에 저장되어 이후 체크박스가 사라짐. 면책 문구(노란 박스)는 유지되지만, 사용자가 매번 새 곡을 등록할 때마다 동의 확인을 받아야 법적으로 더 강력함.
 
-`/support` URL에 접근 가능한 퍼블릭 고객지원 페이지를 새로 만든다. 비로그인 사용자도 접근 가능하며, 기존 Features/Press 페이지와 동일한 레이아웃 패턴(LandingNav + LandingFooter / AppLayout)을 따른다.
-
-## 페이지 내용
-
-1. **이메일 연락처**: `hello@kworship.app` (기존 footer에서 사용 중인 주소)
-2. **로그인 후 채팅 상담 안내**: 로그인하면 앱 내 실시간 고객상담 채팅을 이용할 수 있다는 안내
-3. **운영 시간 / 응답 안내** (선택): 간단한 안내 문구
+## 변경 방향
+- DB 저장 방식을 유지하되, **매 업로드 세션마다** 체크박스를 표시
+- 체크박스는 **로컬 상태**로 관리 (곡 등록 다이얼로그 열 때마다 초기화)
+- DB 기록은 감사 로그(audit trail)로 계속 쌓음 (upsert → insert로 변경하여 매 동의를 기록)
+- 면책 문구(노란 박스)는 항상 표시
 
 ## 변경 파일
 
 | 파일 | 변경 |
 |---|---|
-| `src/pages/Support.tsx` | **새 파일** — 퍼블릭 고객지원 페이지 |
-| `src/App.tsx` | `/support` 라우트 추가 (퍼블릭, Legal/Features 옆) |
-| `src/components/landing/LandingFooter.tsx` | supportLinks에 `/support` 링크 추가 |
+| `src/components/copyright/CopyrightUploadNotice.tsx` | 체크박스를 항상 표시. `checked` 상태를 props로 받아 부모가 제어. `onAcknowledge` 콜백 추가 |
+| `src/hooks/useCopyrightAcknowledgment.ts` | DB 조회 로직 제거 (매번 체크 필요하므로). `acknowledge()`는 insert로 변경하여 감사 로그 누적 |
+| `src/components/songs/SmartSongFlow.tsx` | 로컬 `copyrightChecked` state 추가. 다이얼로그 열릴 때 false로 초기화. 체크 안 되면 업로드 버튼 비활성화 |
+| `src/components/SongDialog.tsx` | 동일하게 로컬 state로 관리 |
 
-## 구현 상세
+## 동작 흐름
 
-### Support.tsx
-
-- Features.tsx 패턴 차용: 비로그인 → LandingNav + LandingFooter 래핑, 로그인 → AppLayout 래핑
-- 한/영 분기 (`language === "ko"`)
-- 섹션:
-  - **헤더**: "고객 지원" / "Customer Support"
-  - **이메일 카드**: Mail 아이콘 + `hello@kworship.app` mailto 링크
-  - **채팅 상담 카드**: MessageCircle 아이콘 + "로그인 후 앱 내 채팅으로 실시간 상담이 가능합니다" + 로그인/대시보드 버튼
-  - **FAQ 링크** (선택): 기존 `/help` 페이지로 안내
-
-### App.tsx
-
-- L231 `<Route path="/legal">` 근처에 추가:
-  ```
-  <Route path="/support" element={<Support />} />
-  ```
-
-### LandingFooter.tsx
-
-- L27-29 supportLinks 배열에 `/support` 페이지 링크 추가
+1. 곡 등록/편집 다이얼로그 열림 → 체크박스 unchecked 상태
+2. 면책 문구(노란 박스)는 항상 보임
+3. 체크박스도 항상 보임 → 사용자가 체크
+4. 체크 시 DB에 새 행 insert (감사 로그)
+5. 체크해야 악보 업로드 버튼 활성화
+6. 다이얼로그 닫았다가 다시 열면 다시 unchecked
 
