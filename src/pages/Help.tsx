@@ -667,7 +667,7 @@ Method 2 - Header Button (Desktop):
 
 📱 Entering Fullscreen:
 1. Open a published setlist or access via share link
-2. In Band View, tap/click on a sheet music image
+2. In Band View, tap/click on a material image
 3. Fullscreen viewer opens
 
 🎛️ Fullscreen Controls:
