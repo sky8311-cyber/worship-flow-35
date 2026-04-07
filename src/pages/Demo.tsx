@@ -81,7 +81,7 @@ const Demo = () => {
     return {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      name: language === "ko" ? "K-Worship 찬양 라이브러리" : "K-Worship Song Library",
+      name: language === "ko" ? "K-Worship 예배 자료 라이브러리" : "K-Worship Worship Library",
       numberOfItems: songs.length,
       itemListElement: songs.map((s: any, i: number) => ({
         "@type": "ListItem",
