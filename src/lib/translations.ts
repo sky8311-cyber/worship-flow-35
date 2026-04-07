@@ -1261,7 +1261,7 @@ export const translations = {
       selectMultipleFiles: "Select multiple files",
       downloadingScore: "Downloading...",
       privateToggle: "Private Song",
-      privateDescription: "Private songs are only visible to you in the Song Library. When added to a worship set, they are visible only to your community members.",
+      privateDescription: "Private songs are only visible to you in your Worship Library. When added to a worship set, they are visible only to your community members.",
       private: "Private",
       privateSongAdded: "Private song added. This song is only visible to your community members.",
       privateSongHidden: "This song is private",
