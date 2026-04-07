@@ -48,10 +48,10 @@ const faqs = [
     aEn: "A personal creative and devotional space built on K-Worship. Use block-based pages to journal worship as a rhythm of life — organize devotions, prayers, and praise notes your way.",
   },
   {
-    q: "무료인가요?",
-    a: "기본 기능은 무료로 제공됩니다. 곡 라이브러리, 셋리스트, 팀 협업 등 핵심 기능을 무료로 사용할 수 있습니다.",
-    qEn: "Is K-Worship free?",
-    aEn: "Core features are free — song library, setlist builder, and team collaboration are all available at no cost.",
+    q: "멤버십은 어떻게 되나요?",
+    a: "기본 멤버로 핵심 기능을 이용할 수 있습니다. 곡 라이브러리, 셋리스트, 팀 협업 등 핵심 기능을 사용할 수 있으며, 팀 협업 및 공동체 관리 등 고급 기능은 정식 멤버십으로 제공됩니다.",
+    qEn: "What membership plans are available?",
+    aEn: "Core features are available to all members — song library, setlist builder, and team collaboration. Advanced features like community management are offered through premium membership.",
   },
   {
     q: "어떻게 시작하나요?",
