@@ -1016,6 +1016,7 @@ const [loading, setLoading] = useState(false);
             className="absolute opacity-0 w-0 h-0 overflow-hidden"
             style={{ pointerEvents: 'none' }}
             id={`file-upload-${index}`}
+            disabled={!copyrightAck}
           />
           
           {/* Upload button using label for better mobile compatibility */}
