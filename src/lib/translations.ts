@@ -1012,10 +1012,10 @@ export const translations = {
       member: "Team Member",
     },
     songLibrary: {
-      title: "Song Library",
+      title: "My Worship Library",
       subtitle: "Manage your worship songs",
       mySongs: "My Songs",
-      addSong: "Add Song",
+      addSong: "Add Song Reference",
       viewAllLibrary: "View All Library",
       recentlyAdded: "Recently Added",
       importCSV: "Import CSV",
