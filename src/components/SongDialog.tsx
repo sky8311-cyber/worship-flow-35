@@ -1074,7 +1074,7 @@ const [loading, setLoading] = useState(false);
             variant="outline"
             size="sm"
             onClick={handleDownload}
-            disabled={downloadingScore || !urlInput.trim()}
+            disabled={downloadingScore || !urlInput.trim() || !copyrightAck}
           >
             {downloadingScore ? (
               <Loader2 className="w-4 h-4 animate-spin" />
