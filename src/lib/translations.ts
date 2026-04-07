@@ -2240,7 +2240,7 @@ songCard: {
       editTitle: "Edit",
       titleConfirmed: "Confirm",
       selectYoutubeAndArtist: "Please select a YouTube video and enter the artist",
-      uploadScoreRequired: "Please upload at least one score",
+      uploadScoreRequired: "Please upload at least one reference material",
     },
     addToSet: {
       title: "Add to Worship Set",
