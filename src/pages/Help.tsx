@@ -834,9 +834,9 @@ Method 2 - Share Link:
 • Uses browser print function
 
 💡 Tips:
-• Handing out to band members → Sheet Music Only ✨
+• Handing out to band members → Reference Materials Only ✨
 • Need a run sheet for the leader → Setlist Print
-• Quick prep before rehearsal → One-Click Sheet Music Print!`
+• Quick prep before rehearsal → One-Click Material Print!`
     }
   ];
 
