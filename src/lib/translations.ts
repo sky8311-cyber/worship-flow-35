@@ -545,7 +545,7 @@ export const translations = {
         worshipSetCreated: "Worship Set Created",
         worshipSetPublished: "Worship Set Published",
         communityPost: "Community Post",
-        scoreUploaded: "Score Uploaded",
+        scoreUploaded: "Material Uploaded",
         lyricsAdded: "Lyrics Added"
       },
       weekly: "Weekly",
