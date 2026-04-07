@@ -77,7 +77,7 @@
     <loc>https://kworship.app/demo</loc>
     <xhtml:link rel="alternate" hreflang="ko" href="https://kworship.app/demo"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://kworship.app/demo"/>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 </urlset>

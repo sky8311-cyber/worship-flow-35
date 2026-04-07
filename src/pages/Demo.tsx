@@ -307,6 +307,7 @@ const Demo = () => {
               <SongCard
                 key={song.id}
                 song={song}
+                isDemo
                 inCart={isInCart(song.id)}
                 onToggleCart={() =>
                   toggleCart({
