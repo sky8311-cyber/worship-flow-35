@@ -61,9 +61,9 @@ const faqs = [
   },
   {
     q: "마커스워십, 피아워십 등의 곡도 관리할 수 있나요?",
-    a: "네, 다양한 한국 CCM 및 워십 곡을 라이브러리에서 관리할 수 있습니다. 유튜브 자동 매칭 기능으로 곡을 바로 재생하고 확인할 수 있습니다.",
+    a: "네, 다양한 한국 CCM 및 워십 곡을 라이브러리에서 관리할 수 있습니다. 유튜브 자동 매칭 기능으로 곡을 바로 재생하고 확인할 수 있습니다. 참고 자료는 사용자가 직접 업로드하여 관리합니다.",
     qEn: "Can I manage songs from Markers Worship, P.I.A Worship, etc.?",
-    aEn: "Yes — manage a wide range of Korean CCM and worship songs in your library, with YouTube auto-matching to play and preview tracks instantly.",
+    aEn: "Yes — manage a wide range of Korean CCM and worship songs in your library, with YouTube auto-matching to play and preview tracks instantly. Reference materials are uploaded and managed by users.",
   },
 ];
 

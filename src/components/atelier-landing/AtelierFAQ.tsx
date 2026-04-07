@@ -75,9 +75,9 @@ const faqs = [
   },
   {
     q: "팀에서도 사용할 수 있나요?",
-    a: "네, 워십 아틀리에는 개인 공간뿐 아니라 팀 단위로도 활용할 수 있습니다. K-Worship의 커뮤니티 기능과 연동하여 팀원들과 셋리스트, 악보, 묵상을 함께 나눌 수 있습니다.",
+    a: "네, 워십 아틀리에는 개인 공간뿐 아니라 팀 단위로도 활용할 수 있습니다. K-Worship의 커뮤니티 기능과 연동하여 팀원들과 셋리스트, 참고 자료, 묵상을 함께 나눌 수 있습니다.",
     qEn: "Can teams use it too?",
-    aEn: "Yes, Worship Atelier can be used by teams as well as individuals. Integrated with K-Worship's community features, teams can share setlists, sheet music, and devotions together.",
+    aEn: "Yes, Worship Atelier can be used by teams as well as individuals. Integrated with K-Worship's community features, teams can share setlists, reference materials, and devotions together.",
   },
 ];
 
