@@ -1,15 +1,16 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
 import { AlertTriangle } from "lucide-react";
 
 interface CopyrightUploadNoticeProps {
   className?: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
 }
 
-export const CopyrightUploadNotice = ({ className }: CopyrightUploadNoticeProps) => {
+export const CopyrightUploadNotice = ({ className, checked, onCheckedChange, disabled }: CopyrightUploadNoticeProps) => {
   const { language } = useTranslation();
-  const { hasAcknowledged, acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
   const isKo = language === "ko";
 
   return (
@@ -24,32 +25,22 @@ export const CopyrightUploadNotice = ({ className }: CopyrightUploadNoticeProps)
         </span>
       </div>
 
-      {/* Checkbox — only shown if not yet acknowledged */}
-      {!hasAcknowledged && (
-        <label className="flex items-start gap-2 mt-2 cursor-pointer">
-          <Checkbox
-            checked={false}
-            disabled={isAcknowledging}
-            onCheckedChange={async (checked) => {
-              if (checked) {
-                await acknowledge();
-              }
-            }}
-            className="mt-0.5"
-          />
-          <span className="text-xs text-muted-foreground leading-tight">
-            {isKo
-              ? "본인은 해당 콘텐츠를 업로드할 법적 권한이 있으며 저작권을 침해하지 않음을 확인합니다."
-              : "I confirm that I have the legal right to upload this content and that it does not infringe copyright."}
-          </span>
-        </label>
-      )}
+      {/* Checkbox — always shown */}
+      <label className="flex items-start gap-2 mt-2 cursor-pointer">
+        <Checkbox
+          checked={checked}
+          disabled={disabled}
+          onCheckedChange={(v) => onCheckedChange(!!v)}
+          className="mt-0.5"
+        />
+        <span className="text-xs text-muted-foreground leading-tight">
+          {isKo
+            ? "본인은 해당 콘텐츠를 업로드할 법적 권한이 있으며 저작권을 침해하지 않음을 확인합니다."
+            : "I confirm that I have the legal right to upload this content and that it does not infringe copyright."}
+        </span>
+      </label>
     </div>
   );
 };
 
-/**
- * Wrapper to block upload actions when acknowledgment hasn't been given.
- * Use `hasAcknowledged` from the hook to conditionally disable upload buttons.
- */
-export { useCopyrightAcknowledgment };
+export { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
