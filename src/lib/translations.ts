@@ -3904,7 +3904,7 @@ songCard: {
         headline: "현장 워십리더가 만든 예배 공동체 플랫폼",
         subheadline: "올인원 시스템 • 정식 출시 • 멀티 공동체 • 한/영 100%",
         tagline: "실질적이고 섬세하게 디자인된 상품이 드디어 정식 출시. 여러분의 시간을 돌려드립니다.",
-        ctaButton: "무료로 시작하기",
+        ctaButton: "지금 시작하기",
         learnMore: "기능 보기",
         badges: {
           allInOne: "올인원",
