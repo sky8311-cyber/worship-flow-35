@@ -49,7 +49,9 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
   const { t, language } = useTranslation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
+  const { acknowledge } = useCopyrightAcknowledgment();
+  const [copyrightChecked, setCopyrightChecked] = useState(false);
+  const copyrightAck = copyrightChecked;
 
 const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
@@ -251,6 +253,7 @@ const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (!open) {
       setShowCloseConfirm(false);
+      setCopyrightChecked(false);
     }
   }, [open]);
   
@@ -1416,7 +1419,7 @@ const [loading, setLoading] = useState(false);
             <p className="text-xs text-muted-foreground mb-2">
               악보 이미지를 키별로 업로드하세요. 순서를 바꾸려면 드래그하세요.
             </p>
-            <CopyrightUploadNotice className="mb-3" />
+            <CopyrightUploadNotice className="mb-3" checked={copyrightChecked} onCheckedChange={(v) => { setCopyrightChecked(v); if (v) acknowledge(); }} disabled={false} />
             
             <DndContext
               sensors={sensors}

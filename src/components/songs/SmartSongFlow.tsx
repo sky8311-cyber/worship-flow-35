@@ -69,6 +69,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   
   const [loading, setLoading] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
+  const [copyrightChecked, setCopyrightChecked] = useState(false);
+  const { acknowledge } = useCopyrightAcknowledgment();
 
   // === STEP 1: Basic Info ===
   const [title, setTitle] = useState(draftSong?.title || "");
@@ -533,6 +535,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           scoreUrlInput={scoreUrlInput}
           setScoreUrlInput={setScoreUrlInput}
           t={t}
+          copyrightChecked={copyrightChecked}
+          setCopyrightChecked={setCopyrightChecked}
+          onAcknowledge={() => acknowledge()}
         />}
         {currentStep === 4 && <Step4_Lyrics
           originalComposer={originalComposer}
@@ -794,8 +799,8 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
   );
 }
 
-function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t }: any) {
-  const { hasAcknowledged: copyrightAck } = useCopyrightAcknowledgment();
+function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t, copyrightChecked, setCopyrightChecked, onAcknowledge }: any) {
+  const copyrightAck = copyrightChecked;
   const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
@@ -838,7 +843,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
       {/* Scores Section */}
       <div className="space-y-3">
         <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> {t("songFlow.scores")}</Label>
-        <CopyrightUploadNotice className="mb-2" />
+        <CopyrightUploadNotice className="mb-2" checked={copyrightChecked} onCheckedChange={(v) => { setCopyrightChecked(v); if (v) onAcknowledge(); }} disabled={false} />
         {scoreVariations.map((variation: ScoreVariation, index: number) => (
           <div key={index} className="border rounded-lg p-3 space-y-2">
             <div className="flex items-center gap-2">
