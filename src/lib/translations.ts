@@ -2823,7 +2823,7 @@ songCard: {
         worshipSetCreated: "예배세트 생성",
         worshipSetPublished: "예배세트 게시",
         communityPost: "커뮤니티 게시글",
-        scoreUploaded: "악보 업로드",
+        scoreUploaded: "자료 업로드",
         lyricsAdded: "가사 추가"
       },
       weekly: "주간",
