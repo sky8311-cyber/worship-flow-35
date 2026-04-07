@@ -1223,7 +1223,7 @@ export const translations = {
     previewVideo: "Preview",
     selectVideo: "Select",
     youtubeRequired: "YouTube URL is required",
-    scoreRequired: "Score file is required",
+    scoreRequired: "Reference material is required",
     previewScore: "Preview",
     removeFile: "Remove",
     uploadedFile: "Uploaded file:",
