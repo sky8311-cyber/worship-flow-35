@@ -242,6 +242,11 @@ export const ScorePreviewDialog = ({
             <p>{t("songLibrary.noScoreAvailable")}</p>
           </div>
         )}
+
+        {/* Score viewer disclaimer - always visible */}
+        <div className="flex-shrink-0 mt-2">
+          <ScoreViewerDisclaimer />
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -865,7 +865,7 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
             {/* URL download */}
             <div className="flex gap-2">
               <Input type="url" placeholder={t("songFlow.imageUrlPaste")} value={index === 0 ? scoreUrlInput : ""} onChange={(e) => index === 0 && setScoreUrlInput(e.target.value)} className="flex-1 text-sm" />
-              <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore}>
+              <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore || !copyrightAck}>
                 {downloadingScore ? <Loader2 className="w-4 h-4 animate-spin" /> : t("songFlow.download")}
               </Button>
             </div>

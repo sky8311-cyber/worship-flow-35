@@ -29,6 +29,7 @@ import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { SmartSongFlow, type SmartSongFlowRef } from "@/components/songs/SmartSongFlow";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 import { useSongUsage } from "@/hooks/useSongUsage";
 import { format } from "date-fns";
 import { ko, enUS } from "date-fns/locale";
