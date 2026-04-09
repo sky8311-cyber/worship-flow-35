@@ -60,6 +60,7 @@ Disallow: /rewards
 Disallow: /referral
 Disallow: /church-account
 Disallow: /band-view
+Disallow: /public-view
 
 # Sitemap location
 Sitemap: https://kworship.app/sitemap.xml

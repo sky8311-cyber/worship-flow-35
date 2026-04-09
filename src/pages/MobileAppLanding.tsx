@@ -38,7 +38,7 @@ const MobileAppLanding = () => {
         description="All-in-one worship team management platform. Song library, setlist creation, real-time team collaboration, and reference material sharing."
         descriptionKo="예배팀을 위한 통합 관리 플랫폼. 곡 라이브러리, 콘티 제작, 실시간 팀 협업, 참고 자료 공유를 한곳에서."
         keywords="K-Worship, worship, church, setlist, worship leader, praise, CCM, worship reference materials, team collaboration"
-        keywordsKo="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 찬양팀, 예배 인도자, 교회, 참고자료, 피아워십, 마커스워십, 어노인팅"
+        keywordsKo="K-Worship, 케이워십, 예배, 찬양, 워십, 콘티, 세트리스트, 찬양팀, 예배 인도자, 교회, 참고자료"
         canonicalPath="/"
       />
       <LandingNav />

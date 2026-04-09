@@ -39,8 +39,8 @@ const Features = () => {
       icon: Music,
       titleEn: "Song Library",
       titleKo: "곡 라이브러리",
-      descriptionEn: "Manage your worship song database with lyrics, scores, YouTube references, and usage history.",
-      descriptionKo: "가사, 악보, YouTube 레퍼런스, 사용 이력을 포함한 찬양 곡 데이터베이스를 관리하세요.",
+      descriptionEn: "Manage your worship song database with lyrics, uploaded references, YouTube links, and usage history.",
+      descriptionKo: "가사, 참고 자료, YouTube 레퍼런스, 사용 이력을 포함한 찬양 곡 데이터베이스를 관리하세요.",
     },
     {
       icon: ListMusic,
@@ -53,15 +53,15 @@ const Features = () => {
       icon: Maximize,
       titleEn: "Tablet Fullscreen (Pinch to Zoom)",
       titleKo: "태블릿 전체화면 (핀치 투 줌)",
-      descriptionEn: "View scores in fullscreen mode on tablets. Pinch to zoom for detailed viewing during worship.",
-      descriptionKo: "태블릿에서 악보를 전체화면으로 보세요. 예배 중 핀치 투 줌으로 세밀하게 확인할 수 있습니다.",
+      descriptionEn: "View uploaded materials in fullscreen mode on tablets. Pinch to zoom for detailed viewing during worship.",
+      descriptionKo: "태블릿에서 참고 자료를 전체화면으로 보세요. 예배 중 핀치 투 줌으로 세밀하게 확인할 수 있습니다.",
     },
     {
       icon: Printer,
       titleEn: "One-Click Print",
       titleKo: "원클릭 인쇄",
-      descriptionEn: "Print your worship set order, scores, and notes with a single click. Perfect for rehearsals.",
-      descriptionKo: "예배 순서지, 악보, 노트를 원클릭으로 인쇄하세요. 리허설에 완벽합니다.",
+      descriptionEn: "Print your worship set order, reference materials, and notes with a single click. Perfect for rehearsals.",
+      descriptionKo: "예배 순서지, 참고 자료, 노트를 원클릭으로 인쇄하세요. 리허설에 완벽합니다.",
     },
     {
       icon: Calendar,
@@ -127,9 +127,9 @@ const Features = () => {
         title="K-Worship Features - All-in-One Worship Team Tools"
         titleKo="K-Worship 기능 소개 - 예배팀을 위한 모든 도구"
         description="Discover K-Worship features: Song Library, Set Builder, Team Collaboration, Music Player, Print, and more. Everything for worship preparation."
-        descriptionKo="K-Worship의 주요 기능을 알아보세요. 곡 라이브러리, 세트 빌더, 팀 협업, 뮤직 플레이어, 인쇄 기능 등 예배 준비의 모든 것. 피아워십 악보 관리도 지원합니다."
+        descriptionKo="K-Worship의 주요 기능을 알아보세요. 곡 라이브러리, 세트 빌더, 팀 협업, 뮤직 플레이어, 인쇄 기능 등 예배 준비의 모든 것."
         keywords="K-Worship features, worship software, church software, setlist builder, song library, team collaboration"
-        keywordsKo="K-Worship 기능, 예배 소프트웨어, 교회 소프트웨어, 콘티 제작, 곡 라이브러리, 팀 협업, 교회 찬양팀 앱, 예배 순서 프로그램, 피아워십, 마커스워십, 어노인팅"
+        keywordsKo="K-Worship 기능, 예배 소프트웨어, 교회 소프트웨어, 콘티 제작, 곡 라이브러리, 팀 협업, 교회 찬양팀 앱, 예배 순서 프로그램"
         canonicalPath="/features"
         jsonLd={featuresJsonLd}
         breadcrumbs={[
@@ -209,8 +209,8 @@ const Features = () => {
           </h2>
           <p className="text-muted-foreground mb-6">
             {language === "ko" 
-              ? "무료로 K-Worship의 모든 기능을 경험해 보세요"
-              : "Experience all features of K-Worship for free"
+              ? "K-Worship의 모든 기능을 경험해 보세요"
+              : "Experience all features of K-Worship"
             }
           </p>
           <Link
