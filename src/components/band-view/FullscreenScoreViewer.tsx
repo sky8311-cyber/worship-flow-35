@@ -30,6 +30,19 @@ export function FullscreenScoreViewer({
   const [zoom, setZoom] = useState(1);
   const [isActualFullscreen, setIsActualFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Signed URL resolution for score images
+  const [signedUrlMap, setSignedUrlMap] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!open || scores.length === 0) return;
+    const urls = scores.map((s) => s.imageUrl).filter(Boolean);
+    getSignedScoreUrls(urls).then(setSignedUrlMap);
+  }, [open, scores.map((s) => s.imageUrl).join(",")]);
+
+  const getResolvedUrl = useCallback(
+    (url: string) => signedUrlMap.get(url) || url,
+    [signedUrlMap]
+  );
   
   // iOS/Fullscreen detection
   const isFullscreenSupported = typeof document.fullscreenEnabled !== 'undefined' && document.fullscreenEnabled;
