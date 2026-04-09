@@ -1,48 +1,44 @@
 
 
-# 법적 위험 완화 — 항목 2~5 구현
+# 저작권 정책 동의 흐름 추가
 
-## 변경 사항
+## 문제
 
-### 1. robots.txt — `/public-view` 크롤러 차단 (항목 2)
-Protected paths 섹션에 `Disallow: /public-view` 추가
+`legal_documents` 테이블에 `copyright` (저작권 정책)과 `trademark` (상표 고지) 문서가 존재하지만, 동의 흐름에서 완전히 제외되어 있습니다.
 
-### 2. SEO 키워드에서 제3자 브랜드명 제거 (항목 3)
-다음 파일들의 `keywordsKo` / `descriptionKo`에서 **피아워십, 마커스워십, 어노인팅, Hillsong, CCM악보** 제거:
+- `useLegalConsent.ts`: `.in("type", ["terms", "privacy", "communications"])` — copyright 누락
+- `LegalConsentModal.tsx`: type이 `"terms" | "privacy" | "communications"`만 허용
+- 결과: 저작권 정책이 업데이트되어도 사용자에게 재동의를 요청하지 않음
 
-| 파일 | 제거 대상 |
+## 변경 계획
+
+### 1. `useLegalConsent.ts` — copyright 타입 추가
+- `PendingDocument` 인터페이스의 type에 `"copyright"` 추가
+- 두 쿼리의 `.in("type", [...])` 필터에 `"copyright"` 추가
+- `hasPendingCopyright` 변수 추가 및 `needsCommunicationConsentOnly` 로직에 반영
+
+### 2. `LegalConsentModal.tsx` — copyright 문서 표시
+- `PendingDocument` 인터페이스에 `"copyright"` 추가
+- `mandatoryDocs` 필터에 `d.type === "copyright"` 추가 (필수 동의 항목으로)
+- `getIcon` 함수에 copyright용 아이콘 추가 (예: `Scale` 또는 `Copyright`)
+
+### 3. `CommunicationConsentModal.tsx` — 타입 정의 동기화
+- `CommunicationsDocument` 인터페이스에 `"copyright"` 추가 (타입 일관성)
+
+### 4. 저작권 정책 버전 업데이트 (DB 마이그레이션)
+- `legal_documents` 테이블의 copyright 문서를 version `2.0`으로 업데이트하여, 기존 사용자에게 재동의 모달이 표시되도록 함
+- 최근 강화된 DMCA Safe Harbor, 중개자 면책, 반복 침해자 정책 등의 내용이 반영된 새 버전
+
+## 변경 파일 (4개)
+| 파일 | 변경 |
 |---|---|
-| `src/pages/Landing.tsx` | descriptionKo의 "마커스워십, 어노인팅, 피아워십 등 다양한 찬양을 관리하세요", keywordsKo의 "마커스워십, 어노인팅, 피아워십, CCM악보" |
-| `src/pages/Features.tsx` | descriptionKo의 "피아워십 악보 관리도 지원합니다", keywordsKo의 "피아워십, 마커스워십, 어노인팅" |
-| `src/pages/MobileAppLanding.tsx` | keywordsKo의 "피아워십, 마커스워십, 어노인팅" |
-| `src/pages/News.tsx` | keywordsKo의 "피아워십" |
-| `src/pages/Help.tsx` | keywordsKo의 "피아워십" |
-| `src/pages/auth/SignUp.tsx` | keywordsKo의 "피아워십" |
+| `src/hooks/useLegalConsent.ts` | copyright 쿼리 추가 |
+| `src/components/legal/LegalConsentModal.tsx` | copyright 표시 + 필수 동의 |
+| `src/components/legal/CommunicationConsentModal.tsx` | 타입 동기화 |
+| DB 마이그레이션 | copyright 문서 v2.0 업데이트 |
 
-**유지**: `LandingFAQ.tsx`의 FAQ 질문 "마커스워십, 피아워십 등의 곡도 관리할 수 있나요?" — 이것은 사용자 질문/답변 형태이므로 상표 사용이 합리적. `MockupScreenContent.tsx`의 목업 데이터(아티스트명)도 UI 시연 목적이므로 유지. `translations.ts`의 mockup 데이터도 유지. `update-curation-profile` Edge Function의 예시 프롬프트도 내부 AI 처리용이므로 유지.
-
-### 3. Features.tsx "악보" → "참고 자료" (항목 4)
-| 위치 | Before | After |
-|---|---|---|
-| L42 | `scores, YouTube references` | `uploaded references, YouTube links` |
-| L43 | `가사, 악보, YouTube 레퍼런스` | `가사, 참고 자료, YouTube 레퍼런스` |
-| L56 | `View scores in fullscreen` | `View uploaded materials in fullscreen` |
-| L57 | `악보를 전체화면으로` | `참고 자료를 전체화면으로` |
-| L63 | `scores, and notes` | `reference materials, and notes` |
-| L64 | `악보, 노트를` | `참고 자료, 노트를` |
-
-### 4. Features.tsx CTA "무료" 제거 (항목 5에 포함)
-| Before | After |
-|---|---|
-| `무료로 K-Worship의 모든 기능을 경험해 보세요` | `K-Worship의 모든 기능을 경험해 보세요` |
-| `Experience all features of K-Worship for free` | `Experience all features of K-Worship` |
-
-### 5. Landing.tsx SEO description 수정 (항목 5)
-| Before | After |
-|---|---|
-| `descriptionKo`: "...마커스워십, 어노인팅, 피아워십 등 다양한 찬양을 관리하세요." | "...예배 준비, 콘티 제작, 팀 협업을 위한 플랫폼입니다." |
-| `keywordsKo`: "...마커스워십, 어노인팅, 피아워십...CCM악보" | "...찬양팀관리, 워십세트, 주일예배, CCM" |
-
-## 총 변경 파일: 7개
-`public/robots.txt`, `src/pages/Landing.tsx`, `src/pages/Features.tsx`, `src/pages/MobileAppLanding.tsx`, `src/pages/News.tsx`, `src/pages/Help.tsx`, `src/pages/auth/SignUp.tsx`
+## 결과
+- ✅ 저작권 정책이 약관/개인정보처리방침과 함께 필수 동의 항목으로 표시
+- ✅ 기존 사용자 모두 다음 방문 시 저작권 정책 v2.0에 동의해야 계속 사용 가능
+- ✅ 향후 저작권 정책 버전 변경 시 자동으로 재동의 요청
 
