@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import {
@@ -151,7 +152,7 @@ export const SongCard = memo(function SongCard({
             className="relative h-32 bg-muted cursor-pointer group"
             onClick={() => setScorePreviewOpen(true)}
           >
-            <img 
+            <SignedScoreImage 
               src={scoreUrl} 
               alt={`${song.title} score preview`}
               className="w-full h-full object-cover object-top"

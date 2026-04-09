@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { ScoreViewerDisclaimer } from "@/components/copyright/ScoreViewerDisclaimer";
+import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 
 interface ScorePreviewDialogProps {
   open: boolean;
@@ -158,7 +159,7 @@ export const ScorePreviewDialog = ({
           // Old single score file display
           <div className="flex-1 overflow-auto min-h-0">
             {scoreUrl ? (
-              <img
+              <SignedScoreImage
                 src={scoreUrl}
                 alt={`${songTitle} score`}
                 className="w-full h-auto rounded-lg"
@@ -223,7 +224,7 @@ export const ScorePreviewDialog = ({
 
             <div className="flex-1 overflow-auto min-h-0">
               {currentFiles[currentPage] ? (
-                <img
+                <SignedScoreImage
                   src={currentFiles[currentPage].url}
                   alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
                   className="w-full h-auto rounded-lg"
