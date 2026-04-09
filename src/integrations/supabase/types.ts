@@ -5275,6 +5275,13 @@ export type Database = {
             referencedRelation: "worship_set_positions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "worship_set_signups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       worship_set_templates: {
