@@ -16,7 +16,7 @@ import { Loader2, Mail, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface CommunicationsDocument {
-  type: "terms" | "privacy" | "communications";
+  type: "terms" | "privacy" | "communications" | "copyright";
   version: string;
   title: string;
   content: string;

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface PendingDocument {
-  type: "terms" | "privacy" | "communications";
+  type: "terms" | "privacy" | "communications" | "copyright";
   version: string;
   title: string;
   content: string;
@@ -33,7 +33,7 @@ export const useLegalConsent = () => {
         .select("*")
         .eq("language", language)
         .eq("is_active", true)
-        .in("type", ["terms", "privacy", "communications"]);
+        .in("type", ["terms", "privacy", "communications", "copyright"]);
 
       if (docsError) throw docsError;
 
@@ -43,7 +43,7 @@ export const useLegalConsent = () => {
         .select("*")
         .eq("user_id", user.id)
         .eq("language", language)
-        .in("document_type", ["terms", "privacy", "communications"]);
+        .in("document_type", ["terms", "privacy", "communications", "copyright"]);
 
       if (accError) throw accError;
 
@@ -52,6 +52,7 @@ export const useLegalConsent = () => {
       let hasPendingTerms = false;
       let hasPendingPrivacy = false;
       let hasPendingCommunications = false;
+      let hasPendingCopyright = false;
       
       for (const doc of activeDocuments || []) {
         const latestAcceptance = acceptances?.find(
@@ -60,7 +61,7 @@ export const useLegalConsent = () => {
         
         if (!latestAcceptance) {
           pendingDocuments.push({
-            type: doc.type as "terms" | "privacy" | "communications",
+            type: doc.type as "terms" | "privacy" | "communications" | "copyright",
             version: doc.version,
             title: doc.title,
             content: doc.content,
@@ -70,6 +71,7 @@ export const useLegalConsent = () => {
           if (doc.type === "terms") hasPendingTerms = true;
           if (doc.type === "privacy") hasPendingPrivacy = true;
           if (doc.type === "communications") hasPendingCommunications = true;
+          if (doc.type === "copyright") hasPendingCopyright = true;
         }
       }
 
@@ -77,6 +79,7 @@ export const useLegalConsent = () => {
       const needsCommunicationConsentOnly = 
         !hasPendingTerms && 
         !hasPendingPrivacy && 
+        !hasPendingCopyright &&
         hasPendingCommunications;
 
       return {
