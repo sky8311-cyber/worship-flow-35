@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getSignedScoreUrls } from "@/utils/scoreUrl";
 
 interface ScoreItem {
   songTitle: string;
