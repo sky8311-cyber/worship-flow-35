@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getSignedScoreUrls } from "@/utils/scoreUrl";
 
 interface ScoreItem {
   songTitle: string;
@@ -29,6 +30,19 @@ export function FullscreenScoreViewer({
   const [zoom, setZoom] = useState(1);
   const [isActualFullscreen, setIsActualFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Signed URL resolution for score images
+  const [signedUrlMap, setSignedUrlMap] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!open || scores.length === 0) return;
+    const urls = scores.map((s) => s.imageUrl).filter(Boolean);
+    getSignedScoreUrls(urls).then(setSignedUrlMap);
+  }, [open, scores.map((s) => s.imageUrl).join(",")]);
+
+  const getResolvedUrl = useCallback(
+    (url: string) => signedUrlMap.get(url) || url,
+    [signedUrlMap]
+  );
   
   // iOS/Fullscreen detection
   const isFullscreenSupported = typeof document.fullscreenEnabled !== 'undefined' && document.fullscreenEnabled;
@@ -408,9 +422,14 @@ export function FullscreenScoreViewer({
             )}
           >
             <img
-              src={currentScore?.imageUrl}
+              src={getResolvedUrl(currentScore?.imageUrl || "")}
               alt={`${currentScore?.songTitle} - Page ${currentScore?.pageNumber}`}
               className="w-full h-auto object-contain transition-transform duration-200 bg-white"
+              onError={() => {
+                // Re-fetch signed URLs on error (expired URL)
+                const urls = scores.map((s) => s.imageUrl).filter(Boolean);
+                getSignedScoreUrls(urls).then(setSignedUrlMap);
+              }}
               style={{ 
                 transform: `scale(${zoom})`,
                 transformOrigin: zoom > 1 ? 'top left' : 'center center'
