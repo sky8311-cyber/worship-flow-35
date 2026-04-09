@@ -1,61 +1,48 @@
 
 
-# 데모 페이지 저작권 노출 위험 대응 방안
+# 법적 위험 완화 — 항목 2~5 구현
 
-## 현재 위험 분석
+## 변경 사항
 
-데모 페이지가 다음과 같이 **최대한 SEO 노출**되도록 설계되어 있음:
+### 1. robots.txt — `/public-view` 크롤러 차단 (항목 2)
+Protected paths 섹션에 `Disallow: /public-view` 추가
 
-```text
-노출 경로:
-├── sitemap.xml → /demo (priority 0.8)
-├── JSON-LD → ItemList + MusicComposition (곡명, 아티스트, 키)
-├── <noscript> → 100곡 전체 HTML 리스트 (크롤러용)
-├── song_scores 쿼리 → 악보 이미지 URL 직접 노출
-└── SongCard → 악보 미리보기 이미지 + ScorePreviewDialog
-```
+### 2. SEO 키워드에서 제3자 브랜드명 제거 (항목 3)
+다음 파일들의 `keywordsKo` / `descriptionKo`에서 **피아워십, 마커스워십, 어노인팅, Hillsong, CCM악보** 제거:
 
-**핵심 문제**: 곡 제목/아티스트가 검색엔진에 인덱싱되는 것 자체는 큰 문제가 아님. **악보(score) 이미지가 로그인 없이 접근 가능**한 것이 저작권 위반 소지의 핵심.
-
----
-
-## 제안 방안: 2단계 접근
-
-### Phase 1 — 즉시 조치 (악보 노출 차단)
-
-| 변경 | 설명 |
+| 파일 | 제거 대상 |
 |---|---|
-| **데모에서 악보 제거** | `song_scores` 조인 제거, `score_file_url`을 항상 `null`로 설정 |
-| **SongCard 데모 모드** | 악보 미리보기/보기 버튼 숨김, 클릭 시 가입 CTA 표시 |
-| **JSON-LD에서 MusicComposition 제거** | 개별 곡 스키마를 제거하고 단순 ItemList만 유지 (곡명만, 아티스트 제거) |
-| **noscript 블록 제거** | 크롤러용 100곡 HTML 리스트 완전 삭제 |
+| `src/pages/Landing.tsx` | descriptionKo의 "마커스워십, 어노인팅, 피아워십 등 다양한 찬양을 관리하세요", keywordsKo의 "마커스워십, 어노인팅, 피아워십, CCM악보" |
+| `src/pages/Features.tsx` | descriptionKo의 "피아워십 악보 관리도 지원합니다", keywordsKo의 "피아워십, 마커스워십, 어노인팅" |
+| `src/pages/MobileAppLanding.tsx` | keywordsKo의 "피아워십, 마커스워십, 어노인팅" |
+| `src/pages/News.tsx` | keywordsKo의 "피아워십" |
+| `src/pages/Help.tsx` | keywordsKo의 "피아워십" |
+| `src/pages/auth/SignUp.tsx` | keywordsKo의 "피아워십" |
 
-### Phase 2 — SEO 재조정
+**유지**: `LandingFAQ.tsx`의 FAQ 질문 "마커스워십, 피아워십 등의 곡도 관리할 수 있나요?" — 이것은 사용자 질문/답변 형태이므로 상표 사용이 합리적. `MockupScreenContent.tsx`의 목업 데이터(아티스트명)도 UI 시연 목적이므로 유지. `translations.ts`의 mockup 데이터도 유지. `update-curation-profile` Edge Function의 예시 프롬프트도 내부 AI 처리용이므로 유지.
 
-| 변경 | 설명 |
+### 3. Features.tsx "악보" → "참고 자료" (항목 4)
+| 위치 | Before | After |
+|---|---|---|
+| L42 | `scores, YouTube references` | `uploaded references, YouTube links` |
+| L43 | `가사, 악보, YouTube 레퍼런스` | `가사, 참고 자료, YouTube 레퍼런스` |
+| L56 | `View scores in fullscreen` | `View uploaded materials in fullscreen` |
+| L57 | `악보를 전체화면으로` | `참고 자료를 전체화면으로` |
+| L63 | `scores, and notes` | `reference materials, and notes` |
+| L64 | `악보, 노트를` | `참고 자료, 노트를` |
+
+### 4. Features.tsx CTA "무료" 제거 (항목 5에 포함)
+| Before | After |
 |---|---|
-| **sitemap에서 /demo 우선순위 하향** | `priority: 0.8` → `0.4`, `changefreq: weekly` → `monthly` |
-| **SEO 메타 키워드 정리** | "worship songs", "찬양곡 검색" 등 콘텐츠 제공자처럼 보이는 키워드 제거 |
-| **SEO description 변경** | "100곡 이상의 찬양곡" → "예배 준비 도구를 체험해보세요" (도구 강조) |
-| **Edge Function sitemap도 동일 적용** | `supabase/functions/sitemap/index.ts`에서 demo priority 조정 |
+| `무료로 K-Worship의 모든 기능을 경험해 보세요` | `K-Worship의 모든 기능을 경험해 보세요` |
+| `Experience all features of K-Worship for free` | `Experience all features of K-Worship` |
 
----
-
-## 변경 대상 파일 (6개)
-
-| 파일 | 변경 내용 |
+### 5. Landing.tsx SEO description 수정 (항목 5)
+| Before | After |
 |---|---|
-| `src/pages/Demo.tsx` | song_scores 조인 제거, JSON-LD 단순화, noscript 삭제, SEO meta 변경 |
-| `src/components/SongCard.tsx` | `isDemo` prop 추가 → 악보 관련 UI 숨김 |
-| `public/sitemap.xml` | /demo priority 0.4로 하향 |
-| `supabase/functions/sitemap/index.ts` | demo priority 0.4로 하향 |
-| `src/components/demo/DemoSignupCTA.tsx` | 악보 보기 시도 시 표시할 메시지 추가 |
-| `public/robots.txt` | 변경 없음 (demo 자체는 접근 허용 유지) |
+| `descriptionKo`: "...마커스워십, 어노인팅, 피아워십 등 다양한 찬양을 관리하세요." | "...예배 준비, 콘티 제작, 팀 협업을 위한 플랫폼입니다." |
+| `keywordsKo`: "...마커스워십, 어노인팅, 피아워십...CCM악보" | "...찬양팀관리, 워십세트, 주일예배, CCM" |
 
-## 결과
-
-- ✅ 곡 제목 검색은 가능 (SEO 유지, 단 도구 중심 포지셔닝)
-- ✅ 악보 이미지는 **로그인 후에만** 접근 가능
-- ✅ 크롤러가 개별 곡 메타데이터를 수집할 수 없음
-- ✅ 데모는 "도구 체험"으로 포지셔닝
+## 총 변경 파일: 7개
+`public/robots.txt`, `src/pages/Landing.tsx`, `src/pages/Features.tsx`, `src/pages/MobileAppLanding.tsx`, `src/pages/News.tsx`, `src/pages/Help.tsx`, `src/pages/auth/SignUp.tsx`
 
