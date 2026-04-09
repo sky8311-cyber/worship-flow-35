@@ -1,4 +1,5 @@
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
+import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1120,7 +1121,7 @@ const BandView = () => {
                       <div className="grid grid-cols-1 gap-3">
                         {scoreFiles.map((score: any, idx: number) => (
                           <div key={score.id} className="border rounded-lg overflow-hidden bg-white">
-                            <img
+                            <SignedScoreImage
                               src={score.file_url}
                               alt={`${song?.title} - Page ${idx + 1}`}
                               className="w-full h-auto"
@@ -1134,7 +1135,7 @@ const BandView = () => {
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-foreground">{t("bandView.score")}</p>
                       <div className="border rounded-lg overflow-hidden bg-white">
-                        <img
+                        <SignedScoreImage
                           src={defaultScoreUrl}
                           alt={song?.title || "Score"}
                           className="w-full h-auto"
