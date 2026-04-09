@@ -1,44 +1,73 @@
 
 
-# 저작권 정책 동의 흐름 추가
+# Scores 버킷 Private 전환 — 면밀 위험 분석
 
-## 문제
+## 1. 현재 상태 (Public 버킷) 유지 시 위험도
 
-`legal_documents` 테이블에 `copyright` (저작권 정책)과 `trademark` (상표 고지) 문서가 존재하지만, 동의 흐름에서 완전히 제외되어 있습니다.
+| 위험 | 심각도 | 설명 |
+|---|---|---|
+| URL 유출 시 무단 접근 | **중** | URL 패턴(`/storage/v1/object/public/scores/`)을 알면 파일명 추측 가능. 다만 파일명이 `Date.now()-random`이라 무작위 탐색은 어려움 |
+| 공유 링크 통한 노출 | **중** | PublicBandView에서 악보 이미지가 비인증 상태로 로드됨. 링크 받은 누구나 이미지 URL을 복사/다운로드 가능 |
+| 검색엔진 인덱싱 | **저** | robots.txt로 `/public-view` 차단 완료. 이미지 자체 URL은 직접 링크가 아니면 크롤링되기 어려움 |
+| 저작권 침해 소송 시 방어력 약화 | **중-상** | "합리적 기술적 보호조치"를 취하지 않았다는 주장에 취약. DMCA Safe Harbor 요건 중 하나 |
 
-- `useLegalConsent.ts`: `.in("type", ["terms", "privacy", "communications"])` — copyright 누락
-- `LegalConsentModal.tsx`: type이 `"terms" | "privacy" | "communications"`만 허용
-- 결과: 저작권 정책이 업데이트되어도 사용자에게 재동의를 요청하지 않음
+**종합**: 즉각적인 법적 위험보다는 **장기적 방어력 약화**가 주된 리스크. 급한 것은 아니지만 해두면 확실히 좋음.
 
-## 변경 계획
+---
 
-### 1. `useLegalConsent.ts` — copyright 타입 추가
-- `PendingDocument` 인터페이스의 type에 `"copyright"` 추가
-- 두 쿼리의 `.in("type", [...])` 필터에 `"copyright"` 추가
-- `hasPendingCopyright` 변수 추가 및 `needsCommunicationConsentOnly` 로직에 반영
+## 2. Private 전환 시 유저 시나리오별 위험 분석
 
-### 2. `LegalConsentModal.tsx` — copyright 문서 표시
-- `PendingDocument` 인터페이스에 `"copyright"` 추가
-- `mandatoryDocs` 필터에 `d.type === "copyright"` 추가 (필수 동의 항목으로)
-- `getIcon` 함수에 copyright용 아이콘 추가 (예: `Scale` 또는 `Copyright`)
+### 시나리오 A: 예배 중 전체화면 악보 보기 (가장 중요)
+- `FullscreenScoreViewer`는 `scores[]` 배열의 `imageUrl`을 `<img src>`에 직접 사용
+- Signed URL이 만료되면 **이미지가 즉시 깨짐** (403 에러)
+- 예배는 보통 1~2시간이지만, 리허설 포함하면 **3시간+** 가능
+- **4시간 만료**: 대부분의 예배 + 리허설 커버. 안전 마진 확보
 
-### 3. `CommunicationConsentModal.tsx` — 타입 정의 동기화
-- `CommunicationsDocument` 인터페이스에 `"copyright"` 추가 (타입 일관성)
+### 시나리오 B: BandView 페이지를 열어둔 채 오래 대기
+- 수요일에 페이지를 열고 주일까지 탭을 안 닫는 경우
+- 4시간 후 이미지 깨짐 → **페이지 새로고침하면 새 signed URL 생성**
+- 대응: 이미지 로드 실패 시 자동으로 signed URL 재생성하는 에러 핸들러 추가
 
-### 4. 저작권 정책 버전 업데이트 (DB 마이그레이션)
-- `legal_documents` 테이블의 copyright 문서를 version `2.0`으로 업데이트하여, 기존 사용자에게 재동의 모달이 표시되도록 함
-- 최근 강화된 DMCA Safe Harbor, 중개자 면책, 반복 침해자 정책 등의 내용이 반영된 새 버전
+### 시나리오 C: PublicBandView (공유 링크)
+- 비인증 상태 → client SDK의 `createSignedUrl` 사용 불가
+- Edge Function 필요 (`share_token` 검증 후 signed URL 반환)
+- **위험**: Edge Function 장애 시 공유 링크에서 악보 전체 미표시
+- 대응: Edge Function에 적절한 에러 핸들링 + 폴백 메시지
 
-## 변경 파일 (4개)
-| 파일 | 변경 |
-|---|---|
-| `src/hooks/useLegalConsent.ts` | copyright 쿼리 추가 |
-| `src/components/legal/LegalConsentModal.tsx` | copyright 표시 + 필수 동의 |
-| `src/components/legal/CommunicationConsentModal.tsx` | 타입 동기화 |
-| DB 마이그레이션 | copyright 문서 v2.0 업데이트 |
+### 시나리오 D: 인쇄 (PrintOptionsDialog)
+- 인쇄 시점에 signed URL이 유효하면 정상 작동
+- 4시간 이내라면 문제 없음
 
-## 결과
-- ✅ 저작권 정책이 약관/개인정보처리방침과 함께 필수 동의 항목으로 표시
-- ✅ 기존 사용자 모두 다음 방문 시 저작권 정책 v2.0에 동의해야 계속 사용 가능
-- ✅ 향후 저작권 정책 버전 변경 시 자동으로 재동의 요청
+### 시나리오 E: 오프라인/네트워크 불안정
+- Signed URL은 온라인 상태에서만 생성 가능
+- 현재도 public URL은 온라인이 필요하므로 **차이 없음**
+
+---
+
+## 3. 기술적 버그 발생 요소
+
+| 위험 요소 | 발생 확률 | 영향 | 완화 방법 |
+|---|---|---|---|
+| 배포 순서 실수 (버킷 먼저 private) | **높음** | 전체 악보 즉시 깨짐 | 코드 변경 → 테스트 → 마지막에 버킷 전환 |
+| Edge Function 장애 | **낮음** | PublicBandView 악보만 영향 | 에러 UI + 재시도 버튼 |
+| 기존 DB의 full public URL 파싱 실패 | **중** | 특정 악보 깨짐 | `extractScorePath()` 유닛 테스트 철저 |
+| Signed URL 생성 API 호출 증가 | **낮음** | 약간의 지연 (수십ms) | 배치 API 사용 + 메모리 캐시 |
+| `score_file_url` (레거시 필드) 누락 처리 | **중** | 구버전 데이터 접근 불가 | 유틸리티에서 null/빈값 체크 |
+
+---
+
+## 4. 결론 및 권장사항
+
+**현재 유지 위험**: 중간 (즉각적 위험은 낮지만 법적 방어력 약화)
+**전환 시 위험**: 배포 순서만 지키면 낮음
+
+**핵심 안전장치 (반드시 포함)**:
+1. Signed URL 만료: **4시간 (14400초)**
+2. `<img>` 로드 실패 시 **자동 URL 재생성** (`onError` 핸들러)
+3. 코드 변경 완료 + 테스트 → **마지막에** 버킷 private 전환
+4. `extractScorePath()` 함수에 다양한 URL 패턴 테스트
+
+이 안전장치들이 포함되면 예배 중 악보 깨짐 위험은 **극히 낮음**으로 판단됩니다.
+
+구현을 진행할까요?
 
