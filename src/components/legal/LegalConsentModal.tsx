@@ -16,11 +16,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, Shield, ExternalLink, Mail } from "lucide-react";
+import { Loader2, FileText, Shield, ExternalLink, Mail, Scale } from "lucide-react";
 import { toast } from "sonner";
 
 interface PendingDocument {
-  type: "terms" | "privacy" | "communications";
+  type: "terms" | "privacy" | "communications" | "copyright";
   version: string;
   title: string;
   content: string;
@@ -47,7 +47,7 @@ export const LegalConsentModal = ({
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
 
   // Filter documents: terms and privacy are mandatory, communications is optional
-  const mandatoryDocs = pendingDocuments.filter(d => d.type === "terms" || d.type === "privacy");
+  const mandatoryDocs = pendingDocuments.filter(d => d.type === "terms" || d.type === "privacy" || d.type === "copyright");
   const communicationsDoc = pendingDocuments.find(d => d.type === "communications");
 
   const handleAccept = async () => {
@@ -133,6 +133,7 @@ export const LegalConsentModal = ({
   const getIcon = (type: string) => {
     if (type === "terms") return FileText;
     if (type === "privacy") return Shield;
+    if (type === "copyright") return Scale;
     return Mail;
   };
 
