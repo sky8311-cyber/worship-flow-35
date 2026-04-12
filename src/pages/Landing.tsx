@@ -18,7 +18,8 @@ const Landing = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (!loading && user && !params.has("preview")) {
+    const isDev = import.meta.env.DEV;
+    if (!loading && user && !params.has("preview") && !isDev) {
       navigate("/dashboard");
     }
   }, [user, loading, navigate, location.search]);
