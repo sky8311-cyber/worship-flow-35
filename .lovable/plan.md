@@ -1,35 +1,23 @@
 
 
-# 포지션 쿼리 400 에러 수정 + 버킷 Private 전환 (4단계)
+# 랜딩 페이지 미리보기 문제 수정
 
-## 문제 원인
+## 원인
+`Landing.tsx`의 `useEffect`에서 로그인된 사용자(`user`)가 있으면 무조건 `/dashboard`로 리다이렉트합니다.
 
-`worship_set_signups` 테이블에 **foreign key가 하나도 없음**. `position_id → worship_set_positions`, `user_id → profiles` 관계가 DB에 정의되지 않아 PostgREST가 `profiles:user_id(...)` 조인을 해석할 수 없음.
+## 해결 방법
+URL 파라미터 `?preview=true`가 있으면 리다이렉트를 건너뛰도록 수정합니다.
 
-## 작업 순서
+### 변경 파일: `src/pages/Landing.tsx`
 
-### Step 1: worship_set_signups FK 추가 (마이그레이션)
-
-```sql
-ALTER TABLE public.worship_set_signups
-  ADD CONSTRAINT worship_set_signups_position_id_fkey
-    FOREIGN KEY (position_id) REFERENCES public.worship_set_positions(id) ON DELETE CASCADE,
-  ADD CONSTRAINT worship_set_signups_user_id_fkey
-    FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+```tsx
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  if (!loading && user && !params.has("preview")) {
+    navigate("/dashboard");
+  }
+}, [user, loading, navigate, location.search]);
 ```
 
-이 FK가 추가되면 PostgREST 스키마 캐시가 갱신되어 `profiles:user_id(...)` 조인이 정상 작동.
-
-### Step 2: 버킷 Private 전환 (마이그레이션)
-
-```sql
-UPDATE storage.buckets SET public = false WHERE id = 'scores';
-```
-
-코드 변경은 이미 완료됨 (Signed URL 로직, Edge Function 배포 완료). 버킷만 private으로 전환하면 4단계 완료.
-
-## 영향 범위
-
-- **FK 추가**: `PositionSignupCard.tsx`, `WorshipSetPositionsManager.tsx`의 기존 쿼리가 정상 작동하게 됨
-- **버킷 전환**: 이미 배포된 Signed URL 코드가 활성화됨
+이렇게 하면 `/` 접속 시에는 기존처럼 대시보드로 이동하고, `/?preview=true`로 접속하면 로그인 상태에서도 랜딩 페이지를 미리볼 수 있습니다.
 
