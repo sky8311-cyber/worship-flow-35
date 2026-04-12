@@ -22,6 +22,8 @@ const MobileAppLanding = () => {
 
   useEffect(() => {
     if (loading) return;
+    const isDev = import.meta.env.DEV;
+    if (isDev) return;
     if (user) navigate("/dashboard", { replace: true });
     else navigate("/login", { replace: true });
   }, [user, loading, navigate]);
