@@ -17,10 +17,11 @@ const Landing = () => {
   const isAppPage = location.pathname === "/app";
 
   useEffect(() => {
-    if (!loading && user) {
+    const params = new URLSearchParams(location.search);
+    if (!loading && user && !params.has("preview")) {
       navigate("/dashboard");
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location.search]);
 
   if (loading) {
     return <FullScreenLoader label="Loading…" />;
