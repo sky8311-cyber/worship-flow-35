@@ -1,59 +1,54 @@
 
-Updated plan: stop searching for more missing embeds and instead verify and simplify the native playback path.
 
-What I found
-- The current code already routes the main visible YouTube embeds through `NativeSafeYouTubeEmbed`.
-- `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx` also already uses that component.
-- The global music player already loads `youtube-player-proxy` from `GlobalYouTubeIframe.tsx`.
-- I do not see another obvious user-facing raw `youtube.com/embed/...` iframe still bypassing the proxy.
-- The bigger clue is runtime behavior:
-  - recent available client/network snapshots do not show requests to `youtube-player-proxy`
-  - the available backend log snapshot for `youtube-player-proxy` does not show recent successful traffic
-- So the likely issue now is not “one more missed iframe,” but that the native app is either not actually reaching the proxy or the current proxy page is still not robust enough for WKWebView.
+# Fix YouTube Error 153 — Root Cause Found
 
-Implementation plan
-1. Add temporary diagnostics
-- Add lightweight logs in:
-  - `src/components/ui/NativeSafeYouTubeEmbed.tsx`
-  - `src/components/music-player/GlobalYouTubeIframe.tsx`
-  - `supabase/functions/youtube-player-proxy/index.ts`
-- Log selected mode, videoId, chosen iframe URL, and whether the proxy page fully loads.
-- This will tell us definitively whether the simulator is using the proxy path.
+## The Real Problem
 
-2. Simplify the proxy implementation
-- Refactor `youtube-player-proxy/index.ts` so the visible embed path uses the simplest possible hosted-player page with correct referrer/origin handling.
-- Unify the native strategy instead of maintaining a special wrapper that may still be fragile in WKWebView.
-- Keep strict videoId sanitization and safe query param handling.
+I tested the proxy edge function with curl and discovered **Supabase's gateway adds its own restrictive headers** to edge function responses:
 
-3. Harden the hidden global player
-- Review `GlobalYouTubeIframe.tsx` and align its iframe attributes with the visible working path.
-- Remove anything unnecessary that could interfere in native WebView playback while preserving postMessage controls.
+```
+Content-Security-Policy: default-src 'none'; sandbox
+Content-Type: text/plain
+```
 
-4. Add a user-safe fallback
-- If native playback still fails or never becomes ready, show a fallback action like “Open in YouTube” instead of leaving a broken player.
-- This keeps the app usable even when a specific video cannot embed.
+This means:
+- The HTML page served by the proxy is treated as plain text, not rendered as HTML
+- Even if it were rendered, the `sandbox` CSP blocks all iframes, scripts, and external resources
+- **The entire proxy-via-edge-function approach cannot work** because Supabase's infrastructure prevents HTML pages from functioning when served from edge functions
 
-5. Make testing deterministic
-- For final simulator verification, use the bundled Capacitor build instead of relying on the remote preview URL.
-- Treat `capacitor.config.ts` as the source of truth and verify the simulator is loading the exact updated app bundle.
+The Xcode log confirms this: `WebPage::runJavaScriptInFrameInScriptWorld: Request to run JavaScript failed` — the JS inside the proxy HTML is blocked by the CSP sandbox.
 
-Files to update
-- `supabase/functions/youtube-player-proxy/index.ts`
-- `src/components/ui/NativeSafeYouTubeEmbed.tsx`
-- `src/components/music-player/GlobalYouTubeIframe.tsx`
-- possibly `src/contexts/MusicPlayerContext.tsx` to clean up readiness/proxy handling
-- `capacitor.config.ts` if needed for reliable local native testing
+## Solution
 
-Success criteria
-- Backend logs show proxy requests from the simulator
-- No Error 153 in:
-  - Band View
-  - Public Band View
-  - Institute chapter videos
-  - Worship Studio YouTube blocks
-  - global music player
-- Failed videos fall back gracefully instead of showing a dead player
+Host the YouTube embed page as a **static HTML file** in the app's `public/` directory instead of serving it from an edge function.
 
-Technical note
-- Based on the current code audit, I do not think the next fix is another iframe replacement.
-- The right next step is to prove the native path with logging, simplify the proxy page, and verify against the bundled native app.
+Since your native app loads from `https://...lovableproject.com` (the server URL in capacitor.config), a static file at `/youtube-embed.html` will:
+1. Be served with proper `Content-Type: text/html`
+2. Have no restrictive CSP sandbox
+3. Have a valid HTTPS origin that YouTube accepts
+4. Work identically in both web and native
+
+## Files to Change
+
+1. **Create `public/youtube-embed.html`** — Self-contained YouTube embed page that reads `videoId` and player options from URL query params, sets `origin` to its own HTTPS origin, and embeds the YouTube iframe. Two variants in one file: simple embed mode and full IFrame API player mode (for the global music player with postMessage control).
+
+2. **Update `src/components/ui/NativeSafeYouTubeEmbed.tsx`** — In native mode, point to `/youtube-embed.html?videoId=xxx&mode=embed` instead of the edge function URL.
+
+3. **Update `src/components/music-player/GlobalYouTubeIframe.tsx`** — Point to `/youtube-embed.html?videoId=xxx&mode=player` instead of the edge function URL.
+
+4. **Keep `supabase/functions/youtube-player-proxy/index.ts`** — Leave it for any non-iframe API uses (e.g., fetching video metadata in the future), but it will no longer serve the HTML embed pages.
+
+## Why This Will Work
+
+- Static files in `public/` are served by Vite/the web server with correct MIME types and no sandbox CSP
+- The app's HTTPS origin (`lovableproject.com`) is a valid YouTube embed origin
+- No edge function gateway interference
+- Same approach works for both the visible embeds and the hidden global music player
+
+## After Implementation
+
+You will need to:
+1. Pull the latest code
+2. `npm run build && npx cap sync ios`
+3. Rebuild in Xcode and test
+
