@@ -8,14 +8,14 @@ export const GlobalYouTubeIframe = () => {
   const videoId = playlist[currentIndex]?.videoId;
   if (!videoId) return null;
 
-  const proxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
-  console.log('[GlobalYouTubeIframe] Loading proxy URL:', proxyUrl);
+  const src = `/youtube-embed.html?videoId=${videoId}&mode=player`;
+  console.log('[GlobalYouTubeIframe] Loading static URL:', src);
 
   return (
     <iframe
       ref={iframeRef}
       id="youtube-proxy-iframe-global"
-      src={proxyUrl}
+      src={src}
       className="fixed top-[-9999px] left-[-9999px] w-1 h-1 border-0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       referrerPolicy="no-referrer-when-downgrade"

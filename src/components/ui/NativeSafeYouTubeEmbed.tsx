@@ -15,11 +15,6 @@ export interface NativeSafeYouTubeEmbedProps {
   onError?: () => void;
 }
 
-/**
- * YouTube embed that works on both web and native (Capacitor).
- * On native, routes through the proxy edge function to avoid Error 153.
- * Shows a fallback "Open in YouTube" link if loading fails.
- */
 export function NativeSafeYouTubeEmbed({
   videoId,
   title,
@@ -34,7 +29,6 @@ export function NativeSafeYouTubeEmbed({
   const isNative = isNativePlatform();
   const [loadFailed, setLoadFailed] = useState(false);
 
-  // Reset failure state when videoId changes
   useEffect(() => {
     setLoadFailed(false);
   }, [videoId]);
@@ -49,8 +43,8 @@ export function NativeSafeYouTubeEmbed({
       controls: controls ? '1' : '0',
       loop: loop ? '1' : '0',
     });
-    src = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?${params.toString()}`;
-    console.log('[NativeSafeYouTubeEmbed] Native mode, proxy URL:', src);
+    src = `/youtube-embed.html?${params.toString()}`;
+    console.log('[NativeSafeYouTubeEmbed] Native mode, static URL:', src);
   } else {
     src = buildYouTubeEmbedUrl(videoId, { autoplay, mute, controls, loop });
   }

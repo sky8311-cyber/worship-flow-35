@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    #player { width: 100%; height: 100%; }
+    iframe { width: 100% !important; height: 100% !important; border: none; }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+  <script>
+    var params = new URLSearchParams(window.location.search);
+    var videoId = params.get('videoId');
+    var mode = params.get('mode') || 'player';
+
+    // Validate videoId
+    if (!videoId || !/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+      document.body.innerHTML = '<p style="color:#fff;text-align:center;padding:20px">Invalid video ID</p>';
+      throw new Error('Invalid videoId');
+    }
+
+    var pageOrigin = window.location.origin;
+
+    function bp(v, d) { return v === '1' ? '1' : (v === '0' ? '0' : d); }
+
+    if (mode === 'embed') {
+      // Simple embed mode
+      var autoplay = bp(params.get('autoplay'), '0');
+      var mute = bp(params.get('mute'), '0');
+      var controls = bp(params.get('controls'), '1');
+      var loop = bp(params.get('loop'), '0');
+
+      var ytParams = new URLSearchParams({
+        rel: '0', modestbranding: '1', playsinline: '1', enablejsapi: '1',
+        autoplay: autoplay, mute: mute, controls: controls, origin: pageOrigin
+      });
+      if (loop === '1') { ytParams.set('loop', '1'); ytParams.set('playlist', videoId); }
+
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube.com/embed/' + videoId + '?' + ytParams.toString();
+      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', '');
+      document.getElementById('player').appendChild(iframe);
+    } else {
+      // Full IFrame API player mode with postMessage control
+      var script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(script);
+
+      var player;
+      var isReady = false;
+
+      function sendToParent(type, data) {
+        data = data || {};
+        try { parent.postMessage({ source: 'youtube-proxy', type: type, ...data }, '*'); } catch (e) {}
+      }
+
+      window.onYouTubeIframeAPIReady = function() {
+        player = new YT.Player('player', {
+          videoId: videoId,
+          playerVars: {
+            autoplay: 1, playsinline: 1, controls: 1, modestbranding: 1,
+            rel: 0, fs: 1, enablejsapi: 1, origin: pageOrigin
+          },
+          events: {
+            onReady: function() { isReady = true; sendToParent('ready'); },
+            onStateChange: function(event) {
+              sendToParent('stateChange', {
+                state: event.data,
+                currentTime: player ? player.getCurrentTime() : 0,
+                duration: player ? player.getDuration() : 0
+              });
+            },
+            onError: function(event) { sendToParent('error', { code: event.data }); }
+          }
+        });
+      };
+
+      window.addEventListener('message', function(event) {
+        if (!event.data || event.data.source === 'youtube-proxy') return;
+        if (event.data.type !== 'command') return;
+        var command = event.data.command;
+        var args = event.data.args;
+        if (!player || !isReady) return;
+        try {
+          switch (command) {
+            case 'play': player.playVideo(); break;
+            case 'pause': player.pauseVideo(); break;
+            case 'stop': player.stopVideo(); break;
+            case 'loadVideo':
+              if (args && args.videoId) {
+                player.loadVideoById(args.videoId);
+                setTimeout(function() { if (player.getPlayerState() !== 1) player.playVideo(); }, 300);
+              }
+              break;
+            case 'cueVideo':
+              if (args && args.videoId) player.cueVideoById(args.videoId);
+              break;
+            case 'seekTo':
+              if (args && typeof args.seconds === 'number') player.seekTo(args.seconds, true);
+              break;
+            case 'setVolume':
+              if (args && typeof args.volume === 'number') player.setVolume(args.volume);
+              break;
+            case 'mute': player.mute(); break;
+            case 'unMute': player.unMute(); break;
+            case 'getState':
+              sendToParent('currentState', {
+                state: player.getPlayerState(),
+                currentTime: player.getCurrentTime(),
+                duration: player.getDuration(),
+                volume: player.getVolume(),
+                isMuted: player.isMuted()
+              });
+              break;
+          }
+        } catch (e) { sendToParent('error', { message: e.message }); }
+      });
+
+      sendToParent('proxyLoaded');
+    }
+  </script>
+</body>
+</html>
