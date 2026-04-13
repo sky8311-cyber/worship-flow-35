@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Youtube } from "lucide-react";
-import { buildYouTubeEmbedUrl } from "@/lib/youtubeEmbed";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 
 function extractVideoId(url: string): string | null {
   if (!url) return null;
@@ -47,16 +47,13 @@ export function YoutubeBlock({ content, isOwner, onContentChange }: Props) {
   }
 
   return (
-    <iframe
-      src={buildYouTubeEmbedUrl(videoId, {
-        autoplay: content.autoplay,
-        mute: content.mute || content.autoplay,
-        controls: !content.hideControls,
-        loop: content.loop,
-      })}
+    <NativeSafeYouTubeEmbed
+      videoId={videoId}
       className="w-full h-full rounded"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
+      autoplay={content.autoplay}
+      mute={content.mute || content.autoplay}
+      controls={!content.hideControls}
+      loop={content.loop}
       onPointerDown={(e) => e.stopPropagation()}
       onError={() => setIframeError(true)}
     />
