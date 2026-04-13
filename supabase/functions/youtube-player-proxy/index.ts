@@ -95,7 +95,7 @@ serve(async (req) => {
   }
 
   // ── Player mode: full YT IFrame API with postMessage for music player ──
-  const proxyOrigin = url.origin;
+  const proxyOrigin = url.origin.replace(/^http:/, 'https:');
 
   const html = `<!DOCTYPE html>
 <html>
