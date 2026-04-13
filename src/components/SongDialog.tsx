@@ -797,10 +797,8 @@ const [loading, setLoading] = useState(false);
 
           if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
-
           updated[variationIndex].files.push({
-            url: publicUrl,
+            url: fileName,
             page: updated[variationIndex].files.length + 1,
           });
         }
@@ -817,11 +815,9 @@ const [loading, setLoading] = useState(false);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
-
         const updated = [...scoreVariations];
         updated[variationIndex].files.push({
-          url: publicUrl,
+          url: fileName,
           page: updated[variationIndex].files.length + 1,
         });
         setScoreVariations(updated);

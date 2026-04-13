@@ -293,8 +293,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
             upsert: false,
           });
           if (uploadError) throw uploadError;
-          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
-          uploadedPages.push({ url: publicUrl, page });
+          uploadedPages.push({ url: fileName, page });
         }
 
         setScoreVariations(prev => {
@@ -315,10 +314,9 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from("scores").upload(fileName, file);
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
       setScoreVariations(prev => {
         const updated = [...prev];
-        updated[variationIndex].files.push({ url: publicUrl, page: updated[variationIndex].files.length + 1 });
+        updated[variationIndex].files.push({ url: fileName, page: updated[variationIndex].files.length + 1 });
         return updated;
       });
       toast.success(t("songFlow.uploadComplete"));

@@ -7,6 +7,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 
 interface ServiceSet {
   id: string;
@@ -172,7 +173,7 @@ export function UpcomingServicesWidget({
                       <div key={setSong.id} className="flex items-center gap-3 p-2 bg-card rounded">
                         <div className="w-16 h-12 bg-muted rounded overflow-hidden shrink-0">
                           {setSong.songs.song_scores?.[0]?.file_url ? (
-                            <img 
+                            <SignedScoreImage 
                               src={setSong.songs.song_scores[0].file_url}
                               className="w-full h-full object-cover"
                               alt="Score"
