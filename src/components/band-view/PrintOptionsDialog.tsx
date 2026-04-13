@@ -339,11 +339,12 @@ export function PrintOptionsDialog({
           .sort((a, b) => (a.page_number || 1) - (b.page_number || 1));
         
         if (keyScores.length > 0) {
-          scoreUrl = keyScores[0].file_url;
+          scoreUrl = getSignedUrl(keyScores[0].file_url);
         } else if (songScores.length > 0) {
-          scoreUrl = songScores[0].file_url;
+          scoreUrl = getSignedUrl(songScores[0].file_url);
         } else {
-          scoreUrl = setSong.override_score_file_url || song?.score_file_url || "";
+          const rawUrl = setSong.override_score_file_url || song?.score_file_url || "";
+          scoreUrl = rawUrl ? getSignedUrl(rawUrl) : "";
         }
 
         return `
