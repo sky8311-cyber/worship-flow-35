@@ -1,21 +1,11 @@
 import { useState } from "react";
 import { Youtube } from "lucide-react";
+import { buildYouTubeEmbedUrl } from "@/lib/youtubeEmbed";
 
 function extractVideoId(url: string): string | null {
   if (!url) return null;
   const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
   return m ? m[1] : null;
-}
-
-function buildEmbedUrl(videoId: string, content: Record<string, any>): string {
-  const params = new URLSearchParams();
-  if (content.autoplay) { params.set("autoplay", "1"); params.set("mute", "1"); }
-  if (content.mute) params.set("mute", "1");
-  if (content.hideControls) params.set("controls", "0");
-  if (content.hideRelated) params.set("rel", "0");
-  if (content.loop) { params.set("loop", "1"); params.set("playlist", videoId); }
-  const qs = params.toString();
-  return `https://www.youtube.com/embed/${videoId}${qs ? `?${qs}` : ""}`;
 }
 
 interface Props {
@@ -58,7 +48,12 @@ export function YoutubeBlock({ content, isOwner, onContentChange }: Props) {
 
   return (
     <iframe
-      src={buildEmbedUrl(videoId, content)}
+      src={buildYouTubeEmbedUrl(videoId, {
+        autoplay: content.autoplay,
+        mute: content.mute || content.autoplay,
+        controls: !content.hideControls,
+        loop: content.loop,
+      })}
       className="w-full h-full rounded"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen
