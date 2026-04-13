@@ -1,28 +1,40 @@
 
 
-# 프로덕션에서 비로그인 사용자에게 랜딩 페이지 표시
+# Private Bucket 이후 악보 이미지 표시 오류 수정
 
-## 문제
-현재 `MobileAppLanding.tsx`에서 비로그인 사용자도 `/login`으로 리다이렉트되어 랜딩 페이지를 볼 수 없음.
+## 문제 원인
 
-## 수정
+`scores` 버킷이 private으로 전환된 후, 두 곳에서 여전히 **raw URL을 직접 사용**하고 있어 이미지가 로드되지 않음:
 
-**파일: `src/pages/MobileAppLanding.tsx`** — `useEffect` 변경:
+1. **SongDialog 악보 썸네일 + 미리보기** — `<img src={file.url}>` (서명 없는 URL)
+2. **PrintOptionsDialog 인쇄 HTML** — `<img src="${score.url}">` (서명 없는 URL)
 
-```tsx
-useEffect(() => {
-  if (loading) return;
-  const isDev = import.meta.env.DEV;
-  if (isDev) return;
-  // 로그인한 사용자만 대시보드로 리다이렉트, 비로그인 사용자는 랜딩 페이지 표시
-  if (user) navigate("/dashboard", { replace: true });
-}, [user, loading, navigate]);
-```
+`SignedScoreImage` 컴포넌트나 `getSignedScoreUrl()` 을 사용하는 곳은 정상 작동하지만, 위 두 곳은 적용이 안 되어 있음.
 
-`else navigate("/login")` 제거 → 비로그인 사용자는 랜딩 페이지 콘텐츠를 볼 수 있음.
+## 수정 계획
 
-## 결과
-- **비로그인 사용자**: 랜딩 페이지 표시 ✅
-- **로그인 사용자**: `/dashboard`로 리다이렉트 (기존 유지)
-- **개발 모드**: 리다이렉트 없이 랜딩 페이지 표시 (기존 유지)
+### 1. SongDialog.tsx — 썸네일 + 미리보기에 SignedScoreImage 적용
+
+**파일:** `src/components/SongDialog.tsx`
+
+- **썸네일 (line ~1109):** `<img src={file.url}>` → `<SignedScoreImage src={file.url}>` 로 교체
+- **미리보기 다이얼로그 (line ~1676):** `<img src={...url}>` → `<SignedScoreImage src={...url}>` 로 교체
+- `SignedScoreImage` import 추가
+
+### 2. PrintOptionsDialog.tsx — 인쇄 전 Signed URL 일괄 생성
+
+**파일:** `src/components/band-view/PrintOptionsDialog.tsx`
+
+인쇄 HTML은 별도 iframe/window에서 렌더링되므로 React 컴포넌트를 사용할 수 없음. 대신:
+
+- `handlePrint`를 `async`로 변경
+- 인쇄 HTML 생성 전에 `getSignedScoreUrls()`로 모든 악보 URL을 일괄 서명
+- `generatePrintHtml`에 서명된 URL Map을 전달하여 `score.url` 대신 서명된 URL 사용
+- `getSignedScoreUrls` import 추가
+
+## 영향 범위
+
+- SongDialog 악보 편집 화면의 썸네일 미리보기
+- SongDialog 내 악보 확대 미리보기
+- BandView 인쇄 기능 (악보만 / 전체 모드)
 
