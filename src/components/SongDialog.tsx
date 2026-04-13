@@ -28,6 +28,7 @@ import { AIEnrichmentDialog } from "@/components/AIEnrichmentDialog";
 import { SongUsageHistoryDialog } from "@/components/SongUsageHistoryDialog";
 import { AddToSetDialog } from "@/components/AddToSetDialog";
 import { SmartSongFlow, type SmartSongFlowRef } from "@/components/songs/SmartSongFlow";
+import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 import { convertPdfToImages } from "@/utils/pdfToImages";
 import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 import { useSongUsage } from "@/hooks/useSongUsage";
@@ -1106,7 +1107,7 @@ const [loading, setLoading] = useState(false);
                     }}
                   >
                     {isImage ? (
-                      <img 
+                      <SignedScoreImage 
                         src={file.url}
                         alt={`Page ${fileIndex + 1}`}
                         className="w-full h-full object-cover"
@@ -1673,7 +1674,7 @@ const [loading, setLoading] = useState(false);
           </DialogHeader>
           <div className="flex-1 overflow-auto flex items-center justify-center p-4">
             {scoreVariations[previewVariationIndex]?.files[previewFileIndex] && (
-              <img 
+              <SignedScoreImage 
                 src={scoreVariations[previewVariationIndex].files[previewFileIndex].url}
                 alt="Score preview"
                 className="max-w-full max-h-full object-contain"
