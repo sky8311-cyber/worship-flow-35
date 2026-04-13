@@ -1,67 +1,59 @@
 
-Do I know what the issue is? Yes.
+Updated plan: stop searching for more missing embeds and instead verify and simplify the native playback path.
 
-What the actual problem is
-
-1. The previous fix did not fully solve the iOS/WebView requirement behind Error 153.
-- In `supabase/functions/youtube-player-proxy/index.ts`, the new `mode=embed` page still just renders a nested plain YouTube iframe.
-- It is missing the hosted-proxy details that current iOS/WebView fixes rely on:
-  - `<meta name="referrer" content="strict-origin-when-cross-origin">`
-  - inner iframe `referrerpolicy`
-  - a YouTube embed URL built from the proxy page’s real HTTPS origin, including `origin=window.location.origin`
-- External references for this exact Capacitor/WKWebView issue describe Error 153 as “embedder identity / missing referrer”, which matches the current proxy still being too minimal.
-
-2. One embed path still bypasses the proxy entirely.
-- `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx` still renders a raw YouTube iframe via `buildYouTubeEmbedUrl(...)`.
-- So Worship Studio blocks can still hit the native WKWebView problem directly.
-
-3. The simulator may still be running an older local bundle.
-- `capacitor.config.ts` uses `webDir: "dist"` and does not have a live `server.url`.
-- That means the iOS app is not hot-loading the preview; it only updates after a local web build + Capacitor sync.
-- That also fits the current evidence: I do not see recent requests hitting `youtube-player-proxy` in the available snapshot/log context, which suggests the simulator may not be loading the new proxy path yet.
+What I found
+- The current code already routes the main visible YouTube embeds through `NativeSafeYouTubeEmbed`.
+- `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx` also already uses that component.
+- The global music player already loads `youtube-player-proxy` from `GlobalYouTubeIframe.tsx`.
+- I do not see another obvious user-facing raw `youtube.com/embed/...` iframe still bypassing the proxy.
+- The bigger clue is runtime behavior:
+  - recent available client/network snapshots do not show requests to `youtube-player-proxy`
+  - the available backend log snapshot for `youtube-player-proxy` does not show recent successful traffic
+- So the likely issue now is not “one more missed iframe,” but that the native app is either not actually reaching the proxy or the current proxy page is still not robust enough for WKWebView.
 
 Implementation plan
+1. Add temporary diagnostics
+- Add lightweight logs in:
+  - `src/components/ui/NativeSafeYouTubeEmbed.tsx`
+  - `src/components/music-player/GlobalYouTubeIframe.tsx`
+  - `supabase/functions/youtube-player-proxy/index.ts`
+- Log selected mode, videoId, chosen iframe URL, and whether the proxy page fully loads.
+- This will tell us definitively whether the simulator is using the proxy path.
 
-A. Fix the proxy correctly
-- Update `supabase/functions/youtube-player-proxy/index.ts` so `mode=embed` serves a proper hosted embed page:
-  - add referrer meta tag
-  - set iframe `referrerpolicy`
-  - build the inner YouTube URL inside the proxy page using `window.location.origin`
-  - pass through supported player params safely (`autoplay`, `mute`, `controls`, `loop`)
-  - validate/sanitize `videoId`
-- Use the hosted page as the real native-safe layer, not just a wrapper around the same direct embed.
+2. Simplify the proxy implementation
+- Refactor `youtube-player-proxy/index.ts` so the visible embed path uses the simplest possible hosted-player page with correct referrer/origin handling.
+- Unify the native strategy instead of maintaining a special wrapper that may still be fragile in WKWebView.
+- Keep strict videoId sanitization and safe query param handling.
 
-B. Finish unifying all native embeds
-- Extend `src/components/ui/NativeSafeYouTubeEmbed.tsx` to support the same player options that existing callers need.
-- Route native mode through the improved proxy with query params.
-- Keep web mode on the normal direct embed.
-- Replace the remaining raw iframe in:
-  - `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx`
-- Re-check for any other direct YouTube iframe usage after that audit.
+3. Harden the hidden global player
+- Review `GlobalYouTubeIframe.tsx` and align its iframe attributes with the visible working path.
+- Remove anything unnecessary that could interfere in native WebView playback while preserving postMessage controls.
 
-C. Verify the simulator is actually running the fixed code
-- After implementation, refresh the local native bundle:
-  - pull latest code
-  - rebuild web assets
-  - `npx cap sync ios`
-  - rebuild in Xcode
-- If the issue still appears, clear stale app assets by cleaning the Xcode build folder or reinstalling the simulator app.
-- Confirm the proxy receives requests and test these surfaces:
-  - Band View
-  - Public Band View
-  - Institute pages
-  - Worship Studio YouTube block
-  - global music player
+4. Add a user-safe fallback
+- If native playback still fails or never becomes ready, show a fallback action like “Open in YouTube” instead of leaving a broken player.
+- This keeps the app usable even when a specific video cannot embed.
+
+5. Make testing deterministic
+- For final simulator verification, use the bundled Capacitor build instead of relying on the remote preview URL.
+- Treat `capacitor.config.ts` as the source of truth and verify the simulator is loading the exact updated app bundle.
 
 Files to update
 - `supabase/functions/youtube-player-proxy/index.ts`
 - `src/components/ui/NativeSafeYouTubeEmbed.tsx`
-- `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx`
-- possibly `src/lib/youtubeEmbed.ts` if I centralize parameter building
+- `src/components/music-player/GlobalYouTubeIframe.tsx`
+- possibly `src/contexts/MusicPlayerContext.tsx` to clean up readiness/proxy handling
+- `capacitor.config.ts` if needed for reliable local native testing
 
-Technical notes
-- The earlier “remove `origin`” idea was correct for direct native WebView embeds, but the hosted proxy strategy is different: the proxy page should provide a valid HTTPS origin/referrer context to YouTube.
-- I do not think this needs any database change.
-- The strongest proof of the fix will be:
-  1. proxy requests visible in backend logs
-  2. no more Error 153 in the simulator across all video entry points
+Success criteria
+- Backend logs show proxy requests from the simulator
+- No Error 153 in:
+  - Band View
+  - Public Band View
+  - Institute chapter videos
+  - Worship Studio YouTube blocks
+  - global music player
+- Failed videos fall back gracefully instead of showing a dead player
+
+Technical note
+- Based on the current code audit, I do not think the next fix is another iframe replacement.
+- The right next step is to prove the native path with logging, simplify the proxy page, and verify against the bundled native app.
