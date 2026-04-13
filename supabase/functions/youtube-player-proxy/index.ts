@@ -29,17 +29,19 @@ serve(async (req) => {
 
   const videoId = sanitizeVideoId(rawVideoId);
   if (!videoId) {
+    console.log('[youtube-player-proxy] Invalid videoId:', rawVideoId);
     return new Response('Invalid videoId', { status: 400, headers: corsHeaders });
   }
 
-  // ── Embed mode: hosted page that provides a valid HTTPS origin to YouTube ──
+  console.log(`[youtube-player-proxy] mode=${mode}, videoId=${videoId}`);
+
+  // ── Embed mode: minimal hosted page for native WKWebView ──
   if (mode === 'embed') {
     const autoplay = boolParam(url.searchParams.get('autoplay'), '0');
     const mute = boolParam(url.searchParams.get('mute'), '0');
     const controls = boolParam(url.searchParams.get('controls'), '1');
     const loop = boolParam(url.searchParams.get('loop'), '0');
 
-    // Build YouTube params statically; origin is set via JS using the proxy page's real HTTPS origin
     const ytParams = new URLSearchParams({
       rel: '0',
       modestbranding: '1',
@@ -54,12 +56,19 @@ serve(async (req) => {
       ytParams.set('playlist', videoId);
     }
 
+    // The key fix: origin is set to this proxy page's HTTPS origin, which YouTube will accept.
+    // The iframe src is built entirely server-side so no JS injection is needed.
+    const proxyOrigin = url.origin;
+    ytParams.set('origin', proxyOrigin);
+
+    const embedSrc = `https://www.youtube.com/embed/${videoId}?${ytParams.toString()}`;
+
     const embedHtml = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="no-referrer-when-downgrade">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
@@ -68,16 +77,11 @@ serve(async (req) => {
 </head>
 <body>
   <iframe
-    id="yt"
-    referrerpolicy="strict-origin-when-cross-origin"
+    src="${embedSrc}"
+    referrerpolicy="no-referrer-when-downgrade"
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
     allowfullscreen
   ></iframe>
-  <script>
-    // Set the iframe src using the proxy page's real HTTPS origin so YouTube accepts it
-    var params = '${ytParams.toString()}' + '&origin=' + encodeURIComponent(window.location.origin);
-    document.getElementById('yt').src = 'https://www.youtube.com/embed/${videoId}?' + params;
-  </script>
 </body>
 </html>`;
 
@@ -90,13 +94,15 @@ serve(async (req) => {
     });
   }
 
-  // ── Player mode (original): full YT IFrame API with postMessage ──
+  // ── Player mode: full YT IFrame API with postMessage for music player ──
+  const proxyOrigin = url.origin;
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="referrer" content="no-referrer-when-downgrade">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
@@ -108,17 +114,14 @@ serve(async (req) => {
   <div id="player"></div>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    let player;
-    let isReady = false;
-    const proxyOrigin = window.location.origin;
+    var player;
+    var isReady = false;
     
     function sendToParent(type, data) {
       data = data || {};
       try {
         parent.postMessage({ source: 'youtube-proxy', type: type, ...data }, '*');
-      } catch (e) {
-        console.error('postMessage error:', e);
-      }
+      } catch (e) {}
     }
     
     function onYouTubeIframeAPIReady() {
@@ -132,43 +135,33 @@ serve(async (req) => {
           rel: 0,
           fs: 1,
           enablejsapi: 1,
-          origin: proxyOrigin
+          origin: '${proxyOrigin}'
         },
         events: {
-          onReady: onPlayerReady,
-          onStateChange: onPlayerStateChange,
-          onError: onPlayerError
+          onReady: function(event) {
+            isReady = true;
+            sendToParent('ready');
+          },
+          onStateChange: function(event) {
+            sendToParent('stateChange', { 
+              state: event.data,
+              currentTime: player ? player.getCurrentTime() : 0,
+              duration: player ? player.getDuration() : 0
+            });
+          },
+          onError: function(event) {
+            sendToParent('error', { code: event.data });
+          }
         }
       });
-    }
-    
-    function onPlayerReady(event) {
-      isReady = true;
-      sendToParent('ready');
-    }
-    
-    function onPlayerStateChange(event) {
-      sendToParent('stateChange', { 
-        state: event.data,
-        currentTime: player ? player.getCurrentTime() : 0,
-        duration: player ? player.getDuration() : 0
-      });
-    }
-    
-    function onPlayerError(event) {
-      console.error('[Proxy] Player Error:', event.data);
-      sendToParent('error', { code: event.data });
     }
     
     window.addEventListener('message', function(event) {
       if (!event.data || event.data.source === 'youtube-proxy') return;
       if (event.data.type !== 'command') return;
-      
       var command = event.data.command;
       var args = event.data.args;
-      
       if (!player || !isReady) return;
-      
       try {
         switch (command) {
           case 'play': player.playVideo(); break;
@@ -204,7 +197,6 @@ serve(async (req) => {
             break;
         }
       } catch (e) {
-        console.error('[Proxy] Command error:', e);
         sendToParent('error', { message: e.message });
       }
     });
