@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Save, GripVertical, Trash2, Plus, Image as ImageIcon, Youtube, Type, Heading1, Heading2, Heading3, Quote, BookOpen, AlertCircle, Minus, Sparkles, Loader2 } from "lucide-react";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 import { toast } from "sonner";
 import { ContentBlock } from "../BlockRenderer";
 import { BlockEditorCommandMenu } from "./BlockEditorCommandMenu";
@@ -134,11 +135,11 @@ const ImageEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
 };
 
 const VideoEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: ContentBlock) => void }) => {
-  const getEmbed = (url: string) => {
+  const getVideoId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    return match ? match[1] : null;
   };
-  const embedUrl = getEmbed(block.data.url || "");
+  const videoId = getVideoId(block.data.url || "");
 
   return (
     <div className="space-y-2">
@@ -148,9 +149,9 @@ const VideoEditor = ({ block, onChange }: { block: ContentBlock; onChange: (b: C
         placeholder="YouTube URL"
         className="text-sm"
       />
-      {embedUrl && (
+      {videoId && (
         <div className="relative rounded-lg overflow-hidden" style={{ paddingTop: "56.25%" }}>
-          <iframe src={embedUrl} className="absolute inset-0 w-full h-full" allowFullScreen />
+          <NativeSafeYouTubeEmbed videoId={videoId} className="absolute inset-0 w-full h-full" />
         </div>
       )}
     </div>

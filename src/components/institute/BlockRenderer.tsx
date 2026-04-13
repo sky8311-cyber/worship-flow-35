@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 export interface ContentBlock {
   id: string;
   type: "heading" | "paragraph" | "image" | "video" | "quote" | "verse" | "callout" | "divider" | "list";
@@ -37,22 +37,20 @@ const ImageBlock = ({ data }: { data: Record<string, any> }) => (
 );
 
 const VideoBlock = ({ data }: { data: Record<string, any> }) => {
-  const embedUrl = useMemo(() => {
+  const videoId = useMemo(() => {
     const url = data.url || "";
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    return match ? match[1] : null;
   }, [data.url]);
 
-  if (!embedUrl) return null;
+  if (!videoId) return null;
 
   return (
     <figure className="my-6">
       <div className="relative rounded-lg overflow-hidden shadow-sm" style={{ paddingTop: "56.25%" }}>
-        <iframe
-          src={embedUrl}
+        <NativeSafeYouTubeEmbed
+          videoId={videoId}
           className="absolute inset-0 w-full h-full"
-          allowFullScreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         />
       </div>
       {data.caption && (

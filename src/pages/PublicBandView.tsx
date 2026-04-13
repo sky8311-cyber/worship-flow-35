@@ -17,6 +17,7 @@ import {
   Users, MessagesSquare, Circle
 } from "lucide-react";
 import { WorshipComponentType, getComponentLabel } from "@/lib/worshipComponents";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 import { parseLocalDate } from "@/lib/countdownHelper";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
@@ -506,14 +507,10 @@ const PublicBandView = () => {
                                 <p className="text-sm font-semibold text-foreground mb-2">{youtubeLinks[0].label}</p>
                               )}
                               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                                <iframe
-                                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                                <NativeSafeYouTubeEmbed
+                                  videoId={videoId}
                                   title={youtubeLinks[0].label || song.song_title || "YouTube video"}
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                  referrerPolicy="strict-origin-when-cross-origin"
-                                  allowFullScreen
+                                  className="absolute top-0 left-0 w-full h-full rounded-lg"
                                 />
                               </div>
                             </div>
@@ -535,14 +532,10 @@ const PublicBandView = () => {
                               <TabsContent key={link.id} value={String(idx)}>
                                 {videoId && (
                                   <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                                    <iframe
-                                      className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                      src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                                    <NativeSafeYouTubeEmbed
+                                      videoId={videoId}
                                       title={link.label || song.song_title || "YouTube video"}
-                                      frameBorder="0"
-                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                      referrerPolicy="strict-origin-when-cross-origin"
-                                      allowFullScreen
+                                      className="absolute top-0 left-0 w-full h-full rounded-lg"
                                     />
                                   </div>
                                 )}
@@ -556,14 +549,10 @@ const PublicBandView = () => {
                     // Fallback to legacy single youtube_url field
                     <div className="mb-4">
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                        <iframe
-                          className="absolute top-0 left-0 w-full h-full rounded-lg"
-                          src={`https://www.youtube.com/embed/${fallbackVideoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                        <NativeSafeYouTubeEmbed
+                          videoId={fallbackVideoId}
                           title={song.song_title || "YouTube video"}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          referrerPolicy="strict-origin-when-cross-origin"
-                          allowFullScreen
+                          className="absolute top-0 left-0 w-full h-full rounded-lg"
                         />
                       </div>
                     </div>
