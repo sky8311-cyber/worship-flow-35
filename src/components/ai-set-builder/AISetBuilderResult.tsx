@@ -4,6 +4,7 @@ import { WorshipArcCard } from "./WorshipArcCard";
 import type { GeneratedSong, WorshipArc } from "./types";
 import { ROLE_COLORS, TEMPO_COLORS } from "./types";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
+import { getSignedScoreUrl } from "@/utils/scoreUrl";
 
 interface AISetBuilderResultProps {
   result: GeneratedSong[];
@@ -73,7 +74,10 @@ export function AISetBuilderResult({ result, songMap, worshipArc }: AISetBuilder
                 {song?.score_file_url && (
                   <button
                     type="button"
-                    onClick={() => window.open(song.score_file_url, "_blank")}
+                    onClick={async () => {
+                      const signedUrl = await getSignedScoreUrl(song.score_file_url);
+                      if (signedUrl) window.open(signedUrl, "_blank");
+                    }}
                     className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
                     title="악보"
                   >

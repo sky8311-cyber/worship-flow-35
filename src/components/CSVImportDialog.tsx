@@ -199,9 +199,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
             .upload(fileName, blob, { contentType: "image/png" });
 
           if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage.from("scores").getPublicUrl(fileName);
-          urls.push(publicUrl);
+          urls.push(fileName);
         }
         // Return first page URL for score_file_url field
         return urls[0] ?? null;
@@ -215,12 +213,7 @@ export const CSVImportDialog = ({ open, onOpenChange, onImportComplete }: CSVImp
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("scores")
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      return fileName;
     } catch (error) {
       console.error("Image upload error:", error);
       return null;

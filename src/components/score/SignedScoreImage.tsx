@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { getSignedScoreUrl } from "@/utils/scoreUrl";
 import { cn } from "@/lib/utils";
 
@@ -28,19 +28,17 @@ export function SignedScoreImage({
   const [signedSrc, setSignedSrc] = useState<string | null>(null);
   const [resolved, setResolved] = useState(false);
   const retryCount = useRef(0);
-  const lastSrc = useRef<string | null>(null);
 
-  // Resolve signed URL when src changes
-  if (src !== lastSrc.current) {
-    lastSrc.current = src;
+  // Resolve signed URL when src changes (using useEffect instead of render-time state setting)
+  useEffect(() => {
+    let cancelled = false;
     retryCount.current = 0;
     setResolved(false);
     setSignedSrc(null);
 
     if (src) {
       getSignedScoreUrl(src).then((url) => {
-        // Only update if src hasn't changed since
-        if (lastSrc.current === src) {
+        if (!cancelled) {
           setSignedSrc(url);
           setResolved(true);
         }
@@ -48,19 +46,18 @@ export function SignedScoreImage({
     } else {
       setResolved(true);
     }
-  }
+
+    return () => { cancelled = true; };
+  }, [src]);
 
   const handleError = useCallback(() => {
-    if (retryCount.current < 2 && lastSrc.current) {
+    if (retryCount.current < 2 && src) {
       retryCount.current += 1;
-      const currentSrc = lastSrc.current;
-      getSignedScoreUrl(currentSrc).then((url) => {
-        if (lastSrc.current === currentSrc) {
-          setSignedSrc(url);
-        }
+      getSignedScoreUrl(src).then((url) => {
+        setSignedSrc(url);
       });
     }
-  }, []);
+  }, [src]);
 
   if (!resolved || !signedSrc) {
     // Show a minimal placeholder while loading
