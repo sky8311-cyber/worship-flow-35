@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { InstituteLayout } from "@/layouts/InstituteLayout";
 import { BlockRenderer } from "@/components/institute/BlockRenderer";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -110,9 +111,9 @@ const InstituteChapter = () => {
     },
   });
 
-  const getYouTubeEmbedUrl = (url: string) => {
+  const getYouTubeVideoId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+    return match ? match[1] : null;
   };
 
   if (!chapter || !course) {
@@ -209,11 +210,11 @@ const InstituteChapter = () => {
             <div className="max-w-[680px] mx-auto px-5 py-6">
               {/* Video */}
               {chapter.video_url && (() => {
-                const ytUrl = getYouTubeEmbedUrl(chapter.video_url);
+                const ytVideoId = getYouTubeVideoId(chapter.video_url);
                 return (
                   <div className="bg-foreground rounded-xl overflow-hidden mb-5 relative" style={{ paddingTop: "56.25%" }}>
-                    {ytUrl ? (
-                      <iframe src={ytUrl} className="absolute inset-0 w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                    {ytVideoId ? (
+                      <NativeSafeYouTubeEmbed videoId={ytVideoId} className="absolute inset-0 w-full h-full" />
                     ) : (
                       <video src={chapter.video_url} controls className="absolute inset-0 w-full h-full" />
                     )}

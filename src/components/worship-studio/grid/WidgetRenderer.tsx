@@ -1,4 +1,5 @@
 import { useTranslation } from "@/hooks/useTranslation";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 import type { StudioWidget, WidgetContent } from "@/hooks/useStudioWidgets";
 import { cn } from "@/lib/utils";
 import { 
@@ -110,11 +111,9 @@ export function WidgetRenderer({
           if (videoId) {
             return (
               <div className="aspect-video rounded-lg overflow-hidden">
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}`}
+                <NativeSafeYouTubeEmbed
+                  videoId={videoId}
                   className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
                 />
               </div>
             );
