@@ -16,7 +16,40 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   const videoId = url.searchParams.get('videoId') || '';
+  const mode = url.searchParams.get('mode') || 'player';
 
+  // ── Embed mode: simple full-screen YouTube embed (no postMessage) ──
+  if (mode === 'embed') {
+    const embedHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+    iframe { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <iframe
+    src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen
+  ></iframe>
+</body>
+</html>`;
+
+    return new Response(embedHtml, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600',
+      },
+    });
+  }
+
+  // ── Player mode (original): full YT IFrame API with postMessage ──
   const html = `<!DOCTYPE html>
 <html>
 <head>
