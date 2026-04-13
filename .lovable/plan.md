@@ -1,40 +1,61 @@
 
+Do I know what the issue is? Yes.
 
-# Private Bucket 이후 악보 이미지 표시 오류 수정
+1. Score images: the private-bucket migration is only half-finished.
+- Display fixes were added in a few places, but several upload flows still save `scores` files as `publicUrl` values instead of bucket paths:
+  - `src/components/SongDialog.tsx`
+  - `src/components/songs/SmartSongFlow.tsx`
+  - `src/components/CSVImportDialog.tsx`
+- There are also still raw score usages that bypass signed URLs, such as:
+  - `src/components/dashboard/UpcomingServicesWidget.tsx`
+  - `src/components/ai-set-builder/AISetBuilderResult.tsx`
+- Result: newly uploaded scores remain fragile/broken after the bucket became private, especially in native app flows.
 
-## 문제 원인
+2. YouTube error 153: native iOS embeds are using YouTube in ways that don’t provide a stable valid web referrer/origin.
+- Direct embeds in pages like `src/pages/BandView.tsx` and `src/pages/PublicBandView.tsx` pass `origin=${window.location.origin}`. In native app this is not a normal HTTPS web origin.
+- The global player uses `srcDoc` in `src/components/music-player/GlobalYouTubeIframe.tsx`, which is also a bad fit for YouTube’s client-identification requirements.
+- That matches the “153 Video Player configuration error” behavior in WKWebView.
 
-`scores` 버킷이 private으로 전환된 후, 두 곳에서 여전히 **raw URL을 직접 사용**하고 있어 이미지가 로드되지 않음:
+Implementation plan
 
-1. **SongDialog 악보 썸네일 + 미리보기** — `<img src={file.url}>` (서명 없는 URL)
-2. **PrintOptionsDialog 인쇄 HTML** — `<img src="${score.url}">` (서명 없는 URL)
+A. Finish the private-score migration properly
+- Change all score upload flows to store bucket paths, not `publicUrl`.
+- Harden `src/utils/scoreUrl.ts` so it normalizes:
+  - legacy public URLs
+  - signed URLs
+  - path-only values
+  - leading `scores/` variants
+- Refactor `src/components/score/SignedScoreImage.tsx` to use an effect-based signed-url flow instead of setting state during render.
 
-`SignedScoreImage` 컴포넌트나 `getSignedScoreUrl()` 을 사용하는 곳은 정상 작동하지만, 위 두 곳은 적용이 안 되어 있음.
+B. Remove remaining raw score access
+- Replace remaining raw `<img src={file_url}>` and raw `window.open(score_url)` usage with signed-url helpers.
+- Audit and update the remaining score consumers, starting with:
+  - `src/components/dashboard/UpcomingServicesWidget.tsx`
+  - `src/components/ai-set-builder/AISetBuilderResult.tsx`
+  - any other direct `file_url` / `score_file_url` image or open-in-new-tab paths found during the audit
 
-## 수정 계획
+C. Make YouTube native-safe
+- Create one shared YouTube embed/player strategy instead of many direct iframes.
+- Update the hidden/global player to load the hosted proxy by real `src=...`, not `srcDoc`.
+- Update `supabase/functions/youtube-player-proxy/index.ts` to include a native-safe hosted player page with explicit YouTube config.
+- Replace direct YouTube iframes in:
+  - `src/pages/BandView.tsx`
+  - `src/pages/PublicBandView.tsx`
+  - `src/components/worship-studio/spaces/blocks/YoutubeBlock.tsx`
+  - other remaining direct YouTube iframe renderers
+- For native iOS/Android, add a graceful fallback: if inline playback still fails, show preview + “Open in YouTube” using the existing deep-link helper instead of leaving a broken embed.
 
-### 1. SongDialog.tsx — 썸네일 + 미리보기에 SignedScoreImage 적용
+D. Verify the actual native flow
+- Test recent score uploads in song library, band view, preview dialog, and print/PDF.
+- Test YouTube playback in both:
+  - visible embedded video sections
+  - global music player
+- Because the repo does not include the committed `ios/` folder here, after implementation the local native app must be refreshed with:
+  - latest code pull
+  - web rebuild
+  - `npx cap sync ios`
+  - rebuild in Xcode/simulator
 
-**파일:** `src/components/SongDialog.tsx`
-
-- **썸네일 (line ~1109):** `<img src={file.url}>` → `<SignedScoreImage src={file.url}>` 로 교체
-- **미리보기 다이얼로그 (line ~1676):** `<img src={...url}>` → `<SignedScoreImage src={...url}>` 로 교체
-- `SignedScoreImage` import 추가
-
-### 2. PrintOptionsDialog.tsx — 인쇄 전 Signed URL 일괄 생성
-
-**파일:** `src/components/band-view/PrintOptionsDialog.tsx`
-
-인쇄 HTML은 별도 iframe/window에서 렌더링되므로 React 컴포넌트를 사용할 수 없음. 대신:
-
-- `handlePrint`를 `async`로 변경
-- 인쇄 HTML 생성 전에 `getSignedScoreUrls()`로 모든 악보 URL을 일괄 서명
-- `generatePrintHtml`에 서명된 URL Map을 전달하여 `score.url` 대신 서명된 URL 사용
-- `getSignedScoreUrls` import 추가
-
-## 영향 범위
-
-- SongDialog 악보 편집 화면의 썸네일 미리보기
-- SongDialog 내 악보 확대 미리보기
-- BandView 인쇄 기능 (악보만 / 전체 모드)
-
+Technical notes
+- I do not think this needs a database schema change first.
+- If I find old records that still need cleanup after the code fix, I can add a small data-normalization migration as a follow-up, but the main fix is in the app code paths above.
