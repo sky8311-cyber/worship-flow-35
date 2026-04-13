@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { isNativePlatform } from "@/utils/platform";
 import { buildYouTubeEmbedUrl } from "@/lib/youtubeEmbed";
+import { ExternalLink } from "lucide-react";
 
 export interface NativeSafeYouTubeEmbedProps {
   videoId: string;
@@ -16,6 +18,7 @@ export interface NativeSafeYouTubeEmbedProps {
 /**
  * YouTube embed that works on both web and native (Capacitor).
  * On native, routes through the proxy edge function to avoid Error 153.
+ * Shows a fallback "Open in YouTube" link if loading fails.
  */
 export function NativeSafeYouTubeEmbed({
   videoId,
@@ -29,6 +32,12 @@ export function NativeSafeYouTubeEmbed({
   onError,
 }: NativeSafeYouTubeEmbedProps) {
   const isNative = isNativePlatform();
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // Reset failure state when videoId changes
+  useEffect(() => {
+    setLoadFailed(false);
+  }, [videoId]);
 
   let src: string;
   if (isNative) {
@@ -41,8 +50,32 @@ export function NativeSafeYouTubeEmbed({
       loop: loop ? '1' : '0',
     });
     src = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?${params.toString()}`;
+    console.log('[NativeSafeYouTubeEmbed] Native mode, proxy URL:', src);
   } else {
     src = buildYouTubeEmbedUrl(videoId, { autoplay, mute, controls, loop });
+  }
+
+  const handleError = () => {
+    console.error('[NativeSafeYouTubeEmbed] iframe load error for videoId:', videoId);
+    setLoadFailed(true);
+    onError?.();
+  };
+
+  if (loadFailed) {
+    return (
+      <div className={`${className} flex flex-col items-center justify-center bg-black/90 text-white gap-3`}>
+        <p className="text-sm text-muted-foreground">영상을 불러올 수 없습니다</p>
+        <a
+          href={`https://www.youtube.com/watch?v=${videoId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors"
+        >
+          <ExternalLink className="w-4 h-4" />
+          YouTube에서 열기
+        </a>
+      </div>
+    );
   }
 
   return (
@@ -52,10 +85,10 @@ export function NativeSafeYouTubeEmbed({
       title={title || "YouTube video"}
       frameBorder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerPolicy="strict-origin-when-cross-origin"
+      referrerPolicy="no-referrer-when-downgrade"
       allowFullScreen
       onPointerDown={onPointerDown}
-      onError={onError}
+      onError={handleError}
     />
   );
 }
