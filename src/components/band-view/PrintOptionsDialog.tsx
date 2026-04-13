@@ -232,14 +232,14 @@ export function PrintOptionsDialog({
             printScores.push({
               title: song?.title || "",
               key: selectedKey || "",
-              url: score.file_url,
+              url: getSignedUrl(score.file_url),
             });
           });
         } else if (setSong.override_score_file_url || song?.score_file_url) {
           printScores.push({
             title: song?.title || "",
             key: selectedKey || "",
-            url: setSong.override_score_file_url || song?.score_file_url,
+            url: getSignedUrl(setSong.override_score_file_url || song?.score_file_url),
           });
         }
       });
