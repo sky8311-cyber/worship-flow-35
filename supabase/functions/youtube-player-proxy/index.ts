@@ -57,8 +57,8 @@ serve(async (req) => {
     }
 
     // The key fix: origin is set to this proxy page's HTTPS origin, which YouTube will accept.
-    // The iframe src is built entirely server-side so no JS injection is needed.
-    const proxyOrigin = url.origin;
+    // Edge functions may report http internally; force https for the public-facing origin.
+    const proxyOrigin = url.origin.replace(/^http:/, 'https:');
     ytParams.set('origin', proxyOrigin);
 
     const embedSrc = `https://www.youtube.com/embed/${videoId}?${ytParams.toString()}`;
