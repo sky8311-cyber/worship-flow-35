@@ -50,6 +50,7 @@ import { creditBandViewOpenedReward } from "@/lib/rewardsHelper";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { ExternalLink } from "lucide-react";
+import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -980,14 +981,10 @@ const BandView = () => {
                                 </Button>
                               </div>
                               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                                <iframe
-                                  className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                                <NativeSafeYouTubeEmbed
+                                  videoId={videoId}
                                   title={youtubeLinks[0].label || song?.title || "YouTube video"}
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                  referrerPolicy="strict-origin-when-cross-origin"
-                                  allowFullScreen
+                                  className="absolute top-0 left-0 w-full h-full rounded-lg"
                                 />
                               </div>
                             </div>
@@ -1021,15 +1018,11 @@ const BandView = () => {
                                       </Button>
                                     </div>
                                     <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                                    <iframe
-                                      className="absolute top-0 left-0 w-full h-full rounded-lg"
-                                      src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
-                                      title={link.label || song?.title || "YouTube video"}
-                                      frameBorder="0"
-                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                      referrerPolicy="strict-origin-when-cross-origin"
-                                      allowFullScreen
-                                    />
+                                      <NativeSafeYouTubeEmbed
+                                        videoId={videoId}
+                                        title={link.label || song?.title || "YouTube video"}
+                                        className="absolute top-0 left-0 w-full h-full rounded-lg"
+                                      />
                                     </div>
                                   </div>
                                 )}
@@ -1054,14 +1047,10 @@ const BandView = () => {
                         </Button>
                       </div>
                       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-                        <iframe
-                          className="absolute top-0 left-0 w-full h-full rounded-lg"
-                          src={`https://www.youtube.com/embed/${fallbackVideoId}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                        <NativeSafeYouTubeEmbed
+                          videoId={fallbackVideoId}
                           title={song?.title || "YouTube video"}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          referrerPolicy="strict-origin-when-cross-origin"
-                          allowFullScreen
+                          className="absolute top-0 left-0 w-full h-full rounded-lg"
                         />
                       </div>
                     </div>
