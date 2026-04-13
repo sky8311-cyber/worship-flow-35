@@ -4,6 +4,10 @@ const config: CapacitorConfig = {
   appId: 'app.kworship.main',
   appName: 'K-Worship',
   webDir: 'dist',
+  server: {
+    url: 'https://2ed7309e-d6b0-4f05-9642-be9265249510.lovableproject.com?forceHideBadge=true',
+    cleartext: true,
+  },
   plugins: {
     StatusBar: {
       overlaysWebView: true,
