@@ -14,6 +14,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { Printer, FileText, Music2, LayoutList } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { getSignedScoreUrls } from "@/utils/scoreUrl";
 
 interface SongScore {
   id: string;
@@ -98,8 +99,21 @@ export function PrintOptionsDialog({
     }, 5000);
   };
 
-  const handlePrint = () => {
-    const html = generatePrintHtml();
+  const handlePrint = async () => {
+    // Collect all score URLs that need signing
+    const allScoreUrls: string[] = [];
+    setSongs.forEach((setSong) => {
+      const songScores = allSongScores.filter((s) => s.song_id === setSong.song_id);
+      songScores.forEach((s) => { if (s.file_url) allScoreUrls.push(s.file_url); });
+      if (setSong.override_score_file_url) allScoreUrls.push(setSong.override_score_file_url);
+      if (setSong.songs?.score_file_url) allScoreUrls.push(setSong.songs.score_file_url);
+    });
+
+    // Batch-sign all URLs before generating HTML
+    const signedUrlMap = await getSignedScoreUrls(allScoreUrls);
+    const getSignedUrl = (url: string) => signedUrlMap.get(url) || url;
+
+    const html = generatePrintHtml(getSignedUrl);
     if (!html) return;
 
     // Close dialog first
@@ -165,7 +179,7 @@ export function PrintOptionsDialog({
     }, 300);
   };
 
-  const generatePrintHtml = () => {
+  const generatePrintHtml = (getSignedUrl: (url: string) => string) => {
     const dateStr = format(
       new Date(serviceSet.date),
       language === "ko" ? "yyyy년 M월 d일 (EEEE)" : "MMMM d, yyyy (EEEE)",
@@ -218,14 +232,14 @@ export function PrintOptionsDialog({
             printScores.push({
               title: song?.title || "",
               key: selectedKey || "",
-              url: score.file_url,
+              url: getSignedUrl(score.file_url),
             });
           });
         } else if (setSong.override_score_file_url || song?.score_file_url) {
           printScores.push({
             title: song?.title || "",
             key: selectedKey || "",
-            url: setSong.override_score_file_url || song?.score_file_url,
+            url: getSignedUrl(setSong.override_score_file_url || song?.score_file_url),
           });
         }
       });
@@ -325,11 +339,12 @@ export function PrintOptionsDialog({
           .sort((a, b) => (a.page_number || 1) - (b.page_number || 1));
         
         if (keyScores.length > 0) {
-          scoreUrl = keyScores[0].file_url;
+          scoreUrl = getSignedUrl(keyScores[0].file_url);
         } else if (songScores.length > 0) {
-          scoreUrl = songScores[0].file_url;
+          scoreUrl = getSignedUrl(songScores[0].file_url);
         } else {
-          scoreUrl = setSong.override_score_file_url || song?.score_file_url || "";
+          const rawUrl = setSong.override_score_file_url || song?.score_file_url || "";
+          scoreUrl = rawUrl ? getSignedUrl(rawUrl) : "";
         }
 
         return `
