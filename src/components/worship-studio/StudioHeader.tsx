@@ -16,7 +16,7 @@ export function StudioHeader({
   onNotifications,
 }: StudioHeaderProps) {
   return (
-    <header className="flex items-center justify-between px-3 py-2 bg-background/95 backdrop-blur-sm">
+    <header className="flex items-center justify-between px-3 py-2 bg-background/95 backdrop-blur-sm safe-top">
       <div className="flex items-center gap-2">
         <img 
           src={worshipAtelierLogo} 
