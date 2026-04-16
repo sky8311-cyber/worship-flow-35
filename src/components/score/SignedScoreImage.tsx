@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { getSignedScoreUrl } from "@/utils/scoreUrl";
+import { getSignedScoreUrl, getCachedSignedUrl } from "@/utils/scoreUrl";
 import { cn } from "@/lib/utils";
 
 interface SignedScoreImageProps {
@@ -25,12 +25,23 @@ export function SignedScoreImage({
   style,
   onClick,
 }: SignedScoreImageProps) {
-  const [signedSrc, setSignedSrc] = useState<string | null>(null);
-  const [resolved, setResolved] = useState(false);
+  // Check cache synchronously to avoid shimmer when batch-prefetch has already resolved
+  const cachedUrl = getCachedSignedUrl(src);
+  const [signedSrc, setSignedSrc] = useState<string | null>(cachedUrl);
+  const [resolved, setResolved] = useState(!!cachedUrl);
   const retryCount = useRef(0);
 
   // Resolve signed URL when src changes (using useEffect instead of render-time state setting)
   useEffect(() => {
+    // If already resolved from cache, skip
+    const fromCache = getCachedSignedUrl(src);
+    if (fromCache) {
+      setSignedSrc(fromCache);
+      setResolved(true);
+      retryCount.current = 0;
+      return;
+    }
+
     let cancelled = false;
     retryCount.current = 0;
     setResolved(false);
