@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { hideSplashScreen } from "@/utils/hideSplash";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ import { InvitedUserWelcomeDialog } from "@/components/onboarding/InvitedUserWel
 import { TeamMemberWelcomeDialog } from "@/components/onboarding/TeamMemberWelcomeDialog";
 import { useEventReminders } from "@/hooks/useEventReminders";
 const Dashboard = () => {
+  useEffect(() => { hideSplashScreen(); }, []);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
