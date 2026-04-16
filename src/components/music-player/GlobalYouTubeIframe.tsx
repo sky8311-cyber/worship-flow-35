@@ -1,5 +1,7 @@
 import { useMusicPlayer } from "@/contexts/MusicPlayerContext";
 
+const BRIDGE_HOST = "https://worship-flow-35.lovable.app";
+
 export const GlobalYouTubeIframe = () => {
   const { playlist, currentIndex, iframeRef, playerState } = useMusicPlayer();
 
@@ -8,7 +10,7 @@ export const GlobalYouTubeIframe = () => {
   const videoId = playlist[currentIndex]?.videoId;
   if (!videoId) return null;
 
-  const src = `/youtube-embed.html?videoId=${videoId}&mode=player`;
+  const src = `${BRIDGE_HOST}/youtube-embed?videoId=${videoId}&mode=player`;
 
   return (
     <iframe
