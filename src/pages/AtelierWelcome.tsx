@@ -13,6 +13,8 @@ const AtelierWelcome = () => {
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <AtelierNav />
+      {/* Spacer for fixed nav + safe area */}
+      <div className="h-16" style={{ marginTop: 'env(safe-area-inset-top, 0px)' }} />
       <AtelierHero />
       <AtelierProblem />
       <AtelierSolution />

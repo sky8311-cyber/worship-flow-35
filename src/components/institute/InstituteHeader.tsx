@@ -68,7 +68,7 @@ export const InstituteHeader = ({ breadcrumb }: InstituteHeaderProps) => {
   };
 
   return (
-    <header className="border-b border-border/50 bg-card/95 backdrop-blur-sm sticky z-40 safe-top">
+    <header className="border-b border-border/50 bg-card/95 backdrop-blur-sm sticky top-0 z-40 pt-[env(safe-area-inset-top,0px)]">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Left: Logo */}
