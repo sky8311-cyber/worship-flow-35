@@ -43,8 +43,7 @@ export function NativeSafeYouTubeEmbed({
       controls: controls ? '1' : '0',
       loop: loop ? '1' : '0',
     });
-    src = `/youtube-embed?${params.toString()}`;
-    console.log('[NativeSafeYouTubeEmbed] Native mode, static URL:', src);
+    src = `/youtube-embed.html?${params.toString()}`;
   } else {
     src = buildYouTubeEmbedUrl(videoId, { autoplay, mute, controls, loop });
   }
