@@ -15,6 +15,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useMemo } from "react";
+import { getSignedScoreUrls } from "@/utils/scoreUrl";
 import { PrintOptionsDialog } from "@/components/band-view/PrintOptionsDialog";
 import { FullscreenScoreViewer } from "@/components/band-view/FullscreenScoreViewer";
 import { useMusicPlayer, PlaylistItem } from "@/contexts/MusicPlayerContext";
@@ -202,7 +203,23 @@ const BandView = () => {
     staleTime: 0,
   });
 
-  // Helper to get YouTube links for a specific song
+  // Batch-prefetch all signed score URLs to warm the cache
+  useEffect(() => {
+    if (!allSongScores || allSongScores.length === 0) return;
+    const allUrls: string[] = [];
+    for (const score of allSongScores) {
+      if ((score as any).file_url) allUrls.push((score as any).file_url);
+    }
+    // Also include override/default score URLs from setSongs
+    for (const ss of (setSongs || [])) {
+      if ((ss as any).override_score_file_url) allUrls.push((ss as any).override_score_file_url);
+      if ((ss as any).songs?.score_file_url) allUrls.push((ss as any).songs.score_file_url);
+    }
+    if (allUrls.length > 0) {
+      getSignedScoreUrls(allUrls);
+    }
+  }, [allSongScores, setSongs]);
+
   const getYoutubeLinksForSong = (songId: string) => {
     return (allYoutubeLinks || [])
       .filter(link => link.song_id === songId)

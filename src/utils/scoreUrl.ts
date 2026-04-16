@@ -9,6 +9,21 @@ const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 const CACHE_BUFFER = 300_000; // 5 minutes buffer before expiry
 
 /**
+ * Synchronously check if a signed URL is already cached.
+ * Returns the cached URL or null if not cached / expired.
+ */
+export function getCachedSignedUrl(urlOrPath: string | null | undefined): string | null {
+  if (!urlOrPath) return null;
+  const path = extractScorePath(urlOrPath);
+  if (!path) return null;
+  const cached = signedUrlCache.get(path);
+  if (cached && cached.expiresAt > Date.now() + CACHE_BUFFER) {
+    return cached.url;
+  }
+  return null;
+}
+
+/**
  * Extract the storage path from a full public URL or return the path as-is.
  * Handles both old public URLs and new path-only values.
  * 

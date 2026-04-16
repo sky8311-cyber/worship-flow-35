@@ -79,6 +79,7 @@ export function NativeSafeYouTubeEmbed({
       src={src}
       title={title || "YouTube video"}
       frameBorder="0"
+      loading="lazy"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerPolicy="strict-origin-when-cross-origin"
       allowFullScreen
