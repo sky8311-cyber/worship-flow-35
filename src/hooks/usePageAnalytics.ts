@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { isNativePlatform } from "@/utils/platform";
 
 // Generate or retrieve session ID from sessionStorage
 const getSessionId = (): string => {
@@ -81,10 +82,19 @@ export const usePageAnalytics = () => {
     enteredAtRef.current = null;
   }, []);
 
-  // Handle route changes
+  // Handle route changes — defer on native to avoid blocking first paint
   useEffect(() => {
     if (previousPathRef.current && previousPathRef.current !== location.pathname) {
       updateDuration();
+    }
+
+    if (isNativePlatform()) {
+      // Defer analytics recording on native by 3 seconds to prioritize first paint
+      const timer = setTimeout(() => {
+        recordPageView();
+      }, 3000);
+      previousPathRef.current = location.pathname;
+      return () => clearTimeout(timer);
     }
 
     recordPageView();

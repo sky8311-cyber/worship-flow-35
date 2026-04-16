@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "@/lib/animations";
 import logo from "@/assets/kworship-logo-mobile.png";
@@ -14,6 +13,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { isNativePlatform } from "@/utils/platform";
 
 const MobileAppLanding = () => {
   const { t, language } = useTranslation();
@@ -27,10 +27,17 @@ const MobileAppLanding = () => {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, loading, navigate]);
 
-  if (loading) {
-    return <FullScreenLoader label="Loading…" />;
+  // Native app: skip heavy marketing page entirely — show lightweight redirect
+  if (isNativePlatform()) {
+    // If still loading auth, show nothing (splash screen covers)
+    // Once loaded: if user → redirect handled by useEffect; if no user → go to login
+    if (!loading && !user) {
+      navigate("/login", { replace: true });
+    }
+    return null; // Splash screen or nothing — native should never render marketing page
   }
 
+  // Web: render the full marketing landing page (no loading gate — paint immediately)
   return (
     <>
       <SEOHead

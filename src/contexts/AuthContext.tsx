@@ -486,8 +486,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const hasRole = (role: string) => roles.includes(role);
   const isAdmin = hasRole("admin");
   const isWorshipLeader = hasRole("worship_leader");
-  // Wait for role sync to complete before marking as fully loaded
-  const isFullyLoaded = !loading && !!user && profileLoaded && roleSyncComplete;
+  // Don't wait for roleSyncComplete — it runs in background and is non-critical for first paint
+  const isFullyLoaded = !loading && !!user && profileLoaded;
 
   const isCommunityLeader = async (communityId: string): Promise<boolean> => {
     if (!user) return false;
