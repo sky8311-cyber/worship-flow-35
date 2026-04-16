@@ -142,8 +142,7 @@ const BandView = () => {
       return data;
     },
     enabled: !!id && !!user,
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   const { data: setSongs } = useQuery({
@@ -163,8 +162,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Separate query for song scores to avoid nested alias issues with multi-page scores
@@ -182,8 +180,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Fetch YouTube links for all songs
@@ -199,8 +196,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Batch-prefetch all signed score URLs to warm the cache
@@ -216,7 +212,12 @@ const BandView = () => {
       if ((ss as any).songs?.score_file_url) allUrls.push((ss as any).songs.score_file_url);
     }
     if (allUrls.length > 0) {
-      getSignedScoreUrls(allUrls);
+      getSignedScoreUrls(allUrls).then((map) => {
+        for (const url of map.values()) {
+          const img = new Image();
+          img.src = url;
+        }
+      });
     }
   }, [allSongScores, setSongs]);
 
@@ -240,8 +241,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Check if user can edit this worship set
