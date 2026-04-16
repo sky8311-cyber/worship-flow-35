@@ -1,72 +1,57 @@
-<final-text>Do I know what the issue is? Yes.
 
-Root cause
-1. The current method cannot succeed as designed:
-   - `public/youtube-embed.html` exists in the repo and even in `dist/`
-   - but both public hosts return the app’s 404 page for `/youtube-embed.html`
-   - so this host is not exposing that file the way we assumed
-2. The native app is still booting the entire remote website through `capacitor.config.ts -> server.url = https://kworship.app?...`
-   - that means app launch depends on the published site and its script injection behavior
-   - this is the unstable path still producing the iPhone `JS Eval error`
-3. So the real fix is to split responsibilities:
-   - the native app should boot from the local bundled app
-   - only the YouTube bridge should use a public HTTPS page
 
-Best next movement
-1. Stop loading the whole app from the remote site
-   - remove production `server.url` from `capacitor.config.ts` or keep it dev-only
-   - let Capacitor load local `dist` assets again
-   Why: this removes the remote-site boot path that is failing on iPhone.
+# Speed Up YouTube & Score Loading
 
-2. Replace the static-file bridge with a standalone SPA bridge route
-   - use `/youtube-embed` instead of `/youtube-embed.html`
-   - do not rely on `public/youtube-embed.html`
-   - in `src/main.tsx`, detect `window.location.pathname === "/youtube-embed"` and render only a tiny bridge component
-   - do not mount `App`, router, auth, query client, music player, landing page, or global UI for that route
-   Why: the host clearly serves SPA routes, but not this extra html file. A standalone route can work if it bypasses the full app shell.
+## Problem
+1. **Scores**: Each `SignedScoreImage` makes an **individual** `createSignedUrl` API call. A worship set with 5 songs × 3 pages = 15 sequential network requests before images even start loading.
+2. **YouTube (native)**: The bridge page loads the full YouTube IFrame API script (`iframe_api`) every time, with no preloading. On native, there's an extra hop through the HTTPS bridge host.
 
-3. Point native YouTube iframes to an absolute HTTPS bridge URL
-   - update `NativeSafeYouTubeEmbed.tsx`
-   - update `GlobalYouTubeIframe.tsx`
-   - for native only, use a public HTTPS bridge URL such as:
-     `https://worship-flow-35.lovable.app/youtube-embed?...`
-   - keep normal web embeds for normal web usage
-   Why: the app runs locally, while YouTube still gets a valid HTTPS origin.
+## Plan
 
-4. Keep the bridge minimal and isolated
-   - move the current bridge logic from `public/youtube-embed.html` into the standalone bridge component
-   - preserve both `mode=embed` and `mode=player`
-   - preserve the postMessage API used by the global player
-   - validate `event.origin` against the chosen bridge host
-   - keep `strict-origin-when-cross-origin`
-   - keep native player persistence disabled
-   - remove the unused `Capacitor` import from `MobileAppLanding.tsx`
-   Why: this avoids the earlier React-in-iframe recursion problem while also removing extra native risk on boot.
+### 1. Batch-prefetch signed URLs in BandView
+Instead of each `SignedScoreImage` independently calling `getSignedScoreUrl`, collect **all** score URLs from the query data and batch-sign them upfront using the existing `getSignedScoreUrls` utility.
 
-5. Verify in this order
-   - publish frontend
-   - confirm `https://worship-flow-35.lovable.app/youtube-embed?videoId=dQw4w9WgXcQ&mode=embed` shows a player, not 404
-   - rebuild native: `git pull`, `npm run build`, `npx cap sync ios`
-   - clean Xcode build folder
-   - delete app from iPhone
-   - reinstall and test
+**Files**: `src/pages/BandView.tsx`, `src/pages/PublicBandView.tsx`
+- After the main data query resolves, extract all `file_url` values
+- Call `getSignedScoreUrls(allUrls)` once → populates the in-memory cache
+- `SignedScoreImage` will then hit the cache instantly (no network calls)
 
-What this plan fixes
-- iPhone app boot no longer depends on the remote website
-- YouTube still runs from a valid HTTPS origin
-- no dependence on a static html file that the host is not serving
-- no fallback to opening the browser
-- no recursive full-app boot inside the iframe
+### 2. Add prefetch cache warming to SignedScoreImage
+Make `SignedScoreImage` check the existing `signedUrlCache` synchronously before going async. If the URL is already cached, render immediately with no loading placeholder.
 
-Files to change
-- `capacitor.config.ts`
-- `src/main.tsx`
-- new standalone bridge component/page
-- `src/components/ui/NativeSafeYouTubeEmbed.tsx`
-- `src/components/music-player/GlobalYouTubeIframe.tsx`
-- `src/pages/MobileAppLanding.tsx`
+**File**: `src/components/score/SignedScoreImage.tsx`, `src/utils/scoreUrl.ts`
+- Export a `getCachedSignedUrl(path)` sync function from `scoreUrl.ts`
+- In `SignedScoreImage`, check cache first → skip the loading shimmer if already resolved
 
-Technical details
-- The earlier “publish it and retry” diagnosis was incomplete. I now have stronger evidence: the bridge file is not publicly reachable even on the current public hosts, so that architecture itself is wrong here.
-- The safest bridge host to use first is the public Lovable domain, because it is directly tied to frontend publish state. After it is stable, you can optionally point the bridge to `kworship.app` too.
-- The crucial design change is not “route vs html” by itself; it is “standalone bridge route rendered before the full app shell.” That is what avoids both hosting 404s and iframe recursion.</final-text>
+### 3. Preconnect to YouTube domains
+Add `<link rel="preconnect">` hints so the browser establishes connections early.
+
+**File**: `index.html`
+- Add preconnect for `https://www.youtube.com` and `https://i.ytimg.com`
+
+### 4. Add loading="lazy" to off-screen YouTube iframes
+YouTube embeds in blocks below the fold should use `loading="lazy"` on the iframe.
+
+**File**: `src/components/ui/NativeSafeYouTubeEmbed.tsx`
+- Add `loading="lazy"` attribute to the iframe element
+
+### 5. Preload YouTube IFrame API in bridge page
+In `YouTubeBridgePage.tsx`, the IFrame API script tag can use `async` (already implicit) but we can also add a `dns-prefetch` inline for the video CDN.
+
+**File**: `src/components/YouTubeBridgePage.tsx` — minor, low impact
+
+---
+
+## Expected Impact
+- **Scores**: ~15 individual API calls → 1 batch call. Images appear 3-5× faster.
+- **YouTube**: Marginal improvement from preconnect hints; lazy loading reduces initial page weight.
+
+## Files to Change
+1. `src/pages/BandView.tsx` — batch prefetch scores
+2. `src/pages/PublicBandView.tsx` — batch prefetch scores  
+3. `src/utils/scoreUrl.ts` — export sync cache lookup
+4. `src/components/score/SignedScoreImage.tsx` — use sync cache
+5. `index.html` — preconnect hints
+6. `src/components/ui/NativeSafeYouTubeEmbed.tsx` — lazy loading
+7. `src/components/dashboard/UpcomingServicesWidget.tsx` — batch prefetch (optional)
+
