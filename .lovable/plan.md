@@ -1,54 +1,53 @@
 
 
-# Fix YouTube Error 153 — Root Cause Found
+# Fix Native App: Use kworship.app + Fix youtube-embed.html 404
 
-## The Real Problem
+## Two Problems Found
 
-I tested the proxy edge function with curl and discovered **Supabase's gateway adds its own restrictive headers** to edge function responses:
+### Problem 1: Wrong server URL
+`capacitor.config.ts` points to the Lovable preview URL (`lovableproject.com`), which requires Lovable authentication. When the native WebView can't handle the auth redirect, it opens an external browser. You want the app to load from your official domain `kworship.app`.
 
-```
-Content-Security-Policy: default-src 'none'; sandbox
-Content-Type: text/plain
-```
+### Problem 2: youtube-embed.html returns 404 in production
+I verified that `https://kworship.app/youtube-embed.html` and `https://worship-flow-35.lovable.app/youtube-embed.html` both return a 404 page. This is because Lovable's SPA hosting routes all unknown paths to `index.html`, which renders the React app's 404 page instead of serving the static HTML file.
 
-This means:
-- The HTML page served by the proxy is treated as plain text, not rendered as HTML
-- Even if it were rendered, the `sandbox` CSP blocks all iframes, scripts, and external resources
-- **The entire proxy-via-edge-function approach cannot work** because Supabase's infrastructure prevents HTML pages from functioning when served from edge functions
-
-The Xcode log confirms this: `WebPage::runJavaScriptInFrameInScriptWorld: Request to run JavaScript failed` — the JS inside the proxy HTML is blocked by the CSP sandbox.
+The static `public/youtube-embed.html` approach **cannot work** on Lovable hosting because SPA fallback intercepts it.
 
 ## Solution
 
-Host the YouTube embed page as a **static HTML file** in the app's `public/` directory instead of serving it from an edge function.
+### Step 1: Update capacitor.config.ts
+Change the server URL to your official domain:
+```typescript
+server: {
+  url: 'https://kworship.app?forceHideBadge=true',
+  cleartext: true,
+}
+```
 
-Since your native app loads from `https://...lovableproject.com` (the server URL in capacitor.config), a static file at `/youtube-embed.html` will:
-1. Be served with proper `Content-Type: text/html`
-2. Have no restrictive CSP sandbox
-3. Have a valid HTTPS origin that YouTube accepts
-4. Work identically in both web and native
+### Step 2: Move youtube-embed.html into a React route
+Since Lovable SPA hosting won't serve raw HTML files, convert the YouTube embed page into a standalone React route at `/youtube-embed` that renders outside the normal app layout. This route will:
+- Parse query params (`videoId`, `mode`, `autoplay`, etc.)
+- Render a minimal full-screen page with the YouTube iframe/API player
+- Have no app chrome (no header, no sidebar)
+
+### Step 3: Update iframe references
+Change `/youtube-embed.html?...` to `/youtube-embed?...` in:
+- `NativeSafeYouTubeEmbed.tsx`
+- `GlobalYouTubeIframe.tsx`
+
+### Step 4: Remove the static file
+Delete `public/youtube-embed.html` since it's unused.
 
 ## Files to Change
-
-1. **Create `public/youtube-embed.html`** — Self-contained YouTube embed page that reads `videoId` and player options from URL query params, sets `origin` to its own HTTPS origin, and embeds the YouTube iframe. Two variants in one file: simple embed mode and full IFrame API player mode (for the global music player with postMessage control).
-
-2. **Update `src/components/ui/NativeSafeYouTubeEmbed.tsx`** — In native mode, point to `/youtube-embed.html?videoId=xxx&mode=embed` instead of the edge function URL.
-
-3. **Update `src/components/music-player/GlobalYouTubeIframe.tsx`** — Point to `/youtube-embed.html?videoId=xxx&mode=player` instead of the edge function URL.
-
-4. **Keep `supabase/functions/youtube-player-proxy/index.ts`** — Leave it for any non-iframe API uses (e.g., fetching video metadata in the future), but it will no longer serve the HTML embed pages.
+1. `capacitor.config.ts` — update server URL to `https://kworship.app`
+2. `src/pages/YouTubeEmbed.tsx` — new standalone page (no app layout)
+3. `src/App.tsx` — add route `/youtube-embed`
+4. `src/components/ui/NativeSafeYouTubeEmbed.tsx` — update path
+5. `src/components/music-player/GlobalYouTubeIframe.tsx` — update path
+6. Delete `public/youtube-embed.html`
 
 ## Why This Will Work
-
-- Static files in `public/` are served by Vite/the web server with correct MIME types and no sandbox CSP
-- The app's HTTPS origin (`lovableproject.com`) is a valid YouTube embed origin
-- No edge function gateway interference
-- Same approach works for both the visible embeds and the hidden global music player
-
-## After Implementation
-
-You will need to:
-1. Pull the latest code
-2. `npm run build && npx cap sync ios`
-3. Rebuild in Xcode and test
+- `kworship.app` is your published domain with no auth gate
+- A React route at `/youtube-embed` will be properly served by SPA hosting
+- The page renders a bare YouTube player with no app chrome
+- The `origin` sent to YouTube will be `https://kworship.app` — a valid HTTPS origin
 
