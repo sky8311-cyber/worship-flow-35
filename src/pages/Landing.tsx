@@ -24,9 +24,7 @@ const Landing = () => {
     }
   }, [user, loading, navigate, location.search]);
 
-  if (loading) {
-    return <FullScreenLoader label="Loading…" />;
-  }
+  // Don't block first paint — render the page immediately while auth resolves
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
