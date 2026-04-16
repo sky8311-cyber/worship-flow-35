@@ -44,6 +44,7 @@ import MobileAppLanding from "./pages/MobileAppLanding";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
+import YouTubeEmbed from "./pages/YouTubeEmbed";
 // Lazy load all other pages for code splitting
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const SongLibrary = lazyWithRetry(() => import("./pages/SongLibrary"));
