@@ -4,10 +4,6 @@ const config: CapacitorConfig = {
   appId: 'app.kworship.main',
   appName: 'K-Worship',
   webDir: 'dist',
-  server: {
-    url: 'https://kworship.app?forceHideBadge=true',
-    cleartext: true,
-  },
   plugins: {
     StatusBar: {
       overlaysWebView: true,

@@ -3,6 +3,8 @@ import { isNativePlatform } from "@/utils/platform";
 import { buildYouTubeEmbedUrl } from "@/lib/youtubeEmbed";
 import { ExternalLink } from "lucide-react";
 
+const BRIDGE_HOST = "https://worship-flow-35.lovable.app";
+
 export interface NativeSafeYouTubeEmbedProps {
   videoId: string;
   title?: string;
@@ -43,7 +45,7 @@ export function NativeSafeYouTubeEmbed({
       controls: controls ? '1' : '0',
       loop: loop ? '1' : '0',
     });
-    src = `/youtube-embed.html?${params.toString()}`;
+    src = `${BRIDGE_HOST}/youtube-embed?${params.toString()}`;
   } else {
     src = buildYouTubeEmbedUrl(videoId, { autoplay, mute, controls, loop });
   }
