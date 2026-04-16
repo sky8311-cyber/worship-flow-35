@@ -8,7 +8,8 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { getSignedScoreUrls } from "@/utils/scoreUrl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DOMPurify from "dompurify";
 import { 
@@ -182,6 +183,22 @@ const PublicBandView = () => {
     },
     enabled: !!setSongs && songIds.length > 0,
   });
+
+  // Batch-prefetch all signed score URLs to warm the cache
+  useEffect(() => {
+    if (!allSongScores || allSongScores.length === 0) return;
+    const allUrls: string[] = [];
+    for (const score of allSongScores) {
+      if (score.file_url) allUrls.push(score.file_url);
+    }
+    for (const ss of (setSongs || [])) {
+      if (ss.override_score_file_url) allUrls.push(ss.override_score_file_url);
+      if (ss.song_score_file_url) allUrls.push(ss.song_score_file_url);
+    }
+    if (allUrls.length > 0) {
+      getSignedScoreUrls(allUrls);
+    }
+  }, [allSongScores, setSongs]);
 
   // Helper to get YouTube links for a specific song
   const getYoutubeLinksForSong = (songId: string) => {
