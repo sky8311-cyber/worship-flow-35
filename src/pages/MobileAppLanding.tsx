@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Capacitor } from "@capacitor/core";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { FullScreenLoader } from "@/components/layout/FullScreenLoader";
 import { motion } from "framer-motion";
