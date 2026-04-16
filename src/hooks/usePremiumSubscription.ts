@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { isNativeIOS } from "@/utils/platform";
+import { REVENUECAT_ENABLED } from "@/hooks/useRevenueCat";
 
 interface PremiumSubscriptionStatus {
   isSubscribed: boolean;
@@ -79,7 +80,7 @@ export function usePremiumSubscription(): PremiumSubscriptionStatus & { isLoadin
 
       // On native iOS, also check RevenueCat entitlements
       let nativeIsActive = false;
-      if (isNativeIOS()) {
+      if (REVENUECAT_ENABLED && isNativeIOS()) {
         try {
           const { Purchases } = await import("@revenuecat/purchases-capacitor");
           const { customerInfo } = await Purchases.getCustomerInfo();
