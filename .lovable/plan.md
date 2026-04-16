@@ -1,53 +1,63 @@
+<final-text>I count 3 unsuccessful fix directions so far. The last one — moving the YouTube bridge into a React route — is the one that likely caused the current iPhone failure.
 
+Do I know what the issue is? Yes.
 
-# Fix Native App: Use kworship.app + Fix youtube-embed.html 404
+What is actually broken
+1. The native app now correctly loads `https://kworship.app`, so the old preview-URL/browser-auth problem is fixed.
+2. The current YouTube bridge at `/youtube-embed` is not live on the published site right now, so production returns your app’s 404 page.
+3. More importantly: using a React route for the bridge is unsafe here. `/youtube-embed` boots the full React app inside the iframe. Your `App` always mounts `MusicPlayerProvider` and `GlobalMusicPlayer`, and `/youtube-embed` is not excluded as a public route. If saved player state exists in localStorage, the iframe can recursively create another hidden iframe inside itself. That is the strongest match for the `JS Eval error` on iPhone.
+4. `MusicPlayerContext.tsx` still has stale edge-function proxy code, so the migration is incomplete.
 
-## Two Problems Found
+Best one-shot fix
+1. Revert the YouTube bridge back to a true static file:
+   - restore `public/youtube-embed.html`
+   - handle both `mode=embed` and `mode=player` there
+   - use `window.location.origin` for the YouTube origin
+   - use the referrer policy expected by the bridge
+   Why: a real static file is served directly and does not boot the React app inside the iframe.
 
-### Problem 1: Wrong server URL
-`capacitor.config.ts` points to the Lovable preview URL (`lovableproject.com`), which requires Lovable authentication. When the native WebView can't handle the auth redirect, it opens an external browser. You want the app to load from your official domain `kworship.app`.
+2. Point native YouTube usage back to the static bridge:
+   - `src/components/ui/NativeSafeYouTubeEmbed.tsx` → `/youtube-embed.html?...`
+   - `src/components/music-player/GlobalYouTubeIframe.tsx` → `/youtube-embed.html?...`
 
-### Problem 2: youtube-embed.html returns 404 in production
-I verified that `https://kworship.app/youtube-embed.html` and `https://worship-flow-35.lovable.app/youtube-embed.html` both return a 404 page. This is because Lovable's SPA hosting routes all unknown paths to `index.html`, which renders the React app's 404 page instead of serving the static HTML file.
+3. Remove the unsafe React bridge path entirely:
+   - delete `src/pages/YouTubeEmbed.tsx`
+   - remove the `YouTubeEmbed` import and `/youtube-embed` route from `src/App.tsx`
 
-The static `public/youtube-embed.html` approach **cannot work** on Lovable hosting because SPA fallback intercepts it.
+4. Finish the cleanup:
+   - remove `proxyHtml` state/fetch logic from `src/contexts/MusicPlayerContext.tsx`
+   - keep only one playback architecture: hidden iframe + postMessage
 
-## Solution
+5. Secondary cleanup in the same pass:
+   - add explicit splash hide after app boot to remove the timeout warning
+   - do not treat the `UIScene` and sandbox-extension lines as the blocker; they are not the YouTube/browser-fallback root cause
 
-### Step 1: Update capacitor.config.ts
-Change the server URL to your official domain:
-```typescript
-server: {
-  url: 'https://kworship.app?forceHideBadge=true',
-  cleartext: true,
-}
-```
+Required verification before rebuilding iPhone
+1. Publish the frontend update first.
+2. Verify these load a player page, not a 404:
+   - `https://kworship.app/youtube-embed.html?videoId=dQw4w9WgXcQ&mode=embed`
+   - `https://kworship.app/youtube-embed.html?videoId=dQw4w9WgXcQ&mode=player`
+3. Verify a visible YouTube embed works on a real app page.
+4. Verify the global music player works both:
+   - from a clean session
+   - after restoring saved player state
 
-### Step 2: Move youtube-embed.html into a React route
-Since Lovable SPA hosting won't serve raw HTML files, convert the YouTube embed page into a standalone React route at `/youtube-embed` that renders outside the normal app layout. This route will:
-- Parse query params (`videoId`, `mode`, `autoplay`, etc.)
-- Render a minimal full-screen page with the YouTube iframe/API player
-- Have no app chrome (no header, no sidebar)
+Native rollout after that
+1. Pull latest locally
+2. `npm run build && npx cap sync ios`
+3. In Xcode: Clean Build Folder
+4. Delete the app from the iPhone once, then reinstall it to clear stale WKWebView cache/localStorage
+5. Re-test app launch and YouTube playback
 
-### Step 3: Update iframe references
-Change `/youtube-embed.html?...` to `/youtube-embed?...` in:
-- `NativeSafeYouTubeEmbed.tsx`
-- `GlobalYouTubeIframe.tsx`
+Files to change
+- `public/youtube-embed.html`
+- `src/components/ui/NativeSafeYouTubeEmbed.tsx`
+- `src/components/music-player/GlobalYouTubeIframe.tsx`
+- `src/App.tsx`
+- `src/contexts/MusicPlayerContext.tsx`
+- app boot file for splash hide
 
-### Step 4: Remove the static file
-Delete `public/youtube-embed.html` since it's unused.
-
-## Files to Change
-1. `capacitor.config.ts` — update server URL to `https://kworship.app`
-2. `src/pages/YouTubeEmbed.tsx` — new standalone page (no app layout)
-3. `src/App.tsx` — add route `/youtube-embed`
-4. `src/components/ui/NativeSafeYouTubeEmbed.tsx` — update path
-5. `src/components/music-player/GlobalYouTubeIframe.tsx` — update path
-6. Delete `public/youtube-embed.html`
-
-## Why This Will Work
-- `kworship.app` is your published domain with no auth gate
-- A React route at `/youtube-embed` will be properly served by SPA hosting
-- The page renders a bare YouTube player with no app chrome
-- The `origin` sent to YouTube will be `https://kworship.app` — a valid HTTPS origin
-
+Why this is the highest-confidence move
+- It corrects the earlier bad assumption: real static files do work on this hosting; SPA fallback only happens when no real file exists.
+- It removes the React-in-iframe recursion risk, which is the most plausible cause of the iPhone JS exception.
+- It keeps the app on `kworship.app`, so it will not fall back to the preview auth flow or push the user into a browser.</final-text>
