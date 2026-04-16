@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { isNativeIOS } from "@/utils/platform";
+import { REVENUECAT_ENABLED } from "@/hooks/useRevenueCat";
 
 interface PremiumSubscriptionStatus {
   isSubscribed: boolean;

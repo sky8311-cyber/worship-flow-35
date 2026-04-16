@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { isNativeIOS } from "@/utils/platform";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Temporary flag to disable RevenueCat during startup — flip to true when ready
+export const REVENUECAT_ENABLED = false;
+
 // RevenueCat entitlement identifiers (must match RevenueCat dashboard)
 export const RC_ENTITLEMENTS = {
   PREMIUM: "premium",
@@ -34,7 +37,7 @@ export function useRevenueCat() {
 
   // Initialize RevenueCat SDK
   useEffect(() => {
-    if (!isNativeIOS()) return;
+    if (!REVENUECAT_ENABLED || !isNativeIOS()) return;
 
     const initRC = async () => {
       try {
@@ -74,7 +77,7 @@ export function useRevenueCat() {
 
   // Re-identify when user changes
   useEffect(() => {
-    if (!isNativeIOS() || !state.isInitialized || !user?.id) return;
+    if (!REVENUECAT_ENABLED || !isNativeIOS() || !state.isInitialized || !user?.id) return;
 
     const identify = async () => {
       try {
@@ -92,7 +95,7 @@ export function useRevenueCat() {
 
   // Purchase a package
   const purchasePackage = useCallback(async (packageToPurchase: any) => {
-    if (!isNativeIOS()) return null;
+    if (!REVENUECAT_ENABLED || !isNativeIOS()) return null;
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
@@ -126,7 +129,7 @@ export function useRevenueCat() {
 
   // Restore purchases (required by Apple)
   const restorePurchases = useCallback(async () => {
-    if (!isNativeIOS()) return null;
+    if (!REVENUECAT_ENABLED || !isNativeIOS()) return null;
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
