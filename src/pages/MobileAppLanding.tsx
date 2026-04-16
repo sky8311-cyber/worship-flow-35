@@ -19,23 +19,25 @@ const MobileAppLanding = () => {
   const { t, language } = useTranslation();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const native = isNativePlatform();
 
   useEffect(() => {
     if (loading) return;
     const isDev = import.meta.env.DEV;
     if (isDev) return;
-    if (user) navigate("/dashboard", { replace: true });
-  }, [user, loading, navigate]);
 
-  // Native app: skip heavy marketing page entirely — show lightweight redirect
-  if (isNativePlatform()) {
-    // If still loading auth, show nothing (splash screen covers)
-    // Once loaded: if user → redirect handled by useEffect; if no user → go to login
-    if (!loading && !user) {
-      navigate("/login", { replace: true });
+    if (native) {
+      // On native: go straight to dashboard or login — never show marketing page
+      navigate(user ? "/dashboard" : "/login", { replace: true });
+      return;
     }
-    return null; // Splash screen or nothing — native should never render marketing page
-  }
+
+    // Web: redirect authenticated users to dashboard
+    if (user) navigate("/dashboard", { replace: true });
+  }, [user, loading, navigate, native]);
+
+  // Native: render nothing — useEffect handles redirect, splash covers the gap
+  if (native) return null;
 
   // Web: render the full marketing landing page (no loading gate — paint immediately)
   return (
