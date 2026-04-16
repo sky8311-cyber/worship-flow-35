@@ -44,7 +44,7 @@ import MobileAppLanding from "./pages/MobileAppLanding";
 import Login from "./pages/auth/Login";
 import SignUp from "./pages/auth/SignUp";
 import NotFound from "./pages/NotFound";
-import YouTubeEmbed from "./pages/YouTubeEmbed";
+
 // Lazy load all other pages for code splitting
 const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
 const SongLibrary = lazyWithRetry(() => import("./pages/SongLibrary"));
@@ -221,8 +221,6 @@ const App = () => {
             <PageAnalyticsProvider />
             <Suspense fallback={<PageLoader />}>
             <Routes>
-              {/* Standalone YouTube embed (no app chrome) */}
-              <Route path="/youtube-embed" element={<YouTubeEmbed />} />
               {/* Public Landing Pages */}
               <Route path="/" element={<MobileAppLanding />} />
               <Route path="/app" element={<Landing />} />

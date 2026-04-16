@@ -17,7 +17,6 @@ interface MusicPlayerState {
   duration: number;
   setTitle: string;
   setId: string;
-  proxyHtml: string | null;
 }
 
 interface MusicPlayerContextType extends MusicPlayerState {
@@ -49,24 +48,20 @@ const defaultState: MusicPlayerState = {
   duration: 0,
   setTitle: "",
   setId: "",
-  proxyHtml: null,
 };
 
 const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(undefined);
 
 export const MusicPlayerProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<MusicPlayerState>(() => {
-    // Try to restore from localStorage
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Restore in paused state (don't auto-play on page load)
         return {
           ...defaultState,
           ...parsed,
-          isPlaying: false, // Always start paused on restore
-          proxyHtml: null, // Will be fetched fresh
+          isPlaying: false,
         };
       }
     } catch (e) {
@@ -78,8 +73,6 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
   const [playerReady, setPlayerReady] = useState(false);
   const [pendingPlayIntent, setPendingPlayIntent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const isFetchingProxyRef = useRef(false);
-  const lastFetchedVideoIdRef = useRef<string | null>(null);
 
   // Persist to localStorage on state changes (except when closed)
   useEffect(() => {
@@ -98,43 +91,12 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
     }
   }, [state.playerState, state.playlist, state.currentIndex, state.currentTime, state.setTitle, state.setId]);
 
-  // Fetch proxy HTML when player opens
-  useEffect(() => {
-    const fetchProxyHtml = async () => {
-      const videoId = state.playlist[state.currentIndex]?.videoId;
-      if (!videoId) return;
-      if (isFetchingProxyRef.current) return;
-      if (state.proxyHtml && lastFetchedVideoIdRef.current === videoId) return;
-
-      try {
-        isFetchingProxyRef.current = true;
-        console.log('[MusicPlayerContext] Fetching proxy HTML with videoId:', videoId);
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/youtube-player-proxy?videoId=${videoId}`;
-        const res = await fetch(url);
-        const html = await res.text();
-        lastFetchedVideoIdRef.current = videoId;
-        setState(prev => ({ ...prev, proxyHtml: html }));
-      } catch (error) {
-        console.error('[MusicPlayerContext] Failed to fetch proxy HTML:', error);
-      } finally {
-        isFetchingProxyRef.current = false;
-      }
-    };
-
-    if (state.playerState !== 'closed' && state.playlist.length > 0 && !state.proxyHtml) {
-      fetchProxyHtml();
-    }
-  }, [state.playerState, state.playlist.length, state.proxyHtml, state.currentIndex]);
-
-  // Cleanup proxy HTML when player is closed
+  // Cleanup when player is closed
   useEffect(() => {
     if (state.playerState === 'closed') {
       const timer = setTimeout(() => {
-        setState(prev => ({ ...prev, proxyHtml: null }));
         setPlayerReady(false);
         setPendingPlayIntent(false);
-        isFetchingProxyRef.current = false;
-        lastFetchedVideoIdRef.current = null;
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -179,22 +141,16 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
       currentTime: 0,
       duration: 0,
       playerState: 'full',
-      isPlaying: false, // Wait for user to tap play (iOS autoplay policy)
-      proxyHtml: null, // Force refetch with new playlist
+      isPlaying: false,
     }));
     setPlayerReady(false);
   }, []);
 
   const closePlayer = useCallback(() => {
     sendCommand('pause');
-    setState({
-      ...defaultState,
-      proxyHtml: null,
-    });
+    setState({ ...defaultState });
     setPlayerReady(false);
     setPendingPlayIntent(false);
-    isFetchingProxyRef.current = false;
-    lastFetchedVideoIdRef.current = null;
     localStorage.removeItem(STORAGE_KEY);
   }, [sendCommand]);
 

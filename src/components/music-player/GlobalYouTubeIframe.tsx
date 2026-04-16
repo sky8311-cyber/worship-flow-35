@@ -8,8 +8,7 @@ export const GlobalYouTubeIframe = () => {
   const videoId = playlist[currentIndex]?.videoId;
   if (!videoId) return null;
 
-  const src = `/youtube-embed?videoId=${videoId}&mode=player`;
-  console.log('[GlobalYouTubeIframe] Loading static URL:', src);
+  const src = `/youtube-embed.html?videoId=${videoId}&mode=player`;
 
   return (
     <iframe

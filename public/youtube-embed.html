@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>YouTube Player Bridge</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body,#player{width:100%;height:100%;background:#000;overflow:hidden}</style>
+</head>
+<body>
+<div id="player"></div>
+<script>
+(function(){
+  var qs = new URLSearchParams(window.location.search);
+  var videoId = qs.get('videoId') || '';
+  var mode = qs.get('mode') || 'player';
+  var pageOrigin = window.location.origin;
+
+  if (!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
+    document.getElementById('player').innerHTML =
+      '<p style="color:#fff;text-align:center;padding:20px">Invalid video ID</p>';
+    return;
+  }
+
+  function bp(v, d) { return v === '1' ? '1' : v === '0' ? '0' : d; }
+
+  if (mode === 'embed') {
+    var autoplay = bp(qs.get('autoplay'), '0');
+    var mute = bp(qs.get('mute'), '0');
+    var controls = bp(qs.get('controls'), '1');
+    var loop = bp(qs.get('loop'), '0');
+    var yp = new URLSearchParams({
+      rel:'0', modestbranding:'1', playsinline:'1', enablejsapi:'1',
+      autoplay:autoplay, mute:mute, controls:controls, origin:pageOrigin
+    });
+    if (loop === '1') { yp.set('loop','1'); yp.set('playlist', videoId); }
+    var iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube.com/embed/' + videoId + '?' + yp.toString();
+    iframe.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+    iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+    iframe.setAttribute('allowfullscreen','');
+    iframe.style.cssText = 'width:100%;height:100%;border:none;';
+    document.getElementById('player').appendChild(iframe);
+    return;
+  }
+
+  // Player mode — full IFrame API with postMessage control
+  var player = null;
+  var isReady = false;
+
+  function sendToParent(type, data) {
+    try { window.parent.postMessage(Object.assign({source:'youtube-proxy', type:type}, data || {}), '*'); } catch(e){}
+  }
+
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady = function() {
+    player = new YT.Player('player', {
+      videoId: videoId,
+      playerVars: {
+        autoplay:1, playsinline:1, controls:1, modestbranding:1,
+        rel:0, fs:1, enablejsapi:1, origin:pageOrigin
+      },
+      events: {
+        onReady: function() { isReady = true; sendToParent('ready'); },
+        onStateChange: function(e) {
+          sendToParent('stateChange', {
+            state: e.data,
+            currentTime: player ? player.getCurrentTime() : 0,
+            duration: player ? player.getDuration() : 0
+          });
+        },
+        onError: function(e) { sendToParent('error', {code: e.data}); }
+      }
+    });
+  };
+
+  window.addEventListener('message', function(event) {
+    if (!event.data || event.data.source === 'youtube-proxy') return;
+    if (event.data.type !== 'command') return;
+    var cmd = event.data.command;
+    var args = event.data.args;
+    if (!player || !isReady) return;
+    try {
+      switch(cmd) {
+        case 'play': player.playVideo(); break;
+        case 'pause': player.pauseVideo(); break;
+        case 'stop': player.stopVideo(); break;
+        case 'loadVideo':
+          if (args && args.videoId) {
+            player.loadVideoById(args.videoId);
+            setTimeout(function(){ if(player.getPlayerState()!==1) player.playVideo(); }, 300);
+          }
+          break;
+        case 'cueVideo':
+          if (args && args.videoId) player.cueVideoById(args.videoId);
+          break;
+        case 'seekTo':
+          if (args && typeof args.seconds === 'number') player.seekTo(args.seconds, true);
+          break;
+        case 'setVolume':
+          if (args && typeof args.volume === 'number') player.setVolume(args.volume);
+          break;
+        case 'mute': player.mute(); break;
+        case 'unMute': player.unMute(); break;
+        case 'getState':
+          sendToParent('currentState', {
+            state: player.getPlayerState(),
+            currentTime: player.getCurrentTime(),
+            duration: player.getDuration(),
+            volume: player.getVolume(),
+            isMuted: player.isMuted()
+          });
+          break;
+      }
+    } catch(e) { sendToParent('error', {message: e.message}); }
+  });
+
+  sendToParent('proxyLoaded');
+})();
+</script>
+</body>
+</html>
