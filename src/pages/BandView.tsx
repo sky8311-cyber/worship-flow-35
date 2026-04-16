@@ -142,8 +142,7 @@ const BandView = () => {
       return data;
     },
     enabled: !!id && !!user,
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   const { data: setSongs } = useQuery({
