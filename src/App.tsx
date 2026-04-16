@@ -220,6 +220,8 @@ const App = () => {
             <PageAnalyticsProvider />
             <Suspense fallback={<PageLoader />}>
             <Routes>
+              {/* Standalone YouTube embed (no app chrome) */}
+              <Route path="/youtube-embed" element={<YouTubeEmbed />} />
               {/* Public Landing Pages */}
               <Route path="/" element={<MobileAppLanding />} />
               <Route path="/app" element={<Landing />} />
