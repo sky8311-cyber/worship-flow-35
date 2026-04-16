@@ -28,7 +28,7 @@ export function FeatureComingSoon({
     : description || "This feature is currently under development. Stay tuned!";
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div className="fixed inset-0 z-50 flex flex-col bg-background pt-[env(safe-area-inset-top,0px)]">
       {/* Header */}
       <header className="flex items-center px-3 py-3 border-b border-border flex-shrink-0">
         <Button
