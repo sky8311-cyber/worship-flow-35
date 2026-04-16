@@ -41,7 +41,7 @@ export function CanvasHeader({ title, stage, onTitleChange, onStageChange, onPub
   };
 
   return (
-    <header className="border-b border-border/40 bg-[#faf7f2] dark:bg-background relative z-10">
+    <header className="border-b border-border/40 bg-[#faf7f2] dark:bg-background relative z-10 shrink-0 pt-[env(safe-area-inset-top,0px)]">
       {/* Row 1: back + title + publish */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Button variant="ghost" size="icon" onClick={onBack} className="h-9 w-9 shrink-0">

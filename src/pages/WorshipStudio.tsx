@@ -90,7 +90,7 @@ export default function WorshipStudio() {
       targetName={studioOwnerName || undefined}
     >
       {({ status: neighborStatus, onAction: onAddNeighbor }) => (
-        <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden relative safe-top">
+        <div className="fixed inset-0 bg-[#faf7f2] dark:bg-background z-50 flex flex-col overflow-hidden relative">
           <div className="absolute inset-0 pointer-events-none bg-noise opacity-[0.025] z-0" />
           <SEOHead title={t("studio.title")} description={t("studio.description")} />
           
