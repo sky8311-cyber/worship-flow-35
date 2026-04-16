@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
+import { isNativePlatform } from "@/utils/platform";
 
 export interface PlaylistItem {
   videoId: string;
@@ -38,6 +39,7 @@ interface MusicPlayerContextType extends MusicPlayerState {
 }
 
 const STORAGE_KEY = "k-worship-music-player";
+const shouldPersistPlayerState = !isNativePlatform();
 
 const defaultState: MusicPlayerState = {
   playerState: 'closed',
@@ -54,6 +56,10 @@ const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(und
 
 export const MusicPlayerProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<MusicPlayerState>(() => {
+    if (!shouldPersistPlayerState) {
+      return defaultState;
+    }
+
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -67,6 +73,7 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
     } catch (e) {
       console.error('[MusicPlayerContext] Failed to restore state:', e);
     }
+
     return defaultState;
   });
 
@@ -74,8 +81,17 @@ export const MusicPlayerProvider = ({ children }: { children: React.ReactNode })
   const [pendingPlayIntent, setPendingPlayIntent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Persist to localStorage on state changes (except when closed)
+  // Native app should never restore stale player state on boot.
   useEffect(() => {
+    if (!shouldPersistPlayerState) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []);
+
+  // Persist to localStorage on state changes (web only, except when closed)
+  useEffect(() => {
+    if (!shouldPersistPlayerState) return;
+
     if (state.playerState === 'closed') {
       localStorage.removeItem(STORAGE_KEY);
     } else if (state.playlist.length > 0) {

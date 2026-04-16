@@ -78,7 +78,7 @@ export function NativeSafeYouTubeEmbed({
       title={title || "YouTube video"}
       frameBorder="0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerPolicy="no-referrer-when-downgrade"
+      referrerPolicy="strict-origin-when-cross-origin"
       allowFullScreen
       onPointerDown={onPointerDown}
       onError={handleError}

@@ -17,7 +17,7 @@ export const GlobalYouTubeIframe = () => {
       src={src}
       className="fixed top-[-9999px] left-[-9999px] w-1 h-1 border-0"
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      referrerPolicy="no-referrer-when-downgrade"
+      referrerPolicy="strict-origin-when-cross-origin"
     />
   );
 };
