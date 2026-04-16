@@ -196,7 +196,12 @@ const PublicBandView = () => {
       if (ss.song_score_file_url) allUrls.push(ss.song_score_file_url);
     }
     if (allUrls.length > 0) {
-      getSignedScoreUrls(allUrls);
+      getSignedScoreUrls(allUrls).then((map) => {
+        for (const url of map.values()) {
+          const img = new Image();
+          img.src = url;
+        }
+      });
     }
   }, [allSongScores, setSongs]);
 

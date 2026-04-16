@@ -216,7 +216,12 @@ const BandView = () => {
       if ((ss as any).songs?.score_file_url) allUrls.push((ss as any).songs.score_file_url);
     }
     if (allUrls.length > 0) {
-      getSignedScoreUrls(allUrls);
+      getSignedScoreUrls(allUrls).then((map) => {
+        for (const url of map.values()) {
+          const img = new Image();
+          img.src = url;
+        }
+      });
     }
   }, [allSongScores, setSongs]);
 
