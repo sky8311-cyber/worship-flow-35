@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import "./index.css";
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -9,20 +10,6 @@ if (window.location.pathname === "/youtube-embed") {
   });
 } else {
   import("./App").then(({ default: App }) => {
-    import("./index.css");
     root.render(<App />);
   });
-
-  // Hide splash screen on native after app mounts
-  import("@capacitor/core").then(({ Capacitor }) => {
-    if (Capacitor.isNativePlatform()) {
-      import("@capacitor/splash-screen").then(({ SplashScreen }) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            SplashScreen.hide().catch(() => undefined);
-          });
-        });
-      });
-    }
-  }).catch(() => undefined);
 }
