@@ -241,8 +241,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Check if user can edit this worship set
