@@ -14,8 +14,7 @@ const config: CapacitorConfig = {
       style: 'DARK'
     },
     SplashScreen: {
-      launchAutoHide: true,
-      autoHideDelay: 1500
+      launchAutoHide: false,
     }
   }
 };
