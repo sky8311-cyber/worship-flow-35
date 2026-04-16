@@ -162,8 +162,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Separate query for song scores to avoid nested alias issues with multi-page scores
@@ -181,8 +180,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Fetch YouTube links for all songs
@@ -198,8 +196,7 @@ const BandView = () => {
       if (error) throw error;
       return data || [];
     },
-    refetchOnMount: "always",
-    staleTime: 0,
+    staleTime: 60_000,
   });
 
   // Batch-prefetch all signed score URLs to warm the cache
