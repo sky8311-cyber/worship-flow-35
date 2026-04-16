@@ -1,115 +1,72 @@
-<final-text># Speed up native app launch and separate harmless iOS warnings
 
-## What I found
-Do I know what the issue is? Yes.
 
-- The logs you pasted are mostly iOS/WebKit platform warnings, not the main cause of the slow open:
-  - `UIScene lifecycle will soon be required...` = future iOS compatibility warning
-  - `Could not create a sandbox extension...` = known native/WebKit warning
-  - `Unable to hide query parameters from script...` = WebKit warning, usually non-blocking
-- The real slowdown is your startup path:
-  1. `src/App.tsx` mounts the full provider tree, router, analytics, and global systems even on first open
-  2. `src/contexts/AuthContext.tsx` immediately runs session/profile/roles/community fetches
-  3. Public entry pages (`src/pages/MobileAppLanding.tsx`, `src/pages/Landing.tsx`) wait on auth `loading` and show a full-screen loader before first content
-  4. `/` currently opens a heavy animated landing page, which is not a good native startup screen
-  5. `syncWorshipLeaderRole()` is still on the critical path for authenticated users because `isFullyLoaded` waits for `roleSyncComplete`
-- RevenueCat is already disabled, so it is not the current startup bottleneck
+# Speed Up Native App Launch — Deeper Optimization
 
-## One-shot fix
+## Current situation
+The previous round moved `isFullyLoaded` off `roleSyncComplete` and made `MobileAppLanding` skip rendering on native. Those were good changes but the app still feels slow because the **real bottleneck** was not addressed: the entire app shell, provider tree, and auth initialization must complete before any screen paints.
 
-### 1) Make native open an app-first screen
-For native only, stop using the animated marketing landing page as the startup surface.
+## Root causes still present
 
-- Native `/` should go straight to a lightweight login/dashboard shell
-- Keep the current landing page behavior for web
+1. **`main.tsx` uses a dynamic `import("./App")` chain** — the app module, CSS, and all synchronous imports inside `App.tsx` load sequentially after the initial JS bundle. The splash screen hides via `requestAnimationFrame` x2, but the WebView still shows nothing useful until App mounts.
 
-Files:
-- `src/App.tsx`
-- `src/pages/MobileAppLanding.tsx`
-- `src/pages/Landing.tsx`
-- possibly `src/main.tsx`
+2. **`MobileAppLanding` calls `navigate("/login")` during render** on native — this is a side effect during render (not in useEffect), which React may run multiple times and which doesn't paint anything before navigating. The component returns `null`, so the user sees a blank screen between splash hide and login mount.
 
-### 2) Stop blocking first paint on public/native entry
-Remove the full-screen wait on auth loading for public/native entry pages.
+3. **No Vite manual chunk splitting** — the entire app (all 80+ lazy routes, all providers, framer-motion, radix, etc.) is in one or two chunks. The initial bundle is larger than necessary for the native login path.
 
-- Render the shell immediately
-- Redirect only after auth state resolves
-- Keep strict gating only on protected routes
+4. **`index.css` is dynamically imported** in `main.tsx` (`import("./index.css")`) — this means styles load asynchronously, causing a flash of unstyled content.
 
-Files:
-- `src/pages/MobileAppLanding.tsx`
-- `src/pages/Landing.tsx`
-- `src/App.tsx`
+5. **Auth `getSession()` + `fetchProfile()` block the loading state** — every protected route waits for this, but even the login page waits indirectly because `MobileAppLanding` reads `useAuth()`.
 
-### 3) Move role sync off the critical path
-Keep auth correctness, but stop making first render wait for role sync.
+## What the iOS warnings mean (for clarity)
+- `UIScene lifecycle` — Apple deprecation warning; cosmetic, does not cause slowness
+- `Could not create a sandbox extension` — WebKit security log; harmless
+- `Unable to hide query parameters` — WebKit internal; harmless
+- `Unable to simultaneously satisfy constraints` — UIKit auto-layout conflict in system keyboard/toolbar; harmless
+- `variant selector cell index` — emoji rendering internals; harmless
+- `WEBP _reader` — a WEBP image failed to decode; minor, not blocking
+- `DialogContent requires DialogTitle` — accessibility warning from Radix
 
-- Run `syncWorshipLeaderRole()` after first paint / in background
-- Do not hold startup behind `roleSyncComplete`
-- Keep profile/role loading protection where protected screens actually need it
+**None of these warnings cause the slow launch.** The slowness is entirely in the JS/React startup path.
 
-File:
-- `src/contexts/AuthContext.tsx`
+## Plan
 
-### 4) Defer nonessential startup work
-Reduce extra work during first launch.
+### 1. Fix the native redirect to use `useEffect` instead of render-time `navigate()`
+Currently `MobileAppLanding` calls `navigate("/login")` during render body (not in a useEffect). This is wrong — it causes a blank frame. Move it into the existing `useEffect` so that on native, the redirect to `/login` or `/dashboard` is handled properly and doesn't cause an extra render cycle returning `null`.
 
-- Delay page analytics on native first load
-- Keep global player and other background systems from doing unnecessary startup work
-- Preserve current web behavior where appropriate
+**File:** `src/pages/MobileAppLanding.tsx`
 
-Files:
-- `src/hooks/usePageAnalytics.ts`
-- `src/App.tsx`
-- optionally `src/contexts/MusicPlayerContext.tsx`
+### 2. Make `index.css` a static import in `main.tsx`
+Change `import("./index.css")` (dynamic) to a top-level `import "./index.css"` so styles are available immediately when the DOM paints. This eliminates the flash of unstyled content.
 
-### 5) Fix the `UIScene` warning in the native iOS project
-This is important for future iOS compatibility, but it is separate from the main startup speed issue.
+**File:** `src/main.tsx`
 
-- Adopt the scene-based lifecycle in the iOS native project
-- I cannot patch that part from this repo snapshot because there is no `ios/` directory checked in here right now
+### 3. Add Vite manual chunks for vendor splitting
+Split large vendor dependencies (`framer-motion`, `@radix-ui`, `@tanstack/react-query`, `@supabase`) into separate chunks. This lets the browser cache them independently and reduces the main chunk parse time.
 
-Native files likely involved locally:
-- `ios/App/App/AppDelegate.swift`
-- `ios/App/App/Info.plist`
-- `ios/App/App/SceneDelegate.swift` or equivalent scene manifest setup
+**File:** `vite.config.ts`
 
-## Technical details
-```text
-Current path:
-App boots
--> full app shell mounts
--> AuthContext fetches session/profile/roles
--> public page waits on loading
--> heavy animated landing renders
--> role sync/analytics add more work
+### 4. Defer `PageAnalyticsProvider` on native
+The analytics provider currently mounts at the router root and fires immediately. On native, wrap it in a `useEffect` with a longer delay (already partially done in `usePageAnalytics.ts` with 3s delay, but the provider still mounts and runs hooks). Make the provider component itself skip mounting on native for the first 5 seconds.
 
-Target path:
-Native app boots
--> lightweight app shell/login/dashboard paints immediately
--> auth hydrates in background
--> role sync/analytics run after first paint
-```
+**File:** `src/components/analytics/PageAnalyticsProvider.tsx`
 
-## Files I expect to change
-1. `src/App.tsx`
-2. `src/pages/MobileAppLanding.tsx`
-3. `src/pages/Landing.tsx`
-4. `src/contexts/AuthContext.tsx`
-5. `src/hooks/usePageAnalytics.ts`
-6. Possibly `src/main.tsx`
-7. Native iOS project files outside the current repo snapshot
+### 5. Defer splash screen hide until the first real route paints
+Currently splash hides after 2x `requestAnimationFrame` in `main.tsx`, which fires before auth resolves or login renders. Instead, hide splash screen from within the first painted component (Login or Dashboard) so the user never sees a blank white screen.
+
+**Files:** `src/main.tsx`, `src/pages/auth/Login.tsx`, `src/pages/Dashboard.tsx`
+
+## Files to change
+1. `src/pages/MobileAppLanding.tsx` — fix render-time navigate
+2. `src/main.tsx` — static CSS import, remove early splash hide
+3. `vite.config.ts` — add manual chunks
+4. `src/components/analytics/PageAnalyticsProvider.tsx` — defer on native
+5. `src/pages/auth/Login.tsx` — hide splash on mount
+6. `src/pages/Dashboard.tsx` — hide splash on mount
 
 ## Expected result
-- Faster first visible screen on iPhone
-- No more opening the heavy marketing landing page as the native startup surface
-- Less startup delay from auth, analytics, and role sync
-- `UIScene` warning handled separately in the native project
-- Remaining sandbox/WebKit warnings may still appear, but they should no longer be the main reason the app feels slow
+- Splash screen stays visible until login/dashboard actually paints
+- No blank white screen between splash and first content
+- Smaller initial JS chunk = faster parse
+- Styles available immediately (no FOUC)
+- Analytics deferred on native startup
 
-## QA after implementation
-- Cold launch on iPhone while signed out
-- Cold launch while already signed in
-- Compare time to first visible screen before/after
-- Verify `/dashboard`, login, Atelier, and Institute still behave correctly
-- Rebuild the native app and verify whether the `UIScene` warning disappears after the native project update</final-text>
