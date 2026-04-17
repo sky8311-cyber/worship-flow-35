@@ -47,6 +47,7 @@ export const SetSongScoreDialog = ({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [apiNotConfigured, setApiNotConfigured] = useState(false);
+  const [setupErrorMessage, setSetupErrorMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [privateSignedUrl, setPrivateSignedUrl] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -68,6 +69,7 @@ export const SetSongScoreDialog = ({
       setQuery(defaultQuery);
       setResults([]);
       setApiNotConfigured(false);
+      setSetupErrorMessage(null);
     }
   }, [open, defaultQuery]);
 
@@ -90,9 +92,8 @@ export const SetSongScoreDialog = ({
     if (!query.trim()) return;
     setSearching(true);
     setApiNotConfigured(false);
+    setSetupErrorMessage(null);
     try {
-      // Call the edge function directly via fetch so we can inspect the 503 body
-      // without supabase-js throwing a console error.
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-image-search`,
@@ -109,8 +110,17 @@ export const SetSongScoreDialog = ({
 
       const body = await res.json().catch(() => ({}));
 
-      if (res.status === 503 || body?.error === "not_configured") {
+      if (body?.error === "not_configured") {
         setApiNotConfigured(true);
+        setResults([]);
+        return;
+      }
+
+      if (body?.error === "referer_blocked") {
+        setApiNotConfigured(true);
+        setSetupErrorMessage(
+          "Google API 키에 브라우저 referrer 제한이 걸려 있어 사용할 수 없습니다. 관리자에게 키 제한 해제를 요청하세요.",
+        );
         setResults([]);
         return;
       }
@@ -240,7 +250,7 @@ export const SetSongScoreDialog = ({
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-muted-foreground">
-                  Google 검색 기능을 사용하려면 관리자에게 API 설정을 요청하세요
+                  {setupErrorMessage ?? "Google 검색 기능을 사용하려면 관리자에게 API 설정을 요청하세요"}
                 </p>
               </div>
             ) : (
