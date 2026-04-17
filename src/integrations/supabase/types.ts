@@ -3806,7 +3806,10 @@ export type Database = {
           override_score_file_url: string | null
           override_youtube_url: string | null
           position: number
+          private_score_file_url: string | null
           score_key: string | null
+          score_ref_thumbnail: string | null
+          score_ref_url: string | null
           service_set_id: string
           song_id: string
           time_signature: string | null
@@ -3823,7 +3826,10 @@ export type Database = {
           override_score_file_url?: string | null
           override_youtube_url?: string | null
           position: number
+          private_score_file_url?: string | null
           score_key?: string | null
+          score_ref_thumbnail?: string | null
+          score_ref_url?: string | null
           service_set_id: string
           song_id: string
           time_signature?: string | null
@@ -3840,7 +3846,10 @@ export type Database = {
           override_score_file_url?: string | null
           override_youtube_url?: string | null
           position?: number
+          private_score_file_url?: string | null
           score_key?: string | null
+          score_ref_thumbnail?: string | null
+          score_ref_url?: string | null
           service_set_id?: string
           song_id?: string
           time_signature?: string | null
