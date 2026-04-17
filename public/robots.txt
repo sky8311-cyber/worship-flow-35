@@ -62,6 +62,13 @@ Disallow: /church-account
 Disallow: /band-view
 Disallow: /public-view
 
+# Score / sheet music paths (private — never index)
+Disallow: /scores/
+Disallow: /sheet-music/
+Disallow: /song-scores/
+Disallow: /storage/v1/object/public/scores/
+Disallow: /storage/v1/object/sign/scores/
+
 # Sitemap location
 Sitemap: https://kworship.app/sitemap.xml
 
