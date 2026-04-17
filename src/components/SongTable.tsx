@@ -369,7 +369,6 @@ const handleDelete = async (song: any) => {
                                 <Youtube className="h-4 w-4 text-accent group-hover:text-white" />
                               </Button>
                             )}
-                            )}
                             {onEdit && (
                               <Button
                                 variant="ghost"
