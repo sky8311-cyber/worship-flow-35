@@ -125,6 +125,15 @@ export const SetSongScoreDialog = ({
         return;
       }
 
+      if (body?.error === "invalid_cx_config") {
+        setApiNotConfigured(true);
+        setSetupErrorMessage(
+          "Google 검색 엔진(CX) 설정이 올바르지 않습니다. 관리자에게 Search Engine ID 및 '이미지 검색 / 전체 웹 검색' 활성화 확인을 요청하세요.",
+        );
+        setResults([]);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(body?.message || `Search failed (${res.status})`);
       }
