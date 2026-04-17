@@ -95,22 +95,27 @@ export const SetSongScoreDialog = ({
         body: { query: query.trim() },
       });
 
-      if (error) {
-        // Check if it's the 503 not_configured error
-        const ctx: any = (error as any).context;
-        if (ctx?.status === 503 || (data as any)?.error === "not_configured") {
-          setApiNotConfigured(true);
-          setResults([]);
-          return;
+      // Try to detect "not_configured" from either error response body or data
+      let errorBody: any = null;
+      if (error && (error as any).context?.json) {
+        try {
+          errorBody = await (error as any).context.json();
+        } catch {
+          // ignore
         }
-        throw error;
       }
 
-      if ((data as any)?.error === "not_configured") {
+      if (
+        errorBody?.error === "not_configured" ||
+        (data as any)?.error === "not_configured" ||
+        (error as any)?.context?.status === 503
+      ) {
         setApiNotConfigured(true);
         setResults([]);
         return;
       }
+
+      if (error) throw error;
 
       setResults((data as any)?.items || []);
     } catch (e: any) {
