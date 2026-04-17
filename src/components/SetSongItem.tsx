@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { SetSongScoreDialog } from "./SetSongScoreDialog";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showScorePreview, setShowScorePreview] = useState(false);
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -398,16 +400,23 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     유튜브
                   </Button>
                 )}
-                {(currentScoreUrl || song?.id) && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowScorePreview(true)}
-                  >
-                    <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
-                    악보
-                  </Button>
-                )}
+                {(() => {
+                  const hasScoreRef = Boolean(setSong.score_ref_url || setSong.private_score_file_url);
+                  return (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowScoreDialog(true)}
+                      className="relative"
+                    >
+                      <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
+                      악보
+                      {hasScoreRef && (
+                        <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-primary" />
+                      )}
+                    </Button>
+                  );
+                })()}
               </div>
             </div>
 
@@ -438,6 +447,17 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         scoreUrl={currentScoreUrl}
         songTitle={song?.title || ""}
         songId={song?.id}
+      />
+
+      <SetSongScoreDialog
+        open={showScoreDialog}
+        onOpenChange={setShowScoreDialog}
+        setSongId={dbId}
+        defaultQuery={song?.title ? `${song.title} 악보` : ""}
+        scoreRefUrl={setSong.score_ref_url}
+        scoreRefThumbnail={setSong.score_ref_thumbnail}
+        privateScoreFileUrl={setSong.private_score_file_url}
+        onSaved={(updates) => onUpdate(index, updates)}
       />
     </div>
   );
