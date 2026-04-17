@@ -91,33 +91,35 @@ export const SetSongScoreDialog = ({
     setSearching(true);
     setApiNotConfigured(false);
     try {
-      const { data, error } = await supabase.functions.invoke("google-image-search", {
-        body: { query: query.trim() },
-      });
+      // Call the edge function directly via fetch so we can inspect the 503 body
+      // without supabase-js throwing a console error.
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/google-image-search`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            Authorization: `Bearer ${session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ query: query.trim() }),
+        },
+      );
 
-      // Try to detect "not_configured" from either error response body or data
-      let errorBody: any = null;
-      if (error && (error as any).context?.json) {
-        try {
-          errorBody = await (error as any).context.json();
-        } catch {
-          // ignore
-        }
-      }
+      const body = await res.json().catch(() => ({}));
 
-      if (
-        errorBody?.error === "not_configured" ||
-        (data as any)?.error === "not_configured" ||
-        (error as any)?.context?.status === 503
-      ) {
+      if (res.status === 503 || body?.error === "not_configured") {
         setApiNotConfigured(true);
         setResults([]);
         return;
       }
 
-      if (error) throw error;
+      if (!res.ok) {
+        throw new Error(body?.message || `Search failed (${res.status})`);
+      }
 
-      setResults((data as any)?.items || []);
+      setResults(body?.items || []);
     } catch (e: any) {
       console.error(e);
       toast.error("검색 중 오류가 발생했습니다");
