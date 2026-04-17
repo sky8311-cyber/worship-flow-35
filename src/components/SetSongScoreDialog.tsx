@@ -49,7 +49,19 @@ export const SetSongScoreDialog = ({
   const [apiNotConfigured, setApiNotConfigured] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [privateSignedUrl, setPrivateSignedUrl] = useState<string | null>(null);
-  const { acknowledged, acknowledge } = useCopyrightAcknowledgment();
+  const [acknowledged, setAcknowledged] = useState(false);
+  const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
+
+  const handleAcknowledgeChange = async (checked: boolean) => {
+    setAcknowledged(checked);
+    if (checked) {
+      try {
+        await acknowledge();
+      } catch (e) {
+        console.error("Failed to record acknowledgment:", e);
+      }
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -313,8 +325,9 @@ export const SetSongScoreDialog = ({
           {/* Tab 2: Private Upload */}
           <TabsContent value="upload" className="space-y-4">
             <CopyrightUploadNotice
-              acknowledged={acknowledged}
-              onAcknowledge={acknowledge}
+              checked={acknowledged}
+              onCheckedChange={handleAcknowledgeChange}
+              disabled={isAcknowledging}
             />
 
             <div className="border-2 border-dashed border-border rounded-md p-6 text-center">
