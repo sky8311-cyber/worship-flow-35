@@ -134,6 +134,15 @@ export const SetSongScoreDialog = ({
         return;
       }
 
+      if (body?.error === "api_not_enabled") {
+        setApiNotConfigured(true);
+        setSetupErrorMessage(
+          "Google Cloud 프로젝트에서 'Custom Search API'가 활성화되어 있지 않습니다. 관리자에게 Google Cloud Console에서 해당 API를 활성화해 달라고 요청하세요.",
+        );
+        setResults([]);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(body?.message || `Search failed (${res.status})`);
       }

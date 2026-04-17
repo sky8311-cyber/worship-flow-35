@@ -96,6 +96,23 @@ Deno.serve(async (req) => {
       const reason = data?.error?.details?.find((d: any) => d?.reason)?.reason;
       const message: string = data?.error?.message || "";
 
+      if (
+        res.status === 403 &&
+        /Custom Search (JSON )?API/i.test(message)
+      ) {
+        return new Response(
+          JSON.stringify({
+            error: "api_not_enabled",
+            message:
+              "Google Cloud 프로젝트에서 'Custom Search API'가 활성화되어 있지 않습니다. Google Cloud Console > APIs & Services > Library에서 활성화해주세요.",
+          }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
       const isRefererBlocked =
         res.status === 403 &&
         (reason === "API_KEY_HTTP_REFERRER_BLOCKED" || /referer/i.test(message));
