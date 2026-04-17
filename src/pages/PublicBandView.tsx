@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { SEOHead } from "@/components/seo/SEOHead";
 import { SignedScoreImage } from "@/components/score/SignedScoreImage";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -288,6 +289,15 @@ const PublicBandView = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Score privacy: prevent search engines from indexing token-shared sets containing scores */}
+      <SEOHead
+        title="Worship Set - K-Worship"
+        titleKo="워십세트 - K-Worship"
+        description="Private worship set shared via link"
+        descriptionKo="링크로 공유된 비공개 워십세트"
+        canonicalPath="/"
+        noIndex
+      />
       {/* Public View Banner */}
       <div className="bg-accent/10 border-b border-accent/30">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
