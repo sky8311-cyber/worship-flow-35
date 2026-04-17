@@ -411,15 +411,8 @@ export const SongCard = memo(function SongCard({
           </TooltipProvider>
         </CardContent>
       </Card>
-      
-      <ScorePreviewDialog
-        open={scorePreviewOpen}
-        onOpenChange={setScorePreviewOpen}
-        scoreUrl={scoreUrl}
-        songTitle={song.title}
-        songId={song.id}
-      />
-      
+
+
       <SongUsageHistoryDialog
         open={usageHistoryOpen}
         onOpenChange={setUsageHistoryOpen}
