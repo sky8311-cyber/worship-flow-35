@@ -3976,6 +3976,7 @@ export type Database = {
           key: string
           page_number: number | null
           position: number | null
+          score_is_public: boolean
           song_id: string
           updated_at: string | null
         }
@@ -3987,6 +3988,7 @@ export type Database = {
           key: string
           page_number?: number | null
           position?: number | null
+          score_is_public?: boolean
           song_id: string
           updated_at?: string | null
         }
@@ -3998,6 +4000,7 @@ export type Database = {
           key?: string
           page_number?: number | null
           position?: number | null
+          score_is_public?: boolean
           song_id?: string
           updated_at?: string | null
         }
@@ -4087,6 +4090,7 @@ export type Database = {
           notes: string | null
           original_composer: string | null
           score_file_url: string | null
+          score_is_public: boolean
           status: string
           subtitle: string | null
           tags: string | null
@@ -4112,6 +4116,7 @@ export type Database = {
           notes?: string | null
           original_composer?: string | null
           score_file_url?: string | null
+          score_is_public?: boolean
           status?: string
           subtitle?: string | null
           tags?: string | null
@@ -4137,6 +4142,7 @@ export type Database = {
           notes?: string | null
           original_composer?: string | null
           score_file_url?: string | null
+          score_is_public?: boolean
           status?: string
           subtitle?: string | null
           tags?: string | null
