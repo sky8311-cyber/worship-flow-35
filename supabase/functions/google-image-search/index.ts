@@ -49,6 +49,24 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       console.error("Google CSE error:", data);
+      const reason = data?.error?.details?.find((d: any) => d?.reason)?.reason;
+      const isRefererBlocked =
+        res.status === 403 &&
+        (reason === "API_KEY_HTTP_REFERRER_BLOCKED" ||
+          /referer/i.test(data?.error?.message || ""));
+      if (isRefererBlocked) {
+        return new Response(
+          JSON.stringify({
+            error: "referer_blocked",
+            message:
+              "Google API key has HTTP referrer restrictions. Remove referrer restriction for backend use.",
+          }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
       return new Response(
         JSON.stringify({
           error: "google_api_error",
