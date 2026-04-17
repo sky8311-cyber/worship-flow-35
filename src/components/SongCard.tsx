@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { FavoriteButton } from "./FavoriteButton";
-import { Edit, Trash2, Youtube, Eye, ShoppingCart, BarChart3, Check, Lock } from "lucide-react";
-import { FileMusic, Plus } from "lucide-react";
+import { Edit, Trash2, Youtube, ShoppingCart, BarChart3, Check, Lock, Music } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/contexts/AuthContext";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
-import { SignedScoreImage } from "@/components/score/SignedScoreImage";
-import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { getYouTubeThumbnail } from "@/lib/youtubeThumbnail";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import {
   AlertDialog,
@@ -74,14 +73,12 @@ export const SongCard = memo(function SongCard({
   const { t, language } = useTranslation();
   const { isAdmin, isWorshipLeader } = useAuth();
   const queryClient = useQueryClient();
-  const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Fallback: use song_scores if score_file_url is not directly set
-  // In demo mode, never expose score URLs
-  const scoreUrl = isDemo ? null : (song.score_file_url || song.song_scores?.[0]?.file_url || null);
-  
+  const [thumbError, setThumbError] = useState(false);
+
+  const youtubeThumb = getYouTubeThumbnail(song.youtube_url);
+
   const canViewUsageHistory = isAdmin || isWorshipLeader;
 
   const handleDelete = async () => {
@@ -147,21 +144,30 @@ export const SongCard = memo(function SongCard({
             </Badge>
           </div>
         )}
-        {scoreUrl && (
-          <div 
-            className="relative h-32 bg-muted cursor-pointer group"
-            onClick={() => setScorePreviewOpen(true)}
-          >
-            <SignedScoreImage 
-              src={scoreUrl} 
-              alt={`${song.title} score preview`}
-              className="w-full h-full object-cover object-top"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Eye className="w-8 h-8 text-white" />
-            </div>
-          </div>
-        )}
+        {/* YouTube thumbnail (or musical-note placeholder) */}
+        <div
+          className={`relative h-32 bg-muted flex items-center justify-center overflow-hidden ${
+            song.youtube_url ? "cursor-pointer group" : ""
+          }`}
+          onClick={() => song.youtube_url && openYouTubeUrl(song.youtube_url)}
+        >
+          {youtubeThumb && !thumbError ? (
+            <>
+              <img
+                src={youtubeThumb}
+                alt={`${song.title} thumbnail`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={() => setThumbError(true)}
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Youtube className="w-10 h-10 text-white" />
+              </div>
+            </>
+          ) : (
+            <Music className="w-10 h-10 text-muted-foreground/40" />
+          )}
+        </div>
         <CardContent className="p-5">
           <div className="mb-3">
            {song.is_private && (
@@ -224,18 +230,6 @@ export const SongCard = memo(function SongCard({
                 >
                   <Youtube className="w-4 h-4 mr-1 text-accent group-hover:text-white" />
                   <span className="truncate">{t("songCard.viewYouTube")}</span>
-                </Button>
-              )}
-              {scoreUrl && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setScorePreviewOpen(true)}
-                  className="flex-1 w-full group hover:bg-primary hover:text-white hover:border-primary"
-                  data-tutorial="song-score-btn"
-                >
-                  <FileMusic className="w-4 h-4 mr-1 text-primary group-hover:text-white" />
-                  <span className="truncate">{t("songCard.viewScore")}</span>
                 </Button>
               )}
             </div>
@@ -417,15 +411,8 @@ export const SongCard = memo(function SongCard({
           </TooltipProvider>
         </CardContent>
       </Card>
-      
-      <ScorePreviewDialog
-        open={scorePreviewOpen}
-        onOpenChange={setScorePreviewOpen}
-        scoreUrl={scoreUrl}
-        songTitle={song.title}
-        songId={song.id}
-      />
-      
+
+
       <SongUsageHistoryDialog
         open={usageHistoryOpen}
         onOpenChange={setUsageHistoryOpen}

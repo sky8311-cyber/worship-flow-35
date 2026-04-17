@@ -905,10 +905,7 @@ const SongLibrary = () => {
         ) : sortedAndFilteredSongs && sortedAndFilteredSongs.length > 0 ? (
           viewMode === "table" ? (
             <SongTable
-              songs={sortedAndFilteredSongs.map(song => ({
-                ...song,
-                score_file_url: (song as any).song_scores?.[0]?.file_url || null
-              }))}
+              songs={sortedAndFilteredSongs}
               onEdit={isWorshipLeader ? handleEditSong : undefined}
               onDelete={isWorshipLeader ? () => refetch() : undefined}
               columnFilters={columnFilters}
@@ -926,7 +923,7 @@ const SongLibrary = () => {
               {sortedAndFilteredSongs.map((song) => (
                 <SongCard
                   key={song.id}
-                  song={{ ...song, score_file_url: (song as any).song_scores?.[0]?.file_url || null }}
+                  song={song}
                   onEdit={isWorshipLeader ? handleEditSong : undefined}
                   onDelete={isWorshipLeader ? () => refetch() : undefined}
                   inCart={isWorshipLeader ? cartIds.has(song.id) : false}

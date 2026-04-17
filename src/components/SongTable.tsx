@@ -6,13 +6,11 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Youtube, Edit, Trash2, Filter, ArrowUp, ArrowDown, ShoppingCart, Plus, BarChart3, Check, Lock, PenLine } from "lucide-react";
-import { FileMusic } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ScorePreviewDialog } from "./ScorePreviewDialog";
 import { SongUsageHistoryDialog } from "./SongUsageHistoryDialog";
 import { FavoriteButton } from "./FavoriteButton";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
@@ -67,7 +65,6 @@ export const SongTable = ({
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [songToDelete, setSongToDelete] = useState<any>(null);
-  const [scorePreviewOpen, setScorePreviewOpen] = useState(false);
   const [usageHistoryOpen, setUsageHistoryOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
   const [filterInputs, setFilterInputs] = useState<Record<string, string>>({});
@@ -207,10 +204,6 @@ const handleDelete = async (song: any) => {
     }
   };
 
-  const handlePreviewScore = (song: any) => {
-    setSelectedSong(song);
-    setScorePreviewOpen(true);
-  };
 
   const handleYoutubeClick = (url: string | null) => {
     if (url) {
@@ -376,17 +369,6 @@ const handleDelete = async (song: any) => {
                                 <Youtube className="h-4 w-4 text-accent group-hover:text-white" />
                               </Button>
                             )}
-                            {song.score_file_url && (
-                               <Button
-                                 variant="ghost"
-                                 size="icon"
-                                 onClick={() => handlePreviewScore(song)}
-                                 className="group h-8 w-8 hover:bg-primary hover:text-white"
-                                 title={t("songCard.viewScore")}
-                               >
-                                 <FileMusic className="h-4 w-4 text-primary group-hover:text-white" />
-                              </Button>
-                            )}
                             {onEdit && (
                               <Button
                                 variant="ghost"
@@ -441,14 +423,6 @@ const handleDelete = async (song: any) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      <ScorePreviewDialog
-        open={scorePreviewOpen}
-        onOpenChange={setScorePreviewOpen}
-        scoreUrl={selectedSong?.score_file_url}
-        songTitle={selectedSong?.title || ""}
-        songId={selectedSong?.id}
-      />
       
       <SongUsageHistoryDialog
         open={usageHistoryOpen}
