@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,21 +14,13 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { ArtistSelector } from "@/components/ArtistSelector";
 import { TopicSelector } from "@/components/TopicSelector";
 import { toast } from "sonner";
-import { 
-  Lock, Loader2, ExternalLink, Check, Search, Plus, 
-  Music, FileText, Pen, ChevronRight, ChevronLeft, Save, X
+import {
+  Lock, Loader2, ExternalLink, Check, Search, Plus,
+  Music, Pen, ChevronRight, ChevronLeft, Save, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { convertPdfToImages } from "@/utils/pdfToImages";
-import { CopyrightUploadNotice, useCopyrightAcknowledgment } from "@/components/copyright/CopyrightUploadNotice";
 
 const TOTAL_STEPS = 6;
-
-interface ScoreVariation {
-  id?: string;
-  key: string;
-  files: Array<{ url: string; page: number; id?: string }>;
-}
 
 interface YouTubeLink {
   id?: string;
@@ -48,8 +39,8 @@ interface YouTubeResult {
 interface SmartSongFlowProps {
   /** Existing draft song to resume, or null for brand new */
   draftSong?: any;
-  onComplete: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[]) => Promise<void>;
-  onDraftSave: (songData: any, scoreVariations: ScoreVariation[], youtubeLinks: YouTubeLink[], currentStep: number) => Promise<void>;
+  onComplete: (songData: any, youtubeLinks: YouTubeLink[]) => Promise<void>;
+  onDraftSave: (songData: any, youtubeLinks: YouTubeLink[], currentStep: number) => Promise<void>;
   onClose: () => void;
   onCancel?: () => void;
 }
@@ -61,16 +52,14 @@ export interface SmartSongFlowRef {
 export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({ draftSong, onComplete, onDraftSave, onClose, onCancel }, ref) => {
   const { t, language } = useTranslation();
   const { user } = useAuth();
-  
+
   const isKo = language === "ko";
-  
+
   // Current step (1-indexed)
   const [currentStep, setCurrentStep] = useState(draftSong?.draft_step || 1);
-  
+
   const [loading, setLoading] = useState(false);
   const [draftSaving, setDraftSaving] = useState(false);
-  const [copyrightChecked, setCopyrightChecked] = useState(false);
-  const { acknowledge } = useCopyrightAcknowledgment();
 
   // === STEP 1: Basic Info ===
   const [title, setTitle] = useState(draftSong?.title || "");
@@ -87,16 +76,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const artistSectionRef = useRef<HTMLDivElement>(null);
   const [artistHighlight, setArtistHighlight] = useState(false);
 
-  // === STEP 3: Additional YouTube + Scores ===
+  // === STEP 3: Additional YouTube Links ===
   const [youtubeLinks, setYoutubeLinks] = useState<YouTubeLink[]>(
     draftSong ? [] : [{ label: "", url: "" }]
   );
-  const [scoreVariations, setScoreVariations] = useState<ScoreVariation[]>(
-    [{ key: "", files: [] }]
-  );
-  const [uploadingVariationIndex, setUploadingVariationIndex] = useState<number | null>(null);
-  const [scoreUrlInput, setScoreUrlInput] = useState("");
-  const [downloadingScore, setDownloadingScore] = useState(false);
 
   // === STEP 4: Lyrics ===
   const [originalComposer, setOriginalComposer] = useState(draftSong?.original_composer || "");
@@ -116,7 +99,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [topicsSuggested, setTopicsSuggested] = useState(false);
 
-  // Load draft youtube links and scores
+  // Load draft youtube links
   useEffect(() => {
     if (draftSong?.id) {
       loadDraftData(draftSong.id);
@@ -124,10 +107,11 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   }, [draftSong?.id]);
 
   const loadDraftData = async (songId: string) => {
-    const [linksRes, scoresRes] = await Promise.all([
-      supabase.from("song_youtube_links").select("*").eq("song_id", songId).order("position"),
-      supabase.from("song_scores").select("*").eq("song_id", songId).order("key").order("page_number"),
-    ]);
+    const linksRes = await supabase
+      .from("song_youtube_links")
+      .select("*")
+      .eq("song_id", songId)
+      .order("position");
 
     if (linksRes.data && linksRes.data.length > 0) {
       setYoutubeLinks(linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url })));
@@ -136,27 +120,13 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     } else {
       setYoutubeLinks([{ label: "", url: "" }]);
     }
-
-    if (scoresRes.data && scoresRes.data.length > 0) {
-      const grouped: Record<string, Array<{ url: string; page: number; id: string }>> = {};
-      scoresRes.data.forEach(s => {
-        if (!grouped[s.key]) grouped[s.key] = [];
-        grouped[s.key].push({ url: s.file_url, page: s.page_number, id: s.id });
-      });
-      setScoreVariations(Object.entries(grouped).map(([key, files]) => ({
-        key,
-        files: files.sort((a, b) => a.page - b.page),
-      })));
-    } else {
-      setScoreVariations([{ key: draftSong?.default_key || "", files: [] }]);
-    }
   };
 
   // === YouTube Search (Step 2) ===
   const searchYouTube = useCallback(async (query?: string) => {
     const searchQ = query || youtubeSearchQuery || `${title} ${subtitle ? subtitle + " " : ""}찬양`;
     if (!searchQ.trim()) return;
-    
+
     setYoutubeSearching(true);
     setYoutubeSearchQuery(searchQ);
     try {
@@ -183,7 +153,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
   const handleSelectYoutubeResult = (result: YouTubeResult) => {
     setSelectedYoutubeResult(result);
-    // Don't auto-fill artist — user must select/enter manually
     // Set first YouTube link
     setYoutubeLinks(prev => {
       const updated = [...prev];
@@ -274,85 +243,11 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     }
   };
 
-  // === Score Upload ===
-  const uploadScoreFile = async (file: File, variationIndex: number) => {
-    try {
-      setUploadingVariationIndex(variationIndex);
-
-      // PDF files: convert to images via edge function
-      if (file.type === "application/pdf") {
-        // Convert PDF to images client-side (browser canvas)
-        const pageImages = await convertPdfToImages(file);
-        if (!pageImages.length) throw new Error("No pages found in PDF");
-
-        const uploadedPages: Array<{ url: string; page: number }> = [];
-        for (const { blob, page } of pageImages) {
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}-page-${page}.png`;
-          const { error: uploadError } = await supabase.storage.from("scores").upload(fileName, blob, {
-            contentType: "image/png",
-            upsert: false,
-          });
-          if (uploadError) throw uploadError;
-          uploadedPages.push({ url: fileName, page });
-        }
-
-        setScoreVariations(prev => {
-          const updated = [...prev];
-          const currentFiles = updated[variationIndex].files;
-          const startPage = currentFiles.length + 1;
-          uploadedPages.forEach((img, idx) => {
-            currentFiles.push({ url: img.url, page: startPage + idx });
-          });
-          return updated;
-        });
-        toast.success(t("songFlow.uploadComplete"));
-        return;
-      }
-
-      // Image files: direct upload
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage.from("scores").upload(fileName, file);
-      if (uploadError) throw uploadError;
-      setScoreVariations(prev => {
-        const updated = [...prev];
-        updated[variationIndex].files.push({ url: fileName, page: updated[variationIndex].files.length + 1 });
-        return updated;
-      });
-      toast.success(t("songFlow.uploadComplete"));
-    } catch (error: any) {
-      toast.error(t("songFlow.uploadError").replace("{message}", error.message));
-    } finally {
-      setUploadingVariationIndex(null);
-    }
-  };
-
-  const handleDownloadFromUrl = async (variationIndex: number, url: string) => {
-    if (!url.trim()) return;
-    setDownloadingScore(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("download-score-image", { body: { url } });
-      if (error) throw error;
-      setScoreVariations(prev => {
-        const updated = [...prev];
-        updated[variationIndex].files.push({ url: data.url, page: updated[variationIndex].files.length + 1 });
-        return updated;
-      });
-      setScoreUrlInput("");
-      toast.success(t("songFlow.downloadComplete"));
-    } catch (error) {
-      toast.error(t("songFlow.downloadFailed"));
-    } finally {
-      setDownloadingScore(false);
-    }
-  };
-
   // === Navigation ===
   const canGoNext = () => {
     switch (currentStep) {
       case 1: return title.trim().length > 0;
       case 2: return !!selectedYoutubeResult && artist.trim().length > 0;
-      case 3: return scoreVariations.some(v => v.files.length > 0 && v.key);
       case 5: return songLanguage && topics.length >= 2;
       default: return true;
     }
@@ -362,12 +257,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     if (!canGoNext()) {
       if (currentStep === 1) toast.error(t("songFlow.enterTitle"));
       if (currentStep === 2) toast.error(t("songFlow.selectYoutubeAndArtist"));
-      if (currentStep === 3) {
-        const hasFiles = scoreVariations.some(v => v.files.length > 0);
-        const hasKey = scoreVariations.some(v => v.key);
-        if (!hasKey) toast.error(language === "ko" ? "키를 선택하세요" : "Please select a key");
-        if (!hasFiles) toast.error(t("songFlow.uploadScoreRequired"));
-      }
       if (currentStep === 5) {
         if (!songLanguage) toast.error(t("songFlow.selectLanguage"));
         else if (topics.length < 2) toast.error(t("songFlow.minTopics"));
@@ -403,14 +292,12 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         lyrics: lyrics.trim() || null,
         notes: notes.trim() || null,
         is_private: isPrivate,
-        default_key: scoreVariations[0]?.key || "",
-        score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
         tempo: tempo || null,
         status: "published",
         draft_step: null,
       };
-      await onComplete(songData, scoreVariations, youtubeLinks);
+      await onComplete(songData, youtubeLinks);
     } catch (error: any) {
       toast.error(t("songFlow.saveError").replace("{message}", error.message));
     } finally {
@@ -431,14 +318,12 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         lyrics: lyrics.trim() || null,
         notes: notes.trim() || null,
         is_private: isPrivate,
-        default_key: scoreVariations[0]?.key || "",
-        score_file_url: scoreVariations[0]?.files[0]?.url || "",
         youtube_url: youtubeLinks[0]?.url || "",
         tempo: tempo || null,
         status: "draft",
         draft_step: currentStep,
       };
-      await onDraftSave(songData, scoreVariations, youtubeLinks, currentStep);
+      await onDraftSave(songData, youtubeLinks, currentStep);
       toast.success(t("songFlow.draftSaved"));
     } catch (error: any) {
       toast.error(t("songFlow.draftSaveError").replace("{message}", error.message));
@@ -455,7 +340,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const stepLabels = [
     t("songFlow.steps.songInfo"),
     t("songFlow.steps.youtube"),
-    t("songFlow.steps.scoresLinks"),
+    isKo ? "추가 YouTube 링크" : "Additional YouTube Links",
     t("songFlow.steps.lyrics"),
     t("songFlow.steps.languageTopics"),
     t("songFlow.steps.review"),
@@ -496,7 +381,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto min-h-0 px-4 py-3">
-        {currentStep === 1 && <Step1_BasicInfo 
+        {currentStep === 1 && <Step1_BasicInfo
           title={title} setTitle={setTitle}
           subtitle={subtitle} setSubtitle={setSubtitle}
           isPrivate={isPrivate} setIsPrivate={setIsPrivate}
@@ -521,21 +406,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           setTitle={setTitle}
           t={t}
         />}
-        {currentStep === 3 && <Step3_LinksScores
+        {currentStep === 3 && <Step3_Links
           youtubeLinks={youtubeLinks}
           setYoutubeLinks={setYoutubeLinks}
-          scoreVariations={scoreVariations}
-          setScoreVariations={setScoreVariations}
-          uploadScoreFile={uploadScoreFile}
-          uploadingVariationIndex={uploadingVariationIndex}
-          handleDownloadFromUrl={handleDownloadFromUrl}
-          downloadingScore={downloadingScore}
-          scoreUrlInput={scoreUrlInput}
-          setScoreUrlInput={setScoreUrlInput}
           t={t}
-          copyrightChecked={copyrightChecked}
-          setCopyrightChecked={setCopyrightChecked}
-          onAcknowledge={() => acknowledge()}
         />}
         {currentStep === 4 && <Step4_Lyrics
           originalComposer={originalComposer}
@@ -565,7 +439,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         {currentStep === 6 && <Step6_Review
           title={title} subtitle={subtitle} isPrivate={isPrivate}
           artist={artist} originalComposer={originalComposer}
-          youtubeLinks={youtubeLinks} scoreVariations={scoreVariations}
+          youtubeLinks={youtubeLinks}
           lyrics={lyrics} notes={notes}
           songLanguage={songLanguage} tempo={tempo} topics={topics}
           onEditStep={setCurrentStep}
@@ -588,17 +462,17 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           )}
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleDraftSave}
             disabled={draftSaving}
           >
             {draftSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
             {t("songFlow.draftSave")}
           </Button>
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             onClick={handleNext}
             disabled={loading || !canGoNext()}
           >
@@ -773,7 +647,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
       )}
 
       {/* Artist */}
-      <div 
+      <div
         ref={artistSectionRef}
         className={cn(
           "space-y-2 pt-3 border-t transition-all duration-500",
@@ -797,10 +671,7 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
   );
 }
 
-function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, setScoreVariations, uploadScoreFile, uploadingVariationIndex, handleDownloadFromUrl, downloadingScore, scoreUrlInput, setScoreUrlInput, t, copyrightChecked, setCopyrightChecked, onAcknowledge }: any) {
-  const copyrightAck = copyrightChecked;
-  const MUSICAL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-
+function Step3_Links({ youtubeLinks, setYoutubeLinks, t }: any) {
   const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
   const removeYoutubeLink = (index: number) => setYoutubeLinks(youtubeLinks.filter((_: any, i: number) => i !== index));
   const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
@@ -837,70 +708,6 @@ function Step3_LinksScores({ youtubeLinks, setYoutubeLinks, scoreVariations, set
           <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addYoutubeLink")}
         </Button>
       </div>
-
-      {/* Scores Section */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2"><FileText className="w-4 h-4" /> {t("songFlow.scores")}</Label>
-        <CopyrightUploadNotice className="mb-2" checked={copyrightChecked} onCheckedChange={(v) => { setCopyrightChecked(v); if (v) onAcknowledge(); }} disabled={false} />
-        {scoreVariations.map((variation: ScoreVariation, index: number) => (
-          <div key={index} className="border rounded-lg p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <Select value={variation.key} onValueChange={(v) => {
-                const updated = [...scoreVariations];
-                updated[index].key = v;
-                setScoreVariations(updated);
-              }}>
-                <SelectTrigger className="w-28"><SelectValue placeholder={t("songFlow.keySelect")} /></SelectTrigger>
-                <SelectContent>{MUSICAL_KEYS.map(k => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
-              </Select>
-              <label htmlFor={`score-upload-${index}`} className={`flex-1 ${!copyrightAck ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}>
-                <Button type="button" variant="outline" size="sm" asChild disabled={uploadingVariationIndex === index || !copyrightAck} className="w-full">
-                  <span>{uploadingVariationIndex === index ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />{t("songFlow.uploading")}</> : t("songFlow.scoreUpload")}</span>
-                </Button>
-              </label>
-              <Input id={`score-upload-${index}`} type="file" multiple accept="image/*,.pdf" className="hidden" disabled={!copyrightAck} onChange={async (e) => {
-                const files = e.target.files;
-                if (files) await Promise.all(Array.from(files).map(f => uploadScoreFile(f, index)));
-                e.target.value = "";
-              }} />
-              {index > 0 && <Button type="button" variant="ghost" size="icon" onClick={() => setScoreVariations(scoreVariations.filter((_: any, i: number) => i !== index))}><X className="h-4 w-4" /></Button>}
-            </div>
-            {/* URL download */}
-            <div className="flex gap-2">
-              <Input type="url" placeholder={t("songFlow.imageUrlPaste")} value={index === 0 ? scoreUrlInput : ""} onChange={(e) => index === 0 && setScoreUrlInput(e.target.value)} className="flex-1 text-sm" />
-              <Button type="button" variant="outline" size="sm" onClick={() => handleDownloadFromUrl(index, scoreUrlInput)} disabled={downloadingScore || !copyrightAck}>
-                {downloadingScore ? <Loader2 className="w-4 h-4 animate-spin" /> : t("songFlow.download")}
-              </Button>
-            </div>
-            {/* File thumbnails */}
-            {variation.files.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {variation.files.map((file: any, fi: number) => (
-                  <div key={fi} className="relative group">
-                    <div className="w-20 h-16 rounded border overflow-hidden">
-                      {file.url.match(/\.(jpg|jpeg|png|webp|gif)$/i) ? (
-                        <img src={file.url} alt={`Page ${fi + 1}`} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center"><FileText className="w-6 h-6 text-muted-foreground" /></div>
-                      )}
-                    </div>
-                    <button type="button" onClick={() => {
-                      const updated = [...scoreVariations];
-                      updated[index].files.splice(fi, 1);
-                      updated[index].files = updated[index].files.map((f: any, i: number) => ({ ...f, page: i + 1 }));
-                      setScoreVariations(updated);
-                    }} className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-white rounded-full flex items-center justify-center text-xs">×</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-        <Button type="button" variant="outline" size="sm" onClick={() => setScoreVariations([...scoreVariations, { key: "", files: [] }])}>
-          <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addScoreVariation")}
-        </Button>
-        
-      </div>
     </div>
   );
 }
@@ -921,7 +728,7 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
       {lyricsSearchDone && lyrics && lyricsSource && (
         <p className="text-sm text-primary flex items-center gap-1"><Check className="w-4 h-4" /> {t("songFlow.lyricsFound").replace("{source}", lyricsSource)}</p>
       )}
-      
+
       {/* Candidate links when auto-search fails */}
       {lyricsSearchDone && !lyrics && lyricsCandidates && lyricsCandidates.length > 0 && (
         <div className="space-y-3">
@@ -1015,7 +822,7 @@ function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, 
   );
 }
 
-function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, scoreVariations, lyrics, notes, songLanguage, tempo, topics, onEditStep, t, language }: any) {
+function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, lyrics, notes, songLanguage, tempo, topics, onEditStep, t, language }: any) {
   const langLabel = songLanguage === "KO" ? "한국어" : songLanguage === "EN" ? "English" : songLanguage === "KO/EN" ? "한국어/English" : t("songFlow.notEntered");
   const isKo = language === "ko";
   const tempoLabel = tempo === "slow" ? (isKo ? "느림" : "Slow") : tempo === "mid" ? (isKo ? "미드" : "Mid") : tempo === "fast" ? (isKo ? "빠름" : "Fast") : null;
@@ -1049,14 +856,6 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
         {youtubeLinks.filter((l: any) => l.url.trim()).length > 0 ? (
           youtubeLinks.filter((l: any) => l.url.trim()).map((link: any, i: number) => (
             <p key={i} className="text-xs text-muted-foreground truncate">{link.label || t("songFlow.link")}: {link.url}</p>
-          ))
-        ) : <p className="text-xs text-muted-foreground">{t("songFlow.none")}</p>}
-      </Section>
-
-      <Section label={t("songFlow.scores")} step={3}>
-        {scoreVariations.some((v: any) => v.files.length > 0) ? (
-          scoreVariations.filter((v: any) => v.files.length > 0).map((v: any, i: number) => (
-            <p key={i} className="text-xs text-muted-foreground">{v.key || t("songFlow.noKey")} · {t("songFlow.pages").replace("{count}", String(v.files.length))}</p>
           ))
         ) : <p className="text-xs text-muted-foreground">{t("songFlow.none")}</p>}
       </Section>
