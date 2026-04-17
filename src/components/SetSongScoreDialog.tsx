@@ -134,11 +134,33 @@ export const SetSongScoreDialog = ({
         return;
       }
 
-      if (body?.error === "api_not_enabled") {
+      if (body?.error === "api_access_denied") {
         setApiNotConfigured(true);
+        const debug = [
+          body?.google_status ? `status ${body.google_status}` : null,
+          body?.google_reason || null,
+        ].filter(Boolean).join(" · ");
         setSetupErrorMessage(
-          "Google Cloud 프로젝트에서 'Custom Search API'가 활성화되어 있지 않습니다. 관리자에게 Google Cloud Console에서 해당 API를 활성화해 달라고 요청하세요.",
+          `Google API에서 요청이 거부되었습니다${debug ? ` (${debug})` : ""}. 관리자에게 다음을 확인해 달라고 요청하세요:\n` +
+          "1) GOOGLE_CSE_KEY가 Custom Search API가 활성화된 Google Cloud 프로젝트의 키인지\n" +
+          "2) 해당 프로젝트에 결제(Billing)가 연결되어 있는지\n" +
+          "3) API Key 제한(Application/API restrictions)이 Custom Search API 서버 호출을 허용하는지\n" +
+          "4) Custom Search API가 Enabled 상태인지 (활성화 직후라면 5~10분 대기)",
         );
+        setResults([]);
+        return;
+      }
+
+      if (body?.error === "quota_exceeded") {
+        setApiNotConfigured(true);
+        setSetupErrorMessage("Google API 일일 사용 한도를 초과했습니다. 내일 다시 시도하거나 관리자에게 한도 증설을 요청하세요.");
+        setResults([]);
+        return;
+      }
+
+      if (body?.error === "google_api_error" || body?.error === "internal_error") {
+        setApiNotConfigured(true);
+        setSetupErrorMessage(body?.message || "Google 검색 요청에 실패했습니다.");
         setResults([]);
         return;
       }
