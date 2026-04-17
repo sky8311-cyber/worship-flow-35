@@ -234,8 +234,6 @@ export const SongCard = memo(function SongCard({
               )}
             </div>
           )}
-            </div>
-          )}
 
           {/* Action buttons */}
           <TooltipProvider>
