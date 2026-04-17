@@ -10,8 +10,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GOOGLE_CSE_KEY = Deno.env.get("GOOGLE_CSE_KEY");
-    const GOOGLE_CSE_CX = Deno.env.get("GOOGLE_CSE_CX");
+    const GOOGLE_CSE_KEY = Deno.env.get("GOOGLE_CSE_KEY")?.trim();
+    const GOOGLE_CSE_CX = Deno.env.get("GOOGLE_CSE_CX")?.trim();
 
     if (!GOOGLE_CSE_KEY || !GOOGLE_CSE_CX) {
       return new Response(
@@ -26,8 +26,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { query } = await req.json().catch(() => ({ query: "" }));
-    if (!query || typeof query !== "string" || query.trim().length === 0) {
+    // Basic shape validation for cx (Programmable Search Engine ID).
+    // Valid IDs are typically alphanumeric with ':' allowed, no spaces/URLs.
+    const cxLooksValid = /^[A-Za-z0-9_:-]+$/.test(GOOGLE_CSE_CX);
+    if (!cxLooksValid) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_cx_config",
+          message:
+            "GOOGLE_CSE_CX 값이 올바른 Search Engine ID 형식이 아닙니다. Programmable Search Engine ID만 입력해주세요.",
+        }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const query = typeof body?.query === "string" ? body.query.trim() : "";
+    if (!query) {
       return new Response(
         JSON.stringify({ error: "invalid_query", message: "query is required" }),
         {
@@ -43,23 +61,26 @@ Deno.serve(async (req) => {
     url.searchParams.set("q", query);
     url.searchParams.set("searchType", "image");
     url.searchParams.set("num", "10");
+    url.searchParams.set("safe", "active");
 
     const res = await fetch(url.toString());
     const data = await res.json();
 
     if (!res.ok) {
-      console.error("Google CSE error:", data);
+      console.error("Google CSE error:", JSON.stringify(data));
       const reason = data?.error?.details?.find((d: any) => d?.reason)?.reason;
+      const message: string = data?.error?.message || "";
+
       const isRefererBlocked =
         res.status === 403 &&
         (reason === "API_KEY_HTTP_REFERRER_BLOCKED" ||
-          /referer/i.test(data?.error?.message || ""));
+          /referer/i.test(message));
       if (isRefererBlocked) {
         return new Response(
           JSON.stringify({
             error: "referer_blocked",
             message:
-              "Google API key has HTTP referrer restrictions. Remove referrer restriction for backend use.",
+              "Google API 키에 브라우저 referrer 제한이 걸려 있어 사용할 수 없습니다.",
           }),
           {
             status: 503,
@@ -67,10 +88,27 @@ Deno.serve(async (req) => {
           },
         );
       }
+
+      // 400 INVALID_ARGUMENT typically indicates a malformed cx or engine
+      // that doesn't allow image search.
+      if (res.status === 400) {
+        return new Response(
+          JSON.stringify({
+            error: "invalid_cx_config",
+            message:
+              "Google Programmable Search Engine 설정이 올바르지 않습니다. Search Engine ID(cx)와 '이미지 검색', '전체 웹 검색' 활성화 여부를 확인해주세요.",
+          }),
+          {
+            status: 503,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
       return new Response(
         JSON.stringify({
           error: "google_api_error",
-          message: data?.error?.message || "Google API request failed",
+          message: message || "Google API request failed",
         }),
         {
           status: res.status,
