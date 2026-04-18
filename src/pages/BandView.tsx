@@ -437,32 +437,81 @@ const BandView = () => {
     })),
   ].sort((a, b) => a.position - b.position);
 
-  // Helper function to get score files with fallback to any available key
-  // Uses the separate allSongScores query for reliable multi-page score access
-  const getScoreFilesWithFallback = (songId: string, selectedKey: string) => {
-    // Filter scores for this specific song from the separate query
+  // Helper function to get score files with fallback to any available key.
+  // PRIORITY: per-set scores (set_song_scores, chosen by the worship leader for THIS set)
+  // ALWAYS take precedence over the song-library scores (song_scores). Library scores
+  // are only used as a fallback when the leader has not picked anything for this set.
+  const getScoreFilesWithFallback = (
+    songId: string,
+    selectedKey: string,
+    setSongId?: string
+  ) => {
+    // 1. Per-set scores first
+    if (setSongId) {
+      const setRows = (allSetSongScores || []).filter(
+        (r: any) => r.set_song_id === setSongId
+      );
+      if (setRows.length > 0) {
+        const exact = setRows.filter((r: any) => r.musical_key === selectedKey);
+        if (exact.length > 0) {
+          const files = exact
+            .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+            .map((r: any, i: number) => ({
+              id: r.id,
+              file_url: r.score_url,
+              key: r.musical_key,
+              page_number: i + 1,
+            }));
+          return { scoreFiles: files, scoreKeyUsed: selectedKey, isUsingFallback: false };
+        }
+        // Fallback: primary, then first row
+        const primary = setRows.find((r: any) => r.is_primary) || setRows[0];
+        const fallbackKey = primary.musical_key || selectedKey;
+        const files = setRows
+          .filter((r: any) => r.musical_key === fallbackKey)
+          .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+          .map((r: any, i: number) => ({
+            id: r.id,
+            file_url: r.score_url,
+            key: r.musical_key,
+            page_number: i + 1,
+          }));
+        return {
+          scoreFiles: files,
+          scoreKeyUsed: fallbackKey,
+          isUsingFallback: fallbackKey !== selectedKey && files.length > 0,
+        };
+      }
+    }
+
+    // 2. Legacy: song-library scores
     const songScores = allSongScores?.filter((s: any) => s.song_id === songId) || [];
-    
-    // First try exact key match
     let scoreFiles = songScores
       .filter((score: any) => score.key === selectedKey)
       .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
-    
     let scoreKeyUsed = selectedKey;
-    
-    // If no exact match, fallback to first available key's scores
     if (scoreFiles.length === 0 && songScores.length > 0) {
       scoreKeyUsed = songScores[0]?.key;
       scoreFiles = songScores
         .filter((s: any) => s.key === scoreKeyUsed)
         .sort((a: any, b: any) => (a.page_number || 1) - (b.page_number || 1));
     }
-    
     return { scoreFiles, scoreKeyUsed, isUsingFallback: scoreKeyUsed !== selectedKey && scoreFiles.length > 0 };
   };
 
-  // Helper function to get all available keys for a song
-  const getAvailableKeysForSong = (songId: string) => {
+  // Helper function to get all available keys for a song.
+  // PRIORITY: per-set scores override library scores when present for this set_song.
+  const getAvailableKeysForSong = (songId: string, setSongId?: string) => {
+    if (setSongId) {
+      const setRows = (allSetSongScores || []).filter(
+        (r: any) => r.set_song_id === setSongId
+      );
+      if (setRows.length > 0) {
+        return setRows
+          .map((r: any) => r.musical_key)
+          .filter((v: string, i: number, a: string[]) => v && a.indexOf(v) === i);
+      }
+    }
     const keys = (allSongScores || [])
       .filter((s: any) => s.song_id === songId)
       .map((s: any) => s.key)
@@ -484,8 +533,8 @@ const BandView = () => {
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
       
-      // Get available keys for this song
-      const availableKeys = getAvailableKeysForSong(setSong.song_id);
+      // Get available keys for this song (per-set first, library fallback)
+      const availableKeys = getAvailableKeysForSong(setSong.song_id, setSong.id);
       const currentBrowsingIdx = browsingKeyIndex[setSong.id];
       
       // Priority: browsing key > saved score_key > performance key
@@ -494,7 +543,7 @@ const BandView = () => {
         || setSong.score_key 
         || setSong.key;
       
-      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey, setSong.id);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
@@ -507,7 +556,12 @@ const BandView = () => {
           });
         });
       } else {
-        const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
+        // Final fallback: per-set legacy ref/private url, then library default
+        const defaultScoreUrl =
+          setSong.score_ref_url
+          || setSong.private_score_file_url
+          || setSong.override_score_file_url
+          || song?.score_file_url;
         if (defaultScoreUrl) {
           scores.push({
             songTitle: song?.title || "",
@@ -905,19 +959,23 @@ const BandView = () => {
             const fallbackYoutubeUrl = setSong.override_youtube_url || song?.youtube_url;
             const fallbackVideoId = getYouTubeVideoId(fallbackYoutubeUrl);
             
-            // Get available keys for this song
-            const availableKeys = getAvailableKeysForSong(setSong.song_id);
+            // Get available keys for this song (per-set scores prioritized)
+            const availableKeys = getAvailableKeysForSong(setSong.song_id, setSong.id);
             // Priority: score_key (leader's chosen score key) > key (performance key)
             const leaderSelectedScoreKey = setSong.score_key || setSong.key;
             const defaultKeyIndex = availableKeys.indexOf(leaderSelectedScoreKey);
             const currentKeyIndex = browsingKeyIndex[setSong.id] ?? (defaultKeyIndex >= 0 ? defaultKeyIndex : 0);
             const currentBrowsingKey = availableKeys[currentKeyIndex] || leaderSelectedScoreKey;
             
-            // Get score files for the currently browsing key
-            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey);
+            // Get score files for the currently browsing key (per-set first, library fallback)
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey, setSong.id);
 
-            // Fallback to default score_file_url if no key-specific scores at all
-            const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
+            // Final fallback: per-set legacy ref/private url, then library default
+            const defaultScoreUrl =
+              setSong.score_ref_url
+              || setSong.private_score_file_url
+              || setSong.override_score_file_url
+              || song?.score_file_url;
 
             return (
               <Card key={`song-${setSong.id}`} className="shadow-md print:shadow-none print:break-inside-avoid">
