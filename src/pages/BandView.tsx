@@ -52,6 +52,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { ExternalLink } from "lucide-react";
 import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
+import { BandViewAccessGate } from "@/components/band-view/BandViewAccessGate";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -108,13 +109,16 @@ const BandView = () => {
   // Use global music player context
   const { startPlaylist } = useMusicPlayer();
 
+  const tokenParam = searchParams.get("token");
+
   // Redirect non-authenticated users to login with redirect URL
+  // (skipped when a valid share token is present in URL — link mode allows public access)
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !tokenParam) {
       const currentPath = `/band-view/${id}`;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [authLoading, user, id, navigate]);
+  }, [authLoading, user, id, navigate, tokenParam]);
 
   // Check if user is viewing from a different community
   const { data: userCommunities } = useQuery({
