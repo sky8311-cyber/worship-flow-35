@@ -451,16 +451,17 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         songId={song?.id}
       />
 
-      <SetSongScoreDialog
-        open={showScoreDialog}
-        onOpenChange={setShowScoreDialog}
-        setSongId={dbId}
-        defaultQuery={song?.title ? `${song.title} 악보` : ""}
-        scoreRefUrl={setSong.score_ref_url}
-        scoreRefThumbnail={setSong.score_ref_thumbnail}
-        privateScoreFileUrl={setSong.private_score_file_url}
-        onSaved={(updates) => onUpdate(index, updates)}
-      />
-    </div>
-  );
-};
+      {showScoreDialog && (
+        <Suspense fallback={null}>
+          <SetSongScoreDialog
+            open={showScoreDialog}
+            onOpenChange={setShowScoreDialog}
+            setSongId={dbId}
+            defaultQuery={song?.title ? `${song.title} 악보` : ""}
+            scoreRefUrl={setSong.score_ref_url}
+            scoreRefThumbnail={setSong.score_ref_thumbnail}
+            privateScoreFileUrl={setSong.private_score_file_url}
+            onSaved={(updates) => onUpdate(index, updates)}
+          />
+        </Suspense>
+      )}
