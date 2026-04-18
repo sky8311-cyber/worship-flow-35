@@ -540,8 +540,8 @@ export const SetSongScoreDialog = ({
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="search" className="w-full min-w-0 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
                악보 웹 검색
@@ -549,6 +549,10 @@ export const SetSongScoreDialog = ({
             <TabsTrigger value="upload">
               <Upload className="w-4 h-4 mr-2" />
               내 악보 업로드
+            </TabsTrigger>
+            <TabsTrigger value="vault">
+              <Music className="w-4 h-4 mr-2" />
+              내 보관함
             </TabsTrigger>
           </TabsList>
 
