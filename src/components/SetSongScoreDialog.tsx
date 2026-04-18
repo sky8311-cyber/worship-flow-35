@@ -410,11 +410,11 @@ export const SetSongScoreDialog = ({
 
         {/* Selected Scores Preview Panel */}
         {selectedScores.length > 0 && (
-          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4">
+          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full">
             <p className="text-xs font-medium text-muted-foreground">
               선택된 악보 ({selectedScores.length})
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2 max-w-full">
               {selectedScores.map((score) => {
                 const displayName =
                   score.type === "upload"
@@ -423,7 +423,7 @@ export const SetSongScoreDialog = ({
                 return (
                   <div
                     key={score.id}
-                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border"
+                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden"
                   >
                     {score.thumbnail ? (
                       <img
@@ -436,7 +436,7 @@ export const SetSongScoreDialog = ({
                         <Music className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 overflow-hidden flex-1">
                       <span className="text-xs text-muted-foreground truncate block">
                         {displayName}
                       </span>
