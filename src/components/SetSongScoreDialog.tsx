@@ -270,7 +270,7 @@ export const SetSongScoreDialog = ({
                             src={item.thumbnailLink}
                             alt={item.title}
                             loading="lazy"
-                            className="w-full h-32 object-cover bg-muted"
+                            className="w-full h-32 object-cover object-top bg-muted"
                           />
                           {isSelected && (
                             <div className="absolute top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
