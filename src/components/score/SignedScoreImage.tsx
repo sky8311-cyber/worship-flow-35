@@ -84,6 +84,7 @@ export function SignedScoreImage({
       className={className}
       loading={loading}
       decoding="async"
+      referrerPolicy="no-referrer"
       draggable={draggable}
       style={style}
       onClick={onClick}
