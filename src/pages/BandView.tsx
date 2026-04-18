@@ -959,19 +959,23 @@ const BandView = () => {
             const fallbackYoutubeUrl = setSong.override_youtube_url || song?.youtube_url;
             const fallbackVideoId = getYouTubeVideoId(fallbackYoutubeUrl);
             
-            // Get available keys for this song
-            const availableKeys = getAvailableKeysForSong(setSong.song_id);
+            // Get available keys for this song (per-set scores prioritized)
+            const availableKeys = getAvailableKeysForSong(setSong.song_id, setSong.id);
             // Priority: score_key (leader's chosen score key) > key (performance key)
             const leaderSelectedScoreKey = setSong.score_key || setSong.key;
             const defaultKeyIndex = availableKeys.indexOf(leaderSelectedScoreKey);
             const currentKeyIndex = browsingKeyIndex[setSong.id] ?? (defaultKeyIndex >= 0 ? defaultKeyIndex : 0);
             const currentBrowsingKey = availableKeys[currentKeyIndex] || leaderSelectedScoreKey;
             
-            // Get score files for the currently browsing key
-            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey);
+            // Get score files for the currently browsing key (per-set first, library fallback)
+            const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey, setSong.id);
 
-            // Fallback to default score_file_url if no key-specific scores at all
-            const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
+            // Final fallback: per-set legacy ref/private url, then library default
+            const defaultScoreUrl =
+              setSong.score_ref_url
+              || setSong.private_score_file_url
+              || setSong.override_score_file_url
+              || song?.score_file_url;
 
             return (
               <Card key={`song-${setSong.id}`} className="shadow-md print:shadow-none print:break-inside-avoid">
