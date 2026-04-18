@@ -395,7 +395,7 @@ export const SetSongScoreDialog = ({
           </TabsList>
 
           {/* Tab 1: Web Image Search */}
-          <TabsContent value="search" className="space-y-4 overflow-hidden w-full">
+          <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0">
             {apiNotConfigured ? (
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
