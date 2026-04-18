@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyrightUploadNotice } from "@/components/copyright/CopyrightUploadNotice";
 import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
+import { convertPdfToImages } from "@/utils/pdfToImages";
 
 interface SetSongScoreDialogProps {
   open: boolean;
@@ -237,27 +238,58 @@ export const SetSongScoreDialog = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const ext = file.name.split(".").pop();
-      const path = `${user.id}/${setSongId}/score-${Date.now()}.${ext}`;
+      // PDF: convert each page to a PNG and upload as separate set_song_scores rows.
+      // Image: upload as a single file.
+      if (file.type === "application/pdf") {
+        const pageImages = await convertPdfToImages(file);
+        if (pageImages.length === 0) {
+          toast.error("PDF에서 페이지를 추출하지 못했습니다");
+          return;
+        }
 
-      const { error: upErr } = await supabase.storage
-        .from("scores")
-        .upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
+        const uploadedPaths: string[] = [];
+        for (const { blob, page } of pageImages) {
+          const path = `${user.id}/${setSongId}/score-${Date.now()}-p${page}.png`;
+          const { error: upErr } = await supabase.storage
+            .from("scores")
+            .upload(path, blob, { upsert: true, contentType: "image/png" });
+          if (upErr) throw upErr;
+          uploadedPaths.push(path);
+        }
 
-      // Add to selectedScores list instead of immediately persisting
-      setSelectedScores((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          type: "upload",
-          url: path,
-          thumbnail: null,
-          musicalKey: "C",
-          isPrimary: prev.length === 0,
-        },
-      ]);
-      toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
+        setSelectedScores((prev) => {
+          const newRows: SelectedScore[] = uploadedPaths.map((path, idx) => ({
+            id: crypto.randomUUID(),
+            type: "upload" as const,
+            url: path,
+            thumbnail: null,
+            musicalKey: "C",
+            isPrimary: prev.length === 0 && idx === 0,
+          }));
+          return [...prev, ...newRows];
+        });
+        toast.success(`PDF ${pageImages.length}페이지를 이미지로 변환했습니다. 저장 버튼을 눌러주세요.`);
+      } else {
+        const ext = file.name.split(".").pop();
+        const path = `${user.id}/${setSongId}/score-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("scores")
+          .upload(path, file, { upsert: true });
+        if (upErr) throw upErr;
+
+        setSelectedScores((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            type: "upload",
+            url: path,
+            thumbnail: null,
+            musicalKey: "C",
+            isPrimary: prev.length === 0,
+          },
+        ]);
+        toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "업로드 실패");
@@ -482,6 +514,9 @@ export const SetSongScoreDialog = ({
                 )}
                 <span className="text-sm text-muted-foreground">
                   {uploading ? "업로드 중..." : "PDF 또는 이미지 파일 선택"}
+                </span>
+                <span className="text-xs text-muted-foreground/80">
+                  PDF는 페이지별 이미지로 자동 변환됩니다
                 </span>
               </label>
             </div>

@@ -17,6 +17,12 @@ interface ScorePreviewDialogProps {
   scoreUrl: string | null;
   songTitle: string;
   songId?: string;
+  /**
+   * When provided, the dialog loads per-set score variations from set_song_scores
+   * (the new architecture). When omitted, only the single `scoreUrl` (if any) is shown.
+   * Legacy song_scores library data is no longer queried.
+   */
+  setSongId?: string;
 }
 
 interface ScoreVariation {
@@ -30,6 +36,7 @@ export const ScorePreviewDialog = ({
   scoreUrl,
   songTitle,
   songId,
+  setSongId,
 }: ScorePreviewDialogProps) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -39,54 +46,51 @@ export const ScorePreviewDialog = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open && songId) {
+    if (open && setSongId) {
       loadScoreVariations();
     } else {
       setScoreVariations([]);
       setSelectedKey("");
       setCurrentPage(0);
     }
-  }, [open, songId]);
+  }, [open, setSongId]);
 
   const loadScoreVariations = async () => {
-    if (!songId) return;
-    
+    if (!setSongId) return;
+
     setLoading(true);
     try {
+      // Per-set scores ONLY. Legacy `song_scores` (Song Library) is intentionally
+      // not queried — every worship set must use its own set_song_scores entries.
       const { data, error } = await supabase
-        .from("song_scores")
+        .from("set_song_scores")
         .select("*")
-        .eq("song_id", songId)
-        .order("key", { ascending: true })
-        .order("page_number", { ascending: true });
+        .eq("set_song_id", setSongId)
+        .order("musical_key", { ascending: true })
+        .order("sort_order", { ascending: true });
 
       if (error) throw error;
 
-      // Group by key - filter out empty keys
       const grouped: Record<string, Array<{ url: string; page: number }>> = {};
-      data?.forEach((score) => {
-        // Skip entries with empty or missing keys
-        if (!score.key || score.key.trim() === "") return;
-        
-        if (!grouped[score.key]) {
-          grouped[score.key] = [];
-        }
-        grouped[score.key].push({
-          url: score.file_url,
-          page: score.page_number,
+      data?.forEach((score: any, idx: number) => {
+        const key = score.musical_key;
+        if (!key || key.trim() === "") return;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push({
+          url: score.score_url,
+          page: score.sort_order ?? idx,
         });
       });
 
       const variations = Object.entries(grouped)
-        .filter(([key]) => key && key.trim() !== "") // Extra safety check
+        .filter(([key]) => key && key.trim() !== "")
         .map(([key, files]) => ({
           key,
           files: files.sort((a, b) => a.page - b.page),
         }));
 
       setScoreVariations(variations);
-      
-      // Auto-select first key
+
       if (variations.length > 0) {
         setSelectedKey(variations[0].key);
         setCurrentPage(0);
@@ -114,8 +118,9 @@ export const ScorePreviewDialog = ({
     }
   };
 
-  // Fallback to old single score file if no variations exist
-  const shouldShowOldScore = !songId || (scoreVariations.length === 0 && scoreUrl);
+  // When no per-set variations exist, fall back to the single `scoreUrl` prop
+  // (this is a per-set URL passed by the caller, NOT a legacy library file).
+  const shouldShowSingleScore = scoreVariations.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,7 +160,7 @@ export const ScorePreviewDialog = ({
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
-        ) : shouldShowOldScore ? (
+        ) : shouldShowSingleScore ? (
           // Old single score file display
           <div className="flex-1 overflow-auto min-h-0">
             {scoreUrl ? (
