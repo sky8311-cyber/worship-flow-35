@@ -533,8 +533,8 @@ const BandView = () => {
     setSongs?.forEach((setSong: any) => {
       const song = setSong.songs;
       
-      // Get available keys for this song
-      const availableKeys = getAvailableKeysForSong(setSong.song_id);
+      // Get available keys for this song (per-set first, library fallback)
+      const availableKeys = getAvailableKeysForSong(setSong.song_id, setSong.id);
       const currentBrowsingIdx = browsingKeyIndex[setSong.id];
       
       // Priority: browsing key > saved score_key > performance key
@@ -543,7 +543,7 @@ const BandView = () => {
         || setSong.score_key 
         || setSong.key;
       
-      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey);
+      const { scoreFiles, scoreKeyUsed } = getScoreFilesWithFallback(setSong.song_id, leaderScoreKey, setSong.id);
 
       if (scoreFiles.length > 0) {
         scoreFiles.forEach((score: any, idx: number) => {
@@ -556,7 +556,12 @@ const BandView = () => {
           });
         });
       } else {
-        const defaultScoreUrl = setSong.override_score_file_url || song?.score_file_url;
+        // Final fallback: per-set legacy ref/private url, then library default
+        const defaultScoreUrl =
+          setSong.score_ref_url
+          || setSong.private_score_file_url
+          || setSong.override_score_file_url
+          || song?.score_file_url;
         if (defaultScoreUrl) {
           scores.push({
             songTitle: song?.title || "",
