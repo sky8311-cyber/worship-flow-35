@@ -1,39 +1,40 @@
 
-Goal: fix the score-selection dialog so selecting an item does not make the modal/cards expand like in the screenshot.
 
-1. Audit and harden the full width-constraining chain in `SetSongScoreDialog.tsx`
-- Keep the existing dialog/tab overflow guards.
-- Add `min-w-0` to the key parent wrappers that sit inside the dialog grid, because the dialog itself is a CSS grid and grid children can still expand from `min-content` sizing.
-- Apply the same containment pattern to the selected-items preview block so adding a selection cannot change modal width.
+## Why "편집이 차단되었습니다" appears
 
-2. Replace the fragile search-results grid sizing with an explicit 3-column minmax layout
-- Update the web search results wrapper to use a guaranteed `repeat(3, minmax(0, 1fr))` column definition rather than relying on a layout that can fall back to content-sized columns.
-- Keep `overflow-hidden w-full min-w-0` on the grid container.
-- Ensure each card uses `w-full min-w-0 overflow-hidden` so a result can never exceed its grid track.
+Looking at console logs + `useSetEditLock.ts`:
 
-3. Constrain every image-card child consistently
-- Keep `img` at `w-full max-w-full object-cover`.
-- Add truncation to any visible text inside result cards or related preview cards.
-- Verify there are no remaining card wrappers in this dialog using default `min-width:auto` behavior.
+```
+lockStatus: "locked_by_other"
+lockHolder.userId: 0c97068c-...   ← same as current user
+lockHolder.sessionId: session-1776544407244-zjyb2sj  ← different tab
+acquiredAt: 22:52:36   lastActivity: 22:52:37 (no heartbeat since!)
+```
 
-4. Verify the exact user flow shown in the screenshot
-- Open score dialog on `/set-builder/...`
-- Search, select, deselect, and reselect multiple web results
-- Confirm the results stay in a stable 3-column grid on desktop
-- Confirm the modal width does not grow and no horizontal scroll appears
-- Confirm the selected-items panel remains clipped/truncated correctly after items are added
+The edit lock for this set is held by **the same user** (`최광은`) but from a **different browser tab/session**. The lock comparison in `useSetEditLock.ts` only checks `holder_session_id === sessionIdRef.current`, so the user's own ghost session blocks them. `isBlocked` becomes true, and clicking the new "기본으로 설정" star → `handleUpdateItem` (SetBuilder.tsx:1306) → fires the toast. Save also tripped it.
 
-Technical details
-- Likely root cause: `DialogContent` uses `display: grid`, and grid children default to `min-width: auto`; combined with a results grid/cards that are not fully constrained, content can force expansion.
-- The current code already has some overflow fixes, so the remaining issue is most likely the sizing chain, not just one missing `truncate`.
-- Implementation pattern to apply:
-  - dialog child wrappers: `min-w-0`
-  - tabs/tabs content: `w-full min-w-0 overflow-hidden`
-  - results grid: explicit `repeat(3, minmax(0, 1fr))`
-  - result cards: `w-full min-w-0 overflow-hidden`
-  - text nodes: `truncate`
-  - images: `w-full max-w-full`
+The other session's `last_activity_at` is **frozen at 22:52:37** (no heartbeat for 2+ minutes) while `expires_at` keeps getting bumped — likely a closed tab whose unmount cleanup didn't run, or an idle tab still extending TTL without activity.
 
-Scope
-- Limit changes to `SetSongScoreDialog.tsx` unless a shared wrapper needs the same non-breaking containment pattern.
-- No data/model changes; layout-only fix.
+## Fix plan
+
+**1. `useSetEditLock.ts` — treat same-user locks correctly**
+
+In the lock-state resolver (around lines 217-237) and the realtime UPDATE handler (lines 836-845), add a same-user takeover branch:
+
+- If `lock.holder_user_id === user.id` AND `lock.holder_session_id !== sessionIdRef.current`:
+  - If the other session is stale (`now - last_activity_at > 30s`), call `force_takeover` automatically (mirror the logic already in `acquireLock` lines 280-308) instead of marking `locked_by_other`.
+  - Otherwise, set a new status `locked_by_me_other_tab` (or keep `locked_by_other` but expose `isSameUser: true` on `lockHolder`) so UI can show a friendlier "다른 탭에서 편집 중 — 여기서 이어서 편집" button that calls `force_takeover` with one click.
+
+**2. `SetBuilder.tsx` — UI affordance**
+
+In the read-only banner (around line 1780), when `lockHolder.userId === user.id`, render the message in Korean as "다른 탭/기기에서 편집 중입니다" with a primary "여기서 편집 이어가기" button that triggers takeover, instead of just showing the generic blocked state.
+
+**3. Immediate user unblock (no code)**
+
+Right now the user can click any "다른 사용자가 편집 중" takeover button already in the UI to grab the lock back, OR close the other tab; the stale lock will be auto-cleaned within 30s once heartbeats stop and they reload.
+
+## Scope
+- 2 files: `src/hooks/useSetEditLock.ts`, `src/pages/SetBuilder.tsx`
+- No DB / migration changes
+- Behavior preserved for true cross-user lock conflicts
+
