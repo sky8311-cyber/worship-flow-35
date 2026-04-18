@@ -651,6 +651,88 @@ export const SetSongScoreDialog = ({
               </label>
             </div>
           </TabsContent>
+
+          {/* Tab 3: My Vault */}
+          <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0">
+            {vaultLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : vaultItems.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-center">
+                <Music className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  아직 저장된 악보가 없어요.
+                </p>
+                <p className="text-xs text-muted-foreground/80">
+                  악보를 업로드하면 자동으로 보관됩니다.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
+                {vaultItems.map((item) => {
+                  const selected = selectedScores.some(
+                    (s) => s.vaultScoreId === item.id || s.url === item.score_url
+                  );
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedScores((prev) => {
+                          if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
+                            return prev.filter(
+                              (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
+                            );
+                          }
+                          return [
+                            ...prev,
+                            {
+                              id: crypto.randomUUID(),
+                              type: "upload" as const,
+                              url: item.score_url,
+                              thumbnail: item.thumbnail_url,
+                              musicalKey: item.musical_key || "C",
+                              isPrimary: prev.length === 0,
+                              vaultScoreId: item.id,
+                              label: item.label,
+                            },
+                          ];
+                        });
+                      }}
+                      className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
+                        selected ? "border-primary ring-2 ring-primary" : "border-border"
+                      }`}
+                    >
+                      {item.thumbnail_url ? (
+                        <img
+                          src={item.thumbnail_url}
+                          alt={item.label || ""}
+                          loading="lazy"
+                          className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                        />
+                      ) : (
+                        <div className="w-full h-32 flex items-center justify-center bg-muted">
+                          <Music className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                        <Checkbox checked={selected} className="pointer-events-none" />
+                      </div>
+                      <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                        {item.musical_key || "C"}
+                      </div>
+                      {item.label && (
+                        <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
+                          {item.label}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* Selected Scores Preview Panel */}
