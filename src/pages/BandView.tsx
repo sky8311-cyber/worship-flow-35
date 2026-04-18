@@ -183,6 +183,46 @@ const BandView = () => {
     staleTime: 60_000,
   });
 
+  // Fetch per-set-song scores (set_song_scores) — used to pick the score that
+  // matches the band's performance_key
+  const setSongIds = setSongs?.map((s: any) => s.id) || [];
+  const { data: allSetSongScores } = useQuery({
+    queryKey: ["band-view-set-song-scores", id, setSongIds.join(",")],
+    enabled: !!setSongs && setSongIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("set_song_scores")
+        .select("*")
+        .in("set_song_id", setSongIds)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  // Resolve the best score URL/thumbnail for a given set_song based on:
+  //   1. set_song_scores row whose musical_key === performance_key
+  //   2. set_song_scores row where is_primary = true
+  //   3. legacy fallback (score_ref_url / private_score_file_url)
+  const resolveSetSongScore = (setSong: any) => {
+    const rows = (allSetSongScores || []).filter(
+      (r: any) => r.set_song_id === setSong.id
+    );
+    const performanceKey = setSong.performance_key || setSong.key;
+    const exact = rows.find((r: any) => r.musical_key === performanceKey);
+    if (exact) return exact;
+    const primary = rows.find((r: any) => r.is_primary);
+    if (primary) return primary;
+    if (setSong.score_ref_url) {
+      return { score_url: setSong.score_ref_url, score_thumbnail: setSong.score_ref_thumbnail };
+    }
+    if (setSong.private_score_file_url) {
+      return { score_url: setSong.private_score_file_url, score_thumbnail: null };
+    }
+    return null;
+  };
+
   // Fetch YouTube links for all songs
   const { data: allYoutubeLinks } = useQuery({
     queryKey: ["band-view-youtube-links", id, songIds.join(",")],
