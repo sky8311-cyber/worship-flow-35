@@ -159,7 +159,7 @@ export const SetSongScoreDialog = ({
     if (ok) toast.success("악보가 저장되었습니다");
   };
 
-  const handleClearGoogleRef = async () => {
+  const handleClearScoreRef = async () => {
     const ok = await persistUpdates({
       score_ref_url: null,
       score_ref_thumbnail: null,
@@ -321,7 +321,7 @@ export const SetSongScoreDialog = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleClearGoogleRef}
+                    onClick={handleClearScoreRef}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
