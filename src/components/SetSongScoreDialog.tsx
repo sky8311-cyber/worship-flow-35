@@ -254,6 +254,7 @@ export const SetSongScoreDialog = ({
           url: path,
           thumbnail: null,
           musicalKey: "C",
+          isPrimary: prev.length === 0,
         },
       ]);
       toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
@@ -273,6 +274,12 @@ export const SetSongScoreDialog = ({
     }
     setSaving(true);
     try {
+      // Ensure exactly one primary if there are selections
+      let scoresToSave = selectedScores;
+      if (scoresToSave.length > 0 && !scoresToSave.some((s) => s.isPrimary)) {
+        scoresToSave = scoresToSave.map((s, i) => ({ ...s, isPrimary: i === 0 }));
+      }
+
       // Delete existing
       const { error: delErr } = await supabase
         .from("set_song_scores")
@@ -281,18 +288,52 @@ export const SetSongScoreDialog = ({
       if (delErr) throw delErr;
 
       // Insert new rows
-      if (selectedScores.length > 0) {
-        const rows = selectedScores.map((s, i) => ({
+      if (scoresToSave.length > 0) {
+        const rows = scoresToSave.map((s, i) => ({
           set_song_id: setSongId,
           score_type: s.type,
           score_url: s.url,
           score_thumbnail: s.thumbnail,
           musical_key: s.musicalKey,
           sort_order: i,
+          is_primary: s.isPrimary,
         }));
         const { error: insErr } = await supabase.from("set_song_scores").insert(rows);
         if (insErr) throw insErr;
       }
+
+      // Sync set_songs.score_key (and possibly performance_key) with primary score
+      const primary = scoresToSave.find((s) => s.isPrimary);
+      const newScoreKey = primary?.musicalKey || null;
+
+      // Read current performance_key
+      const { data: existingSetSong } = await supabase
+        .from("set_songs")
+        .select("performance_key, key")
+        .eq("id", setSongId)
+        .maybeSingle();
+
+      const existingPerformanceKey =
+        (existingSetSong as any)?.performance_key || (existingSetSong as any)?.key || null;
+
+      const updatePayload: Record<string, any> = { score_key: newScoreKey };
+      let promptKeyChange = false;
+
+      if (newScoreKey) {
+        if (!existingPerformanceKey) {
+          // No performance key set yet — match it to the score key
+          updatePayload.performance_key = newScoreKey;
+        } else if (existingPerformanceKey !== newScoreKey) {
+          // Different — keep but ask the user
+          promptKeyChange = true;
+        }
+      }
+
+      const { error: updErr } = await supabase
+        .from("set_songs")
+        .update(updatePayload)
+        .eq("id", setSongId);
+      if (updErr) throw updErr;
 
       // Parallelize cache invalidations
       await Promise.all([
@@ -300,7 +341,30 @@ export const SetSongScoreDialog = ({
         queryClient.invalidateQueries({ queryKey: ["band-view-songs"] }),
         queryClient.invalidateQueries({ queryKey: ["set-song-scores", setSongId] }),
       ]);
+
       toast.success("저장되었습니다");
+
+      if (promptKeyChange && newScoreKey) {
+        toast("악보 키가 변경됐습니다. 연주 키도 동일하게 업데이트하시겠어요?", {
+          duration: 10000,
+          action: {
+            label: "예",
+            onClick: async () => {
+              await supabase
+                .from("set_songs")
+                .update({ performance_key: newScoreKey })
+                .eq("id", setSongId);
+              await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["set-songs"] }),
+                queryClient.invalidateQueries({ queryKey: ["band-view-songs"] }),
+              ]);
+              toast.success("연주 키가 업데이트되었습니다");
+            },
+          },
+          cancel: { label: "아니오", onClick: () => {} },
+        });
+      }
+
       onSaved?.({});
       onOpenChange(false);
     } catch (err: any) {
