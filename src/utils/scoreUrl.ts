@@ -14,6 +14,8 @@ const CACHE_BUFFER = 300_000; // 5 minutes buffer before expiry
  */
 export function getCachedSignedUrl(urlOrPath: string | null | undefined): string | null {
   if (!urlOrPath) return null;
+  // External URLs (e.g. naver blog hotlinks) are used as-is — no signing needed
+  if (isExternalUrl(urlOrPath)) return urlOrPath;
   const path = extractScorePath(urlOrPath);
   if (!path) return null;
   const cached = signedUrlCache.get(path);
