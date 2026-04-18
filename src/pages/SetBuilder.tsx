@@ -1784,14 +1784,18 @@ const SetBuilder = () => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                 <div className="flex-1 space-y-1">
                   <div className="font-medium text-blue-800 dark:text-blue-200">
-                    {language === "ko" 
-                      ? `👀 읽기 모드로 열람 중`
-                      : `👀 Viewing in Read-Only Mode`}
+                    {lockHolder.userId === user?.id
+                      ? (language === "ko" ? "🔁 다른 탭/기기에서 편집 중" : "🔁 Editing in another tab/device")
+                      : (language === "ko" ? `👀 읽기 모드로 열람 중` : `👀 Viewing in Read-Only Mode`)}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {language === "ko" 
-                      ? `현재 ${lockHolder.name}님이 이 세트를 편집하고 있어요.`
-                      : `${lockHolder.name} is currently editing this set.`}
+                    {lockHolder.userId === user?.id
+                      ? (language === "ko"
+                          ? "다른 탭이나 기기에서 이 세트를 편집하고 있어요. 여기서 이어서 편집하시겠어요?"
+                          : "You're editing this set in another tab or device. Continue editing here?")
+                      : (language === "ko"
+                          ? `현재 ${lockHolder.name}님이 이 세트를 편집하고 있어요.`
+                          : `${lockHolder.name} is currently editing this set.`)}
                   </div>
                   {isRequestingTakeover && takeoverCountdown !== null && (
                     <div className="mt-2">
@@ -1824,6 +1828,15 @@ const SetBuilder = () => {
                       onClick={cancelTakeoverRequest}
                     >
                       {language === "ko" ? "요청 취소" : "Cancel"}
+                    </Button>
+                  ) : lockHolder.userId === user?.id ? (
+                    <Button
+                      size="sm"
+                      onClick={requestTakeover}
+                      disabled={isAcquiring}
+                    >
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      {language === "ko" ? "여기서 편집 이어가기" : "Continue editing here"}
                     </Button>
                   ) : (
                     <Button 
