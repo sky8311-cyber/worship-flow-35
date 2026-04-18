@@ -17,6 +17,7 @@ interface SetSongScoreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setSongId?: string;
+  songId?: string | null;
   defaultQuery?: string;
   scoreRefUrl?: string | null;
   scoreRefThumbnail?: string | null;
@@ -26,6 +27,15 @@ interface SetSongScoreDialogProps {
     score_ref_thumbnail?: string | null;
     private_score_file_url?: string | null;
   }) => void;
+}
+
+interface VaultScore {
+  id: string;
+  score_url: string;
+  thumbnail_url: string | null;
+  musical_key: string | null;
+  label: string | null;
+  pages_count: number | null;
 }
 
 interface SearchResult {
