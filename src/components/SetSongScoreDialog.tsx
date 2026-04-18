@@ -436,9 +436,11 @@ export const SetSongScoreDialog = ({
                         <Music className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
-                    <span className="flex-1 text-xs text-muted-foreground truncate">
-                      {displayName}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {displayName}
+                      </span>
+                    </div>
                     <Select
                       value={score.musicalKey}
                       onValueChange={(v) => updateSelectedKey(score.id, v)}
