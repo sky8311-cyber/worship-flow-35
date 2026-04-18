@@ -534,12 +534,11 @@ const BandView = () => {
           });
         });
       } else {
-        // Final fallback: per-set legacy ref/private url, then library default
+        // Final fallback: per-set legacy ref/private url ONLY (no song-library defaults)
         const defaultScoreUrl =
           setSong.score_ref_url
           || setSong.private_score_file_url
-          || setSong.override_score_file_url
-          || song?.score_file_url;
+          || setSong.override_score_file_url;
         if (defaultScoreUrl) {
           scores.push({
             songTitle: song?.title || "",
