@@ -312,6 +312,7 @@ export const SetSongScoreDialog = ({
           uploadedPaths.push(path);
         }
 
+        const baseLabel = file.name.replace(/\.[^.]+$/, "");
         setSelectedScores((prev) => {
           const newRows: SelectedScore[] = uploadedPaths.map((path, idx) => ({
             id: crypto.randomUUID(),
@@ -320,6 +321,7 @@ export const SetSongScoreDialog = ({
             thumbnail: null,
             musicalKey: "C",
             isPrimary: prev.length === 0 && idx === 0,
+            label: `${baseLabel} - p${idx + 1}`,
           }));
           return [...prev, ...newRows];
         });
@@ -332,6 +334,7 @@ export const SetSongScoreDialog = ({
           .upload(path, file, { upsert: true });
         if (upErr) throw upErr;
 
+        const baseLabel = file.name.replace(/\.[^.]+$/, "");
         setSelectedScores((prev) => [
           ...prev,
           {
@@ -341,6 +344,7 @@ export const SetSongScoreDialog = ({
             thumbnail: null,
             musicalKey: "C",
             isPrimary: prev.length === 0,
+            label: baseLabel,
           },
         ]);
         toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
