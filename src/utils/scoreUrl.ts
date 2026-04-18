@@ -14,6 +14,8 @@ const CACHE_BUFFER = 300_000; // 5 minutes buffer before expiry
  */
 export function getCachedSignedUrl(urlOrPath: string | null | undefined): string | null {
   if (!urlOrPath) return null;
+  // External URLs (e.g. naver blog hotlinks) are used as-is — no signing needed
+  if (isExternalUrl(urlOrPath)) return urlOrPath;
   const path = extractScorePath(urlOrPath);
   if (!path) return null;
   const cached = signedUrlCache.get(path);
@@ -51,17 +53,28 @@ export function extractScorePath(urlOrPath: string | null | undefined): string |
     return decodeURIComponent(pathWithQuery.split("?")[0]);
   }
 
-  // Already a path (no http)
-  if (!urlOrPath.startsWith("http")) {
-    // Remove leading bucket name if present
-    if (urlOrPath.startsWith(`${BUCKET}/`)) {
-      return urlOrPath.slice(BUCKET.length + 1);
-    }
-    return urlOrPath.startsWith("/") ? urlOrPath.slice(1) : urlOrPath;
+  // External URL (not our storage) — not a storage path
+  if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+    return null;
   }
 
-  // Unknown URL format — return as-is (will fail gracefully)
-  return urlOrPath;
+  // Already a path (no http)
+  // Remove leading bucket name if present
+  if (urlOrPath.startsWith(`${BUCKET}/`)) {
+    return urlOrPath.slice(BUCKET.length + 1);
+  }
+  return urlOrPath.startsWith("/") ? urlOrPath.slice(1) : urlOrPath;
+}
+
+/**
+ * Returns true if value is an external (non-Supabase-storage) URL.
+ */
+export function isExternalUrl(urlOrPath: string | null | undefined): boolean {
+  if (!urlOrPath) return false;
+  if (!urlOrPath.startsWith("http://") && !urlOrPath.startsWith("https://")) return false;
+  // It's http(s) — only "ours" if it contains our storage prefix
+  return urlOrPath.indexOf(`/storage/v1/object/public/${BUCKET}/`) === -1
+    && urlOrPath.indexOf(`/storage/v1/object/sign/${BUCKET}/`) === -1;
 }
 
 /**
@@ -72,6 +85,9 @@ export function extractScorePath(urlOrPath: string | null | undefined): string |
  */
 export async function getSignedScoreUrl(urlOrPath: string | null | undefined): Promise<string | null> {
   if (!urlOrPath) return null;
+
+  // External URL — return as-is, no signing needed
+  if (isExternalUrl(urlOrPath)) return urlOrPath;
 
   const path = extractScorePath(urlOrPath);
   if (!path) return null;
@@ -118,6 +134,11 @@ export async function getSignedScoreUrls(
 
   for (const url of urls) {
     if (!url) continue;
+    // External URL — pass through
+    if (isExternalUrl(url)) {
+      result.set(url, url);
+      continue;
+    }
     const path = extractScorePath(url);
     if (!path) continue;
 
