@@ -109,6 +109,7 @@ export const SetSongScoreDialog = ({
           url: row.score_url,
           thumbnail: row.score_thumbnail,
           musicalKey: row.musical_key || "C",
+          isPrimary: !!row.is_primary,
         }))
       );
     };
@@ -122,6 +123,7 @@ export const SetSongScoreDialog = ({
       if (prev.some((s) => s.url === item.link)) {
         return prev.filter((s) => s.url !== item.link);
       }
+      const isFirst = prev.length === 0;
       return [
         ...prev,
         {
@@ -130,17 +132,30 @@ export const SetSongScoreDialog = ({
           url: item.link,
           thumbnail: item.thumbnailLink,
           musicalKey: "C",
+          isPrimary: isFirst,
         },
       ];
     });
   };
 
   const removeSelected = (id: string) => {
-    setSelectedScores((prev) => prev.filter((s) => s.id !== id));
+    setSelectedScores((prev) => {
+      const removed = prev.find((s) => s.id === id);
+      const next = prev.filter((s) => s.id !== id);
+      // If we removed the primary, promote the first remaining
+      if (removed?.isPrimary && next.length > 0 && !next.some((s) => s.isPrimary)) {
+        next[0] = { ...next[0], isPrimary: true };
+      }
+      return next;
+    });
   };
 
   const updateSelectedKey = (id: string, key: string) => {
     setSelectedScores((prev) => prev.map((s) => (s.id === id ? { ...s, musicalKey: key } : s)));
+  };
+
+  const setAsPrimary = (id: string) => {
+    setSelectedScores((prev) => prev.map((s) => ({ ...s, isPrimary: s.id === id })));
   };
 
   // Debounced search: rapid typing/Enter only triggers once per 400ms
