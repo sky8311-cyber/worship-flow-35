@@ -104,8 +104,45 @@ export const SetSongScoreDialog = ({
       setResults([]);
       setApiNotConfigured(false);
       setSetupErrorMessage(null);
+      setActiveTab("search");
+      setVaultItems([]);
+      setVaultLoaded(false);
     }
   }, [open, defaultQuery]);
+
+  const loadVault = async () => {
+    if (vaultLoaded || vaultLoading) return;
+    setVaultLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setVaultLoaded(true);
+        return;
+      }
+      let q = supabase
+        .from("user_score_vault")
+        .select("id, score_url, thumbnail_url, musical_key, label, pages_count")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (songId) q = q.eq("song_id", songId);
+      const { data, error } = await q;
+      if (error) throw error;
+      setVaultItems((data || []) as VaultScore[]);
+      setVaultLoaded(true);
+    } catch (e) {
+      console.error("Failed to load vault:", e);
+      toast.error("보관함 불러오기 실패");
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && activeTab === "vault" && !vaultLoaded && !vaultLoading) {
+      loadVault();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab]);
 
   // Load existing scores from set_song_scores when dialog opens
   useEffect(() => {
