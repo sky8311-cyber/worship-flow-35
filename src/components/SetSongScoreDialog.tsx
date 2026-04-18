@@ -110,21 +110,16 @@ export const SetSongScoreDialog = ({
 
       const body = await res.json().catch(() => ({}));
 
-      if (body?.error) {
-        setApiNotConfigured(true);
-        setSetupErrorMessage(body?.message || "이미지 검색 요청에 실패했습니다.");
+      if (body?.error || !res.ok) {
+        toast.error("이미지 검색에 실패했습니다");
         setResults([]);
         return;
-      }
-
-      if (!res.ok) {
-        throw new Error(body?.message || `Search failed (${res.status})`);
       }
 
       setResults(body?.items || []);
     } catch (e: any) {
       console.error(e);
-      toast.error("검색 중 오류가 발생했습니다");
+      toast.error("이미지 검색에 실패했습니다");
     } finally {
       setSearching(false);
     }
