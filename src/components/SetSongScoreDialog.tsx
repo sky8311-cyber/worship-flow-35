@@ -422,7 +422,7 @@ export const SetSongScoreDialog = ({
                 </p>
 
                 {results.length > 0 && (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden">
                     {results.map((item, i) => {
                       const selected = isSelected(item.link);
                       return (
@@ -430,7 +430,7 @@ export const SetSongScoreDialog = ({
                           type="button"
                           key={i}
                           onClick={() => toggleWebSelection(item)}
-                          className={`relative rounded-md overflow-hidden border-2 transition-all hover:border-primary ${
+                          className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary ${
                             selected ? "border-primary ring-2 ring-primary" : "border-border"
                           }`}
                         >
@@ -438,7 +438,7 @@ export const SetSongScoreDialog = ({
                             src={item.thumbnailLink}
                             alt={item.title}
                             loading="lazy"
-                            className="w-full h-32 object-cover object-top bg-muted"
+                            className="w-full max-w-full h-32 object-cover object-top bg-muted"
                           />
                           <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
                             <Checkbox checked={selected} className="pointer-events-none" />
