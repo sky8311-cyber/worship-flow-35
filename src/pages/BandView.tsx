@@ -661,9 +661,14 @@ const BandView = () => {
     );
   }
 
-  // If not authenticated, show nothing (redirect is happening)
-  if (!user) {
+  // If not authenticated AND no token, show nothing (redirect is happening)
+  if (!user && !tokenParam) {
     return null;
+  }
+
+  // Access gate based on band_view_visibility
+  if (accessGate) {
+    return <BandViewAccessGate variant={accessGate} setId={id} />;
   }
 
   if (!serviceSet) {
