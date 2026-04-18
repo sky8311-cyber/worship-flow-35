@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X } from "lucide-react";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,6 +42,7 @@ interface SelectedScore {
   url: string;
   thumbnail: string | null;
   musicalKey: string;
+  isPrimary: boolean;
 }
 
 const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
