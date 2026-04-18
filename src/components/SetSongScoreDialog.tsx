@@ -521,6 +521,22 @@ export const SetSongScoreDialog = ({
                         {displayName}
                       </span>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAsPrimary(score.id)}
+                      title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
+                      className="h-8 w-8 flex-shrink-0"
+                    >
+                      <Star
+                        className={`w-4 h-4 ${
+                          score.isPrimary
+                            ? "fill-primary text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </Button>
                     <Select
                       value={score.musicalKey}
                       onValueChange={(v) => updateSelectedKey(score.id, v)}
