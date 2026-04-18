@@ -52,6 +52,7 @@ import { SEOHead } from "@/components/seo/SEOHead";
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { ExternalLink } from "lucide-react";
 import { NativeSafeYouTubeEmbed } from "@/components/ui/NativeSafeYouTubeEmbed";
+import { BandViewAccessGate } from "@/components/band-view/BandViewAccessGate";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
@@ -108,13 +109,16 @@ const BandView = () => {
   // Use global music player context
   const { startPlaylist } = useMusicPlayer();
 
+  const tokenParam = searchParams.get("token");
+
   // Redirect non-authenticated users to login with redirect URL
+  // (skipped when a valid share token is present in URL — link mode allows public access)
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !user && !tokenParam) {
       const currentPath = `/band-view/${id}`;
       navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [authLoading, user, id, navigate]);
+  }, [authLoading, user, id, navigate, tokenParam]);
 
   // Check if user is viewing from a different community
   const { data: userCommunities } = useQuery({
@@ -141,9 +145,50 @@ const BandView = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id && !!user,
+    enabled: !!id && (!!user || !!tokenParam),
     staleTime: 60_000,
   });
+
+  // Team membership check: only run when set is 'team' visibility AND user is logged in
+  const { data: isTeamMember, isLoading: isTeamCheckLoading } = useQuery({
+    queryKey: ["band-view-team-member", id, user?.id, serviceSet?.community_id],
+    queryFn: async () => {
+      if (!user || !serviceSet?.community_id) return false;
+      const { data } = await supabase
+        .from("community_members")
+        .select("id")
+        .eq("community_id", serviceSet.community_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return !!data;
+    },
+    enabled: !!user && !!serviceSet && (serviceSet as any)?.band_view_visibility === "team",
+    staleTime: 60_000,
+  });
+
+  // Compute access decision
+  const accessGate: null | "team" | "link" | "login" = (() => {
+    if (!serviceSet) return null;
+    const visibility = (serviceSet as any).band_view_visibility || "public";
+    if (visibility === "public") return null;
+    if (visibility === "link") {
+      const expected = (serviceSet as any).share_token;
+      if (tokenParam && expected && tokenParam === expected) return null;
+      // No/invalid token. If user is logged in admin, allow; if logged-in creator/community member also allow.
+      if (isAdmin) return null;
+      return "link";
+    }
+    if (visibility === "team") {
+      if (!user) return "login";
+      if (isAdmin) return null;
+      // Allow share token bypass even in team mode
+      const expected = (serviceSet as any).share_token;
+      if (tokenParam && expected && tokenParam === expected) return null;
+      if (isTeamCheckLoading) return null; // wait for check
+      return isTeamMember ? null : "team";
+    }
+    return null;
+  })();
 
   const { data: setSongs } = useQuery({
     queryKey: ["band-view-songs", id],
@@ -616,9 +661,14 @@ const BandView = () => {
     );
   }
 
-  // If not authenticated, show nothing (redirect is happening)
-  if (!user) {
+  // If not authenticated AND no token, show nothing (redirect is happening)
+  if (!user && !tokenParam) {
     return null;
+  }
+
+  // Access gate based on band_view_visibility
+  if (accessGate) {
+    return <BandViewAccessGate variant={accessGate} setId={id} />;
   }
 
   if (!serviceSet) {
