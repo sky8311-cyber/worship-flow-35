@@ -490,11 +490,11 @@ export const SetSongScoreDialog = ({
 
         {/* Selected Scores Preview Panel */}
         {selectedScores.length > 0 && (
-          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full">
+          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full w-full min-w-0 overflow-hidden">
             <p className="text-xs font-medium text-muted-foreground">
               선택된 악보 ({selectedScores.length})
             </p>
-            <div className="space-y-2 max-w-full">
+            <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
               {selectedScores.map((score) => {
                 const displayName =
                   score.type === "upload"
