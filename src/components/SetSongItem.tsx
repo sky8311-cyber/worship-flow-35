@@ -465,3 +465,6 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
           />
         </Suspense>
       )}
+    </div>
+  );
+};
