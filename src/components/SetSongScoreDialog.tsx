@@ -30,6 +30,8 @@ interface SearchResult {
   link: string;
   thumbnailLink: string;
   contextLink?: string;
+  width?: number | null;
+  height?: number | null;
 }
 
 export const SetSongScoreDialog = ({
@@ -116,7 +118,7 @@ export const SetSongScoreDialog = ({
         return;
       }
 
-      setResults(body?.items || []);
+      setResults((body?.items || []).filter((item: any) => (item.width == null || item.width >= 300) && (item.height == null || item.height >= 200)));
     } catch (e: any) {
       console.error(e);
       toast.error("이미지 검색에 실패했습니다");
