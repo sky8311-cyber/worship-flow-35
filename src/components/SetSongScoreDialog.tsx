@@ -422,7 +422,7 @@ export const SetSongScoreDialog = ({
                 </p>
 
                 {results.length > 0 && (
-                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden">
+                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
                     {results.map((item, i) => {
                       const selected = isSelected(item.link);
                       return (
