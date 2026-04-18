@@ -459,6 +459,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
             open={showScoreDialog}
             onOpenChange={setShowScoreDialog}
             setSongId={dbId}
+            songId={song?.id}
             defaultQuery={song?.title ? `${song.title} 악보` : ""}
             scoreRefUrl={setSong.score_ref_url}
             scoreRefThumbnail={setSong.score_ref_thumbnail}
