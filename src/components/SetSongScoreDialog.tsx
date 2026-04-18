@@ -377,12 +377,12 @@ export const SetSongScoreDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0 [&>*]:min-w-0">
+        <DialogHeader className="min-w-0">
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="search" className="w-full overflow-hidden">
+        <Tabs defaultValue="search" className="w-full min-w-0 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
