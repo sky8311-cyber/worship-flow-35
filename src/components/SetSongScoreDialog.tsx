@@ -165,6 +165,7 @@ export const SetSongScoreDialog = ({
           thumbnail: row.score_thumbnail,
           musicalKey: row.musical_key || "C",
           isPrimary: !!row.is_primary,
+          vaultScoreId: row.vault_score_id ?? null,
         }))
       );
     };
