@@ -54,6 +54,8 @@ interface SelectedScore {
   thumbnail: string | null;
   musicalKey: string;
   isPrimary: boolean;
+  vaultScoreId?: string | null;
+  label?: string | null;
 }
 
 const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
