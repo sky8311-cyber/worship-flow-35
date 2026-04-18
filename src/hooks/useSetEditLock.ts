@@ -231,11 +231,40 @@ export function useSetEditLock(
         setTakeoverRequester(null);
         setIsTakeoverRequested(false);
       }
+    } else if (lock.holder_user_id === user?.id) {
+      // Same user, different tab/session - try to auto-takeover if stale
+      const lastActivity = new Date(lock.last_activity_at).getTime();
+      const isStale = Date.now() - lastActivity > 30 * 1000;
+      if (isStale) {
+        console.log("[EditLock] Same-user stale lock detected, auto-taking over");
+        const forceResult = await invokeLockAction({
+          action: 'force_takeover',
+          set_id: setId,
+          session_id: sessionIdRef.current,
+          user_id: user!.id,
+          user_name: userName,
+          device: deviceRef.current,
+        });
+        if (forceResult.success) {
+          setLockStatus("locked_by_me");
+          setLockHolder({
+            userId: user!.id,
+            name: userName,
+            sessionId: sessionIdRef.current,
+            acquiredAt: new Date().toISOString(),
+            device: deviceRef.current,
+          });
+          return;
+        }
+      }
+      // Active same-user session in another tab - mark as locked_by_other but UI can detect via userId match
+      setLockStatus("locked_by_other");
+      setLockHolder(holderInfo);
     } else {
       setLockStatus("locked_by_other");
       setLockHolder(holderInfo);
     }
-  }, [setId, user?.id]);
+  }, [setId, user?.id, userName]);
 
   // Acquire lock
   const acquireLock = useCallback(async (): Promise<boolean> => {
