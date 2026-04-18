@@ -3797,6 +3797,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_primary: boolean
           musical_key: string
           score_thumbnail: string | null
           score_type: string
@@ -3807,6 +3808,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_primary?: boolean
           musical_key?: string
           score_thumbnail?: string | null
           score_type: string
@@ -3817,6 +3819,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_primary?: boolean
           musical_key?: string
           score_thumbnail?: string | null
           score_type?: string
@@ -3846,6 +3849,7 @@ export type Database = {
           lyrics: string | null
           override_score_file_url: string | null
           override_youtube_url: string | null
+          performance_key: string | null
           position: number
           private_score_file_url: string | null
           score_key: string | null
@@ -3854,6 +3858,7 @@ export type Database = {
           service_set_id: string
           song_id: string
           time_signature: string | null
+          transpose_amount: string | null
         }
         Insert: {
           bpm?: number | null
@@ -3866,6 +3871,7 @@ export type Database = {
           lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
+          performance_key?: string | null
           position: number
           private_score_file_url?: string | null
           score_key?: string | null
@@ -3874,6 +3880,7 @@ export type Database = {
           service_set_id: string
           song_id: string
           time_signature?: string | null
+          transpose_amount?: string | null
         }
         Update: {
           bpm?: number | null
@@ -3886,6 +3893,7 @@ export type Database = {
           lyrics?: string | null
           override_score_file_url?: string | null
           override_youtube_url?: string | null
+          performance_key?: string | null
           position?: number
           private_score_file_url?: string | null
           score_key?: string | null
@@ -3894,6 +3902,7 @@ export type Database = {
           service_set_id?: string
           song_id?: string
           time_signature?: string | null
+          transpose_amount?: string | null
         }
         Relationships: [
           {

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X } from "lucide-react";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -42,6 +42,7 @@ interface SelectedScore {
   url: string;
   thumbnail: string | null;
   musicalKey: string;
+  isPrimary: boolean;
 }
 
 const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
@@ -108,6 +109,7 @@ export const SetSongScoreDialog = ({
           url: row.score_url,
           thumbnail: row.score_thumbnail,
           musicalKey: row.musical_key || "C",
+          isPrimary: !!row.is_primary,
         }))
       );
     };
@@ -121,6 +123,7 @@ export const SetSongScoreDialog = ({
       if (prev.some((s) => s.url === item.link)) {
         return prev.filter((s) => s.url !== item.link);
       }
+      const isFirst = prev.length === 0;
       return [
         ...prev,
         {
@@ -129,17 +132,30 @@ export const SetSongScoreDialog = ({
           url: item.link,
           thumbnail: item.thumbnailLink,
           musicalKey: "C",
+          isPrimary: isFirst,
         },
       ];
     });
   };
 
   const removeSelected = (id: string) => {
-    setSelectedScores((prev) => prev.filter((s) => s.id !== id));
+    setSelectedScores((prev) => {
+      const removed = prev.find((s) => s.id === id);
+      const next = prev.filter((s) => s.id !== id);
+      // If we removed the primary, promote the first remaining
+      if (removed?.isPrimary && next.length > 0 && !next.some((s) => s.isPrimary)) {
+        next[0] = { ...next[0], isPrimary: true };
+      }
+      return next;
+    });
   };
 
   const updateSelectedKey = (id: string, key: string) => {
     setSelectedScores((prev) => prev.map((s) => (s.id === id ? { ...s, musicalKey: key } : s)));
+  };
+
+  const setAsPrimary = (id: string) => {
+    setSelectedScores((prev) => prev.map((s) => ({ ...s, isPrimary: s.id === id })));
   };
 
   // Debounced search: rapid typing/Enter only triggers once per 400ms
@@ -238,6 +254,7 @@ export const SetSongScoreDialog = ({
           url: path,
           thumbnail: null,
           musicalKey: "C",
+          isPrimary: prev.length === 0,
         },
       ]);
       toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
@@ -257,6 +274,12 @@ export const SetSongScoreDialog = ({
     }
     setSaving(true);
     try {
+      // Ensure exactly one primary if there are selections
+      let scoresToSave = selectedScores;
+      if (scoresToSave.length > 0 && !scoresToSave.some((s) => s.isPrimary)) {
+        scoresToSave = scoresToSave.map((s, i) => ({ ...s, isPrimary: i === 0 }));
+      }
+
       // Delete existing
       const { error: delErr } = await supabase
         .from("set_song_scores")
@@ -265,18 +288,52 @@ export const SetSongScoreDialog = ({
       if (delErr) throw delErr;
 
       // Insert new rows
-      if (selectedScores.length > 0) {
-        const rows = selectedScores.map((s, i) => ({
+      if (scoresToSave.length > 0) {
+        const rows = scoresToSave.map((s, i) => ({
           set_song_id: setSongId,
           score_type: s.type,
           score_url: s.url,
           score_thumbnail: s.thumbnail,
           musical_key: s.musicalKey,
           sort_order: i,
+          is_primary: s.isPrimary,
         }));
         const { error: insErr } = await supabase.from("set_song_scores").insert(rows);
         if (insErr) throw insErr;
       }
+
+      // Sync set_songs.score_key (and possibly performance_key) with primary score
+      const primary = scoresToSave.find((s) => s.isPrimary);
+      const newScoreKey = primary?.musicalKey || null;
+
+      // Read current performance_key
+      const { data: existingSetSong } = await supabase
+        .from("set_songs")
+        .select("performance_key, key")
+        .eq("id", setSongId)
+        .maybeSingle();
+
+      const existingPerformanceKey =
+        (existingSetSong as any)?.performance_key || (existingSetSong as any)?.key || null;
+
+      const updatePayload: Record<string, any> = { score_key: newScoreKey };
+      let promptKeyChange = false;
+
+      if (newScoreKey) {
+        if (!existingPerformanceKey) {
+          // No performance key set yet — match it to the score key
+          updatePayload.performance_key = newScoreKey;
+        } else if (existingPerformanceKey !== newScoreKey) {
+          // Different — keep but ask the user
+          promptKeyChange = true;
+        }
+      }
+
+      const { error: updErr } = await supabase
+        .from("set_songs")
+        .update(updatePayload)
+        .eq("id", setSongId);
+      if (updErr) throw updErr;
 
       // Parallelize cache invalidations
       await Promise.all([
@@ -284,7 +341,30 @@ export const SetSongScoreDialog = ({
         queryClient.invalidateQueries({ queryKey: ["band-view-songs"] }),
         queryClient.invalidateQueries({ queryKey: ["set-song-scores", setSongId] }),
       ]);
+
       toast.success("저장되었습니다");
+
+      if (promptKeyChange && newScoreKey) {
+        toast("악보 키가 변경됐습니다. 연주 키도 동일하게 업데이트하시겠어요?", {
+          duration: 10000,
+          action: {
+            label: "예",
+            onClick: async () => {
+              await supabase
+                .from("set_songs")
+                .update({ performance_key: newScoreKey })
+                .eq("id", setSongId);
+              await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ["set-songs"] }),
+                queryClient.invalidateQueries({ queryKey: ["band-view-songs"] }),
+              ]);
+              toast.success("연주 키가 업데이트되었습니다");
+            },
+          },
+          cancel: { label: "아니오", onClick: () => {} },
+        });
+      }
+
       onSaved?.({});
       onOpenChange(false);
     } catch (err: any) {
@@ -441,6 +521,22 @@ export const SetSongScoreDialog = ({
                         {displayName}
                       </span>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setAsPrimary(score.id)}
+                      title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
+                      className="h-8 w-8 flex-shrink-0"
+                    >
+                      <Star
+                        className={`w-4 h-4 ${
+                          score.isPrimary
+                            ? "fill-primary text-primary"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    </Button>
                     <Select
                       value={score.musicalKey}
                       onValueChange={(v) => updateSelectedKey(score.id, v)}
