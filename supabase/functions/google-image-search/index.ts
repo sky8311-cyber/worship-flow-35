@@ -10,28 +10,131 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
-const extractSearchEngineId = (value: string | null | undefined) => {
-  const trimmed = value?.trim();
-  if (!trimmed) return "";
-  const unquoted = trimmed.replace(/^['"`]+|['"`]+$/g, "").trim();
+const SEARCH_PROVIDER = "duckduckgo";
+const SEARCH_USER_AGENT =
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-  const directCxMatch = unquoted.match(/(?:^|[?&\s])cx=([A-Za-z0-9_:%-]+)/i);
-  if (directCxMatch?.[1]) return decodeURIComponent(directCxMatch[1]).trim();
+class SearchProviderError extends Error {
+  code: string;
+  details?: Record<string, unknown>;
 
-  if (/^https?:\/\//i.test(unquoted)) {
-    try {
-      const url = new URL(unquoted);
-      const fromQuery = url.searchParams.get("cx") || url.searchParams.get("cse_id");
-      if (fromQuery?.trim()) return fromQuery.trim();
-    } catch {
-      // ignore
-    }
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = "SearchProviderError";
+    this.code = code;
+    this.details = details;
+  }
+}
+
+const stripHtml = (value: string | null | undefined) =>
+  (value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+
+const extractVqdToken = (html: string) => {
+  const patterns = [
+    /vqd=['"]([^'"]+)['"]/i,
+    /"vqd":"([^"]+)"/i,
+    /vqd=([^&'"\s]+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match?.[1]) return match[1];
   }
 
-  return unquoted;
+  return "";
 };
 
-const looksLikeSearchEngineId = (value: string) => /^[A-Za-z0-9_:%-]{8,}$/.test(value);
+const getDuckDuckGoToken = async (query: string) => {
+  const url = new URL("https://duckduckgo.com/");
+  url.searchParams.set("q", query);
+  url.searchParams.set("iax", "images");
+  url.searchParams.set("ia", "images");
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "user-agent": SEARCH_USER_AGENT,
+    },
+  });
+
+  const html = await res.text();
+  const vqd = extractVqdToken(html);
+
+  if (!res.ok || !vqd) {
+    throw new SearchProviderError(
+      "search_unavailable",
+      "외부 이미지 검색 제공자에서 검색 세션을 만들지 못했습니다. 잠시 후 다시 시도해주세요.",
+      { provider: SEARCH_PROVIDER, upstream_status: res.status || null },
+    );
+  }
+
+  return vqd;
+};
+
+const searchDuckDuckGoImages = async (query: string) => {
+  const vqd = await getDuckDuckGoToken(query);
+  const url = new URL("https://duckduckgo.com/i.js");
+  url.searchParams.set("q", query);
+  url.searchParams.set("o", "json");
+  url.searchParams.set("l", "wt-wt");
+  url.searchParams.set("f", ",,,");
+  url.searchParams.set("p", "1");
+  url.searchParams.set("vqd", vqd);
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      "accept": "application/json, text/javascript, */*; q=0.01",
+      "referer": "https://duckduckgo.com/",
+      "user-agent": SEARCH_USER_AGENT,
+      "x-requested-with": "XMLHttpRequest",
+    },
+  });
+
+  const raw = await res.text();
+
+  if (res.status === 202 || res.status === 429) {
+    throw new SearchProviderError(
+      "rate_limited",
+      "외부 이미지 검색 제공자 요청이 잠시 제한되었습니다. 잠시 후 다시 시도해주세요.",
+      { provider: SEARCH_PROVIDER, upstream_status: res.status },
+    );
+  }
+
+  if (!res.ok) {
+    throw new SearchProviderError(
+      "search_unavailable",
+      "외부 이미지 검색 제공자가 요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      { provider: SEARCH_PROVIDER, upstream_status: res.status },
+    );
+  }
+
+  let data: any;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new SearchProviderError(
+      "search_unavailable",
+      "외부 이미지 검색 응답을 해석하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      { provider: SEARCH_PROVIDER },
+    );
+  }
+
+  const items = Array.isArray(data?.results)
+    ? data.results
+        .slice(0, 10)
+        .map((item: any) => ({
+          title: stripHtml(item?.title) || query,
+          link: item?.image || item?.thumbnail || "",
+          thumbnailLink: item?.thumbnail || item?.image || "",
+          contextLink: item?.url || null,
+          width: item?.width ?? null,
+          height: item?.height ?? null,
+        }))
+        .filter((item: any) => item.link && item.thumbnailLink)
+    : [];
+
+  return items;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,100 +142,32 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const GOOGLE_CSE_KEY = Deno.env.get("GOOGLE_CSE_KEY")?.trim();
-    const GOOGLE_CSE_CX = extractSearchEngineId(Deno.env.get("GOOGLE_CSE_CX"));
-
-    if (!GOOGLE_CSE_KEY || !GOOGLE_CSE_CX) {
-      return json({
-        error: "not_configured",
-        message: "Google CSE API keys are not configured",
-      });
-    }
-
-    if (!looksLikeSearchEngineId(GOOGLE_CSE_CX)) {
-      return json({
-        error: "invalid_cx_config",
-        message:
-          "GOOGLE_CSE_CX 값에서 유효한 Search Engine ID를 찾을 수 없습니다.",
-      });
-    }
-
     const body = await req.json().catch(() => ({}));
     const query = typeof body?.query === "string" ? body.query.trim() : "";
+
     if (!query) {
-      return json({ error: "invalid_query", message: "query is required" }, 400);
+      return json({ error: "invalid_query", message: "query is required", provider: SEARCH_PROVIDER });
     }
 
-    const url = new URL("https://www.googleapis.com/customsearch/v1");
-    url.searchParams.set("key", GOOGLE_CSE_KEY);
-    url.searchParams.set("cx", GOOGLE_CSE_CX);
-    url.searchParams.set("q", query);
-    url.searchParams.set("searchType", "image");
-    url.searchParams.set("num", "10");
-    url.searchParams.set("safe", "active");
+    const items = await searchDuckDuckGoImages(query);
 
-    const res = await fetch(url.toString());
-    const data = await res.json();
-
-    if (!res.ok) {
-      const reason = data?.error?.details?.find((d: any) => d?.reason)?.reason;
-      const message: string = data?.error?.message || "";
-      console.error("Google CSE error:", res.status, reason, message);
-
-      // 403 family — treat as configuration access issue (broad bucket)
-      if (res.status === 403) {
-        return json({
-          error: "api_access_denied",
-          message:
-            "Google API에서 요청을 거부했습니다. 아래 설정을 확인해주세요.",
-          google_status: res.status,
-          google_reason: reason ?? null,
-          google_message: message || null,
-        });
-      }
-
-      if (res.status === 400) {
-        return json({
-          error: "invalid_cx_config",
-          message:
-            "Google Programmable Search Engine 설정이 올바르지 않습니다. Search Engine ID(cx)와 '이미지 검색' 활성화 여부를 확인해주세요.",
-          google_status: res.status,
-          google_reason: reason ?? null,
-          google_message: message || null,
-        });
-      }
-
-      if (res.status === 429) {
-        return json({
-          error: "quota_exceeded",
-          message: "Google API 일일 사용 한도를 초과했습니다.",
-          google_status: res.status,
-          google_reason: reason ?? null,
-          google_message: message || null,
-        });
-      }
-
+    return json({ items, provider: SEARCH_PROVIDER });
+  } catch (error) {
+    if (error instanceof SearchProviderError) {
+      console.error("image search provider error:", error.code, error.details);
       return json({
-        error: "google_api_error",
-        message: message || "Google API request failed",
-        google_status: res.status,
-        google_reason: reason ?? null,
-        google_message: message || null,
+        error: error.code,
+        message: error.message,
+        provider: SEARCH_PROVIDER,
+        ...error.details,
       });
     }
 
-    const items = (data.items || []).map((item: any) => ({
-      title: item.title,
-      link: item.link,
-      thumbnailLink: item.image?.thumbnailLink,
-      contextLink: item.image?.contextLink,
-      width: item.image?.width,
-      height: item.image?.height,
-    }));
-
-    return json({ items });
-  } catch (e) {
-    console.error("google-image-search error:", e);
-    return json({ error: "internal_error", message: String(e) }, 500);
+    console.error("image-search error:", error);
+    return json({
+      error: "internal_error",
+      message: "이미지 검색 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      provider: SEARCH_PROVIDER,
+    });
   }
 });

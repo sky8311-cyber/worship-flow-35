@@ -110,57 +110,9 @@ export const SetSongScoreDialog = ({
 
       const body = await res.json().catch(() => ({}));
 
-      if (body?.error === "not_configured") {
+      if (body?.error) {
         setApiNotConfigured(true);
-        setResults([]);
-        return;
-      }
-
-      if (body?.error === "referer_blocked") {
-        setApiNotConfigured(true);
-        setSetupErrorMessage(
-          "Google API 키에 브라우저 referrer 제한이 걸려 있어 사용할 수 없습니다. 관리자에게 키 제한 해제를 요청하세요.",
-        );
-        setResults([]);
-        return;
-      }
-
-      if (body?.error === "invalid_cx_config") {
-        setApiNotConfigured(true);
-        setSetupErrorMessage(
-          "Google 검색 엔진(CX) 설정이 올바르지 않습니다. 관리자에게 Search Engine ID 및 '이미지 검색 / 전체 웹 검색' 활성화 확인을 요청하세요.",
-        );
-        setResults([]);
-        return;
-      }
-
-      if (body?.error === "api_access_denied") {
-        setApiNotConfigured(true);
-        const debug = [
-          body?.google_status ? `status ${body.google_status}` : null,
-          body?.google_reason || null,
-        ].filter(Boolean).join(" · ");
-        setSetupErrorMessage(
-          `Google API에서 요청이 거부되었습니다${debug ? ` (${debug})` : ""}. 관리자에게 다음을 확인해 달라고 요청하세요:\n` +
-          "1) GOOGLE_CSE_KEY가 Custom Search API가 활성화된 Google Cloud 프로젝트의 키인지\n" +
-          "2) 해당 프로젝트에 결제(Billing)가 연결되어 있는지\n" +
-          "3) API Key 제한(Application/API restrictions)이 Custom Search API 서버 호출을 허용하는지\n" +
-          "4) Custom Search API가 Enabled 상태인지 (활성화 직후라면 5~10분 대기)",
-        );
-        setResults([]);
-        return;
-      }
-
-      if (body?.error === "quota_exceeded") {
-        setApiNotConfigured(true);
-        setSetupErrorMessage("Google API 일일 사용 한도를 초과했습니다. 내일 다시 시도하거나 관리자에게 한도 증설을 요청하세요.");
-        setResults([]);
-        return;
-      }
-
-      if (body?.error === "google_api_error" || body?.error === "internal_error") {
-        setApiNotConfigured(true);
-        setSetupErrorMessage(body?.message || "Google 검색 요청에 실패했습니다.");
+        setSetupErrorMessage(body?.message || "이미지 검색 요청에 실패했습니다.");
         setResults([]);
         return;
       }
@@ -207,7 +159,7 @@ export const SetSongScoreDialog = ({
     if (ok) toast.success("악보가 저장되었습니다");
   };
 
-  const handleClearGoogleRef = async () => {
+  const handleClearScoreRef = async () => {
     const ok = await persistUpdates({
       score_ref_url: null,
       score_ref_thumbnail: null,
@@ -276,7 +228,7 @@ export const SetSongScoreDialog = ({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
-              악보 검색 (Google)
+               악보 웹 검색
             </TabsTrigger>
             <TabsTrigger value="upload">
               <Upload className="w-4 h-4 mr-2" />
@@ -284,13 +236,13 @@ export const SetSongScoreDialog = ({
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab 1: Google Image Search */}
+          {/* Tab 1: Web Image Search */}
           <TabsContent value="search" className="space-y-4">
             {apiNotConfigured ? (
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-muted-foreground">
-                  {setupErrorMessage ?? "Google 검색 기능을 사용하려면 관리자에게 API 설정을 요청하세요"}
+                   {setupErrorMessage ?? "이미지 검색 기능을 현재 사용할 수 없습니다. 잠시 후 다시 시도해주세요."}
                 </p>
               </div>
             ) : (
@@ -369,7 +321,7 @@ export const SetSongScoreDialog = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={handleClearGoogleRef}
+                    onClick={handleClearScoreRef}
                     className="text-destructive hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
