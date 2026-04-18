@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -142,6 +142,25 @@ export const SetSongScoreDialog = ({
     setSelectedScores((prev) => prev.map((s) => (s.id === id ? { ...s, musicalKey: key } : s)));
   };
 
+  // Debounced search: rapid typing/Enter only triggers once per 400ms
+  const lastSearchAtRef = useRef(0);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerSearch = () => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    const elapsed = Date.now() - lastSearchAtRef.current;
+    const wait = elapsed > 400 ? 0 : 400 - elapsed;
+    searchDebounceRef.current = setTimeout(() => {
+      lastSearchAtRef.current = Date.now();
+      handleSearch();
+    }, wait);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
+
   const handleSearch = async () => {
     if (!query.trim()) return;
     setSearching(true);
@@ -259,9 +278,12 @@ export const SetSongScoreDialog = ({
         if (insErr) throw insErr;
       }
 
-      queryClient.invalidateQueries({ queryKey: ["set-songs"] });
-      queryClient.invalidateQueries({ queryKey: ["band-view-songs"] });
-      queryClient.invalidateQueries({ queryKey: ["set-song-scores", setSongId] });
+      // Parallelize cache invalidations
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["set-songs"] }),
+        queryClient.invalidateQueries({ queryKey: ["band-view-songs"] }),
+        queryClient.invalidateQueries({ queryKey: ["set-song-scores", setSongId] }),
+      ]);
       toast.success("저장되었습니다");
       onSaved?.({});
       onOpenChange(false);
