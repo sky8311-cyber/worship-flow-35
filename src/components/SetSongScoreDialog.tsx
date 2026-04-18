@@ -377,12 +377,12 @@ export const SetSongScoreDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="search" className="w-full">
+        <Tabs defaultValue="search" className="w-full overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
@@ -395,7 +395,7 @@ export const SetSongScoreDialog = ({
           </TabsList>
 
           {/* Tab 1: Web Image Search */}
-          <TabsContent value="search" className="space-y-4">
+          <TabsContent value="search" className="space-y-4 overflow-hidden w-full">
             {apiNotConfigured ? (
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -453,7 +453,7 @@ export const SetSongScoreDialog = ({
           </TabsContent>
 
           {/* Tab 2: Private Upload */}
-          <TabsContent value="upload" className="space-y-4">
+          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full">
             <CopyrightUploadNotice
               checked={acknowledged}
               onCheckedChange={handleAcknowledgeChange}
