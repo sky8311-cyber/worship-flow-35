@@ -1,46 +1,76 @@
 
-사용자가 BandView에서 E키 악보로 화살표를 눌렀는데 이미지가 깨져서 표시됨 (스크린샷에 깨진 이미지 아이콘 + "빛 되신 주 - Page 1" alt 텍스트만 보임).
+## 3-Layer Content Architecture — DB 마이그레이션 플랜
 
-## 원인 조사 필요
+### 목표
+사용자가 지정한 3-레이어 구조를 위한 신규 테이블/컬럼 추가. **기존 데이터는 100% 보존**.
 
-스크린샷 분석:
-- "E (인도자 선택: F)" → 사용자가 E키를 선택해서 보고 있음 (인도자는 F키 선택)
-- "(1/2)" → 2페이지짜리 악보
-- 깨진 이미지 + "빛 되신 주 - Page 1" alt → `<img src="...">`의 src가 잘못된 URL이거나 만료된 signed URL
+---
 
-가능한 원인 후보:
-1. **`set_song_scores`에 저장된 `score_url`이 외부 URL (예: 인터넷 검색 결과 링크)** 인데 BandView/Preview는 이를 `getSignedScoreUrl`로 통과시켜 storage signed URL로 변환하려다 실패
-2. **`score_url`이 storage path는 맞지만 `scores` 버킷에 실제로 존재하지 않음** (E키는 외부 링크로만 등록되어 storage에 파일이 없음)
-3. **`SignedScoreImage` retry 로직이 외부 URL에 대해 잘못 동작** (외부 URL인 경우 그냥 그대로 써야 하는데 signed URL 변환을 시도)
-4. **PDF 변환 실패** — E키 악보가 PDF로 업로드됐는데 변환된 PNG 페이지가 일부만 저장됨
+### 1. 테이블 신규 생성
 
-## 조사 계획 (READ-ONLY)
+#### `public.user_score_vault` (Layer 2 — 개인 악보 보관함)
+- `id` uuid PK (default gen_random_uuid())
+- `user_id` uuid NOT NULL → `auth.users(id)` ON DELETE CASCADE
+- `song_id` uuid → `public.songs(id)` ON DELETE SET NULL
+- `score_url` text NOT NULL
+- `thumbnail_url` text
+- `musical_key` text DEFAULT 'C'
+- `label` text
+- `pages_count` int DEFAULT 1
+- `created_at` timestamptz DEFAULT now()
+- 인덱스: `(user_id)`, `(user_id, song_id)`
+- RLS ENABLE
+- 정책: `"own vault"` FOR ALL USING `auth.uid() = user_id` WITH CHECK `auth.uid() = user_id`
 
-1. `src/utils/scoreUrl.ts`의 `getSignedScoreUrl` 로직 확인 — 외부 URL (http로 시작하는 풀 URL) vs storage path를 어떻게 구분하는지
-2. `set_song_scores` 테이블에서 현재 세트(`fba3a4c7-5727-4a88-b89a-bc252454c839`)의 E키 row들의 `score_url` 실제 값 확인 (storage path인지 외부 URL인지)
-3. `SetSongScoreDialog.tsx`의 외부 URL 등록 경로 vs PDF 업로드 경로가 `score_url`에 무엇을 저장하는지 확인
-4. `SignedScoreImage`가 외부 URL을 받았을 때의 동작 확인
-5. 콘솔/네트워크 로그로 실제로 어떤 URL을 요청하다 실패했는지 확인
+#### `public.user_song_profiles` (Layer 2 — 개인 곡 프로필)
+- `id` uuid PK (default gen_random_uuid())
+- `user_id` uuid NOT NULL → `auth.users(id)` ON DELETE CASCADE
+- `song_id` uuid NOT NULL → `public.songs(id)` ON DELETE CASCADE
+- `preferred_key` text
+- `notes` text
+- `vault_score_ids` uuid[] DEFAULT '{}'
+- `created_at` timestamptz DEFAULT now()
+- UNIQUE `(user_id, song_id)`
+- 인덱스: `(user_id, song_id)`
+- RLS ENABLE
+- 정책: `"own profiles"` FOR ALL USING `auth.uid() = user_id` WITH CHECK `auth.uid() = user_id`
 
-## 가설
+---
 
-가장 유력: **E키 악보를 외부 검색(예: Praise.kr, 워십리더 등)에서 URL로 추가했는데**, `set_song_scores.score_url`에 외부 URL 그대로 저장됨 → `SignedScoreImage` → `getSignedScoreUrl`이 이를 storage path로 오인하고 `scores` 버킷에서 signed URL 생성 시도 → 404 또는 잘못된 URL 반환 → 이미지 깨짐.
+### 2. 기존 테이블 컬럼 추가
 
-또는: 외부 URL이 hotlink-protected라서 `<img>` 직접 로드 시 차단됨.
+#### `public.service_sets` (실제 워십세트 테이블 — 사용자 요청의 `worship_sets`는 코드베이스 기준 `service_sets`)
+> ⚠️ 사용자가 `worship_sets`로 적었지만 실제 테이블명은 `service_sets`입니다 (mem://database/naming-and-schema-constraints-v2 참조). 의도하신 게 그게 맞다고 보고 `service_sets`에 적용합니다. 다른 의도였다면 알려주세요.
 
-## 수정 방향 (조사 후 확정)
+- `has_private_scores` boolean DEFAULT false
+- `band_view_visibility` text DEFAULT 'public' CHECK in ('public','team','link')
+- `share_token` uuid DEFAULT gen_random_uuid()
+  - **백필**: 기존 NULL 행에 `gen_random_uuid()` 채우기
+  - UNIQUE INDEX `idx_service_sets_share_token`
 
-- `getSignedScoreUrl`/`SignedScoreImage`에서 URL 종류 판별:
-  - `http(s)://` 외부 URL → 그대로 사용 (signed URL 변환 안 함)
-  - storage path (예: `userId/setSongId/...`) → `scores` 버킷에서 signed URL 생성
-- 외부 URL이 hotlink-protected인 경우 → 사용자에게 "외부 사이트에서 직접 보기" 링크 제공 또는 업로드 권유
-- E키 row의 실제 `score_url` 값 확인 후 정확한 fix 결정
+> 참고: 기존에 `public_share_token` 컬럼이 이미 있음 (별도 용도, 외부 공개 링크). 신규 `share_token`은 별도 컬럼으로 추가 (band_view_visibility='link' 모드용).
 
-## 다음 단계
+#### `public.set_song_scores`
+- `vault_score_id` uuid → `public.user_score_vault(id)` ON DELETE SET NULL
 
-읽기 전용 모드라 코드/DB 조사부터 진행 필요. 사용자 승인 후 default 모드에서:
-1. `src/utils/scoreUrl.ts`, `SetSongScoreDialog.tsx`의 외부 URL 저장 경로 정독
-2. DB에서 해당 set의 E키 `set_song_scores.score_url` 값 확인 (Supabase select)
-3. 콘솔/네트워크 로그 확인 (깨진 이미지 요청의 실제 URL & 응답)
-4. URL 타입 판별 분기를 `getSignedScoreUrl`에 추가
-5. 필요 시 `SetSongScoreDialog`의 외부 URL 등록 흐름에서 사용자에게 "외부 링크는 미리보기가 제한될 수 있으니 다운로드 후 업로드 권장" 안내 추가
+---
+
+### 3. 데이터 보존
+- 모든 ALTER는 `IF NOT EXISTS`
+- 기존 행 어떤 것도 삭제/수정 안 함 (share_token 백필만 발생, 기존 값 있으면 유지)
+- 레거시 `song_scores` / `songs.score_file_url` 그대로 보존
+
+---
+
+### 4. 코드 영향
+- 마이그레이션만 실행. 애플리케이션 코드는 이번 턴에서 **변경하지 않음**.
+- 마이그레이션 승인 → `src/integrations/supabase/types.ts` 자동 재생성됨.
+- 다음 턴에서 사용자가 UI/로직 연결 요청 시 그때 코드 작성.
+
+---
+
+### 5. 보안
+- 두 신규 테이블 RLS 활성화 + 본인 데이터만 접근 가능 정책.
+- `service_sets`의 신규 컬럼은 기존 RLS 정책에 그대로 포함됨 (별도 정책 불필요).
+
+승인하시면 마이그레이션 파일을 생성합니다.
