@@ -256,6 +256,10 @@ export const SetSongScoreDialog = ({
                   </Button>
                 </div>
 
+                <p className="text-xs text-muted-foreground">
+                  검색 결과는 외부 웹사이트의 이미지입니다. K-Worship은 해당 콘텐츠를 저장하거나 소유하지 않으며, 저작권 이용 책임은 사용자에게 있습니다.
+                </p>
+
                 {results.length > 0 && (
                   <div className="grid grid-cols-3 gap-3">
                     {results.map((item, i) => {
