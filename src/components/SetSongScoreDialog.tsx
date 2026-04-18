@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyrightUploadNotice } from "@/components/copyright/CopyrightUploadNotice";
 import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
+import { convertPdfToImages } from "@/utils/pdfToImages";
 
 interface SetSongScoreDialogProps {
   open: boolean;
