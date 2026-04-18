@@ -453,7 +453,7 @@ export const SetSongScoreDialog = ({
           </TabsContent>
 
           {/* Tab 2: Private Upload */}
-          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full">
+          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0">
             <CopyrightUploadNotice
               checked={acknowledged}
               onCheckedChange={handleAcknowledgeChange}
