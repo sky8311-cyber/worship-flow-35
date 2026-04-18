@@ -947,12 +947,11 @@ const BandView = () => {
             // Get score files for the currently browsing key (per-set first, library fallback)
             const { scoreFiles, scoreKeyUsed, isUsingFallback } = getScoreFilesWithFallback(setSong.song_id, currentBrowsingKey, setSong.id);
 
-            // Final fallback: per-set legacy ref/private url, then library default
+            // Final fallback: per-set legacy ref/private url ONLY (no song-library defaults)
             const defaultScoreUrl =
               setSong.score_ref_url
               || setSong.private_score_file_url
-              || setSong.override_score_file_url
-              || song?.score_file_url;
+              || setSong.override_score_file_url;
 
             return (
               <Card key={`song-${setSong.id}`} className="shadow-md print:shadow-none print:break-inside-avoid">
