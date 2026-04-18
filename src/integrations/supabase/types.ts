@@ -3432,12 +3432,14 @@ export type Database = {
         Row: {
           ai_generated: boolean | null
           band_name: string | null
+          band_view_visibility: string
           community_id: string | null
           conductor_note: string | null
           created_at: string
           created_by: string | null
           date: string
           emotional_journey: string | null
+          has_private_scores: boolean
           id: string
           is_public: boolean | null
           notes: string | null
@@ -3446,6 +3448,7 @@ export type Database = {
           scripture_reference: string | null
           service_name: string
           service_time: string | null
+          share_token: string | null
           status: Database["public"]["Enums"]["set_status"]
           target_audience: string | null
           tempo_pattern: string | null
@@ -3459,12 +3462,14 @@ export type Database = {
         Insert: {
           ai_generated?: boolean | null
           band_name?: string | null
+          band_view_visibility?: string
           community_id?: string | null
           conductor_note?: string | null
           created_at?: string
           created_by?: string | null
           date: string
           emotional_journey?: string | null
+          has_private_scores?: boolean
           id?: string
           is_public?: boolean | null
           notes?: string | null
@@ -3473,6 +3478,7 @@ export type Database = {
           scripture_reference?: string | null
           service_name: string
           service_time?: string | null
+          share_token?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
           tempo_pattern?: string | null
@@ -3486,12 +3492,14 @@ export type Database = {
         Update: {
           ai_generated?: boolean | null
           band_name?: string | null
+          band_view_visibility?: string
           community_id?: string | null
           conductor_note?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
           emotional_journey?: string | null
+          has_private_scores?: boolean
           id?: string
           is_public?: boolean | null
           notes?: string | null
@@ -3500,6 +3508,7 @@ export type Database = {
           scripture_reference?: string | null
           service_name?: string
           service_time?: string | null
+          share_token?: string | null
           status?: Database["public"]["Enums"]["set_status"]
           target_audience?: string | null
           tempo_pattern?: string | null
@@ -3804,6 +3813,7 @@ export type Database = {
           score_url: string
           set_song_id: string
           sort_order: number
+          vault_score_id: string | null
         }
         Insert: {
           created_at?: string
@@ -3815,6 +3825,7 @@ export type Database = {
           score_url: string
           set_song_id: string
           sort_order?: number
+          vault_score_id?: string | null
         }
         Update: {
           created_at?: string
@@ -3826,6 +3837,7 @@ export type Database = {
           score_url?: string
           set_song_id?: string
           sort_order?: number
+          vault_score_id?: string | null
         }
         Relationships: [
           {
@@ -3833,6 +3845,13 @@ export type Database = {
             columns: ["set_song_id"]
             isOneToOne: false
             referencedRelation: "set_songs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "set_song_scores_vault_score_id_fkey"
+            columns: ["vault_score_id"]
+            isOneToOne: false
+            referencedRelation: "user_score_vault"
             referencedColumns: ["id"]
           },
         ]
@@ -4926,6 +4945,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_score_vault: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          musical_key: string | null
+          pages_count: number | null
+          score_url: string
+          song_id: string | null
+          thumbnail_url: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          musical_key?: string | null
+          pages_count?: number | null
+          score_url: string
+          song_id?: string | null
+          thumbnail_url?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          musical_key?: string | null
+          pages_count?: number | null
+          score_url?: string
+          song_id?: string | null
+          thumbnail_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_score_vault_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_seeds: {
         Row: {
           created_at: string | null
@@ -4958,6 +5021,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "seed_levels"
             referencedColumns: ["level"]
+          },
+        ]
+      }
+      user_song_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          preferred_key: string | null
+          song_id: string
+          user_id: string
+          vault_score_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          preferred_key?: string | null
+          song_id: string
+          user_id: string
+          vault_score_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          preferred_key?: string | null
+          song_id?: string
+          user_id?: string
+          vault_score_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_song_profiles_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
           },
         ]
       }
