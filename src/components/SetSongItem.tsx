@@ -11,13 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GripVertical, X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
 import { FileMusic } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { Metronome } from "./Metronome";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
-import { SetSongScoreDialog } from "./SetSongScoreDialog";
+const SetSongScoreDialog = lazy(() =>
+  import("./SetSongScoreDialog").then((m) => ({ default: m.SetSongScoreDialog }))
+);
 import { openYouTubeUrl } from "@/lib/youtubeHelper";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -449,16 +451,20 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         songId={song?.id}
       />
 
-      <SetSongScoreDialog
-        open={showScoreDialog}
-        onOpenChange={setShowScoreDialog}
-        setSongId={dbId}
-        defaultQuery={song?.title ? `${song.title} 악보` : ""}
-        scoreRefUrl={setSong.score_ref_url}
-        scoreRefThumbnail={setSong.score_ref_thumbnail}
-        privateScoreFileUrl={setSong.private_score_file_url}
-        onSaved={(updates) => onUpdate(index, updates)}
-      />
+      {showScoreDialog && (
+        <Suspense fallback={null}>
+          <SetSongScoreDialog
+            open={showScoreDialog}
+            onOpenChange={setShowScoreDialog}
+            setSongId={dbId}
+            defaultQuery={song?.title ? `${song.title} 악보` : ""}
+            scoreRefUrl={setSong.score_ref_url}
+            scoreRefThumbnail={setSong.score_ref_thumbnail}
+            privateScoreFileUrl={setSong.private_score_file_url}
+            onSaved={(updates) => onUpdate(index, updates)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
