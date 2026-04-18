@@ -134,6 +134,11 @@ export async function getSignedScoreUrls(
 
   for (const url of urls) {
     if (!url) continue;
+    // External URL — pass through
+    if (isExternalUrl(url)) {
+      result.set(url, url);
+      continue;
+    }
     const path = extractScorePath(url);
     if (!path) continue;
 
