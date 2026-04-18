@@ -17,6 +17,12 @@ interface ScorePreviewDialogProps {
   scoreUrl: string | null;
   songTitle: string;
   songId?: string;
+  /**
+   * When provided, the dialog loads per-set score variations from set_song_scores
+   * (the new architecture). When omitted, only the single `scoreUrl` (if any) is shown.
+   * Legacy song_scores library data is no longer queried.
+   */
+  setSongId?: string;
 }
 
 interface ScoreVariation {
