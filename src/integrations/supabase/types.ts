@@ -3793,6 +3793,47 @@ export type Database = {
           },
         ]
       }
+      set_song_scores: {
+        Row: {
+          created_at: string
+          id: string
+          musical_key: string
+          score_thumbnail: string | null
+          score_type: string
+          score_url: string
+          set_song_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          musical_key?: string
+          score_thumbnail?: string | null
+          score_type: string
+          score_url: string
+          set_song_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          musical_key?: string
+          score_thumbnail?: string | null
+          score_type?: string
+          score_url?: string
+          set_song_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "set_song_scores_set_song_id_fkey"
+            columns: ["set_song_id"]
+            isOneToOne: false
+            referencedRelation: "set_songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       set_songs: {
         Row: {
           bpm: number | null
