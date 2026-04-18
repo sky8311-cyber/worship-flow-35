@@ -371,6 +371,40 @@ export const SetSongScoreDialog = ({
         scoresToSave = scoresToSave.map((s, i) => ({ ...s, isPrimary: i === 0 }));
       }
 
+      // Get current user (for vault upserts)
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Vault upsert for upload-type scores that don't already have a vault_score_id
+      const vaultIdByLocalId: Record<string, string> = {};
+      if (user) {
+        const toVault = scoresToSave.filter(
+          (s) => s.type === "upload" && !s.vaultScoreId
+        );
+        if (toVault.length > 0) {
+          const vaultRows = toVault.map((s) => ({
+            user_id: user.id,
+            song_id: songId ?? null,
+            score_url: s.url,
+            thumbnail_url: s.thumbnail,
+            musical_key: s.musicalKey,
+            label: s.label ?? null,
+            pages_count: 1,
+          }));
+          const { data: vaultInserted, error: vaultErr } = await supabase
+            .from("user_score_vault")
+            .insert(vaultRows)
+            .select("id");
+          if (vaultErr) {
+            console.warn("Vault insert failed (non-fatal):", vaultErr);
+          } else if (vaultInserted) {
+            toVault.forEach((s, i) => {
+              const inserted = vaultInserted[i];
+              if (inserted?.id) vaultIdByLocalId[s.id] = inserted.id;
+            });
+          }
+        }
+      }
+
       // Delete existing
       const { error: delErr } = await supabase
         .from("set_song_scores")
@@ -388,9 +422,42 @@ export const SetSongScoreDialog = ({
           musical_key: s.musicalKey,
           sort_order: i,
           is_primary: s.isPrimary,
+          vault_score_id: s.vaultScoreId ?? vaultIdByLocalId[s.id] ?? null,
         }));
         const { error: insErr } = await supabase.from("set_song_scores").insert(rows);
         if (insErr) throw insErr;
+      }
+
+      // Auto-gating: update service_sets.has_private_scores & band_view_visibility
+      try {
+        const { data: setSongRow } = await supabase
+          .from("set_songs")
+          .select("service_set_id")
+          .eq("id", setSongId)
+          .maybeSingle();
+        const serviceSetId = (setSongRow as any)?.service_set_id;
+        if (serviceSetId) {
+          const hasUpload = scoresToSave.some((s) => s.type === "upload");
+          if (hasUpload) {
+            const { data: ssRow } = await supabase
+              .from("service_sets")
+              .select("band_view_visibility")
+              .eq("id", serviceSetId)
+              .maybeSingle();
+            const updates: Record<string, any> = { has_private_scores: true };
+            if ((ssRow as any)?.band_view_visibility === "public") {
+              updates.band_view_visibility = "team";
+            }
+            await supabase.from("service_sets").update(updates).eq("id", serviceSetId);
+          } else {
+            await supabase
+              .from("service_sets")
+              .update({ has_private_scores: false })
+              .eq("id", serviceSetId);
+          }
+        }
+      } catch (gateErr) {
+        console.warn("Auto-gating failed (non-fatal):", gateErr);
       }
 
       // Sync set_songs.score_key (and possibly performance_key) with primary score
