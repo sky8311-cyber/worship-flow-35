@@ -450,6 +450,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         scoreUrl={currentScoreUrl}
         songTitle={song?.title || ""}
         songId={song?.id}
+        setSongId={dbId}
       />
 
       {showScoreDialog && (
