@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { GripVertical, X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
 import { FileMusic } from "lucide-react";
-import { useState, useMemo, lazy, Suspense } from "react";
+import { useState, useMemo, lazy, Suspense, useEffect } from "react";
+import { computeTranspose, formatTranspose } from "@/lib/transpose";
 import { Metronome } from "./Metronome";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -81,10 +82,34 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     return variations;
   }, [song]);
 
-  // Standard musical keys for performance key override
-  const MUSICAL_KEYS = [
-    "C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"
-  ];
+  // Standard 12 musical keys for performance key selection
+  const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+  // Score key (read-only) is auto-populated from primary score in set_song_scores
+  const scoreKey: string | null = setSong.score_key || null;
+  // Performance key — fall back to legacy `key` column for backward compat
+  const performanceKey: string | null = setSong.performance_key || setSong.key || null;
+
+  // Auto-compute transpose whenever score_key or performance_key changes
+  const transposeNumber = useMemo(
+    () => computeTranspose(scoreKey, performanceKey),
+    [scoreKey, performanceKey]
+  );
+  const transposeDisplay = transposeNumber === null ? "-" : formatTranspose(transposeNumber);
+
+  // Persist transpose_amount to DB when it changes (display-only, but kept in sync)
+  useEffect(() => {
+    if (!dbId) return;
+    const newTranspose = transposeNumber === null ? null : formatTranspose(transposeNumber);
+    if ((setSong.transpose_amount ?? null) === newTranspose) return;
+    onUpdate(index, { transpose_amount: newTranspose });
+    if (status === "published") {
+      supabase
+        .from("set_songs")
+        .update({ transpose_amount: newTranspose })
+        .eq("id", dbId);
+    }
+  }, [transposeNumber, dbId, status]);
 
   const handleKeyVariationChange = async (selectedKey: string) => {
     const variation = keyVariations.find(v => v.key === selectedKey);
@@ -115,11 +140,22 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     }
   };
 
-  const handlePerformanceKeyChange = (performanceKey: string) => {
-    if (performanceKey === "none") {
-      onUpdate(index, { key: null });
-    } else {
-      onUpdate(index, { key: performanceKey });
+  const handlePerformanceKeyChange = async (newKey: string) => {
+    const value = newKey === "none" ? null : newKey;
+    // Update local state — keep legacy `key` in sync for backward compat
+    onUpdate(index, { performance_key: value, key: value });
+
+    if (dbId) {
+      const { error } = await supabase
+        .from("set_songs")
+        .update({ performance_key: value, key: value })
+        .eq("id", dbId);
+      if (error) {
+        console.error("Failed to save performance_key:", error);
+        toast.error("연주 키 저장에 실패했습니다");
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["band-view-songs"] });
+      }
     }
   };
 
