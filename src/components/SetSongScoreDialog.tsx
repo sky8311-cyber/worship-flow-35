@@ -64,6 +64,7 @@ export const SetSongScoreDialog = ({
   open,
   onOpenChange,
   setSongId,
+  songId,
   defaultQuery = "",
   scoreRefUrl,
   scoreRefThumbnail,
@@ -80,6 +81,10 @@ export const SetSongScoreDialog = ({
   const [acknowledged, setAcknowledged] = useState(false);
   const [selectedScores, setSelectedScores] = useState<SelectedScore[]>([]);
   const [saving, setSaving] = useState(false);
+  const [vaultItems, setVaultItems] = useState<VaultScore[]>([]);
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultLoaded, setVaultLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("search");
   const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
 
   const handleAcknowledgeChange = async (checked: boolean) => {
