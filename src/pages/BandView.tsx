@@ -246,10 +246,9 @@ const BandView = () => {
     for (const score of allSongScores) {
       if ((score as any).file_url) allUrls.push((score as any).file_url);
     }
-    // Also include override/default score URLs from setSongs
+    // Also include override score URLs from setSongs (no song-library defaults)
     for (const ss of (setSongs || [])) {
       if ((ss as any).override_score_file_url) allUrls.push((ss as any).override_score_file_url);
-      if ((ss as any).songs?.score_file_url) allUrls.push((ss as any).songs.score_file_url);
     }
     if (allUrls.length > 0) {
       getSignedScoreUrls(allUrls).then((map) => {
