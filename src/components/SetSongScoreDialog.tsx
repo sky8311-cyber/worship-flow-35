@@ -17,6 +17,7 @@ interface SetSongScoreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setSongId?: string;
+  songId?: string | null;
   defaultQuery?: string;
   scoreRefUrl?: string | null;
   scoreRefThumbnail?: string | null;
@@ -26,6 +27,15 @@ interface SetSongScoreDialogProps {
     score_ref_thumbnail?: string | null;
     private_score_file_url?: string | null;
   }) => void;
+}
+
+interface VaultScore {
+  id: string;
+  score_url: string;
+  thumbnail_url: string | null;
+  musical_key: string | null;
+  label: string | null;
+  pages_count: number | null;
 }
 
 interface SearchResult {
@@ -44,6 +54,8 @@ interface SelectedScore {
   thumbnail: string | null;
   musicalKey: string;
   isPrimary: boolean;
+  vaultScoreId?: string | null;
+  label?: string | null;
 }
 
 const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
@@ -52,6 +64,7 @@ export const SetSongScoreDialog = ({
   open,
   onOpenChange,
   setSongId,
+  songId,
   defaultQuery = "",
   scoreRefUrl,
   scoreRefThumbnail,
@@ -68,6 +81,10 @@ export const SetSongScoreDialog = ({
   const [acknowledged, setAcknowledged] = useState(false);
   const [selectedScores, setSelectedScores] = useState<SelectedScore[]>([]);
   const [saving, setSaving] = useState(false);
+  const [vaultItems, setVaultItems] = useState<VaultScore[]>([]);
+  const [vaultLoading, setVaultLoading] = useState(false);
+  const [vaultLoaded, setVaultLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("search");
   const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
 
   const handleAcknowledgeChange = async (checked: boolean) => {
@@ -87,8 +104,45 @@ export const SetSongScoreDialog = ({
       setResults([]);
       setApiNotConfigured(false);
       setSetupErrorMessage(null);
+      setActiveTab("search");
+      setVaultItems([]);
+      setVaultLoaded(false);
     }
   }, [open, defaultQuery]);
+
+  const loadVault = async () => {
+    if (vaultLoaded || vaultLoading) return;
+    setVaultLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setVaultLoaded(true);
+        return;
+      }
+      let q = supabase
+        .from("user_score_vault")
+        .select("id, score_url, thumbnail_url, musical_key, label, pages_count")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (songId) q = q.eq("song_id", songId);
+      const { data, error } = await q;
+      if (error) throw error;
+      setVaultItems((data || []) as VaultScore[]);
+      setVaultLoaded(true);
+    } catch (e) {
+      console.error("Failed to load vault:", e);
+      toast.error("보관함 불러오기 실패");
+    } finally {
+      setVaultLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && activeTab === "vault" && !vaultLoaded && !vaultLoading) {
+      loadVault();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab]);
 
   // Load existing scores from set_song_scores when dialog opens
   useEffect(() => {
@@ -111,6 +165,7 @@ export const SetSongScoreDialog = ({
           thumbnail: row.score_thumbnail,
           musicalKey: row.musical_key || "C",
           isPrimary: !!row.is_primary,
+          vaultScoreId: row.vault_score_id ?? null,
         }))
       );
     };
@@ -257,6 +312,7 @@ export const SetSongScoreDialog = ({
           uploadedPaths.push(path);
         }
 
+        const baseLabel = file.name.replace(/\.[^.]+$/, "");
         setSelectedScores((prev) => {
           const newRows: SelectedScore[] = uploadedPaths.map((path, idx) => ({
             id: crypto.randomUUID(),
@@ -265,6 +321,7 @@ export const SetSongScoreDialog = ({
             thumbnail: null,
             musicalKey: "C",
             isPrimary: prev.length === 0 && idx === 0,
+            label: `${baseLabel} - p${idx + 1}`,
           }));
           return [...prev, ...newRows];
         });
@@ -277,6 +334,7 @@ export const SetSongScoreDialog = ({
           .upload(path, file, { upsert: true });
         if (upErr) throw upErr;
 
+        const baseLabel = file.name.replace(/\.[^.]+$/, "");
         setSelectedScores((prev) => [
           ...prev,
           {
@@ -286,6 +344,7 @@ export const SetSongScoreDialog = ({
             thumbnail: null,
             musicalKey: "C",
             isPrimary: prev.length === 0,
+            label: baseLabel,
           },
         ]);
         toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
@@ -312,6 +371,40 @@ export const SetSongScoreDialog = ({
         scoresToSave = scoresToSave.map((s, i) => ({ ...s, isPrimary: i === 0 }));
       }
 
+      // Get current user (for vault upserts)
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Vault upsert for upload-type scores that don't already have a vault_score_id
+      const vaultIdByLocalId: Record<string, string> = {};
+      if (user) {
+        const toVault = scoresToSave.filter(
+          (s) => s.type === "upload" && !s.vaultScoreId
+        );
+        if (toVault.length > 0) {
+          const vaultRows = toVault.map((s) => ({
+            user_id: user.id,
+            song_id: songId ?? null,
+            score_url: s.url,
+            thumbnail_url: s.thumbnail,
+            musical_key: s.musicalKey,
+            label: s.label ?? null,
+            pages_count: 1,
+          }));
+          const { data: vaultInserted, error: vaultErr } = await supabase
+            .from("user_score_vault")
+            .insert(vaultRows)
+            .select("id");
+          if (vaultErr) {
+            console.warn("Vault insert failed (non-fatal):", vaultErr);
+          } else if (vaultInserted) {
+            toVault.forEach((s, i) => {
+              const inserted = vaultInserted[i];
+              if (inserted?.id) vaultIdByLocalId[s.id] = inserted.id;
+            });
+          }
+        }
+      }
+
       // Delete existing
       const { error: delErr } = await supabase
         .from("set_song_scores")
@@ -329,9 +422,42 @@ export const SetSongScoreDialog = ({
           musical_key: s.musicalKey,
           sort_order: i,
           is_primary: s.isPrimary,
+          vault_score_id: s.vaultScoreId ?? vaultIdByLocalId[s.id] ?? null,
         }));
         const { error: insErr } = await supabase.from("set_song_scores").insert(rows);
         if (insErr) throw insErr;
+      }
+
+      // Auto-gating: update service_sets.has_private_scores & band_view_visibility
+      try {
+        const { data: setSongRow } = await supabase
+          .from("set_songs")
+          .select("service_set_id")
+          .eq("id", setSongId)
+          .maybeSingle();
+        const serviceSetId = (setSongRow as any)?.service_set_id;
+        if (serviceSetId) {
+          const hasUpload = scoresToSave.some((s) => s.type === "upload");
+          if (hasUpload) {
+            const { data: ssRow } = await supabase
+              .from("service_sets")
+              .select("band_view_visibility")
+              .eq("id", serviceSetId)
+              .maybeSingle();
+            const updates: Record<string, any> = { has_private_scores: true };
+            if ((ssRow as any)?.band_view_visibility === "public") {
+              updates.band_view_visibility = "team";
+            }
+            await supabase.from("service_sets").update(updates).eq("id", serviceSetId);
+          } else {
+            await supabase
+              .from("service_sets")
+              .update({ has_private_scores: false })
+              .eq("id", serviceSetId);
+          }
+        }
+      } catch (gateErr) {
+        console.warn("Auto-gating failed (non-fatal):", gateErr);
       }
 
       // Sync set_songs.score_key (and possibly performance_key) with primary score
@@ -414,8 +540,8 @@ export const SetSongScoreDialog = ({
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="search" className="w-full min-w-0 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 overflow-hidden">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
                악보 웹 검색
@@ -423,6 +549,10 @@ export const SetSongScoreDialog = ({
             <TabsTrigger value="upload">
               <Upload className="w-4 h-4 mr-2" />
               내 악보 업로드
+            </TabsTrigger>
+            <TabsTrigger value="vault">
+              <Music className="w-4 h-4 mr-2" />
+              내 보관함
             </TabsTrigger>
           </TabsList>
 
@@ -520,6 +650,88 @@ export const SetSongScoreDialog = ({
                 </span>
               </label>
             </div>
+          </TabsContent>
+
+          {/* Tab 3: My Vault */}
+          <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0">
+            {vaultLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : vaultItems.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-center">
+                <Music className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  아직 저장된 악보가 없어요.
+                </p>
+                <p className="text-xs text-muted-foreground/80">
+                  악보를 업로드하면 자동으로 보관됩니다.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
+                {vaultItems.map((item) => {
+                  const selected = selectedScores.some(
+                    (s) => s.vaultScoreId === item.id || s.url === item.score_url
+                  );
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedScores((prev) => {
+                          if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
+                            return prev.filter(
+                              (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
+                            );
+                          }
+                          return [
+                            ...prev,
+                            {
+                              id: crypto.randomUUID(),
+                              type: "upload" as const,
+                              url: item.score_url,
+                              thumbnail: item.thumbnail_url,
+                              musicalKey: item.musical_key || "C",
+                              isPrimary: prev.length === 0,
+                              vaultScoreId: item.id,
+                              label: item.label,
+                            },
+                          ];
+                        });
+                      }}
+                      className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
+                        selected ? "border-primary ring-2 ring-primary" : "border-border"
+                      }`}
+                    >
+                      {item.thumbnail_url ? (
+                        <img
+                          src={item.thumbnail_url}
+                          alt={item.label || ""}
+                          loading="lazy"
+                          className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                        />
+                      ) : (
+                        <div className="w-full h-32 flex items-center justify-center bg-muted">
+                          <Music className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                        <Checkbox checked={selected} className="pointer-events-none" />
+                      </div>
+                      <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                        {item.musical_key || "C"}
+                      </div>
+                      {item.label && (
+                        <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
+                          {item.label}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
