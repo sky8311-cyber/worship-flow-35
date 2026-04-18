@@ -503,7 +503,7 @@ export const SetSongScoreDialog = ({
                 return (
                   <div
                     key={score.id}
-                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden"
+                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
                   >
                     {score.thumbnail ? (
                       <img
