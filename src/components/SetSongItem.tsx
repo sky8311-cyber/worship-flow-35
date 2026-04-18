@@ -252,85 +252,50 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                 </TooltipProvider>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {/* Score Key Selection - which score file to use */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* 악보키 — read-only, auto-populated from primary score in set_song_scores */}
                 <div>
-                  <label className="text-xs text-muted-foreground">악보 키</label>
-                  {keyVariations.length > 0 ? (
-                    <Select 
-                      value={setSong.score_key || keyVariations.find(v => v.scoreUrl === setSong.override_score_file_url)?.key || keyVariations[0]?.key || ""} 
-                      onValueChange={handleKeyVariationChange}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder={song?.default_key || "악보 선택"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {keyVariations.map((variation) => (
-                          <SelectItem key={variation.key} value={variation.key}>
-                            <div className="flex items-center gap-2">
-                              <span>{variation.key}</span>
-                              {variation.scoreUrl && (
-                                <FileMusic className="w-3 h-3 text-blue-500" />
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="mt-1 text-sm text-muted-foreground py-2">
-                      {song?.default_key || "-"}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Performance Key Override - the actual key to play */}
-                <div className="flex items-end gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs text-muted-foreground">실제 연주키</label>
-                    <Select 
-                      value={setSong.key || "none"} 
-                      onValueChange={handlePerformanceKeyChange}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">-</SelectItem>
-                        {MUSICAL_KEYS.map((key) => (
-                          <SelectItem key={key} value={key}>
-                            {key}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <span className="text-muted-foreground mb-2">→</span>
-                  <div className="flex-1">
-                    <label className="text-xs text-muted-foreground">전조 키</label>
-                    <Select 
-                      value={setSong.key_change_to || "none"} 
-                      onValueChange={handleKeyChangeToChange}
-                      disabled={!setSong.key}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="선택" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">-</SelectItem>
-                        {MUSICAL_KEYS.map((key) => (
-                          <SelectItem key={key} value={key}>
-                            {key}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <label className="text-xs text-muted-foreground">악보키</label>
+                  <div className="mt-1 h-10 px-3 flex items-center rounded-md border border-input bg-muted/40 text-sm">
+                    {scoreKey || song?.default_key || "-"}
                   </div>
                 </div>
+
+                {/* 연주키 — user-editable, persisted immediately */}
+                <div>
+                  <label className="text-xs text-muted-foreground">연주키</label>
+                  <Select
+                    value={performanceKey || "none"}
+                    onValueChange={handlePerformanceKeyChange}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">-</SelectItem>
+                      {MUSICAL_KEYS.map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {key}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 전조 — read-only, auto-computed */}
+                <div>
+                  <label className="text-xs text-muted-foreground">전조</label>
+                  <div className="mt-1 h-10 px-3 flex items-center rounded-md border border-input bg-muted/40 text-sm">
+                    {transposeDisplay}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>
                   <div className="mt-1">
-                    <Metronome 
+                    <Metronome
                       bpm={setSong.bpm}
                       timeSignature={setSong.time_signature}
                       onBpmChange={(newBpm) => onUpdate(index, { bpm: newBpm })}
