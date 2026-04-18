@@ -51,17 +51,28 @@ export function extractScorePath(urlOrPath: string | null | undefined): string |
     return decodeURIComponent(pathWithQuery.split("?")[0]);
   }
 
-  // Already a path (no http)
-  if (!urlOrPath.startsWith("http")) {
-    // Remove leading bucket name if present
-    if (urlOrPath.startsWith(`${BUCKET}/`)) {
-      return urlOrPath.slice(BUCKET.length + 1);
-    }
-    return urlOrPath.startsWith("/") ? urlOrPath.slice(1) : urlOrPath;
+  // External URL (not our storage) — not a storage path
+  if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
+    return null;
   }
 
-  // Unknown URL format — return as-is (will fail gracefully)
-  return urlOrPath;
+  // Already a path (no http)
+  // Remove leading bucket name if present
+  if (urlOrPath.startsWith(`${BUCKET}/`)) {
+    return urlOrPath.slice(BUCKET.length + 1);
+  }
+  return urlOrPath.startsWith("/") ? urlOrPath.slice(1) : urlOrPath;
+}
+
+/**
+ * Returns true if value is an external (non-Supabase-storage) URL.
+ */
+export function isExternalUrl(urlOrPath: string | null | undefined): boolean {
+  if (!urlOrPath) return false;
+  if (!urlOrPath.startsWith("http://") && !urlOrPath.startsWith("https://")) return false;
+  // It's http(s) — only "ours" if it contains our storage prefix
+  return urlOrPath.indexOf(`/storage/v1/object/public/${BUCKET}/`) === -1
+    && urlOrPath.indexOf(`/storage/v1/object/sign/${BUCKET}/`) === -1;
 }
 
 /**
