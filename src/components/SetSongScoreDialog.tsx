@@ -515,6 +515,9 @@ export const SetSongScoreDialog = ({
                 <span className="text-sm text-muted-foreground">
                   {uploading ? "업로드 중..." : "PDF 또는 이미지 파일 선택"}
                 </span>
+                <span className="text-xs text-muted-foreground/80">
+                  PDF는 페이지별 이미지로 자동 변환됩니다
+                </span>
               </label>
             </div>
           </TabsContent>
