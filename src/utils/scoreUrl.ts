@@ -86,6 +86,9 @@ export function isExternalUrl(urlOrPath: string | null | undefined): boolean {
 export async function getSignedScoreUrl(urlOrPath: string | null | undefined): Promise<string | null> {
   if (!urlOrPath) return null;
 
+  // External URL — return as-is, no signing needed
+  if (isExternalUrl(urlOrPath)) return urlOrPath;
+
   const path = extractScorePath(urlOrPath);
   if (!path) return null;
 
