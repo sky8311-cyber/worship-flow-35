@@ -377,12 +377,12 @@ export const SetSongScoreDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0 [&>*]:min-w-0">
+        <DialogHeader className="min-w-0">
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="search" className="w-full overflow-hidden">
+        <Tabs defaultValue="search" className="w-full min-w-0 overflow-hidden">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
@@ -395,7 +395,7 @@ export const SetSongScoreDialog = ({
           </TabsList>
 
           {/* Tab 1: Web Image Search */}
-          <TabsContent value="search" className="space-y-4 overflow-hidden w-full">
+          <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0">
             {apiNotConfigured ? (
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -422,7 +422,7 @@ export const SetSongScoreDialog = ({
                 </p>
 
                 {results.length > 0 && (
-                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden">
+                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
                     {results.map((item, i) => {
                       const selected = isSelected(item.link);
                       return (
@@ -453,7 +453,7 @@ export const SetSongScoreDialog = ({
           </TabsContent>
 
           {/* Tab 2: Private Upload */}
-          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full">
+          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0">
             <CopyrightUploadNotice
               checked={acknowledged}
               onCheckedChange={handleAcknowledgeChange}
@@ -490,11 +490,11 @@ export const SetSongScoreDialog = ({
 
         {/* Selected Scores Preview Panel */}
         {selectedScores.length > 0 && (
-          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full">
+          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full w-full min-w-0 overflow-hidden">
             <p className="text-xs font-medium text-muted-foreground">
               선택된 악보 ({selectedScores.length})
             </p>
-            <div className="space-y-2 max-w-full">
+            <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
               {selectedScores.map((score) => {
                 const displayName =
                   score.type === "upload"
@@ -503,7 +503,7 @@ export const SetSongScoreDialog = ({
                 return (
                   <div
                     key={score.id}
-                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden"
+                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
                   >
                     {score.thumbnail ? (
                       <img
