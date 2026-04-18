@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Upload, ExternalLink, Trash2, Loader2, AlertCircle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -34,6 +36,16 @@ interface SearchResult {
   height?: number | null;
 }
 
+interface SelectedScore {
+  id: string;
+  type: "web" | "upload";
+  url: string;
+  thumbnail: string | null;
+  musicalKey: string;
+}
+
+const MUSICAL_KEYS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
 export const SetSongScoreDialog = ({
   open,
   onOpenChange,
@@ -51,8 +63,9 @@ export const SetSongScoreDialog = ({
   const [apiNotConfigured, setApiNotConfigured] = useState(false);
   const [setupErrorMessage, setSetupErrorMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [privateSignedUrl, setPrivateSignedUrl] = useState<string | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
+  const [selectedScores, setSelectedScores] = useState<SelectedScore[]>([]);
+  const [saving, setSaving] = useState(false);
   const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
 
   const handleAcknowledgeChange = async (checked: boolean) => {
@@ -75,20 +88,59 @@ export const SetSongScoreDialog = ({
     }
   }, [open, defaultQuery]);
 
-  // Resolve signed URL for private score
+  // Load existing scores from set_song_scores when dialog opens
   useEffect(() => {
-    const resolve = async () => {
-      if (!privateScoreFileUrl) {
-        setPrivateSignedUrl(null);
+    const load = async () => {
+      if (!open || !setSongId) return;
+      const { data, error } = await supabase
+        .from("set_song_scores")
+        .select("*")
+        .eq("set_song_id", setSongId)
+        .order("sort_order", { ascending: true });
+      if (error) {
+        console.error("Failed to load scores:", error);
         return;
       }
-      const { data } = await supabase.storage
-        .from("scores")
-        .createSignedUrl(privateScoreFileUrl, 14400);
-      setPrivateSignedUrl(data?.signedUrl || null);
+      setSelectedScores(
+        (data || []).map((row: any) => ({
+          id: row.id,
+          type: row.score_type as "web" | "upload",
+          url: row.score_url,
+          thumbnail: row.score_thumbnail,
+          musicalKey: row.musical_key || "C",
+        }))
+      );
     };
-    resolve();
-  }, [privateScoreFileUrl]);
+    load();
+  }, [open, setSongId]);
+
+  const isSelected = (url: string) => selectedScores.some((s) => s.url === url);
+
+  const toggleWebSelection = (item: SearchResult) => {
+    setSelectedScores((prev) => {
+      if (prev.some((s) => s.url === item.link)) {
+        return prev.filter((s) => s.url !== item.link);
+      }
+      return [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          type: "web",
+          url: item.link,
+          thumbnail: item.thumbnailLink,
+          musicalKey: "C",
+        },
+      ];
+    });
+  };
+
+  const removeSelected = (id: string) => {
+    setSelectedScores((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const updateSelectedKey = (id: string, key: string) => {
+    setSelectedScores((prev) => prev.map((s) => (s.id === id ? { ...s, musicalKey: key } : s)));
+  };
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -127,43 +179,6 @@ export const SetSongScoreDialog = ({
     }
   };
 
-  const persistUpdates = async (updates: {
-    score_ref_url?: string | null;
-    score_ref_thumbnail?: string | null;
-    private_score_file_url?: string | null;
-  }) => {
-    if (setSongId) {
-      const { error } = await supabase
-        .from("set_songs")
-        .update(updates)
-        .eq("id", setSongId);
-      if (error) {
-        toast.error("저장 실패");
-        return false;
-      }
-      queryClient.invalidateQueries({ queryKey: ["set-songs"] });
-      queryClient.invalidateQueries({ queryKey: ["band-view-songs"] });
-    }
-    onSaved?.(updates);
-    return true;
-  };
-
-  const handleSelectImage = async (item: SearchResult) => {
-    const ok = await persistUpdates({
-      score_ref_url: item.link,
-      score_ref_thumbnail: item.thumbnailLink,
-    });
-    if (ok) toast.success("악보가 저장되었습니다");
-  };
-
-  const handleClearScoreRef = async () => {
-    const ok = await persistUpdates({
-      score_ref_url: null,
-      score_ref_thumbnail: null,
-    });
-    if (ok) toast.success("저장된 악보가 삭제되었습니다");
-  };
-
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -195,8 +210,18 @@ export const SetSongScoreDialog = ({
         .upload(path, file, { upsert: true });
       if (upErr) throw upErr;
 
-      const ok = await persistUpdates({ private_score_file_url: path });
-      if (ok) toast.success("업로드 완료");
+      // Add to selectedScores list instead of immediately persisting
+      setSelectedScores((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          type: "upload",
+          url: path,
+          thumbnail: null,
+          musicalKey: "C",
+        },
+      ]);
+      toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "업로드 실패");
@@ -206,12 +231,46 @@ export const SetSongScoreDialog = ({
     }
   };
 
-  const handleDeletePrivate = async () => {
-    if (privateScoreFileUrl) {
-      await supabase.storage.from("scores").remove([privateScoreFileUrl]);
+  const handleSaveAll = async () => {
+    if (!setSongId) {
+      toast.error("먼저 셋리스트를 저장해주세요");
+      return;
     }
-    const ok = await persistUpdates({ private_score_file_url: null });
-    if (ok) toast.success("삭제되었습니다");
+    setSaving(true);
+    try {
+      // Delete existing
+      const { error: delErr } = await supabase
+        .from("set_song_scores")
+        .delete()
+        .eq("set_song_id", setSongId);
+      if (delErr) throw delErr;
+
+      // Insert new rows
+      if (selectedScores.length > 0) {
+        const rows = selectedScores.map((s, i) => ({
+          set_song_id: setSongId,
+          score_type: s.type,
+          score_url: s.url,
+          score_thumbnail: s.thumbnail,
+          musical_key: s.musicalKey,
+          sort_order: i,
+        }));
+        const { error: insErr } = await supabase.from("set_song_scores").insert(rows);
+        if (insErr) throw insErr;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["set-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["band-view-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["set-song-scores", setSongId] });
+      toast.success("저장되었습니다");
+      onSaved?.({});
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "저장 실패");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -263,13 +322,14 @@ export const SetSongScoreDialog = ({
                 {results.length > 0 && (
                   <div className="grid grid-cols-3 gap-3">
                     {results.map((item, i) => {
-                      const isSelected = scoreRefUrl === item.link;
+                      const selected = isSelected(item.link);
                       return (
                         <button
+                          type="button"
                           key={i}
-                          onClick={() => handleSelectImage(item)}
+                          onClick={() => toggleWebSelection(item)}
                           className={`relative rounded-md overflow-hidden border-2 transition-all hover:border-primary ${
-                            isSelected ? "border-primary ring-2 ring-primary/30" : "border-border"
+                            selected ? "border-primary ring-2 ring-primary" : "border-border"
                           }`}
                         >
                           <img
@@ -278,57 +338,15 @@ export const SetSongScoreDialog = ({
                             loading="lazy"
                             className="w-full h-32 object-cover object-top bg-muted"
                           />
-                          {isSelected && (
-                            <div className="absolute top-1 right-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                              선택됨
-                            </div>
-                          )}
+                          <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                            <Checkbox checked={selected} className="pointer-events-none" />
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 )}
               </>
-            )}
-
-            {scoreRefUrl && (
-              <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30">
-                <p className="text-xs font-medium text-muted-foreground">현재 저장된 악보</p>
-                <div className="flex items-start gap-3">
-                  {scoreRefThumbnail && (
-                    <img
-                      src={scoreRefThumbnail}
-                      alt="saved score"
-                      className="w-20 h-20 object-cover rounded border border-border"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <a
-                      href={scoreRefUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      브라우저에서 열기
-                    </a>
-                    <p className="text-xs text-muted-foreground">
-                      이미지를 불러올 수 없으면 위 링크로 원본을 확인하세요
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClearScoreRef}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
             )}
           </TabsContent>
 
@@ -365,41 +383,79 @@ export const SetSongScoreDialog = ({
                 </span>
               </label>
             </div>
-
-            {privateScoreFileUrl && (
-              <div className="border border-border rounded-md p-3 bg-muted/30">
-                <p className="text-xs font-medium text-muted-foreground mb-2">업로드된 파일</p>
-                <div className="flex items-center justify-between gap-3">
-                  {privateSignedUrl && privateScoreFileUrl.match(/\.(png|jpe?g|webp)$/i) ? (
-                    <img
-                      src={privateSignedUrl}
-                      alt="private score"
-                      className="w-20 h-20 object-cover rounded border border-border"
-                    />
-                  ) : (
-                    <a
-                      href={privateSignedUrl || "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      파일 열기
-                    </a>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleDeletePrivate}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </TabsContent>
         </Tabs>
+
+        {/* Selected Scores Preview Panel */}
+        {selectedScores.length > 0 && (
+          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4">
+            <p className="text-xs font-medium text-muted-foreground">
+              선택된 악보 ({selectedScores.length})
+            </p>
+            <div className="space-y-2">
+              {selectedScores.map((score) => {
+                const displayName =
+                  score.type === "upload"
+                    ? score.url.split("/").pop() || score.url
+                    : score.url;
+                return (
+                  <div
+                    key={score.id}
+                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border"
+                  >
+                    {score.thumbnail ? (
+                      <img
+                        src={score.thumbnail}
+                        alt=""
+                        className="w-12 h-12 object-cover object-top rounded border border-border flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 flex items-center justify-center rounded bg-muted border border-border flex-shrink-0">
+                        <Music className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className="flex-1 text-xs text-muted-foreground truncate">
+                      {displayName}
+                    </span>
+                    <Select
+                      value={score.musicalKey}
+                      onValueChange={(v) => updateSelectedKey(score.id, v)}
+                    >
+                      <SelectTrigger className="w-20 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MUSICAL_KEYS.map((k) => (
+                          <SelectItem key={k} value={k}>
+                            {k}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSelected(score.id)}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+            취소
+          </Button>
+          <Button onClick={handleSaveAll} disabled={saving || !setSongId}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            저장
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
