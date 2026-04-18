@@ -160,7 +160,7 @@ export const ScorePreviewDialog = ({
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
-        ) : shouldShowOldScore ? (
+        ) : shouldShowSingleScore ? (
           // Old single score file display
           <div className="flex-1 overflow-auto min-h-0">
             {scoreUrl ? (
