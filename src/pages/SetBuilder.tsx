@@ -35,6 +35,7 @@ import { WorshipSetPositionsManager } from "@/components/worship-set/WorshipSetP
 import { SetHistoryTab } from "@/components/worship-set/SetHistoryTab";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
+import { PrivateShareControls } from "@/components/set-builder/PrivateShareControls";
 import { useAutoSaveDraft, clearLastEditedDraft, upsertSongsAndComponents, type DbIdUpdate } from "@/hooks/useAutoSaveDraft";
 import { useSetRealtimeSync, useRealtimeHandlers } from "@/hooks/useSetRealtimeSync";
 import { useSetEditLock } from "@/hooks/useSetEditLock";
@@ -1522,6 +1523,12 @@ const SetBuilder = () => {
             <Share2 className="w-4 h-4 shrink-0" />
             <span className="text-xs sm:text-sm">{t("setBuilder.shareLink")}</span>
           </Button>
+          <PrivateShareControls
+            serviceSetId={id}
+            hasPrivate={!!(existingSet as any)?.has_private_scores}
+            visibility={(existingSet as any)?.band_view_visibility}
+            shareToken={(existingSet as any)?.share_token}
+          />
         </>
       )}
     </div>
