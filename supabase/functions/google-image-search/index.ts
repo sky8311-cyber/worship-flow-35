@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    console.error("google-image-search error:", error);
+    console.error("image-search error:", error);
     return json({
       error: "internal_error",
       message: "이미지 검색 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
