@@ -866,6 +866,67 @@ export const SetSongScoreDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Vault delete confirm */}
+      <AlertDialog open={!!vaultDeleteId} onOpenChange={(o) => !o && setVaultDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>보관함에서 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 악보를 내 보관함에서 영구 삭제합니다. 이미 다른 워십세트에 사용 중인 악보 파일은 그대로 유지됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={vaultDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={vaultDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!vaultDeleteId) return;
+                setVaultDeleting(true);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) throw new Error("Not authenticated");
+                  const { error } = await supabase
+                    .from("user_score_vault")
+                    .delete()
+                    .eq("id", vaultDeleteId)
+                    .eq("user_id", user.id);
+                  if (error) throw error;
+                  const removedItem = vaultItems.find((v) => v.id === vaultDeleteId);
+                  setVaultItems((prev) => prev.filter((v) => v.id !== vaultDeleteId));
+                  setSelectedScores((prev) =>
+                    prev.filter(
+                      (s) =>
+                        s.vaultScoreId !== vaultDeleteId &&
+                        (!removedItem || s.url !== removedItem.score_url),
+                    ),
+                  );
+                  toast.success("보관함에서 삭제되었습니다");
+                  setVaultDeleteId(null);
+                } catch (err: any) {
+                  console.error(err);
+                  toast.error(err.message || "삭제 실패");
+                } finally {
+                  setVaultDeleting(false);
+                }
+              }}
+            >
+              {vaultDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Score preview from selected list */}
+      <ScorePreviewDialog
+        open={!!previewScoreUrl}
+        onOpenChange={(o) => !o && setPreviewScoreUrl(null)}
+        scoreUrl={previewScoreUrl}
+        songTitle={previewScoreTitle}
+        songId={songId ?? undefined}
+      />
     </Dialog>
   );
 };
