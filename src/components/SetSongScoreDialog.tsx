@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye } from "lucide-react";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye, Lock, Globe, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,6 +47,8 @@ interface VaultScore {
   musical_key: string | null;
   label: string | null;
   pages_count: number | null;
+  score_type: "web" | "upload";
+  file_name: string | null;
 }
 
 interface SearchResult {
