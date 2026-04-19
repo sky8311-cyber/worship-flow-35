@@ -209,28 +209,30 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                     </span>
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
-                  {/* Assigned To (담당자) field */}
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      value={component.assigned_to || ""}
-                      onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
-                      placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
-                      className="h-8 text-sm"
-                    />
-                  </div>
+                <CollapsibleContent className="mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Assigned To (담당자) field */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        value={component.assigned_to || ""}
+                        onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
+                        placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
+                        className="h-8 text-sm w-full"
+                      />
+                    </div>
 
-                  {/* Duration input */}
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      type="number"
-                      value={component.duration_minutes || ""}
-                      onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
-                      placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
-                      className="h-8 text-sm w-32"
-                    />
+                    {/* Duration input */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        type="number"
+                        value={component.duration_minutes || ""}
+                        onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
+                        placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
+                        className="h-8 text-sm w-full"
+                      />
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
