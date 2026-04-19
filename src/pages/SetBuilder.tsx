@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
+import { ReorderItemsDialog } from "@/components/set-builder/ReorderItemsDialog";
 import { CollaboratorsHeader } from "@/components/CollaboratorsHeader";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
@@ -96,6 +97,7 @@ const SetBuilder = () => {
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
   const { hasFeature, isLoading: isTierLoading } = useTierFeature();
   const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
