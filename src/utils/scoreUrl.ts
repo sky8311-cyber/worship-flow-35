@@ -4,9 +4,32 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const BUCKET = "scores";
 const SIGNED_URL_EXPIRY = 14400; // 4 hours in seconds
 
-// In-memory cache for signed URLs to avoid redundant API calls
+// LRU cache for signed URLs to avoid redundant API calls AND prevent unbounded memory growth on iPad/mobile.
+// Map preserves insertion order — re-inserting a key moves it to the end (most recent).
 const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 const CACHE_BUFFER = 300_000; // 5 minutes buffer before expiry
+const MAX_CACHE_SIZE = 60; // Cap to prevent memory pressure on low-RAM devices
+
+function cacheSet(path: string, entry: { url: string; expiresAt: number }) {
+  // Refresh LRU position
+  if (signedUrlCache.has(path)) signedUrlCache.delete(path);
+  signedUrlCache.set(path, entry);
+  // Evict oldest entries
+  while (signedUrlCache.size > MAX_CACHE_SIZE) {
+    const oldestKey = signedUrlCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    signedUrlCache.delete(oldestKey);
+  }
+}
+
+function cacheGet(path: string): { url: string; expiresAt: number } | undefined {
+  const entry = signedUrlCache.get(path);
+  if (!entry) return undefined;
+  // Touch — move to end (LRU)
+  signedUrlCache.delete(path);
+  signedUrlCache.set(path, entry);
+  return entry;
+}
 
 /**
  * Synchronously check if a signed URL is already cached.
@@ -18,7 +41,7 @@ export function getCachedSignedUrl(urlOrPath: string | null | undefined): string
   if (isExternalUrl(urlOrPath)) return urlOrPath;
   const path = extractScorePath(urlOrPath);
   if (!path) return null;
-  const cached = signedUrlCache.get(path);
+  const cached = cacheGet(path);
   if (cached && cached.expiresAt > Date.now() + CACHE_BUFFER) {
     return cached.url;
   }
@@ -93,7 +116,7 @@ export async function getSignedScoreUrl(urlOrPath: string | null | undefined): P
   if (!path) return null;
 
   // Check cache
-  const cached = signedUrlCache.get(path);
+  const cached = cacheGet(path);
   if (cached && cached.expiresAt > Date.now() + CACHE_BUFFER) {
     return cached.url;
   }
@@ -109,8 +132,8 @@ export async function getSignedScoreUrl(urlOrPath: string | null | undefined): P
       return urlOrPath;
     }
 
-    // Cache the result
-    signedUrlCache.set(path, {
+    // Cache the result (LRU)
+    cacheSet(path, {
       url: data.signedUrl,
       expiresAt: Date.now() + SIGNED_URL_EXPIRY * 1000,
     });
@@ -142,8 +165,8 @@ export async function getSignedScoreUrls(
     const path = extractScorePath(url);
     if (!path) continue;
 
-    // Check cache first
-    const cached = signedUrlCache.get(path);
+    // Check cache first (LRU touch)
+    const cached = cacheGet(path);
     if (cached && cached.expiresAt > Date.now() + CACHE_BUFFER) {
       result.set(url, cached.url);
     } else {
@@ -173,7 +196,7 @@ export async function getSignedScoreUrls(
       const { original, path } = toSign[idx];
       if (item.signedUrl) {
         result.set(original, item.signedUrl);
-        signedUrlCache.set(path, {
+        cacheSet(path, {
           url: item.signedUrl,
           expiresAt: Date.now() + SIGNED_URL_EXPIRY * 1000,
         });
