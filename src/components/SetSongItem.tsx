@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { Badge } from "@/components/ui/badge";
+import { SongProgressionSettings } from "./set-builder/SongProgressionSettings";
 const SetSongScoreDialog = lazy(() =>
   import("./SetSongScoreDialog").then((m) => ({ default: m.SetSongScoreDialog }))
 );
