@@ -472,7 +472,9 @@ export const SetSongScoreDialog = ({
           },
         ]);
         setVaultLoaded(false);
-        toast.success("업로드 완료. 클라우드에 저장되었습니다.");
+        toast.success("악보 저장 완료", {
+          description: "악보 사용 히스토리에 저장됐습니다.",
+        });
       }
     } catch (err: any) {
       console.error(err);
@@ -684,7 +686,7 @@ export const SetSongScoreDialog = ({
             </TabsTrigger>
             <TabsTrigger value="vault">
               <History className="w-4 h-4 mr-2" />
-              히스토리 클라우드
+              악보 사용 히스토리
             </TabsTrigger>
           </TabsList>
 
@@ -793,13 +795,10 @@ export const SetSongScoreDialog = ({
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             ) : vaultItems.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center">
+              <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
                 <Music className="w-8 h-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  아직 저장된 악보가 없어요.
-                </p>
-                <p className="text-xs text-muted-foreground/80">
-                  악보를 업로드하면 자동으로 보관됩니다.
+                <p className="text-sm text-muted-foreground whitespace-pre-line">
+                  {"이 곡에 사용한 악보가 여기에 기록됩니다.\n악보를 검색하거나 파일을 업로드해보세요."}
                 </p>
               </div>
             ) : (
@@ -877,7 +876,7 @@ export const SetSongScoreDialog = ({
                           e.stopPropagation();
                           setVaultDeleteId(item.id);
                         }}
-                        title="히스토리 클라우드에서 삭제"
+                        title="악보 사용 히스토리에서 삭제"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

@@ -1432,6 +1432,7 @@ songCard: {
       progression: {
         title: "Performance Settings",
         history: "History",
+        historyTooltip: "Load a previous performance setting for this song",
         historyTitle: "Performance History",
         historyEmpty: "No saved history",
         save: "Save",
@@ -1450,9 +1451,9 @@ songCard: {
         title: "Manage Score",
         webTab: "Search Web",
         uploadTab: "My Uploads",
-        vaultTab: "Score History",
-        vaultLoadError: "Failed to load score history",
-        vaultDeleteTitle: "Delete from score history",
+        vaultTab: "Score Usage History",
+        vaultLoadError: "Failed to load score usage history",
+        vaultDeleteTitle: "Delete from score usage history",
       },
     },
     csvImport: {
@@ -3722,6 +3723,7 @@ songCard: {
       progression: {
         title: "진행 설정",
         history: "이력",
+        historyTooltip: "이 곡의 과거 진행 설정을 불러올 수 있습니다",
         historyTitle: "진행 설정 이력",
         historyEmpty: "저장된 이력이 없습니다",
         save: "저장",
@@ -3740,9 +3742,9 @@ songCard: {
         title: "악보 관리",
         webTab: "악보 웹 검색",
         uploadTab: "내 악보 업로드",
-        vaultTab: "히스토리 클라우드",
-        vaultLoadError: "히스토리 클라우드 불러오기 실패",
-        vaultDeleteTitle: "히스토리 클라우드에서 삭제",
+        vaultTab: "악보 사용 히스토리",
+        vaultLoadError: "악보 사용 히스토리 불러오기 실패",
+        vaultDeleteTitle: "악보 사용 히스토리에서 삭제",
       },
     },
     csvImport: {
