@@ -2250,6 +2250,12 @@ const SetBuilder = () => {
       </div>
                 ) : (
                   <>
+                    {items.length > 1 && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-2 px-1">
+                        <ArrowUpDown className="w-3 h-3" />
+                        {language === "ko" ? "번호를 눌러 순서를 변경할 수 있어요" : "Click the number to reorder"}
+                      </p>
+                    )}
                     <div className="space-y-3">
                       {items.map((item, index) =>
                         item.type === "song" ? (
