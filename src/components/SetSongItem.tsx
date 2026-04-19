@@ -1,5 +1,3 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { GripVertical, X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
+import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useState, useMemo, lazy, Suspense, useEffect } from "react";
 import { computeTranspose, formatTranspose } from "@/lib/transpose";
@@ -33,16 +31,12 @@ interface SetSongItemProps {
   totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
+  onOpenReorder?: () => void;
   dbId?: string;
   status?: "draft" | "published";
 }
 
-export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown, dbId, status }: SetSongItemProps) => {
-  // Use the setSong's id if available, otherwise fallback to index-based id
-  const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
+export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onOpenReorder, dbId, status }: SetSongItemProps) => {
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showScorePreview, setShowScorePreview] = useState(false);
