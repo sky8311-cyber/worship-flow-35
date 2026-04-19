@@ -5,6 +5,7 @@ import { Loader2, History, Save, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface ProgressionHistoryEntry {
   id: string;
@@ -32,6 +33,7 @@ export const ProgressionHistoryControls = ({
   notes,
   onApplyHistory,
 }: ProgressionHistoryControlsProps) => {
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -53,10 +55,10 @@ export const ProgressionHistoryControls = ({
           notes: notes ?? null,
         });
       if (error) throw error;
-      toast.success("저장되었습니다");
+      toast.success(t("setSongItem.progression.saveSuccess"));
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message || "저장 실패");
+      toast.error(e.message || t("setSongItem.progression.saveError"));
     } finally {
       setSaving(false);
     }
@@ -78,7 +80,7 @@ export const ProgressionHistoryControls = ({
       setHistory((data || []) as ProgressionHistoryEntry[]);
     } catch (e) {
       console.error(e);
-      toast.error("이력 불러오기 실패");
+      toast.error(t("setSongItem.progression.loadError"));
     } finally {
       setHistoryLoading(false);
     }
@@ -88,19 +90,19 @@ export const ProgressionHistoryControls = ({
     <div className="flex items-center justify-between">
       <h5 className="text-sm font-medium flex items-center gap-1.5">
         <Music2 className="w-4 h-4 text-primary" />
-        진행 설정
+        {t("setSongItem.progression.title")}
       </h5>
       <div className="flex gap-1">
         <Popover open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadHistory(); }}>
           <PopoverTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
               <History className="w-3.5 h-3.5 mr-1" />
-              이력
+              {t("setSongItem.progression.history")}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80 p-0">
             <div className="p-2 border-b">
-              <p className="text-xs font-medium">진행 설정 이력</p>
+              <p className="text-xs font-medium">{t("setSongItem.progression.historyTitle")}</p>
             </div>
             <div className="max-h-72 overflow-y-auto">
               {historyLoading ? (
@@ -109,7 +111,7 @@ export const ProgressionHistoryControls = ({
                 </div>
               ) : history.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-6">
-                  저장된 이력이 없습니다
+                  {t("setSongItem.progression.historyEmpty")}
                 </p>
               ) : (
                 <ul className="divide-y">
@@ -124,7 +126,7 @@ export const ProgressionHistoryControls = ({
                           {format(new Date(h.created_at), "yyyy-MM-dd HH:mm")}
                         </div>
                         <div className="font-medium">
-                          BPM: {h.bpm ?? "-"} / {h.time_signature ?? "-"} / 에너지: {h.energy_level ?? "-"}
+                          BPM: {h.bpm ?? "-"} / {h.time_signature ?? "-"} / {t("setSongItem.energyLevel")}: {h.energy_level ?? "-"}
                         </div>
                         {h.notes && (
                           <div className="text-muted-foreground truncate mt-0.5">{h.notes}</div>
@@ -139,7 +141,7 @@ export const ProgressionHistoryControls = ({
         </Popover>
         <Button size="sm" className="h-7 px-2 text-xs bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />}
-          저장
+          {t("setSongItem.progression.save")}
         </Button>
       </div>
     </div>

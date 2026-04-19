@@ -152,7 +152,7 @@ export const SetSongScoreDialog = ({
       setVaultLoaded(true);
     } catch (e) {
       console.error("Failed to load vault:", e);
-      toast.error("히스토리 클라우드 불러오기 실패");
+      toast.error(t("setSongItem.scoreDialog.vaultLoadError"));
     } finally {
       setVaultLoading(false);
     }
