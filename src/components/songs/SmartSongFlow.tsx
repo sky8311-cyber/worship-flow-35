@@ -458,6 +458,23 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
             />
           ))}
         </div>
+        <div className="flex gap-1 mt-1">
+          {stepShortLabels.map((label, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex-1 text-[10px] text-center truncate",
+                i + 1 === currentStep
+                  ? "text-primary font-semibold"
+                  : i + 1 < currentStep
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+              )}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Content */}
@@ -471,8 +488,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         {currentStep === 2 && <Step2_YouTube
           youtubeResults={youtubeResults}
           youtubeSearching={youtubeSearching}
-          selectedResult={selectedYoutubeResult}
-          onSelect={handleSelectYoutubeResult}
+          selectedVideoIds={selectedVideoIds}
+          onToggle={handleToggleYoutubeResult}
           searchQuery={youtubeSearchQuery}
           onSearchQueryChange={setYoutubeSearchQuery}
           onSearch={() => searchYouTube()}
