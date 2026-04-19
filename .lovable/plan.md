@@ -1,46 +1,48 @@
 
-## 수정 플랜: Layer 3 박스 - 중복 필드 제거
+## C안 적용: 곡 순서 변경 진입점 명확화
 
-### 현재 문제
-- `SongProgressionSettings.tsx`가 BPM/박자/에너지/진행설명 필드를 자체적으로 렌더링 → SetSongItem의 기존 필드와 중복 표시
+### 변경 1: `SetSongItem.tsx` 숫자 버튼 강화
+현재 `text-xl font-bold text-accent w-9 h-9 rounded-full` 단순 버튼을 명확한 인터랙션 배지로 교체:
 
-### 수정 방향
+```tsx
+<Tooltip>
+  <TooltipTrigger asChild>
+    <button
+      onClick={() => onOpenReorder?.()}
+      className="flex items-center gap-1 px-2 h-9 rounded-full 
+                 bg-accent/10 hover:bg-accent/25 
+                 border-2 border-accent/40 hover:border-accent
+                 text-accent font-bold text-base
+                 cursor-pointer transition-all"
+    >
+      {index + 1}
+      <ArrowUpDown className="w-3 h-3 opacity-70" />
+    </button>
+  </TooltipTrigger>
+  <TooltipContent>곡 순서 변경</TooltipContent>
+</Tooltip>
+```
 
-**1. `SongProgressionSettings.tsx` → `ProgressionHistoryControls.tsx`로 역할 축소**
-- 입력 필드(Input/Textarea/Select) 전부 제거
-- 헤더 UI만 유지: `🎵 진행 설정` 라벨 + `[이력]` Popover 버튼 + `[저장]` 버튼
-- Props로 현재 값(`bpm`, `timeSignature`, `energyLevel`, `notes`) 받음
-- Props로 `onApplyHistory(entry)` 콜백 받음 → 이력 항목 클릭 시 부모(SetSongItem)의 onUpdate 호출
-- `[저장]` 동작: 받은 props 값을 `user_song_settings_history`에 INSERT (기존 set_songs 저장 로직 건드리지 않음)
-- `[이력]` 동작: on-demand 조회 → Popover 목록 → 클릭 시 `onApplyHistory` 호출
+### 변경 2: `SetComponentItem.tsx` 동일 적용
+일관성을 위해 컴포넌트 아이템(예배 순서)도 같은 스타일 적용. (이미 `onOpenReorder` prop 존재)
 
-**2. `SetSongItem.tsx` 수정**
-- 라인 324의 단독 `<SongProgressionSettings />` 제거
-- 라인 326-369 (BPM/박자/에너지 grid + 진행설명) 전체를 시각적 박스로 감쌈:
-  ```tsx
-  <div className="border border-border rounded-md p-3 bg-muted/20 space-y-3">
-    <ProgressionHistoryControls 
-      songId={song.id}
-      bpm={setSong.bpm}
-      timeSignature={setSong.time_signature}
-      energyLevel={setSong.energy_level}
-      notes={setSong.custom_notes}
-      onApplyHistory={(h) => onUpdate(index, {
-        bpm: h.bpm, 
-        time_signature: h.time_signature,
-        energy_level: h.energy_level,
-        custom_notes: h.notes,
-      })}
-    />
-    {/* 기존 BPM/박자/에너지 grid 그대로 */}
-    {/* 기존 진행설명 textarea 그대로 */}
-  </div>
-  ```
+### 변경 3: `SetBuilder.tsx` 상단 안내 문구
+세트 곡 목록 상단(또는 "곡 추가" 버튼 근처)에 작은 hint 텍스트 추가:
 
-**3. 저장 동작 분리 보장**
-- 기존 필드의 `onUpdate` → `set_songs` 저장 (기존 그대로, 변경 없음)
-- 새 `[저장]` 버튼 → `user_song_settings_history` INSERT만 (이력 스냅샷 용도)
+```tsx
+<p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-2">
+  <ArrowUpDown className="w-3 h-3" />
+  곡 번호를 눌러 순서를 변경할 수 있어요
+</p>
+```
 
 ### 영향 파일
-- `src/components/set-builder/SongProgressionSettings.tsx` (필드 제거, controls-only로 리팩터)
-- `src/components/SetSongItem.tsx` (중복 호출 제거, 기존 필드를 박스로 감싸기)
+- `src/components/SetSongItem.tsx` — 번호 버튼 스타일 + Tooltip + ArrowUpDown 아이콘
+- `src/components/SetComponentItem.tsx` — 동일 적용
+- `src/pages/SetBuilder.tsx` — 곡 목록 상단 안내 한 줄 추가
+
+### 핵심 원칙
+- **시각**: 테두리 + 배경으로 클릭 가능 명시
+- **의미**: ArrowUpDown 아이콘으로 "정렬" 직관 전달
+- **언어**: Tooltip + 상단 안내로 명시적 설명
+- **일관**: 곡/컴포넌트 모두 동일 패턴
