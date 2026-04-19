@@ -378,6 +378,33 @@ export const SetSongScoreDialog = ({
         }
 
         const baseLabel = file.name.replace(/\.[^.]+$/, "");
+
+        // Insert into vault immediately (one row per page)
+        let vaultIds: (string | null)[] = uploadedPaths.map(() => null);
+        if (songId) {
+          const vaultRows = uploadedPaths.map((path, idx) => ({
+            user_id: user.id,
+            song_id: songId,
+            score_url: path,
+            thumbnail_url: null,
+            label: `${baseLabel} - p${idx + 1}`,
+            pages_count: 1,
+            score_type: "upload" as const,
+            file_name: file.name,
+            file_type: file.type,
+            storage_path: path,
+          }));
+          const { data: inserted, error: vErr } = await supabase
+            .from("user_score_vault")
+            .insert(vaultRows)
+            .select("id");
+          if (vErr) {
+            console.warn("Vault insert failed (non-fatal):", vErr);
+          } else if (inserted) {
+            vaultIds = inserted.map((r) => r.id);
+          }
+        }
+
         setSelectedScores((prev) => {
           const newRows: SelectedScore[] = uploadedPaths.map((path, idx) => ({
             id: crypto.randomUUID(),
@@ -387,10 +414,12 @@ export const SetSongScoreDialog = ({
             musicalKey: "C",
             isPrimary: prev.length === 0 && idx === 0,
             label: `${baseLabel} - p${idx + 1}`,
+            vaultScoreId: vaultIds[idx] ?? null,
           }));
           return [...prev, ...newRows];
         });
-        toast.success(`PDF ${pageImages.length}페이지를 이미지로 변환했습니다. 저장 버튼을 눌러주세요.`);
+        setVaultLoaded(false);
+        toast.success(`PDF ${pageImages.length}페이지를 이미지로 변환하고 클라우드에 저장했습니다.`);
       } else {
         const ext = file.name.split(".").pop();
         const path = `${user.id}/${setSongId}/score-${Date.now()}.${ext}`;
@@ -400,6 +429,33 @@ export const SetSongScoreDialog = ({
         if (upErr) throw upErr;
 
         const baseLabel = file.name.replace(/\.[^.]+$/, "");
+
+        // Insert into vault immediately
+        let vaultId: string | null = null;
+        if (songId) {
+          const { data: inserted, error: vErr } = await supabase
+            .from("user_score_vault")
+            .insert({
+              user_id: user.id,
+              song_id: songId,
+              score_url: path,
+              thumbnail_url: null,
+              label: baseLabel,
+              pages_count: 1,
+              score_type: "upload",
+              file_name: file.name,
+              file_type: file.type,
+              storage_path: path,
+            })
+            .select("id")
+            .maybeSingle();
+          if (vErr) {
+            console.warn("Vault insert failed (non-fatal):", vErr);
+          } else if (inserted) {
+            vaultId = inserted.id;
+          }
+        }
+
         setSelectedScores((prev) => [
           ...prev,
           {
@@ -410,9 +466,11 @@ export const SetSongScoreDialog = ({
             musicalKey: "C",
             isPrimary: prev.length === 0,
             label: baseLabel,
+            vaultScoreId: vaultId,
           },
         ]);
-        toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
+        setVaultLoaded(false);
+        toast.success("업로드 완료. 클라우드에 저장되었습니다.");
       }
     } catch (err: any) {
       console.error(err);
