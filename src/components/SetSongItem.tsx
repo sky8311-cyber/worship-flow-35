@@ -18,6 +18,8 @@ import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SongDialog } from "./SongDialog";
 import { ScorePreviewDialog } from "./ScorePreviewDialog";
+import { Badge } from "@/components/ui/badge";
+import { SongProgressionSettings } from "./set-builder/SongProgressionSettings";
 const SetSongScoreDialog = lazy(() =>
   import("./SetSongScoreDialog").then((m) => ({ default: m.SetSongScoreDialog }))
 );
@@ -227,11 +229,39 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
 
             <div className="flex-1 space-y-3">
               <div className="flex items-start justify-between">
-                <div>
+                <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground">{song?.title}</h4>
                   {song?.artist && (
                     <p className="text-sm text-muted-foreground">{song.artist}</p>
                   )}
+                  {(() => {
+                    const tagsList: string[] = Array.isArray(song?.tags)
+                      ? song.tags
+                      : typeof song?.tags === "string" && song.tags.trim()
+                        ? song.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+                        : [];
+                    const hasMeta = song?.language || song?.tempo || tagsList.length > 0;
+                    if (!hasMeta) return null;
+                    return (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {song?.language && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                            {song.language}
+                          </Badge>
+                        )}
+                        {song?.tempo && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                            {song.tempo}
+                          </Badge>
+                        )}
+                        {tagsList.map((tag, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px] py-0 px-1.5 h-5">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <TooltipProvider>
                   <Tooltip>
@@ -290,6 +320,8 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   </div>
                 </div>
               </div>
+
+              {song?.id && <SongProgressionSettings songId={song.id} />}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>

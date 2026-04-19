@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye } from "lucide-react";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye, Lock, Globe, History } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -47,6 +47,8 @@ interface VaultScore {
   musical_key: string | null;
   label: string | null;
   pages_count: number | null;
+  score_type: "web" | "upload";
+  file_name: string | null;
 }
 
 interface SearchResult {
@@ -127,6 +129,11 @@ export const SetSongScoreDialog = ({
 
   const loadVault = async () => {
     if (vaultLoaded || vaultLoading) return;
+    if (!songId) {
+      setVaultItems([]);
+      setVaultLoaded(true);
+      return;
+    }
     setVaultLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -134,22 +141,27 @@ export const SetSongScoreDialog = ({
         setVaultLoaded(true);
         return;
       }
-      let q = supabase
+      const { data, error } = await supabase
         .from("user_score_vault")
-        .select("id, score_url, thumbnail_url, musical_key, label, pages_count")
+        .select("id, score_url, thumbnail_url, musical_key, label, pages_count, score_type, file_name")
         .eq("user_id", user.id)
+        .eq("song_id", songId)
         .order("created_at", { ascending: false });
-      if (songId) q = q.eq("song_id", songId);
-      const { data, error } = await q;
       if (error) throw error;
       setVaultItems((data || []) as VaultScore[]);
       setVaultLoaded(true);
     } catch (e) {
       console.error("Failed to load vault:", e);
-      toast.error("보관함 불러오기 실패");
+      toast.error("히스토리 클라우드 불러오기 실패");
     } finally {
       setVaultLoading(false);
     }
+  };
+
+  // Reload vault after web/upload inserts
+  const refreshVault = async () => {
+    setVaultLoaded(false);
+    setVaultLoading(false);
   };
 
   useEffect(() => {
@@ -189,12 +201,50 @@ export const SetSongScoreDialog = ({
 
   const isSelected = (url: string) => selectedScores.some((s) => s.url === url);
 
+  const extractDomainLabel = (url: string): string => {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return url;
+    }
+  };
+
+  const saveWebToVault = async (item: SearchResult) => {
+    if (!songId) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: existing } = await supabase
+        .from("user_score_vault")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("song_id", songId)
+        .eq("score_url", item.link)
+        .maybeSingle();
+      if (existing) return;
+      await supabase.from("user_score_vault").insert({
+        user_id: user.id,
+        song_id: songId,
+        score_url: item.link,
+        thumbnail_url: item.thumbnailLink,
+        score_type: "web",
+        label: item.title || extractDomainLabel(item.link),
+      });
+      // mark vault as needing reload next time tab opens
+      setVaultLoaded(false);
+    } catch (e) {
+      console.warn("Web vault save failed (non-fatal):", e);
+    }
+  };
+
   const toggleWebSelection = (item: SearchResult) => {
     setSelectedScores((prev) => {
       if (prev.some((s) => s.url === item.link)) {
         return prev.filter((s) => s.url !== item.link);
       }
       const isFirst = prev.length === 0;
+      // Fire-and-forget vault save
+      saveWebToVault(item);
       return [
         ...prev,
         {
@@ -328,6 +378,33 @@ export const SetSongScoreDialog = ({
         }
 
         const baseLabel = file.name.replace(/\.[^.]+$/, "");
+
+        // Insert into vault immediately (one row per page)
+        let vaultIds: (string | null)[] = uploadedPaths.map(() => null);
+        if (songId) {
+          const vaultRows = uploadedPaths.map((path, idx) => ({
+            user_id: user.id,
+            song_id: songId,
+            score_url: path,
+            thumbnail_url: null,
+            label: `${baseLabel} - p${idx + 1}`,
+            pages_count: 1,
+            score_type: "upload" as const,
+            file_name: file.name,
+            file_type: file.type,
+            storage_path: path,
+          }));
+          const { data: inserted, error: vErr } = await supabase
+            .from("user_score_vault")
+            .insert(vaultRows)
+            .select("id");
+          if (vErr) {
+            console.warn("Vault insert failed (non-fatal):", vErr);
+          } else if (inserted) {
+            vaultIds = inserted.map((r) => r.id);
+          }
+        }
+
         setSelectedScores((prev) => {
           const newRows: SelectedScore[] = uploadedPaths.map((path, idx) => ({
             id: crypto.randomUUID(),
@@ -337,10 +414,12 @@ export const SetSongScoreDialog = ({
             musicalKey: "C",
             isPrimary: prev.length === 0 && idx === 0,
             label: `${baseLabel} - p${idx + 1}`,
+            vaultScoreId: vaultIds[idx] ?? null,
           }));
           return [...prev, ...newRows];
         });
-        toast.success(`PDF ${pageImages.length}페이지를 이미지로 변환했습니다. 저장 버튼을 눌러주세요.`);
+        setVaultLoaded(false);
+        toast.success(`PDF ${pageImages.length}페이지를 이미지로 변환하고 클라우드에 저장했습니다.`);
       } else {
         const ext = file.name.split(".").pop();
         const path = `${user.id}/${setSongId}/score-${Date.now()}.${ext}`;
@@ -350,6 +429,33 @@ export const SetSongScoreDialog = ({
         if (upErr) throw upErr;
 
         const baseLabel = file.name.replace(/\.[^.]+$/, "");
+
+        // Insert into vault immediately
+        let vaultId: string | null = null;
+        if (songId) {
+          const { data: inserted, error: vErr } = await supabase
+            .from("user_score_vault")
+            .insert({
+              user_id: user.id,
+              song_id: songId,
+              score_url: path,
+              thumbnail_url: null,
+              label: baseLabel,
+              pages_count: 1,
+              score_type: "upload",
+              file_name: file.name,
+              file_type: file.type,
+              storage_path: path,
+            })
+            .select("id")
+            .maybeSingle();
+          if (vErr) {
+            console.warn("Vault insert failed (non-fatal):", vErr);
+          } else if (inserted) {
+            vaultId = inserted.id;
+          }
+        }
+
         setSelectedScores((prev) => [
           ...prev,
           {
@@ -360,9 +466,11 @@ export const SetSongScoreDialog = ({
             musicalKey: "C",
             isPrimary: prev.length === 0,
             label: baseLabel,
+            vaultScoreId: vaultId,
           },
         ]);
-        toast.success("업로드 완료. 저장 버튼을 눌러주세요.");
+        setVaultLoaded(false);
+        toast.success("업로드 완료. 클라우드에 저장되었습니다.");
       }
     } catch (err: any) {
       console.error(err);
@@ -566,8 +674,8 @@ export const SetSongScoreDialog = ({
               내 악보 업로드
             </TabsTrigger>
             <TabsTrigger value="vault">
-              <Music className="w-4 h-4 mr-2" />
-              내 보관함
+              <History className="w-4 h-4 mr-2" />
+              히스토리 클라우드
             </TabsTrigger>
           </TabsList>
 
@@ -704,7 +812,7 @@ export const SetSongScoreDialog = ({
                               ...prev,
                               {
                                 id: crypto.randomUUID(),
-                                type: "upload" as const,
+                                type: item.score_type === "web" ? "web" : "upload",
                                 url: item.score_url,
                                 thumbnail: item.thumbnail_url,
                                 musicalKey: item.musical_key || "C",
@@ -734,12 +842,17 @@ export const SetSongScoreDialog = ({
                         <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
                           <Checkbox checked={selected} className="pointer-events-none" />
                         </div>
-                        <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
-                          {item.musical_key || "C"}
+                        <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                          {item.score_type === "web" ? (
+                            <Globe className="w-3 h-3 text-blue-500" />
+                          ) : (
+                            <Lock className="w-3 h-3 text-amber-600" />
+                          )}
+                          <span>{item.musical_key || "C"}</span>
                         </div>
-                        {item.label && (
+                        {(item.label || item.file_name) && (
                           <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
-                            {item.label}
+                            {item.label || item.file_name}
                           </div>
                         )}
                       </button>
@@ -752,7 +865,7 @@ export const SetSongScoreDialog = ({
                           e.stopPropagation();
                           setVaultDeleteId(item.id);
                         }}
-                        title="보관함에서 삭제"
+                        title="히스토리 클라우드에서 삭제"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

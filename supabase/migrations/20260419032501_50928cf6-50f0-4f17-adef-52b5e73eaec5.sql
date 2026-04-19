@@ -1,0 +1,5 @@
+ALTER TABLE public.user_score_vault
+  ADD COLUMN IF NOT EXISTS score_type TEXT NOT NULL DEFAULT 'upload',
+  ADD COLUMN IF NOT EXISTS file_name TEXT,
+  ADD COLUMN IF NOT EXISTS file_type TEXT,
+  ADD COLUMN IF NOT EXISTS storage_path TEXT;
