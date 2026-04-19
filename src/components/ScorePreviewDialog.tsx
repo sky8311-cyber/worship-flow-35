@@ -39,7 +39,7 @@ export const ScorePreviewDialog = ({
   setSongId,
 }: ScorePreviewDialogProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  
   const [scoreVariations, setScoreVariations] = useState<ScoreVariation[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(0);
