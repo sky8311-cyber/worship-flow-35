@@ -89,7 +89,7 @@ const SongLibrary = () => {
   const [selectedKey, setSelectedKey] = useState<string>("all");
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("recent");
-  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCSVDialogOpen, setIsCSVDialogOpen] = useState(false);
   const [selectedSong, setSelectedSong] = useState<any>(null);
