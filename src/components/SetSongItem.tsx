@@ -242,21 +242,38 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   })()}
                 </div>
                 <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowEditDialog(true)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>곡 편집</p>
-                    </TooltipContent>
-                  </Tooltip>
+                  <div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowEditDialog(true)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>곡 편집</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                          onClick={() => onRemove(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>곡 삭제</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </TooltipProvider>
               </div>
 
@@ -449,16 +466,6 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </div>
             </div>
 
-            <div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(index)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
