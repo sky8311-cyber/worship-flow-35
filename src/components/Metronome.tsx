@@ -177,7 +177,7 @@ export const Metronome = ({ bpm, timeSignature = "4/4", onBpmChange }: Metronome
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
       {/* Beat indicator */}
       <div className="flex items-center gap-1">
         {Array.from({ length: beatsPerMeasure }).map((_, i) => (
