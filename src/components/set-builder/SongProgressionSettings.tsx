@@ -88,18 +88,18 @@ export const ProgressionHistoryControls = ({
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <h5 className="text-sm font-medium flex items-center gap-1.5">
-        <Music2 className="w-4 h-4 text-primary" />
-        {t("setSongItem.progression.title")}
+    <div className="flex items-center justify-between gap-2">
+      <h5 className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 min-w-0">
+        <Music2 className="w-4 h-4 text-primary flex-shrink-0" />
+        <span className="truncate">{t("setSongItem.progression.title")}</span>
       </h5>
-      <div className="flex gap-1">
+      <div className="flex gap-1 flex-shrink-0">
         <Popover open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadHistory(); }}>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs whitespace-nowrap">
                     <History className="w-3.5 h-3.5 mr-1" />
                     {t("setSongItem.progression.history")}
                   </Button>
@@ -149,7 +149,7 @@ export const ProgressionHistoryControls = ({
             </div>
           </PopoverContent>
         </Popover>
-        <Button size="sm" className="h-7 px-2 text-xs bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
+        <Button size="sm" className="h-7 px-2 text-xs whitespace-nowrap bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />}
           {t("setSongItem.progression.save")}
         </Button>
