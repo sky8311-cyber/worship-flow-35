@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useTranslation } from "@/hooks/useTranslation";
 
 export type ReorderItem = {
   type: "song" | "component";
@@ -105,7 +104,6 @@ export const ReorderItemsDialog = ({
   onSave,
 }: ReorderItemsDialogProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
   const [tempItems, setTempItems] = useState<ReorderItem[]>(items);
 
   useEffect(() => {
