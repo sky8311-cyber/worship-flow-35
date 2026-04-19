@@ -201,7 +201,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     <ArrowUpDown className="w-3 h-3 opacity-70" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>곡 순서 변경</TooltipContent>
+                <TooltipContent>{t("setSongItem.reorder.tooltip")}</TooltipContent>
               </Tooltip>
             </div>
 
@@ -327,7 +327,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">박자</label>
+                      <label className="text-xs text-muted-foreground">{t("setSongItem.timeSignature")}</label>
                       <Input
                         value={setSong.time_signature || ""}
                         onChange={(e) => onUpdate(index, { time_signature: e.target.value })}
@@ -336,25 +336,25 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground">에너지 레벨</label>
+                      <label className="text-xs text-muted-foreground">{t("setSongItem.energyLevel")}</label>
                       <Input
                         type="number"
                         min="1"
                         max="5"
                         value={setSong.energy_level || ""}
                         onChange={(e) => onUpdate(index, { energy_level: e.target.value ? parseInt(e.target.value) : null })}
-                        placeholder="1-5"
+                        placeholder={t("setSongItem.energyPlaceholder")}
                         className="mt-1"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-xs text-muted-foreground">진행설명</label>
+                    <label className="text-xs text-muted-foreground">{t("setSongItem.progressionNotes")}</label>
                     <Textarea
                       value={setSong.custom_notes || ""}
                       onChange={(e) => onUpdate(index, { custom_notes: e.target.value })}
-                      placeholder="예: 후렴 2번 반복, 브리지 생략"
+                      placeholder={t("setSongItem.progressionNotesPlaceholder")}
                       rows={2}
                       className="mt-1"
                     />
@@ -439,7 +439,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                       className="relative"
                     >
                       <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
-                      악보 선택
+                      {t("setSongItem.score")}
                       {hasScoreRef && (
                         <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-primary" />
                       )}
