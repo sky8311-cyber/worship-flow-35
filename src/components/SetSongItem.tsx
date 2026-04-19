@@ -466,16 +466,6 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </div>
             </div>
 
-            <div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(index)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
