@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle, History } from "lucide-react";
+import { ArrowLeft, Calendar, Plus, Save, Share2, Music, Search, Shield, LogOut, Upload, Lock, Check, FileText, Copy, Trash2, Loader2, Circle, CheckCircle, XCircle, History, ArrowUpDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
@@ -2250,6 +2250,12 @@ const SetBuilder = () => {
       </div>
                 ) : (
                   <>
+                    {items.length > 1 && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 mb-2 px-1">
+                        <ArrowUpDown className="w-3 h-3" />
+                        {language === "ko" ? "번호를 눌러 순서를 변경할 수 있어요" : "Click the number to reorder"}
+                      </p>
+                    )}
                     <div className="space-y-3">
                       {items.map((item, index) =>
                         item.type === "song" ? (

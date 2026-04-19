@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
+import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil, ArrowUpDown } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useState, useMemo, lazy, Suspense, useEffect } from "react";
 import { computeTranspose, formatTranspose } from "@/lib/transpose";
@@ -190,14 +190,19 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
         <CardContent className="p-4">
           <div className="flex gap-3">
             <div className="flex flex-col items-center justify-start pt-1">
-              <button
-                type="button"
-                onClick={() => onOpenReorder?.()}
-                className="text-2xl font-bold text-primary w-10 h-10 rounded-full hover:bg-primary/10 transition-colors flex items-center justify-center"
-                title="순서 변경"
-              >
-                {index + 1}
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => onOpenReorder?.()}
+                    className="flex items-center gap-1 px-2 h-9 rounded-full bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary text-primary font-bold text-base cursor-pointer transition-all"
+                  >
+                    {index + 1}
+                    <ArrowUpDown className="w-3 h-3 opacity-70" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>곡 순서 변경</TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="flex-1 space-y-3">
