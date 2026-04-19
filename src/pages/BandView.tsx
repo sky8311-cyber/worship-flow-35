@@ -524,7 +524,29 @@ const BandView = () => {
       // Legacy fallback — preserves images for sets created before per-set scores
       return getLegacySongScoreFiles(songId, selectedKey);
     }
-...
+    const exact = setRows.filter((r: any) => r.musical_key === selectedKey);
+    if (exact.length > 0) {
+      const files = exact
+        .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map((r: any, i: number) => ({
+          id: r.id,
+          file_url: r.score_url,
+          key: r.musical_key,
+          page_number: i + 1,
+        }));
+      return { scoreFiles: files, scoreKeyUsed: selectedKey, isUsingFallback: false };
+    }
+    const primary = setRows.find((r: any) => r.is_primary) || setRows[0];
+    const fallbackKey = primary.musical_key || selectedKey;
+    const files = setRows
+      .filter((r: any) => r.musical_key === fallbackKey)
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((r: any, i: number) => ({
+        id: r.id,
+        file_url: r.score_url,
+        key: r.musical_key,
+        page_number: i + 1,
+      }));
     return {
       scoreFiles: files,
       scoreKeyUsed: fallbackKey,
