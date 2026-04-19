@@ -107,21 +107,12 @@ const SongLibrary = () => {
   
   // Use global song cart - use cartIds Set for O(1) lookups
   const { cartItems, cartIds, toggleCart, clearCart, cartCount } = useSongCart();
-  const prevCartCountRef = useRef(cartCount);
 
   useEffect(() => {
     if (window.innerWidth < 768) {
       setViewMode("card");
     }
   }, []);
-
-  // Auto-scroll to action bar when a song is added to the cart
-  useEffect(() => {
-    if (cartCount > prevCartCountRef.current) {
-      searchRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    prevCartCountRef.current = cartCount;
-  }, [cartCount]);
 
   // Batch fetch all user favorites in ONE query (eliminates 520+ individual queries)
   const { data: userFavorites } = useQuery({
@@ -962,7 +953,7 @@ const SongLibrary = () => {
       </main>
 
       {/* Mobile Floating Action Stack */}
-      <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown}>
+      <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown && cartCount === 0}>
         {/* Cart indicator - bottom of stack */}
         <FloatingCartIndicator 
           count={cartCount} 
