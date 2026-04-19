@@ -438,7 +438,6 @@ const SongLibrary = () => {
         song.tags || "",
         song.youtube_url || "",
         song.score_file_url || "",
-        song.notes || "",
         song.interpretation || "",
         song.lyrics || "",
         formatYoutubeLinks(song.id),
