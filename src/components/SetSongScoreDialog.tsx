@@ -5,13 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyrightUploadNotice } from "@/components/copyright/CopyrightUploadNotice";
 import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
 
 interface SetSongScoreDialogProps {
   open: boolean;
@@ -85,6 +96,10 @@ export const SetSongScoreDialog = ({
   const [vaultLoading, setVaultLoading] = useState(false);
   const [vaultLoaded, setVaultLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("search");
+  const [vaultDeleteId, setVaultDeleteId] = useState<string | null>(null);
+  const [vaultDeleting, setVaultDeleting] = useState(false);
+  const [previewScoreUrl, setPreviewScoreUrl] = useState<string | null>(null);
+  const [previewScoreTitle, setPreviewScoreTitle] = useState<string>("");
   const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
 
   const handleAcknowledgeChange = async (checked: boolean) => {
@@ -675,59 +690,73 @@ export const SetSongScoreDialog = ({
                     (s) => s.vaultScoreId === item.id || s.url === item.score_url
                   );
                   return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      onClick={() => {
-                        setSelectedScores((prev) => {
-                          if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
-                            return prev.filter(
-                              (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
-                            );
-                          }
-                          return [
-                            ...prev,
-                            {
-                              id: crypto.randomUUID(),
-                              type: "upload" as const,
-                              url: item.score_url,
-                              thumbnail: item.thumbnail_url,
-                              musicalKey: item.musical_key || "C",
-                              isPrimary: prev.length === 0,
-                              vaultScoreId: item.id,
-                              label: item.label,
-                            },
-                          ];
-                        });
-                      }}
-                      className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
-                        selected ? "border-primary ring-2 ring-primary" : "border-border"
-                      }`}
-                    >
-                      {item.thumbnail_url ? (
-                        <img
-                          src={item.thumbnail_url}
-                          alt={item.label || ""}
-                          loading="lazy"
-                          className="w-full max-w-full h-32 object-cover object-top bg-muted"
-                        />
-                      ) : (
-                        <div className="w-full h-32 flex items-center justify-center bg-muted">
-                          <Music className="w-8 h-8 text-muted-foreground" />
+                    <div key={item.id} className="relative group min-w-0 w-full">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedScores((prev) => {
+                            if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
+                              return prev.filter(
+                                (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
+                              );
+                            }
+                            return [
+                              ...prev,
+                              {
+                                id: crypto.randomUUID(),
+                                type: "upload" as const,
+                                url: item.score_url,
+                                thumbnail: item.thumbnail_url,
+                                musicalKey: item.musical_key || "C",
+                                isPrimary: prev.length === 0,
+                                vaultScoreId: item.id,
+                                label: item.label,
+                              },
+                            ];
+                          });
+                        }}
+                        className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
+                          selected ? "border-primary ring-2 ring-primary" : "border-border"
+                        }`}
+                      >
+                        {item.thumbnail_url ? (
+                          <img
+                            src={item.thumbnail_url}
+                            alt={item.label || ""}
+                            loading="lazy"
+                            className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                          />
+                        ) : (
+                          <div className="w-full h-32 flex items-center justify-center bg-muted">
+                            <Music className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                          <Checkbox checked={selected} className="pointer-events-none" />
                         </div>
-                      )}
-                      <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
-                        <Checkbox checked={selected} className="pointer-events-none" />
-                      </div>
-                      <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
-                        {item.musical_key || "C"}
-                      </div>
-                      {item.label && (
-                        <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
-                          {item.label}
+                        <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                          {item.musical_key || "C"}
                         </div>
-                      )}
-                    </button>
+                        {item.label && (
+                          <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
+                            {item.label}
+                          </div>
+                        )}
+                      </button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute bottom-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVaultDeleteId(item.id);
+                        }}
+                        title="보관함에서 삭제"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   );
                 })}
               </div>
@@ -752,17 +781,30 @@ export const SetSongScoreDialog = ({
                     key={score.id}
                     className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
                   >
-                    {score.thumbnail ? (
-                      <img
-                        src={score.thumbnail}
-                        alt=""
-                        className="w-12 h-12 object-cover object-top rounded border border-border flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 flex items-center justify-center rounded bg-muted border border-border flex-shrink-0">
-                        <Music className="w-5 h-5 text-muted-foreground" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewScoreUrl(score.url);
+                        setPreviewScoreTitle(score.label || displayName);
+                      }}
+                      className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
+                      title="악보 미리보기"
+                    >
+                      {score.thumbnail ? (
+                        <img
+                          src={score.thumbnail}
+                          alt=""
+                          className="w-12 h-12 object-cover object-top bg-muted block"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 flex items-center justify-center bg-muted">
+                          <Music className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye className="w-4 h-4 text-foreground" />
                       </div>
-                    )}
+                    </button>
                     <div className="min-w-0 overflow-hidden flex-1">
                       <span className="text-xs text-muted-foreground truncate block">
                         {displayName}
@@ -824,6 +866,67 @@ export const SetSongScoreDialog = ({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      {/* Vault delete confirm */}
+      <AlertDialog open={!!vaultDeleteId} onOpenChange={(o) => !o && setVaultDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>보관함에서 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              이 악보를 내 보관함에서 영구 삭제합니다. 이미 다른 워십세트에 사용 중인 악보 파일은 그대로 유지됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={vaultDeleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={vaultDeleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!vaultDeleteId) return;
+                setVaultDeleting(true);
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) throw new Error("Not authenticated");
+                  const { error } = await supabase
+                    .from("user_score_vault")
+                    .delete()
+                    .eq("id", vaultDeleteId)
+                    .eq("user_id", user.id);
+                  if (error) throw error;
+                  const removedItem = vaultItems.find((v) => v.id === vaultDeleteId);
+                  setVaultItems((prev) => prev.filter((v) => v.id !== vaultDeleteId));
+                  setSelectedScores((prev) =>
+                    prev.filter(
+                      (s) =>
+                        s.vaultScoreId !== vaultDeleteId &&
+                        (!removedItem || s.url !== removedItem.score_url),
+                    ),
+                  );
+                  toast.success("보관함에서 삭제되었습니다");
+                  setVaultDeleteId(null);
+                } catch (err: any) {
+                  console.error(err);
+                  toast.error(err.message || "삭제 실패");
+                } finally {
+                  setVaultDeleting(false);
+                }
+              }}
+            >
+              {vaultDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Score preview from selected list */}
+      <ScorePreviewDialog
+        open={!!previewScoreUrl}
+        onOpenChange={(o) => !o && setPreviewScoreUrl(null)}
+        scoreUrl={previewScoreUrl}
+        songTitle={previewScoreTitle}
+        songId={songId ?? undefined}
+      />
     </Dialog>
   );
 };
