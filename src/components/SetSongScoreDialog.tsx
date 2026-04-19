@@ -812,7 +812,7 @@ export const SetSongScoreDialog = ({
                               ...prev,
                               {
                                 id: crypto.randomUUID(),
-                                type: "upload" as const,
+                                type: item.score_type === "web" ? "web" : "upload",
                                 url: item.score_url,
                                 thumbnail: item.thumbnail_url,
                                 musicalKey: item.musical_key || "C",
@@ -842,12 +842,17 @@ export const SetSongScoreDialog = ({
                         <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
                           <Checkbox checked={selected} className="pointer-events-none" />
                         </div>
-                        <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
-                          {item.musical_key || "C"}
+                        <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                          {item.score_type === "web" ? (
+                            <Globe className="w-3 h-3 text-blue-500" />
+                          ) : (
+                            <Lock className="w-3 h-3 text-amber-600" />
+                          )}
+                          <span>{item.musical_key || "C"}</span>
                         </div>
-                        {item.label && (
+                        {(item.label || item.file_name) && (
                           <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
-                            {item.label}
+                            {item.label || item.file_name}
                           </div>
                         )}
                       </button>
@@ -860,7 +865,7 @@ export const SetSongScoreDialog = ({
                           e.stopPropagation();
                           setVaultDeleteId(item.id);
                         }}
-                        title="보관함에서 삭제"
+                        title="히스토리 클라우드에서 삭제"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
