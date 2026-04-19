@@ -421,7 +421,6 @@ const SongLibrary = () => {
         { v: "tags", s: headerStyle },
         { v: "youtube_url", s: headerStyle },
         { v: "score_file_url", s: headerStyle },
-        { v: "notes", s: headerStyle },
         { v: "interpretation", s: headerStyle },
         { v: "lyrics", s: headerStyle },
         { v: "youtube_links", s: headerStyle },
