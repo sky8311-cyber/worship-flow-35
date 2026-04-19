@@ -147,9 +147,9 @@ export const SongCard = memo(function SongCard({
         {/* YouTube thumbnail (or musical-note placeholder) */}
         <div
           className={`relative h-32 bg-muted flex items-center justify-center overflow-hidden ${
-            song.youtube_url ? "cursor-pointer group" : ""
+            onEdit ? "cursor-pointer group" : ""
           }`}
-          onClick={() => song.youtube_url && openYouTubeUrl(song.youtube_url)}
+          onClick={() => onEdit?.(song)}
         >
           {youtubeThumb && !thumbError ? (
             <>
@@ -161,7 +161,7 @@ export const SongCard = memo(function SongCard({
                 onError={() => setThumbError(true)}
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Youtube className="w-10 h-10 text-white" />
+                <Edit className="w-10 h-10 text-white" />
               </div>
             </>
           ) : (
