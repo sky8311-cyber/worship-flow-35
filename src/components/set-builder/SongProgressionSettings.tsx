@@ -95,7 +95,7 @@ export const ProgressionHistoryControls = ({
       <div className="flex gap-1">
         <Popover open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadHistory(); }}>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+            <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
               <History className="w-3.5 h-3.5 mr-1" />
               {t("setSongItem.progression.history")}
             </Button>
