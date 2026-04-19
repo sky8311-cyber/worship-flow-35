@@ -44,11 +44,6 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
   const song = setSong.song || setSong.songs;
   const hasImportedLyrics = Boolean(setSong.lyrics && setSong.lyrics.trim());
   const songHasLyrics = Boolean(song?.lyrics && song.lyrics.trim());
