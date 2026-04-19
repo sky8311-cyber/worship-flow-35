@@ -111,7 +111,7 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                   <button
                     type="button"
                     onClick={() => onOpenReorder?.()}
-                    className="flex items-center gap-1 px-2 h-9 rounded-full bg-accent/10 hover:bg-accent/25 border-2 border-accent/40 hover:border-accent text-accent-foreground font-bold text-base cursor-pointer transition-all"
+                    className="flex items-center gap-1 px-2 h-9 rounded-full bg-accent/10 hover:bg-accent/25 border-2 border-accent/40 hover:border-accent text-accent font-bold text-base cursor-pointer transition-all"
                   >
                     {index + 1}
                     <ArrowUpDown className="w-3 h-3 opacity-70" />
