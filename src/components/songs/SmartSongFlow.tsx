@@ -864,11 +864,6 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
         </div>
       </Section>
 
-      {notes && (
-        <Section label={t("songFlow.notesLabel")} step={4}>
-          <p className="text-xs text-muted-foreground line-clamp-2">{notes}</p>
-        </Section>
-      )}
     </div>
   );
 }
