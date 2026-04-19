@@ -2312,7 +2312,7 @@ const SetBuilder = () => {
                     </div>
 
                     {items.length > 0 && (
-                      <div className="mt-6 p-4 bg-accent/50 rounded-lg">
+                      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
                         <div className="flex items-center justify-between mb-3 gap-2">
                           <h4 className="font-semibold">
                             {language === "ko" ? "곡 순서 변경" : "Reorder Items"}
