@@ -96,6 +96,10 @@ export const SetSongScoreDialog = ({
   const [vaultLoading, setVaultLoading] = useState(false);
   const [vaultLoaded, setVaultLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("search");
+  const [vaultDeleteId, setVaultDeleteId] = useState<string | null>(null);
+  const [vaultDeleting, setVaultDeleting] = useState(false);
+  const [previewScoreUrl, setPreviewScoreUrl] = useState<string | null>(null);
+  const [previewScoreTitle, setPreviewScoreTitle] = useState<string>("");
   const { acknowledge, isAcknowledging } = useCopyrightAcknowledgment();
 
   const handleAcknowledgeChange = async (checked: boolean) => {
