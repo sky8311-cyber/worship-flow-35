@@ -115,11 +115,21 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
       .order("position");
 
     if (linksRes.data && linksRes.data.length > 0) {
-      setYoutubeLinks(linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url })));
+      const loadedLinks = linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url }));
+      setYoutubeLinks(loadedLinks);
+      // Reconstruct selectedVideoIds from URLs
+      const ids = new Set<string>();
+      loadedLinks.forEach(l => {
+        const m = l.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+        if (m?.[1]) ids.add(m[1]);
+      });
+      setSelectedVideoIds(ids);
     } else if (draftSong?.youtube_url) {
       setYoutubeLinks([{ label: t("songFlow.original"), url: draftSong.youtube_url }]);
+      const m = draftSong.youtube_url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+      if (m?.[1]) setSelectedVideoIds(new Set([m[1]]));
     } else {
-      setYoutubeLinks([{ label: "", url: "" }]);
+      setYoutubeLinks([]);
     }
   };
 
@@ -152,15 +162,28 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     }
   }, [currentStep]);
 
-  const handleSelectYoutubeResult = (result: YouTubeResult) => {
-    setSelectedYoutubeResult(result);
-    // Set first YouTube link
-    setYoutubeLinks(prev => {
-      const updated = [...prev];
-      const defaultLabel = artist || "";
-      if (updated.length === 0) updated.push({ label: defaultLabel, url: result.url });
-      else { updated[0] = { ...updated[0], label: updated[0].label || defaultLabel, url: result.url }; }
-      return updated;
+  const handleToggleYoutubeResult = (result: YouTubeResult) => {
+    setSelectedVideoIds(prev => {
+      const next = new Set(prev);
+      let updatedLinks: YouTubeLink[];
+      if (next.has(result.videoId)) {
+        next.delete(result.videoId);
+        // Remove matching link from youtubeLinks
+        setYoutubeLinks(curr => curr.filter(l => {
+          const m = l.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+          return m?.[1] !== result.videoId;
+        }));
+      } else {
+        next.add(result.videoId);
+        // Append to youtubeLinks (preserving existing entries / first selection becomes default label)
+        setYoutubeLinks(curr => {
+          // avoid dupe
+          if (curr.some(l => l.url === result.url)) return curr;
+          const defaultLabel = curr.length === 0 ? (artist || result.channelTitle || "") : (result.channelTitle || "");
+          return [...curr, { label: defaultLabel, url: result.url }];
+        });
+      }
+      return next;
     });
   };
 
@@ -248,7 +271,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const canGoNext = () => {
     switch (currentStep) {
       case 1: return title.trim().length > 0;
-      case 2: return !!selectedYoutubeResult && artist.trim().length > 0;
+      case 2: return selectedVideoIds.size >= 1 && artist.trim().length > 0;
       case 5: return songLanguage && topics.length >= 2;
       default: return true;
     }
