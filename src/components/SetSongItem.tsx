@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
+import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil, ArrowUpDown } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useState, useMemo, lazy, Suspense, useEffect } from "react";
 import { computeTranspose, formatTranspose } from "@/lib/transpose";
