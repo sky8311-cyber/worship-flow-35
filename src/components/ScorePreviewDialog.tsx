@@ -127,11 +127,11 @@ export const ScorePreviewDialog = ({
       <DialogContent
         hideCloseButton
         className={cn(
-          "flex flex-col bg-background gap-2",
-          // Fullscreen on ALL viewports — image fits screen, no scroll
+          "flex flex-col bg-background gap-2 overflow-hidden",
+          // Fullscreen on ALL viewports — use svh (small viewport height) for stable iPad/Safari sizing
           "!fixed !top-0 !left-0 !right-0 !bottom-0",
           "!translate-x-0 !translate-y-0",
-          "w-screen h-[100dvh] max-w-none max-h-none rounded-none p-3 sm:p-4",
+          "w-screen h-[100svh] max-w-none max-h-[100svh] rounded-none p-3 sm:p-4",
           "pt-[max(0.75rem,env(safe-area-inset-top))]",
           "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
