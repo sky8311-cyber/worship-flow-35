@@ -4945,34 +4945,46 @@ export type Database = {
       user_score_vault: {
         Row: {
           created_at: string
+          file_name: string | null
+          file_type: string | null
           id: string
           label: string | null
           musical_key: string | null
           pages_count: number | null
+          score_type: string
           score_url: string
           song_id: string | null
+          storage_path: string | null
           thumbnail_url: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
           id?: string
           label?: string | null
           musical_key?: string | null
           pages_count?: number | null
+          score_type?: string
           score_url: string
           song_id?: string | null
+          storage_path?: string | null
           thumbnail_url?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          file_name?: string | null
+          file_type?: string | null
           id?: string
           label?: string | null
           musical_key?: string | null
           pages_count?: number | null
+          score_type?: string
           score_url?: string
           song_id?: string | null
+          storage_path?: string | null
           thumbnail_url?: string | null
           user_id?: string
         }
