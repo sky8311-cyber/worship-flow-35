@@ -1430,8 +1430,8 @@ songCard: {
       progressionNotes: "Notes",
       progressionNotesPlaceholder: "e.g. Chorus ×2, skip bridge",
       progression: {
-        title: "Progression Settings (Optional)",
-        history: "Use Previous",
+        title: "Progression",
+        history: "Load Previous",
         historyTooltip: "Load a previous performance setting for this song",
         historyTitle: "Performance History",
         historyEmpty: "No saved history",
