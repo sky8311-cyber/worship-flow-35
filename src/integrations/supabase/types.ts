@@ -4165,7 +4165,6 @@ export type Database = {
           language: string | null
           last_enrichment_at: string | null
           lyrics: string | null
-          notes: string | null
           original_composer: string | null
           score_file_url: string | null
           score_is_public: boolean
@@ -4191,7 +4190,6 @@ export type Database = {
           language?: string | null
           last_enrichment_at?: string | null
           lyrics?: string | null
-          notes?: string | null
           original_composer?: string | null
           score_file_url?: string | null
           score_is_public?: boolean
@@ -4217,7 +4215,6 @@ export type Database = {
           language?: string | null
           last_enrichment_at?: string | null
           lyrics?: string | null
-          notes?: string | null
           original_composer?: string | null
           score_file_url?: string | null
           score_is_public?: boolean
@@ -5055,6 +5052,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_song_profiles_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_song_settings_history: {
+        Row: {
+          bpm: number | null
+          created_at: string
+          energy_level: number | null
+          id: string
+          notes: string | null
+          song_id: string
+          time_signature: string | null
+          user_id: string
+        }
+        Insert: {
+          bpm?: number | null
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          notes?: string | null
+          song_id: string
+          time_signature?: string | null
+          user_id: string
+        }
+        Update: {
+          bpm?: number | null
+          created_at?: string
+          energy_level?: number | null
+          id?: string
+          notes?: string | null
+          song_id?: string
+          time_signature?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_song_settings_history_song_id_fkey"
             columns: ["song_id"]
             isOneToOne: false
             referencedRelation: "songs"
