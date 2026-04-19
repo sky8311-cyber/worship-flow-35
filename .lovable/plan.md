@@ -1,35 +1,41 @@
 
-## 송 카드 헤더 — 편집/삭제 버튼 일관성 + 우측 여백 정리
+## 4가지 정리 작업
 
-### 진단 (스크린샷 기준)
-- 편집 버튼(연필): 회색 ghost icon, 작음
-- 삭제 버튼(X): 빨간색, 다른 크기/스타일
-- 두 버튼이 너무 다르고 정렬도 어긋남
-- 모바일: 제목 길면 버튼이 밀려 넘침
-- 카드 본문(키 입력, 진행설정 박스 등)이 우측에 불필요한 여백을 두고 있어 좁은 화면에서 컬럼 폭이 작아짐
+### 1) 예배 순서 카드 (SetComponentItem) 헤더 통일
+**현재**: 우측에 X(삭제) 버튼만 별도 컬럼(`<div>`)으로 분리. 편집 개념은 없으나 송 카드와 위치/패딩이 어긋남.
+**수정** (`src/components/SetComponentItem.tsx`):
+- 우측 별도 컬럼 제거
+- 헤더 영역(현재 `<div className="flex items-center justify-between">` 줄 125)에 송 카드와 동일한 액션 컨테이너 배치: `<div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">` + X 버튼 (`h-8 w-8 ghost text-muted-foreground hover:text-destructive`)
+- 본문 우측 패딩/여백 제거 → 본문이 카드 끝까지 폭 활용 (송 카드와 컬럼 정렬)
 
-### 조사 필요
-1. `src/components/SetSongItem.tsx` — 송 카드 헤더 + 본문 구조, padding/margin
-2. 편집 버튼 / 삭제 버튼 위치 (헤더 우측에 같이 있는지, 분리되어 있는지)
-3. 진행설정 박스(`SongProgressionSettings` 또는 유사) 컨테이너 padding
+### 2) 담당자 + 소요시간 같은 줄 (2 columns), 모바일은 2줄
+**수정** (`SetComponentItem.tsx` 줄 202-225):
+- `CollapsibleContent` 내부를 `grid grid-cols-1 sm:grid-cols-2 gap-2`로 변경
+- 두 Input 모두 `w-full` (현재 소요시간만 `w-32` 고정 → 제거)
+- 아이콘은 Input 내부 `relative` + `absolute left-2`로 배치하거나, 현재처럼 `flex items-center gap-2 min-w-0` + `Input className="w-full"` 유지
+- 아래 RichTextEditor도 동일 width (`w-full`이 기본이지만 부모 컨테이너 width 정렬 확인)
 
-### 수정 방안
+### 3) "이력" 버튼 outline 추가
+**수정** (`src/components/set-builder/SongProgressionSettings.tsx` 줄 98):
+- `variant="ghost"` → `variant="outline"` 으로 변경
+- 사이즈/높이는 그대로 (`h-7 px-2 text-xs`)
 
-**1) 우측 액션 버튼 통일**
-- 편집/삭제 버튼 모두 동일 스타일: `variant="ghost" size="icon"` + `h-8 w-8`
-- 색상: 편집 = `text-muted-foreground hover:text-foreground`, 삭제 = `text-muted-foreground hover:text-destructive` (hover 시에만 빨강)
-- 같은 컨테이너 `flex items-center gap-1 flex-shrink-0`로 묶어 정렬 일관성 확보
-- 헤더 전체: `flex items-start gap-2` + 제목 영역 `flex-1 min-w-0` (제목 길어도 버튼 안 밀림, 제목은 `truncate`)
-
-**2) 우측 여백 제거 — 컬럼 정렬**
-- 카드 본문 컨테이너의 `pr-*` (우측 패딩) 제거 또는 헤더와 동일한 padding으로 통일
-- 진행설정 박스, 키 입력 영역의 `max-w-*` / 우측 margin 제거
-- 컨테이너: `px-3 sm:px-4` 양쪽 균일, 우측 추가 여백 없음
-- 결과: 본문 컨트롤들이 헤더 액션 버튼 우측 끝선까지 폭을 활용
+### 4) "가사 가져오기" + "복사" 버튼 일관성 + 모바일 정리
+**현재** (`SetSongItem.tsx` 줄 383-435):
+- "가사 가져오기"는 Switch + Label + Download 아이콘 (스위치 형태)
+- "복사"는 ghost Button (별도 우측 배치)
+- 모바일에서 두 영역이 분리되어 복잡해 보임
+**수정**:
+- 두 버튼 모두 동일한 outline 버튼 스타일로 통일: `variant="outline" size="sm" className="h-7 px-2 text-xs gap-1"`
+- "가사 가져오기"는 Switch 제거 → `Button` (toggle 동작: 체크 시 활성 variant, 미체크 시 outline). 아이콘은 `Download`
+- "복사" 버튼도 동일한 `h-7 px-2 text-xs` outline
+- 한 줄에 정렬: `<div className="flex items-center gap-1 flex-wrap">` — 모바일에서 좁으면 `flex-wrap`으로 자연스럽게 줄바꿈, 데스크톱에서는 한 줄
+- 가사 토글(트리거 chevron)은 좌측, 액션 버튼들(가져오기/복사)은 우측 그룹으로 배치
 
 ### 영향 파일
-- `src/components/SetSongItem.tsx` (메인)
-- 필요 시 진행설정 박스 컴포넌트 (이전 수정에서 `p-2` 처리됨)
+1. `src/components/SetComponentItem.tsx` — 헤더 X버튼 위치 통일, 담당자/소요시간 2-col grid
+2. `src/components/SetSongItem.tsx` — 가사 영역 버튼 일관성/한줄 정리
+3. `src/components/set-builder/SongProgressionSettings.tsx` — 이력 버튼 outline
 
 ### 진행
-승인 시 default 모드에서 `SetSongItem.tsx` 헤더 버튼 통일 + 본문 우측 패딩 제거. 데이터 변경 없음. iPad/모바일 재테스트 요청.
+승인 시 default 모드에서 위 3개 파일 수정. 데이터 변경 없음. 모바일/데스크톱 재테스트 요청.
