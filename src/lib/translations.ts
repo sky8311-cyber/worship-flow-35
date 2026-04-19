@@ -1432,6 +1432,7 @@ songCard: {
       progression: {
         title: "Performance Settings",
         history: "History",
+        historyTooltip: "Load a previous performance setting for this song",
         historyTitle: "Performance History",
         historyEmpty: "No saved history",
         save: "Save",
@@ -3722,6 +3723,7 @@ songCard: {
       progression: {
         title: "진행 설정",
         history: "이력",
+        historyTooltip: "이 곡의 과거 진행 설정을 불러올 수 있습니다",
         historyTitle: "진행 설정 이력",
         historyEmpty: "저장된 이력이 없습니다",
         save: "저장",
