@@ -1,42 +1,28 @@
 
-## 5가지 이슈 종합 수정 계획
+## iPad 악보 미리보기 — 이미지 위쪽 빈 공간 + 하단 잘림 수정
 
-### 1. 악보 선택 다이얼로그 느린 로딩 (모바일 + iPad)
-**원인 추정**: `SetSongScoreDialog` 열릴 때 모든 악보 후보의 서명 URL을 동기적으로 발급/이미지 로드. 캐시 미스 + 직렬 처리.
-**조사**: `SetSongScoreDialog.tsx`, 썸네일 리스트 렌더링 부분.
-**수정**:
-- 다이얼로그 콘텐츠를 `open=true`일 때만 마운트 (lazy)
-- 썸네일을 `IntersectionObserver` 기반 lazy load (또는 `loading="lazy"` 충분)
-- 서명 URL 발급 병렬화 (`Promise.all`) + 캐시 hit 체크 우선
+### 진단 (스크린샷 기준)
+- iPad 세로 화면에서 악보가 화면 중앙~하단에만 표시되고 위쪽 절반이 비어있음
+- 하단 disclaimer ("본 자료는 사용자가 업로드한 콘텐츠")가 화면 밖으로 잘림
+- 원인: `ScorePreviewDialog`의 이미지 컨테이너가 `flex-1`로 공간을 차지하지만 이미지가 `object-contain`으로 비율 유지하면서 컨테이너 높이가 실제 사용 가능한 높이보다 큼 → disclaimer가 viewport 밖으로 밀려나고, 이미지는 컨테이너 안에서 중앙 정렬되어 위쪽이 비어 보임
 
-### 2. iPad 악보검색 시 하단 저장/취소 버튼 가려짐
-**원인**: iPad에서 검색 input focus → 가상 키보드가 뜨지 않거나 `100dvh`가 키보드 영역 미반영. DialogContent의 `max-h-[calc(100dvh-...)]` 가 sticky footer 보장 안 함.
-**수정**: `SetSongScoreDialog`를 flex column 구조로 — `DialogHeader` (shrink-0) + `검색/리스트 영역` (flex-1 overflow-auto) + `DialogFooter` (sticky bottom, shrink-0). 푸터는 `safe-area-inset-bottom` 패딩 포함.
+### 가설
+`DialogContent`가 `h-[100dvh]`이지만 내부 flex 레이아웃이 헤더(타이틀+컨트롤) + 이미지(flex-1) + disclaimer 구조에서 disclaimer 높이가 계산에 포함되지 않거나, iPad Safari의 `100dvh`가 주소창/탭바 높이 변동 시 잘못 계산됨.
 
-### 3. iPad 악보 미리보기 — 이미지 작고 하단 disclaimer 안 보임
-**원인**: `ScorePreviewDialog`가 fullscreen이지만 이미지 컨테이너가 충분히 안 늘어나거나, disclaimer가 `max-h` 밖으로 밀림.
-**수정**:
-- 이미지 영역 `flex-1 min-h-0`로 남은 공간 모두 차지, `object-contain`은 `w-full h-full` 보장
-- iPad에서 disclaimer가 항상 보이도록 footer를 `flex-shrink-0` + safe-area-bottom 패딩
-- 헤더/푸터 높이 확정 후 가운데 영역만 flex-1로 배분
-
-### 4. 모바일에서도 드래그&드롭 추가
-**현재**: `ReorderItemsDialog`는 모바일이면 화살표만, 데스크톱이면 dnd-kit.
-**수정**: `isMobile` 분기 제거 → 항상 `DndContext` 사용 + 화살표 버튼도 같이 표시 (이중 UX). PointerSensor에 `activationConstraint: { delay: 200, tolerance: 5 }` 추가해 스크롤과 드래그 구분.
-
-### 5. 모바일 SetBuilder 최적화 — 진행설정 박스 메트로놈/체크 넘침
-**조사 필요**: `SongProgressionSettings.tsx` (메트로놈 + 체크 버튼이 한 행에 있는 영역).
-**수정**:
-- 좁은 폭에서 컨트롤들이 한 줄에 안 들어가면 `flex-wrap` 또는 grid로 재배치
-- 박스 패딩 `p-4` → 모바일 `p-3`, 컨트롤 간격 `gap-2`
-- 메트로놈/체크 버튼 크기 축소 (`size="sm"` 또는 `h-9 w-9`) 및 `flex-shrink-0`
-- 라벨/값 영역 `min-w-0 truncate`
+### 수정 방안
+1. **`DialogContent` 높이 제약 강화**: `h-[100dvh]` → `h-[100svh]` (small viewport height: 주소창 펼쳤을 때 기준 — 항상 안전한 최소 높이). iPad Safari/Chrome에서 `100svh`가 100dvh보다 안정적.
+2. **레이아웃 구조 정리**:
+   - 컨테이너: `flex flex-col h-[100svh] overflow-hidden`
+   - Header (`flex-shrink-0`): 타이틀 + 닫기 버튼
+   - Controls (`flex-shrink-0`): Key/Page selector
+   - Image area (`flex-1 min-h-0 overflow-hidden flex items-center justify-center`)
+   - Disclaimer (`flex-shrink-0`): 항상 보이도록 마지막에 배치
+3. **이미지**: `max-w-full max-h-full w-auto h-auto object-contain` 유지 — 컨테이너가 정확히 남은 공간이 되면 자연스럽게 fit
+4. **iPad Disclaimer 가시성**: disclaimer 컴포넌트에 mobile에서 더 컴팩트한 패딩 적용 (이미 적용됐는지 확인 후 조정)
 
 ### 영향 파일
-1. `src/components/SetSongScoreDialog.tsx` — flex layout, lazy 마운트, 푸터 sticky (이슈 1, 2)
-2. `src/components/ScorePreviewDialog.tsx` — iPad 이미지/disclaimer 레이아웃 (이슈 3)
-3. `src/components/set-builder/ReorderItemsDialog.tsx` — 모바일에도 dnd 적용 (이슈 4)
-4. `src/components/set-builder/SongProgressionSettings.tsx` — 모바일 레이아웃 최적화 (이슈 5)
+1. `src/components/ScorePreviewDialog.tsx` — `h-[100dvh]` → `h-[100svh]` 교체, flex 구조 재확인
+2. (필요 시) `src/components/copyright/ScoreViewerDisclaimer.tsx` — iPad에서 한 줄로 줄어들도록 컴팩트 모드
 
 ### 진행
-승인 시 default 모드에서 위 4개 파일을 순차 수정. DB/데이터 변경 없음. iPad + 모바일 재테스트 요청.
+승인 시 default 모드에서 `ScorePreviewDialog` 레이아웃을 svh 기반으로 교체하고 disclaimer가 항상 viewport 안에 보이도록 보정. 데이터 변경 없음. iPad Safari/Chrome에서 재테스트 요청.
