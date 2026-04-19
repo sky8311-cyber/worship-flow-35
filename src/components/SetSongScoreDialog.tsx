@@ -129,6 +129,11 @@ export const SetSongScoreDialog = ({
 
   const loadVault = async () => {
     if (vaultLoaded || vaultLoading) return;
+    if (!songId) {
+      setVaultItems([]);
+      setVaultLoaded(true);
+      return;
+    }
     setVaultLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -136,22 +141,27 @@ export const SetSongScoreDialog = ({
         setVaultLoaded(true);
         return;
       }
-      let q = supabase
+      const { data, error } = await supabase
         .from("user_score_vault")
-        .select("id, score_url, thumbnail_url, musical_key, label, pages_count")
+        .select("id, score_url, thumbnail_url, musical_key, label, pages_count, score_type, file_name")
         .eq("user_id", user.id)
+        .eq("song_id", songId)
         .order("created_at", { ascending: false });
-      if (songId) q = q.eq("song_id", songId);
-      const { data, error } = await q;
       if (error) throw error;
       setVaultItems((data || []) as VaultScore[]);
       setVaultLoaded(true);
     } catch (e) {
       console.error("Failed to load vault:", e);
-      toast.error("보관함 불러오기 실패");
+      toast.error("히스토리 클라우드 불러오기 실패");
     } finally {
       setVaultLoading(false);
     }
+  };
+
+  // Reload vault after web/upload inserts
+  const refreshVault = async () => {
+    setVaultLoaded(false);
+    setVaultLoading(false);
   };
 
   useEffect(() => {
