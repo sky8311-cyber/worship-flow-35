@@ -84,6 +84,8 @@ export function SignedScoreImage({
       className={className}
       loading={loading}
       decoding="async"
+      // @ts-expect-error fetchpriority is valid HTML attribute, not yet in React types
+      fetchpriority="low"
       referrerPolicy="no-referrer"
       draggable={draggable}
       style={style}
