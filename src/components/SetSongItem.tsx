@@ -321,6 +321,8 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                 </div>
               </div>
 
+              {song?.id && <SongProgressionSettings songId={song.id} />}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground">BPM</label>
