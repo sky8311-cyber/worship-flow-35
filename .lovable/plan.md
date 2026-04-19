@@ -1,105 +1,28 @@
 
-## i18n: 오늘 추가된 한국어 UI 텍스트 영문 번역
+## 진단: 게시된 워십셋의 악보 이미지가 안 보이는 문제
 
-### 접근
-프로젝트는 `useTranslation` + `src/lib/translations.ts` 사용. 새 키를 `setBuilder` 섹션 하위 `progression` 그룹으로 추가하고, 기존 키는 재사용. BandView 게이트는 이미 인라인 EN/KO 처리됨(변경 불필요).
+### 증상
+- 라우트: `/band-view/fb2b4635-6dfd-4abb-9739-84c5c2e499fd` (이미 게시된 셋)
+- 이전 세션에서 만들어진 레거시 셋들의 악보 이미지가 보이지 않음
+- 사용자는 명시적으로 "레거시 시스템(저장된 악보 이미지 파일)을 건드리지 말라"고 요청했었음
 
-### 1. `src/lib/translations.ts` — 새 키 추가
+### 원인 가설
+오늘/최근 세션에서 악보 표시 컴포넌트(`SignedScoreImage`, `useSignedScoreUrl`, `scoreUrl` 유틸)가 도입/변경되면서 **레거시 데이터 형식**(예: 외부 URL, 다른 버킷 경로, public URL 등)을 처리하지 못하게 되었을 가능성.
 
-**en.setBuilder.progression** (신규):
-```ts
-progression: {
-  title: "Performance Settings",
-  bpm: "BPM",
-  timeSignature: "Time Signature",
-  energyLevel: "Energy Level",
-  energyPlaceholder: "1-5",
-  notes: "Notes",
-  notesPlaceholder: "e.g. Chorus ×2, skip bridge",
-  history: "History",
-  historyTitle: "Performance History",
-  historyEmpty: "No saved history",
-  save: "Save",
-  saveSuccess: "Saved",
-  saveError: "Failed to save",
-  loadError: "Failed to load history",
-}
-```
+특히 `extractScorePath` 함수가:
+- `scores` 버킷의 경로만 추출하도록 만들어졌다면
+- 레거시 셋이 다른 버킷/외부 URL/public URL을 사용했을 경우 → `null` 반환 → 서명 URL 생성 실패 → 빈 placeholder
 
-**en.setBuilder.reorder** (신규):
-```ts
-reorder: {
-  title: "Reorder Songs",
-  tooltip: "Reorder songs",
-  componentTooltip: "Reorder",
-  hint: "Click a number to reorder",
-  cancel: "Cancel",
-  save: "Save",
-}
-```
+### 조사 계획 (READ-ONLY)
+1. `src/utils/scoreUrl.ts` 의 `extractScorePath` / `getSignedScoreUrl` 로직 검토 — 어떤 형식의 URL을 처리하는지
+2. BandView에서 악보 렌더링하는 컴포넌트 찾기 (`SetSongScoreDisplay`, `BandView` 등) — 최근에 `<img src>` → `<SignedScoreImage>`로 바꾼 곳이 있는지
+3. 해당 셋(`fb2b4635-...`)의 `set_songs.score_url` / `score_image_urls` 실제 DB 값 조회 → 어떤 형식인지 확인
+4. 콘솔/네트워크 로그 확인 — 404, 403, 또는 빈 URL 요청이 있는지
 
-**en.setSongScoreDialog** (신규 또는 setSongItem 내):
-```ts
-score: {
-  vaultTab: "Score History",
-  webTab: "Search Web",
-  uploadTab: "My Uploads",
-  vaultLoadError: "Failed to load score history",
-  vaultDeleteTitle: "Delete from score history",
-}
-```
+### 수정 방향 (조사 후)
+- `extractScorePath` 가 레거시 URL 형식(직접 public URL, 외부 호스트, 다른 버킷 등)을 인식하면 **원본 URL 그대로 반환**하도록 fallback 추가
+- `SignedScoreImage` 컴포넌트가 서명 URL 생성 실패 시 **원본 src로 fallback** 렌더링
+- 즉, "서명 URL 변환이 가능한 경우만 변환, 아니면 원본 그대로" 정책
 
-**ko** 동일 구조로 한국어 원문 매핑:
-- progression: `진행 설정 / BPM / 박자 / 에너지 레벨 / 1-5 / 진행설명 / 예: 후렴 2번 반복, 브리지 생략 / 이력 / 진행 설정 이력 / 저장된 이력이 없습니다 / 저장 / 저장되었습니다 / 저장 실패 / 이력 불러오기 실패`
-- reorder: `곡 순서 변경 / 곡 순서 변경 / 순서 변경 / 번호를 눌러 순서를 변경할 수 있어요 / 취소 / 저장`
-- score: `히스토리 클라우드 / 악보 웹 검색 / 내 악보 업로드 / 히스토리 클라우드 불러오기 실패 / 히스토리 클라우드에서 삭제`
-
-> 기존 `setSongItem.score = "악보 선택" / "Select Score"` 는 이미 존재 — 변경 없음.
-> 기존 `common.cancel / common.save` 는 재사용 가능.
-
-### 2. 컴포넌트 적용
-
-**`src/components/set-builder/SongProgressionSettings.tsx`**:
-- `useTranslation` import 추가
-- `진행 설정` → `t("setBuilder.progression.title")`
-- `이력` 버튼 → `t("setBuilder.progression.history")`
-- `진행 설정 이력` → `t("setBuilder.progression.historyTitle")`
-- `저장된 이력이 없습니다` → `t("setBuilder.progression.historyEmpty")`
-- `저장` → `t("setBuilder.progression.save")`
-- toast: `저장되었습니다 / 저장 실패 / 이력 불러오기 실패` → 각 키
-
-**`src/components/SetSongItem.tsx`** (라인 339, 353, 357, 204):
-- `에너지 레벨` → `t("setBuilder.progression.energyLevel")`
-- `진행설명` 라벨 → `t("setBuilder.progression.notes")`
-- placeholder `예: 후렴...` → `t("setBuilder.progression.notesPlaceholder")`
-- Tooltip `곡 순서 변경` → `t("setBuilder.reorder.tooltip")`
-- (참고: `악보 선택` 라인 442는 이미 `setSongItem.score` 존재 → `t("setSongItem.score")`로 교체)
-
-**`src/components/SetComponentItem.tsx`** (라인 120):
-- Tooltip `순서 변경` → `t("setBuilder.reorder.componentTooltip")`
-
-**`src/components/set-builder/ReorderItemsDialog.tsx`**:
-- `useTranslation` import
-- DialogTitle `곡 순서 변경` → `t("setBuilder.reorder.title")`
-- 버튼 `취소` → `t("common.cancel")`, `저장` → `t("common.save")`
-
-**`src/components/SetSongScoreDialog.tsx`**:
-- 탭 `히스토리 클라우드` → `t("setSongItem.score.vaultTab")` (또는 별도 키)
-- 탭 `악보 웹 검색`, `내 악보 업로드` → 각 키
-- toast `히스토리 클라우드 불러오기 실패` → 키
-- title `히스토리 클라우드에서 삭제` → 키
-
-**`src/pages/SetBuilder.tsx`** (이전에 추가한 hint):
-- `번호를 눌러 순서를 변경할 수 있어요` → `t("setBuilder.reorder.hint")`
-
-### 3. BandView 게이트 — 변경 없음
-`BandViewAccessGate.tsx` 의 모든 안내 문구는 이미 `language === "ko"` 분기로 EN/KO 모두 존재. 확인 완료, 그대로 유지.
-
-### 영향 파일
-1. `src/lib/translations.ts` — 신규 키 추가 (en/ko 양쪽)
-2. `src/components/set-builder/SongProgressionSettings.tsx`
-3. `src/components/SetSongItem.tsx`
-4. `src/components/SetComponentItem.tsx`
-5. `src/components/set-builder/ReorderItemsDialog.tsx`
-6. `src/components/SetSongScoreDialog.tsx`
-7. `src/pages/SetBuilder.tsx`
+### 다음 단계
+승인 시 default 모드로 전환 → DB에서 해당 셋 데이터 조회 + `scoreUrl.ts` 로직 검토 → 레거시 호환 fallback 패치 적용. 기존 데이터는 절대 수정하지 않음 (코드 레벨 호환성만 추가).
