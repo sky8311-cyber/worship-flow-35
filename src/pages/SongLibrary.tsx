@@ -953,7 +953,7 @@ const SongLibrary = () => {
       </main>
 
       {/* Mobile Floating Action Stack */}
-      <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown}>
+      <FloatingActionStack hasMiniPlayer={playerState === 'mini'} hidden={isScrollingDown && cartCount === 0}>
         {/* Cart indicator - bottom of stack */}
         <FloatingCartIndicator 
           count={cartCount} 
