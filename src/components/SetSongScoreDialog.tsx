@@ -663,340 +663,343 @@ export const SetSongScoreDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-3xl w-[calc(100vw-1rem)] p-0 gap-0 flex flex-col overflow-hidden min-w-0 [&>*]:min-w-0"
+        className="max-w-3xl w-[calc(100vw-1rem)] p-0 gap-0 flex flex-col min-w-0 [&>*]:min-w-0"
         style={{
           maxHeight: "calc(100dvh - 2rem)",
         }}
       >
-        <DialogHeader className="min-w-0 px-6 pt-6 pb-2 flex-shrink-0">
-          <DialogTitle>악보 관리</DialogTitle>
-        </DialogHeader>
+        {/* Single scroll container — header, tabs, selected scores, footer all flow together */}
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden min-w-0"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          <DialogHeader className="min-w-0 px-6 pt-6 pb-2">
+            <DialogTitle>악보 관리</DialogTitle>
+          </DialogHeader>
 
-        {/* Only mount heavy content while open to free thumbnails on close */}
-        {!open ? null : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 flex-1 flex flex-col overflow-hidden px-6">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
-            <TabsTrigger value="search">
-              <Search className="w-4 h-4 mr-2" />
-               악보 웹 검색
-            </TabsTrigger>
-            <TabsTrigger value="upload">
-              <Upload className="w-4 h-4 mr-2" />
-              내 악보 업로드
-            </TabsTrigger>
-            <TabsTrigger value="vault">
-              <History className="w-4 h-4 mr-2" />
-              악보 사용 히스토리
-            </TabsTrigger>
-          </TabsList>
+          {/* Only mount heavy content while open to free thumbnails on close */}
+          {!open ? null : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 flex flex-col px-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="search">
+                <Search className="w-4 h-4 mr-2" />
+                 악보 웹 검색
+              </TabsTrigger>
+              <TabsTrigger value="upload">
+                <Upload className="w-4 h-4 mr-2" />
+                내 악보 업로드
+              </TabsTrigger>
+              <TabsTrigger value="vault">
+                <History className="w-4 h-4 mr-2" />
+                악보 사용 히스토리
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 -mx-1 px-1">
-          {/* Tab 1: Web Image Search */}
-          <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
-            {apiNotConfigured ? (
-              <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
-                <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-muted-foreground">
-                   {setupErrorMessage ?? "이미지 검색 기능을 현재 사용할 수 없습니다. 잠시 후 다시 시도해주세요."}
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="flex gap-2">
-                  <Input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                    placeholder="예: 주님은 나의 힘이요 악보"
-                  />
-                  <Button onClick={handleSearch} disabled={searching || !query.trim()}>
-                    {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "검색"}
-                  </Button>
+            <div className="-mx-1 px-1">
+            {/* Tab 1: Web Image Search */}
+            <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
+              {apiNotConfigured ? (
+                <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
+                  <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-muted-foreground">
+                     {setupErrorMessage ?? "이미지 검색 기능을 현재 사용할 수 없습니다. 잠시 후 다시 시도해주세요."}
+                  </p>
                 </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                      placeholder="예: 주님은 나의 힘이요 악보"
+                    />
+                    <Button onClick={handleSearch} disabled={searching || !query.trim()}>
+                      {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "검색"}
+                    </Button>
+                  </div>
 
-                <p className="text-xs text-muted-foreground">
-                  검색 결과는 외부 웹사이트의 이미지입니다. K-Worship은 해당 콘텐츠를 저장하거나 소유하지 않으며, 저작권 이용 책임은 사용자에게 있습니다.
-                </p>
+                  <p className="text-xs text-muted-foreground">
+                    검색 결과는 외부 웹사이트의 이미지입니다. K-Worship은 해당 콘텐츠를 저장하거나 소유하지 않으며, 저작권 이용 책임은 사용자에게 있습니다.
+                  </p>
 
-                {results.length > 0 && (
-                  <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
-                    {results.map((item, i) => {
-                      const selected = isSelected(item.link);
-                      return (
+                  {results.length > 0 && (
+                    <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
+                      {results.map((item, i) => {
+                        const selected = isSelected(item.link);
+                        return (
+                          <button
+                            type="button"
+                            key={i}
+                            onClick={() => toggleWebSelection(item)}
+                            className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary ${
+                              selected ? "border-primary ring-2 ring-primary" : "border-border"
+                            }`}
+                          >
+                            <img
+                              src={item.thumbnailLink}
+                              alt={item.title}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                            />
+                            <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                              <Checkbox checked={selected} className="pointer-events-none" />
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            {/* Tab 2: Private Upload */}
+            <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
+              <CopyrightUploadNotice
+                checked={acknowledged}
+                onCheckedChange={handleAcknowledgeChange}
+                disabled={isAcknowledging}
+              />
+
+              <div className="border-2 border-dashed border-border rounded-md p-6 text-center">
+                <input
+                  type="file"
+                  id="score-upload"
+                  accept="application/pdf,image/*"
+                  onChange={handleFileUpload}
+                  disabled={uploading || !acknowledged}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="score-upload"
+                  className={`inline-flex flex-col items-center gap-2 cursor-pointer ${
+                    !acknowledged || uploading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="w-8 h-8 text-muted-foreground" />
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    {uploading ? "업로드 중..." : "PDF 또는 이미지 파일 선택"}
+                  </span>
+                  <span className="text-xs text-muted-foreground/80">
+                    PDF는 페이지별 이미지로 자동 변환됩니다
+                  </span>
+                </label>
+              </div>
+            </TabsContent>
+
+            {/* Tab 3: My Vault */}
+            <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
+              {vaultLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : vaultItems.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
+                  <Music className="w-8 h-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {"이 곡에 사용한 악보가 여기에 기록됩니다.\n악보를 검색하거나 파일을 업로드해보세요."}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
+                  {vaultItems.map((item) => {
+                    const selected = selectedScores.some(
+                      (s) => s.vaultScoreId === item.id || s.url === item.score_url
+                    );
+                    return (
+                      <div key={item.id} className="relative group min-w-0 w-full">
                         <button
                           type="button"
-                          key={i}
-                          onClick={() => toggleWebSelection(item)}
-                          className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary ${
+                          onClick={() => {
+                            setSelectedScores((prev) => {
+                              if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
+                                return prev.filter(
+                                  (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
+                                );
+                              }
+                              return [
+                                ...prev,
+                                {
+                                  id: crypto.randomUUID(),
+                                  type: item.score_type === "web" ? "web" : "upload",
+                                  url: item.score_url,
+                                  thumbnail: item.thumbnail_url,
+                                  musicalKey: item.musical_key || "C",
+                                  isPrimary: prev.length === 0,
+                                  vaultScoreId: item.id,
+                                  label: item.label,
+                                },
+                              ];
+                            });
+                          }}
+                          className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
                             selected ? "border-primary ring-2 ring-primary" : "border-border"
                           }`}
                         >
-                          <img
-                            src={item.thumbnailLink}
-                            alt={item.title}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full max-w-full h-32 object-cover object-top bg-muted"
-                          />
+                          {item.thumbnail_url ? (
+                            <img
+                              src={item.thumbnail_url}
+                              alt={item.label || ""}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                            />
+                          ) : (
+                            <div className="w-full h-32 flex items-center justify-center bg-muted">
+                              <Music className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
                           <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
                             <Checkbox checked={selected} className="pointer-events-none" />
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-
-          {/* Tab 2: Private Upload */}
-          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
-            <CopyrightUploadNotice
-              checked={acknowledged}
-              onCheckedChange={handleAcknowledgeChange}
-              disabled={isAcknowledging}
-            />
-
-            <div className="border-2 border-dashed border-border rounded-md p-6 text-center">
-              <input
-                type="file"
-                id="score-upload"
-                accept="application/pdf,image/*"
-                onChange={handleFileUpload}
-                disabled={uploading || !acknowledged}
-                className="hidden"
-              />
-              <label
-                htmlFor="score-upload"
-                className={`inline-flex flex-col items-center gap-2 cursor-pointer ${
-                  !acknowledged || uploading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {uploading ? (
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                ) : (
-                  <Upload className="w-8 h-8 text-muted-foreground" />
-                )}
-                <span className="text-sm text-muted-foreground">
-                  {uploading ? "업로드 중..." : "PDF 또는 이미지 파일 선택"}
-                </span>
-                <span className="text-xs text-muted-foreground/80">
-                  PDF는 페이지별 이미지로 자동 변환됩니다
-                </span>
-              </label>
-            </div>
-          </TabsContent>
-
-          {/* Tab 3: My Vault */}
-          <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
-            {vaultLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : vaultItems.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-12 text-center px-4">
-                <Music className="w-8 h-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {"이 곡에 사용한 악보가 여기에 기록됩니다.\n악보를 검색하거나 파일을 업로드해보세요."}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-3 overflow-hidden w-full min-w-0">
-                {vaultItems.map((item) => {
-                  const selected = selectedScores.some(
-                    (s) => s.vaultScoreId === item.id || s.url === item.score_url
-                  );
-                  return (
-                    <div key={item.id} className="relative group min-w-0 w-full">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedScores((prev) => {
-                            if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
-                              return prev.filter(
-                                (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
-                              );
-                            }
-                            return [
-                              ...prev,
-                              {
-                                id: crypto.randomUUID(),
-                                type: item.score_type === "web" ? "web" : "upload",
-                                url: item.score_url,
-                                thumbnail: item.thumbnail_url,
-                                musicalKey: item.musical_key || "C",
-                                isPrimary: prev.length === 0,
-                                vaultScoreId: item.id,
-                                label: item.label,
-                              },
-                            ];
-                          });
-                        }}
-                        className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
-                          selected ? "border-primary ring-2 ring-primary" : "border-border"
-                        }`}
-                      >
-                        {item.thumbnail_url ? (
-                          <img
-                            src={item.thumbnail_url}
-                            alt={item.label || ""}
-                            loading="lazy"
-                            decoding="async"
-                            className="w-full max-w-full h-32 object-cover object-top bg-muted"
-                          />
-                        ) : (
-                          <div className="w-full h-32 flex items-center justify-center bg-muted">
-                            <Music className="w-8 h-8 text-muted-foreground" />
+                          <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                            {item.score_type === "web" ? (
+                              <Globe className="w-3 h-3 text-blue-500" />
+                            ) : (
+                              <Lock className="w-3 h-3 text-amber-600" />
+                            )}
+                            <span>{item.musical_key || "C"}</span>
                           </div>
-                        )}
-                        <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
-                          <Checkbox checked={selected} className="pointer-events-none" />
-                        </div>
-                        <div className="absolute top-1 left-1 flex items-center gap-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
-                          {item.score_type === "web" ? (
-                            <Globe className="w-3 h-3 text-blue-500" />
-                          ) : (
-                            <Lock className="w-3 h-3 text-amber-600" />
+                          {(item.label || item.file_name) && (
+                            <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
+                              {item.label || item.file_name}
+                            </div>
                           )}
-                          <span>{item.musical_key || "C"}</span>
-                        </div>
-                        {(item.label || item.file_name) && (
-                          <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
-                            {item.label || item.file_name}
-                          </div>
-                        )}
-                      </button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute bottom-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setVaultDeleteId(item.id);
-                        }}
-                        title="악보 사용 히스토리에서 삭제"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-          </div>
-        </Tabs>
-        )}
-
-        {/* Sticky bottom: Selected scores + Footer */}
-        <div
-          className="flex-shrink-0 border-t border-border bg-background px-6 pt-3 pb-4"
-          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
-        >
-          {/* Selected Scores Preview Panel */}
-          {selectedScores.length > 0 && (
-            <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mb-3 max-w-full w-full min-w-0 overflow-hidden max-h-40 overflow-y-auto">
-              <p className="text-xs font-medium text-muted-foreground">
-                선택된 악보 ({selectedScores.length})
-              </p>
-              <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
-                {selectedScores.map((score) => {
-                  const displayName =
-                    score.type === "upload"
-                      ? score.url.split("/").pop() || score.url
-                      : score.url;
-                  return (
-                    <div
-                      key={score.id}
-                      className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPreviewScoreUrl(score.url);
-                          setPreviewScoreTitle(score.label || displayName);
-                        }}
-                        className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
-                        title="악보 미리보기"
-                      >
-                        {score.thumbnail ? (
-                          <img
-                            src={score.thumbnail}
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            className="w-12 h-12 object-cover object-top bg-muted block"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 flex items-center justify-center bg-muted">
-                            <Music className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Eye className="w-4 h-4 text-foreground" />
-                        </div>
-                      </button>
-                      <div className="min-w-0 overflow-hidden flex-1">
-                        <span className="text-xs text-muted-foreground truncate block">
-                          {displayName}
-                        </span>
+                        </button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute bottom-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVaultDeleteId(item.id);
+                          }}
+                          title="악보 사용 히스토리에서 삭제"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setAsPrimary(score.id)}
-                        title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
-                        className="h-8 w-8 flex-shrink-0"
-                      >
-                        <Star
-                          className={`w-4 h-4 ${
-                            score.isPrimary
-                              ? "fill-primary text-primary"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      </Button>
-                      <Select
-                        value={score.musicalKey}
-                        onValueChange={(v) => updateSelectedKey(score.id, v)}
-                      >
-                        <SelectTrigger className="w-20 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MUSICAL_KEYS.map((k) => (
-                            <SelectItem key={k} value={k}>
-                              {k}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeSelected(score.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
             </div>
+          </Tabs>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              취소
-            </Button>
-            <Button onClick={handleSaveAll} disabled={saving || !setSongId}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              저장
-            </Button>
+          {/* Selected scores + Footer — flow at end of single scroll */}
+          <div className="border-t border-border bg-background px-6 pt-3 pb-4 mt-4">
+            {/* Selected Scores Preview Panel */}
+            {selectedScores.length > 0 && (
+              <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mb-3 max-w-full w-full min-w-0 overflow-hidden">
+                <p className="text-xs font-medium text-muted-foreground">
+                  선택된 악보 ({selectedScores.length})
+                </p>
+                <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
+                  {selectedScores.map((score) => {
+                    const displayName =
+                      score.type === "upload"
+                        ? score.url.split("/").pop() || score.url
+                        : score.url;
+                    return (
+                      <div
+                        key={score.id}
+                        className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPreviewScoreUrl(score.url);
+                            setPreviewScoreTitle(score.label || displayName);
+                          }}
+                          className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
+                          title="악보 미리보기"
+                        >
+                          {score.thumbnail ? (
+                            <img
+                              src={score.thumbnail}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              className="w-12 h-12 object-cover object-top bg-muted block"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 flex items-center justify-center bg-muted">
+                              <Music className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Eye className="w-4 h-4 text-foreground" />
+                          </div>
+                        </button>
+                        <div className="min-w-0 overflow-hidden flex-1">
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {displayName}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setAsPrimary(score.id)}
+                          title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
+                          className="h-8 w-8 flex-shrink-0"
+                        >
+                          <Star
+                            className={`w-4 h-4 ${
+                              score.isPrimary
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        </Button>
+                        <Select
+                          value={score.musicalKey}
+                          onValueChange={(v) => updateSelectedKey(score.id, v)}
+                        >
+                          <SelectTrigger className="w-20 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MUSICAL_KEYS.map((k) => (
+                              <SelectItem key={k} value={k}>
+                                {k}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeSelected(score.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+                취소
+              </Button>
+              <Button onClick={handleSaveAll} disabled={saving || !setSongId}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                저장
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
