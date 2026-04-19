@@ -1,30 +1,25 @@
 
 ## 작업 이해
 
-송 라이브러리(Song Library) 페이지의 두 가지 변경:
-1. 데스크탑에서도 **카드 스타일 뷰가 기본(default)** — 현재 데스크탑은 테이블 뷰가 기본인 것으로 추정
-2. 카드의 **썸네일 클릭** 시 YouTube로 이동하지 말고, "편집" 버튼과 동일하게 **SongDialog 편집 다이얼로그를 열어 상세 보기**
-
-## 탐색 필요
-
-- `src/pages/SongLibrary.tsx` (또는 유사 경로) — 뷰 모드(card/table) 기본값 결정 로직 확인
-- 카드 컴포넌트 파일 (예: `SongCard.tsx`) — 썸네일 onClick 핸들러 위치 확인
-- 모바일/데스크탑 분기 로직 (useIsMobile 등) 확인
+송 라이브러리(/songs)에서 곡을 카트에 담을 때, 상단의 "곡 검색 / 새 곡 추가 / 곡 담기(카트)" 액션 영역이 스크롤되어 화면 밖에 있으면 사용자가 직접 위로 스크롤해야 카트 버튼이 보임. → **카트에 곡이 담기는 순간 자동으로 상단 액션 바로 부드럽게 스크롤**해서 사용자가 즉시 카트 액션을 취할 수 있게 한다.
 
 ## 변경 계획
 
-### 1) 카드 뷰를 데스크탑 기본값으로
-- 뷰 모드 state 초기값을 `"card"`로 통일 (현재 데스크탑에서 `"table"`로 분기되어 있을 가능성)
-- 사용자가 토글 버튼으로 테이블/카드 전환은 그대로 유지 (선택지는 남김)
-- localStorage에 저장된 사용자 선호가 있다면 존중, 없을 때만 카드를 default로
+### `src/pages/SongLibrary.tsx`
 
-### 2) 썸네일 클릭 → 편집 다이얼로그 오픈
-- 카드 컴포넌트 썸네일 영역의 `onClick` (현재 `window.open(youtube_url)`)을 제거
-- 대신 부모(SongLibrary)에서 받은 `onEdit(song)` 핸들러 호출 → SongDialog 오픈
-- YouTube로 직접 가고 싶은 사용자를 위한 진입점은 다이얼로그 내부 YouTube 링크 + (필요 시) 카드 우측 별도 작은 ▶︎ 아이콘 유지 여부는 현 상태 유지 (불필요하면 제거 안 함, 보존)
+1. 상단 액션 바(검색/새 곡 추가/카트 버튼이 위치한 컨테이너)에 `actionBarRef` 부착.
+2. `useSongCart()`의 `cartCount`를 watch하는 `useEffect` 추가:
+   - `prevCountRef`로 직전 값 저장
+   - **카운트가 증가했을 때만** `actionBarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })` 실행
+   - 첫 마운트(localStorage 복원)에는 스크롤 안 함 — `prevCountRef`를 초기 cartCount로 시드
+   - 감소(제거/clear)에는 스크롤 안 함
 
-## 영향 파일 (탐색 후 확정)
-1. `src/pages/SongLibrary.tsx` — viewMode 기본값 `"card"`
-2. `src/components/song-library/SongCard.tsx` (또는 동일 역할 파일) — 썸네일 onClick → `onEdit(song)`
+### 동작 결과
+- 어느 위치에서든 곡을 카트에 담는 순간 → 상단 액션 바가 화면 안으로 부드럽게 들어옴
+- 사용자는 즉시 "곡 담기(카트 열기)" 또는 "세트에 추가" 가능
+- 평소 화면 공간은 그대로 (sticky 고정 아님)
 
-데이터/스키마 변경 없음. 순수 UI 동작 변경.
+## 영향 파일
+- `src/pages/SongLibrary.tsx` — `actionBarRef` + `cartCount` 감시 useEffect 추가
+
+데이터/스키마/번역 변경 없음. 순수 UX 개선.
