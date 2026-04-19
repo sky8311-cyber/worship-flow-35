@@ -690,59 +690,73 @@ export const SetSongScoreDialog = ({
                     (s) => s.vaultScoreId === item.id || s.url === item.score_url
                   );
                   return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      onClick={() => {
-                        setSelectedScores((prev) => {
-                          if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
-                            return prev.filter(
-                              (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
-                            );
-                          }
-                          return [
-                            ...prev,
-                            {
-                              id: crypto.randomUUID(),
-                              type: "upload" as const,
-                              url: item.score_url,
-                              thumbnail: item.thumbnail_url,
-                              musicalKey: item.musical_key || "C",
-                              isPrimary: prev.length === 0,
-                              vaultScoreId: item.id,
-                              label: item.label,
-                            },
-                          ];
-                        });
-                      }}
-                      className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
-                        selected ? "border-primary ring-2 ring-primary" : "border-border"
-                      }`}
-                    >
-                      {item.thumbnail_url ? (
-                        <img
-                          src={item.thumbnail_url}
-                          alt={item.label || ""}
-                          loading="lazy"
-                          className="w-full max-w-full h-32 object-cover object-top bg-muted"
-                        />
-                      ) : (
-                        <div className="w-full h-32 flex items-center justify-center bg-muted">
-                          <Music className="w-8 h-8 text-muted-foreground" />
+                    <div key={item.id} className="relative group min-w-0 w-full">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedScores((prev) => {
+                            if (prev.some((s) => s.vaultScoreId === item.id || s.url === item.score_url)) {
+                              return prev.filter(
+                                (s) => s.vaultScoreId !== item.id && s.url !== item.score_url
+                              );
+                            }
+                            return [
+                              ...prev,
+                              {
+                                id: crypto.randomUUID(),
+                                type: "upload" as const,
+                                url: item.score_url,
+                                thumbnail: item.thumbnail_url,
+                                musicalKey: item.musical_key || "C",
+                                isPrimary: prev.length === 0,
+                                vaultScoreId: item.id,
+                                label: item.label,
+                              },
+                            ];
+                          });
+                        }}
+                        className={`relative rounded-md overflow-hidden min-w-0 w-full border-2 transition-all hover:border-primary text-left ${
+                          selected ? "border-primary ring-2 ring-primary" : "border-border"
+                        }`}
+                      >
+                        {item.thumbnail_url ? (
+                          <img
+                            src={item.thumbnail_url}
+                            alt={item.label || ""}
+                            loading="lazy"
+                            className="w-full max-w-full h-32 object-cover object-top bg-muted"
+                          />
+                        ) : (
+                          <div className="w-full h-32 flex items-center justify-center bg-muted">
+                            <Music className="w-8 h-8 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
+                          <Checkbox checked={selected} className="pointer-events-none" />
                         </div>
-                      )}
-                      <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
-                        <Checkbox checked={selected} className="pointer-events-none" />
-                      </div>
-                      <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
-                        {item.musical_key || "C"}
-                      </div>
-                      {item.label && (
-                        <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
-                          {item.label}
+                        <div className="absolute top-1 left-1 bg-background/90 rounded px-1.5 py-0.5 text-[10px] font-medium pointer-events-none">
+                          {item.musical_key || "C"}
                         </div>
-                      )}
-                    </button>
+                        {item.label && (
+                          <div className="px-2 py-1 text-[11px] text-muted-foreground truncate bg-background">
+                            {item.label}
+                          </div>
+                        )}
+                      </button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute bottom-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVaultDeleteId(item.id);
+                        }}
+                        title="보관함에서 삭제"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   );
                 })}
               </div>
