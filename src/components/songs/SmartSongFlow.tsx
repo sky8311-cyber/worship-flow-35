@@ -358,14 +358,73 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     triggerDraftSave: handleDraftSave,
   }));
 
+  // === AI Auto-fill (Step 5) ===
+  const handleAIFill = async () => {
+    if (!title.trim()) {
+      toast.error(t("songFlow.enterTitle"));
+      return;
+    }
+    setAiFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("enrich-song", {
+        body: {
+          title: title.trim(),
+          artist: artist.trim() || undefined,
+          language: songLanguage || undefined,
+          subtitle: subtitle.trim() || undefined,
+          youtube_url: youtubeLinks[0]?.url || undefined,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      const sugg = data?.suggestions;
+      if (!sugg) {
+        toast.error(t("songFlow.aiFillError"));
+        return;
+      }
+      // Apply tags (merge with existing, max 3)
+      if (Array.isArray(sugg.tags) && sugg.tags.length > 0) {
+        const tagNames = sugg.tags
+          .map((tg: any) => (typeof tg === "string" ? tg : tg?.ko))
+          .filter(Boolean);
+        const merged = Array.from(new Set([...topics, ...tagNames])).slice(0, 3);
+        setTopics(merged);
+      }
+      // Offer lyrics if missing
+      if (!lyrics.trim() && sugg.lyrics && sugg.lyrics.trim().length > 50) {
+        if (window.confirm(t("songFlow.aiFillLyricsPrompt"))) {
+          setLyrics(sugg.lyrics);
+          toast.success(t("songFlow.aiFillLyricsApplied"));
+        }
+      }
+      toast.success(t("songFlow.aiFilled"));
+    } catch (err: any) {
+      console.error("AI fill error:", err);
+      toast.error(t("songFlow.aiFillError"));
+    } finally {
+      setAiFilling(false);
+    }
+  };
+
   // === RENDER ===
   const stepLabels = [
     t("songFlow.steps.songInfo"),
     t("songFlow.steps.youtube"),
-    isKo ? "추가 YouTube 링크" : "Additional YouTube Links",
+    t("songFlow.steps.scoresLinks"),
     t("songFlow.steps.lyrics"),
     t("songFlow.steps.languageTopics"),
     t("songFlow.steps.review"),
+  ];
+  const stepShortLabels = [
+    t("songFlow.stepShort.songInfo"),
+    t("songFlow.stepShort.youtube"),
+    t("songFlow.stepShort.links"),
+    t("songFlow.stepShort.lyrics"),
+    t("songFlow.stepShort.tags"),
+    t("songFlow.stepShort.review"),
   ];
 
   return (
