@@ -190,7 +190,7 @@ const SongLibrary = () => {
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select(
-        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes, song_scores(id, key, file_url, page_number)"
+        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, song_scores(id, key, file_url, page_number)"
       );
 
       if (debouncedSearchQuery) {
@@ -421,7 +421,6 @@ const SongLibrary = () => {
         { v: "tags", s: headerStyle },
         { v: "youtube_url", s: headerStyle },
         { v: "score_file_url", s: headerStyle },
-        { v: "notes", s: headerStyle },
         { v: "interpretation", s: headerStyle },
         { v: "lyrics", s: headerStyle },
         { v: "youtube_links", s: headerStyle },
@@ -439,7 +438,6 @@ const SongLibrary = () => {
         song.tags || "",
         song.youtube_url || "",
         song.score_file_url || "",
-        song.notes || "",
         song.interpretation || "",
         song.lyrics || "",
         formatYoutubeLinks(song.id),
@@ -460,7 +458,6 @@ const SongLibrary = () => {
         { wch: 12 },  // tags
         { wch: 20 },  // youtube_url
         { wch: 40 },  // score_file_url
-        { wch: 30 },  // notes
         { wch: 30 },  // interpretation
         { wch: 50 },  // lyrics
         { wch: 60 },  // youtube_links
