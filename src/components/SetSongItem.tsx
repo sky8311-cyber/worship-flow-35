@@ -381,47 +381,40 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
 
               {/* Lyrics Section */}
               <Collapsible open={lyricsOpen} onOpenChange={setLyricsOpen}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
-                        <span className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
-                          {t("setSongItem.lyrics")}
-                          {lyricsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </span>
-                      </Button>
-                    </CollapsibleTrigger>
-                    
-                    {/* Import Lyrics Toggle */}
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
+                      <span className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+                        {t("setSongItem.lyrics")}
+                        {lyricsOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                      </span>
+                    </Button>
+                  </CollapsibleTrigger>
+
+                  <div className="flex items-center gap-1 flex-wrap">
                     {songHasLyrics && (
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          id={`lyrics-toggle-${index}`}
-                          checked={hasImportedLyrics}
-                          onCheckedChange={handleLyricsToggle}
-                        />
-                        <Label 
-                          htmlFor={`lyrics-toggle-${index}`} 
-                          className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1"
-                        >
-                          <Download className="w-3 h-3" />
-                          가사 가져오기
-                        </Label>
-                      </div>
+                      <Button
+                        variant={hasImportedLyrics ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleLyricsToggle(!hasImportedLyrics)}
+                        className="h-7 px-2 text-xs gap-1"
+                      >
+                        <Download className="w-3 h-3" />
+                        가사 가져오기
+                      </Button>
+                    )}
+                    {hasImportedLyrics && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyLyrics}
+                        className="h-7 px-2 text-xs gap-1"
+                      >
+                        <Copy className="w-3 h-3" />
+                        {t("setSongItem.copyLyrics")}
+                      </Button>
                     )}
                   </div>
-                  
-                  {hasImportedLyrics && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCopyLyrics}
-                      className="h-6 text-xs"
-                    >
-                      <Copy className="w-3 h-3 mr-1" />
-                      {t("setSongItem.copyLyrics")}
-                    </Button>
-                  )}
                 </div>
                 <CollapsibleContent>
                   <Textarea

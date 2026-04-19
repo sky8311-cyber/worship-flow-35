@@ -121,9 +121,9 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
               </Tooltip>
             </div>
 
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
                   {/* Type selector dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -166,6 +166,16 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+                <div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemove(index)}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Custom name input */}
@@ -199,28 +209,30 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                     </span>
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2 mt-2">
-                  {/* Assigned To (담당자) field */}
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      value={component.assigned_to || ""}
-                      onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
-                      placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
-                      className="h-8 text-sm"
-                    />
-                  </div>
+                <CollapsibleContent className="mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {/* Assigned To (담당자) field */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        value={component.assigned_to || ""}
+                        onChange={(e) => onUpdate(index, { assigned_to: e.target.value })}
+                        placeholder={language === "ko" ? "담당자 (선택)" : "Assigned to (optional)"}
+                        className="h-8 text-sm w-full"
+                      />
+                    </div>
 
-                  {/* Duration input */}
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                    <Input
-                      type="number"
-                      value={component.duration_minutes || ""}
-                      onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
-                      placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
-                      className="h-8 text-sm w-32"
-                    />
+                    {/* Duration input */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <Input
+                        type="number"
+                        value={component.duration_minutes || ""}
+                        onChange={(e) => onUpdate(index, { duration_minutes: e.target.value ? parseInt(e.target.value) : null })}
+                        placeholder={language === "ko" ? "소요시간 (분)" : "Duration (min)"}
+                        className="h-8 text-sm w-full"
+                      />
+                    </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -265,17 +277,6 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                   />
                 </CollapsibleContent>
               </Collapsible>
-            </div>
-
-            <div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(index)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-              >
-                <X className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </CardContent>
