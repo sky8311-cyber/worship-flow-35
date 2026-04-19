@@ -1,12 +1,21 @@
 
-사용자가 이전 요청 중 미완료 항목을 지적. 직전 turn에서 4가지(탭이름, 빈상태, 토스트, 툴팁)는 했지만, 그 **이전** 승인된 plan 3가지가 누락됐는지 검토 필요.
+translations.ts KO만 변경:
+- `setSongItem.progression.title`: "진행 설정 (선택사항)" → "진행설정"
+- `setSongItem.progression.history`: "이전 진행 불러오기" 유지
+- `setSongItem.progression.save`: "오늘 진행 저장" → "진행 저장"
 
-승인된 plan 3가지:
-1. SetSongScoreDialog 이중 스크롤 제거
-2. 진행 설정 라벨 변경 (title/history/save)
-3. "게시하기" → "공동체에 게시하기"
+모바일 오버플로우 방지 (SongProgressionSettings.tsx):
+- 헤더 컨테이너: `flex items-center justify-between` → `flex items-center justify-between gap-2`
+- 제목 `<h5>`: `flex-shrink-0` 추가, 또는 `truncate min-w-0`
+- 버튼 그룹 `<div className="flex gap-1">`: `flex-shrink-0` 추가
+- 버튼 텍스트가 길어 좁은 화면에서 줄바꿈/오버플로우 발생 시 → 버튼 자체에 `whitespace-nowrap` 추가
+- 추가 안전장치: 모바일에서 텍스트 숨기고 아이콘만 표시하는 옵션 (`hidden xs:inline`) 대신, `whitespace-nowrap` + `flex-shrink-0`로 충분
 
-확인할 것:
-- SetSongScoreDialog.tsx의 현재 스크롤 구조
-- translations.ts의 progression 라벨 + publish 라벨
-- Dashboard.tsx, UpcomingEventsWidget.tsx, SetBuilder.tsx 하드코딩 "게시하기"
+영문(EN)도 함께 짧게 정렬:
+- title: "Progression"
+- history: "Load Previous"  
+- save: "Save Progression"
+
+영향 파일:
+1. `src/lib/translations.ts` — 3개 키 KO/EN 단축
+2. `src/components/set-builder/SongProgressionSettings.tsx` — 헤더 flex 안전장치 (gap, flex-shrink-0, whitespace-nowrap)
