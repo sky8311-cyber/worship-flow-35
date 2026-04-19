@@ -125,17 +125,15 @@ export const ScorePreviewDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        hideCloseButton={isMobile}
+        hideCloseButton
         className={cn(
-          "flex flex-col",
-          // Mobile: force fullscreen with !important to override base dialog styles
+          "flex flex-col bg-background",
+          // Fullscreen on ALL viewports — image fits screen, no scroll
           "!fixed !top-0 !left-0 !right-0 !bottom-0",
           "!translate-x-0 !translate-y-0",
-          "w-full h-[100dvh] max-w-full max-h-full rounded-none p-4",
-          // Desktop: restore centered modal positioning
-          "sm:!left-[50%] sm:!top-[50%] sm:!right-auto sm:!bottom-auto",
-          "sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
-          "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
+          "w-screen h-[100dvh] max-w-none max-h-none rounded-none p-3 sm:p-4",
+          "pt-[max(0.75rem,env(safe-area-inset-top))]",
+          "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
         <DialogHeader className="flex-shrink-0">
