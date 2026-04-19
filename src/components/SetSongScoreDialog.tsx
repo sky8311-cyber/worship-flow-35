@@ -201,12 +201,50 @@ export const SetSongScoreDialog = ({
 
   const isSelected = (url: string) => selectedScores.some((s) => s.url === url);
 
+  const extractDomainLabel = (url: string): string => {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return url;
+    }
+  };
+
+  const saveWebToVault = async (item: SearchResult) => {
+    if (!songId) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: existing } = await supabase
+        .from("user_score_vault")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("song_id", songId)
+        .eq("score_url", item.link)
+        .maybeSingle();
+      if (existing) return;
+      await supabase.from("user_score_vault").insert({
+        user_id: user.id,
+        song_id: songId,
+        score_url: item.link,
+        thumbnail_url: item.thumbnailLink,
+        score_type: "web",
+        label: item.title || extractDomainLabel(item.link),
+      });
+      // mark vault as needing reload next time tab opens
+      setVaultLoaded(false);
+    } catch (e) {
+      console.warn("Web vault save failed (non-fatal):", e);
+    }
+  };
+
   const toggleWebSelection = (item: SearchResult) => {
     setSelectedScores((prev) => {
       if (prev.some((s) => s.url === item.link)) {
         return prev.filter((s) => s.url !== item.link);
       }
       const isFirst = prev.length === 0;
+      // Fire-and-forget vault save
+      saveWebToVault(item);
       return [
         ...prev,
         {
