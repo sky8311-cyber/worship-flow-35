@@ -2436,6 +2436,13 @@ const SetBuilder = () => {
         />
       )}
 
+      <ReorderItemsDialog
+        open={reorderOpen}
+        onOpenChange={setReorderOpen}
+        items={items as any}
+        onSave={(newItems) => setItems(newItems as any)}
+      />
+
       <AISetBuilderPanel
         open={showAIPanel}
         onOpenChange={setShowAIPanel}
