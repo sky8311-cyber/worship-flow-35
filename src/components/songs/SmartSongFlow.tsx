@@ -430,7 +430,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   return (
     <div className="flex flex-col h-full min-h-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b shrink-0"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}
+      >
         <div className="min-w-0">
           <h2 className="text-lg font-semibold truncate">
             {title.trim() || t("songFlow.newSong")}
