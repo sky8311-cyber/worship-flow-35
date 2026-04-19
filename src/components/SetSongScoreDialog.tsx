@@ -5,13 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, Upload, Trash2, Loader2, AlertCircle, Music, X, Star, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyrightUploadNotice } from "@/components/copyright/CopyrightUploadNotice";
 import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
 import { convertPdfToImages } from "@/utils/pdfToImages";
+import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
 
 interface SetSongScoreDialogProps {
   open: boolean;
