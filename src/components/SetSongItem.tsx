@@ -300,7 +300,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </div>
 
               {song?.id && (
-                <div className="border-2 border-accent/60 rounded-md p-3 bg-accent/5 space-y-3">
+                <div className="border-2 border-accent/60 rounded-md p-2 sm:p-3 bg-accent/5 space-y-3 min-w-0 overflow-hidden">
                   <ProgressionHistoryControls
                     songId={song.id}
                     bpm={setSong.bpm}
@@ -315,10 +315,10 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                     })}
                   />
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+                    <div className="min-w-0">
                       <label className="text-xs text-muted-foreground">BPM</label>
-                      <div className="mt-1">
+                      <div className="mt-1 min-w-0">
                         <Metronome
                           bpm={setSong.bpm}
                           timeSignature={setSong.time_signature}

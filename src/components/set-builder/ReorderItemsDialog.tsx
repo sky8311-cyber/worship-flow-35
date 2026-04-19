@@ -18,7 +18,6 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export type ReorderItem = {
@@ -43,7 +42,19 @@ const getItemLabel = (item: ReorderItem): string => {
   return item.data?.label || "(이름 없음)";
 };
 
-const SortableRow = ({ item, index }: { item: ReorderItem; index: number }) => {
+const SortableRowWithArrows = ({
+  item,
+  index,
+  total,
+  onUp,
+  onDown,
+}: {
+  item: ReorderItem;
+  index: number;
+  total: number;
+  onUp: () => void;
+  onDown: () => void;
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -63,42 +74,20 @@ const SortableRow = ({ item, index }: { item: ReorderItem; index: number }) => {
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none"
+        aria-label="드래그하여 순서 변경"
       >
         <GripVertical className="w-4 h-4" />
       </button>
       <span className="text-sm font-bold text-primary w-6 text-center">{index + 1}</span>
       <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <span className="text-sm flex-1 truncate">{getItemLabel(item)}</span>
-    </div>
-  );
-};
-
-const StaticRow = ({
-  item,
-  index,
-  total,
-  onUp,
-  onDown,
-}: {
-  item: ReorderItem;
-  index: number;
-  total: number;
-  onUp: () => void;
-  onDown: () => void;
-}) => {
-  const Icon = item.type === "song" ? Music : Circle;
-  return (
-    <div className="flex items-center gap-2 p-2 border border-border rounded-md bg-card">
-      <span className="text-sm font-bold text-primary w-6 text-center">{index + 1}</span>
-      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      <span className="text-sm flex-1 truncate">{getItemLabel(item)}</span>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUp} disabled={index === 0}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onUp} disabled={index === 0}>
         <ChevronUp className="w-4 h-4" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7"
+        className="h-7 w-7 flex-shrink-0"
         onClick={onDown}
         disabled={index === total - 1}
       >
@@ -115,7 +104,6 @@ export const ReorderItemsDialog = ({
   onSave,
 }: ReorderItemsDialogProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
   const [tempItems, setTempItems] = useState<ReorderItem[]>(items);
 
   useEffect(() => {
@@ -123,7 +111,9 @@ export const ReorderItemsDialog = ({
   }, [open, items]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -159,33 +149,27 @@ export const ReorderItemsDialog = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-2 py-2">
-          {isMobile ? (
-            tempItems.map((item, index) => (
-              <StaticRow
-                key={item.id}
-                item={item}
-                index={index}
-                total={tempItems.length}
-                onUp={() => moveItem(index, -1)}
-                onDown={() => moveItem(index, 1)}
-              />
-            ))
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={tempItems.map((i) => i.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={tempItems.map((i) => i.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {tempItems.map((item, index) => (
-                  <SortableRow key={item.id} item={item} index={index} />
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
+              {tempItems.map((item, index) => (
+                <SortableRowWithArrows
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  total={tempItems.length}
+                  onUp={() => moveItem(index, -1)}
+                  onDown={() => moveItem(index, 1)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
 
         <DialogFooter>

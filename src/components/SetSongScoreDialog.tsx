@@ -660,13 +660,20 @@ export const SetSongScoreDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden min-w-0 [&>*]:min-w-0">
-        <DialogHeader className="min-w-0">
+      <DialogContent
+        className="max-w-3xl w-[calc(100vw-1rem)] p-0 gap-0 flex flex-col overflow-hidden min-w-0 [&>*]:min-w-0"
+        style={{
+          maxHeight: "calc(100dvh - 2rem)",
+        }}
+      >
+        <DialogHeader className="min-w-0 px-6 pt-6 pb-2 flex-shrink-0">
           <DialogTitle>악보 관리</DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3">
+        {/* Only mount heavy content while open to free thumbnails on close */}
+        {!open ? null : (
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-w-0 flex-1 flex flex-col overflow-hidden px-6">
+          <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
             <TabsTrigger value="search">
               <Search className="w-4 h-4 mr-2" />
                악보 웹 검색
@@ -681,8 +688,9 @@ export const SetSongScoreDialog = ({
             </TabsTrigger>
           </TabsList>
 
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 -mx-1 px-1">
           {/* Tab 1: Web Image Search */}
-          <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0">
+          <TabsContent value="search" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
             {apiNotConfigured ? (
               <div className="flex items-start gap-3 p-4 rounded-md bg-muted border border-border">
                 <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -725,6 +733,7 @@ export const SetSongScoreDialog = ({
                             src={item.thumbnailLink}
                             alt={item.title}
                             loading="lazy"
+                            decoding="async"
                             className="w-full max-w-full h-32 object-cover object-top bg-muted"
                           />
                           <div className="absolute top-1 right-1 bg-background/90 rounded p-0.5 pointer-events-none">
@@ -740,7 +749,7 @@ export const SetSongScoreDialog = ({
           </TabsContent>
 
           {/* Tab 2: Private Upload */}
-          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0">
+          <TabsContent value="upload" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
             <CopyrightUploadNotice
               checked={acknowledged}
               onCheckedChange={handleAcknowledgeChange}
@@ -778,7 +787,7 @@ export const SetSongScoreDialog = ({
           </TabsContent>
 
           {/* Tab 3: My Vault */}
-          <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0">
+          <TabsContent value="vault" className="space-y-4 overflow-hidden w-full min-w-0 mt-3">
             {vaultLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -834,6 +843,7 @@ export const SetSongScoreDialog = ({
                             src={item.thumbnail_url}
                             alt={item.label || ""}
                             loading="lazy"
+                            decoding="async"
                             className="w-full max-w-full h-32 object-cover object-top bg-muted"
                           />
                         ) : (
@@ -877,109 +887,119 @@ export const SetSongScoreDialog = ({
               </div>
             )}
           </TabsContent>
-        </Tabs>
-
-        {/* Selected Scores Preview Panel */}
-        {selectedScores.length > 0 && (
-          <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mt-4 max-w-full w-full min-w-0 overflow-hidden">
-            <p className="text-xs font-medium text-muted-foreground">
-              선택된 악보 ({selectedScores.length})
-            </p>
-            <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
-              {selectedScores.map((score) => {
-                const displayName =
-                  score.type === "upload"
-                    ? score.url.split("/").pop() || score.url
-                    : score.url;
-                return (
-                  <div
-                    key={score.id}
-                    className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPreviewScoreUrl(score.url);
-                        setPreviewScoreTitle(score.label || displayName);
-                      }}
-                      className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
-                      title="악보 미리보기"
-                    >
-                      {score.thumbnail ? (
-                        <img
-                          src={score.thumbnail}
-                          alt=""
-                          className="w-12 h-12 object-cover object-top bg-muted block"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 flex items-center justify-center bg-muted">
-                          <Music className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Eye className="w-4 h-4 text-foreground" />
-                      </div>
-                    </button>
-                    <div className="min-w-0 overflow-hidden flex-1">
-                      <span className="text-xs text-muted-foreground truncate block">
-                        {displayName}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setAsPrimary(score.id)}
-                      title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
-                      className="h-8 w-8 flex-shrink-0"
-                    >
-                      <Star
-                        className={`w-4 h-4 ${
-                          score.isPrimary
-                            ? "fill-primary text-primary"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                    </Button>
-                    <Select
-                      value={score.musicalKey}
-                      onValueChange={(v) => updateSelectedKey(score.id, v)}
-                    >
-                      <SelectTrigger className="w-20 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {MUSICAL_KEYS.map((k) => (
-                          <SelectItem key={k} value={k}>
-                            {k}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeSelected(score.id)}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+        </Tabs>
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            취소
-          </Button>
-          <Button onClick={handleSaveAll} disabled={saving || !setSongId}>
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            저장
-          </Button>
-        </DialogFooter>
+        {/* Sticky bottom: Selected scores + Footer */}
+        <div
+          className="flex-shrink-0 border-t border-border bg-background px-6 pt-3 pb-4"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          {/* Selected Scores Preview Panel */}
+          {selectedScores.length > 0 && (
+            <div className="border border-border rounded-md p-3 space-y-2 bg-muted/30 mb-3 max-w-full w-full min-w-0 overflow-hidden max-h-40 overflow-y-auto">
+              <p className="text-xs font-medium text-muted-foreground">
+                선택된 악보 ({selectedScores.length})
+              </p>
+              <div className="space-y-2 max-w-full w-full min-w-0 overflow-hidden">
+                {selectedScores.map((score) => {
+                  const displayName =
+                    score.type === "upload"
+                      ? score.url.split("/").pop() || score.url
+                      : score.url;
+                  return (
+                    <div
+                      key={score.id}
+                      className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewScoreUrl(score.url);
+                          setPreviewScoreTitle(score.label || displayName);
+                        }}
+                        className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
+                        title="악보 미리보기"
+                      >
+                        {score.thumbnail ? (
+                          <img
+                            src={score.thumbnail}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            className="w-12 h-12 object-cover object-top bg-muted block"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex items-center justify-center bg-muted">
+                            <Music className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Eye className="w-4 h-4 text-foreground" />
+                        </div>
+                      </button>
+                      <div className="min-w-0 overflow-hidden flex-1">
+                        <span className="text-xs text-muted-foreground truncate block">
+                          {displayName}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setAsPrimary(score.id)}
+                        title={score.isPrimary ? "기본 악보" : "기본으로 설정"}
+                        className="h-8 w-8 flex-shrink-0"
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            score.isPrimary
+                              ? "fill-primary text-primary"
+                              : "text-muted-foreground"
+                          }`}
+                        />
+                      </Button>
+                      <Select
+                        value={score.musicalKey}
+                        onValueChange={(v) => updateSelectedKey(score.id, v)}
+                      >
+                        <SelectTrigger className="w-20 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MUSICAL_KEYS.map((k) => (
+                            <SelectItem key={k} value={k}>
+                              {k}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSelected(score.id)}
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+              취소
+            </Button>
+            <Button onClick={handleSaveAll} disabled={saving || !setSongId}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              저장
+            </Button>
+          </div>
+        </div>
       </DialogContent>
 
       {/* Vault delete confirm */}
