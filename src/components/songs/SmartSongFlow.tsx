@@ -959,10 +959,25 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
   );
 }
 
-function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, topics, setTopics, topicsLoading, t, language }: any) {
+function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, topics, setTopics, topicsLoading, aiFilling, onAIFill, t, language }: any) {
   const isKo = language === "ko";
   return (
     <div className="space-y-6">
+      {/* AI Auto-fill */}
+      <Button
+        type="button"
+        variant="default"
+        onClick={onAIFill}
+        disabled={aiFilling}
+        className="w-full"
+      >
+        {aiFilling ? (
+          <><Loader2 className="w-4 h-4 animate-spin mr-2" />{t("songFlow.aiFilling")}</>
+        ) : (
+          <><Sparkles className="w-4 h-4 mr-2" />{t("songFlow.aiFillButton")}</>
+        )}
+      </Button>
+
       {topicsLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center py-4">
           <Loader2 className="w-4 h-4 animate-spin" />
