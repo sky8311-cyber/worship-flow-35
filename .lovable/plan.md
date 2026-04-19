@@ -1,28 +1,46 @@
 
-## 진단: 게시된 워십셋의 악보 이미지가 안 보이는 문제
+## iPad 프리뷰 크래시/느림 원인 조사 계획
 
-### 증상
-- 라우트: `/band-view/fb2b4635-6dfd-4abb-9739-84c5c2e499fd` (이미 게시된 셋)
-- 이전 세션에서 만들어진 레거시 셋들의 악보 이미지가 보이지 않음
-- 사용자는 명시적으로 "레거시 시스템(저장된 악보 이미지 파일)을 건드리지 말라"고 요청했었음
+### 현재 상황
+- 사용자: iPad에서 프리뷰 중 Chrome 반복 크래시, 로딩 매우 느림
+- 현재 라우트: `/set-builder/fba3a4c7-5727-4a88-b89a-bc252454c839` (편집 잠금 활성, 30초 간격 realtime UPDATE 이벤트 다수)
+- 콘솔: DialogContent aria 경고 외 에러 없음. EditLock realtime 이벤트만 반복.
+- 세션 리플레이: 악보 미리보기 다이얼로그 열고/닫기 반복 후 스크롤
 
-### 원인 가설
-오늘/최근 세션에서 악보 표시 컴포넌트(`SignedScoreImage`, `useSignedScoreUrl`, `scoreUrl` 유틸)가 도입/변경되면서 **레거시 데이터 형식**(예: 외부 URL, 다른 버킷 경로, public URL 등)을 처리하지 못하게 되었을 가능성.
+### 가설 (우선순위)
+1. **메모리 누수 — `SignedScoreImage` / `getSignedScoreUrl` 캐시 폭증**
+   - 오늘 추가된 fullscreen `ScorePreviewDialog`가 여러 페이지 이미지를 모두 큰 사이즈로 로드
+   - iPad Safari/Chrome은 메모리 한계 낮음 → 큰 이미지 누적 시 탭 크래시 (iOS WebKit ~250MB/탭)
+   - 다이얼로그 닫아도 캐시/img 객체가 GC 안 되면 누적
 
-특히 `extractScorePath` 함수가:
-- `scores` 버킷의 경로만 추출하도록 만들어졌다면
-- 레거시 셋이 다른 버킷/외부 URL/public URL을 사용했을 경우 → `null` 반환 → 서명 URL 생성 실패 → 빈 placeholder
+2. **무한 리렌더 / Effect 루프**
+   - `SignedScoreImage` useEffect가 `src` 변경마다 setState 3번 호출
+   - 부모가 src를 매 렌더 새 객체/문자열로 만들면 폭주 가능
 
-### 조사 계획 (READ-ONLY)
-1. `src/utils/scoreUrl.ts` 의 `extractScorePath` / `getSignedScoreUrl` 로직 검토 — 어떤 형식의 URL을 처리하는지
-2. BandView에서 악보 렌더링하는 컴포넌트 찾기 (`SetSongScoreDisplay`, `BandView` 등) — 최근에 `<img src>` → `<SignedScoreImage>`로 바꾼 곳이 있는지
-3. 해당 셋(`fb2b4635-...`)의 `set_songs.score_url` / `score_image_urls` 실제 DB 값 조회 → 어떤 형식인지 확인
-4. 콘솔/네트워크 로그 확인 — 404, 403, 또는 빈 URL 요청이 있는지
+3. **EditLock realtime 채널 누수**
+   - 30초마다 UPDATE 이벤트 정상이나, 다이얼로그 마운트마다 채널 추가 구독 시 누적
 
-### 수정 방향 (조사 후)
-- `extractScorePath` 가 레거시 URL 형식(직접 public URL, 외부 호스트, 다른 버킷 등)을 인식하면 **원본 URL 그대로 반환**하도록 fallback 추가
-- `SignedScoreImage` 컴포넌트가 서명 URL 생성 실패 시 **원본 src로 fallback** 렌더링
-- 즉, "서명 URL 변환이 가능한 경우만 변환, 아니면 원본 그대로" 정책
+4. **PDF.js 워커 메모리 점유** (PDF→이미지 변환 모듈이 SetBuilder에 로드되어 있음)
 
-### 다음 단계
-승인 시 default 모드로 전환 → DB에서 해당 셋 데이터 조회 + `scoreUrl.ts` 로직 검토 → 레거시 호환 fallback 패치 적용. 기존 데이터는 절대 수정하지 않음 (코드 레벨 호환성만 추가).
+### 조사 방법 (default 모드 전환 후)
+1. **dev-server 로그 확인**: `tail -n 300 /tmp/dev-server-logs/dev-server.log` — 최근 빌드 에러/경고
+2. **`SignedScoreImage` / `scoreUrl.ts` 캐시 정책 검토**: 캐시 크기 제한, eviction 여부
+3. **`ScorePreviewDialog` 리소스 정리**: `open=false`일 때 이미지 src clear, 컴포넌트 언마운트 시 cleanup
+4. **`SetBuilder.tsx` 마운트되는 큰 모듈 확인**: pdfjs, AI 컴포넌트 lazy load 여부
+5. **브라우저 performance profile** (사용자 승인 시): 메모리/long task 측정
+6. **realtime 채널 unsubscribe 확인**: `useEditLock` 훅의 cleanup
+
+### 예상 수정 (조사 결과 기반)
+- **캐시 LRU**: `getSignedScoreUrl` 캐시에 max size + LRU 도입 (예: 최대 50개)
+- **이미지 정리**: `ScorePreviewDialog`가 닫힐 때 img 참조 명시적 해제, `loading="lazy"` + `decoding="async"` 유지
+- **비활성 페이지 unmount**: 다중 페이지에서 현재 페이지만 DOM 유지, 나머지는 제거 (이미 그런 구조이지만 prefetch 비활성화 검토)
+- **PDF.js 동적 import 확인**: SetBuilder 진입 시 즉시 로드되지 않도록
+- **iPad용 이미지 다운스케일**: `SignedScoreImage`에 `sizes`/`srcset` 또는 viewport 기반 max-width 적용 검토
+
+### 진행 방식
+승인 시 default 모드에서:
+1. 로그/코드 조사 (5-10분)
+2. 발견된 원인별로 패치 (캐시 제한 + 다이얼로그 cleanup이 1순위)
+3. iPad에서 재테스트 요청
+
+데이터/DB는 건드리지 않음. 클라이언트 메모리 관리 코드만 수정.
