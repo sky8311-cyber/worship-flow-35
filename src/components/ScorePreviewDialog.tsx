@@ -223,12 +223,12 @@ export const ScorePreviewDialog = ({
               )}
             </div>
 
-            <div className="flex-1 overflow-auto min-h-0">
+            <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
               {currentFiles[currentPage] ? (
                 <SignedScoreImage
                   src={currentFiles[currentPage].url}
                   alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
-                  className="w-full h-auto rounded-lg"
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                 />
               ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
