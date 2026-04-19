@@ -458,7 +458,6 @@ const SongLibrary = () => {
         { wch: 12 },  // tags
         { wch: 20 },  // youtube_url
         { wch: 40 },  // score_file_url
-        { wch: 30 },  // notes
         { wch: 30 },  // interpretation
         { wch: 50 },  // lyrics
         { wch: 60 },  // youtube_links
