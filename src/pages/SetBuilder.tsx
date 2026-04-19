@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
-import { ReorderItemsDialog } from "@/components/set-builder/ReorderItemsDialog";
+import { ReorderItemsDialog, ReorderItemsPanel } from "@/components/set-builder/ReorderItemsDialog";
 import { CollaboratorsHeader } from "@/components/CollaboratorsHeader";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
@@ -2311,47 +2311,25 @@ const SetBuilder = () => {
                       </Button>
                     </div>
 
-                    <div className="mt-6 p-4 bg-accent/50 rounded-lg">
-                      <h4 className="font-semibold mb-2">
-                        {language === "ko" ? "요약" : "Summary"}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {language === "ko" 
-                          ? `총 ${items.length}개 항목 (곡 ${songCount}개, 순서 ${componentCount}개)`
-                          : `Total ${items.length} items (${songCount} songs, ${componentCount} components)`
-                        }
-                      </p>
-                      {items.length > 0 && (
-                        <ol className="mt-2 space-y-0.5 text-sm text-muted-foreground list-decimal list-inside">
-                          {items.map((item, idx) => {
-                            if (item.type === "song") {
-                              const title = item.data.song?.title || item.data.title || "?";
-                              const playKey = item.data.key || item.data.song?.default_key;
-                              const keyChangeTo = item.data.key_change_to;
-                              const keyDisplay = keyChangeTo && playKey
-                                ? `${playKey} → ${keyChangeTo}`
-                                : playKey || "";
-                              return (
-                                <li key={idx}>
-                                  {title}{keyDisplay ? ` (${keyDisplay})` : ""}
-                                </li>
-                              );
-                            }
-                            const label = item.data.label || item.data.component_type || "순서";
-                            return <li key={idx} className="text-muted-foreground/70">{label}</li>;
-                          })}
-                        </ol>
-                      )}
-                      {songCount > 0 && (
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {language === "ko" ? "키 순서: " : "Key sequence: "}
-                          {items
-                            .filter(i => i.type === "song")
-                            .map((i) => i.data.key || i.data.song?.default_key || "?")
-                            .join(" → ")}
-                        </p>
-                      )}
-                    </div>
+                    {items.length > 0 && (
+                      <div className="mt-6 p-4 bg-accent/50 rounded-lg">
+                        <div className="flex items-center justify-between mb-3 gap-2">
+                          <h4 className="font-semibold">
+                            {language === "ko" ? "곡 순서 변경" : "Reorder Items"}
+                          </h4>
+                          <p className="text-xs text-muted-foreground flex-shrink-0">
+                            {language === "ko"
+                              ? `${items.length}개 (곡 ${songCount} · 순서 ${componentCount})`
+                              : `${items.length} (${songCount} songs · ${componentCount} components)`}
+                          </p>
+                        </div>
+                        <ReorderItemsPanel
+                          items={items as any}
+                          onChange={(newItems) => setItems(newItems as any)}
+                          language={language as "ko" | "en"}
+                        />
+                      </div>
+                    )}
                   </>
                 )}
                   </CardContent>

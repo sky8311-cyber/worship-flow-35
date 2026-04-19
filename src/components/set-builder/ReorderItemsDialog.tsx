@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronUp, ChevronDown, GripVertical, Music, Circle } from "lucide-react";
@@ -34,10 +34,26 @@ interface ReorderItemsDialogProps {
   onSave: (newItems: ReorderItem[]) => void;
 }
 
+const getSongKey = (item: ReorderItem): string | null => {
+  if (item.type !== "song") return null;
+  const d = item.data || {};
+  return (
+    d.score_key ||
+    d.key ||
+    d.song?.default_key ||
+    d.songs?.default_key ||
+    null
+  );
+};
+
 const getItemLabel = (item: ReorderItem): string => {
   if (item.type === "song") {
     const song = item.data?.song || item.data?.songs;
-    return song?.title || "(제목 없음)";
+    const title = song?.title || item.data?.title || "(제목 없음)";
+    const key = getSongKey(item);
+    const keyChangeTo = item.data?.key_change_to;
+    const keyDisplay = keyChangeTo && key ? `${key} → ${keyChangeTo}` : key;
+    return keyDisplay ? `${title} (${keyDisplay})` : title;
   }
   return item.data?.label || "(이름 없음)";
 };
@@ -97,6 +113,75 @@ const SortableRowWithArrows = ({
   );
 };
 
+interface ReorderItemsPanelProps {
+  items: ReorderItem[];
+  onChange: (newItems: ReorderItem[]) => void;
+  language?: "ko" | "en";
+}
+
+export const ReorderItemsPanel = ({ items, onChange, language = "ko" }: ReorderItemsPanelProps) => {
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((i) => i.id === active.id);
+    const newIndex = items.findIndex((i) => i.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    onChange(arrayMove(items, oldIndex, newIndex));
+  };
+
+  const moveItem = (idx: number, dir: -1 | 1) => {
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= items.length) return;
+    onChange(arrayMove(items, idx, newIdx));
+  };
+
+  const keySequence = items
+    .filter((i) => i.type === "song")
+    .map((i) => {
+      const k = getSongKey(i);
+      const to = i.data?.key_change_to;
+      if (k && to) return `${k}→${to}`;
+      return k || "?";
+    });
+
+  return (
+    <div className="space-y-2">
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          {items.map((item, index) => (
+            <SortableRowWithArrows
+              key={item.id}
+              item={item}
+              index={index}
+              total={items.length}
+              onUp={() => moveItem(index, -1)}
+              onDown={() => moveItem(index, 1)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
+
+      {keySequence.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <div className="text-xs font-semibold text-muted-foreground mb-1">
+            {language === "ko" ? "키 순서" : "Key Sequence"}
+          </div>
+          <div className="text-sm font-mono text-foreground break-words">
+            {keySequence.join(" → ")}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const ReorderItemsDialog = ({
   open,
   onOpenChange,
@@ -110,32 +195,6 @@ export const ReorderItemsDialog = ({
     if (open) setTempItems(items);
   }, [open, items]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    setTempItems((curr) => {
-      const oldIndex = curr.findIndex((i) => i.id === active.id);
-      const newIndex = curr.findIndex((i) => i.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return curr;
-      return arrayMove(curr, oldIndex, newIndex);
-    });
-  };
-
-  const moveItem = (idx: number, dir: -1 | 1) => {
-    setTempItems((curr) => {
-      const newIdx = idx + dir;
-      if (newIdx < 0 || newIdx >= curr.length) return curr;
-      return arrayMove(curr, idx, newIdx);
-    });
-  };
-
   const handleSave = () => {
     onSave(tempItems);
     onOpenChange(false);
@@ -148,28 +207,8 @@ export const ReorderItemsDialog = ({
           <DialogTitle>{t("setSongItem.reorder.title")}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-2 py-2">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={tempItems.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              {tempItems.map((item, index) => (
-                <SortableRowWithArrows
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  total={tempItems.length}
-                  onUp={() => moveItem(index, -1)}
-                  onDown={() => moveItem(index, 1)}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+        <div className="flex-1 overflow-y-auto py-2">
+          <ReorderItemsPanel items={tempItems} onChange={setTempItems} />
         </div>
 
         <DialogFooter>
