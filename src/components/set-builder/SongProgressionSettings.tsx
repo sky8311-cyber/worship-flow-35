@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2, History, Save, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -94,12 +95,21 @@ export const ProgressionHistoryControls = ({
       </h5>
       <div className="flex gap-1">
         <Popover open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadHistory(); }}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
-              <History className="w-3.5 h-3.5 mr-1" />
-              {t("setSongItem.progression.history")}
-            </Button>
-          </PopoverTrigger>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                    <History className="w-3.5 h-3.5 mr-1" />
+                    {t("setSongItem.progression.history")}
+                  </Button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {t("setSongItem.progression.historyTooltip")}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <PopoverContent align="end" className="w-80 p-0">
             <div className="p-2 border-b">
               <p className="text-xs font-medium">{t("setSongItem.progression.historyTitle")}</p>
