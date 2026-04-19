@@ -1,28 +1,35 @@
 
-## iPad 악보 미리보기 — 이미지 위쪽 빈 공간 + 하단 잘림 수정
+## 송 카드 헤더 — 편집/삭제 버튼 일관성 + 우측 여백 정리
 
 ### 진단 (스크린샷 기준)
-- iPad 세로 화면에서 악보가 화면 중앙~하단에만 표시되고 위쪽 절반이 비어있음
-- 하단 disclaimer ("본 자료는 사용자가 업로드한 콘텐츠")가 화면 밖으로 잘림
-- 원인: `ScorePreviewDialog`의 이미지 컨테이너가 `flex-1`로 공간을 차지하지만 이미지가 `object-contain`으로 비율 유지하면서 컨테이너 높이가 실제 사용 가능한 높이보다 큼 → disclaimer가 viewport 밖으로 밀려나고, 이미지는 컨테이너 안에서 중앙 정렬되어 위쪽이 비어 보임
+- 편집 버튼(연필): 회색 ghost icon, 작음
+- 삭제 버튼(X): 빨간색, 다른 크기/스타일
+- 두 버튼이 너무 다르고 정렬도 어긋남
+- 모바일: 제목 길면 버튼이 밀려 넘침
+- 카드 본문(키 입력, 진행설정 박스 등)이 우측에 불필요한 여백을 두고 있어 좁은 화면에서 컬럼 폭이 작아짐
 
-### 가설
-`DialogContent`가 `h-[100dvh]`이지만 내부 flex 레이아웃이 헤더(타이틀+컨트롤) + 이미지(flex-1) + disclaimer 구조에서 disclaimer 높이가 계산에 포함되지 않거나, iPad Safari의 `100dvh`가 주소창/탭바 높이 변동 시 잘못 계산됨.
+### 조사 필요
+1. `src/components/SetSongItem.tsx` — 송 카드 헤더 + 본문 구조, padding/margin
+2. 편집 버튼 / 삭제 버튼 위치 (헤더 우측에 같이 있는지, 분리되어 있는지)
+3. 진행설정 박스(`SongProgressionSettings` 또는 유사) 컨테이너 padding
 
 ### 수정 방안
-1. **`DialogContent` 높이 제약 강화**: `h-[100dvh]` → `h-[100svh]` (small viewport height: 주소창 펼쳤을 때 기준 — 항상 안전한 최소 높이). iPad Safari/Chrome에서 `100svh`가 100dvh보다 안정적.
-2. **레이아웃 구조 정리**:
-   - 컨테이너: `flex flex-col h-[100svh] overflow-hidden`
-   - Header (`flex-shrink-0`): 타이틀 + 닫기 버튼
-   - Controls (`flex-shrink-0`): Key/Page selector
-   - Image area (`flex-1 min-h-0 overflow-hidden flex items-center justify-center`)
-   - Disclaimer (`flex-shrink-0`): 항상 보이도록 마지막에 배치
-3. **이미지**: `max-w-full max-h-full w-auto h-auto object-contain` 유지 — 컨테이너가 정확히 남은 공간이 되면 자연스럽게 fit
-4. **iPad Disclaimer 가시성**: disclaimer 컴포넌트에 mobile에서 더 컴팩트한 패딩 적용 (이미 적용됐는지 확인 후 조정)
+
+**1) 우측 액션 버튼 통일**
+- 편집/삭제 버튼 모두 동일 스타일: `variant="ghost" size="icon"` + `h-8 w-8`
+- 색상: 편집 = `text-muted-foreground hover:text-foreground`, 삭제 = `text-muted-foreground hover:text-destructive` (hover 시에만 빨강)
+- 같은 컨테이너 `flex items-center gap-1 flex-shrink-0`로 묶어 정렬 일관성 확보
+- 헤더 전체: `flex items-start gap-2` + 제목 영역 `flex-1 min-w-0` (제목 길어도 버튼 안 밀림, 제목은 `truncate`)
+
+**2) 우측 여백 제거 — 컬럼 정렬**
+- 카드 본문 컨테이너의 `pr-*` (우측 패딩) 제거 또는 헤더와 동일한 padding으로 통일
+- 진행설정 박스, 키 입력 영역의 `max-w-*` / 우측 margin 제거
+- 컨테이너: `px-3 sm:px-4` 양쪽 균일, 우측 추가 여백 없음
+- 결과: 본문 컨트롤들이 헤더 액션 버튼 우측 끝선까지 폭을 활용
 
 ### 영향 파일
-1. `src/components/ScorePreviewDialog.tsx` — `h-[100dvh]` → `h-[100svh]` 교체, flex 구조 재확인
-2. (필요 시) `src/components/copyright/ScoreViewerDisclaimer.tsx` — iPad에서 한 줄로 줄어들도록 컴팩트 모드
+- `src/components/SetSongItem.tsx` (메인)
+- 필요 시 진행설정 박스 컴포넌트 (이전 수정에서 `p-2` 처리됨)
 
 ### 진행
-승인 시 default 모드에서 `ScorePreviewDialog` 레이아웃을 svh 기반으로 교체하고 disclaimer가 항상 viewport 안에 보이도록 보정. 데이터 변경 없음. iPad Safari/Chrome에서 재테스트 요청.
+승인 시 default 모드에서 `SetSongItem.tsx` 헤더 버튼 통일 + 본문 우측 패딩 제거. 데이터 변경 없음. iPad/모바일 재테스트 요청.
