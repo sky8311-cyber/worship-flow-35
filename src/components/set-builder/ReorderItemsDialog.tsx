@@ -43,7 +43,19 @@ const getItemLabel = (item: ReorderItem): string => {
   return item.data?.label || "(이름 없음)";
 };
 
-const SortableRow = ({ item, index }: { item: ReorderItem; index: number }) => {
+const SortableRowWithArrows = ({
+  item,
+  index,
+  total,
+  onUp,
+  onDown,
+}: {
+  item: ReorderItem;
+  index: number;
+  total: number;
+  onUp: () => void;
+  onDown: () => void;
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -63,42 +75,20 @@ const SortableRow = ({ item, index }: { item: ReorderItem; index: number }) => {
         {...attributes}
         {...listeners}
         className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground touch-none"
+        aria-label="드래그하여 순서 변경"
       >
         <GripVertical className="w-4 h-4" />
       </button>
       <span className="text-sm font-bold text-primary w-6 text-center">{index + 1}</span>
       <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <span className="text-sm flex-1 truncate">{getItemLabel(item)}</span>
-    </div>
-  );
-};
-
-const StaticRow = ({
-  item,
-  index,
-  total,
-  onUp,
-  onDown,
-}: {
-  item: ReorderItem;
-  index: number;
-  total: number;
-  onUp: () => void;
-  onDown: () => void;
-}) => {
-  const Icon = item.type === "song" ? Music : Circle;
-  return (
-    <div className="flex items-center gap-2 p-2 border border-border rounded-md bg-card">
-      <span className="text-sm font-bold text-primary w-6 text-center">{index + 1}</span>
-      <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-      <span className="text-sm flex-1 truncate">{getItemLabel(item)}</span>
-      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUp} disabled={index === 0}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onUp} disabled={index === 0}>
         <ChevronUp className="w-4 h-4" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7"
+        className="h-7 w-7 flex-shrink-0"
         onClick={onDown}
         disabled={index === total - 1}
       >
