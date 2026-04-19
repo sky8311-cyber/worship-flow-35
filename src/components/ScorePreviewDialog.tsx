@@ -157,13 +157,13 @@ export const ScorePreviewDialog = ({
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
         ) : shouldShowSingleScore ? (
-          // Old single score file display
-          <div className="flex-1 overflow-auto min-h-0">
+          // Single score file display — full-screen fit, no scroll
+          <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
             {scoreUrl ? (
               <SignedScoreImage
                 src={scoreUrl}
                 alt={`${songTitle} score`}
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
