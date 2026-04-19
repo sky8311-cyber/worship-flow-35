@@ -166,6 +166,16 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
+                <div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onRemove(index)}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
 
               {/* Custom name input */}
