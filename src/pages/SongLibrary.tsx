@@ -190,7 +190,7 @@ const SongLibrary = () => {
     queryKey: ["songs", debouncedSearchQuery, selectedLanguage, sortBy],
     queryFn: async () => {
       let query = supabase.from("songs").select(
-        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, notes, song_scores(id, key, file_url, page_number)"
+        "id, title, subtitle, artist, default_key, language, tags, is_private, status, created_by, created_at, youtube_url, lyrics, song_scores(id, key, file_url, page_number)"
       );
 
       if (debouncedSearchQuery) {
