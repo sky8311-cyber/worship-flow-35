@@ -188,8 +188,56 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
     <div>
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center justify-start pt-1">
+          {/* Mobile header row: badge + actions on their own row */}
+          <div className="flex items-center justify-between mb-3 md:hidden">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => onOpenReorder?.()}
+                  className="flex items-center gap-1 px-2 h-9 rounded-full bg-primary/10 hover:bg-primary/20 border-2 border-primary/40 hover:border-primary text-primary font-bold text-base cursor-pointer transition-all"
+                >
+                  {index + 1}
+                  <ArrowUpDown className="w-3 h-3 opacity-70" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{t("setSongItem.reorder.tooltip")}</TooltipContent>
+            </Tooltip>
+            <TooltipProvider>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowEditDialog(true)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>곡 편집</p></TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => onRemove(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p>곡 삭제</p></TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:gap-3">
+            {/* Desktop-only left badge column */}
+            <div className="hidden md:flex flex-col items-center justify-start pt-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -205,7 +253,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </Tooltip>
             </div>
 
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 space-y-3 min-w-0">
               <div className="flex items-start justify-between">
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground">{song?.title}</h4>
