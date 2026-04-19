@@ -23,6 +23,7 @@ import { CopyrightUploadNotice } from "@/components/copyright/CopyrightUploadNot
 import { useCopyrightAcknowledgment } from "@/hooks/useCopyrightAcknowledgment";
 import { convertPdfToImages } from "@/utils/pdfToImages";
 import { ScorePreviewDialog } from "@/components/ScorePreviewDialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SetSongScoreDialogProps {
   open: boolean;
@@ -84,6 +85,7 @@ export const SetSongScoreDialog = ({
   privateScoreFileUrl,
   onSaved,
 }: SetSongScoreDialogProps) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [query, setQuery] = useState(defaultQuery);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -152,7 +154,7 @@ export const SetSongScoreDialog = ({
       setVaultLoaded(true);
     } catch (e) {
       console.error("Failed to load vault:", e);
-      toast.error("히스토리 클라우드 불러오기 실패");
+      toast.error(t("setSongItem.scoreDialog.vaultLoadError"));
     } finally {
       setVaultLoading(false);
     }

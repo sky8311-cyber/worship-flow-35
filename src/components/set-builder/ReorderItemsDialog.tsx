@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export type ReorderItem = {
   type: "song" | "component";
@@ -113,6 +114,7 @@ export const ReorderItemsDialog = ({
   items,
   onSave,
 }: ReorderItemsDialogProps) => {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [tempItems, setTempItems] = useState<ReorderItem[]>(items);
 
@@ -153,7 +155,7 @@ export const ReorderItemsDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>곡 순서 변경</DialogTitle>
+          <DialogTitle>{t("setSongItem.reorder.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-2 py-2">
@@ -188,9 +190,9 @@ export const ReorderItemsDialog = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {t("setSongItem.reorder.cancel")}
           </Button>
-          <Button onClick={handleSave}>저장</Button>
+          <Button onClick={handleSave}>{t("setSongItem.reorder.save")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

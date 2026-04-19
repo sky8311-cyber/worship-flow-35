@@ -117,7 +117,7 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                     <ArrowUpDown className="w-3 h-3 opacity-70" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>순서 변경</TooltipContent>
+                <TooltipContent>{t("setSongItem.reorder.componentTooltip")}</TooltipContent>
               </Tooltip>
             </div>
 
