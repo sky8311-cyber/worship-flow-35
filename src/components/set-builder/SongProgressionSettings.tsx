@@ -149,7 +149,7 @@ export const ProgressionHistoryControls = ({
             </div>
           </PopoverContent>
         </Popover>
-        <Button size="sm" className="h-7 px-2 text-xs bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
+        <Button size="sm" className="h-7 px-2 text-xs whitespace-nowrap bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleSave} disabled={saving}>
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />}
           {t("setSongItem.progression.save")}
         </Button>
