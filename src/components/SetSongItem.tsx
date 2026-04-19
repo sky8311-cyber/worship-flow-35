@@ -321,52 +321,68 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                 </div>
               </div>
 
-              {song?.id && <SongProgressionSettings songId={song.id} />}
+              {song?.id && (
+                <div className="border border-border rounded-md p-3 bg-muted/20 space-y-3">
+                  <ProgressionHistoryControls
+                    songId={song.id}
+                    bpm={setSong.bpm}
+                    timeSignature={setSong.time_signature}
+                    energyLevel={setSong.energy_level}
+                    notes={setSong.custom_notes}
+                    onApplyHistory={(h) => onUpdate(index, {
+                      bpm: h.bpm ?? undefined,
+                      time_signature: h.time_signature ?? undefined,
+                      energy_level: h.energy_level ?? undefined,
+                      custom_notes: h.notes ?? undefined,
+                    })}
+                  />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">BPM</label>
-                  <div className="mt-1">
-                    <Metronome
-                      bpm={setSong.bpm}
-                      timeSignature={setSong.time_signature}
-                      onBpmChange={(newBpm) => onUpdate(index, { bpm: newBpm })}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-muted-foreground">BPM</label>
+                      <div className="mt-1">
+                        <Metronome
+                          bpm={setSong.bpm}
+                          timeSignature={setSong.time_signature}
+                          onBpmChange={(newBpm) => onUpdate(index, { bpm: newBpm })}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">박자</label>
+                      <Input
+                        value={setSong.time_signature || ""}
+                        onChange={(e) => onUpdate(index, { time_signature: e.target.value })}
+                        placeholder="4/4"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">에너지 레벨</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={setSong.energy_level || ""}
+                        onChange={(e) => onUpdate(index, { energy_level: e.target.value ? parseInt(e.target.value) : null })}
+                        placeholder="1-5"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-muted-foreground">진행설명</label>
+                    <Textarea
+                      value={setSong.custom_notes || ""}
+                      onChange={(e) => onUpdate(index, { custom_notes: e.target.value })}
+                      placeholder="예: 후렴 2번 반복, 브리지 생략"
+                      rows={2}
+                      className="mt-1"
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">박자</label>
-                  <Input
-                    value={setSong.time_signature || ""}
-                    onChange={(e) => onUpdate(index, { time_signature: e.target.value })}
-                    placeholder="4/4"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">에너지 레벨</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="5"
-                    value={setSong.energy_level || ""}
-                    onChange={(e) => onUpdate(index, { energy_level: e.target.value ? parseInt(e.target.value) : null })}
-                    placeholder="1-5"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs text-muted-foreground">진행설명</label>
-                <Textarea
-                  value={setSong.custom_notes || ""}
-                  onChange={(e) => onUpdate(index, { custom_notes: e.target.value })}
-                  placeholder="예: 후렴 2번 반복, 브리지 생략"
-                  rows={2}
-                  className="mt-1"
-                />
-              </div>
+              )}
 
               {/* Lyrics Section */}
               <Collapsible open={lyricsOpen} onOpenChange={setLyricsOpen}>
