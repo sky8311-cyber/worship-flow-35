@@ -781,17 +781,30 @@ export const SetSongScoreDialog = ({
                     key={score.id}
                     className="flex items-center gap-2 bg-background rounded-md p-2 border border-border overflow-hidden w-full min-w-0 max-w-full"
                   >
-                    {score.thumbnail ? (
-                      <img
-                        src={score.thumbnail}
-                        alt=""
-                        className="w-12 h-12 object-cover object-top rounded border border-border flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 flex items-center justify-center rounded bg-muted border border-border flex-shrink-0">
-                        <Music className="w-5 h-5 text-muted-foreground" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPreviewScoreUrl(score.url);
+                        setPreviewScoreTitle(score.label || displayName);
+                      }}
+                      className="relative group flex-shrink-0 rounded border border-border overflow-hidden hover:border-primary transition-colors"
+                      title="악보 미리보기"
+                    >
+                      {score.thumbnail ? (
+                        <img
+                          src={score.thumbnail}
+                          alt=""
+                          className="w-12 h-12 object-cover object-top bg-muted block"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 flex items-center justify-center bg-muted">
+                          <Music className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Eye className="w-4 h-4 text-foreground" />
                       </div>
-                    )}
+                    </button>
                     <div className="min-w-0 overflow-hidden flex-1">
                       <span className="text-xs text-muted-foreground truncate block">
                         {displayName}
