@@ -15,8 +15,9 @@ import {
   X, ChevronDown, ChevronUp, Clock, User,
   Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone,
   ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets,
-  Users, MessagesSquare, Circle, FileText, Check, Plus, Settings
+  Users, MessagesSquare, Circle, FileText, Check, Plus, Settings, ArrowUpDown
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { WorshipComponentType, getComponentLabel, WORSHIP_COMPONENTS } from "@/lib/worshipComponents";
