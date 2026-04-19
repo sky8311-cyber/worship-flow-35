@@ -1435,7 +1435,7 @@ songCard: {
         historyTooltip: "Load a previous performance setting for this song",
         historyTitle: "Performance History",
         historyEmpty: "No saved history",
-        save: "Save",
+        save: "Save Progression",
         saveSuccess: "Saved",
         saveError: "Failed to save",
         loadError: "Failed to load history",
