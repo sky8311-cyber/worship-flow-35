@@ -1,19 +1,46 @@
 
-## DB 마이그레이션 2가지
+## 수정 플랜: Layer 3 박스 - 중복 필드 제거
 
-### [1] `songs.notes` 컬럼 완전 삭제
-```sql
-ALTER TABLE public.songs DROP COLUMN IF EXISTS notes;
-```
-⚠️ 해당 컬럼의 모든 데이터가 영구 삭제됩니다.
+### 현재 문제
+- `SongProgressionSettings.tsx`가 BPM/박자/에너지/진행설명 필드를 자체적으로 렌더링 → SetSongItem의 기존 필드와 중복 표시
 
-### [2] `user_song_settings_history` 테이블 신규 생성
-- 컬럼: `id`, `user_id`, `song_id`, `bpm`, `time_signature`, `energy_level`, `notes`, `created_at`
-- FK: `user_id → auth.users` (CASCADE), `song_id → songs` (CASCADE)
-- RLS 활성화 + 정책 "own history" (본인 데이터만 ALL)
-- 인덱스: `(user_id, song_id, created_at DESC)`
+### 수정 방향
 
-### ⚠️ 코드 영향
-`songs.notes`를 참조하는 코드가 있다면 마이그레이션 후 빌드 에러 발생. 마이그레이션 승인 후 코드 조사하여 별도 수정 필요할 수 있음 (이번 턴은 마이그레이션만).
+**1. `SongProgressionSettings.tsx` → `ProgressionHistoryControls.tsx`로 역할 축소**
+- 입력 필드(Input/Textarea/Select) 전부 제거
+- 헤더 UI만 유지: `🎵 진행 설정` 라벨 + `[이력]` Popover 버튼 + `[저장]` 버튼
+- Props로 현재 값(`bpm`, `timeSignature`, `energyLevel`, `notes`) 받음
+- Props로 `onApplyHistory(entry)` 콜백 받음 → 이력 항목 클릭 시 부모(SetSongItem)의 onUpdate 호출
+- `[저장]` 동작: 받은 props 값을 `user_song_settings_history`에 INSERT (기존 set_songs 저장 로직 건드리지 않음)
+- `[이력]` 동작: on-demand 조회 → Popover 목록 → 클릭 시 `onApplyHistory` 호출
 
-승인하시면 마이그레이션 실행합니다.
+**2. `SetSongItem.tsx` 수정**
+- 라인 324의 단독 `<SongProgressionSettings />` 제거
+- 라인 326-369 (BPM/박자/에너지 grid + 진행설명) 전체를 시각적 박스로 감쌈:
+  ```tsx
+  <div className="border border-border rounded-md p-3 bg-muted/20 space-y-3">
+    <ProgressionHistoryControls 
+      songId={song.id}
+      bpm={setSong.bpm}
+      timeSignature={setSong.time_signature}
+      energyLevel={setSong.energy_level}
+      notes={setSong.custom_notes}
+      onApplyHistory={(h) => onUpdate(index, {
+        bpm: h.bpm, 
+        time_signature: h.time_signature,
+        energy_level: h.energy_level,
+        custom_notes: h.notes,
+      })}
+    />
+    {/* 기존 BPM/박자/에너지 grid 그대로 */}
+    {/* 기존 진행설명 textarea 그대로 */}
+  </div>
+  ```
+
+**3. 저장 동작 분리 보장**
+- 기존 필드의 `onUpdate` → `set_songs` 저장 (기존 그대로, 변경 없음)
+- 새 `[저장]` 버튼 → `user_song_settings_history` INSERT만 (이력 스냅샷 용도)
+
+### 영향 파일
+- `src/components/set-builder/SongProgressionSettings.tsx` (필드 제거, controls-only로 리팩터)
+- `src/components/SetSongItem.tsx` (중복 호출 제거, 기존 필드를 박스로 감싸기)
