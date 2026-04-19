@@ -2248,48 +2248,35 @@ const SetBuilder = () => {
       </div>
                 ) : (
                   <>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={items.map((item) => item.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-3">
-                          {items.map((item, index) => 
-                            item.type === "song" ? (
-                              <SetSongItem
-                                key={item.id}
-                                setSong={item.data}
-                                index={index}
-                                totalCount={items.length}
-                                onRemove={handleRemoveItem}
-                                onUpdate={handleUpdateItem}
-                                onMoveUp={handleMoveUp}
-                                onMoveDown={handleMoveDown}
-                                dbId={item.dbId}
-                                status={status}
-                              />
-                            ) : (
-                              <SetComponentItem
-                                key={item.id}
-                                component={{ ...item.data, id: item.id }}
-                                index={index}
-                                totalCount={items.length}
-                                onRemove={handleRemoveItem}
-                                onUpdate={handleUpdateItem}
-                                onMoveUp={handleMoveUp}
-                                onMoveDown={handleMoveDown}
-                              />
-                            )
-                          )}
-                          {/* Scroll target for auto-scroll after adding items */}
-                          <div ref={itemsEndRef} />
-                        </div>
-                      </SortableContext>
-                    </DndContext>
+                    <div className="space-y-3">
+                      {items.map((item, index) =>
+                        item.type === "song" ? (
+                          <SetSongItem
+                            key={item.id}
+                            setSong={item.data}
+                            index={index}
+                            totalCount={items.length}
+                            onRemove={handleRemoveItem}
+                            onUpdate={handleUpdateItem}
+                            onOpenReorder={() => setReorderOpen(true)}
+                            dbId={item.dbId}
+                            status={status}
+                          />
+                        ) : (
+                          <SetComponentItem
+                            key={item.id}
+                            component={{ ...item.data, id: item.id }}
+                            index={index}
+                            totalCount={items.length}
+                            onRemove={handleRemoveItem}
+                            onUpdate={handleUpdateItem}
+                            onOpenReorder={() => setReorderOpen(true)}
+                          />
+                        )
+                      )}
+                      {/* Scroll target for auto-scroll after adding items */}
+                      <div ref={itemsEndRef} />
+                    </div>
 
                     {/* Mobile add buttons */}
                     <div className="flex gap-2 mt-4 lg:hidden">
