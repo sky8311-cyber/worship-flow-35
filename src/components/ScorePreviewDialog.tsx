@@ -124,10 +124,10 @@ export const ScorePreviewDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         hideCloseButton
         className={cn(
-          "flex flex-col bg-background",
+          "flex flex-col bg-background gap-2",
           // Fullscreen on ALL viewports — image fits screen, no scroll
           "!fixed !top-0 !left-0 !right-0 !bottom-0",
           "!translate-x-0 !translate-y-0",
@@ -152,17 +152,53 @@ export const ScorePreviewDialog = ({
           </div>
         </DialogHeader>
 
-        {/* CRITICAL: Only mount image content when open. This guarantees that closing
-            the dialog releases all <img> elements and lets the browser GC large
-            decoded bitmaps (essential for iPad/iOS Safari ~250MB tab limit). */}
-        {!open ? null : loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-muted-foreground">{t("common.loading")}</p>
+        {/* Variation/page controls (only when multiple variations) */}
+        {open && !loading && scoreVariations.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <label className="text-sm font-medium">{t("songDialog.key")}:</label>
+              <Select value={selectedKey} onValueChange={(key) => {
+                setSelectedKey(key);
+                setCurrentPage(0);
+              }}>
+                <SelectTrigger className="w-36 sm:w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {scoreVariations
+                    .filter((variation) => variation.key && variation.key.trim() !== "")
+                    .map((variation) => (
+                      <SelectItem key={variation.key} value={variation.key}>
+                        {variation.key} ({variation.files.length}{" "}
+                        {variation.files.length === 1 ? t("songDialog.page") : t("songDialog.page")})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {hasMultiplePages && (
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button variant="outline" size="sm" onClick={handlePrevPage} disabled={currentPage === 0}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm">
+                  {currentPage + 1} / {currentFiles.length}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleNextPage} disabled={currentPage === currentFiles.length - 1}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
-        ) : shouldShowSingleScore ? (
-          // Single score file display — full-screen fit, no scroll
-          <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-            {scoreUrl ? (
+        )}
+
+        {/* Image area — flex-1 so it fills space between header/controls and disclaimer */}
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          {!open ? null : loading ? (
+            <p className="text-muted-foreground">{t("common.loading")}</p>
+          ) : shouldShowSingleScore ? (
+            scoreUrl ? (
               <SignedScoreImage
                 src={scoreUrl}
                 alt={`${songTitle} score`}
@@ -173,86 +209,24 @@ export const ScorePreviewDialog = ({
                 <FileMusic className="w-16 h-16 mb-4 opacity-50" />
                 <p>{t("songLibrary.noScoreAvailable")}</p>
               </div>
-            )}
-          </div>
-        ) : scoreVariations.length > 0 ? (
-          // New multi-key variation display
-          <>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 flex-shrink-0">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <label className="text-sm font-medium">{t("songDialog.key")}:</label>
-                <Select value={selectedKey} onValueChange={(key) => {
-                  setSelectedKey(key);
-                  setCurrentPage(0);
-                }}>
-                 <SelectTrigger className="w-36 sm:w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scoreVariations
-                      .filter((variation) => variation.key && variation.key.trim() !== "")
-                      .map((variation) => (
-                        <SelectItem key={variation.key} value={variation.key}>
-                          {variation.key} ({variation.files.length}{" "}
-                          {variation.files.length === 1 ? t("songDialog.page") : t("songDialog.page")})
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {hasMultiplePages && (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrevPage}
-                    disabled={currentPage === 0}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm">
-                    {currentPage + 1} / {currentFiles.length}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
-                    disabled={currentPage === currentFiles.length - 1}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+            )
+          ) : currentFiles[currentPage] ? (
+            <SignedScoreImage
+              key={`${selectedKey}-${currentPage}`}
+              src={currentFiles[currentPage].url}
+              alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
+              className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <FileMusic className="w-16 h-16 mb-4 opacity-50" />
+              <p>{t("songLibrary.noScoreAvailable")}</p>
             </div>
+          )}
+        </div>
 
-            {/* Render ONLY the current page <img> — siblings are unmounted to free
-                decoded bitmap memory (critical for multi-page scores on iPad). */}
-            <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
-              {currentFiles[currentPage] ? (
-                <SignedScoreImage
-                  key={`${selectedKey}-${currentPage}`}
-                  src={currentFiles[currentPage].url}
-                  alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
-                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                />
-              ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <FileMusic className="w-16 h-16 mb-4 opacity-50" />
-                  <p>{t("songLibrary.noScoreAvailable")}</p>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <FileMusic className="w-16 h-16 mb-4 opacity-50" />
-            <p>{t("songLibrary.noScoreAvailable")}</p>
-          </div>
-        )}
-
-        {/* Score viewer disclaimer - always visible */}
-        <div className="flex-shrink-0 mt-2">
+        {/* Score viewer disclaimer - always visible, fixed at bottom */}
+        <div className="flex-shrink-0">
           <ScoreViewerDisclaimer />
         </div>
       </DialogContent>

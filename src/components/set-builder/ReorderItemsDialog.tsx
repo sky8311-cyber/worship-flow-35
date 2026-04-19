@@ -123,7 +123,9 @@ export const ReorderItemsDialog = ({
   }, [open, items]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -159,33 +161,27 @@ export const ReorderItemsDialog = ({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-2 py-2">
-          {isMobile ? (
-            tempItems.map((item, index) => (
-              <StaticRow
-                key={item.id}
-                item={item}
-                index={index}
-                total={tempItems.length}
-                onUp={() => moveItem(index, -1)}
-                onDown={() => moveItem(index, 1)}
-              />
-            ))
-          ) : (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={tempItems.map((i) => i.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={tempItems.map((i) => i.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {tempItems.map((item, index) => (
-                  <SortableRow key={item.id} item={item} index={index} />
-                ))}
-              </SortableContext>
-            </DndContext>
-          )}
+              {tempItems.map((item, index) => (
+                <SortableRowWithArrows
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  total={tempItems.length}
+                  onUp={() => moveItem(index, -1)}
+                  onDown={() => moveItem(index, 1)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
 
         <DialogFooter>
