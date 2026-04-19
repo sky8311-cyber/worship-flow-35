@@ -67,10 +67,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const [subtitle, setSubtitle] = useState(draftSong?.subtitle || "");
   const [isPrivate, setIsPrivate] = useState(draftSong?.is_private || false);
 
-  // === STEP 2: YouTube + Artist ===
+  // === STEP 2: YouTube + Artist (multi-select) ===
   const [artist, setArtist] = useState(draftSong?.artist || "");
   const [youtubeResults, setYoutubeResults] = useState<YouTubeResult[]>([]);
-  const [selectedYoutubeResult, setSelectedYoutubeResult] = useState<YouTubeResult | null>(null);
+  const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set());
   const [youtubeSearching, setYoutubeSearching] = useState(false);
   const [youtubeSearchQuery, setYoutubeSearchQuery] = useState("");
   const [showCustomSearch, setShowCustomSearch] = useState(false);
@@ -79,7 +79,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
   // === STEP 3: Additional YouTube Links ===
   const [youtubeLinks, setYoutubeLinks] = useState<YouTubeLink[]>(
-    draftSong ? [] : [{ label: "", url: "" }]
+    draftSong ? [] : []
   );
 
   // === STEP 4: Lyrics ===
@@ -98,6 +98,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   );
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [topicsSuggested, setTopicsSuggested] = useState(false);
+  const [aiFilling, setAiFilling] = useState(false);
 
   // Load draft youtube links
   useEffect(() => {
