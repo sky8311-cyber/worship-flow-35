@@ -322,7 +322,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
               </div>
 
               {song?.id && (
-                <div className="border border-border rounded-md p-3 bg-muted/20 space-y-3">
+                <div className="border-2 border-accent/60 rounded-md p-3 bg-accent/5 space-y-3">
                   <ProgressionHistoryControls
                     songId={song.id}
                     bpm={setSong.bpm}
@@ -461,7 +461,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                       className="relative"
                     >
                       <FileMusic className="w-4 h-4 mr-1 text-blue-500" />
-                      악보
+                      악보 선택
                       {hasScoreRef && (
                         <span className="ml-1.5 inline-block w-2 h-2 rounded-full bg-primary" />
                       )}
