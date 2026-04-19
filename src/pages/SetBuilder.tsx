@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
-import { ReorderItemsDialog } from "@/components/set-builder/ReorderItemsDialog";
+import { ReorderItemsDialog, ReorderItemsPanel } from "@/components/set-builder/ReorderItemsDialog";
 import { CollaboratorsHeader } from "@/components/CollaboratorsHeader";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
