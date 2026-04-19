@@ -2437,6 +2437,9 @@ const SetBuilder = () => {
           setId={id}
           publicShareToken={(existingSet as any)?.public_share_token || null}
           publicShareEnabled={(existingSet as any)?.public_share_enabled || false}
+          hasPrivateScores={!!(existingSet as any)?.has_private_scores}
+          bandViewVisibility={(existingSet as any)?.band_view_visibility || "public"}
+          privateShareToken={(existingSet as any)?.share_token || null}
           onUpdate={() => {
             queryClient.invalidateQueries({ queryKey: ["service-set", id] });
             queryClient.invalidateQueries({ queryKey: ["upcoming-sets"] });
