@@ -674,8 +674,8 @@ export const SetSongScoreDialog = ({
               내 악보 업로드
             </TabsTrigger>
             <TabsTrigger value="vault">
-              <Music className="w-4 h-4 mr-2" />
-              내 보관함
+              <History className="w-4 h-4 mr-2" />
+              히스토리 클라우드
             </TabsTrigger>
           </TabsList>
 
