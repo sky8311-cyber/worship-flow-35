@@ -88,12 +88,12 @@ export const ProgressionHistoryControls = ({
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <h5 className="text-sm font-medium flex items-center gap-1.5">
-        <Music2 className="w-4 h-4 text-primary" />
-        {t("setSongItem.progression.title")}
+    <div className="flex items-center justify-between gap-2">
+      <h5 className="text-sm font-medium flex items-center gap-1.5 flex-shrink-0 min-w-0">
+        <Music2 className="w-4 h-4 text-primary flex-shrink-0" />
+        <span className="truncate">{t("setSongItem.progression.title")}</span>
       </h5>
-      <div className="flex gap-1">
+      <div className="flex gap-1 flex-shrink-0">
         <Popover open={historyOpen} onOpenChange={(o) => { setHistoryOpen(o); if (o) loadHistory(); }}>
           <TooltipProvider delayDuration={200}>
             <Tooltip>
