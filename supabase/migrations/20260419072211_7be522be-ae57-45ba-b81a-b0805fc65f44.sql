@@ -1,0 +1,22 @@
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
+CREATE INDEX IF NOT EXISTS idx_community_members_user_id ON public.community_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_community_members_community_id ON public.community_members(community_id);
+CREATE INDEX IF NOT EXISTS idx_set_components_set_id ON public.set_components(service_set_id);
+CREATE INDEX IF NOT EXISTS idx_seed_transactions_user_created ON public.seed_transactions(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_songs_created_by ON public.songs(created_by);
+CREATE INDEX IF NOT EXISTS idx_songs_is_private ON public.songs(is_private);
+CREATE INDEX IF NOT EXISTS idx_songs_status ON public.songs(status) WHERE status IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_wl_applications_user_id ON public.worship_leader_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_service_sets_community_date ON public.service_sets(community_id, date DESC);
+CREATE INDEX IF NOT EXISTS idx_song_youtube_links_song_id ON public.song_youtube_links(song_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorite_songs_user_id ON public.user_favorite_songs(user_id);
+
+ANALYZE public.user_roles;
+ANALYZE public.community_members;
+ANALYZE public.set_components;
+ANALYZE public.seed_transactions;
+ANALYZE public.songs;
+ANALYZE public.service_sets;
+ANALYZE public.song_youtube_links;
+ANALYZE public.user_favorite_songs;
+ANALYZE public.worship_leader_applications;

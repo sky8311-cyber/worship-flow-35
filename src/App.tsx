@@ -129,10 +129,11 @@ const PageLoader = () => <FullScreenLoader />;
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 1000, // 10 seconds default (conservative)
-      gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
-      refetchOnWindowFocus: true, // Keep true for collaboration features
-      retry: 1, // Reduce from default 3
+      staleTime: 60 * 1000, // 60s — drastically cut redundant refetches
+      gcTime: 10 * 60 * 1000, // 10 min cache retention
+      refetchOnWindowFocus: false, // Was causing waterfalls; collab uses Realtime instead
+      refetchOnMount: false, // Trust cache; explicit invalidation when needed
+      retry: 1,
     },
   },
 });
