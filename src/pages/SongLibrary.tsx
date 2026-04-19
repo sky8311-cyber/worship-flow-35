@@ -544,7 +544,7 @@ const SongLibrary = () => {
           </Card>
         )}
 
-        <Card className="shadow-md mb-6">
+        <Card ref={searchRef} className="shadow-md mb-6">
           <CardHeader>
             {/* View Mode Toggle, Cross-Community Toggle & Action Buttons */}
             <div className="flex flex-col items-end gap-2 mb-2">
