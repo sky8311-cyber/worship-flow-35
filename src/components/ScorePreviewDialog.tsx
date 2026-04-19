@@ -152,7 +152,10 @@ export const ScorePreviewDialog = ({
           </div>
         </DialogHeader>
 
-        {loading ? (
+        {/* CRITICAL: Only mount image content when open. This guarantees that closing
+            the dialog releases all <img> elements and lets the browser GC large
+            decoded bitmaps (essential for iPad/iOS Safari ~250MB tab limit). */}
+        {!open ? null : loading ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
@@ -223,9 +226,12 @@ export const ScorePreviewDialog = ({
               )}
             </div>
 
+            {/* Render ONLY the current page <img> — siblings are unmounted to free
+                decoded bitmap memory (critical for multi-page scores on iPad). */}
             <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
               {currentFiles[currentPage] ? (
                 <SignedScoreImage
+                  key={`${selectedKey}-${currentPage}`}
                   src={currentFiles[currentPage].url}
                   alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
