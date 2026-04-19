@@ -1,5 +1,3 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,10 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  GripVertical, X, ChevronDown, ChevronUp, Clock, User,
-  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
-  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets, 
+import {
+  X, ChevronDown, ChevronUp, Clock, User,
+  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone,
+  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets,
   Users, MessagesSquare, Circle, FileText, Check, Plus, Settings
 } from "lucide-react";
 import { useState } from "react";
@@ -44,8 +42,7 @@ interface SetComponentItemProps {
   totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
+  onOpenReorder?: () => void;
 }
 
 const getIconForType = (type: WorshipComponentType): React.ComponentType<any> => {
@@ -71,8 +68,7 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
   return iconMap[iconNames[type]] || Circle;
 };
 
-export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetComponentItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
+export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onOpenReorder }: SetComponentItemProps) => {
   const [notesOpen, setNotesOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(!!component.content);
   const [showDetails, setShowDetails] = useState(
@@ -81,11 +77,6 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customName, setCustomName] = useState("");
   const { language, t } = useTranslation();
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const IconComponent = getIconForType(component.component_type);
 
@@ -109,35 +100,19 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div>
       <Card className="shadow-sm border-l-4 border-l-accent bg-accent/10">
         <CardContent className="p-3">
           <div className="flex gap-3">
-            <div className="flex flex-col items-center justify-start pt-1 gap-1">
-              <button {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
-                <GripVertical className="w-5 h-5" />
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => onMoveUp(index)}
-                disabled={index === 0}
+            <div className="flex flex-col items-center justify-start pt-1">
+              <button
+                type="button"
+                onClick={() => onOpenReorder?.()}
+                className="text-xl font-bold text-accent w-9 h-9 rounded-full hover:bg-accent/20 transition-colors flex items-center justify-center"
+                title="순서 변경"
               >
-                <ChevronUp className="w-4 h-4" />
-              </Button>
-              <div className="text-xl font-bold text-accent">
                 {index + 1}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => onMoveDown(index)}
-                disabled={index === totalCount - 1}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
 
             <div className="flex-1 space-y-2">

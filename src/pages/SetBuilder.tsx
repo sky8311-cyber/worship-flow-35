@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { SetSongItem } from "@/components/SetSongItem";
 import { SetComponentItem } from "@/components/SetComponentItem";
+import { ReorderItemsDialog } from "@/components/set-builder/ReorderItemsDialog";
 import { CollaboratorsHeader } from "@/components/CollaboratorsHeader";
 import { WorshipComponentPalette } from "@/components/WorshipComponentPalette";
 
@@ -96,6 +97,7 @@ const SetBuilder = () => {
   const [showCreateCommunity, setShowCreateCommunity] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showAIPanel, setShowAIPanel] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
   const { hasFeature, isLoading: isTierLoading } = useTierFeature();
   const { isAiSetBuilderEnabled } = useAppSettings();
   const [templateApplied, setTemplateApplied] = useState(false);
@@ -2248,48 +2250,35 @@ const SetBuilder = () => {
       </div>
                 ) : (
                   <>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
-                    >
-                      <SortableContext
-                        items={items.map((item) => item.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-3">
-                          {items.map((item, index) => 
-                            item.type === "song" ? (
-                              <SetSongItem
-                                key={item.id}
-                                setSong={item.data}
-                                index={index}
-                                totalCount={items.length}
-                                onRemove={handleRemoveItem}
-                                onUpdate={handleUpdateItem}
-                                onMoveUp={handleMoveUp}
-                                onMoveDown={handleMoveDown}
-                                dbId={item.dbId}
-                                status={status}
-                              />
-                            ) : (
-                              <SetComponentItem
-                                key={item.id}
-                                component={{ ...item.data, id: item.id }}
-                                index={index}
-                                totalCount={items.length}
-                                onRemove={handleRemoveItem}
-                                onUpdate={handleUpdateItem}
-                                onMoveUp={handleMoveUp}
-                                onMoveDown={handleMoveDown}
-                              />
-                            )
-                          )}
-                          {/* Scroll target for auto-scroll after adding items */}
-                          <div ref={itemsEndRef} />
-                        </div>
-                      </SortableContext>
-                    </DndContext>
+                    <div className="space-y-3">
+                      {items.map((item, index) =>
+                        item.type === "song" ? (
+                          <SetSongItem
+                            key={item.id}
+                            setSong={item.data}
+                            index={index}
+                            totalCount={items.length}
+                            onRemove={handleRemoveItem}
+                            onUpdate={handleUpdateItem}
+                            onOpenReorder={() => setReorderOpen(true)}
+                            dbId={item.dbId}
+                            status={status}
+                          />
+                        ) : (
+                          <SetComponentItem
+                            key={item.id}
+                            component={{ ...item.data, id: item.id }}
+                            index={index}
+                            totalCount={items.length}
+                            onRemove={handleRemoveItem}
+                            onUpdate={handleUpdateItem}
+                            onOpenReorder={() => setReorderOpen(true)}
+                          />
+                        )
+                      )}
+                      {/* Scroll target for auto-scroll after adding items */}
+                      <div ref={itemsEndRef} />
+                    </div>
 
                     {/* Mobile add buttons */}
                     <div className="flex gap-2 mt-4 lg:hidden">
@@ -2446,6 +2435,13 @@ const SetBuilder = () => {
           }}
         />
       )}
+
+      <ReorderItemsDialog
+        open={reorderOpen}
+        onOpenChange={setReorderOpen}
+        items={items as any}
+        onSave={(newItems) => setItems(newItems as any)}
+      />
 
       <AISetBuilderPanel
         open={showAIPanel}

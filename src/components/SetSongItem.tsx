@@ -1,5 +1,3 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { GripVertical, X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
+import { X, Youtube, Copy, ChevronDown, ChevronUp, Download, Pencil } from "lucide-react";
 import { FileMusic } from "lucide-react";
 import { useState, useMemo, lazy, Suspense, useEffect } from "react";
 import { computeTranspose, formatTranspose } from "@/lib/transpose";
@@ -33,27 +31,18 @@ interface SetSongItemProps {
   totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
+  onOpenReorder?: () => void;
   dbId?: string;
   status?: "draft" | "published";
 }
 
-export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown, dbId, status }: SetSongItemProps) => {
-  // Use the setSong's id if available, otherwise fallback to index-based id
-  const sortableId = setSong.id ? `song-${setSong.id}` : `song-new-${index}`;
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId });
+export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, onOpenReorder, dbId, status }: SetSongItemProps) => {
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showScorePreview, setShowScorePreview] = useState(false);
   const [showScoreDialog, setShowScoreDialog] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const song = setSong.song || setSong.songs;
   const hasImportedLyrics = Boolean(setSong.lyrics && setSong.lyrics.trim());
@@ -196,35 +185,19 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div>
       <Card className="shadow-sm">
         <CardContent className="p-4">
           <div className="flex gap-3">
-            <div className="flex flex-col items-center justify-start pt-1 gap-1">
-              <button {...listeners} className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
-                <GripVertical className="w-5 h-5" />
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => onMoveUp(index)}
-                disabled={index === 0}
+            <div className="flex flex-col items-center justify-start pt-1">
+              <button
+                type="button"
+                onClick={() => onOpenReorder?.()}
+                className="text-2xl font-bold text-primary w-10 h-10 rounded-full hover:bg-primary/10 transition-colors flex items-center justify-center"
+                title="순서 변경"
               >
-                <ChevronUp className="w-4 h-4" />
-              </Button>
-              <div className="text-2xl font-bold text-primary">
                 {index + 1}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => onMoveDown(index)}
-                disabled={index === totalCount - 1}
-              >
-                <ChevronDown className="w-4 h-4" />
-              </Button>
+              </button>
             </div>
 
             <div className="flex-1 space-y-3">
