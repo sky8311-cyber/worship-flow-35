@@ -278,17 +278,6 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
                 </CollapsibleContent>
               </Collapsible>
             </div>
-
-            <div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(index)}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
