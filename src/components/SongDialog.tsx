@@ -541,7 +541,7 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
           }
         }}
         style={{
-          paddingTop: !song ? '0' : 'max(1rem, env(safe-area-inset-top, 0px))',
+          paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
           paddingBottom: !song ? '0' : 'max(1rem, env(safe-area-inset-bottom, 0px))'
         }}
       >
