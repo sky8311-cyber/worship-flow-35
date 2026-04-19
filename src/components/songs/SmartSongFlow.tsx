@@ -897,7 +897,6 @@ function Step3_Links({ youtubeLinks, setYoutubeLinks, t }: any) {
     </div>
   );
 }
-}
 
 function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates, t }: any) {
   return (
