@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +17,7 @@ import { TopicSelector } from "@/components/TopicSelector";
 import { toast } from "sonner";
 import {
   Lock, Loader2, ExternalLink, Check, Search, Plus,
-  Music, Pen, ChevronRight, ChevronLeft, Save, X
+  Music, Pen, ChevronRight, ChevronLeft, Save, X, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
