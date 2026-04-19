@@ -121,9 +121,9 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
               </Tooltip>
             </div>
 
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
                   {/* Type selector dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
