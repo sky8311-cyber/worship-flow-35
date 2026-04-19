@@ -6,7 +6,7 @@ import { FileMusic, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 import { cn } from "@/lib/utils";
 import { ScoreViewerDisclaimer } from "@/components/copyright/ScoreViewerDisclaimer";
 import { SignedScoreImage } from "@/components/score/SignedScoreImage";
