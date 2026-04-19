@@ -1,5 +1,3 @@
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,10 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  GripVertical, X, ChevronDown, ChevronUp, Clock, User,
-  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone, 
-  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets, 
+import {
+  X, ChevronDown, ChevronUp, Clock, User,
+  Timer, HandMetal, HandHeart, BookOpen, Mic, Heart, Megaphone,
+  ScrollText, Sparkles, Music, Music2, MessageCircle, Wine, Droplets,
   Users, MessagesSquare, Circle, FileText, Check, Plus, Settings
 } from "lucide-react";
 import { useState } from "react";
@@ -44,8 +42,7 @@ interface SetComponentItemProps {
   totalCount: number;
   onRemove: (index: number) => void;
   onUpdate: (index: number, updates: any) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
+  onOpenReorder?: () => void;
 }
 
 const getIconForType = (type: WorshipComponentType): React.ComponentType<any> => {
@@ -71,8 +68,7 @@ const getIconForType = (type: WorshipComponentType): React.ComponentType<any> =>
   return iconMap[iconNames[type]] || Circle;
 };
 
-export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onMoveUp, onMoveDown }: SetComponentItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: component.id });
+export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpdate, onOpenReorder }: SetComponentItemProps) => {
   const [notesOpen, setNotesOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(!!component.content);
   const [showDetails, setShowDetails] = useState(
@@ -81,11 +77,6 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customName, setCustomName] = useState("");
   const { language, t } = useTranslation();
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
 
   const IconComponent = getIconForType(component.component_type);
 
