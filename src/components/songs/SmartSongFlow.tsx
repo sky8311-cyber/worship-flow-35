@@ -529,6 +529,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           topics={topics}
           setTopics={setTopics}
           topicsLoading={topicsLoading}
+          aiFilling={aiFilling}
+          onAIFill={handleAIFill}
           t={t}
           language={language}
         />}
@@ -573,7 +575,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
             disabled={loading || !canGoNext()}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            {currentStep === TOTAL_STEPS ? t("songFlow.save") : t("songFlow.next")}
+            {currentStep === TOTAL_STEPS ? t("songFlow.save") : t("songFlow.continue")}
             {currentStep < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
