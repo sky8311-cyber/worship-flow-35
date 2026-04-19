@@ -290,7 +290,7 @@ export const SetSongItem = ({ setSong, index, totalCount, onRemove, onUpdate, on
                   })()}
                 </div>
                 <TooltipProvider>
-                  <div className="flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">
+                  <div className="hidden md:flex items-center gap-1 flex-shrink-0 -mr-1 -mt-1">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
