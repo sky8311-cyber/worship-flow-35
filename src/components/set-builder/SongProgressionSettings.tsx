@@ -99,7 +99,7 @@ export const ProgressionHistoryControls = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                  <Button variant="outline" size="sm" className="h-7 px-2 text-xs whitespace-nowrap">
                     <History className="w-3.5 h-3.5 mr-1" />
                     {t("setSongItem.progression.history")}
                   </Button>
