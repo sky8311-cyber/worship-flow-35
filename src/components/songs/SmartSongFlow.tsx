@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +17,7 @@ import { TopicSelector } from "@/components/TopicSelector";
 import { toast } from "sonner";
 import {
   Lock, Loader2, ExternalLink, Check, Search, Plus,
-  Music, Pen, ChevronRight, ChevronLeft, Save, X
+  Music, Pen, ChevronRight, ChevronLeft, Save, X, Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -66,10 +67,10 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const [subtitle, setSubtitle] = useState(draftSong?.subtitle || "");
   const [isPrivate, setIsPrivate] = useState(draftSong?.is_private || false);
 
-  // === STEP 2: YouTube + Artist ===
+  // === STEP 2: YouTube + Artist (multi-select) ===
   const [artist, setArtist] = useState(draftSong?.artist || "");
   const [youtubeResults, setYoutubeResults] = useState<YouTubeResult[]>([]);
-  const [selectedYoutubeResult, setSelectedYoutubeResult] = useState<YouTubeResult | null>(null);
+  const [selectedVideoIds, setSelectedVideoIds] = useState<Set<string>>(new Set());
   const [youtubeSearching, setYoutubeSearching] = useState(false);
   const [youtubeSearchQuery, setYoutubeSearchQuery] = useState("");
   const [showCustomSearch, setShowCustomSearch] = useState(false);
@@ -78,7 +79,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
 
   // === STEP 3: Additional YouTube Links ===
   const [youtubeLinks, setYoutubeLinks] = useState<YouTubeLink[]>(
-    draftSong ? [] : [{ label: "", url: "" }]
+    draftSong ? [] : []
   );
 
   // === STEP 4: Lyrics ===
@@ -97,6 +98,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   );
   const [topicsLoading, setTopicsLoading] = useState(false);
   const [topicsSuggested, setTopicsSuggested] = useState(false);
+  const [aiFilling, setAiFilling] = useState(false);
 
   // Load draft youtube links
   useEffect(() => {
@@ -113,11 +115,21 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
       .order("position");
 
     if (linksRes.data && linksRes.data.length > 0) {
-      setYoutubeLinks(linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url })));
+      const loadedLinks = linksRes.data.map(l => ({ id: l.id, label: l.label, url: l.url }));
+      setYoutubeLinks(loadedLinks);
+      // Reconstruct selectedVideoIds from URLs
+      const ids = new Set<string>();
+      loadedLinks.forEach(l => {
+        const m = l.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+        if (m?.[1]) ids.add(m[1]);
+      });
+      setSelectedVideoIds(ids);
     } else if (draftSong?.youtube_url) {
       setYoutubeLinks([{ label: t("songFlow.original"), url: draftSong.youtube_url }]);
+      const m = draftSong.youtube_url.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+      if (m?.[1]) setSelectedVideoIds(new Set([m[1]]));
     } else {
-      setYoutubeLinks([{ label: "", url: "" }]);
+      setYoutubeLinks([]);
     }
   };
 
@@ -150,15 +162,28 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     }
   }, [currentStep]);
 
-  const handleSelectYoutubeResult = (result: YouTubeResult) => {
-    setSelectedYoutubeResult(result);
-    // Set first YouTube link
-    setYoutubeLinks(prev => {
-      const updated = [...prev];
-      const defaultLabel = artist || "";
-      if (updated.length === 0) updated.push({ label: defaultLabel, url: result.url });
-      else { updated[0] = { ...updated[0], label: updated[0].label || defaultLabel, url: result.url }; }
-      return updated;
+  const handleToggleYoutubeResult = (result: YouTubeResult) => {
+    setSelectedVideoIds(prev => {
+      const next = new Set(prev);
+      let updatedLinks: YouTubeLink[];
+      if (next.has(result.videoId)) {
+        next.delete(result.videoId);
+        // Remove matching link from youtubeLinks
+        setYoutubeLinks(curr => curr.filter(l => {
+          const m = l.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/);
+          return m?.[1] !== result.videoId;
+        }));
+      } else {
+        next.add(result.videoId);
+        // Append to youtubeLinks (preserving existing entries / first selection becomes default label)
+        setYoutubeLinks(curr => {
+          // avoid dupe
+          if (curr.some(l => l.url === result.url)) return curr;
+          const defaultLabel = curr.length === 0 ? (artist || result.channelTitle || "") : (result.channelTitle || "");
+          return [...curr, { label: defaultLabel, url: result.url }];
+        });
+      }
+      return next;
     });
   };
 
@@ -246,7 +271,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   const canGoNext = () => {
     switch (currentStep) {
       case 1: return title.trim().length > 0;
-      case 2: return !!selectedYoutubeResult && artist.trim().length > 0;
+      case 2: return selectedVideoIds.size >= 1 && artist.trim().length > 0;
       case 5: return songLanguage && topics.length >= 2;
       default: return true;
     }
@@ -333,14 +358,73 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
     triggerDraftSave: handleDraftSave,
   }));
 
+  // === AI Auto-fill (Step 5) ===
+  const handleAIFill = async () => {
+    if (!title.trim()) {
+      toast.error(t("songFlow.enterTitle"));
+      return;
+    }
+    setAiFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("enrich-song", {
+        body: {
+          title: title.trim(),
+          artist: artist.trim() || undefined,
+          language: songLanguage || undefined,
+          subtitle: subtitle.trim() || undefined,
+          youtube_url: youtubeLinks[0]?.url || undefined,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      const sugg = data?.suggestions;
+      if (!sugg) {
+        toast.error(t("songFlow.aiFillError"));
+        return;
+      }
+      // Apply tags (merge with existing, max 3)
+      if (Array.isArray(sugg.tags) && sugg.tags.length > 0) {
+        const tagNames = sugg.tags
+          .map((tg: any) => (typeof tg === "string" ? tg : tg?.ko))
+          .filter(Boolean);
+        const merged = Array.from(new Set([...topics, ...tagNames])).slice(0, 3);
+        setTopics(merged);
+      }
+      // Offer lyrics if missing
+      if (!lyrics.trim() && sugg.lyrics && sugg.lyrics.trim().length > 50) {
+        if (window.confirm(t("songFlow.aiFillLyricsPrompt"))) {
+          setLyrics(sugg.lyrics);
+          toast.success(t("songFlow.aiFillLyricsApplied"));
+        }
+      }
+      toast.success(t("songFlow.aiFilled"));
+    } catch (err: any) {
+      console.error("AI fill error:", err);
+      toast.error(t("songFlow.aiFillError"));
+    } finally {
+      setAiFilling(false);
+    }
+  };
+
   // === RENDER ===
   const stepLabels = [
     t("songFlow.steps.songInfo"),
     t("songFlow.steps.youtube"),
-    isKo ? "추가 YouTube 링크" : "Additional YouTube Links",
+    t("songFlow.steps.scoresLinks"),
     t("songFlow.steps.lyrics"),
     t("songFlow.steps.languageTopics"),
     t("songFlow.steps.review"),
+  ];
+  const stepShortLabels = [
+    t("songFlow.stepShort.songInfo"),
+    t("songFlow.stepShort.youtube"),
+    t("songFlow.stepShort.links"),
+    t("songFlow.stepShort.lyrics"),
+    t("songFlow.stepShort.tags"),
+    t("songFlow.stepShort.review"),
   ];
 
   return (
@@ -374,6 +458,23 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
             />
           ))}
         </div>
+        <div className="flex gap-1 mt-1">
+          {stepShortLabels.map((label, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex-1 text-[10px] text-center truncate",
+                i + 1 === currentStep
+                  ? "text-primary font-semibold"
+                  : i + 1 < currentStep
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+              )}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Content */}
@@ -387,8 +488,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         {currentStep === 2 && <Step2_YouTube
           youtubeResults={youtubeResults}
           youtubeSearching={youtubeSearching}
-          selectedResult={selectedYoutubeResult}
-          onSelect={handleSelectYoutubeResult}
+          selectedVideoIds={selectedVideoIds}
+          onToggle={handleToggleYoutubeResult}
           searchQuery={youtubeSearchQuery}
           onSearchQueryChange={setYoutubeSearchQuery}
           onSearch={() => searchYouTube()}
@@ -428,6 +529,8 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           topics={topics}
           setTopics={setTopics}
           topicsLoading={topicsLoading}
+          aiFilling={aiFilling}
+          onAIFill={handleAIFill}
           t={t}
           language={language}
         />}
@@ -472,7 +575,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
             disabled={loading || !canGoNext()}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-            {currentStep === TOTAL_STEPS ? t("songFlow.save") : t("songFlow.next")}
+            {currentStep === TOTAL_STEPS ? t("songFlow.save") : t("songFlow.continue")}
             {currentStep < TOTAL_STEPS && <ChevronRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
@@ -523,17 +626,25 @@ function Step1_BasicInfo({ title, setTitle, subtitle, setSubtitle, isPrivate, se
   );
 }
 
-function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSelect, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, title, setTitle, t }: any) {
+function Step2_YouTube({ youtubeResults, youtubeSearching, selectedVideoIds, onToggle, searchQuery, onSearchQueryChange, onSearch, showCustomSearch, setShowCustomSearch, artist, setArtist, artistSectionRef, artistHighlight, setArtistHighlight, title, setTitle, t }: any) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editTitleValue, setEditTitleValue] = useState(title);
 
-  const handleSelectAndScroll = (result: YouTubeResult) => {
-    onSelect(result);
-    setTimeout(() => {
-      artistSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setArtistHighlight(true);
-      setTimeout(() => setArtistHighlight(false), 2000);
-    }, 100);
+  const hasAnySelected = selectedVideoIds && selectedVideoIds.size > 0;
+  // Pick first selected result as the "primary" for channel hint
+  const primaryResult: YouTubeResult | undefined = youtubeResults.find((r: YouTubeResult) => selectedVideoIds?.has(r.videoId));
+
+  const handleToggleAndScroll = (result: YouTubeResult) => {
+    const wasSelected = selectedVideoIds?.has(result.videoId);
+    onToggle(result);
+    if (!wasSelected && selectedVideoIds.size === 0) {
+      // First selection — scroll to artist
+      setTimeout(() => {
+        artistSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setArtistHighlight(true);
+        setTimeout(() => setArtistHighlight(false), 2000);
+      }, 100);
+    }
   };
 
   return (
@@ -571,45 +682,57 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
         </div>
       )}
 
+      {/* Multi-select hint */}
+      {youtubeResults.length > 0 && (
+        <p className="text-xs text-muted-foreground">{t("songFlow.multiSelectHint")}</p>
+      )}
+
       {/* Results */}
       {youtubeResults.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">{t("songFlow.searchResults").replace("{count}", String(youtubeResults.length))}</p>
-          {youtubeResults.map((r: YouTubeResult) => (
-            <Card
-              key={r.videoId}
-              className={cn(
-                "cursor-pointer transition-all",
-                selectedResult?.videoId === r.videoId
-                  ? "ring-2 ring-primary bg-primary/5"
-                  : "hover:bg-muted/50"
-              )}
-              onClick={() => handleSelectAndScroll(r)}
-            >
-              <CardContent className="p-3 flex items-center gap-3">
-                <img src={r.thumbnailUrl} alt={r.title} className="w-24 h-16 object-cover rounded flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium line-clamp-2" dangerouslySetInnerHTML={{ __html: r.title }} />
-                  <p className="text-xs text-muted-foreground mt-1">{r.channelTitle}</p>
-                </div>
-                <div className="flex flex-col gap-1 flex-shrink-0">
-                  <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={(e) => { e.stopPropagation(); window.open(r.url, "_blank"); }}>
-                    <ExternalLink className="w-3 h-3" /> {t("songFlow.open")}
-                  </Button>
-                  {selectedResult?.videoId === r.videoId && (
-                    <span className="text-xs text-primary font-medium flex items-center gap-1 justify-center">
-                      <Check className="w-3 h-3" /> {t("songFlow.selected")}
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {youtubeResults.map((r: YouTubeResult) => {
+            const isSelected = selectedVideoIds?.has(r.videoId);
+            return (
+              <Card
+                key={r.videoId}
+                className={cn(
+                  "cursor-pointer transition-all",
+                  isSelected ? "ring-2 ring-primary bg-primary/5" : "hover:bg-muted/50"
+                )}
+                onClick={() => handleToggleAndScroll(r)}
+              >
+                <CardContent className="p-3 flex items-center gap-3">
+                  <Checkbox
+                    checked={isSelected}
+                    onCheckedChange={() => handleToggleAndScroll(r)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-shrink-0"
+                  />
+                  <img src={r.thumbnailUrl} alt={r.title} className="w-24 h-16 object-cover rounded flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium line-clamp-2" dangerouslySetInnerHTML={{ __html: r.title }} />
+                    <p className="text-xs text-muted-foreground mt-1">{r.channelTitle}</p>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={(e) => { e.stopPropagation(); window.open(r.url, "_blank"); }}>
+                      <ExternalLink className="w-3 h-3" /> {t("songFlow.open")}
+                    </Button>
+                    {isSelected && (
+                      <span className="text-xs text-primary font-medium flex items-center gap-1 justify-center">
+                        <Check className="w-3 h-3" /> {t("songFlow.selected")}
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {/* Title confirmation */}
-      {selectedResult && (
+      {hasAnySelected && (
         <div className="space-y-2 pt-3 border-t">
           <Label>{t("songFlow.confirmTitle")}</Label>
           {editingTitle ? (
@@ -650,13 +773,13 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
         )}
       >
         <Label>{t("songFlow.artist")} <span className="text-destructive">*</span></Label>
-        {selectedResult && (
+        {primaryResult && (
           <p className="text-xs text-muted-foreground flex items-center gap-1">
-            ℹ️ {t("songFlow.youtubeChannel").replace("{name}", selectedResult.channelTitle)}
+            ℹ️ {t("songFlow.youtubeChannel").replace("{name}", primaryResult.channelTitle)}
           </p>
         )}
         <ArtistSelector value={artist} onValueChange={setArtist} />
-        {!artist && selectedResult && (
+        {!artist && hasAnySelected && (
           <p className="text-xs text-amber-600 dark:text-amber-400">
             {t("songFlow.selectArtist")}
           </p>
@@ -667,41 +790,109 @@ function Step2_YouTube({ youtubeResults, youtubeSearching, selectedResult, onSel
 }
 
 function Step3_Links({ youtubeLinks, setYoutubeLinks, t }: any) {
-  const addYoutubeLink = () => setYoutubeLinks([...youtubeLinks, { label: "", url: "" }]);
-  const removeYoutubeLink = (index: number) => setYoutubeLinks(youtubeLinks.filter((_: any, i: number) => i !== index));
-  const updateYoutubeLink = (index: number, field: "label" | "url", value: string) => {
-    setYoutubeLinks((prev: YouTubeLink[]) => prev.map((link, i) => i === index ? { ...link, [field]: value } : link));
+  const [customLabel, setCustomLabel] = useState("");
+  const [customUrl, setCustomUrl] = useState("");
+
+  const removeLink = (index: number) =>
+    setYoutubeLinks(youtubeLinks.filter((_: any, i: number) => i !== index));
+
+  const updateLink = (index: number, field: "label" | "url", value: string) => {
+    setYoutubeLinks((prev: YouTubeLink[]) =>
+      prev.map((link, i) => (i === index ? { ...link, [field]: value } : link))
+    );
+  };
+
+  const addCustom = () => {
+    const url = customUrl.trim();
+    if (!url) return;
+    setYoutubeLinks((prev: YouTubeLink[]) => [
+      ...prev,
+      { label: customLabel.trim() || t("songFlow.link"), url },
+    ]);
+    setCustomLabel("");
+    setCustomUrl("");
   };
 
   return (
     <div className="space-y-6">
-      {/* YouTube Links Section */}
+      {/* Selected/managed links */}
       <div className="space-y-3">
-        <Label className="flex items-center gap-2"><Music className="w-4 h-4" /> {t("songFlow.youtubeLinks")}</Label>
-        {youtubeLinks.map((link: YouTubeLink, index: number) => {
-          const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
-          return (
-            <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
-              <Input placeholder={t("songFlow.labelPlaceholder")} value={link.label} onChange={(e) => updateYoutubeLink(index, "label", e.target.value)} className="text-sm" />
-              <div className="flex gap-2 items-center">
-                <Input type="url" placeholder="https://youtube.com/..." value={link.url} onChange={(e) => updateYoutubeLink(index, "url", e.target.value)} className="flex-1 text-sm" />
-                {youtubeLinks.length > 1 && (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeYoutubeLink(index)}><X className="h-4 w-4" /></Button>
-                )}
-              </div>
-              {videoId && (
-                <div className="flex justify-center">
-                  <div className="relative w-28 h-20 rounded overflow-hidden cursor-pointer" onClick={() => window.open(link.url, "_blank")}>
-                    <img src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`} alt="thumbnail" className="w-full h-full object-cover" />
+        <Label className="flex items-center gap-2">
+          <Music className="w-4 h-4" /> {t("songFlow.selectedYoutubes")}
+        </Label>
+        {youtubeLinks.length === 0 ? (
+          <p className="text-xs text-muted-foreground p-3 border rounded-lg bg-muted/30">
+            {t("songFlow.selectedYoutubesEmpty")}
+          </p>
+        ) : (
+          youtubeLinks.map((link: YouTubeLink, index: number) => {
+            const videoId = link.url?.match(/(?:youtube\.com\/.*v=|youtu\.be\/)([^#&?]+)/)?.[1];
+            return (
+              <div key={index} className="p-3 border rounded-lg bg-muted/30 space-y-2">
+                <div className="flex items-center gap-2">
+                  {videoId && (
+                    <img
+                      src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                      alt="thumbnail"
+                      className="w-20 h-14 object-cover rounded flex-shrink-0 cursor-pointer"
+                      onClick={() => window.open(link.url, "_blank")}
+                    />
+                  )}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <Input
+                      placeholder={t("songFlow.labelPlaceholder")}
+                      value={link.label}
+                      onChange={(e) => updateLink(index, "label", e.target.value)}
+                      className="text-sm h-8"
+                    />
+                    <Input
+                      type="url"
+                      placeholder="https://youtube.com/..."
+                      value={link.url}
+                      onChange={(e) => updateLink(index, "url", e.target.value)}
+                      className="text-xs h-8"
+                    />
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeLink(index)}
+                    className="flex-shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </div>
-          );
-        })}
-        <Button type="button" variant="outline" size="sm" onClick={addYoutubeLink}>
-          <Plus className="h-4 w-4 mr-1" /> {t("songFlow.addYoutubeLink")}
-        </Button>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Add custom URL */}
+      <div className="space-y-2 pt-3 border-t">
+        <Label className="flex items-center gap-2">
+          <Plus className="w-4 h-4" /> {t("songFlow.addCustomUrl")}
+        </Label>
+        <Input
+          placeholder={t("songFlow.customUrlPlaceholder")}
+          value={customLabel}
+          onChange={(e) => setCustomLabel(e.target.value)}
+          className="text-sm"
+        />
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            placeholder="https://youtube.com/..."
+            value={customUrl}
+            onChange={(e) => setCustomUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addCustom()}
+            className="flex-1 text-sm"
+          />
+          <Button type="button" size="sm" onClick={addCustom} disabled={!customUrl.trim()}>
+            <Plus className="h-4 w-4 mr-1" /> {t("songFlow.add")}
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -768,10 +959,25 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
   );
 }
 
-function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, topics, setTopics, topicsLoading, t, language }: any) {
+function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, topics, setTopics, topicsLoading, aiFilling, onAIFill, t, language }: any) {
   const isKo = language === "ko";
   return (
     <div className="space-y-6">
+      {/* AI Auto-fill */}
+      <Button
+        type="button"
+        variant="default"
+        onClick={onAIFill}
+        disabled={aiFilling}
+        className="w-full"
+      >
+        {aiFilling ? (
+          <><Loader2 className="w-4 h-4 animate-spin mr-2" />{t("songFlow.aiFilling")}</>
+        ) : (
+          <><Sparkles className="w-4 h-4 mr-2" />{t("songFlow.aiFillButton")}</>
+        )}
+      </Button>
+
       {topicsLoading && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center py-4">
           <Loader2 className="w-4 h-4 animate-spin" />
