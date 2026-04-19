@@ -106,14 +106,19 @@ export const SetComponentItem = ({ component, index, totalCount, onRemove, onUpd
         <CardContent className="p-3">
           <div className="flex gap-3">
             <div className="flex flex-col items-center justify-start pt-1">
-              <button
-                type="button"
-                onClick={() => onOpenReorder?.()}
-                className="text-xl font-bold text-accent w-9 h-9 rounded-full hover:bg-accent/20 transition-colors flex items-center justify-center"
-                title="순서 변경"
-              >
-                {index + 1}
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => onOpenReorder?.()}
+                    className="flex items-center gap-1 px-2 h-9 rounded-full bg-accent/10 hover:bg-accent/25 border-2 border-accent/40 hover:border-accent text-accent-foreground font-bold text-base cursor-pointer transition-all"
+                  >
+                    {index + 1}
+                    <ArrowUpDown className="w-3 h-3 opacity-70" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>순서 변경</TooltipContent>
+              </Tooltip>
             </div>
 
             <div className="flex-1 space-y-2">
