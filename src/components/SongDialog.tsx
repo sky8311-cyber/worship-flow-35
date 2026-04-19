@@ -784,17 +784,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             />
           </div>
 
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes">{t("songDialog.notes")}</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows={3}
-            />
-          </div>
-
           {/* Language */}
           <div>
             <Label htmlFor="language">{t("songDialog.language")}</Label>

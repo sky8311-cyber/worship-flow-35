@@ -84,7 +84,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
   // === STEP 4: Lyrics ===
   const [originalComposer, setOriginalComposer] = useState(draftSong?.original_composer || "");
   const [lyrics, setLyrics] = useState(draftSong?.lyrics || "");
-  const [notes, setNotes] = useState(draftSong?.notes || "");
   const [lyricsSearching, setLyricsSearching] = useState(false);
   const [lyricsSource, setLyricsSource] = useState<string | null>(null);
   const [lyricsSearchDone, setLyricsSearchDone] = useState(false);
@@ -290,7 +289,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         language: songLanguage,
         tags: topics.join(", "),
         lyrics: lyrics.trim() || null,
-        notes: notes.trim() || null,
         is_private: isPrivate,
         youtube_url: youtubeLinks[0]?.url || "",
         tempo: tempo || null,
@@ -316,7 +314,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
         language: songLanguage || null,
         tags: topics.length > 0 ? topics.join(", ") : null,
         lyrics: lyrics.trim() || null,
-        notes: notes.trim() || null,
         is_private: isPrivate,
         youtube_url: youtubeLinks[0]?.url || "",
         tempo: tempo || null,
@@ -416,8 +413,6 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           setOriginalComposer={setOriginalComposer}
           lyrics={lyrics}
           setLyrics={setLyrics}
-          notes={notes}
-          setNotes={setNotes}
           onSearchLyrics={searchLyrics}
           lyricsSearching={lyricsSearching}
           lyricsSource={lyricsSource}
@@ -440,7 +435,7 @@ export const SmartSongFlow = forwardRef<SmartSongFlowRef, SmartSongFlowProps>(({
           title={title} subtitle={subtitle} isPrivate={isPrivate}
           artist={artist} originalComposer={originalComposer}
           youtubeLinks={youtubeLinks}
-          lyrics={lyrics} notes={notes}
+          lyrics={lyrics}
           songLanguage={songLanguage} tempo={tempo} topics={topics}
           onEditStep={setCurrentStep}
           t={t}
@@ -712,7 +707,7 @@ function Step3_Links({ youtubeLinks, setYoutubeLinks, t }: any) {
   );
 }
 
-function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, notes, setNotes, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates, t }: any) {
+function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics, onSearchLyrics, lyricsSearching, lyricsSource, lyricsSearchDone, lyricsCandidates, t }: any) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -769,11 +764,6 @@ function Step4_Lyrics({ originalComposer, setOriginalComposer, lyrics, setLyrics
         <Label>{t("songFlow.lyricsLabel")}</Label>
         <Textarea value={lyrics} onChange={(e: any) => setLyrics(e.target.value)} placeholder={t("songFlow.lyricsPlaceholder")} rows={6} className="font-mono text-sm" />
       </div>
-
-      <div className="space-y-2">
-        <Label>{t("songFlow.notesLabel")}</Label>
-        <Textarea value={notes} onChange={(e: any) => setNotes(e.target.value)} placeholder={t("songFlow.notesPlaceholder")} rows={3} />
-      </div>
     </div>
   );
 }
@@ -822,7 +812,7 @@ function Step5_LanguageTopics({ songLanguage, setSongLanguage, tempo, setTempo, 
   );
 }
 
-function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, lyrics, notes, songLanguage, tempo, topics, onEditStep, t, language }: any) {
+function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, youtubeLinks, lyrics, songLanguage, tempo, topics, onEditStep, t, language }: any) {
   const langLabel = songLanguage === "KO" ? "한국어" : songLanguage === "EN" ? "English" : songLanguage === "KO/EN" ? "한국어/English" : t("songFlow.notEntered");
   const isKo = language === "ko";
   const tempoLabel = tempo === "slow" ? (isKo ? "느림" : "Slow") : tempo === "mid" ? (isKo ? "미드" : "Mid") : tempo === "fast" ? (isKo ? "빠름" : "Fast") : null;
@@ -874,11 +864,6 @@ function Step6_Review({ title, subtitle, isPrivate, artist, originalComposer, yo
         </div>
       </Section>
 
-      {notes && (
-        <Section label={t("songFlow.notesLabel")} step={4}>
-          <p className="text-xs text-muted-foreground line-clamp-2">{notes}</p>
-        </Section>
-      )}
     </div>
   );
 }
