@@ -666,30 +666,6 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             />
           </div>
 
-          {/* Private Song Toggle */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
-            <div className="flex items-center gap-3">
-              <Lock className="w-4 h-4 text-muted-foreground" />
-              <div>
-                <Label htmlFor="is_private" className="font-medium">{t("songDialog.privateToggle")}</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("songDialog.privateDescription")}</p>
-              </div>
-            </div>
-            <Switch
-              id="is_private"
-              checked={formData.is_private}
-              onCheckedChange={(checked) => setFormData({...formData, is_private: checked})}
-              disabled={setUsageCount > 0 && !formData.is_private}
-            />
-          </div>
-          {setUsageCount > 0 && !formData.is_private && (
-            <p className="text-xs text-amber-600 mt-1">
-              {language === "ko"
-                ? `이 곡은 ${setUsageCount}개의 워십세트에서 사용 중이므로 비공개로 전환할 수 없습니다.`
-                : `This song is used in ${setUsageCount} worship set(s) and cannot be made private.`}
-            </p>
-          )}
-
           {/* Artist */}
           <div className="space-y-1.5">
             <Label htmlFor="artist">{t("songDialog.artist")}</Label>
@@ -700,6 +676,48 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
               value={formData.artist}
               onValueChange={(artist) => setFormData({ ...formData, artist })}
             />
+          </div>
+
+          {/* Language */}
+          <div>
+            <Label htmlFor="language">{t("songDialog.language")}</Label>
+            <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
+                <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
+                <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Topics */}
+          <div>
+            <Label htmlFor="topics">{t("songDialog.topics")}</Label>
+            <TopicSelector
+              selectedTopics={formData.topics}
+              onTopicsChange={(topics) => setFormData({ ...formData, topics })}
+              minTopics={2}
+              maxTopics={3}
+            />
+          </div>
+
+          {/* Tempo */}
+          <div>
+            <Label>{language === "ko" ? "템포" : "Tempo"}</Label>
+            <Select value={formData.tempo} onValueChange={(value) => setFormData({ ...formData, tempo: value === "__none__" ? "" : value })}>
+              <SelectTrigger>
+                <SelectValue placeholder={language === "ko" ? "선택 안 함" : "Not selected"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{language === "ko" ? "선택 안 함" : "Not selected"}</SelectItem>
+                <SelectItem value="slow">{language === "ko" ? "느림 (Slow)" : "Slow"}</SelectItem>
+                <SelectItem value="mid">{language === "ko" ? "미드 (Mid)" : "Mid"}</SelectItem>
+                <SelectItem value="fast">{language === "ko" ? "빠름 (Fast)" : "Fast"}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div data-tutorial="song-youtube-section">
@@ -784,47 +802,29 @@ export const SongDialog = ({ open, onOpenChange, song, onClose }: SongDialogProp
             />
           </div>
 
-          {/* Language */}
-          <div>
-            <Label htmlFor="language">{t("songDialog.language")}</Label>
-            <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="KO">{t("songLibrary.languages.ko")}</SelectItem>
-                <SelectItem value="EN">{t("songLibrary.languages.en")}</SelectItem>
-                <SelectItem value="KO/EN">{t("songLibrary.languages.koen")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tempo */}
-          <div>
-            <Label>{language === "ko" ? "템포" : "Tempo"}</Label>
-            <Select value={formData.tempo} onValueChange={(value) => setFormData({ ...formData, tempo: value === "__none__" ? "" : value })}>
-              <SelectTrigger>
-                <SelectValue placeholder={language === "ko" ? "선택 안 함" : "Not selected"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">{language === "ko" ? "선택 안 함" : "Not selected"}</SelectItem>
-                <SelectItem value="slow">{language === "ko" ? "느림 (Slow)" : "Slow"}</SelectItem>
-                <SelectItem value="mid">{language === "ko" ? "미드 (Mid)" : "Mid"}</SelectItem>
-                <SelectItem value="fast">{language === "ko" ? "빠름 (Fast)" : "Fast"}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Topics */}
-          <div>
-            <Label htmlFor="topics">{t("songDialog.topics")}</Label>
-            <TopicSelector
-              selectedTopics={formData.topics}
-              onTopicsChange={(topics) => setFormData({ ...formData, topics })}
-              minTopics={2}
-              maxTopics={3}
+          {/* Private Song Toggle */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+            <div className="flex items-center gap-3">
+              <Lock className="w-4 h-4 text-muted-foreground" />
+              <div>
+                <Label htmlFor="is_private" className="font-medium">{t("songDialog.privateToggle")}</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("songDialog.privateDescription")}</p>
+              </div>
+            </div>
+            <Switch
+              id="is_private"
+              checked={formData.is_private}
+              onCheckedChange={(checked) => setFormData({...formData, is_private: checked})}
+              disabled={setUsageCount > 0 && !formData.is_private}
             />
           </div>
+          {setUsageCount > 0 && !formData.is_private && (
+            <p className="text-xs text-amber-600 mt-1">
+              {language === "ko"
+                ? `이 곡은 ${setUsageCount}개의 워십세트에서 사용 중이므로 비공개로 전환할 수 없습니다.`
+                : `This song is used in ${setUsageCount} worship set(s) and cannot be made private.`}
+            </p>
+          )}
 
           <div className="flex justify-end gap-2" data-tutorial="song-save-button">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
