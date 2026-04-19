@@ -364,7 +364,7 @@ export function UpcomingEventsWidget({
                             <DropdownMenuItem onClick={(e) => handleTogglePublish(event, e)}>
                               {event.status === "draft" ? (
                                 <>
-                                  <Upload className="w-4 h-4 mr-2" /> 게시하기
+                                  <Upload className="w-4 h-4 mr-2" /> 공동체에 게시하기
                                 </>
                               ) : (
                                 <>

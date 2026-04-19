@@ -816,7 +816,7 @@ const Dashboard = () => {
                                   {set.status === "draft" ? (
                                     <>
                                       <Upload className="mr-2 h-4 w-4" />
-                                      게시하기
+                                      공동체에 게시하기
                                     </>
                                   ) : (
                                     <>

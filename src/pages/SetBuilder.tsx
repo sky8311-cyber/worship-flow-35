@@ -2382,7 +2382,7 @@ const SetBuilder = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmPublish}>게시하기</AlertDialogAction>
+            <AlertDialogAction onClick={confirmPublish}>공동체에 게시하기</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
