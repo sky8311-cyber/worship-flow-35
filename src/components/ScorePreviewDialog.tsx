@@ -6,7 +6,7 @@ import { FileMusic, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
+
 import { cn } from "@/lib/utils";
 import { ScoreViewerDisclaimer } from "@/components/copyright/ScoreViewerDisclaimer";
 import { SignedScoreImage } from "@/components/score/SignedScoreImage";
@@ -39,7 +39,7 @@ export const ScorePreviewDialog = ({
   setSongId,
 }: ScorePreviewDialogProps) => {
   const { t } = useTranslation();
-  const isMobile = useIsMobile();
+  
   const [scoreVariations, setScoreVariations] = useState<ScoreVariation[]>([]);
   const [selectedKey, setSelectedKey] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(0);
@@ -125,17 +125,15 @@ export const ScorePreviewDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        hideCloseButton={isMobile}
+        hideCloseButton
         className={cn(
-          "flex flex-col",
-          // Mobile: force fullscreen with !important to override base dialog styles
+          "flex flex-col bg-background",
+          // Fullscreen on ALL viewports — image fits screen, no scroll
           "!fixed !top-0 !left-0 !right-0 !bottom-0",
           "!translate-x-0 !translate-y-0",
-          "w-full h-[100dvh] max-w-full max-h-full rounded-none p-4",
-          // Desktop: restore centered modal positioning
-          "sm:!left-[50%] sm:!top-[50%] sm:!right-auto sm:!bottom-auto",
-          "sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
-          "sm:max-w-4xl sm:max-h-[90vh] sm:h-auto sm:rounded-xl sm:p-6"
+          "w-screen h-[100dvh] max-w-none max-h-none rounded-none p-3 sm:p-4",
+          "pt-[max(0.75rem,env(safe-area-inset-top))]",
+          "pb-[max(0.75rem,env(safe-area-inset-bottom))]"
         )}
       >
         <DialogHeader className="flex-shrink-0">
@@ -143,16 +141,14 @@ export const ScorePreviewDialog = ({
             <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 truncate">
               {t("songLibrary.previewScore")} - {songTitle}
             </DialogTitle>
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 -mr-2 -mt-2"
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 -mr-2 -mt-2"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </DialogHeader>
 
@@ -161,13 +157,13 @@ export const ScorePreviewDialog = ({
             <p className="text-muted-foreground">{t("common.loading")}</p>
           </div>
         ) : shouldShowSingleScore ? (
-          // Old single score file display
-          <div className="flex-1 overflow-auto min-h-0">
+          // Single score file display — full-screen fit, no scroll
+          <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
             {scoreUrl ? (
               <SignedScoreImage
                 src={scoreUrl}
                 alt={`${songTitle} score`}
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -227,12 +223,12 @@ export const ScorePreviewDialog = ({
               )}
             </div>
 
-            <div className="flex-1 overflow-auto min-h-0">
+            <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
               {currentFiles[currentPage] ? (
                 <SignedScoreImage
                   src={currentFiles[currentPage].url}
                   alt={`${songTitle} ${selectedKey} - Page ${currentPage + 1}`}
-                  className="w-full h-auto rounded-lg"
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                 />
               ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
