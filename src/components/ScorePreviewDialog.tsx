@@ -141,16 +141,14 @@ export const ScorePreviewDialog = ({
             <DialogTitle className="text-base sm:text-lg flex-1 min-w-0 truncate">
               {t("songLibrary.previewScore")} - {songTitle}
             </DialogTitle>
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 -mr-2 -mt-2"
-                onClick={() => onOpenChange(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 -mr-2 -mt-2"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </DialogHeader>
 
